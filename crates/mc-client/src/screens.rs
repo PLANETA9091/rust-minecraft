@@ -6661,6 +6661,18 @@ pub enum ScreenKind {
     /// PRE-FILLED edit walk (the selected row's own seat) the later
     /// round banks.
     EditServer,
+    /// THE DELETE'S OWN CONFIRM SEAT (vanilla ConfirmScreen the
+    /// selectServer.deleteQuestion walk — the server list's `selectServer.delete`
+    /// lambda `setScreen(new ConfirmScreen(this::onConfirmDelete,
+    /// DELETE_QUESTION, DELETE_WARNING, DELETE_BUTTON, CANCEL))` opens):
+    /// the question the title band keeps, the warning the message lines
+    /// the row's own name the %s substitution answers, the Delete +
+    /// Cancel pair the footer row the 150-wide bounds keep — the YES
+    /// the onConfirmDelete walk the list's remove serves (the selected
+    /// row the list drops, the serverList.save the file the later
+    /// persistence round banks), the NO + the Escape the callback(false)
+    /// the list the unchanged returns.
+    DeleteConfirm,
     /// Vanilla DisconnectedScreen: the join outcome (server-side login
     /// disconnect reason, transport error, or the offline profile line).
     Disconnect,
@@ -29065,6 +29077,12 @@ impl App {
             // flow's own parent returns, the fields the typed words the
             // save never banks)
             self.open(ScreenKind::Servers);
+        } else if self.screen == ScreenKind::DeleteConfirm {
+            // THE CONFIRM'S OWN ESCAPE LANE (the vanilla ConfirmScreen
+            // the onClose override the callback(false) ride speaks —
+            // the ESCAPE the NO the same walk serves, the list the
+            // unchanged returns)
+            self.open(ScreenKind::Servers);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -39146,23 +39164,41 @@ impl App {
                         self.es_edit = Some(idx);
                     }
                 }
-                // THE SELECTED ROW'S OWN DELETE WALK (vanilla
+                // THE SELECTED ROW'S OWN DELETE OPENER (vanilla
                 // JoinMultiplayerScreen's `selectServer.delete` lambda —
-                // the minimal round the direct remove banks [the
-                // vanilla ConfirmScreen the deleteQuestion the later
-                // round owes — the yes walk the serverList.remove
-                // servers, the client's own confirm the same law the
-                // later seat wears], the selection the clamp the
-                // shorter list keeps, the EMPTY list the row never
-                // has — the arm the refusal keeps)
+                // the ConfirmScreen the `setScreen(new
+                // ConfirmScreen(this::onConfirmDelete, ...))` walk
+                // opens, the selected row the question the warning
+                // carries, the remove the YES walk the confirm serves;
+                // the EMPTY list the row never has — the arm the opener
+                // the refusal keeps)
                 "delete" => {
+                    if self.selected_server < self.servers.len() {
+                        self.open(ScreenKind::DeleteConfirm);
+                    }
+                }
+                // THE CONFIRM'S OWN YES WALK (vanilla
+                // ConfirmScreen.onPress the `callback.accept(true)` —
+                // the onConfirmDelete the confirmed arm the list's
+                // remove serves [the selected row the list drops, the
+                // serverList.save the file the later persistence
+                // round banks], the selection the clamp the shorter
+                // list keeps [the past-end the saturating_sub the zero
+                // banks], the parent the setScreen the list returns)
+                "delyes" => {
                     if self.selected_server < self.servers.len() {
                         self.servers.remove(self.selected_server);
                         if self.selected_server >= self.servers.len() {
                             self.selected_server = self.servers.len().saturating_sub(1);
                         }
                     }
+                    self.open(ScreenKind::Servers);
                 }
+                // THE CONFIRM'S OWN NO WALK (vanilla ConfirmScreen.onPress
+                // the `callback.accept(false)` — the onConfirmDelete the
+                // denied arm the list never touches, the parent the
+                // setScreen the list the unchanged returns)
+                "delno" => self.open(ScreenKind::Servers),
                 // vanilla ConnectScreen Cancel: abandon the in-flight join
                 // (late results carry unknown ids and are ignored)
                 "cancel" => self.open(ScreenKind::Servers),
@@ -59695,6 +59731,7 @@ impl App {
             ScreenKind::Connect => self.render_connect(&mut g, a, w, h),
             ScreenKind::DirectConnect => self.render_direct_connect(&mut g, a, w, h),
             ScreenKind::EditServer => self.render_edit_server(&mut g, a, w, h),
+            ScreenKind::DeleteConfirm => self.render_delete_confirm(&mut g, a, w, h),
             ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
                 // 3D world first (full framebuffer resolution), then the
@@ -67769,6 +67806,70 @@ impl App {
             cx,
             h / 4 + 120,
             200,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE DELETE'S OWN CONFIRM SEAT (vanilla ConfirmScreen the delete
+    /// walk): the question (selectServer.deleteQuestion) the
+    /// `height / 6 - 12` band wears, the warning
+    /// (selectServer.deleteWarning) the message lines the row's own
+    /// name the %s substitution answers (the `width - 50` wrap the
+    /// font split speaks, the `90` start the 9-step the lineHeight
+    /// keeps), the Delete (selectServer.deleteButton) + Cancel
+    /// (gui.cancel) pair the `height / 6 + 96` row the 150-wide bounds
+    /// keep (yes `width / 2 - 155`, no `width / 2 - 155 + 160`).
+    fn render_delete_confirm(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
+        let cx = w / 2;
+        g.text_centered(
+            a,
+            cx,
+            h / 6 - 12,
+            tr("selectServer.deleteQuestion")
+                .unwrap_or("Are you sure you want to remove this server?"),
+            WHITE,
+            true,
+        );
+        // THE WARNING'S OWN SUBSTITUTION (the TranslatableContents the
+        // %s argument the row's own name answers — the plain %s the
+        // single-arg the replace walk serves, the empty selection the
+        // empty word the fallback keeps)
+        let name = self
+            .servers
+            .get(self.selected_server)
+            .map(|s| s.name.clone())
+            .unwrap_or_default();
+        let warning = tr("selectServer.deleteWarning")
+            .unwrap_or("'%s' will be lost forever! (A long time!)")
+            .replace("%s", &name);
+        // THE MESSAGE LINES' OWN WRAP (the vanilla walk the `width - 50`
+        // the font split speaks — the `90` start the 9-step the
+        // lineHeight keeps)
+        let mut y = 90;
+        for line in wrap_chat_text(&warning, (w - 50).max(1)) {
+            g.text_centered(a, cx, y, &line, WHITE, true);
+            y += 9;
+        }
+        // THE YES/NO PAIR'S OWN ROW (the vanilla bounds walk the two
+        // 150-wide keeps — the Delete the yes seat, the Cancel the no)
+        self.buttons.push(Button::new(
+            "delyes",
+            tr("selectServer.deleteButton")
+                .unwrap_or("Delete")
+                .to_string(),
+            cx - 80,
+            h / 6 + 96,
+            150,
+        ));
+        self.buttons.push(Button::new(
+            "delno",
+            tr("gui.cancel").unwrap_or("Cancel").to_string(),
+            cx + 80,
+            h / 6 + 96,
+            150,
         ));
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);

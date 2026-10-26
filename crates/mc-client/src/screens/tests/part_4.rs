@@ -23304,8 +23304,9 @@ fn the_servers_rows_own_edit_delete_pair_wears() {
     assert_eq!(app.servers.len(), before + 1, "the add the list appends");
     assert_eq!(app.selected_server, app.servers.len() - 1);
 
-    // THE DELETE'S OWN WALK (the selected row the list removes — the
-    // selection the clamp the shorter list keeps)
+    // THE DELETE'S OWN WALK (the opener the confirm seat opens — the
+    // YES walk the list's remove serves, the selection the clamp the
+    // shorter list keeps)
     app.open(ScreenKind::Servers);
     app.render_title_buttons_for_test();
     let delete = app
@@ -23317,8 +23318,22 @@ fn the_servers_rows_own_edit_delete_pair_wears() {
     app.selected_server = 0;
     let len = app.servers.len();
     app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::DeleteConfirm,
+        "the opener the confirm seat opens"
+    );
+    assert_eq!(app.servers.len(), len, "the confirm the list never touches");
+    app.render_title_buttons_for_test();
+    let yes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delyes")
+        .expect("delyes")
+        .clone();
+    app.on_click(yes.x + yes.w / 2, yes.y + yes.h / 2);
     assert_eq!(app.screen, ScreenKind::Servers);
-    assert_eq!(app.servers.len(), len - 1, "the delete the row removes");
+    assert_eq!(app.servers.len(), len - 1, "the yes the row removes");
     assert_eq!(
         app.servers[0].name, "Hypixel Renamed",
         "the first row the walk removes — the renamed row the list keeps"
@@ -23327,7 +23342,8 @@ fn the_servers_rows_own_edit_delete_pair_wears() {
 
     // THE EMPTY LIST'S OWN INACTIVE LAW (the updateButtonStatus walk —
     // the pair the INACTIVE the hovered() refusal keeps, the empty-list
-    // arms the silence wears)
+    // arms the silence wears; the confirm loop the yes walk the rows
+    // the list drains)
     while !app.servers.is_empty() {
         app.selected_server = app.servers.len() - 1;
         app.render_title_buttons_for_test();
@@ -23338,6 +23354,14 @@ fn the_servers_rows_own_edit_delete_pair_wears() {
             .expect("delete")
             .clone();
         app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+        app.render_title_buttons_for_test();
+        let yes = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "delyes")
+            .expect("delyes")
+            .clone();
+        app.on_click(yes.x + yes.w / 2, yes.y + yes.h / 2);
     }
     assert!(app.servers.is_empty());
     assert_eq!(app.selected_server, 0, "the clamp the zero keeps");
@@ -23364,4 +23388,118 @@ fn the_servers_rows_own_edit_delete_pair_wears() {
     );
     app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
     assert_eq!(app.screen, ScreenKind::Servers);
+}
+
+/// THE DELETE'S OWN CONFIRM SEAT (vanilla ConfirmScreen the delete walk
+/// the whole seat answers: the opener the list never touches, the
+/// geometry the vanilla bounds the two 150-wide keep [yes
+/// `width / 2 - 155`, no `width / 2 - 155 + 160`, the `height / 6 + 96`
+/// row], the YES the onConfirmDelete walk the list's remove serves +
+/// the clamp the selection keeps, the NO the callback(false) the list
+/// the unchanged returns, the ESCAPE the onClose override the same no
+/// walk wears, the empty-list opener the refusal keeps).
+#[test]
+fn the_delete_confirm_seat_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Servers);
+    app.render_title_buttons_for_test();
+    let delete = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delete")
+        .expect("delete")
+        .clone();
+    app.selected_server = 0;
+
+    // THE OPENER'S OWN HAND-OFF (the ConfirmScreen the lambda opens —
+    // the list the question the confirm carries, the row the remove
+    // the YES alone serves)
+    let len = app.servers.len();
+    let first_name = app.servers[0].name.clone();
+    app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    assert_eq!(app.screen, ScreenKind::DeleteConfirm);
+    assert_eq!(app.servers.len(), len, "the confirm the list keeps");
+
+    // THE PAIR'S OWN GEOMETRY (the vanilla ConfirmScreen.init bounds
+    // walk the two 150-wide keeps — the yes `width / 2 - 155` the 320
+    // frame the 5 answers, the no `width / 2 - 155 + 160` the 165
+    // wears, the `height / 6 + 96` row the both seats keep)
+    app.render_title_buttons_for_test();
+    let yes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delyes")
+        .expect("delyes")
+        .clone();
+    assert_eq!((yes.x, yes.w, yes.y), (5, 150, 30 + 96));
+    let no = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delno")
+        .expect("delno")
+        .clone();
+    assert_eq!((no.x, no.w, no.y), (165, 150, 30 + 96));
+    assert!(yes.active && no.active, "the pair the vanilla arms");
+
+    // THE NO'S OWN WALK (the callback(false) — the list the unchanged
+    // keeps, the parent the setScreen the list returns)
+    app.on_click(no.x + no.w / 2, no.y + no.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), len, "the no the list never touches");
+    assert_eq!(app.servers[0].name, first_name);
+
+    // THE ESCAPE'S OWN NO WALK (the onClose override the callback(false)
+    // ride — the same no walk the ESCAPE serves)
+    app.render_title_buttons_for_test();
+    app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    assert_eq!(app.screen, ScreenKind::DeleteConfirm);
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), len, "the escape the list keeps");
+
+    // THE YES'S OWN WALK (the onConfirmDelete the confirmed arm — the
+    // selected row the list drops, the clamp the selection keeps, the
+    // parent the list returns)
+    app.selected_server = 1;
+    app.render_title_buttons_for_test();
+    app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    assert_eq!(app.screen, ScreenKind::DeleteConfirm);
+    app.render_title_buttons_for_test();
+    let yes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delyes")
+        .expect("delyes")
+        .clone();
+    app.on_click(yes.x + yes.w / 2, yes.y + yes.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), len - 1, "the yes the row drops");
+    assert_eq!(
+        app.selected_server,
+        app.servers.len() - 1,
+        "the clamp the shorter list keeps"
+    );
+
+    // THE LAST ROW'S OWN CLAMP (the selection the shorter list the end
+    // the zero banks — the past-end the saturating_sub the walk keeps)
+    app.selected_server = app.servers.len() - 1;
+    app.render_title_buttons_for_test();
+    app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    app.render_title_buttons_for_test();
+    let yes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delyes")
+        .expect("delyes")
+        .clone();
+    app.on_click(yes.x + yes.w / 2, yes.y + yes.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert!(
+        app.servers.is_empty(),
+        "the last row the walk removes — the empty list the clamp banks"
+    );
+    assert_eq!(
+        app.selected_server, 0,
+        "the empty the saturating_sub zero keeps"
+    );
 }
