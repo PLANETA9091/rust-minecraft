@@ -23659,3 +23659,107 @@ fn the_servers_list_own_persistence_file_round_wears() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen.keyPressed walk
+// the 258 case answers — the EditServer the two-box seat the
+// name/address cycle speaks, the DirectConnect the one-box seat the
+// re-arm answers, the SHIFT the backward walk the same law keeps)
+#[test]
+fn the_entry_forms_own_tab_ride_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    assert!(
+        app.es_name_focus && !app.es_address_focus,
+        "the setInitialFocus the name box arms"
+    );
+
+    // THE FORWARD CYCLE (the name the first seat keeps — the Tab the
+    // address speaks, the second Tab the wrap the name answers)
+    app.on_editserver_tab(true);
+    assert!(
+        app.es_address_focus && !app.es_name_focus,
+        "the first Tab the address speaks"
+    );
+    app.on_editserver_tab(true);
+    assert!(
+        app.es_name_focus && !app.es_address_focus,
+        "the second Tab the wrap the name answers"
+    );
+
+    // THE BACKWARD WALK (the Shift+Tab the two-entry cycle the same
+    // wrap serves — the name the backward the address speaks)
+    app.on_editserver_tab(false);
+    assert!(
+        app.es_address_focus && !app.es_name_focus,
+        "the Shift+Tab the backward wrap the address answers"
+    );
+    app.on_editserver_tab(false);
+    assert!(
+        app.es_name_focus && !app.es_address_focus,
+        "the backward the name the wrap answers"
+    );
+
+    // THE NOTHING-FOCUSED ARM (the outside click the pair loses — the
+    // forward Tab the name the first seat speaks, the backward the
+    // address's own end answers)
+    let (nx, ny, nw, nh) = app.es_name_rect;
+    let (ax, ay, _, _) = app.es_address_rect;
+    assert!(
+        !app.on_editserver_box_click(nx + nw + 50, ny + nh + 50),
+        "the outside click the FALSE returns"
+    );
+    assert!(!app.es_name_focus && !app.es_address_focus);
+    app.on_editserver_tab(true);
+    assert!(app.es_name_focus, "the forward nothing-arm the name speaks");
+    app.on_editserver_box_click(nx + nw + 50, ny + nh + 50);
+    app.on_editserver_tab(false);
+    assert!(
+        app.es_address_focus,
+        "the backward nothing-arm the address speaks"
+    );
+
+    // THE RIDE'S OWN TYPING (the focused box the chars answer — the
+    // Tab-stepped address the typed word the lane banks)
+    for c in "mc.example.net".chars() {
+        app.on_editserver_char(c);
+    }
+    assert_eq!(
+        app.es_address, "mc.example.net",
+        "the Tab-stepped focus the typing wears"
+    );
+    assert_eq!(
+        app.es_name, "Minecraft Server",
+        "the unfocused name the typing never lands"
+    );
+
+    // THE STALE SCREENS' OWN GATE (the Servers seat the Tab the
+    // silence keeps — the form lanes the other screens never pass)
+    app.open(ScreenKind::Servers);
+    app.es_name_focus = true;
+    app.on_editserver_tab(true);
+    assert!(
+        app.es_name_focus,
+        "the stale screen the focus the gate never moves"
+    );
+
+    // THE DIRECT CONNECTION'S OWN RE-ARM (the one-box seat the Tab
+    // answers — the fresh ctor the focus the box arms, the outside
+    // click the focus lost the re-arm banks, the focused box the Tab
+    // the same seat keeps, the stale screens the gate never passes)
+    app.open(ScreenKind::DirectConnect);
+    assert!(app.direct_focus, "the setInitialFocus the box arms");
+    let (bx, by, bw, bh) = app.direct_box_rect;
+    app.on_direct_box_click(bx + bw + 50, by + bh + 50);
+    assert!(!app.direct_focus, "the outside click the focus loses");
+    app.on_direct_tab();
+    assert!(app.direct_focus, "the Tab the box re-arms");
+    app.on_direct_tab();
+    assert!(app.direct_focus, "the focused box the Tab the seat keeps");
+    app.open(ScreenKind::Servers);
+    app.direct_focus = false;
+    app.on_direct_tab();
+    assert!(
+        !app.direct_focus,
+        "the stale screen the re-arm the gate never passes"
+    );
+}

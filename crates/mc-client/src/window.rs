@@ -2019,6 +2019,25 @@ pub fn run_gui_app(
             // internal gates the screen state alone keeps)
             app.on_editserver_backspace();
         }
+        // THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen
+        // keyPressed walk the 258 case answers — the same law the
+        // debug options + the options family rides wear, the
+        // `createTabEvent(!hasShiftDown())` the focus navigation
+        // serves): the EditServer the TWO-box seat the name/address
+        // cycle speaks, the DirectConnect the one-box seat the
+        // re-arm answers, the SHIFT the hasShiftDown query wears —
+        // the backward walk the Shift+Tab answer keeps
+        if !app.chat_open
+            && matches!(
+                app.screen,
+                crate::screens::ScreenKind::EditServer | crate::screens::ScreenKind::DirectConnect
+            )
+            && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
+        {
+            let shift = window.is_key_down(Key::LeftShift);
+            app.on_editserver_tab(!shift);
+            app.on_direct_tab();
+        }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
         // `createTabEvent(!hasShiftDown())` the focus navigation

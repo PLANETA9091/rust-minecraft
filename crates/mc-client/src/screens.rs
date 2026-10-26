@@ -35816,6 +35816,75 @@ impl App {
         false
     }
 
+    /// THE ENTRY FORM'S OWN TAB RIDE (javap 26.2 the Screen.keyPressed
+    /// walk the 258 case answers — the `createTabEvent(!hasShiftDown())`
+    /// the focus navigation serves, the same law the debug options +
+    /// the options family rides wear): the TWO-box seat the
+    /// name/address cycle answers (the children add-order law the
+    /// widget list wears — the name box the first seat keeps, the
+    /// address the second speaks; the focused seat the ±1 step banks,
+    /// the nothing-focused arm the direction's end seat [the forward
+    /// walk the name first speaks, the backward the address's own end
+    /// answers], the two-box table the wrap the modulo serves — the
+    /// footer pair the buttons the keyboard focus the round never
+    /// carries, the cycle the boxes alone steps). The APPLY the pair's
+    /// exclusivity wears (the setFocused(true) re-arm the sibling the
+    /// focus transfer clears — the click walk's own law the ride
+    /// shares), the stale screens the gate never passes.
+    pub fn on_editserver_tab(&mut self, forward: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        // THE SEAT TABLE (the children add-order law — the TWO-box
+        // table the cycle wears: 0 the name, 1 the address)
+        let cur = if self.es_name_focus {
+            Some(0)
+        } else if self.es_address_focus {
+            Some(1)
+        } else {
+            None
+        };
+        let next = match cur {
+            Some(i) => {
+                if forward {
+                    (i + 1) % 2
+                } else {
+                    // the TWO-entry table the backward the same wrap
+                    // the modulo banks — (i + len - 1) % len the law
+                    // the formula keeps
+                    (i + 2 - 1) % 2
+                }
+            }
+            None => {
+                if forward {
+                    0
+                } else {
+                    1
+                }
+            }
+        };
+        // THE APPLY (the changeFocus law — the exclusivity the pair
+        // keeps)
+        self.es_name_focus = next == 0;
+        self.es_address_focus = next == 1;
+    }
+
+    /// THE DIRECT CONNECTION'S OWN TAB RE-ARM (the same Screen walk
+    /// the one-box form answers — the children add-order the address
+    /// box the first seat keeps, the Tab the box the setFocused(true)
+    /// re-arm serves: the nothing-focused arm the first seat speaks
+    /// [the outside click the focus lost the re-arm banks], the
+    /// focused box the Tab the same seat the single-entry cycle
+    /// keeps, the SHIFT the backward the same seat answers — the
+    /// one-seat table the wrap the same box speaks). The stale screens
+    /// the gate never passes.
+    pub fn on_direct_tab(&mut self) {
+        if self.screen != ScreenKind::DirectConnect {
+            return;
+        }
+        self.direct_focus = true;
+    }
+
     /// THE SEARCH BOX'S OWN CLICK FOCUS (the EditBox.mouseClicked walk
     /// — the inside click the `setFocused(true)` re-arm serves, the
     /// TRUE the consumed click returns (the caller's buttons walk the
