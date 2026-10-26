@@ -23312,6 +23312,7 @@ fn the_add_server_entry_form_own_seat_wears() {
         app.es_name, "Minecraft Server",
         "the unfocused pair the chars never land"
     );
+    app.es_name_last_click = None; // the fresh stamp the plain walk keeps (the double window the 271 test wears)
     app.on_editserver_box_click(nx + 5, ny + 5);
     assert_eq!(
         app.es_name_cursor, 0,
@@ -23328,6 +23329,7 @@ fn the_add_server_entry_form_own_seat_wears() {
     // exceeds — the len the seat parks, the typed char the append
     // the same insert walk wears)
     let full = crate::gui::font_text_width("Minecraft Server");
+    app.es_name_last_click = None; // the fresh stamp the plain walk keeps
     app.on_editserver_box_click(nx + 4 + full + 2, ny + 5);
     assert_eq!(
         app.es_name_cursor, 16,
@@ -23350,6 +23352,7 @@ fn the_add_server_entry_form_own_seat_wears() {
     // THE CAPS' OWN REFUSAL (the name the 32 the EditBox default
     // keeps, the address the 128 the setMaxLength speaks — the
     // over-cap char the lane never lands)
+    app.es_name_last_click = None; // the fresh stamp the plain walk keeps
     app.on_editserver_box_click(nx + 5, ny + 5);
     app.es_name = "x".repeat(32);
     app.on_editserver_char('y');
@@ -23358,6 +23361,7 @@ fn the_add_server_entry_form_own_seat_wears() {
         32,
         "the 32 cap the name refuses"
     );
+    app.es_address_last_click = None; // the fresh stamp the plain walk keeps
     app.on_editserver_box_click(ax + 5, ay + 5);
     app.es_address = "z".repeat(128);
     app.on_editserver_char('w');
@@ -24120,6 +24124,7 @@ fn the_entry_forms_own_caret_ride_wears() {
         "the left edge the x-band the zero parks"
     );
     let tail = crate::gui::font_text_width(&app.es_name);
+    app.es_name_last_click = None; // the fresh stamp the plain walk keeps
     app.on_editserver_box_click(nx + 4 + tail + 2, ny + 5);
     assert!(app.es_name_focus, "the in-box click the focus keeps");
     assert!(
@@ -24224,6 +24229,7 @@ fn the_caret_own_x_band_click_positions_wears() {
 
     // THE PAST-TAIL'S OWN SEAT (the full width the offset exceeds —
     // the len the same seat answers)
+    app.es_name_last_click = None; // the fresh stamp the plain walk keeps
     app.on_editserver_box_click(nx + 4 + full + 2, ny + 5);
     assert_eq!(app.es_name_cursor, 16, "the past-tail the len parks");
 
@@ -24232,6 +24238,7 @@ fn the_caret_own_x_band_click_positions_wears() {
     // helper the same walk the test computes)
     let probe = full / 2;
     let expected = caret_prefix_probe("Minecraft Server", probe);
+    app.es_name_last_click = None; // the fresh stamp the plain walk keeps
     app.on_editserver_box_click(nx + 4 + probe, ny + 5);
     assert_eq!(
         app.es_name_cursor, expected,
@@ -24963,6 +24970,7 @@ fn the_entry_boxes_own_drag_seat_wears() {
     // THE SHIFT CLICK'S OWN ANCHOR (the plain click the pre-click
     // cursor re-seats, the shift the two-arg walk the [0, 11) opens,
     // the second shift the anchor keeps, the arm never banks)
+    app.direct_last_click = None; // the fresh stamp the plain walk keeps (the double window the 271 test wears)
     assert!(
         app.on_direct_box_click(bx + 4, by + 5),
         "the re-press the TRUE wears"
@@ -25232,6 +25240,164 @@ fn the_chat_selection_own_drag_seat_wears() {
     app.on_chat_key();
     assert!(!app.chat_drag_armed, "the fresh open the arm clears");
     assert_eq!(app.chat_highlight, None, "the fresh open the anchor clears");
+}
+
+/// THE ENTRY BOXES' OWN DOUBLE CLICK (the 268 chat law the direct/
+/// editserver forms wear — the EditBox `lastClickTime` walk the 250ms
+/// window serves: the collapsed second click the WORD selects, the
+/// live-selection next click the WHOLE value answers, the third the
+/// all re-answers, the stale window the plain seek re-wears, the
+/// outside click the stamp never banks, the per-Box stamps the
+/// sibling's window never reads, the fresh ctors the stale windows
+/// never inherit).
+#[test]
+fn the_entry_boxes_own_double_click_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::DirectConnect);
+    for c in "hello world".chars() {
+        app.on_direct_char(c);
+    }
+    // THE RECT'S OWN BANK (the render the walk banks — the mouse lanes
+    // the same geometry the tests wear)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (bx, by, _, _) = app.direct_box_rect;
+
+    // THE WORD SEAT'S OWN LAW (the free helper the direct probes —
+    // the non-space seat the [start, end) run, the space seat the
+    // empty pair, the past-tail the last word)
+    assert_eq!(
+        crate::screens::entry_word_at("hello world", 0),
+        (0, 5),
+        "the head seat the hello run banks"
+    );
+    assert_eq!(
+        crate::screens::entry_word_at("hello world", 6),
+        (6, 11),
+        "the w seat the world run banks"
+    );
+    assert_eq!(
+        crate::screens::entry_word_at("hello world", 5),
+        (5, 5),
+        "the space seat the empty pair keeps"
+    );
+    assert_eq!(
+        crate::screens::entry_word_at("hello world", 99),
+        (6, 11),
+        "the past-tail the last word answers"
+    );
+
+    // THE FIRST CLICK'S OWN PLAIN WALK (the stamp the fresh state the
+    // plain seek wears — the left edge the zero parks)
+    assert!(
+        app.on_direct_box_click(bx + 4, by + 5),
+        "the inside press the TRUE consumes"
+    );
+    assert_eq!(app.direct_cursor, 0, "the left edge the zero parks");
+    assert_eq!(app.direct_highlight, None, "the plain the collapse keeps");
+    assert!(
+        app.direct_last_click.is_some(),
+        "the plain click the stamp banks"
+    );
+
+    // THE SECOND CLICK'S OWN WORD (the <250ms window the collapsed
+    // pair the [0, 5) "hello" run answers — the cursor the word end,
+    // the anchor the word start)
+    app.on_direct_box_click(bx + 4, by + 5);
+    assert_eq!(app.direct_cursor, 5, "the double the word end parks");
+    assert_eq!(app.direct_highlight, Some(0), "the word the start banks");
+
+    // THE THIRD CLICK'S OWN ALL (the live selection the next click
+    // the WHOLE value [0, 11) answers)
+    app.on_direct_box_click(bx + 4, by + 5);
+    assert_eq!(app.direct_cursor, 11, "the all the len wears");
+    assert_eq!(app.direct_highlight, Some(0), "the all the zero parks");
+
+    // THE FOURTH CLICK'S OWN ALL (the live pair the climb re-answers)
+    app.on_direct_box_click(bx + 4, by + 5);
+    assert_eq!(app.direct_cursor, 11, "the re-all the len wears");
+    assert_eq!(app.direct_highlight, Some(0), "the re-all the zero parks");
+
+    // THE STALE WINDOW'S OWN PLAIN SEEK (the backdated stamp the plain
+    // walk re-wears — the anchor the collapse, the seat the clicked x)
+    app.direct_last_click = Some((0, 0)); // the epoch stamp the stale window wears
+    app.on_direct_box_click(bx + 4, by + 5);
+    assert_eq!(app.direct_cursor, 0, "the stale the left edge parks");
+    assert_eq!(app.direct_highlight, None, "the stale the collapse wears");
+
+    // THE OUTSIDE CLICK'S OWN KEEP (the stamp never banks — the band
+    // the walk never owns)
+    app.direct_last_click = None;
+    assert!(
+        !app.on_direct_box_click(bx + 1000, by + 5),
+        "the outside the FALSE wears"
+    );
+    assert!(
+        app.direct_last_click.is_none(),
+        "the outside the stamp never banks"
+    );
+
+    // THE EDIT FORM'S OWN WALK (the name box the same law the pair
+    // wears — the per-Box stamp the sibling's window never reads)
+    app.open(ScreenKind::EditServer);
+    app.render(&mut fb, &mut assets);
+    let (nx, ny, _, _) = app.es_name_rect;
+    app.on_editserver_box_click(nx + 4, ny + 5);
+    assert_eq!(app.es_name_cursor, 0, "the name the left edge parks");
+    app.on_editserver_box_click(nx + 4, ny + 5);
+    assert_eq!(app.es_name_cursor, 9, "the double the Minecraft end wears");
+    assert_eq!(app.es_name_highlight, Some(0), "the word the start banks");
+    app.on_editserver_box_click(nx + 4, ny + 5);
+    assert_eq!(app.es_name_cursor, 16, "the all the name len wears");
+    assert_eq!(app.es_name_highlight, Some(0), "the all the zero parks");
+
+    // THE ADDRESS'S OWN FRESH STAMP (the name's live window the
+    // address's first click never reads — the per-Box law the plain
+    // walk keeps, the name's selection the losing box never touches)
+    let (ax, ay, _, _) = app.es_address_rect;
+    app.on_editserver_box_click(ax + 4, ay + 5);
+    assert!(app.es_address_focus, "the address the focus arms");
+    assert_eq!(app.es_address_cursor, 0, "the empty tail the zero parks");
+    assert_eq!(
+        app.es_address_highlight, None,
+        "the address the fresh stamp the plain walk wears"
+    );
+    assert_eq!(
+        app.es_name_highlight,
+        Some(0),
+        "the losing box's selection the walk keeps"
+    );
+
+    // THE NAME'S OWN STALE WINDOW (the backdated stamp the plain seek
+    // re-wears — the anchor the collapse)
+    app.es_name_last_click = Some((0, 0));
+    app.on_editserver_box_click(nx + 4, ny + 5);
+    assert_eq!(app.es_name_cursor, 0, "the stale the left edge parks");
+    assert_eq!(
+        app.es_name_highlight, None,
+        "the stale the name collapse wears"
+    );
+
+    // THE FRESH CTOR'S OWN WINDOWS (the reopen the stale stamps the
+    // re-created forms never inherit)
+    app.direct_last_click = Some((1, 1));
+    app.es_name_last_click = Some((1, 1));
+    app.es_address_last_click = Some((1, 1));
+    app.open(ScreenKind::DirectConnect);
+    assert_eq!(
+        app.direct_last_click, None,
+        "the reopen the direct stamp clears"
+    );
+    app.open(ScreenKind::EditServer);
+    assert_eq!(
+        app.es_name_last_click, None,
+        "the reopen the name stamp clears"
+    );
+    assert_eq!(
+        app.es_address_last_click, None,
+        "the reopen the address stamp clears"
+    );
 }
 
 /// THE SELECTION'S OWN DOUBLE CLICK (the vanilla EditBox.mouseClicked

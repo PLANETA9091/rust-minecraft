@@ -195,6 +195,35 @@ fn entry_click_seat(value: &str, display: usize, mx: i32, bx: i32) -> usize {
     caret_char_index_at(&window, mx - (bx + 4)) + display
 }
 
+/// THE ENTRY BOXES' OWN WORD SEAT (the 268 chat law the
+/// `chat_word_at` helper wears — the non-space seat the [start, end)
+/// run banks, the space seat the empty pair keeps, the past-tail the
+/// last word the same law answers).
+fn entry_word_at(value: &str, seat: usize) -> (usize, usize) {
+    let chars: Vec<char> = value.chars().collect();
+    let n = chars.len();
+    let lo = seat.min(n);
+    if lo < n && !chars[lo].is_whitespace() {
+        let mut start = lo;
+        while start > 0 && !chars[start - 1].is_whitespace() {
+            start -= 1;
+        }
+        let mut end = lo;
+        while end < n && !chars[end].is_whitespace() {
+            end += 1;
+        }
+        (start, end)
+    } else if lo == n && lo > 0 && !chars[n - 1].is_whitespace() {
+        let mut start = n;
+        while start > 0 && !chars[start - 1].is_whitespace() {
+            start -= 1;
+        }
+        (start, n)
+    } else {
+        (lo, lo) // the space seat the empty word wears
+    }
+}
+
 fn load_splashes() -> Vec<String> {
     for prefix in [
         "assets-cache/jar",
@@ -7849,6 +7878,16 @@ pub struct App {
     /// press the flag never banks).
     pub direct_drag_armed: bool,
     pub es_drag_armed: bool,
+    /// THE ENTRY BOXES' OWN DOUBLE STAMPS (the 268 chat law the
+    /// EditBox `lastClickTime` field keeps — the per-Box stamps the
+    /// vanilla per-widget law wears: the millis + the seat the 250ms
+    /// window banks, the window the word/all the climb answers, the
+    /// stale window the plain seek re-answers, the outside click the
+    /// stamp never banks, the fresh ctors the stale windows never
+    /// inherit).
+    pub direct_last_click: Option<(u128, usize)>,
+    pub es_name_last_click: Option<(u128, usize)>,
+    pub es_address_last_click: Option<(u128, usize)>,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11430,6 +11469,9 @@ impl App {
             direct_highlight: None,
             direct_drag_armed: false,
             es_drag_armed: false,
+            direct_last_click: None,
+            es_name_last_click: None,
+            es_address_last_click: None,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -22156,6 +22198,10 @@ impl App {
             // stale arm never inherits — the fresh EditBox the dragging
             // false state the ctor keeps)
             self.direct_drag_armed = false;
+            // THE DOUBLE STAMP'S OWN FRESH SEAT (the re-created screen
+            // the stale window never inherits — the fresh EditBox the
+            // lastClickTime zero the ctor keeps)
+            self.direct_last_click = None;
             // THE CARET'S OWN FRESH SEAT (the vanilla setText walk the
             // cursor the empty tail parks — the zero the end the same
             // seat the empty box speaks)
@@ -22193,6 +22239,11 @@ impl App {
             // stale arm never inherits — the same law the direct form
             // the pair wears)
             self.es_drag_armed = false;
+            // THE DOUBLE STAMPS' OWN FRESH SEATS (the re-created form
+            // the stale windows never inherit — the per-Box pair the
+            // same law wears)
+            self.es_name_last_click = None;
+            self.es_address_last_click = None;
             // THE CARETS' OWN FRESH SEATS (the vanilla setText walk the
             // cursor the tail parks — the defaultName the end seat
             // speaks, the EMPTY address the zero the same end keeps)
@@ -36289,24 +36340,53 @@ impl App {
         // frames the drag walk answers, the outside the false disarms)
         self.direct_drag_armed = inside;
         if inside {
-            // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
-            // re-seats — the 266 law the box wears; the outside click the
-            // vanilla walk the losing box's selection never touches)
-            self.direct_highlight = None;
             // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
             // clicked char the cursor positions — the VISIBLE WINDOW
             // the `trimStringToWidth(value.substring(displayPos))` law
             // the two-step answers, the x the prefix length + the
             // displayPos the seat wears, the box padding the +4 the
             // render's own text origin speaks)
-            let visible: String = self
-                .direct_address
-                .chars()
-                .skip(self.direct_display)
-                .collect();
-            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
-            let window: String = visible.chars().take(vis_len).collect();
-            self.direct_cursor = caret_char_index_at(&window, mx - (bx + 4)) + self.direct_display;
+            let seat = entry_click_seat(&self.direct_address, self.direct_display, mx, bx);
+            // THE DOUBLE'S OWN WINDOW (the 268 chat law the EditBox
+            // lastClickTime walk serves — the <250ms window the climb
+            // answers: the live selection the next click the WHOLE
+            // value [the selectText(0, len) law], the collapsed pair
+            // the word select the cursor=end/anchor=start wears, the
+            // empty word the None anchor keeps, the third click the
+            // all re-answers, the stale window the plain seek re-wears)
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis())
+                .unwrap_or(0);
+            if let Some((t, _)) = self.direct_last_click {
+                if now.saturating_sub(t) < 250 {
+                    let live = matches!(self.direct_highlight, Some(h) if h != self.direct_cursor);
+                    if live {
+                        // the whole value the climb answers (the 269
+                        // selectAll law the same park wears)
+                        self.direct_cursor = self.direct_address.chars().count();
+                        self.direct_highlight = Some(0);
+                    } else {
+                        let (ws, we) = entry_word_at(&self.direct_address, seat);
+                        self.direct_cursor = we;
+                        self.direct_highlight = if ws == we { None } else { Some(ws) };
+                    }
+                    self.direct_last_click = Some((now, seat));
+                    display_window_sync(
+                        &self.direct_address,
+                        &mut self.direct_display,
+                        self.direct_cursor,
+                        ENTRY_BOX_INNER,
+                    );
+                    return true;
+                }
+            }
+            // the plain click the `moveCursorTo(pos)` one-arg law the
+            // anchor collapses (the 266 law the box wears) — the
+            // consumed press the stamp + the DRAG ARM banks
+            self.direct_last_click = Some((now, seat));
+            self.direct_highlight = None;
+            self.direct_cursor = seat;
             display_window_sync(
                 &self.direct_address,
                 &mut self.direct_display,
@@ -36998,20 +37078,52 @@ impl App {
             // inside press serves — the arm the held frames the focused
             // dispatch's drag walk answers)
             self.es_drag_armed = true;
-            // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
-            // re-seats — the 266 law the box wears)
-            self.es_name_highlight = None;
             // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
             // clicked char the cursor positions — the VISIBLE WINDOW
             // the `trimStringToWidth(value.substring(displayPos))` law
             // the two-step answers, the x the prefix length + the
             // displayPos the seat wears, the box padding the +4 the
             // render's own text origin speaks)
-            let visible: String = self.es_name.chars().skip(self.es_name_display).collect();
-            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
-            let window: String = visible.chars().take(vis_len).collect();
-            self.es_name_cursor =
-                caret_char_index_at(&window, mx - (nx + 4)) + self.es_name_display;
+            let seat = entry_click_seat(&self.es_name, self.es_name_display, mx, nx);
+            // THE DOUBLE'S OWN WINDOW (the 268 chat law the EditBox
+            // lastClickTime walk serves — the per-Box stamp the sibling's
+            // window never reads: the live selection the next click the
+            // WHOLE value answers, the collapsed pair the word select
+            // wears, the empty word the None anchor keeps, the stale
+            // window the plain seek re-wears)
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis())
+                .unwrap_or(0);
+            if let Some((t, _)) = self.es_name_last_click {
+                if now.saturating_sub(t) < 250 {
+                    let live =
+                        matches!(self.es_name_highlight, Some(h) if h != self.es_name_cursor);
+                    if live {
+                        // the whole value the climb answers (the 269
+                        // selectAll law the same park wears)
+                        self.es_name_cursor = self.es_name.chars().count();
+                        self.es_name_highlight = Some(0);
+                    } else {
+                        let (ws, we) = entry_word_at(&self.es_name, seat);
+                        self.es_name_cursor = we;
+                        self.es_name_highlight = if ws == we { None } else { Some(ws) };
+                    }
+                    self.es_name_last_click = Some((now, seat));
+                    display_window_sync(
+                        &self.es_name,
+                        &mut self.es_name_display,
+                        self.es_name_cursor,
+                        ENTRY_BOX_INNER,
+                    );
+                    return true;
+                }
+            }
+            // the plain click the one-arg seek the anchor collapses (the
+            // 266 law the box wears) — the consumed press the stamp banks
+            self.es_name_last_click = Some((now, seat));
+            self.es_name_highlight = None;
+            self.es_name_cursor = seat;
             display_window_sync(
                 &self.es_name,
                 &mut self.es_name_display,
@@ -37025,16 +37137,40 @@ impl App {
             self.es_name_focus = false;
             // THE DRAG ARM'S OWN BANK (the same arm the name lane wears)
             self.es_drag_armed = true;
+            // THE CARET'S OWN X-BAND (the same walk the name lane wears)
+            let seat = entry_click_seat(&self.es_address, self.es_address_display, mx, ax);
+            // THE DOUBLE'S OWN WINDOW (the per-Box stamp the name's
+            // window never reads — the same law the name lane wears)
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis())
+                .unwrap_or(0);
+            if let Some((t, _)) = self.es_address_last_click {
+                if now.saturating_sub(t) < 250 {
+                    let live =
+                        matches!(self.es_address_highlight, Some(h) if h != self.es_address_cursor);
+                    if live {
+                        self.es_address_cursor = self.es_address.chars().count();
+                        self.es_address_highlight = Some(0);
+                    } else {
+                        let (ws, we) = entry_word_at(&self.es_address, seat);
+                        self.es_address_cursor = we;
+                        self.es_address_highlight = if ws == we { None } else { Some(ws) };
+                    }
+                    self.es_address_last_click = Some((now, seat));
+                    display_window_sync(
+                        &self.es_address,
+                        &mut self.es_address_display,
+                        self.es_address_cursor,
+                        ENTRY_BOX_INNER,
+                    );
+                    return true;
+                }
+            }
+            // the plain click the one-arg seek the anchor collapses
+            self.es_address_last_click = Some((now, seat));
             self.es_address_highlight = None;
-            let visible: String = self
-                .es_address
-                .chars()
-                .skip(self.es_address_display)
-                .collect();
-            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
-            let window: String = visible.chars().take(vis_len).collect();
-            self.es_address_cursor =
-                caret_char_index_at(&window, mx - (ax + 4)) + self.es_address_display;
+            self.es_address_cursor = seat;
             display_window_sync(
                 &self.es_address,
                 &mut self.es_address_display,
