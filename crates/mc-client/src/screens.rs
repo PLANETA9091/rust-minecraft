@@ -35255,9 +35255,12 @@ impl App {
     /// the wrap the `clearFocus()` re-walk the END seats arms: the
     /// off-the-tail forward the HEAD seat re-arms, the off-the-head
     /// backward the TAIL serves). THE FAMILY'S OWN HOUSES (the same
-    /// Screen base class the Options + the three sub-screens extend
-    /// — the MouseSettings/Controls/Accessibility rows the 243 walk
-    /// the same law serves). THE TRAVERSAL'S OWN ORDER (the
+    /// Screen base class the Options + the three sub-screens + the
+    /// KeyBinds list extend — the MouseSettings/Controls/
+    /// Accessibility rows the 243 walk the same law serves, the
+    /// KeyBinds rows the list's own store snapshot the kb-prefix
+    /// filter wears, the capture-armed seat the walk never
+    /// disturbs). THE TRAVERSAL'S OWN ORDER (the
     /// `handleTabNavigation` walk): the children() snapshot the
     /// `Comparator.comparingInt` `getTabOrderGroup()` sort answers —
     /// the ALL-ZERO groups the stable sort never re-seats, the ADD
@@ -35278,6 +35281,13 @@ impl App {
     /// canChangeValue field the slider alone carries), the OLD
     /// seat's grab the re-apply the global mirror clears.
     pub fn on_options_tab(&mut self, forward: bool) {
+        // THE CAPTURE'S OWN GUARD (the KeyBinds armed seat the walk
+        // never speaks — the vanilla KeyEntry.keyPressed the selected
+        // branch the ANY key the rebind wears FIRST, the super's tab
+        // navigation the return never reaches)
+        if self.screen == ScreenKind::KeyBinds && self.kb_selected.is_some() {
+            return;
+        }
         // THE FAMILY'S OWN SEAT TABLES (the same Screen base class
         // the four houses extend — the Options house the 243 walk
         // banks, the MouseSettings/Controls/Accessibility rows the
@@ -35325,23 +35335,36 @@ impl App {
             "opt_fov_effect",
             "accdone",
         ];
-        let focusable: &[&str] = match self.screen {
-            ScreenKind::Options => &OPTIONS_SEATS,
-            ScreenKind::MouseSettings => &MOUSE_SEATS,
-            ScreenKind::Controls => &CONTROLS_SEATS,
-            ScreenKind::Accessibility => &ACCESS_SEATS,
-            _ => return,
-        };
         // THE FOCUSABLES' OWN ORDER (the children() add-order law —
         // the buttons store the build's own snapshot banks, the
         // focusable ids the filter keeps, the inactive the
-        // nextFocusPath refusal wears)
-        let order: Vec<&'static str> = self
-            .buttons
-            .iter()
-            .filter(|b| b.active && focusable.contains(&b.id))
-            .map(|b| b.id)
-            .collect();
+        // nextFocusPath refusal wears). THE KEY BINDS' OWN ROWS (the
+        // list the store snapshot wears — the VISIBLE rows the clip
+        // band the render pushes [the off-band rows the clip never
+        // seats], the change + reset pair the row order keeps, the
+        // reset the non-default arm the active filter serves, the
+        // footer pair the tail keeps — the kb prefix the ids' own
+        // law keeps)
+        let order: Vec<&'static str> = if self.screen == ScreenKind::KeyBinds {
+            self.buttons
+                .iter()
+                .filter(|b| b.active && b.id.starts_with("kb"))
+                .map(|b| b.id)
+                .collect()
+        } else {
+            let focusable: &[&str] = match self.screen {
+                ScreenKind::Options => &OPTIONS_SEATS,
+                ScreenKind::MouseSettings => &MOUSE_SEATS,
+                ScreenKind::Controls => &CONTROLS_SEATS,
+                ScreenKind::Accessibility => &ACCESS_SEATS,
+                _ => return,
+            };
+            self.buttons
+                .iter()
+                .filter(|b| b.active && focusable.contains(&b.id))
+                .map(|b| b.id)
+                .collect()
+        };
         let len = order.len();
         if len == 0 {
             return;
@@ -67994,6 +68017,16 @@ impl App {
             h - 28,
             140,
         ));
+        // THE FOCUSED FLAGS' OWN RE-WEAR (the same one sweep the
+        // sub-screen walks wear — the Tab-ride seat the frame banks,
+        // the list rows the store snapshot the ids answer, the stale
+        // seat the flags clear; the capture seat the `> display <`
+        // wrap the selected law the frame never shares)
+        if let Some(id) = self.options_focus {
+            for b in self.buttons.iter_mut() {
+                b.focused = b.id == id;
+            }
+        }
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
         }

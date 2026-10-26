@@ -2010,14 +2010,21 @@ pub fn run_gui_app(
         // wrap the clearFocus re-walk the end seats speaks). THE
         // SUB-SCREENS' OWN RIDE (the same Screen base class the
         // MouseSettings/Controls/Accessibility houses extend — the
-        // rows the each house's own add order the walk serves)
+        // rows the each house's own add order the walk serves). THE
+        // KEY BINDS' OWN RIDE (the list's own rows the store
+        // snapshot serves, the footer pair the tail keeps; the
+        // REBIND'S OWN CONSUMPTION the event law keeps — the armed
+        // rebind the Tab the bind banks, the walk the consumed key
+        // the Escape lane's own law shares)
         if matches!(
             app.screen,
             crate::screens::ScreenKind::Options
                 | crate::screens::ScreenKind::MouseSettings
                 | crate::screens::ScreenKind::Controls
                 | crate::screens::ScreenKind::Accessibility
-        ) && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
+                | crate::screens::ScreenKind::KeyBinds
+        ) && !rebind_consumed
+            && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
         {
             let shift = window.is_key_down(Key::LeftShift);
             app.on_options_tab(!shift);

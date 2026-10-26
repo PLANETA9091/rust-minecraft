@@ -21939,3 +21939,175 @@ fn the_sub_screens_own_tab_ride_the_add_order_the_claims_wear() {
     );
     assert!(!app.options_grab, "the plain class the grab never carries");
 }
+
+/// THE KEY BINDS' OWN TAB RIDE (the autopush-248 round — the same
+/// handleTabNavigation walk the 243-247 family the KeyBinds list
+/// serves: the rows the list's OWN store snapshot wears [the
+/// VISIBLE rows the clip band the render pushes, the change +
+/// reset pair the row order keeps, the reset the non-default arm
+/// the active filter serves, the footer pair the tail keeps], the
+/// kb prefix the ids' own filter law keeps, the CAPTURE-ARMED seat
+/// the walk never disturbs [the vanilla KeyEntry.keyPressed the
+/// selected branch the ANY key the rebind wears FIRST, the super's
+/// tab navigation the return never reaches], the stale-id +
+/// nothing-focused end-seat arms, the wrap the head re-arms, the
+/// focused sweep the list rows the frame lights).
+#[test]
+fn the_key_binds_own_tab_ride_the_list_rows_the_capture_guard_wear() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::KeyBinds);
+    app.render_title_buttons_for_test();
+    use crate::options_file::key_binds as kb;
+
+    // THE STORE'S OWN SNAPSHOT (the visible rows the clip band
+    // pushes — the fresh screen the binds the defaults keep, the
+    // reset rows the INACTIVE arm the active filter never seats)
+    let fresh: Vec<String> = app
+        .buttons
+        .iter()
+        .filter(|b| b.active && b.id.starts_with("kb"))
+        .map(|b| b.id.to_string())
+        .collect();
+    assert!(
+        fresh.iter().all(|id| !id.starts_with("kb_rowreset_")),
+        "the fresh screen the reset rows the inactive filter never seats"
+    );
+    assert_eq!(
+        fresh.last().map(String::as_str),
+        Some("kbdone"),
+        "the footer the tail keeps"
+    );
+    assert!(
+        fresh[0].starts_with("kb_change_"),
+        "the head the change row's own first seat keeps"
+    );
+
+    // THE NOTHING-FOCUSED ARM (the head the store's own first seat
+    // wears) + THE FULL RIDE (the walk the store's own add order
+    // wears — the visited set the snapshot the exact order answers)
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the fresh ctor keeps"
+    );
+    let mut visited: Vec<String> = Vec::new();
+    for _ in 0..fresh.len() {
+        app.on_options_tab(true);
+        if let Some(id) = app.options_focus {
+            visited.push(id.to_string());
+        }
+    }
+    assert_eq!(visited, fresh, "the ride the store's own add order wears");
+
+    // THE WRAP'S OWN RE-WALK (the tail's forward the head re-arms)
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus.as_deref(),
+        Some(fresh[0].as_str()),
+        "the wrap the head re-arms"
+    );
+
+    // THE BACKWARD-FROM-NOTHING ARM (the fresh open the tail wears)
+    app.open(ScreenKind::KeyBinds);
+    app.render_title_buttons_for_test();
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus,
+        Some("kbdone"),
+        "the backward arm the tail wears"
+    );
+
+    // THE STALE ID'S OWN ARM (the head the nothing-focused answers)
+    app.options_focus = Some("opt_ms_sensitivity");
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus.as_deref(),
+        Some(fresh[0].as_str()),
+        "the stale id the head arm answers"
+    );
+
+    // THE NON-DEFAULT ARM'S OWN SEAT (the reset row the active arm
+    // seats — the changed bind the rowreset the ride includes, the
+    // INACTIVE pairs the filter never seats; the LEFT row the
+    // seated trio's own in-band seat the clip keeps [the movement
+    // group the alphabetical law re-seats — Jump/Sneak/Sprint/
+    // Strafe Left the visible quartet answers, the FORWARD row the
+    // off-band seat the clip never renders])
+    app.key_binds[kb::LEFT] = Some(crate::options_file::key_binds::Bind::Keyboard(
+        minifb::Key::C,
+    ));
+    app.render_title_buttons_for_test();
+    let armed: Vec<String> = app
+        .buttons
+        .iter()
+        .filter(|b| b.active && b.id.starts_with("kb"))
+        .map(|b| b.id.to_string())
+        .collect();
+    assert_eq!(
+        armed
+            .iter()
+            .filter(|id| id.starts_with("kb_rowreset_"))
+            .count(),
+        1,
+        "the one non-default bind the ONE reset row seats"
+    );
+    let mut visited2: Vec<String> = Vec::new();
+    // THE NOTHING-FOCUSED START (the rebuild the stale seat the
+    // belief keeps — the earlier ride's head seat [the same
+    // kb_change_jump row the visible quartet still carries] the
+    // rotation the ride would wear; the clear the from-nothing arm
+    // the fresh start keeps)
+    app.options_focus = None;
+    for _ in 0..armed.len() {
+        app.on_options_tab(true);
+        if let Some(id) = app.options_focus {
+            visited2.push(id.to_string());
+        }
+    }
+    assert_eq!(
+        visited2, armed,
+        "the armed ride the snapshot the exact order wears"
+    );
+
+    // THE CAPTURE'S OWN GUARD (the armed seat the walk never
+    // speaks — the stale-free belief the walk keeps, the disarm the
+    // ride resumes)
+    let seat = app.options_focus;
+    app.kb_selected = Some(kb::FORWARD);
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus, seat,
+        "the capture-armed seat the walk never disturbs"
+    );
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus, seat,
+        "the armed seat the backward walk never wears"
+    );
+    app.kb_selected = None;
+    app.on_options_tab(true);
+    assert_ne!(app.options_focus, seat, "the disarm the ride resumes");
+
+    // THE FOCUSED SWEEP'S OWN FRAME (the list rows the flags wear —
+    // the kbdone seat the focused frame lights, the change rows the
+    // stale flags clear; the capture seat the `> display <` wrap
+    // the selected law the frame never shares)
+    app.options_focus = Some("kbdone");
+    app.render_title_buttons_for_test();
+    let done = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kbdone")
+        .expect("the footer")
+        .clone();
+    assert!(done.focused, "the tail seat the focused frame wears");
+    let row = app
+        .buttons
+        .iter()
+        .find(|b| b.id.starts_with("kb_change_"))
+        .expect("the change row")
+        .clone();
+    assert!(
+        !row.focused,
+        "the change row the stale flag the sweep clears"
+    );
+}
