@@ -26797,3 +26797,187 @@ fn the_debug_box_own_double_click_wears() {
         "the reopen the stamp clears"
     );
 }
+
+/// THE CREATIVE SEARCH BOX'S OWN CARET SEAT (the 178 dev round the
+/// debug box the same cursorPos law wears — the char lane the
+/// insert-at-seat walk serves, the Backspace the before-seat char
+/// removes, the Delete the after-seat char the 261 arm serves, the
+/// LEFT/RIGHT the ±1 the bounds clamp, the Home/End the head/tail
+/// parks, the ctrl-words the seat's own bounds remove, the tab/open
+/// clears the same reset wear).
+#[test]
+fn the_creative_search_own_caret_seat_wears() {
+    let mut app = App::new(3);
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    // THE FRESH SEAT (the empty box the zero seat keeps — the tab
+    // walk's clear the cursor the same reset wears)
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the fresh open the zero seat keeps"
+    );
+    // THE TYPED TAIL (the end seat the tail push the same law keeps)
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(app.creative_search, "hello world", "the typed word banks");
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the typed tail the end seat wears"
+    );
+    // THE LEFT PAIR'S OWN RIDE + THE MID-STRING INSERT (the ±1 the
+    // bounds clamp — the insert the byte index the seat speaks, the
+    // after-insert seat the +1 wears)
+    app.on_creative_caret_arrow(true);
+    app.on_creative_caret_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 9,
+        "the left pair the seat walks"
+    );
+    app.on_creative_char('X');
+    assert_eq!(
+        app.creative_search, "hello worXld",
+        "the mid-string insert the seat speaks"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the after-insert seat wears"
+    );
+    // THE END'S OWN CLAMP + THE HOME PARK (the bounds the tail/head
+    // keep — the forward/backward steps the same laws answer)
+    app.on_creative_caret_home_end(true);
+    assert_eq!(app.creative_search_cursor, 12, "the end park the len wears");
+    app.on_creative_caret_arrow(false);
+    assert_eq!(
+        app.creative_search_cursor, 12,
+        "the end clamp the seat keeps"
+    );
+    app.on_creative_caret_home_end(false);
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the home park the zero wears"
+    );
+    app.on_creative_caret_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the head clamp the seat keeps"
+    );
+    app.on_creative_caret_arrow(false);
+    assert_eq!(
+        app.creative_search_cursor, 1,
+        "the right step the seat walks"
+    );
+    // THE DELETE'S OWN AFTER-SEAT CHAR (the 261 arm the mid-string
+    // caret removes, the end seat the forward silence keeps)
+    app.on_creative_delete();
+    assert_eq!(
+        app.creative_search, "hllo worXld",
+        "the after-seat char the delete removes"
+    );
+    app.on_creative_caret_home_end(true);
+    app.on_creative_delete();
+    assert_eq!(
+        app.creative_search, "hllo worXld",
+        "the end seat the delete silence keeps"
+    );
+    // THE BACKSPACE'S OWN BEFORE-SEAT CHAR (the deleteText(-1) walk
+    // the mid-string caret answers, the zero seat the silence keeps)
+    app.on_creative_caret_arrow(true);
+    app.on_creative_backspace();
+    assert_eq!(
+        app.creative_search, "hllo worXd",
+        "the before-seat char the backspace removes"
+    );
+    assert_eq!(app.creative_search_cursor, 9, "the before seat re-parks");
+    app.on_creative_caret_home_end(false);
+    app.on_creative_backspace();
+    assert_eq!(
+        app.creative_search, "hllo worXd",
+        "the zero seat the backspace silence keeps"
+    );
+    // THE CTRL WORDS' OWN MID-STRING PAIR (the backward arm the
+    // [bound, seat) range the cursor the bound re-parks, the forward
+    // arm the [seat, bound) walk the cursor the seat keeps — the
+    // space-run skip the same law speaks)
+    app.on_creative_caret_arrow(false);
+    app.on_creative_caret_arrow(false);
+    app.on_creative_caret_arrow(false);
+    app.on_creative_caret_arrow(false);
+    app.on_creative_caret_arrow(false);
+    assert_eq!(
+        app.creative_search_cursor, 5,
+        "the ride the past-space seat parks"
+    );
+    app.on_creative_ctrl_words(false);
+    assert_eq!(
+        app.creative_search, "worXd",
+        "the backward arm the head word removes"
+    );
+    assert_eq!(app.creative_search_cursor, 0, "the cursor the bound parks");
+    app.on_creative_ctrl_words(true);
+    assert_eq!(
+        app.creative_search, "",
+        "the forward arm the whole value removes"
+    );
+    assert_eq!(app.creative_search_cursor, 0, "the cursor the seat keeps");
+    // THE MID-STRING FORWARD'S OWN SPACE (the seat-on-space the run
+    // skip the bound speaks, the second ride the tail word removes)
+    for c in "one two".chars() {
+        app.on_creative_char(c);
+    }
+    app.on_creative_caret_arrow(true);
+    app.on_creative_caret_arrow(true);
+    app.on_creative_caret_arrow(true);
+    app.on_creative_caret_arrow(true);
+    assert_eq!(app.creative_search_cursor, 3, "the pre-space seat parks");
+    app.on_creative_ctrl_words(true);
+    assert_eq!(
+        app.creative_search, "onetwo",
+        "the space the forward walk removes"
+    );
+    assert_eq!(app.creative_search_cursor, 3, "the cursor the seat keeps");
+    app.on_creative_ctrl_words(true);
+    assert_eq!(app.creative_search, "one", "the tail word the ride removes");
+    // THE END-SEAT BACKWARD'S OWN TAIL WORD (the typed the seat
+    // re-arms — the backward walk the whole tail the same verdict
+    // wears)
+    app.on_creative_caret_home_end(true);
+    app.on_creative_ctrl_words(false);
+    assert_eq!(app.creative_search, "", "the tail word the walk removes");
+    assert_eq!(app.creative_search_cursor, 0, "the cursor the bound parks");
+    // THE TAB'S OWN RESET (the category seat the clear the cursor the
+    // same reset wears — the re-entered search the fresh box arms,
+    // the stale tab the lanes never answer)
+    app.select_creative_tab(0);
+    assert_eq!(app.creative_search, "", "the category the box clears");
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the tab walk the cursor resets"
+    );
+    app.on_creative_caret_arrow(false);
+    app.on_creative_caret_home_end(true);
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the stale tab the gates keep"
+    );
+    app.select_creative_tab(6);
+    for c in "ok".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(
+        app.creative_search, "ok",
+        "the re-entered tab the typed word wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 2,
+        "the re-entered tab the tail seat wears"
+    );
+    // THE OPEN'S OWN RESET (the picker re-open the word + cursor the
+    // same reset retires)
+    app.open_creative_picker();
+    assert_eq!(app.creative_search, "", "the reopen the word resets");
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the reopen the cursor resets"
+    );
+}

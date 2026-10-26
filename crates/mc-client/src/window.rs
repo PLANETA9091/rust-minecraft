@@ -2198,6 +2198,23 @@ pub fn run_gui_app(
                 app.on_debug_options_delete();
             }
         }
+        // THE CREATIVE SEARCH BOX'S OWN CARET RIDE (the EditBox
+        // tableswitch's 268/269 the Home/End the bounds park serves,
+        // the 261 the Delete the after-seat char removes — the 178
+        // dev round the debug box the same ride wore, the sibling
+        // methods the internal gates keep, the stale screens the gate
+        // never passes)
+        if app.screen == crate::screens::ScreenKind::Creative {
+            if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
+                app.on_creative_caret_home_end(false);
+            }
+            if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
+                app.on_creative_caret_home_end(true);
+            }
+            if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
+                app.on_creative_delete();
+            }
+        }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
         // `createTabEvent(!hasShiftDown())` the focus navigation
@@ -2355,6 +2372,19 @@ pub fn run_gui_app(
             }
             if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
                 app.on_debug_options_arrow(0, 1);
+            }
+        }
+        // THE CREATIVE SEARCH BOX'S OWN ARROW RIDE (the EditBox
+        // tableswitch's 262/263 cases the LEFT/RIGHT moveCursorBy ±1
+        // serve — the search seat the caret ride answers, the
+        // single-line box the Up/Down the same ride never shares, the
+        // other tabs the internal gate keeps)
+        if app.screen == crate::screens::ScreenKind::Creative {
+            if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                app.on_creative_caret_arrow(true);
+            }
+            if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                app.on_creative_caret_arrow(false);
             }
         }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's

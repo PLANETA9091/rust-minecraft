@@ -9332,6 +9332,16 @@ pub struct App {
     /// (leftPos+82, topPos+6, 80x9) walk builds — the selectTab's
     /// setValue("") clears the both-way walk keeps).
     pub creative_search: String,
+    /// THE SEARCH BOX'S OWN CARET SEAT (the EditBox `cursorPos` law
+    /// the END-SEAT model retires — the 178 dev round the debug box
+    /// the same walk wore: the char lane the insert-at-seat walk
+    /// wears, the Backspace the before-seat char removes, the Delete
+    /// the after-seat char the 261 arm serves, the LEFT/RIGHT the ±1
+    /// the bounds clamp, the Home/End the head/tail parks, the
+    /// ctrl-words the seat's own bounds remove; the fresh ctor the
+    /// EMPTY box the zero seat keeps, the tab/open clears the same
+    /// reset wear).
+    pub creative_search_cursor: usize,
     /// THE SCROLL OFFSET (the `scrollOffs` field — 0..1 the
     /// subtractInputFromScroll clamp keeps, the wheel the delta /
     /// scrollableRows walk drives).
@@ -11739,6 +11749,7 @@ impl App {
             creative_source: Vec::new(),
             creative_items: Vec::new(),
             creative_search: String::new(),
+            creative_search_cursor: 0,
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
@@ -23422,6 +23433,7 @@ impl App {
             self.creative_tab = 0;
         }
         self.creative_search.clear();
+        self.creative_search_cursor = 0;
         self.creative_items = self.creative_source.clone();
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
@@ -23500,6 +23512,7 @@ impl App {
                 // the wrapped rows the store's own fields read, the
                 // fresh-scroll tail the walk's own order keeps)
                 self.creative_search.clear();
+                self.creative_search_cursor = 0;
             }
             CreativeTabKind::SavedHotbar => {
                 // THE HONEST SILENCE (the hotbar pages the
@@ -23518,6 +23531,7 @@ impl App {
                     return;
                 }
                 self.creative_search.clear();
+                self.creative_search_cursor = 0;
                 self.creative_items = Self::creative_operator_items();
             }
             CreativeTabKind::Search => {
@@ -23525,6 +23539,7 @@ impl App {
                 // entering from another seat the fresh box arms, the
                 // categories the same clear keep)
                 self.creative_search.clear();
+                self.creative_search_cursor = 0;
                 self.refresh_creative_search();
             }
             _ => {
@@ -23533,6 +23548,7 @@ impl App {
                 // vocabulary the every-category seat shares until the
                 // grouping tables land)
                 self.creative_search.clear();
+                self.creative_search_cursor = 0;
                 self.creative_items = self.creative_source.clone();
             }
         }
@@ -23595,7 +23611,12 @@ impl App {
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's (82, 6, 80x9)
     /// walk builds — the charTyped lane the focused box answers, the
     /// max length 50 the setMaxLength walk keeps, the refresh the
-    /// onEdited walk speaks).
+    /// onEdited walk speaks; the CARET SEAT the 178 dev round the
+    /// debug box the same insertText walk wears — the char the byte
+    /// index the seat speaks, the caret the +1 the after-insert seat
+    /// wears, the end seat the tail push the same law keeps, the cap
+    /// the seat keeps [the blocked insert the responder never
+    /// answers]).
     pub fn on_creative_char(&mut self, c: char) {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
@@ -23603,36 +23624,112 @@ impl App {
         {
             return;
         }
-        self.creative_search.push(c);
+        let len = self.creative_search.chars().count();
+        let seat = self.creative_search_cursor.min(len);
+        if seat == len {
+            self.creative_search.push(c);
+        } else {
+            let start = caret_byte_index(&self.creative_search, seat);
+            self.creative_search.insert(start, c);
+        }
+        self.creative_search_cursor = seat + 1;
         self.refresh_creative_search();
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
     }
 
     /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed's Backspace arm —
-    /// the popped char the refresh answers).
+    /// the popped char the refresh answers; the CARET SEAT the
+    /// deleteText(-1) walk the before-seat char removes — the zero
+    /// seat the silence keeps, the mid-string caret the same walk
+    /// answers).
     pub fn on_creative_backspace(&mut self) {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
         {
             return;
         }
-        if self.creative_search.pop().is_some() {
+        let len = self.creative_search.chars().count();
+        let seat = self.creative_search_cursor.min(len);
+        if seat > 0 {
+            let start = caret_byte_index(&self.creative_search, seat - 1);
+            let end = caret_byte_index(&self.creative_search, seat);
+            self.creative_search.replace_range(start..end, "");
+            self.creative_search_cursor = seat - 1;
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
         }
     }
 
+    /// THE CARET'S OWN DELETE (the tableswitch's 261 arm the
+    /// `deleteText(1)` walk serves — the char AT the seat the
+    /// mid-string caret removes, the end seat the forward silence
+    /// keeps, the refresh + the scroll the backspace's own tails the
+    /// same laws wear).
+    pub fn on_creative_delete(&mut self) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        let len = self.creative_search.chars().count();
+        let seat = self.creative_search_cursor.min(len);
+        if seat < len {
+            let start = caret_byte_index(&self.creative_search, seat);
+            let end = caret_byte_index(&self.creative_search, seat + 1);
+            self.creative_search.replace_range(start..end, "");
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+        }
+    }
+
+    /// THE CARET'S OWN RIDE (the tableswitch's 262/263 arms the
+    /// moveCursorBy(±1) walk serves — the LEFT the saturating step
+    /// backward wears, the RIGHT the clamped step forward keeps, the
+    /// bounds the head/tail parks).
+    pub fn on_creative_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        let len = self.creative_search.chars().count();
+        let seat = self.creative_search_cursor.min(len);
+        self.creative_search_cursor = if left {
+            seat.saturating_sub(1)
+        } else {
+            (seat + 1).min(len)
+        };
+    }
+
+    /// THE CARET'S OWN PARK (the tableswitch's 268/269 arms the
+    /// moveCursorTo walk serves — the Home the zero park wears, the
+    /// End the len park keeps).
+    pub fn on_creative_caret_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        self.creative_search_cursor = if end {
+            self.creative_search.chars().count()
+        } else {
+            0
+        };
+    }
+
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
     /// `Screen.hasControlDown()` branch the `deleteWords(-1)` walk
-    /// serves — the END-SEAT model the cursor the string's tail
-    /// wears, the backward arm the tail word the space-run skip the
-    /// walk removes [the plain pop's ctrl sibling the same
-    /// `word_boundary` law answers], the forward arm the end
-    /// seat the bound never passes — the zero delta the no-op keeps;
-    /// the refresh + the scroll the backspace's own tails the same
-    /// laws wear)
+    /// serves — the CARET SEAT the deleteWords walk the seat's own
+    /// bounds the word pair removes: the backward arm the [bound,
+    /// seat) range the cursor the bound re-parks, the forward arm the
+    /// [seat, bound) range the cursor the seat keeps, the end-seat
+    /// backward walk the tail word the same verdict wears, the
+    /// forward arm the end seat the bound never passes — the zero
+    /// delta the no-op keeps; the refresh + the scroll the
+    /// backspace's own tails the same laws wear)
     pub fn on_creative_ctrl_words(&mut self, forward: bool) {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
@@ -23640,10 +23737,18 @@ impl App {
             return;
         }
         let len = self.creative_search.chars().count();
-        let bound = word_boundary(&self.creative_search, len, forward);
-        if bound != len {
-            let start = caret_byte_index(&self.creative_search, bound);
-            self.creative_search.replace_range(start.., "");
+        let seat = self.creative_search_cursor.min(len);
+        let bound = word_boundary(&self.creative_search, seat, forward);
+        if bound != seat {
+            // the seat's own bound the word pair the range removes —
+            // the backward arm the [bound, seat) walk the cursor the
+            // bound re-parks, the forward arm the [seat, bound) walk
+            // the cursor the seat keeps (the vanilla deleteWords the
+            // same delta the honest pair answers)
+            let start = caret_byte_index(&self.creative_search, bound.min(seat));
+            let end = caret_byte_index(&self.creative_search, bound.max(seat));
+            self.creative_search.replace_range(start..end, "");
+            self.creative_search_cursor = bound.min(seat);
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
@@ -28649,7 +28754,16 @@ impl App {
                 }
             } else {
                 g.text(a, tx, ty, &self.creative_search, WHITE, false);
-                let tw = g.text_width(&self.creative_search);
+                // THE CARET'S OWN PREFIX (the cursorPos the
+                // trimStringToWidth law the before-seat chars the band
+                // width wears — the mid-string caret the seat speaks,
+                // the end seat the whole word the same width keeps)
+                let prefix: String = self
+                    .creative_search
+                    .chars()
+                    .take(self.creative_search_cursor)
+                    .collect();
+                let tw = g.text_width(&prefix);
                 if (self.frame / 6) % 2 == 0 {
                     g.fill(tx + tw + 1, ty, 1, 8, [1.0, 1.0, 1.0, 1.0]);
                 }
