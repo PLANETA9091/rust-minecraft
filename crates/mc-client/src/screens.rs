@@ -7575,6 +7575,15 @@ pub struct App {
     pub es_address: String,
     pub es_address_focus: bool,
     pub es_address_rect: (i32, i32, i32, i32),
+    /// THE EDIT MODE'S OWN SEAT (the vanilla EditServerScreen the
+    /// `serverData != null` walk keeps — the selected row's own
+    /// ServerData the edit walk carries: the PRE-FILLED boxes the
+    /// fields answer, the save the SAME entry the fields update, the
+    /// None the add-mode the fresh ctor speaks). The open()'s own
+    /// fresh-ctor arm the None resets — the edit opener the seat
+    /// re-arms AFTER the open (the vanilla ctor the ServerData the
+    /// fields wrap, the session the stale row never inherits).
+    pub es_edit: Option<usize>,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11096,6 +11105,7 @@ impl App {
             es_address: String::new(),
             es_address_focus: false,
             es_address_rect: (0, 0, 0, 0),
+            es_edit: None,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -21821,6 +21831,10 @@ impl App {
             self.es_address.clear();
             self.es_name_focus = true;
             self.es_address_focus = false;
+            // THE MODE'S OWN RESET (the add-mode the fresh ctor speaks —
+            // the edit opener the seat the open AFTER re-arms, the stale
+            // row the next add the walk never overwrites)
+            self.es_edit = None;
         }
         // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
         // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
@@ -39082,21 +39096,73 @@ impl App {
                 // speaks)
                 "essave" => {
                     let addr = self.es_address.trim().to_string();
-                    self.servers.push(ServerEntry {
-                        name: self.es_name.clone(),
-                        motd: "§4Can't connect to server".to_string(),
-                        ping_ms: 0,
-                        online: false,
-                        version: String::new(),
-                        host: if addr.is_empty() { None } else { Some(addr) },
-                    });
-                    self.selected_server = self.servers.len() - 1;
+                    let host = if addr.is_empty() { None } else { Some(addr) };
+                    // THE EDIT MODE'S OWN SAVE (the vanilla walk the
+                    // SAME ServerData the fields update — the list's
+                    // own entry the name/address rows wear, the ping
+                    // status the old values the refresh keeps until the
+                    // row re-asks, the setSelected the row the form
+                    // came from keeps)
+                    if let Some(idx) = self.es_edit {
+                        if let Some(entry) = self.servers.get_mut(idx) {
+                            entry.name = self.es_name.clone();
+                            entry.host = host;
+                        }
+                    } else {
+                        self.servers.push(ServerEntry {
+                            name: self.es_name.clone(),
+                            motd: "§4Can't connect to server".to_string(),
+                            ping_ms: 0,
+                            online: false,
+                            version: String::new(),
+                            host,
+                        });
+                        self.selected_server = self.servers.len() - 1;
+                    }
                     self.open(ScreenKind::Servers);
                 }
                 // THE ENTRY FORM'S OWN CANCEL (the vanilla Cancel lambda —
                 // the lastScreen the server list returns, the fields the
                 // list never touches)
                 "escancel" => self.open(ScreenKind::Servers),
+                // THE SELECTED ROW'S OWN EDIT OPENER (vanilla
+                // JoinMultiplayerScreen's `selectServer.edit` lambda —
+                // the EditServerScreen the `setScreen(new
+                // EditServerScreen(this, selected))` walk opens, the
+                // SAME form the add-mode shares — the selected row's
+                // own fields the boxes PRE-FILL [the vanilla ctor the
+                // ServerData the fields wrap], the edit seat the open
+                // AFTER re-arms, the save the same entry the walk
+                // updates; the EMPTY list the selection the row never
+                // has — the arm the opener the refusal keeps)
+                "edit" => {
+                    if self.selected_server < self.servers.len() {
+                        let idx = self.selected_server;
+                        self.open(ScreenKind::EditServer);
+                        if let Some(entry) = self.servers.get(idx) {
+                            self.es_name = entry.name.clone();
+                            self.es_address = entry.host.clone().unwrap_or_default();
+                        }
+                        self.es_edit = Some(idx);
+                    }
+                }
+                // THE SELECTED ROW'S OWN DELETE WALK (vanilla
+                // JoinMultiplayerScreen's `selectServer.delete` lambda —
+                // the minimal round the direct remove banks [the
+                // vanilla ConfirmScreen the deleteQuestion the later
+                // round owes — the yes walk the serverList.remove
+                // servers, the client's own confirm the same law the
+                // later seat wears], the selection the clamp the
+                // shorter list keeps, the EMPTY list the row never
+                // has — the arm the refusal keeps)
+                "delete" => {
+                    if self.selected_server < self.servers.len() {
+                        self.servers.remove(self.selected_server);
+                        if self.selected_server >= self.servers.len() {
+                            self.selected_server = self.servers.len().saturating_sub(1);
+                        }
+                    }
+                }
                 // vanilla ConnectScreen Cancel: abandon the in-flight join
                 // (late results carry unknown ids and are ignored)
                 "cancel" => self.open(ScreenKind::Servers),
@@ -67497,9 +67563,13 @@ impl App {
         // Add Server [`width / 2 + 54`] trio wears — the entry-form
         // round's own slot the third opener answers, the EditServer
         // lambda the walk opens —, the BOTTOM row the `height - 28`
-        // band the Edit/Delete/Refresh/Cancel quartet's Refresh
-        // [`width / 2 + 2`] + Cancel [`width / 2 + 80`] seats wear, the
-        // 74-wide the bounds walk speaks)
+        // band the Edit/Delete/Refresh/Cancel quartet's FOUR 74-wide
+        // seats wear [Edit `width / 2 - 154`, Delete `width / 2 - 74`,
+        // Refresh `width / 2 + 2`, Cancel `width / 2 + 80`] — the pair
+        // the selected row's own seat the form serves, the vanilla
+        // `updateButtonStatus` walk the SELECTION the active law reads
+        // [the EMPTY list the pair the INACTIVE the hovered() refusal
+        // keeps])
         self.buttons.push(Button::new(
             "join",
             tr("selectServer.select")
@@ -67525,6 +67595,24 @@ impl App {
             h - 52,
             100,
         ));
+        let mut edit = Button::new(
+            "edit",
+            tr("selectServer.edit").unwrap_or("Edit").to_string(),
+            cx - 117,
+            h - 28,
+            74,
+        );
+        edit.active = !self.servers.is_empty();
+        self.buttons.push(edit);
+        let mut delete = Button::new(
+            "delete",
+            tr("selectServer.delete").unwrap_or("Delete").to_string(),
+            cx - 37,
+            h - 28,
+            74,
+        );
+        delete.active = !self.servers.is_empty();
+        self.buttons.push(delete);
         self.buttons.push(Button::new(
             "refresh",
             tr("selectServer.refresh").unwrap_or("Refresh").to_string(),

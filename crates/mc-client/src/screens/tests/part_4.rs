@@ -23200,3 +23200,168 @@ fn the_add_server_entry_form_own_seat_wears() {
     assert_eq!(app.screen, ScreenKind::Servers);
     assert_eq!(app.servers.len(), len);
 }
+
+/// THE SERVERS ROWS' OWN EDIT/DELETE PAIR (javap 26.2 the bottom row's
+/// own quartet the whole seat answers: the Edit/Delete the 74-wide
+/// slots the vanilla bounds keep, the updateButtonStatus walk the
+/// SELECTION the active law reads [the EMPTY list the pair sleeps],
+/// the edit opener the SAME form the selected row's fields PRE-FILL
+/// [the es_edit seat the open AFTER re-arms], the edit save the SAME
+/// entry the name/address rows update [the ping status the old values
+/// keep], the delete the list's remove serves + the selection the
+/// clamp the shorter list keeps, the add-after-edit the fresh ctor the
+/// mode resets — the stale seat the next add the row never
+/// overwrites).
+#[test]
+fn the_servers_rows_own_edit_delete_pair_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Servers);
+    app.render_title_buttons_for_test();
+    // THE QUARTET'S OWN GEOMETRY (the vanilla init's bottom row the
+    // FOUR 74-wide seats keep — the Edit `width / 2 - 154` the 320
+    // frame the 6 answers, the Delete `width / 2 - 74` the 86 wears,
+    // the Refresh/Cancel the 162/240 the same band keeps)
+    let edit = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "edit")
+        .expect("edit")
+        .clone();
+    assert_eq!((edit.x, edit.w, edit.y), (6, 74, 180 - 28));
+    let delete = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delete")
+        .expect("delete")
+        .clone();
+    assert_eq!((delete.x, delete.w, delete.y), (86, 74, 180 - 28));
+    assert!(edit.active && delete.active, "the rows the pair arms");
+
+    // THE EDIT OPENER'S OWN PRE-FILL (the selectServer.edit lambda the
+    // SAME form opens — the selected row's own fields the boxes carry,
+    // the es_edit seat the open AFTER re-arms)
+    app.selected_server = 1;
+    app.on_click(edit.x + edit.w / 2, edit.y + edit.h / 2);
+    assert_eq!(app.screen, ScreenKind::EditServer);
+    assert_eq!(
+        app.es_name, "hypixel.net",
+        "the row's own name the form keeps"
+    );
+    assert_eq!(
+        app.es_address.as_str(),
+        "hypixel.net",
+        "the row's own host the form keeps"
+    );
+    assert_eq!(app.es_edit, Some(1), "the edit seat the opener arms");
+
+    // THE EDIT SAVE'S OWN WALK (the SAME entry the fields update — the
+    // name/host rows wear, the ping status the old values keep, the
+    // list the length never changes, the setScreen the parent returns)
+    app.es_name = "Hypixel Renamed".to_string();
+    app.es_address = "mc.hypixel.net".to_string();
+    let before = app.servers.len();
+    let old_motd = app.servers[1].motd.clone();
+    let old_online = app.servers[1].online;
+    app.render_title_buttons_for_test();
+    let save = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    app.on_click(save.x + save.w / 2, save.y + save.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), before, "the edit the list never grows");
+    let entry = &app.servers[1];
+    assert_eq!(entry.name, "Hypixel Renamed");
+    assert_eq!(entry.host.as_deref(), Some("mc.hypixel.net"));
+    assert_eq!(entry.motd, old_motd, "the ping status the old values keep");
+    assert_eq!(entry.online, old_online);
+    assert_eq!(app.selected_server, 1, "the row the form came from keeps");
+
+    // THE ADD-AFTER-EDIT'S OWN FRESH CTOR (the mode the open() resets —
+    // the stale seat the next add the row never overwrites, the save
+    // the append the length grows serves)
+    app.open(ScreenKind::Servers);
+    app.render_title_buttons_for_test();
+    let add = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "addserver")
+        .expect("addserver")
+        .clone();
+    app.on_click(add.x + add.w / 2, add.y + add.h / 2);
+    assert_eq!(app.screen, ScreenKind::EditServer);
+    assert_eq!(app.es_edit, None, "the fresh ctor the add mode speaks");
+    app.render_title_buttons_for_test();
+    let save = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    app.on_click(save.x + save.w / 2, save.y + save.h / 2);
+    assert_eq!(app.servers.len(), before + 1, "the add the list appends");
+    assert_eq!(app.selected_server, app.servers.len() - 1);
+
+    // THE DELETE'S OWN WALK (the selected row the list removes — the
+    // selection the clamp the shorter list keeps)
+    app.open(ScreenKind::Servers);
+    app.render_title_buttons_for_test();
+    let delete = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delete")
+        .expect("delete")
+        .clone();
+    app.selected_server = 0;
+    let len = app.servers.len();
+    app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), len - 1, "the delete the row removes");
+    assert_eq!(
+        app.servers[0].name, "Hypixel Renamed",
+        "the first row the walk removes — the renamed row the list keeps"
+    );
+    assert_eq!(app.selected_server, 0, "the clamp the selection keeps");
+
+    // THE EMPTY LIST'S OWN INACTIVE LAW (the updateButtonStatus walk —
+    // the pair the INACTIVE the hovered() refusal keeps, the empty-list
+    // arms the silence wears)
+    while !app.servers.is_empty() {
+        app.selected_server = app.servers.len() - 1;
+        app.render_title_buttons_for_test();
+        let delete = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "delete")
+            .expect("delete")
+            .clone();
+        app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    }
+    assert!(app.servers.is_empty());
+    assert_eq!(app.selected_server, 0, "the clamp the zero keeps");
+    app.render_title_buttons_for_test();
+    let edit = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "edit")
+        .expect("edit")
+        .clone();
+    let delete = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "delete")
+        .expect("delete")
+        .clone();
+    assert!(!edit.active, "the empty list the edit sleeps");
+    assert!(!delete.active, "the empty list the delete sleeps");
+    app.on_click(edit.x + edit.w / 2, edit.y + edit.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Servers,
+        "the inactive the refusal keeps"
+    );
+    app.on_click(delete.x + delete.w / 2, delete.y + delete.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+}
