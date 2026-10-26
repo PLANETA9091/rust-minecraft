@@ -1669,6 +1669,18 @@ pub fn run_gui_app(
             .unwrap_or_default()
             .join("debug-profile.json"),
     );
+    // THE SERVER LIST FILE'S OWN GAME DIR (javap `ServerList` the 26.2
+    // walk — the `servers.dat` the cwd names, the ctor's `load()` the
+    // Minecraft.<init> moment the boot answers [the file's truth the
+    // rows wear, the missing file the seed keeps], the `save()` the
+    // every-mutation law the add/edit/remove rides; the headless boot
+    // the None keeps)
+    app.servers_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("servers.dat"),
+    );
+    app.servers_file_load_once();
     app.options_file_load();
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);

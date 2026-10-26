@@ -5999,8 +5999,12 @@ pub(crate) fn lock_icon_sprite(locked: bool, active: bool, hovered: bool) -> &'s
     }
 }
 
-/// Server list entry (name, MOTD with § codes, ping ms).
-#[derive(Debug, Clone)]
+/// Server list entry (name, MOTD with § codes, ping ms). The serde
+/// pair the client's own JSON store wears — the `servers.dat` file the
+/// rows encode, the boot's load the truth wears, the every-mutation
+/// save the file rewrites (the vanilla `ServerList.save/load` law the
+/// client's own store format answers).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ServerEntry {
     pub name: String,
     pub motd: String,
@@ -6669,8 +6673,8 @@ pub enum ScreenKind {
     /// the row's own name the %s substitution answers, the Delete +
     /// Cancel pair the footer row the 150-wide bounds keep — the YES
     /// the onConfirmDelete walk the list's remove serves (the selected
-    /// row the list drops, the serverList.save the file the later
-    /// persistence round banks), the NO + the Escape the callback(false)
+    /// row the list drops, the serverList.save the file the same walk
+    /// rewrites), the NO + the Escape the callback(false)
     /// the list the unchanged returns.
     DeleteConfirm,
     /// Vanilla DisconnectedScreen: the join outcome (server-side login
@@ -7596,6 +7600,20 @@ pub struct App {
     /// re-arms AFTER the open (the vanilla ctor the ServerData the
     /// fields wrap, the session the stale row never inherits).
     pub es_edit: Option<usize>,
+    /// THE SERVER LIST'S OWN FILE (javap `ServerList` the 26.2 walk —
+    /// the `servers.dat` path the game dir keeps, the `Minecraft.<init>`
+    /// ctor's `new ServerList(this)` + `load()` moment the boot answers,
+    /// the `save()` the every-mutation law the add/edit/remove rides):
+    /// the file the rows the JSON store encodes, the added/edited/
+    /// deleted rows the RESTART OUTLIVES. `None` keeps the no-game-dir
+    /// boot (the headless goldens' own determinism — the file lanes the
+    /// walk never spends), `Some` the real game loop's walk rides.
+    pub servers_file: Option<std::path::PathBuf>,
+    /// THE SERVER LIST'S OWN LOAD FLAG (the `ServerList.load()` the ctor
+    /// once answers — the flag the walk banks before the rows serve,
+    /// every later touch the in-memory rows keep: the vanilla ctor the
+    /// load the boot's own single moment speaks).
+    pub servers_loaded: bool,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11118,6 +11136,8 @@ impl App {
             es_address_focus: false,
             es_address_rect: (0, 0, 0, 0),
             es_edit: None,
+            servers_file: None,
+            servers_loaded: false,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -34522,6 +34542,53 @@ impl App {
         }
     }
 
+    /// THE SERVER LIST'S OWN LOAD WALK — javap `ServerList.load()` the
+    /// 26.2 walk (the `Minecraft.<init>` ctor the `load()` moment the
+    /// boot answers, the file's entries the in-memory rows wear): the
+    /// file's truth the rows replace, the missing/corrupt file the
+    /// seeded demo rows keep (the fresh-install the never-written file
+    /// never carries, the client's own demo stand-in the empty list
+    /// never wears — the honest keep the vanilla fresh-boot law banks),
+    /// the flag the walk banks so the later touches the in-memory rows
+    /// keep. THE NONE BOOT the no-game-dir stand-in keeps — the flag
+    /// banks, the file lane the walk never spends (the headless goldens'
+    /// own determinism).
+    pub fn servers_file_load_once(&mut self) {
+        if self.servers_loaded {
+            return;
+        }
+        self.servers_loaded = true;
+        let Some(path) = self.servers_file.clone() else {
+            return;
+        };
+        if let Ok(text) = std::fs::read_to_string(&path) {
+            if let Ok(rows) = serde_json::from_str::<Vec<ServerEntry>>(&text) {
+                self.servers = rows;
+                if self.selected_server >= self.servers.len() {
+                    self.selected_server = self.servers.len().saturating_sub(1);
+                }
+            }
+        }
+    }
+
+    /// THE SERVER LIST'S OWN SAVE WALK — javap `ServerList.save()` the
+    /// 26.2 walk (the file the every-mutation law rewrites — the
+    /// addServer the push rides, the edit the replace serves, the
+    /// removeServer the confirmed walk speaks): the rows the client's
+    /// own JSON store encodes (the vanilla NBT the file format keeps —
+    /// the client's own store the JSON the load-compat law wears), the
+    /// write the silent failure keeps (the in-memory rows the truth
+    /// stays — the vanilla log the error walks). THE NONE BOOT the
+    /// no-game-dir stand-in keeps.
+    pub fn servers_file_save(&self) {
+        let Some(path) = &self.servers_file else {
+            return;
+        };
+        if let Ok(text) = serde_json::to_string_pretty(&self.servers) {
+            let _ = std::fs::write(path, text);
+        }
+    }
+
     /// THE OPTIONS FILE'S OWN LOAD WALK (the vanilla `Options.load()` law
     /// the probes bank — see [`crate::options_file`] module doc): the boot
     /// the file's truth wears, the missing file the defaults keep, the
@@ -39137,6 +39204,11 @@ impl App {
                         });
                         self.selected_server = self.servers.len() - 1;
                     }
+                    // THE FILE'S OWN SAVE RIDE (the vanilla onSave walk
+                    // the `serverList.save()` call answers — the
+                    // add/edit mutation the file rewrites, the rows the
+                    // RESTART OUTLIVES)
+                    self.servers_file_save();
                     self.open(ScreenKind::Servers);
                 }
                 // THE ENTRY FORM'S OWN CANCEL (the vanilla Cancel lambda —
@@ -39181,10 +39253,10 @@ impl App {
                 // ConfirmScreen.onPress the `callback.accept(true)` —
                 // the onConfirmDelete the confirmed arm the list's
                 // remove serves [the selected row the list drops, the
-                // serverList.save the file the later persistence
-                // round banks], the selection the clamp the shorter
-                // list keeps [the past-end the saturating_sub the zero
-                // banks], the parent the setScreen the list returns)
+                // serverList.save the file the same walk rewrites],
+                // the selection the clamp the shorter list keeps [the
+                // past-end the saturating_sub the zero banks], the
+                // parent the setScreen the list returns)
                 "delyes" => {
                     if self.selected_server < self.servers.len() {
                         self.servers.remove(self.selected_server);
@@ -39192,6 +39264,11 @@ impl App {
                             self.selected_server = self.servers.len().saturating_sub(1);
                         }
                     }
+                    // THE FILE'S OWN SAVE RIDE (the vanilla
+                    // onConfirmDelete walk the `serverList.save()` call
+                    // answers — the remove the file rewrites, the rows
+                    // the RESTART OUTLIVES)
+                    self.servers_file_save();
                     self.open(ScreenKind::Servers);
                 }
                 // THE CONFIRM'S OWN NO WALK (vanilla ConfirmScreen.onPress

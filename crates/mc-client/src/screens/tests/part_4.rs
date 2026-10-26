@@ -23503,3 +23503,159 @@ fn the_delete_confirm_seat_wears() {
         "the empty the saturating_sub zero keeps"
     );
 }
+
+// THE SERVER LIST'S OWN PERSISTENCE FILE (javap `ServerList.load/save`
+// the 26.2 walk — the client's own JSON store the file rows encode, the
+// load the boot's once moment the truth wears, the save the
+// every-mutation ride the add/edit/remove walks bank, the missing/
+// corrupt file the seeded demo rows keep)
+#[test]
+fn the_servers_list_own_persistence_file_round_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_servers_dat_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("servers.dat");
+
+    // THE SAVE'S OWN TRUTH (the seed rows the file banks — the two
+    // demo entries the fresh ctor keeps, the JSON the store encodes)
+    let mut app = App::new(3);
+    assert_eq!(app.servers.len(), 2, "the fresh ctor the demo rows keeps");
+    app.servers_file = Some(path.clone());
+    app.servers_file_save();
+    let text = std::fs::read_to_string(&path).expect("the save the file writes");
+    let rows: Vec<ServerEntry> = serde_json::from_str(&text).expect("the JSON the store encodes");
+    assert_eq!(rows.len(), 2, "the seed the file wears");
+    assert_eq!(
+        rows[0].name, "mc2rs sandbox",
+        "the first row the file keeps"
+    );
+    assert_eq!(
+        rows[1].host.as_deref(),
+        Some("hypixel.net"),
+        "the host the row keeps"
+    );
+
+    // THE LOAD'S OWN ROUND (the file's truth the fresh boot wears —
+    // the second ctor the same file the rows answer)
+    let mut fresh = App::new(3);
+    fresh.servers_file = Some(path.clone());
+    fresh.servers_file_load_once();
+    assert_eq!(fresh.servers.len(), 2, "the file's truth the boot wears");
+    assert_eq!(
+        fresh.servers[0].name, "mc2rs sandbox",
+        "the load the row keeps"
+    );
+
+    // THE ADD'S OWN RIDE (the essave the push speaks, the file the
+    // mutation rewrites — the three rows the next boot reads)
+    fresh.open(ScreenKind::EditServer);
+    fresh.render_title_buttons_for_test();
+    fresh.on_editserver_box_click(fresh.es_address_rect.0 + 5, fresh.es_address_rect.1 + 5);
+    for c in "my.host".chars() {
+        fresh.on_editserver_char(c);
+    }
+    fresh.render_title_buttons_for_test();
+    let done = fresh
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    fresh.on_click(done.x + done.w / 2, done.y + done.h / 2);
+    assert_eq!(fresh.screen, ScreenKind::Servers);
+    assert_eq!(fresh.servers.len(), 3, "the add the list grows");
+    let text = std::fs::read_to_string(&path).expect("the save the add rides");
+    let rows: Vec<ServerEntry> = serde_json::from_str(&text).expect("the rewrite the file wears");
+    assert_eq!(rows.len(), 3, "the added row the file banks");
+    assert_eq!(
+        rows[2].host.as_deref(),
+        Some("my.host"),
+        "the typed address the row keeps"
+    );
+
+    // THE EDIT'S OWN RIDE (the same file the fields update — the row's
+    // rename the rewrite wears, the length the walk never grows)
+    fresh.selected_server = 0;
+    fresh.render_title_buttons_for_test();
+    let edit = fresh
+        .buttons
+        .iter()
+        .find(|b| b.id == "edit")
+        .expect("edit")
+        .clone();
+    fresh.on_click(edit.x + edit.w / 2, edit.y + edit.h / 2);
+    assert_eq!(fresh.screen, ScreenKind::EditServer);
+    for _ in 0..fresh.es_name.chars().count() {
+        fresh.on_editserver_backspace();
+    }
+    for c in "renamed".chars() {
+        fresh.on_editserver_char(c);
+    }
+    fresh.render_title_buttons_for_test();
+    let save = fresh
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    fresh.on_click(save.x + save.w / 2, save.y + save.h / 2);
+    assert_eq!(fresh.servers.len(), 3, "the edit the length never grows");
+    let rows: Vec<ServerEntry> =
+        serde_json::from_str(&std::fs::read_to_string(&path).expect("the rewrite the edit rides"))
+            .expect("the JSON the store encodes");
+    assert_eq!(rows[0].name, "renamed", "the rename the file keeps");
+
+    // THE DELETE'S OWN RIDE (the confirm's yes the remove serves, the
+    // file the shorter list rewrites)
+    fresh.selected_server = 0;
+    fresh.render_title_buttons_for_test();
+    let del = fresh
+        .buttons
+        .iter()
+        .find(|b| b.id == "delete")
+        .expect("delete")
+        .clone();
+    fresh.on_click(del.x + del.w / 2, del.y + del.h / 2);
+    fresh.render_title_buttons_for_test();
+    let yes = fresh
+        .buttons
+        .iter()
+        .find(|b| b.id == "delyes")
+        .expect("delyes")
+        .clone();
+    fresh.on_click(yes.x + yes.w / 2, yes.y + yes.h / 2);
+    assert_eq!(fresh.servers.len(), 2, "the yes the row drops");
+    let rows: Vec<ServerEntry> = serde_json::from_str(
+        &std::fs::read_to_string(&path).expect("the rewrite the remove rides"),
+    )
+    .expect("the JSON the store encodes");
+    assert_eq!(rows.len(), 2, "the removed row the file drops");
+    assert_eq!(
+        rows[0].name, "hypixel.net",
+        "the shortened list the file keeps"
+    );
+
+    // THE MISSING FILE'S OWN KEEP (the fresh path the demo rows never
+    // loses — the fresh-install the never-written file the seed banks)
+    let mut virgin = App::new(3);
+    virgin.servers_file = Some(dir.join("absent.dat"));
+    virgin.servers_file_load_once();
+    assert_eq!(virgin.servers.len(), 2, "the missing file the seed keeps");
+
+    // THE CORRUPT FILE'S OWN KEEP (the garbage the parse refuses —
+    // the seed rows the boot keeps, the honest failure the vanilla log
+    // the error answers)
+    std::fs::write(dir.join("corrupt.dat"), "{{{not json").expect("write");
+    let mut broken = App::new(3);
+    broken.servers_file = Some(dir.join("corrupt.dat"));
+    broken.servers_file_load_once();
+    assert_eq!(broken.servers.len(), 2, "the corrupt file the seed keeps");
+
+    // THE NONE BOOT'S OWN DETERMINISM (the no-game-dir the flag banks —
+    // the file lane the walk never spends, the list the ctor seed keeps)
+    let mut headless = App::new(3);
+    headless.servers_file_load_once();
+    assert!(headless.servers_loaded, "the flag the walk banks");
+    assert_eq!(headless.servers.len(), 2, "the none boot the seed keeps");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
