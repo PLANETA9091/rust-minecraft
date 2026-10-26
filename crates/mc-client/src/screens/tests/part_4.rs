@@ -26535,3 +26535,140 @@ fn the_debug_selection_own_seat_wears() {
         "the fresh open the anchor the reset retires"
     );
 }
+
+#[test]
+fn the_debug_drag_own_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+                                // THE FRESH CTOR'S OWN UNARMED SEAT (the setDragging the false
+                                // state keeps — the stale arm the re-open walk the same reset
+                                // retires)
+    assert!(
+        !app.debug_search_drag_armed,
+        "the fresh open the unarmed seat keeps"
+    );
+    for c in "hello world".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search_cursor, 11, "the typed tail parks");
+    // THE PLAIN PRESS'S OWN ARM (the inside click the drag arm banks,
+    // the left edge the zero parks, the anchor the collapse keeps)
+    assert!(
+        app.on_debug_options_box_click(218, 25, 640),
+        "the inside press the TRUE consumes"
+    );
+    assert!(app.debug_search_drag_armed, "the press the arm banks");
+    assert_eq!(app.debug_search_cursor, 0, "the left edge the zero parks");
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the press the collapse keeps"
+    );
+    // THE ARMED DRAG'S OWN WALK (the past-tail the clamp parks — the
+    // [0, 11) range the press place the anchor opens)
+    app.on_debug_options_box_drag(218 + 1000, 25, 640);
+    assert_eq!(app.debug_search_cursor, 11, "the past-tail the len parks");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the drag the press place the anchor opens"
+    );
+    // THE OUTSIDE-BAND DRAG'S OWN KEEP (the y-band the row keeps —
+    // the outside row the drag never owns)
+    app.on_debug_options_box_drag(218 + 40, 15, 640);
+    assert_eq!(
+        app.debug_search_cursor, 11,
+        "the outside row the seat keeps"
+    );
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the outside row the anchor keeps"
+    );
+    // THE UNARMED DRAG'S OWN SILENCE (the release the disarm speaks —
+    // the held walk the honest lane only answers)
+    app.debug_search_drag_armed = false;
+    app.on_debug_options_box_drag(222, 25, 640);
+    assert_eq!(app.debug_search_cursor, 11, "the unarmed the seat keeps");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the unarmed the anchor keeps"
+    );
+    // THE SHIFT CLICK'S OWN ANCHOR (the plain press the cursor the
+    // zero re-seats, the shift the two-arg walk the [0, seat) opens,
+    // the second shift the anchor keeps, the arm never banks)
+    assert!(
+        app.on_debug_options_box_click(218, 25, 640),
+        "the re-press the TRUE wears"
+    );
+    assert_eq!(app.debug_search_cursor, 0, "the re-press the zero parks");
+    app.debug_search_drag_armed = false; // the release the disarm speaks
+    assert!(
+        app.on_debug_options_box_shift_click(422, 25, 640),
+        "the shift click the inside TRUE wears"
+    );
+    assert_eq!(
+        app.debug_search_cursor, 11,
+        "the shift click the past-tail seat wears"
+    );
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the shift the pre-click cursor the anchor banks"
+    );
+    app.on_debug_options_box_shift_click(422, 25, 640);
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the second shift the anchor keeps"
+    );
+    assert!(
+        !app.debug_search_drag_armed,
+        "the shift lane the arm never banks"
+    );
+    // THE OUTSIDE SHIFT'S OWN KEEP (the band never owns — the outside
+    // click the FALSE the caller keeps, the selection the same
+    // honesty keeps)
+    assert!(
+        !app.on_debug_options_box_shift_click(100, 25, 640),
+        "the outside shift the FALSE wears"
+    );
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the outside the selection keeps"
+    );
+    assert_eq!(app.debug_search_cursor, 11, "the outside the seat keeps");
+    // THE OUTSIDE PRESS'S OWN DISARM (the setDragging(flag && inside)
+    // walk the false press the arm clears)
+    assert!(
+        !app.on_debug_options_box_click(218 + 1000, 25, 640),
+        "the outside press the FALSE wears"
+    );
+    assert!(
+        !app.debug_search_drag_armed,
+        "the outside press the arm clears"
+    );
+    // THE STALE SCREEN'S OWN SILENCE (the other screens the lanes
+    // never answer, the fresh open the arm the stale seat never
+    // inherits)
+    app.open(ScreenKind::Title);
+    app.debug_search_drag_armed = true; // the armed flag the screen gate the honest probe wears
+    app.on_debug_options_box_drag(222, 25, 640);
+    assert_eq!(
+        app.debug_search_cursor, 11,
+        "the stale screen the seat keeps"
+    );
+    app.on_debug_options_key(); // the fresh open the second tap wears
+    app.on_debug_options_key();
+    assert!(!app.debug_search_drag_armed, "the reopen the arm clears");
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the reopen the anchor collapses"
+    );
+    assert_eq!(
+        app.debug_search, "",
+        "the reopen the word the reset retires"
+    );
+}

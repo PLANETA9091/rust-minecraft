@@ -10257,6 +10257,13 @@ pub struct App {
     /// deleteSelection first step answers; the fresh ctor the None
     /// keeps, the re-open walk the same reset wears).
     pub debug_search_highlight: Option<usize>,
+    /// THE SEARCH BOX'S OWN DRAG ARM (the vanilla `setDragging(flag
+    /// && button == 0)` walk the 269 chat + the 270 entry arms wear —
+    /// the inside press the flag banks, the outside press the false
+    /// disarms, the release the falling edge the held walk ends; the
+    /// fresh ctor the unarmed seat keeps, the re-open walk the same
+    /// reset wears).
+    pub debug_search_drag_armed: bool,
     /// THE DEBUG OPTIONS' OWN FOCUS SEAT (the vanilla `getFocused` law
     /// the button widgets wear — the preset pair + the entry pills the
     /// Tab walk's own store banks, the BOX the `debug_search_focus`
@@ -11924,6 +11931,7 @@ impl App {
             debug_search_focus: true,
             debug_search_cursor: 0,
             debug_search_highlight: None,
+            debug_search_drag_armed: false,
             debug_focus: None,
             debug_box_rect: (0, 0, 0, 0),
             debug_profile: Some(false),
@@ -22195,6 +22203,7 @@ impl App {
             self.debug_search.clear();
             self.debug_search_cursor = 0;
             self.debug_search_highlight = None;
+            self.debug_search_drag_armed = false;
             self.debug_scroll = 0.0;
             // THE INITIAL FOCUS'S OWN RE-ARM (the vanilla init's
             // setInitialFocus the fresh screen answers — the re-open
@@ -37611,6 +37620,11 @@ impl App {
         let box_w = (gui_w / 3).max(80);
         let bx = gui_w / 2 - box_w / 2;
         let inside = my >= 20 && my < 40 && mx >= bx && mx < bx + box_w;
+        // THE DRAG ARM'S OWN BANK (the vanilla `setDragging(flag &&
+        // button == 0)` walk the 269 chat + the 270 entry arms wear —
+        // the inside press the flag banks, the outside press the false
+        // disarms)
+        self.debug_search_drag_armed = inside;
         if inside {
             self.debug_search_focus = true;
             // the plain click the anchor collapses (the mouseClick the
@@ -37624,6 +37638,60 @@ impl App {
             self.debug_search_cursor = entry_click_seat(&self.debug_search, 0, mx, bx);
         }
         inside
+    }
+
+    /// THE SELECTION'S OWN SHIFT CLICK (the EditBox.mouseClicked's
+    /// hasShiftDown branch the `moveCursorTo(pos, true)` walk serves —
+    /// the 266 chat + the 269/270 entry laws the box wears: the live
+    /// anchor the same seat keeps, the no-anchor first ride the
+    /// PRE-CLICK cursor the anchor banks, the cursor the clicked seat
+    /// wears, the range the [anchor, seat) opens, the outside click
+    /// the false the caller the plain walk keeps; the drag arm the
+    /// SHIFT press never banks (the 269/270 law the plain lane the
+    /// arm alone wears).
+    pub fn on_debug_options_box_shift_click(&mut self, mx: i32, my: i32, gui_w: i32) -> bool {
+        if self.screen != ScreenKind::DebugOptions {
+            return false;
+        }
+        let box_w = (gui_w / 3).max(80);
+        let bx = gui_w / 2 - box_w / 2;
+        let inside = my >= 20 && my < 40 && mx >= bx && mx < bx + box_w;
+        if !inside {
+            return false; // the outside click the band never owns
+        }
+        self.debug_search_focus = true;
+        let seat = entry_click_seat(&self.debug_search, 0, mx, bx);
+        if self.debug_search_highlight.is_none() {
+            // the pre-click cursor the anchor banks (the two-arg
+            // moveCursorTo the highlightPos law keeps)
+            self.debug_search_highlight = Some(self.debug_search_cursor);
+        }
+        self.debug_search_cursor = seat;
+        true
+    }
+
+    /// THE SELECTION'S OWN DRAG (the EditBox.onDrag walk the 266 chat
+    /// + the 269/270 entry laws the box wears — the armed press's
+    /// held frames the cursor the seat follows, the anchor the press
+    /// place the range opens, the y-band the row keeps, the past-tail
+    /// the clamp parks, the closed/unarmed box the lane never
+    /// answers).
+    pub fn on_debug_options_box_drag(&mut self, mx: i32, my: i32, gui_w: i32) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_drag_armed {
+            return;
+        }
+        let box_w = (gui_w / 3).max(80);
+        let bx = gui_w / 2 - box_w / 2;
+        if my < 20 || my >= 40 {
+            return; // the outside row the drag never owns
+        }
+        let seat = entry_click_seat(&self.debug_search, 0, mx, bx);
+        if self.debug_search_highlight.is_none() {
+            // the press seat the anchor banks (the vanilla drag the
+            // first-click place the range opens)
+            self.debug_search_highlight = Some(self.debug_search_cursor);
+        }
+        self.debug_search_cursor = seat;
     }
 
     /// THE FILTER'S OWN LAW (the updateSearch `path.contains(query)`
