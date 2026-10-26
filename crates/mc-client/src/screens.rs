@@ -9342,6 +9342,11 @@ pub struct App {
     /// EMPTY box the zero seat keeps, the tab/open clears the same
     /// reset wear).
     pub creative_search_cursor: usize,
+    /// THE SELECTION'S OWN ANCHOR (the EditBox highlightPos law the
+    /// 266 chat + the 272 debug rounds the boxes wear — the live
+    /// range the [min, max) pair speaks, the collapsed/absent seat
+    /// the None keeps)
+    pub creative_search_highlight: Option<usize>,
     /// THE SCROLL OFFSET (the `scrollOffs` field — 0..1 the
     /// subtractInputFromScroll clamp keeps, the wheel the delta /
     /// scrollableRows walk drives).
@@ -11750,6 +11755,7 @@ impl App {
             creative_items: Vec::new(),
             creative_search: String::new(),
             creative_search_cursor: 0,
+            creative_search_highlight: None,
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
@@ -23434,6 +23440,7 @@ impl App {
         }
         self.creative_search.clear();
         self.creative_search_cursor = 0;
+        self.creative_search_highlight = None;
         self.creative_items = self.creative_source.clone();
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
@@ -23513,6 +23520,7 @@ impl App {
                 // fresh-scroll tail the walk's own order keeps)
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_highlight = None;
             }
             CreativeTabKind::SavedHotbar => {
                 // THE HONEST SILENCE (the hotbar pages the
@@ -23532,6 +23540,7 @@ impl App {
                 }
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_highlight = None;
                 self.creative_items = Self::creative_operator_items();
             }
             CreativeTabKind::Search => {
@@ -23540,6 +23549,7 @@ impl App {
                 // categories the same clear keep)
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_highlight = None;
                 self.refresh_creative_search();
             }
             _ => {
@@ -23549,6 +23559,7 @@ impl App {
                 // grouping tables land)
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_highlight = None;
                 self.creative_items = self.creative_source.clone();
             }
         }
@@ -23620,22 +23631,44 @@ impl App {
     pub fn on_creative_char(&mut self, c: char) {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
-            || self.creative_search.chars().count() >= 50
         {
             return;
         }
-        let len = self.creative_search.chars().count();
-        let seat = self.creative_search_cursor.min(len);
-        if seat == len {
-            self.creative_search.push(c);
-        } else {
-            let start = caret_byte_index(&self.creative_search, seat);
-            self.creative_search.insert(start, c);
+        // THE LIVE RANGE'S OWN FIRST STEP (the insertText the
+        // deleteSelection walk serves — the replaced word the typed
+        // char answers, the collapsed/absent pair the plain insert
+        // keeps — the 266 chat + the 272 debug laws the box wears)
+        let replaced = entry_delete_selection(
+            &mut self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+        );
+        if self.creative_search.chars().count() < 50 {
+            // THE SEAT'S OWN INSERT (the EditBox.charTyped the insertText
+            // walk the cursorPos serves — the byte index the seat speaks,
+            // the caret the +1 the after-insert seat wears; the end seat
+            // the tail push the same law keeps)
+            let len = self.creative_search.chars().count();
+            let seat = self.creative_search_cursor.min(len);
+            if seat == len {
+                self.creative_search.push(c);
+            } else {
+                let start = caret_byte_index(&self.creative_search, seat);
+                self.creative_search.insert(start, c);
+            }
+            self.creative_search_cursor = seat + 1;
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+        } else if replaced {
+            // the cap-blocked insert the removal alone wears (the
+            // vanilla insertText the deleteSelection first step the
+            // separate walk serves — the value the removal changed the
+            // list the same refresh re-walks)
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
         }
-        self.creative_search_cursor = seat + 1;
-        self.refresh_creative_search();
-        self.creative_scroll = 0.0;
-        self.creative_scroll_to(0.0);
     }
 
     /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed's Backspace arm —
@@ -23647,6 +23680,18 @@ impl App {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
         {
+            return;
+        }
+        // the live range the deleteText's own first step answers (the
+        // 266 chat + the 272 debug laws the box wears)
+        if entry_delete_selection(
+            &mut self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+        ) {
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
             return;
         }
         let len = self.creative_search.chars().count();
@@ -23673,6 +23718,18 @@ impl App {
         {
             return;
         }
+        // the live range the deleteText's own first step answers (the
+        // 266 chat + the 272 debug laws the box wears)
+        if entry_delete_selection(
+            &mut self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+        ) {
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+            return;
+        }
         let len = self.creative_search.chars().count();
         let seat = self.creative_search_cursor.min(len);
         if seat < len {
@@ -23695,6 +23752,10 @@ impl App {
         {
             return;
         }
+        // the plain motion the anchor collapses (the one-arg
+        // moveCursorBy the setHighlightPos(cursorPos) tail wears — the
+        // 266 chat + the 272 debug laws the box wears)
+        self.creative_search_highlight = None;
         let len = self.creative_search.chars().count();
         let seat = self.creative_search_cursor.min(len);
         self.creative_search_cursor = if left {
@@ -23713,11 +23774,67 @@ impl App {
         {
             return;
         }
+        // the plain park the anchor collapses (the same one-arg law
+        // the chat family wears — the 266 + the 272 rounds the boxes
+        // wear)
+        self.creative_search_highlight = None;
         self.creative_search_cursor = if end {
             self.creative_search.chars().count()
         } else {
             0
         };
+    }
+
+    /// THE SELECTION'S OWN SHIFT RIDE (the 262/263 arms the no-ctrl
+    /// branch the two-arg `moveCursorBy(±1, hasShiftDown())` walk
+    /// serves — the 266 chat + the 272 debug laws the box wears — the
+    /// anchor the old seat banks, the ride the range extends, the
+    /// unfocused box the gate never passes).
+    pub fn on_creative_caret_shift_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        entry_shift_arrow(
+            &self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+            left,
+        );
+    }
+
+    /// THE SELECTION'S OWN SHIFT PARK (the 268/269 arms the
+    /// hasShiftDown branch the two-arg moveCursorTo walk serves — the
+    /// shift the anchor the same law keeps, the no-anchor first ride
+    /// the old cursor the anchor banks).
+    pub fn on_creative_caret_shift_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        entry_shift_home_end(
+            &self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+            end,
+        );
+    }
+
+    /// THE SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm the
+    /// `Screen.hasControlDown()` branch the `selectAll()` walk serves
+    /// — the 266 chat + the 272 debug laws the box wears — the
+    /// cursorPos the value's end wears, the highlightPos the zero
+    /// parks, the [0, len) range the whole value answers).
+    pub fn on_creative_select_all(&mut self) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        self.creative_search_cursor = self.creative_search.chars().count();
+        self.creative_search_highlight = Some(0);
     }
 
     /// THE SEARCH BOX'S OWN CLICK SEAT (the EditBox.mouseClicked walk
@@ -23744,10 +23861,46 @@ impl App {
         let inside = mx >= bx && mx < bx + 80 && my >= by && my < by + 9;
         if inside {
             // the caret's own x-band seek (the vanilla mouseClick the
-            // one-arg moveCursorTo walk serves)
+            // one-arg moveCursorTo walk serves) — the plain click the
+            // anchor collapses (the setHighlightPos(cursorPos) tail
+            // wears — the 266 chat + the 272 debug laws the box wears)
+            self.creative_search_highlight = None;
             self.creative_search_cursor = entry_click_seat(&self.creative_search, 0, mx, bx);
         }
         inside
+    }
+
+    /// THE SELECTION'S OWN SHIFT CLICK (the EditBox.mouseClicked's
+    /// hasShiftDown branch the `moveCursorTo(pos, true)` walk serves —
+    /// the 266 chat + the 272 debug laws the box wears: the live
+    /// anchor the same seat keeps, the no-anchor first ride the
+    /// PRE-CLICK cursor the anchor banks, the cursor the clicked seat
+    /// wears, the range the [anchor, seat) opens, the outside click
+    /// the false the caller the tab/palette lanes answers).
+    pub fn on_creative_box_shift_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return false;
+        }
+        let (px, py) = self.creative_panel;
+        if px == 0 && py == 0 {
+            return false; // the un-banked panel the render never spoke
+        }
+        let bx = px + 82;
+        let by = py + 6;
+        let inside = mx >= bx && mx < bx + 80 && my >= by && my < by + 9;
+        if !inside {
+            return false; // the outside click the band never owns
+        }
+        let seat = entry_click_seat(&self.creative_search, 0, mx, bx);
+        if self.creative_search_highlight.is_none() {
+            // the pre-click cursor the anchor banks (the two-arg
+            // moveCursorTo the highlightPos law keeps)
+            self.creative_search_highlight = Some(self.creative_search_cursor);
+        }
+        self.creative_search_cursor = seat;
+        true
     }
 
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
@@ -23764,6 +23917,18 @@ impl App {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
         {
+            return;
+        }
+        // the live range the deleteWords' own first step answers (the
+        // 266 chat + the 272 debug laws the box wears)
+        if entry_delete_selection(
+            &mut self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+        ) {
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
             return;
         }
         let len = self.creative_search.chars().count();
@@ -28783,6 +28948,23 @@ impl App {
                     g.text(a, tx, ty, &hint, [0.5, 0.5, 0.5], false);
                 }
             } else {
+                // THE SELECTION'S OWN BAND (the EditBox.render's highlight
+                // walk the 266 law the box wears — the min/max(cursor,
+                // anchor) the prefix widths the 0xFF808080 gray fill the
+                // text's y-1..y+9 band draws, the collapsed/absent seat
+                // the band never wears — the pinned scenes the None seat
+                // the byte-identical law keeps)
+                if let Some(anchor) = self.creative_search_highlight {
+                    if anchor != self.creative_search_cursor {
+                        let lo = anchor.min(self.creative_search_cursor);
+                        let hi = anchor.max(self.creative_search_cursor);
+                        let pre: String = self.creative_search.chars().take(lo).collect();
+                        let sel: String = self.creative_search.chars().take(hi).collect();
+                        let x1 = tx + g.text_width(&pre);
+                        let x2 = tx + g.text_width(&sel);
+                        g.fill(x1, ty - 1, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                    }
+                }
                 g.text(a, tx, ty, &self.creative_search, WHITE, false);
                 // THE CARET'S OWN PREFIX (the cursorPos the
                 // trimStringToWidth law the before-seat chars the band

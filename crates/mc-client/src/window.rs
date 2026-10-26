@@ -2205,11 +2205,34 @@ pub fn run_gui_app(
         // methods the internal gates keep, the stale screens the gate
         // never passes)
         if app.screen == crate::screens::ScreenKind::Creative {
+            // THE SELECTION'S OWN ALL (the 65 arm the hasControlDown
+            // branch the selectAll walk serves — the focused box the
+            // whole value answers, the internal gate the seat keeps)
+            if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
+                app.on_creative_select_all();
+            }
+            // THE SELECTION'S OWN SHIFT SEAT (the hasShiftDown query
+            // the two-arg branches — the 266 chat law the box wears,
+            // the ride the anchor keeps)
+            let creative_shift =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
-                app.on_creative_caret_home_end(false);
+                if creative_shift {
+                    // the 268 arm the hasShiftDown branch the anchor
+                    // keeps (the zero park the range opens)
+                    app.on_creative_caret_shift_home_end(false);
+                } else {
+                    app.on_creative_caret_home_end(false);
+                }
             }
             if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
-                app.on_creative_caret_home_end(true);
+                if creative_shift {
+                    // the 269 arm the hasShiftDown branch the anchor
+                    // keeps (the len park the range opens)
+                    app.on_creative_caret_shift_home_end(true);
+                } else {
+                    app.on_creative_caret_home_end(true);
+                }
             }
             if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
                 app.on_creative_delete();
@@ -2378,13 +2401,25 @@ pub fn run_gui_app(
         // tableswitch's 262/263 cases the LEFT/RIGHT moveCursorBy ±1
         // serve — the search seat the caret ride answers, the
         // single-line box the Up/Down the same ride never shares, the
-        // other tabs the internal gate keeps)
+        // other tabs the internal gate keeps; the shift the two-arg
+        // branch the selection extends — the 266 chat law the box
+        // wears)
         if app.screen == crate::screens::ScreenKind::Creative {
+            let creative_shift =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
-                app.on_creative_caret_arrow(true);
+                if creative_shift {
+                    app.on_creative_caret_shift_arrow(true);
+                } else {
+                    app.on_creative_caret_arrow(true);
+                }
             }
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
-                app.on_creative_caret_arrow(false);
+                if creative_shift {
+                    app.on_creative_caret_shift_arrow(false);
+                } else {
+                    app.on_creative_caret_arrow(false);
+                }
             }
         }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
@@ -2639,13 +2674,18 @@ pub fn run_gui_app(
                 // the inside click the focus re-arms, the buttons walk
                 // the consume skips)
             } else if app.screen == crate::screens::ScreenKind::Creative
-                && app.on_creative_box_click(gmx, gmy)
+                && (if shift_down {
+                    app.on_creative_box_shift_click(gmx, gmy)
+                } else {
+                    app.on_creative_box_click(gmx, gmy)
+                })
             {
                 // THE PICKER'S OWN BOX CONSUME (the same EditBox
-                // mouseClicked law the search tab wears — the inside
-                // click the caret the x-band seats, the buttons walk
-                // the consume skips, the outside the tab/palette lanes
-                // answer)
+                // mouseClicked law the search tab wears — the shift the
+                // two-arg lane branches, the plain the one-arg seek —
+                // the inside click the caret the x-band seats, the
+                // buttons walk the consume skips, the outside the
+                // tab/palette lanes answer)
             } else {
                 if app.screen == crate::screens::ScreenKind::DebugOptions {
                     app.debug_search_focus = false;

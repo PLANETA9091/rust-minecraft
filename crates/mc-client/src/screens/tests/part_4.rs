@@ -27071,3 +27071,257 @@ fn the_creative_search_own_click_seat_wears() {
         "the stale screen the FALSE wears"
     );
 }
+
+/// THE CREATIVE SEARCH BOX'S OWN SELECTION SEAT (the 266 chat + the
+/// 272 debug laws the highlightPos anchor family the box wears — the
+/// shift rides the range opens, the select-all the whole value
+/// answers, the deleteSelection the edit weapons' first step speaks,
+/// the shift-click the pre-click cursor the anchor banks, the plain
+/// motion the collapse keeps, the stale seats the gates keep).
+#[test]
+fn the_creative_search_own_selection_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the fresh open the None anchor keeps"
+    );
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the typed tail the plain lane keeps"
+    );
+    // THE SHIFT RIDE'S OWN RANGE (the two-arg moveCursorBy walk — the
+    // anchor the pre-step seat banks, the live anchor the ride keeps)
+    app.on_creative_caret_shift_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the backward ride the seat steps"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(11),
+        "the pre-step seat the anchor banks"
+    );
+    app.on_creative_caret_shift_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 9,
+        "the second ride the seat steps"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(11),
+        "the live anchor the ride keeps"
+    );
+    // THE SHIFT PARK'S OWN OPEN (the shift+Home the [0, seat) range —
+    // the anchor the same law keeps)
+    app.on_creative_caret_shift_home_end(false);
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the shift home the zero parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(11),
+        "the shift park the anchor keeps"
+    );
+    // THE SELECT-ALL'S OWN RANGE (the 65 arm — the cursor the end
+    // wears, the anchor the zero parks)
+    app.on_creative_select_all();
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the all the cursor the end wears"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the all the anchor the zero parks"
+    );
+    // THE DELETE'S OWN FIRST STEP (the live range the deleteSelection
+    // removes — the cursor the lo seat re-parks, the anchor the
+    // collapse wears)
+    app.on_creative_delete();
+    assert_eq!(
+        app.creative_search, "",
+        "the live range the whole value removes"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the removal the lo seat parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the removal the anchor collapses"
+    );
+    // THE BACKSPACE'S OWN FIRST STEP (the live range the before-seat
+    // lane never wears — the removal answers)
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    app.on_creative_select_all();
+    app.on_creative_backspace();
+    assert_eq!(
+        app.creative_search, "",
+        "the backspace the live range removes"
+    );
+    // THE CHAR'S OWN FIRST STEP (the replaced word the typed char
+    // answers — the after-insert seat wears)
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    app.on_creative_select_all();
+    app.on_creative_char('x');
+    assert_eq!(app.creative_search, "x", "the char the live range replaces");
+    assert_eq!(app.creative_search_cursor, 1, "the after-insert seat wears");
+    // THE PLAIN RIDE'S OWN COLLAPSE (the one-arg walk the anchor
+    // clears — the seat the same step keeps: the all the end seat
+    // banks, the LEFT the one step answers)
+    app.on_creative_backspace();
+    for c in "ello world".chars() {
+        app.on_creative_char(c);
+    }
+    app.on_creative_select_all();
+    app.on_creative_caret_arrow(true);
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the plain ride the anchor collapses"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 9,
+        "the plain ride the seat steps"
+    );
+    // THE PLAIN PARK'S OWN COLLAPSE (the one-arg park the same law
+    // wears)
+    app.on_creative_select_all();
+    app.on_creative_caret_home_end(true);
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the plain park the anchor collapses"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the plain park the len wears"
+    );
+    // THE VALUE'S OWN RESET (the click lanes the 276 geometry wears —
+    // the "hello world" word the same x-band seats answer)
+    app.on_creative_select_all();
+    app.on_creative_backspace();
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    // THE CLICK LANES' OWN SEATS (the drawn panel the render banks —
+    // the rect the click lane reads)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (px, py) = app.creative_panel;
+    assert!(px != 0 || py != 0, "the render the panel banks");
+    let bx = px + 82;
+    let by = py + 6;
+    // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
+    // clears — the left edge the zero parks)
+    app.on_creative_select_all();
+    assert!(
+        app.on_creative_box_click(bx + 4, by + 4),
+        "the inside click the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the left edge the zero parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the plain click the anchor collapses"
+    );
+    // THE SHIFT-CLICK'S OWN RANGE (the pre-click cursor the anchor
+    // banks — the 'w' left edge the seat 6 the [0, 6) range opens)
+    let wx = bx + 4 + crate::gui::font_text_width("hello ");
+    assert!(
+        app.on_creative_box_shift_click(wx, by + 4),
+        "the shift click the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the 'w' left edge the seat 6"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the pre-click cursor the anchor banks"
+    );
+    // THE LIVE ANCHOR'S OWN KEEP (the second shift-click the anchor
+    // the same seat keeps — the 'e' seat the range re-opens)
+    let ex = bx + 4 + crate::gui::font_text_width("h");
+    assert!(
+        app.on_creative_box_shift_click(ex, by + 4),
+        "the second shift the TRUE wears"
+    );
+    assert_eq!(app.creative_search_cursor, 1, "the 'e' seat the mid wears");
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the live anchor the same seat keeps"
+    );
+    // the live range the delete answers (the [0, 1) 'h' the removal
+    // wears)
+    app.on_creative_delete();
+    assert_eq!(
+        app.creative_search, "ello world",
+        "the live range the removal answers"
+    );
+    // THE OUTSIDE SHIFT'S OWN KEEP (the FALSE the caller answers —
+    // the seats the same keep)
+    app.on_creative_select_all();
+    assert!(
+        !app.on_creative_box_shift_click(bx + 40, by + 100),
+        "the outside shift the FALSE wears"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the outside the anchor keeps"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the outside the cursor keeps"
+    );
+    // THE STALE TAB'S OWN GATE (the category seat the lane never
+    // answers — the tab walk the anchor the same reset wears)
+    app.select_creative_tab(0);
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the tab walk the anchor resets"
+    );
+    assert!(
+        !app.on_creative_box_shift_click(wx, by + 4),
+        "the stale tab the FALSE wears"
+    );
+    // THE STALE SCREEN'S OWN GATE (the other screens the lane never
+    // answers)
+    app.open(ScreenKind::Title);
+    assert!(
+        !app.on_creative_box_shift_click(wx, by + 4),
+        "the stale screen the FALSE wears"
+    );
+    // THE REOPEN'S OWN RESET (the picker re-open the anchor the same
+    // reset retires)
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    for c in "word".chars() {
+        app.on_creative_char(c);
+    }
+    app.on_creative_select_all();
+    app.open_creative_picker();
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the reopen the anchor resets"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the reopen the cursor resets"
+    );
+}
