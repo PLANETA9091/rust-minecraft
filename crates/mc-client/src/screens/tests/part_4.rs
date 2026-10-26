@@ -9839,6 +9839,168 @@ fn the_slider_s_own_keyboard_grab_walk_the_toggle_the_arrow_step_wears() {
     );
 }
 
+/// THE OPTIONS HOUSE'S OWN TAB RIDE (the autopush-243 round — the
+/// Screen's handleTabNavigation walk the Options family serves: the
+/// children's ADD-ORDER law the seats wear [the all-zero
+/// tabOrderGroup the stable sort never re-seats — the worldoptions
+/// the header's own add the 4th seat banks, the VISUAL head the
+/// order never wears], the nothing-focused arm the direction's end
+/// seat, the wrap the clearFocus re-walk speaks, the SLIDER seat
+/// the KEYBOARD_TAB input the grab ARMS [the setFocused(true) law],
+/// the PLAIN button seat the grab never wears, the stale id the
+/// nothing-focused arm answers, the press's plain claim the same
+/// focus the MOUSE walk banks).
+#[test]
+fn the_options_house_s_own_tab_ride_the_add_order_the_tab_grab_wears() {
+    let mut app = App::new(3);
+    // THE SCREEN GATE'S OWN SILENCE (the title's Tab the walk never
+    // wears)
+    app.on_options_tab(true);
+    assert!(
+        app.options_focus.is_none(),
+        "the wrong screen the walk never speaks"
+    );
+
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    // THE NOTHING-FOCUSED ARM (the forward the HEAD seat — the
+    // add-order law the first slider keeps)
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_sensitivity"),
+        "the head seat the first build's own row wears"
+    );
+    assert!(
+        app.options_grab,
+        "the KEYBOARD_TAB input the setFocused(true) grab arms"
+    );
+    // THE BUILD'S OWN RE-WEAR (the grabbed seat the handle lights)
+    app.render_title_buttons_for_test();
+    let b = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    assert!(b.focused && b.can_change_value, "the build the flags wear");
+
+    // THE ADD-ORDER WALK (the column's own seats — the title lane
+    // the worldoptions never builds)
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_music"), "the second seat");
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_fov"), "the third seat");
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("controls"),
+        "the pair's LEFT the add order the 4th seat wears"
+    );
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("accessibility"));
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("back"), "the tail the done wears");
+    // THE PLAIN SEAT'S OWN GRAB DIE (the re-apply the mirror clears)
+    assert!(
+        !app.options_grab,
+        "the plain button the canChangeValue never carries"
+    );
+    app.render_title_buttons_for_test();
+    let bk = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "back")
+        .expect("the done row")
+        .clone();
+    assert!(bk.focused, "the build the plain seat's frame wears");
+
+    // THE WRAP (the off-the-tail forward the HEAD re-arms — the
+    // clearFocus re-walk the law keeps, the slider the grab re-banks)
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_sensitivity"));
+    assert!(app.options_grab, "the slider seat the Tab re-arms");
+
+    // THE BACKWARD WALK (the Shift+Tab the tail serves — the
+    // nothing-focused arm the TAIL seat answers)
+    app.on_options_tab(false);
+    assert_eq!(app.options_focus, Some("back"));
+    app.options_focus = None;
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus,
+        Some("back"),
+        "the backward from nothing the tail wears"
+    );
+
+    // THE IN-WORLD ADD SEAT (the worldoptions the header's own add
+    // banks — the 4th seat the ADD order wears, NOT the visual head
+    // the h/2-64 row answers)
+    app.options_focus = None;
+    app.options_return = ScreenKind::World;
+    app.render_title_buttons_for_test();
+    app.on_options_tab(true);
+    app.on_options_tab(true);
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_fov"));
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("worldoptions"),
+        "the header row the ADD order the 4th seat banks"
+    );
+    assert!(
+        !app.options_grab,
+        "the header row the plain class the grab never wears"
+    );
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("controls"));
+
+    // THE STALE ID'S OWN ARM (the worldoptions the title lane never
+    // builds — the belief the nothing-focused law answers)
+    app.options_focus = Some("worldoptions");
+    app.options_return = ScreenKind::Title;
+    app.render_title_buttons_for_test();
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_sensitivity"),
+        "the stale seat the head re-arms"
+    );
+
+    // THE PRESS'S OWN PLAIN CLAIM (the click the done the focus
+    // wears, the grab the plain class never carries)
+    app.render_title_buttons_for_test();
+    let bk2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "back")
+        .expect("the done row")
+        .clone();
+    app.on_press(bk2.x + bk2.w / 2, bk2.y + bk2.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("back"),
+        "the plain click the seat claims"
+    );
+    assert!(!app.options_grab);
+
+    // THE MOUSE-GRAB'S OWN RE-BANK (the Enter toggled-off grab the
+    // Tab-away-and-back the KEYBOARD_TAB arm re-banks)
+    app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+    assert!(app.options_grab, "the slider click the MOUSE grab banks");
+    app.on_options_key_selection();
+    assert!(!app.options_grab, "the Enter the grab toggles off");
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_music"));
+    app.on_options_tab(false);
+    assert_eq!(app.options_focus, Some("opt_sensitivity"));
+    assert!(
+        app.options_grab,
+        "the Tab re-focus the KEYBOARD_TAB grab re-banks"
+    );
+}
+
 /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
 /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
 /// the caption the ends law speaks (the 30 the options.fov.min

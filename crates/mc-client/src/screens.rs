@@ -31786,14 +31786,32 @@ impl App {
                     claimed = Some("opt_music");
                 }
             }
+            // THE PLAIN BUTTONS' OWN CLAIM (the Tab-ride round banks —
+            // the MOUSE press the button's own focus wears [the
+            // vanilla click the changeFocus walk answers], the grab
+            // the plain class never carries; the highlighted sprite
+            // the isHoveredOrFocused law the focused seat lights)
+            if claimed.is_none() {
+                for b in &self.buttons {
+                    if b.hovered(mx, my)
+                        && matches!(b.id, "worldoptions" | "controls" | "accessibility" | "back")
+                    {
+                        claimed = Some(b.id);
+                        break;
+                    }
+                }
+            }
             // THE APPLY'S OWN LAW (the setFocused fold — the SAME seat
             // the grab re-banks [the vanilla's own re-arm the second
             // click speaks], the MOVE the old seat dies + the new
-            // arms, the no-claim the clearFocus the belief clears)
+            // arms, the no-claim the clearFocus the belief clears;
+            // the PLAIN button seat the claim the Tab-ride round
+            // banks — the MOUSE press the button's own focus wears,
+            // the grab the plain class never carries)
             match claimed {
                 Some(id) => {
                     self.options_focus = Some(id);
-                    self.options_grab = true;
+                    self.options_grab = matches!(id, "opt_sensitivity" | "opt_music" | "opt_fov");
                 }
                 None => {
                     self.options_focus = None;
@@ -35003,6 +35021,93 @@ impl App {
             "opt_fov" => self.fov = fov_from_value(next),
             _ => {}
         }
+    }
+
+    /// THE OPTIONS HOUSE'S OWN TAB RIDE (javap 26.2 the Screen
+    /// keyPressed walk the Tab arm answers — the `KeyEvent.key()`
+    /// tableswitch the 258 case the `createTabEvent(!hasShiftDown())`
+    /// serves, the `nextFocusPath` the container's own law speaks,
+    /// the wrap the `clearFocus()` re-walk the END seats arms: the
+    /// off-the-tail forward the HEAD seat re-arms, the off-the-head
+    /// backward the TAIL serves). THE TRAVERSAL'S OWN ORDER (the
+    /// `handleTabNavigation` walk): the children() snapshot the
+    /// `Comparator.comparingInt` `getTabOrderGroup()` sort answers —
+    /// the ALL-ZERO groups the stable sort never re-seats, the ADD
+    /// ORDER the traversal wears (the buttons store the render's own
+    /// build banks: the THREE sliders the column's own seats keep,
+    /// the worldoptions the header's own add wears — the row the
+    /// h/2-64 seat the VISUAL head answers BUT the add order the
+    /// 4th seat banks, the pair + the done the footer keeps). THE
+    /// INACTIVE SEAT'S OWN REFUSAL (the `AbstractWidget
+    /// .nextFocusPath` walk — the `isActive()` null the move-on
+    /// law serves; the Options family the always-active rows build,
+    /// the filter the honest shape keeps). THE APPLY'S OWN LAW (the
+    /// changeFocus walk the clearFocus + applyFocus pair serves):
+    /// the SLIDER seat the KEYBOARD_TAB input the grab ARMS (the
+    /// setFocused(true) law the probe banks — the canChangeValue the
+    /// Tab focus the same MOUSE arm wears), the PLAIN button seat
+    /// the grab never wears (the AbstractButton class the
+    /// canChangeValue field the slider alone carries), the OLD
+    /// seat's grab the re-apply the global mirror clears.
+    pub fn on_options_tab(&mut self, forward: bool) {
+        if self.screen != ScreenKind::Options {
+            return;
+        }
+        // THE FOCUSABLES' OWN ORDER (the children() add-order law —
+        // the buttons store the build's own snapshot banks, the
+        // focusable ids the filter keeps, the inactive the
+        // nextFocusPath refusal wears)
+        const FOCUSABLE: [&str; 7] = [
+            "opt_sensitivity",
+            "opt_music",
+            "opt_fov",
+            "worldoptions",
+            "controls",
+            "accessibility",
+            "back",
+        ];
+        let order: Vec<&'static str> = self
+            .buttons
+            .iter()
+            .filter(|b| b.active && FOCUSABLE.contains(&b.id))
+            .map(|b| b.id)
+            .collect();
+        let len = order.len();
+        if len == 0 {
+            return;
+        }
+        // THE CURRENT SEAT (the getFocused walk — the belief the id
+        // wears, the STALE id the build's rows never carry [the
+        // worldoptions the title lane never builds] the
+        // nothing-focused arm answers)
+        let cur = self
+            .options_focus
+            .and_then(|id| order.iter().position(|s| *s == id));
+        // THE STEP (the handleTabNavigation law — the indexOf the ±1
+        // answer, the nothing-focused arm the direction's end seat,
+        // the off-the-end the wrap the modulo speaks)
+        let next = match cur {
+            Some(i) => {
+                if forward {
+                    (i + 1) % len
+                } else {
+                    (i + len - 1) % len
+                }
+            }
+            None => {
+                if forward {
+                    0
+                } else {
+                    len - 1
+                }
+            }
+        };
+        // THE APPLY (the changeFocus law — the slider seat the
+        // KEYBOARD_TAB grab arms, the plain seat the grab never
+        // wears, the old seat's grab the same fold dies)
+        let id = order[next];
+        self.options_focus = Some(id);
+        self.options_grab = matches!(id, "opt_sensitivity" | "opt_music" | "opt_fov");
     }
 
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
@@ -66647,7 +66752,7 @@ impl App {
         // flat port the top seat the row wears, the Done footer the
         // rect the overlap never speaks).
         if self.options_return == ScreenKind::World {
-            self.buttons.push(Button::new(
+            let mut wo = Button::new(
                 "worldoptions",
                 tr("options.worldOptions.button")
                     .unwrap_or("World Options...")
@@ -66655,7 +66760,9 @@ impl App {
                 cx,
                 h / 2 - 64,
                 bw,
-            ));
+            );
+            wo.focused = self.options_focus == Some("worldoptions");
+            self.buttons.push(wo);
         }
         // THE ACCESSIBILITY SCREEN'S OWN ROW (javap the 26.2
         // OptionsScreen.init — the `options.accessibility` button the
@@ -66674,14 +66781,16 @@ impl App {
         // RIGHT the accessibility seat the sub-screen's own opener
         // wears, the 4px center gap the addSmall walk answers — the
         // flat port's slider rows the column the seats above keep)
-        self.buttons.push(Button::new(
+        let mut controls = Button::new(
             "controls",
             tr("options.controls").unwrap_or("Controls...").to_string(),
             cx - 4 - bw / 2,
             h / 2 + 32,
             bw,
-        ));
-        self.buttons.push(Button::new(
+        );
+        controls.focused = self.options_focus == Some("controls");
+        self.buttons.push(controls);
+        let mut accessibility = Button::new(
             "accessibility",
             tr("options.accessibility")
                 .unwrap_or("Accessibility Settings...")
@@ -66689,14 +66798,18 @@ impl App {
             cx + 4 + bw / 2,
             h / 2 + 32,
             bw,
-        ));
-        self.buttons.push(Button::new(
+        );
+        accessibility.focused = self.options_focus == Some("accessibility");
+        self.buttons.push(accessibility);
+        let mut back = Button::new(
             "back",
             tr("gui.done").unwrap_or("Done").to_string(),
             cx,
             h - 28,
             bw,
-        ));
+        );
+        back.focused = self.options_focus == Some("back");
+        self.buttons.push(back);
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
         }

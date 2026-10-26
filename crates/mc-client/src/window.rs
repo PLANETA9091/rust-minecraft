@@ -2000,6 +2000,20 @@ pub fn run_gui_app(
             let shift = window.is_key_down(Key::LeftShift);
             app.on_debug_options_tab(!shift);
         }
+        // THE OPTIONS HOUSE'S OWN TAB RIDE (the same Screen walk the
+        // Options family wears — the Tab the children's add-order law
+        // the seats steps [the sliders the column's own build keeps,
+        // the worldoptions the header's own add banks, the pair + the
+        // done the footer serves], the slider seat the KEYBOARD_TAB
+        // input the grab ARMS [the setFocused(true) law the probe
+        // banks], the plain button seat the grab never wears, the
+        // wrap the clearFocus re-walk the end seats speaks)
+        if app.screen == crate::screens::ScreenKind::Options
+            && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
+        {
+            let shift = window.is_key_down(Key::LeftShift);
+            app.on_options_tab(!shift);
+        }
         // THE FOCUSED BUTTON'S OWN ACTIVATION (javap 26.2
         // AbstractButton.keyPressed walk — the `isSelection()` ask
         // the Enter/Space press answers: the playDownSound + the
