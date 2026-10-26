@@ -26981,3 +26981,93 @@ fn the_creative_search_own_caret_seat_wears() {
         "the reopen the cursor resets"
     );
 }
+
+/// THE CREATIVE SEARCH BOX'S OWN CLICK SEAT (the 270/271 entry + the
+/// 272 debug laws the EditBox.mouseClicked walk the search tab wears
+/// — the inside click the caret the x-band seats, the outside the
+/// FALSE the tab/palette lanes answer, the stale tab/screen the
+/// gates keep).
+#[test]
+fn the_creative_search_own_click_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    // the drawn panel's rect (the render banks the origin the click
+    // lane reads — the (82, 6, 80x9) EditBox law the band speaks)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (px, py) = app.creative_panel;
+    assert!(px != 0 || py != 0, "the render the panel banks");
+    let bx = px + 82;
+    let by = py + 6;
+    // THE 'W' LEFT EDGE'S OWN SEAT (the x-band the prefix widths
+    // answers — the plain click the caret seats)
+    let wx = bx + 4 + crate::gui::font_text_width("hello ");
+    assert!(
+        app.on_creative_box_click(wx, by + 4),
+        "the inside click the TRUE consumes"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the 'w' left edge the seat 6"
+    );
+    // THE LEFT EDGE'S OWN ZERO PARK + THE PAST-TAIL'S OWN LEN CLAMP
+    // (the past-tail x the box band keeps — the inner right edge the
+    // 72px the 66px word's tail the clamp parks)
+    assert!(
+        app.on_creative_box_click(bx + 4, by + 4),
+        "the left edge the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the left edge the zero parks"
+    );
+    assert!(
+        app.on_creative_box_click(bx + 74, by + 4),
+        "the past-tail the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the past-tail the len parks"
+    );
+    // THE MID-STRING'S OWN SEAT (the 'e' left edge the seat 1 wears)
+    let ex = bx + 4 + crate::gui::font_text_width("h");
+    assert!(
+        app.on_creative_box_click(ex, by + 4),
+        "the mid click the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 1,
+        "the 'e' seat the plain wears"
+    );
+    // THE OUTSIDE BAND'S OWN KEEP (the palette row the walk never
+    // owns — the FALSE the caller answers, the cursor keeps)
+    assert!(
+        !app.on_creative_box_click(bx + 40, by + 100),
+        "the outside the FALSE wears"
+    );
+    assert_eq!(app.creative_search_cursor, 1, "the outside the seat keeps");
+    // THE STALE TAB'S OWN GATE (the category seat the lane never
+    // answers — the tab walk the cursor reset the same walk wears)
+    app.select_creative_tab(0);
+    assert!(
+        !app.on_creative_box_click(wx, by + 4),
+        "the stale tab the FALSE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the tab walk the cursor resets"
+    );
+    // THE STALE SCREEN'S OWN GATE (the other screens the lane never
+    // answers)
+    app.open(ScreenKind::Title);
+    assert!(
+        !app.on_creative_box_click(wx, by + 4),
+        "the stale screen the FALSE wears"
+    );
+}

@@ -23720,6 +23720,36 @@ impl App {
         };
     }
 
+    /// THE SEARCH BOX'S OWN CLICK SEAT (the EditBox.mouseClicked walk
+    /// the 270/271 entry + the 272 debug laws the box wears — the
+    /// inside click the caret the x-band seats, the TRUE the consumed
+    /// click returns (the caller's buttons walk the return skips),
+    /// the outside click the FALSE the caller the tab/palette lanes
+    /// answers; the rect the render's own (82, 6, 80x9) EditBox law
+    /// keeps, the panel the render banks; the entry_click_seat law
+    /// the display-less box the same x-band walk wears, the past-tail
+    /// the clamp parks, the left edge the zero keeps).
+    pub fn on_creative_box_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return false;
+        }
+        let (px, py) = self.creative_panel;
+        if px == 0 && py == 0 {
+            return false; // the un-banked panel the render never spoke
+        }
+        let bx = px + 82;
+        let by = py + 6;
+        let inside = mx >= bx && mx < bx + 80 && my >= by && my < by + 9;
+        if inside {
+            // the caret's own x-band seek (the vanilla mouseClick the
+            // one-arg moveCursorTo walk serves)
+            self.creative_search_cursor = entry_click_seat(&self.creative_search, 0, mx, bx);
+        }
+        inside
+    }
+
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
     /// `Screen.hasControlDown()` branch the `deleteWords(-1)` walk
     /// serves — the CARET SEAT the deleteWords walk the seat's own

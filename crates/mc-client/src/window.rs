@@ -2638,6 +2638,14 @@ pub fn run_gui_app(
                 // EditBox mouseClicked law the two-box seat serves —
                 // the inside click the focus re-arms, the buttons walk
                 // the consume skips)
+            } else if app.screen == crate::screens::ScreenKind::Creative
+                && app.on_creative_box_click(gmx, gmy)
+            {
+                // THE PICKER'S OWN BOX CONSUME (the same EditBox
+                // mouseClicked law the search tab wears — the inside
+                // click the caret the x-band seats, the buttons walk
+                // the consume skips, the outside the tab/palette lanes
+                // answer)
             } else {
                 if app.screen == crate::screens::ScreenKind::DebugOptions {
                     app.debug_search_focus = false;
