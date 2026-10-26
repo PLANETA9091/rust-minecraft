@@ -22478,3 +22478,217 @@ fn the_sub_screen_plain_rows_own_enter_activation_wears() {
         "the tab-ride seat the same ride answers"
     );
 }
+
+/// THE KEY BINDS LIST'S OWN ARROW RIDE (the Up/Down the entry ride
+/// the list's own order serves — the model's own row table the y
+/// positions answer, the visible quartet the alphabetical law keeps,
+/// the band edge the scroll reveals [the past-bottom the +6 delta
+/// the row's own bottom speaks], the list's own ends the ride
+/// refuses, the reset column the target's own arm answers [the
+/// non-default the reset seat wears, the default the change seat
+/// wears], the footer pair the entry ride never joins, the armed
+/// rebind the ANY key the capture wears FIRST, the stale seat the
+/// built rows never carry the silence keeps, the grab the kb class
+/// never carries).
+#[test]
+fn the_key_binds_list_own_arrow_ride_the_rows_the_scroll_wear() {
+    let mut app = App::new(3);
+    use crate::options_file::key_binds as kb;
+
+    // THE WRONG SCREEN'S OWN SILENCE (the title's arrows the walk
+    // never wears — the stale seat the belief keeps)
+    app.open(ScreenKind::Title);
+    app.options_focus = Some("kb_change_jump");
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(app.screen, ScreenKind::Title, "the wrong screen silent");
+    assert_eq!(app.options_focus, Some("kb_change_jump"));
+
+    // THE NOTHING-FOCUSED'S OWN SILENCE (the fresh list the ride
+    // never arms — the open() the focus death wears)
+    app.open(ScreenKind::KeyBinds);
+    app.kb_scroll = 0.0;
+    app.render_title_buttons_for_test();
+    assert!(app.options_focus.is_none(), "the fresh ctor keeps");
+    app.on_key_binds_arrow(true, 180);
+    assert!(
+        app.options_focus.is_none() && app.kb_scroll == 0.0,
+        "the nothing-focused the silence keeps"
+    );
+
+    // THE VISIBLE RIDE (the store order the seated quartet wears —
+    // the alphabetical law jump/sneak/sprint/strafe-left the band
+    // seats, the Down the next row's change banks, the grab the kb
+    // class never carries)
+    let rows: Vec<&'static str> = app
+        .buttons
+        .iter()
+        .filter(|b| b.id.starts_with("kb_change_"))
+        .map(|b| b.id)
+        .collect();
+    assert_eq!(rows.len(), 4, "the visible quartet the band seats");
+    assert_eq!(
+        rows,
+        [
+            "kb_change_jump",
+            "kb_change_sneak",
+            "kb_change_sprint",
+            "kb_change_left"
+        ],
+        "the alphabetical law the seats wear"
+    );
+    let seat = |app: &App, id: &str| -> (i32, i32, i32, i32) {
+        let b = app.buttons.iter().find(|b| b.id == id).expect("the seat");
+        (b.x, b.y, b.w, b.h)
+    };
+    let (x, y, w, h) = seat(&app, rows[0]);
+    app.on_press(x + w / 2, y + h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some(rows[0]),
+        "the press the focus banks"
+    );
+    assert!(!app.options_grab, "the kb class the grab never carries");
+    // THE TOP'S OWN END (the up-ride the first row the list refuses)
+    app.on_key_binds_arrow(false, 180);
+    assert_eq!(
+        app.options_focus,
+        Some(rows[0]),
+        "the top end the ride refuses"
+    );
+    assert_eq!(app.kb_scroll, 0.0, "the top end the scroll never moves");
+    // THE DOWN RUN (the adjacent rows the change seats keep)
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(
+        app.options_focus,
+        Some(rows[1]),
+        "the down the next row banks"
+    );
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(app.options_focus, Some(rows[2]));
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(app.options_focus, Some(rows[3]));
+    assert_eq!(app.kb_scroll, 0.0, "the in-band ride the scroll keeps");
+
+    // THE BAND EDGE'S OWN FOLLOW (the past-bottom row the scroll
+    // reveals — the +6 delta the row's own bottom the band speaks,
+    // the next row's change the focus banks)
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(app.kb_scroll, 6.0, "the past-bottom the scroll reveals");
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_right"),
+        "the next row the focus banks"
+    );
+    // THE RE-BUILT STORE'S OWN RIDE (the render the fresh seats
+    // wears — the focused row the band's own bottom keeps, the
+    // up-ride the previous row the scroll never disturbs)
+    app.render_title_buttons_for_test();
+    let (x, y, w, h) = seat(&app, "kb_change_right");
+    assert_eq!(y, 132, "the revealed row the band's bottom seat wears");
+    app.on_key_binds_arrow(false, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_left"),
+        "the up the previous row banks"
+    );
+    assert_eq!(app.kb_scroll, 6.0, "the in-band up the scroll keeps");
+
+    // THE RESET COLUMN'S OWN RIDE (the non-default arm the reset
+    // seat the target's own answer wears — the sprint/left pair the
+    // armed reset column keeps, the ride the same column banks)
+    app.kb_scroll = 0.0;
+    app.key_binds[kb::SPRINT] = Some(kb::Bind::Keyboard(minifb::Key::C));
+    app.key_binds[kb::LEFT] = Some(kb::Bind::Keyboard(minifb::Key::V));
+    app.render_title_buttons_for_test();
+    let (x, y, w, h) = seat(&app, "kb_rowreset_sprint");
+    app.on_press(x + w / 2, y + h / 2);
+    assert_eq!(app.options_focus, Some("kb_rowreset_sprint"));
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_rowreset_left"),
+        "the reset column the target's arm wears"
+    );
+    // THE DEFAULT ARM'S OWN CHANGE SEAT (the next row's reset the
+    // default bind refuses — the isActive law the change seat wears,
+    // the past-bottom the scroll the same ride arms)
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(app.kb_scroll, 6.0, "the same band edge the scroll arms");
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_right"),
+        "the default arm the change seat wears"
+    );
+    // THE UP RIDE THE COLUMN KEEPS (the change seat the up the same
+    // change column banks — the render the fresh store the ride
+    // reads, the live loop's own rebuild law the frame wears)
+    app.render_title_buttons_for_test();
+    app.on_key_binds_arrow(false, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_left"),
+        "the up the change column keeps"
+    );
+
+    // THE LIST'S OWN BOTTOM END (the max scroll the last row the
+    // band keeps — the down-ride the end refuses, the up-ride the
+    // previous row banks)
+    app.kb_scroll = 1098.0;
+    app.render_title_buttons_for_test();
+    let (x, y, w, h) = seat(&app, "kb_change_debuglightmaptexture");
+    app.on_press(x + w / 2, y + h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_debuglightmaptexture"),
+        "the last row the press banks"
+    );
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_debuglightmaptexture"),
+        "the bottom end the ride refuses"
+    );
+    assert_eq!(app.kb_scroll, 1098.0, "the bottom end the scroll keeps");
+    app.on_key_binds_arrow(false, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_debugnetworkcharts"),
+        "the up the previous row banks"
+    );
+
+    // THE FOOTER'S OWN SILENCE (the addFooter pair the entry ride
+    // never joins — the kbdone the fixed seat the walk refuses)
+    app.options_focus = Some("kbdone");
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kbdone"),
+        "the footer the entry ride refuses"
+    );
+    assert_eq!(app.kb_scroll, 1098.0, "the footer the scroll keeps");
+
+    // THE ARMED REBIND'S OWN SILENCE (the ANY key the capture wears
+    // FIRST — the ride the armed frame never reaches)
+    app.options_focus = Some("kb_change_debuglightmaptexture");
+    app.kb_selected = Some(kb::DEBUG_LIGHTMAP_TEXTURE);
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_debuglightmaptexture"),
+        "the armed seat the ride never wears"
+    );
+    app.kb_selected = None;
+
+    // THE STALE SEAT'S OWN SILENCE (the off-band row the store never
+    // carries — the ride the built rows refuse)
+    app.kb_scroll = 0.0;
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("kb_change_debuglightmaptexture");
+    app.on_key_binds_arrow(true, 180);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_debuglightmaptexture"),
+        "the stale seat the silence keeps"
+    );
+    assert!(!app.options_grab, "the ride the grab never carries");
+}

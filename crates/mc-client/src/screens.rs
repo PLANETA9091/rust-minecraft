@@ -35565,6 +35565,97 @@ impl App {
         self.kb_scroll = next.clamp(0.0, max);
     }
 
+    /// THE KEY BINDS LIST'S OWN ARROW RIDE (javap 26.2 the
+    /// AbstractSelectionList's keyPressed walk the Up/Down the entry
+    /// ride serves — the focused entry the list's own order steps:
+    /// the model's own row table the y positions answer, the scroll
+    /// band the reveal follows [the above-band the top re-seats, the
+    /// past-bottom the bottom re-seats, the maxScrollAmount the clamp
+    /// keeps], the LIST'S OWN ENDS the walk refuses [the
+    /// moveSelection the ends the selection keeps], the SAME COLUMN
+    /// the ride wears [the reset column the target's own arm answers,
+    /// the default arm the change seat wears — the isActive law the
+    /// inactive reset refuses], the ARMED rebind the ANY key the
+    /// capture wears FIRST [the walk the armed frame never reaches],
+    /// the footer pair the entry walk never seats [the
+    /// kb_reset/kbdone the addFooter's own fixed pair the list
+    /// entries never join], the grab the kb class never carries).
+    pub fn on_key_binds_arrow(&mut self, down: bool, gui_h: i32) {
+        // THE GATES' OWN WALK (the screen the KeyBinds house keeps,
+        // the armed rebind the ANY key the capture owns FIRST — the
+        // selection ride the armed frame never reaches, the
+        // nothing-focused the silence keeps)
+        if self.screen != ScreenKind::KeyBinds || self.kb_selected.is_some() {
+            return;
+        }
+        let id = match self.options_focus {
+            Some(id) => id,
+            None => return,
+        };
+        // THE ENTRY SEATS' OWN GATE (the change/reset rows the list
+        // entries the walk serves — the footer pair the addFooter's
+        // own fixed seats the entry ride never joins)
+        if !(id.starts_with("kb_change_") || id.starts_with("kb_rowreset_")) {
+            return;
+        }
+        let seat = match self.buttons.iter().find(|b| b.id == id) {
+            Some(b) => (b.x, b.y, b.w, b.h),
+            None => return,
+        };
+        // THE MODEL'S OWN POSITION (the list-space y the scroll's own
+        // off adds — the row's seat the binary search answers, the
+        // stale store the model never carries the silence keeps)
+        use crate::options_file::key_binds as kb;
+        let model = Self::kb_rows_model();
+        let off = self.kb_scroll.round() as i32;
+        let pos = match model.binary_search_by(|(y, _)| (*y).cmp(&(seat.1 + off))) {
+            Ok(p) => p,
+            Err(_) => return,
+        };
+        // THE STEP'S OWN CLAMP (the list's own ends the walk refuses
+        // — the moveSelection the ends the selection keeps)
+        let next = if down {
+            Some(pos + 1)
+        } else {
+            pos.checked_sub(1)
+        };
+        let next = match next {
+            Some(n) if n < model.len() => n,
+            _ => return,
+        };
+        let (ty, ti) = model[next];
+        // THE BAND'S OWN FOLLOW (the scroll the reveal serves — the
+        // above-band the up-ride the top re-seats, the past-bottom
+        // the down-ride the bottom re-seats, the maxScrollAmount the
+        // clamp keeps, the in-band rows the scroll never disturbs)
+        let band_bottom = gui_h - 28;
+        let band = (band_bottom - kb::LIST_TOP).max(0);
+        let max = (kb::content_height() - band).max(0) as i32;
+        let by = ty - off;
+        let raw = if by < kb::LIST_TOP {
+            off - (kb::LIST_TOP - by)
+        } else if by + 20 > band_bottom {
+            off + (by + 20 - band_bottom)
+        } else {
+            off
+        };
+        let new_off = raw.clamp(0, max);
+        if new_off != off {
+            self.kb_scroll = new_off as f64;
+        }
+        // THE COLUMN'S OWN SEAT (the same column the ride keeps —
+        // the reset column the target's own arm answers [the
+        // non-default bind the reset seat wears], the default arm
+        // the change seat wears — the isActive law the inactive
+        // reset refuses)
+        let target = if id.starts_with("kb_rowreset_") && self.key_binds[ti] != kb::DEFAULTS[ti] {
+            Self::kb_reset_id(ti)
+        } else {
+            Self::kb_change_id(ti)
+        };
+        self.options_focus = Some(target);
+    }
+
     /// THE STORES' OWN LAZY LOAD (the dev-68 round — the hotbar lane's
     /// `HotbarManager.get(I)` pcs 1-13 once-flag walk the store access
     /// rides: the first open/flush/spill the file parse answers, the
@@ -67835,6 +67926,314 @@ impl App {
         })
     }
 
+    /// THE ROWS' OWN ID TABLES (the render's own matches the
+    /// helpers wear — the ONE law the render and the arrow walk
+    /// share: the [`Self::kb_change_id`] the change seat's id
+    /// answers, the [`Self::kb_reset_id`] the reset seat's id keeps,
+    /// the catchall arms the hotbar-nine tail the tables' own shape
+    /// keeps, the arms the render's own recon docs travel with)
+    fn kb_change_id(i: usize) -> &'static str {
+        use crate::options_file::key_binds as kb;
+        match i {
+            kb::FORWARD => "kb_change_forward",
+            kb::LEFT => "kb_change_left",
+            kb::BACK => "kb_change_back",
+            kb::RIGHT => "kb_change_right",
+            kb::JUMP => "kb_change_jump",
+            kb::SNEAK => "kb_change_sneak",
+            kb::SPRINT => "kb_change_sprint",
+            kb::INVENTORY => "kb_change_inventory",
+            kb::SWAP_OFFHAND => "kb_change_swapoffhand",
+            kb::DROP => "kb_change_drop",
+            // THE GAMEPLAY TRIO'S OWN IDS (the rows the group walk the
+            // BETWEEN seat renders — the ctor order the ids keep)
+            kb::USE => "kb_change_use",
+            kb::ATTACK => "kb_change_attack",
+            kb::PICK_ITEM => "kb_change_pickitem",
+            // THE HOTBAR NINE'S OWN IDS (the rows the inventory group
+            // the same stride keeps — the ctor's array order the ids
+            // answer)
+            kb::HOTBAR_1 => "kb_change_hotbar1",
+            kb::HOTBAR_2 => "kb_change_hotbar2",
+            kb::HOTBAR_3 => "kb_change_hotbar3",
+            kb::HOTBAR_4 => "kb_change_hotbar4",
+            kb::HOTBAR_5 => "kb_change_hotbar5",
+            kb::HOTBAR_6 => "kb_change_hotbar6",
+            kb::HOTBAR_7 => "kb_change_hotbar7",
+            kb::HOTBAR_8 => "kb_change_hotbar8",
+            kb::HOTBAR_9 => "kb_change_hotbar9",
+            // THE ACTIVATOR PAIR'S OWN IDS (the rows the creative
+            // group walk the AFTER seat renders — the ctor's putfield
+            // order the ids answer)
+            kb::SAVE_ACTIVATOR => "kb_change_saveactivator",
+            kb::LOAD_ACTIVATOR => "kb_change_loadactivator",
+            // THE SPECTATOR PAIR'S OWN IDS (the rows the spectator
+            // group walk the AFTER seat renders — the ctor's putfield
+            // order the ids answer)
+            kb::SPECTATOR_OUTLINES => "kb_change_spectatoroutlines",
+            kb::SPECTATOR_HOTBAR => "kb_change_spectatorhotbar",
+            // THE DEBUG ROW'S OWN ID (the row the debug group walk the
+            // AFTER seat renders — the ctor's putfield order the id
+            // answers)
+            kb::DEBUG_OVERLAY => "kb_change_debugoverlay",
+            // THE DEBUG MODIFIER'S OWN ID (the row the debug pair walk
+            // the AFTER seat renders — the ctor's putfield order the
+            // id answers)
+            kb::DEBUG_MODIFIER => "kb_change_debugmodifier",
+            // THE DEBUG CRASH'S OWN ID (the row the debug trio walk
+            // the AFTER seat renders — the ctor's putfield order the
+            // id answers)
+            kb::DEBUG_CRASH => "kb_change_debugcrash",
+            // THE DEBUG RELOAD CHUNK'S OWN ID (the row the debug
+            // quartet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_RELOAD_CHUNK => "kb_change_debugreloadchunk",
+            // THE DEBUG SHOW HITBOXES' OWN ID (the row the debug
+            // quintet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SHOW_HITBOXES => "kb_change_debugshowhitboxes",
+            // THE DEBUG CLEAR CHAT'S OWN ID (the row the debug
+            // sextet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_CLEAR_CHAT => "kb_change_debugclearchat",
+            // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the row the debug
+            // septet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_change_debugchunkborders",
+            // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the row the
+            // debug octet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_change_debugadvtooltips",
+            // THE DEBUG COPY RECREATE COMMAND'S OWN ID (the row the
+            // debug nonet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_COPY_RECREATE_COMMAND => "kb_change_debugcopyrecreate",
+            // THE DEBUG SPECTATE'S OWN ID (the row the debug ten-row
+            // walk the AFTER seat renders — the ctor's putfield order
+            // the id answers)
+            kb::DEBUG_SPECTATE => "kb_change_debugspectate",
+            // THE DEBUG SWITCH GAME MODE'S OWN ID (the row the debug
+            // eleven-row walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SWITCH_GAME_MODE => "kb_change_debugswitchgamemode",
+            // THE DEBUG DEBUG OPTIONS' OWN ID (the row the debug
+            // twelve-row walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_DEBUG_OPTIONS => "kb_change_debugoptions",
+            // THE DEBUG FOCUS PAUSE'S OWN ID (the row the debug
+            // thirteen-row walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_FOCUS_PAUSE => "kb_change_debugfocuspause",
+            // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ID (the row the
+            // debug fourteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_change_debugdumptextures",
+            // THE DEBUG RELOAD RESOURCE PACKS' OWN ID (the row the
+            // debug fifteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_change_debugreloadpacks",
+            // THE DEBUG PROFILING'S OWN ID (the row the
+            // debug sixteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_PROFILING => "kb_change_debugprofiling",
+            // THE DEBUG COPY LOCATION'S OWN ID (the row the
+            // debug seventeen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_COPY_LOCATION => "kb_change_debugcopylocation",
+            // THE DEBUG DUMP VERSION'S OWN ID (the row the
+            // debug eighteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_DUMP_VERSION => "kb_change_debugdumpversion",
+            // THE DEBUG PROFILING CHART'S OWN ID (the row the
+            // debug nineteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_PROFILING_CHART => "kb_change_debugprofilingchart",
+            // THE DEBUG FPS CHARTS'S OWN ID (the row the
+            // debug twenty-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_FPS_CHARTS => "kb_change_debugfpscharts",
+            // THE DEBUG NETWORK CHARTS'S OWN ID (the row the
+            // debug twenty-one-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_NETWORK_CHARTS => "kb_change_debugnetworkcharts",
+            // THE DEBUG LIGHTMAP TEXTURE'S OWN ID (the row the
+            // debug twenty-two-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_LIGHTMAP_TEXTURE => "kb_change_debuglightmaptexture",
+            _ => "kb_change_hotbar9",
+        }
+    }
+
+    fn kb_reset_id(i: usize) -> &'static str {
+        use crate::options_file::key_binds as kb;
+        match i {
+            kb::FORWARD => "kb_rowreset_forward",
+            kb::LEFT => "kb_rowreset_left",
+            kb::BACK => "kb_rowreset_back",
+            kb::RIGHT => "kb_rowreset_right",
+            kb::JUMP => "kb_rowreset_jump",
+            kb::SNEAK => "kb_rowreset_sneak",
+            kb::SPRINT => "kb_rowreset_sprint",
+            kb::INVENTORY => "kb_rowreset_inventory",
+            kb::SWAP_OFFHAND => "kb_rowreset_swapoffhand",
+            kb::DROP => "kb_rowreset_drop",
+            // THE GAMEPLAY TRIO'S OWN IDS (the same group walk's seats)
+            kb::USE => "kb_rowreset_use",
+            kb::ATTACK => "kb_rowreset_attack",
+            kb::PICK_ITEM => "kb_rowreset_pickitem",
+            // THE HOTBAR NINE'S OWN IDS (the same seats the rows keep)
+            kb::HOTBAR_1 => "kb_rowreset_hotbar1",
+            kb::HOTBAR_2 => "kb_rowreset_hotbar2",
+            kb::HOTBAR_3 => "kb_rowreset_hotbar3",
+            kb::HOTBAR_4 => "kb_rowreset_hotbar4",
+            kb::HOTBAR_5 => "kb_rowreset_hotbar5",
+            kb::HOTBAR_6 => "kb_rowreset_hotbar6",
+            kb::HOTBAR_7 => "kb_rowreset_hotbar7",
+            kb::HOTBAR_8 => "kb_rowreset_hotbar8",
+            kb::HOTBAR_9 => "kb_rowreset_hotbar9",
+            // THE ACTIVATOR PAIR'S OWN IDS (the same seats the rows
+            // keep)
+            kb::SAVE_ACTIVATOR => "kb_rowreset_saveactivator",
+            kb::LOAD_ACTIVATOR => "kb_rowreset_loadactivator",
+            // THE SPECTATOR PAIR'S OWN IDS (the same seats the rows
+            // keep)
+            kb::SPECTATOR_OUTLINES => "kb_rowreset_spectatoroutlines",
+            kb::SPECTATOR_HOTBAR => "kb_rowreset_spectatorhotbar",
+            // THE DEBUG ROW'S OWN ID (the same seat the row keeps)
+            kb::DEBUG_OVERLAY => "kb_rowreset_debugoverlay",
+            // THE DEBUG MODIFIER'S OWN ID (the same seat the row
+            // keeps — the pair the file's own END rows wear)
+            kb::DEBUG_MODIFIER => "kb_rowreset_debugmodifier",
+            // THE DEBUG CRASH'S OWN ID (the same seat the row
+            // keeps — the trio the file's own END rows wear)
+            kb::DEBUG_CRASH => "kb_rowreset_debugcrash",
+            // THE DEBUG RELOAD CHUNK'S OWN ID (the same seat the
+            // row keeps — the quartet the file's own END rows wear)
+            kb::DEBUG_RELOAD_CHUNK => "kb_rowreset_debugreloadchunk",
+            // THE DEBUG SHOW HITBOXES' OWN ID (the same seat the
+            // row keeps — the quintet the file's own END rows wear)
+            kb::DEBUG_SHOW_HITBOXES => "kb_rowreset_debugshowhitboxes",
+            // THE DEBUG CLEAR CHAT'S OWN ID (the same seat the
+            // row keeps — the sextet the file's own END rows wear)
+            kb::DEBUG_CLEAR_CHAT => "kb_rowreset_debugclearchat",
+            // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the same seat the
+            // row keeps — the septet the file's own END rows wear)
+            kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_rowreset_debugchunkborders",
+            // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the same seat
+            // the row keeps — the octet the file's own END rows wear)
+            kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_rowreset_debugadvtooltips",
+            kb::DEBUG_COPY_RECREATE_COMMAND => "kb_rowreset_debugcopyrecreate",
+            // THE DEBUG SPECTATE'S OWN ID (the same seat the row
+            // keeps — the ten-row walk the file's own END rows wear)
+            kb::DEBUG_SPECTATE => "kb_rowreset_debugspectate",
+            // THE DEBUG SWITCH GAME MODE'S OWN ID (the same seat the
+            // row keeps — the eleven-row walk the file's own END rows
+            // wear)
+            kb::DEBUG_SWITCH_GAME_MODE => "kb_rowreset_debugswitchgamemode",
+            kb::DEBUG_DEBUG_OPTIONS => "kb_rowreset_debugoptions",
+            // THE DEBUG FOCUS PAUSE'S OWN ID (the same seat the row
+            // keeps — the thirteen-row walk the file's own END rows
+            // wear)
+            kb::DEBUG_FOCUS_PAUSE => "kb_rowreset_debugfocuspause",
+            // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ID (the same seat
+            // the row keeps — the fourteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_rowreset_debugdumptextures",
+            // THE DEBUG RELOAD RESOURCE PACKS' OWN ID (the same seat
+            // the row keeps — the fifteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_rowreset_debugreloadpacks",
+            // THE DEBUG PROFILING'S OWN ID (the same seat
+            // the row keeps — the sixteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_PROFILING => "kb_rowreset_debugprofiling",
+            // THE DEBUG COPY LOCATION'S OWN ID (the same seat
+            // the row keeps — the seventeen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_COPY_LOCATION => "kb_rowreset_debugcopylocation",
+            // THE DEBUG DUMP VERSION'S OWN ID (the same seat
+            // the row keeps — the eighteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_DUMP_VERSION => "kb_rowreset_debugdumpversion",
+            // THE DEBUG PROFILING CHART'S OWN ID (the same seat
+            // the row keeps — the nineteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_PROFILING_CHART => "kb_rowreset_debugprofilingchart",
+            // THE DEBUG FPS CHARTS'S OWN ID (the same seat
+            // the row keeps — the twenty-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_FPS_CHARTS => "kb_rowreset_debugfpscharts",
+            // THE DEBUG NETWORK CHARTS'S OWN ID (the same seat
+            // the row keeps — the twenty-one-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_NETWORK_CHARTS => "kb_rowreset_debugnetworkcharts",
+            // THE DEBUG LIGHTMAP TEXTURE'S OWN RESET ID (the row the
+            // debug twenty-two-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_LIGHTMAP_TEXTURE => "kb_rowreset_debuglightmaptexture",
+            _ => "kb_rowreset_hotbar9",
+        }
+    }
+
+    /// THE LIST MODEL'S OWN TABLE (the render-order rows the y
+    /// positions the group constants wear — the seated slices the
+    /// group walks bank, the (y, index) pairs the arrow walk's own
+    /// entry ride reads: the movement/gameplay/inventory/hotbar/
+    /// creative/spectator/debug groups the render's own order keeps,
+    /// the y the LIST-space seat the scroll's own off adds, the
+    /// groups ascend the table the binary search answers)
+    fn kb_rows_model() -> &'static Vec<(i32, usize)> {
+        use crate::options_file::key_binds as kb;
+        static ROWS: std::sync::OnceLock<Vec<(i32, usize)>> = std::sync::OnceLock::new();
+        ROWS.get_or_init(|| {
+            let mut rows: Vec<(i32, usize)> = Vec::new();
+            for (pos, i) in Self::kb_seated(0, kb::INVENTORY).into_iter().enumerate() {
+                rows.push((kb::MOVEMENT_ROWS_START + pos as i32 * kb::ROW_STRIDE, i));
+            }
+            for (pos, i) in Self::kb_seated(kb::USE, kb::HOTBAR_1)
+                .into_iter()
+                .enumerate()
+            {
+                rows.push((kb::GAMEPLAY_ROWS_START + pos as i32 * kb::ROW_STRIDE, i));
+            }
+            for (pos, i) in Self::kb_seated(kb::INVENTORY, kb::USE)
+                .into_iter()
+                .enumerate()
+            {
+                rows.push((kb::INVENTORY_ROWS_START + pos as i32 * kb::ROW_STRIDE, i));
+            }
+            for (pos, i) in Self::kb_seated(kb::HOTBAR_1, kb::SAVE_ACTIVATOR)
+                .into_iter()
+                .enumerate()
+            {
+                rows.push((
+                    kb::INVENTORY_ROWS_START
+                        + (kb::USE - kb::INVENTORY + pos) as i32 * kb::ROW_STRIDE,
+                    i,
+                ));
+            }
+            for (pos, i) in Self::kb_seated(kb::SAVE_ACTIVATOR, kb::SPECTATOR_OUTLINES)
+                .into_iter()
+                .enumerate()
+            {
+                rows.push((kb::CREATIVE_ROWS_START + pos as i32 * kb::ROW_STRIDE, i));
+            }
+            for (pos, i) in Self::kb_seated(kb::SPECTATOR_OUTLINES, kb::DEBUG_OVERLAY)
+                .into_iter()
+                .enumerate()
+            {
+                rows.push((kb::SPECTATOR_ROWS_START + pos as i32 * kb::ROW_STRIDE, i));
+            }
+            for (pos, i) in Self::kb_seated(kb::DEBUG_OVERLAY, kb::COUNT)
+                .into_iter()
+                .enumerate()
+            {
+                rows.push((kb::DEBUG_ROWS_START + pos as i32 * kb::ROW_STRIDE, i));
+            }
+            rows
+        })
+    }
+
     /// THE KEY BINDS' OWN LIST (javap 26.2 KeyBindsScreen — the
     /// ControlsScreen pair's RIGHT button the `lambda$addOptions$1`
     /// walk opens): the title the `controls.keybinds.title`
@@ -68126,243 +68525,10 @@ impl App {
         } else {
             display
         };
-        let change_id = match i {
-            kb::FORWARD => "kb_change_forward",
-            kb::LEFT => "kb_change_left",
-            kb::BACK => "kb_change_back",
-            kb::RIGHT => "kb_change_right",
-            kb::JUMP => "kb_change_jump",
-            kb::SNEAK => "kb_change_sneak",
-            kb::SPRINT => "kb_change_sprint",
-            kb::INVENTORY => "kb_change_inventory",
-            kb::SWAP_OFFHAND => "kb_change_swapoffhand",
-            kb::DROP => "kb_change_drop",
-            // THE GAMEPLAY TRIO'S OWN IDS (the rows the group walk the
-            // BETWEEN seat renders — the ctor order the ids keep)
-            kb::USE => "kb_change_use",
-            kb::ATTACK => "kb_change_attack",
-            kb::PICK_ITEM => "kb_change_pickitem",
-            // THE HOTBAR NINE'S OWN IDS (the rows the inventory group
-            // the same stride keeps — the ctor's array order the ids
-            // answer)
-            kb::HOTBAR_1 => "kb_change_hotbar1",
-            kb::HOTBAR_2 => "kb_change_hotbar2",
-            kb::HOTBAR_3 => "kb_change_hotbar3",
-            kb::HOTBAR_4 => "kb_change_hotbar4",
-            kb::HOTBAR_5 => "kb_change_hotbar5",
-            kb::HOTBAR_6 => "kb_change_hotbar6",
-            kb::HOTBAR_7 => "kb_change_hotbar7",
-            kb::HOTBAR_8 => "kb_change_hotbar8",
-            kb::HOTBAR_9 => "kb_change_hotbar9",
-            // THE ACTIVATOR PAIR'S OWN IDS (the rows the creative
-            // group walk the AFTER seat renders — the ctor's putfield
-            // order the ids answer)
-            kb::SAVE_ACTIVATOR => "kb_change_saveactivator",
-            kb::LOAD_ACTIVATOR => "kb_change_loadactivator",
-            // THE SPECTATOR PAIR'S OWN IDS (the rows the spectator
-            // group walk the AFTER seat renders — the ctor's putfield
-            // order the ids answer)
-            kb::SPECTATOR_OUTLINES => "kb_change_spectatoroutlines",
-            kb::SPECTATOR_HOTBAR => "kb_change_spectatorhotbar",
-            // THE DEBUG ROW'S OWN ID (the row the debug group walk the
-            // AFTER seat renders — the ctor's putfield order the id
-            // answers)
-            kb::DEBUG_OVERLAY => "kb_change_debugoverlay",
-            // THE DEBUG MODIFIER'S OWN ID (the row the debug pair walk
-            // the AFTER seat renders — the ctor's putfield order the
-            // id answers)
-            kb::DEBUG_MODIFIER => "kb_change_debugmodifier",
-            // THE DEBUG CRASH'S OWN ID (the row the debug trio walk
-            // the AFTER seat renders — the ctor's putfield order the
-            // id answers)
-            kb::DEBUG_CRASH => "kb_change_debugcrash",
-            // THE DEBUG RELOAD CHUNK'S OWN ID (the row the debug
-            // quartet walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_RELOAD_CHUNK => "kb_change_debugreloadchunk",
-            // THE DEBUG SHOW HITBOXES' OWN ID (the row the debug
-            // quintet walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_SHOW_HITBOXES => "kb_change_debugshowhitboxes",
-            // THE DEBUG CLEAR CHAT'S OWN ID (the row the debug
-            // sextet walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_CLEAR_CHAT => "kb_change_debugclearchat",
-            // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the row the debug
-            // septet walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_change_debugchunkborders",
-            // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the row the
-            // debug octet walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_change_debugadvtooltips",
-            // THE DEBUG COPY RECREATE COMMAND'S OWN ID (the row the
-            // debug nonet walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_COPY_RECREATE_COMMAND => "kb_change_debugcopyrecreate",
-            // THE DEBUG SPECTATE'S OWN ID (the row the debug ten-row
-            // walk the AFTER seat renders — the ctor's putfield order
-            // the id answers)
-            kb::DEBUG_SPECTATE => "kb_change_debugspectate",
-            // THE DEBUG SWITCH GAME MODE'S OWN ID (the row the debug
-            // eleven-row walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_SWITCH_GAME_MODE => "kb_change_debugswitchgamemode",
-            // THE DEBUG DEBUG OPTIONS' OWN ID (the row the debug
-            // twelve-row walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_DEBUG_OPTIONS => "kb_change_debugoptions",
-            // THE DEBUG FOCUS PAUSE'S OWN ID (the row the debug
-            // thirteen-row walk the AFTER seat renders — the ctor's
-            // putfield order the id answers)
-            kb::DEBUG_FOCUS_PAUSE => "kb_change_debugfocuspause",
-            // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ID (the row the
-            // debug fourteen-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_change_debugdumptextures",
-            // THE DEBUG RELOAD RESOURCE PACKS' OWN ID (the row the
-            // debug fifteen-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_change_debugreloadpacks",
-            // THE DEBUG PROFILING'S OWN ID (the row the
-            // debug sixteen-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_PROFILING => "kb_change_debugprofiling",
-            // THE DEBUG COPY LOCATION'S OWN ID (the row the
-            // debug seventeen-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_COPY_LOCATION => "kb_change_debugcopylocation",
-            // THE DEBUG DUMP VERSION'S OWN ID (the row the
-            // debug eighteen-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_DUMP_VERSION => "kb_change_debugdumpversion",
-            // THE DEBUG PROFILING CHART'S OWN ID (the row the
-            // debug nineteen-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_PROFILING_CHART => "kb_change_debugprofilingchart",
-            // THE DEBUG FPS CHARTS'S OWN ID (the row the
-            // debug twenty-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_FPS_CHARTS => "kb_change_debugfpscharts",
-            // THE DEBUG NETWORK CHARTS'S OWN ID (the row the
-            // debug twenty-one-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_NETWORK_CHARTS => "kb_change_debugnetworkcharts",
-            // THE DEBUG LIGHTMAP TEXTURE'S OWN ID (the row the
-            // debug twenty-two-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_LIGHTMAP_TEXTURE => "kb_change_debuglightmaptexture",
-            _ => "kb_change_hotbar9",
-        };
+        let change_id = Self::kb_change_id(i);
         self.buttons
             .push(Button::new(change_id, caption, w - 107, by, 75));
-        let reset_id = match i {
-            kb::FORWARD => "kb_rowreset_forward",
-            kb::LEFT => "kb_rowreset_left",
-            kb::BACK => "kb_rowreset_back",
-            kb::RIGHT => "kb_rowreset_right",
-            kb::JUMP => "kb_rowreset_jump",
-            kb::SNEAK => "kb_rowreset_sneak",
-            kb::SPRINT => "kb_rowreset_sprint",
-            kb::INVENTORY => "kb_rowreset_inventory",
-            kb::SWAP_OFFHAND => "kb_rowreset_swapoffhand",
-            kb::DROP => "kb_rowreset_drop",
-            // THE GAMEPLAY TRIO'S OWN IDS (the same group walk's seats)
-            kb::USE => "kb_rowreset_use",
-            kb::ATTACK => "kb_rowreset_attack",
-            kb::PICK_ITEM => "kb_rowreset_pickitem",
-            // THE HOTBAR NINE'S OWN IDS (the same seats the rows keep)
-            kb::HOTBAR_1 => "kb_rowreset_hotbar1",
-            kb::HOTBAR_2 => "kb_rowreset_hotbar2",
-            kb::HOTBAR_3 => "kb_rowreset_hotbar3",
-            kb::HOTBAR_4 => "kb_rowreset_hotbar4",
-            kb::HOTBAR_5 => "kb_rowreset_hotbar5",
-            kb::HOTBAR_6 => "kb_rowreset_hotbar6",
-            kb::HOTBAR_7 => "kb_rowreset_hotbar7",
-            kb::HOTBAR_8 => "kb_rowreset_hotbar8",
-            kb::HOTBAR_9 => "kb_rowreset_hotbar9",
-            // THE ACTIVATOR PAIR'S OWN IDS (the same seats the rows
-            // keep)
-            kb::SAVE_ACTIVATOR => "kb_rowreset_saveactivator",
-            kb::LOAD_ACTIVATOR => "kb_rowreset_loadactivator",
-            // THE SPECTATOR PAIR'S OWN IDS (the same seats the rows
-            // keep)
-            kb::SPECTATOR_OUTLINES => "kb_rowreset_spectatoroutlines",
-            kb::SPECTATOR_HOTBAR => "kb_rowreset_spectatorhotbar",
-            // THE DEBUG ROW'S OWN ID (the same seat the row keeps)
-            kb::DEBUG_OVERLAY => "kb_rowreset_debugoverlay",
-            // THE DEBUG MODIFIER'S OWN ID (the same seat the row
-            // keeps — the pair the file's own END rows wear)
-            kb::DEBUG_MODIFIER => "kb_rowreset_debugmodifier",
-            // THE DEBUG CRASH'S OWN ID (the same seat the row
-            // keeps — the trio the file's own END rows wear)
-            kb::DEBUG_CRASH => "kb_rowreset_debugcrash",
-            // THE DEBUG RELOAD CHUNK'S OWN ID (the same seat the
-            // row keeps — the quartet the file's own END rows wear)
-            kb::DEBUG_RELOAD_CHUNK => "kb_rowreset_debugreloadchunk",
-            // THE DEBUG SHOW HITBOXES' OWN ID (the same seat the
-            // row keeps — the quintet the file's own END rows wear)
-            kb::DEBUG_SHOW_HITBOXES => "kb_rowreset_debugshowhitboxes",
-            // THE DEBUG CLEAR CHAT'S OWN ID (the same seat the
-            // row keeps — the sextet the file's own END rows wear)
-            kb::DEBUG_CLEAR_CHAT => "kb_rowreset_debugclearchat",
-            // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the same seat the
-            // row keeps — the septet the file's own END rows wear)
-            kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_rowreset_debugchunkborders",
-            // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the same seat
-            // the row keeps — the octet the file's own END rows wear)
-            kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_rowreset_debugadvtooltips",
-            kb::DEBUG_COPY_RECREATE_COMMAND => "kb_rowreset_debugcopyrecreate",
-            // THE DEBUG SPECTATE'S OWN ID (the same seat the row
-            // keeps — the ten-row walk the file's own END rows wear)
-            kb::DEBUG_SPECTATE => "kb_rowreset_debugspectate",
-            // THE DEBUG SWITCH GAME MODE'S OWN ID (the same seat the
-            // row keeps — the eleven-row walk the file's own END rows
-            // wear)
-            kb::DEBUG_SWITCH_GAME_MODE => "kb_rowreset_debugswitchgamemode",
-            kb::DEBUG_DEBUG_OPTIONS => "kb_rowreset_debugoptions",
-            // THE DEBUG FOCUS PAUSE'S OWN ID (the same seat the row
-            // keeps — the thirteen-row walk the file's own END rows
-            // wear)
-            kb::DEBUG_FOCUS_PAUSE => "kb_rowreset_debugfocuspause",
-            // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ID (the same seat
-            // the row keeps — the fourteen-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_rowreset_debugdumptextures",
-            // THE DEBUG RELOAD RESOURCE PACKS' OWN ID (the same seat
-            // the row keeps — the fifteen-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_rowreset_debugreloadpacks",
-            // THE DEBUG PROFILING'S OWN ID (the same seat
-            // the row keeps — the sixteen-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_PROFILING => "kb_rowreset_debugprofiling",
-            // THE DEBUG COPY LOCATION'S OWN ID (the same seat
-            // the row keeps — the seventeen-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_COPY_LOCATION => "kb_rowreset_debugcopylocation",
-            // THE DEBUG DUMP VERSION'S OWN ID (the same seat
-            // the row keeps — the eighteen-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_DUMP_VERSION => "kb_rowreset_debugdumpversion",
-            // THE DEBUG PROFILING CHART'S OWN ID (the same seat
-            // the row keeps — the nineteen-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_PROFILING_CHART => "kb_rowreset_debugprofilingchart",
-            // THE DEBUG FPS CHARTS'S OWN ID (the same seat
-            // the row keeps — the twenty-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_FPS_CHARTS => "kb_rowreset_debugfpscharts",
-            // THE DEBUG NETWORK CHARTS'S OWN ID (the same seat
-            // the row keeps — the twenty-one-row walk the file's own END
-            // rows wear)
-            kb::DEBUG_NETWORK_CHARTS => "kb_rowreset_debugnetworkcharts",
-            // THE DEBUG LIGHTMAP TEXTURE'S OWN RESET ID (the row the
-            // debug twenty-two-row walk the AFTER seat renders — the
-            // ctor's putfield order the id answers)
-            kb::DEBUG_LIGHTMAP_TEXTURE => "kb_rowreset_debuglightmaptexture",
-            _ => "kb_rowreset_hotbar9",
-        };
+        let reset_id = Self::kb_reset_id(i);
         let mut rb = Button::new(
             reset_id,
             tr("controls.reset").unwrap_or("Reset").to_string(),

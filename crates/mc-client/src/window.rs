@@ -2078,6 +2078,21 @@ pub fn run_gui_app(
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
                 app.on_options_key_arrow(true);
             }
+            // THE KEY BINDS LIST'S OWN UP/DOWN RIDE (javap 26.2 the
+            // AbstractSelectionList's keyPressed walk the entry ride
+            // serves — the focused row the list's own order steps,
+            // the scroll band the reveal follows; the REBIND'S OWN
+            // CONSUMPTION the event law the Tab lane shares — the
+            // armed rebind the ANY key the bind banks FIRST, the
+            // ride the consumed key never wears)
+            if app.screen == crate::screens::ScreenKind::KeyBinds {
+                if window.is_key_pressed(Key::Up, minifb::KeyRepeat::No) {
+                    app.on_key_binds_arrow(false, height as i32 / 2);
+                }
+                if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
+                    app.on_key_binds_arrow(true, height as i32 / 2);
+                }
+            }
         }
         // THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen
         // keyPressed walk's 262-265 cases the ArrowNavigation events
