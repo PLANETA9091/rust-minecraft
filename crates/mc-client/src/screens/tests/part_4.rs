@@ -26598,6 +26598,9 @@ fn the_debug_drag_own_seat_wears() {
     // THE SHIFT CLICK'S OWN ANCHOR (the plain press the cursor the
     // zero re-seats, the shift the two-arg walk the [0, seat) opens,
     // the second shift the anchor keeps, the arm never banks)
+    // the epoch stamp the stale window the plain lane wears — the
+    // fast re-press the double law the climb would answer
+    app.debug_search_last_click = Some((0, 0));
     assert!(
         app.on_debug_options_box_click(218, 25, 640),
         "the re-press the TRUE wears"
@@ -26670,5 +26673,127 @@ fn the_debug_drag_own_seat_wears() {
     assert_eq!(
         app.debug_search, "",
         "the reopen the word the reset retires"
+    );
+}
+
+/// THE DEBUG BOX'S OWN DOUBLE CLICK (the 268 chat + the 270/271 entry
+/// laws the EditBox lastClickTime walk the debug search box wears —
+/// the 250ms window the collapsed second click the WORD selects, the
+/// live-selection next click the WHOLE value answers, the stale
+/// window the plain seek re-wears, the space seat the empty word
+/// wears, the reopen the stale stamp the reset retires).
+#[test]
+fn the_debug_box_own_double_click_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+    for c in "hello world".chars() {
+        app.on_debug_options_char(c);
+    }
+    // THE FIRST CLICK'S OWN PLAIN SEEK (the fresh stamp the plain walk
+    // banks — the 'w' left edge the seat 6 wears, the anchor the
+    // collapse keeps)
+    let wx = 218 + crate::gui::font_text_width("hello ");
+    assert!(
+        app.on_debug_options_box_click(wx, 25, 640),
+        "the inside press the TRUE consumes"
+    );
+    assert_eq!(app.debug_search_cursor, 6, "the 'w' left edge the seat 6");
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the plain seek the collapse"
+    );
+    assert!(
+        app.debug_search_last_click.is_some(),
+        "the plain click the stamp banks"
+    );
+    // THE SECOND CLICK'S OWN WORD (the <250ms window the collapsed
+    // pair the [6, 11) "world" run answers — the cursor the word end,
+    // the anchor the word start)
+    app.on_debug_options_box_click(wx, 25, 640);
+    assert_eq!(app.debug_search_cursor, 11, "the double the word end parks");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(6),
+        "the word the start banks"
+    );
+    // THE THIRD CLICK'S OWN ALL (the live selection the whole value
+    // the selectText(0, len) law answers)
+    app.on_debug_options_box_click(wx, 25, 640);
+    assert_eq!(
+        app.debug_search_cursor, 11,
+        "the all the cursor the len wears"
+    );
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the all the zero anchor"
+    );
+    // THE FOURTH CLICK'S OWN ALL (the live pair the climb re-answers)
+    app.on_debug_options_box_click(wx, 25, 640);
+    assert_eq!(app.debug_search_cursor, 11, "the re-all the len wears");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the re-all the zero parks"
+    );
+    // THE STALE WINDOW'S OWN PLAIN SEEK (the backdated stamp the plain
+    // walk re-wears — the anchor the collapse, the seat the clicked x)
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    app.debug_search_last_click = Some((now.saturating_sub(400), 6));
+    app.on_debug_options_box_click(wx, 25, 640);
+    assert_eq!(app.debug_search_cursor, 6, "the stale the plain seat wears");
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the stale the collapse keeps"
+    );
+    // THE MID-WORD'S OWN RUN (the 'e' seat the [0, 5) "hello" range
+    // the same law answers)
+    let ex = 218 + crate::gui::font_text_width("h");
+    app.debug_search_last_click = Some((now.saturating_sub(400), 1));
+    app.on_debug_options_box_click(ex, 25, 640);
+    assert_eq!(app.debug_search_cursor, 1, "the 'e' seat the plain wears");
+    app.on_debug_options_box_click(ex, 25, 640);
+    assert_eq!(app.debug_search_cursor, 5, "the word the end parks");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the word the start banks"
+    );
+    // THE SPACE SEAT'S OWN EMPTY WORD (the between-words click the
+    // collapsed pair the None anchor wears — the empty word the climb
+    // never opens)
+    let sx = 218 + crate::gui::font_text_width("hello");
+    app.debug_search_last_click = Some((now.saturating_sub(400), 5));
+    app.on_debug_options_box_click(sx, 25, 640);
+    assert_eq!(app.debug_search_cursor, 5, "the space seat the plain wears");
+    app.on_debug_options_box_click(sx, 25, 640);
+    assert_eq!(app.debug_search_cursor, 5, "the empty word the end keeps");
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the empty word the None anchor"
+    );
+    // THE OUTSIDE CLICK'S OWN KEEP (the band the walk never owns —
+    // the stamp never banks)
+    app.debug_search_last_click = None;
+    assert!(
+        !app.on_debug_options_box_click(218 + 1000, 25, 640),
+        "the outside the FALSE wears"
+    );
+    assert!(
+        app.debug_search_last_click.is_none(),
+        "the outside the stamp never banks"
+    );
+    // THE FRESH REOPEN'S OWN RESET (the stale stamp the re-created
+    // screen never inherits — the setScreen walk the same law wears)
+    app.debug_search_last_click = Some((1, 1));
+    app.on_debug_options_key(); // the close arm wears
+    app.on_debug_options_key(); // the fresh open the second tap wears
+    assert_eq!(
+        app.debug_search_last_click, None,
+        "the reopen the stamp clears"
     );
 }

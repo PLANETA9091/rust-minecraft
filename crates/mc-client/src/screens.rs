@@ -10264,6 +10264,12 @@ pub struct App {
     /// fresh ctor the unarmed seat keeps, the re-open walk the same
     /// reset wears).
     pub debug_search_drag_armed: bool,
+    /// THE DOUBLE CLICK'S OWN WINDOW (the EditBox `lastClickTime` law
+    /// the 268 chat + the 270/271 entry laws the box wears — the
+    /// <250ms second click the climb answers, the stale window the
+    /// plain seek re-wears; the fresh ctor the None keeps, the re-open
+    /// walk the same reset wears).
+    pub debug_search_last_click: Option<(u128, usize)>,
     /// THE DEBUG OPTIONS' OWN FOCUS SEAT (the vanilla `getFocused` law
     /// the button widgets wear — the preset pair + the entry pills the
     /// Tab walk's own store banks, the BOX the `debug_search_focus`
@@ -11932,6 +11938,7 @@ impl App {
             debug_search_cursor: 0,
             debug_search_highlight: None,
             debug_search_drag_armed: false,
+            debug_search_last_click: None,
             debug_focus: None,
             debug_box_rect: (0, 0, 0, 0),
             debug_profile: Some(false),
@@ -22204,6 +22211,10 @@ impl App {
             self.debug_search_cursor = 0;
             self.debug_search_highlight = None;
             self.debug_search_drag_armed = false;
+            // THE DOUBLE STAMP'S OWN FRESH SEAT (the re-created screen
+            // the stale window never inherits — the fresh EditBox the
+            // lastClickTime zero the ctor keeps)
+            self.debug_search_last_click = None;
             self.debug_scroll = 0.0;
             // THE INITIAL FOCUS'S OWN RE-ARM (the vanilla init's
             // setInitialFocus the fresh screen answers — the re-open
@@ -37627,15 +37638,51 @@ impl App {
         self.debug_search_drag_armed = inside;
         if inside {
             self.debug_search_focus = true;
-            // the plain click the anchor collapses (the mouseClick the
-            // moveCursorTo the setHighlightPos(cursorPos) tail wears)
-            self.debug_search_highlight = None;
             // THE SEAT'S OWN SEEK (the vanilla mouseClick the one-arg
             // moveCursorTo walk serves — the x-band the prefix widths
             // answers, the past-tail the clamp parks, the left edge
             // the zero keeps; the entry_click_seat law the
             // display-less box the same walk wears)
-            self.debug_search_cursor = entry_click_seat(&self.debug_search, 0, mx, bx);
+            let seat = entry_click_seat(&self.debug_search, 0, mx, bx);
+            // THE DOUBLE'S OWN WINDOW (the 268 chat + the 270/271 entry
+            // laws the EditBox lastClickTime walk wears — the <250ms
+            // second click the climb answers: the live selection the
+            // next click the WHOLE value [the selectText(0, len) law],
+            // the collapsed pair the word select the cursor=end/
+            // anchor=start wears, the empty word the None anchor keeps,
+            // the third click the all re-answers, the stale window the
+            // plain seek re-wears)
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis())
+                .unwrap_or(0);
+            if let Some((t, _)) = self.debug_search_last_click {
+                if now.saturating_sub(t) < 250 {
+                    let live = matches!(
+                        self.debug_search_highlight,
+                        Some(h) if h != self.debug_search_cursor
+                    );
+                    if live {
+                        // the whole value the climb answers (the 269
+                        // selectAll law the same park wears)
+                        self.debug_search_cursor = self.debug_search.chars().count();
+                        self.debug_search_highlight = Some(0);
+                    } else {
+                        let (ws, we) = entry_word_at(&self.debug_search, seat);
+                        self.debug_search_cursor = we;
+                        self.debug_search_highlight = if ws == we { None } else { Some(ws) };
+                    }
+                    self.debug_search_last_click = Some((now, seat));
+                    return true;
+                }
+            }
+            // the plain click the `moveCursorTo(pos)` one-arg law the
+            // anchor collapses (the mouseClick the setHighlightPos(
+            // cursorPos) tail wears) — the consumed press the stamp
+            // banks
+            self.debug_search_last_click = Some((now, seat));
+            self.debug_search_highlight = None;
+            self.debug_search_cursor = seat;
         }
         inside
     }
