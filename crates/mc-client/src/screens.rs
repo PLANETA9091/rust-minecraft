@@ -9938,6 +9938,12 @@ pub struct App {
     /// disarm speaks; the outside/unconsumed press the flag never
     /// arms — the suggestion click the band never owns).
     pub chat_drag_armed: bool,
+    /// THE DOUBLE CLICK'S OWN WINDOW (the EditBox.lastClickTime law
+    /// the mouse walk keeps — the millis + the seat the 250ms window
+    /// banks, the window the word/all the climb answers, the stale
+    /// window the plain seek wears, the session edges the fresh open
+    /// resets).
+    pub chat_last_click: Option<(u128, usize)>,
     /// THE CHAT BOX'S OWN DISPLAY WINDOW (the same `displayPos` law
     /// the input band keeps — the long chat line the window the caret
     /// answers, the short line the zero the same bytes wears).
@@ -11725,6 +11731,7 @@ impl App {
             chat_cursor: 0,
             chat_highlight: None,
             chat_drag_armed: false,
+            chat_last_click: None,
             chat_display: 0,
             chat_input_rect: None,
             chat_ghost_seat: None,
@@ -41962,6 +41969,35 @@ impl App {
         self.chat_window_sync();
     }
 
+    /// THE SELECTION'S OWN WORD SEAT (the vanilla double-click walk
+    /// the word the click lands in answers — the non-space seat the
+    /// [start, end) run banks, the space seat the empty pair wears,
+    /// the past-tail the last word the same law keeps).
+    fn chat_word_at(&self, seat: usize) -> (usize, usize) {
+        let chars: Vec<char> = self.chat_input.chars().collect();
+        let n = chars.len();
+        let lo = seat.min(n);
+        if lo < n && !chars[lo].is_whitespace() {
+            let mut start = lo;
+            while start > 0 && !chars[start - 1].is_whitespace() {
+                start -= 1;
+            }
+            let mut end = lo;
+            while end < n && !chars[end].is_whitespace() {
+                end += 1;
+            }
+            (start, end)
+        } else if lo == n && lo > 0 && !chars[n - 1].is_whitespace() {
+            let mut start = n;
+            while start > 0 && !chars[start - 1].is_whitespace() {
+                start -= 1;
+            }
+            (start, n)
+        } else {
+            (lo, lo) // the space seat the empty word wears
+        }
+    }
+
     /// THE CHAT BAND'S OWN X-BAND CLICK (the EditBox.mouseClicked walk
     /// the input band serves — the inside click the caret the char
     /// index positions, the box padding the +4 the render's own text
@@ -41986,11 +42022,41 @@ impl App {
         // two-step answers, the x the prefix length + the displayPos
         // the seat wears, the box padding the +4 the text origin
         // speaks)
+        // THE DOUBLE'S OWN WINDOW (the lastClickTime law the 250ms
+        // climb answers — the collapsed second click the WORD selects,
+        // the live-selection next click the WHOLE value answers [the
+        // selectText(0, len) law], the stale window the plain seek
+        // wears)
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        let seat = self.chat_click_seat(mx, rw);
+        if let Some((t, _)) = self.chat_last_click {
+            if now.saturating_sub(t) < 250 {
+                let live = matches!(self.chat_highlight, Some(h) if h != self.chat_cursor);
+                if live {
+                    // the whole value the climb answers (the 266
+                    // selectAll law the same park wears)
+                    self.chat_cursor = self.chat_input.chars().count();
+                    self.chat_highlight = Some(0);
+                } else {
+                    let (ws, we) = self.chat_word_at(seat);
+                    self.chat_cursor = we;
+                    self.chat_highlight = if ws == we { None } else { Some(ws) };
+                }
+                self.chat_last_click = Some((now, seat));
+                self.chat_drag_armed = true;
+                self.chat_window_sync();
+                return true;
+            }
+        }
         // the plain click the `moveCursorTo(pos)` one-arg law the
         // anchor collapses (the shift-click the two-arg lane the
         // shift arm answers) — the consumed press the DRAG ARM banks
+        self.chat_last_click = Some((now, seat));
         self.chat_highlight = None;
-        self.chat_cursor = self.chat_click_seat(mx, rw);
+        self.chat_cursor = seat;
         self.chat_drag_armed = true;
         self.chat_window_sync();
         true

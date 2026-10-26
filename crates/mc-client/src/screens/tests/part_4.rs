@@ -24426,13 +24426,17 @@ fn the_chat_input_own_caret_ride_wears() {
 
     // THE LEFT EDGE + THE PAST-TAIL (the trim law the prefix the
     // helper re-computes — the zero the left edge wears, the len
-    // the past-tail answers)
+    // the past-tail answers; each click the stale window wears —
+    // the plain seek the double-click window the isolation keeps)
+    app.chat_last_click = None;
     app.on_chat_box_click(rx + 4, ry + 5);
     assert_eq!(app.chat_cursor, 0, "the left edge the zero parks");
+    app.chat_last_click = None;
     app.on_chat_box_click(rx + 4 + 100, ry + 5);
     assert_eq!(app.chat_cursor, 5, "the past-tail the len parks");
     let full = crate::gui::font_text_width("hello");
     let expected = caret_prefix_probe("hello", full / 2);
+    app.chat_last_click = None;
     app.on_chat_box_click(rx + 4 + full / 2, ry + 5);
     assert_eq!(app.chat_cursor, expected, "the mid-band the trim law wears");
 
@@ -24705,6 +24709,94 @@ fn the_chat_selection_own_drag_seat_wears() {
     app.on_chat_key();
     assert!(!app.chat_drag_armed, "the fresh open the arm clears");
     assert_eq!(app.chat_highlight, None, "the fresh open the anchor clears");
+}
+
+/// THE SELECTION'S OWN DOUBLE CLICK (the vanilla EditBox.mouseClicked
+/// lawClickTime walk the chat input wears — the 250ms window the
+/// collapsed second click the WORD selects, the live-selection next
+/// click the WHOLE value answers, the stale window the plain seek
+/// wears, the space seat the empty word wears, the past-tail the
+/// last word keeps).
+#[test]
+fn the_chat_selection_own_double_click_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_chat_key();
+    for c in "hello world".chars() {
+        app.on_chat_char(c);
+    }
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (rx, ry, rw, rh) = app.chat_input_rect.expect("the drawn band's rect");
+
+    // THE FIRST CLICK'S OWN PLAIN SEEK (the stale/no-window the
+    // one-arg law the anchor collapses wears)
+    let wx = rx + 4 + crate::gui::font_text_width("hello ");
+    assert!(app.on_chat_box_click(wx, ry + 5));
+    assert_eq!(app.chat_cursor, 6, "the 'w' left edge the seat 6");
+    assert_eq!(app.chat_highlight, None, "the plain seek the collapse");
+
+    // THE SECOND CLICK'S OWN WORD (the 250ms window the collapsed
+    // state the word selects — the [6, 11) "world" range wears)
+    assert!(app.on_chat_box_click(wx, ry + 5));
+    assert_eq!(app.chat_cursor, 11, "the word end the cursor wears");
+    assert_eq!(app.chat_highlight, Some(6), "the word start the anchor");
+    assert_eq!(app.chat_input, "hello world", "the double the value keeps");
+
+    // THE THIRD CLICK'S OWN ALL (the live selection the whole value
+    // the selectText(0, len) law answers)
+    assert!(app.on_chat_box_click(wx, ry + 5));
+    assert_eq!(app.chat_cursor, 11, "the all the cursor the len wears");
+    assert_eq!(app.chat_highlight, Some(0), "the all the zero anchor");
+
+    // THE STALE WINDOW'S OWN PLAIN SEEK (the 400ms-backdated window
+    // the plain law re-answers)
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    app.chat_last_click = Some((now.saturating_sub(400), 6));
+    assert!(app.on_chat_box_click(wx, ry + 5));
+    assert_eq!(app.chat_cursor, 6, "the stale the plain seat wears");
+    assert_eq!(app.chat_highlight, None, "the stale the collapse keeps");
+
+    // THE MID-WORD'S OWN RUN (the 'e' seat the [0, 5) "hello" range
+    // the same law answers)
+    let ex = rx + 4 + crate::gui::font_text_width("h");
+    app.chat_last_click = Some((now.saturating_sub(400), 1));
+    assert!(app.on_chat_box_click(ex, ry + 5));
+    assert_eq!(app.chat_cursor, 1, "the 'e' seat the plain wears");
+    assert!(app.on_chat_box_click(ex, ry + 5));
+    assert_eq!(app.chat_cursor, 5, "the word end the cursor wears");
+    assert_eq!(app.chat_highlight, Some(0), "the word start the anchor");
+
+    // THE SPACE SEAT'S OWN EMPTY (the space click the (5, 5) pair —
+    // the anchor the None the empty wears)
+    let sx = rx + 4 + crate::gui::font_text_width("hello");
+    app.chat_last_click = Some((now.saturating_sub(400), 0));
+    assert!(app.on_chat_box_click(sx, ry + 5));
+    assert_eq!(app.chat_cursor, 5, "the space seat the plain wears");
+    assert!(app.on_chat_box_click(sx, ry + 5));
+    assert_eq!(app.chat_cursor, 5, "the empty the cursor the seat keeps");
+    assert_eq!(app.chat_highlight, None, "the empty the anchor never wears");
+
+    // THE PAST-TAIL'S OWN LAST WORD (the past-tail x the len seat the
+    // same law keeps)
+    let px = rx + 4 + 100;
+    app.chat_last_click = Some((now.saturating_sub(400), 11));
+    assert!(app.on_chat_box_click(px, ry + 5));
+    assert_eq!(app.chat_cursor, 11, "the past-tail the len parks");
+    assert_eq!(app.chat_highlight, None, "the plain the collapse keeps");
+    assert!(app.on_chat_box_click(px, ry + 5));
+    assert_eq!(app.chat_cursor, 11, "the last word the end wears");
+    assert_eq!(app.chat_highlight, Some(6), "the last word the start wears");
+
+    // THE BACKSPACE'S OWN WORD WIPE (the live range the deleteText
+    // first step answers — the value the word the double took)
+    app.on_chat_backspace();
+    assert_eq!(app.chat_input, "hello ", "the range the removal wears");
+    assert_eq!(app.chat_cursor, 6, "the lo seat the re-park wears");
 }
 
 #[test]
