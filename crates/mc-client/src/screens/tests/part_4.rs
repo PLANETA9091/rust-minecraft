@@ -1018,6 +1018,96 @@ fn pause_buttons_route_back_to_game_options_and_title() {
     assert!(app.paused, "returning from options stays paused");
 }
 
+/// THE PAUSE MENU'S OWN VANILLA GRID (javap the 26.2 jar the
+/// PauseScreen.init + createPauseMenu walks speak): the title the
+/// y-40 StringWidget seat wears, the two columns the 98w
+/// openScreenButton cells answer, the 204w spans the 2*98+8 exact
+/// fit keeps, the paddingTop-50 backtogame row the 70-high cell
+/// wears, the FrameLayout.alignInRectangle(0.5, 0.25) the grid the
+/// (54,3) origin seats [the f2i truncation the 0.25*14=3.5 floor
+/// speaks], the centered sprite quartet the 92-wide band the +60
+/// seat answers [the 20/2-15/2 icon center the +3 seat keeps], the
+/// player-reporting the seenPlayers-minus-self-empty law the
+/// INACTIVE state wears, the multiplayer seat the
+/// menu.multiplayerOptions.button word wears.
+#[test]
+fn the_pause_menu_own_vanilla_grid_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.paused = true;
+    app.render_title_buttons_for_test();
+    let by_id = |app: &App, id: &str| {
+        app.buttons
+            .iter()
+            .find(|b| b.id == id)
+            .unwrap_or_else(|| panic!("{id} missing"))
+            .clone()
+    };
+    // the ten the grid serves (backtogame, adv+stats, the quartet,
+    // options+multiplayeroptions, disconnect)
+    assert_eq!(app.buttons.len(), 10, "the grid's own ten");
+    let back = by_id(&app, "backtogame");
+    assert_eq!(
+        (back.x, back.y, back.w, back.h),
+        (58, 53, 204, 20),
+        "the paddingTop-50 row the (54+4, 3+50) seat wears"
+    );
+    let adv = by_id(&app, "advancements");
+    assert_eq!((adv.x, adv.y, adv.w), (58, 77, 98), "the col0 pair seat");
+    assert_eq!(adv.label, "Advancements", "the gui.advancements word");
+    let stats = by_id(&app, "stats");
+    assert_eq!(
+        (stats.x, stats.y, stats.w),
+        (164, 77, 98),
+        "the col1 seat the 106 column step answers"
+    );
+    assert_eq!(stats.label, "Statistics", "the gui.stats word");
+    for (id, x) in [
+        ("reportbugs", 114),
+        ("sendfeedback", 138),
+        ("friends", 162),
+        ("playerreporting", 186),
+    ] {
+        let b = by_id(&app, id);
+        assert_eq!(
+            (b.x, b.y, b.w, b.h),
+            (x, 101, 20, 20),
+            "{id} the spacing-4 band seat wears"
+        );
+        assert_eq!(b.label, "", "{id} the label-free icon button wears");
+    }
+    assert!(
+        !by_id(&app, "playerreporting").active,
+        "the empty seen-players set the report button the inactive wears"
+    );
+    assert!(
+        by_id(&app, "friends").active,
+        "the !isDemo law the active keeps"
+    );
+    assert!(
+        by_id(&app, "reportbugs").active && by_id(&app, "sendfeedback").active,
+        "the main-series law the bug+social actives keep"
+    );
+    let opts = by_id(&app, "options");
+    assert_eq!((opts.x, opts.y, opts.w), (58, 125, 98), "the row-4 col0");
+    let lan = by_id(&app, "multiplayeroptions");
+    assert_eq!((lan.x, lan.y, lan.w), (164, 125, 98), "the row-4 col1");
+    assert_eq!(
+        lan.label, "Open to LAN",
+        "the multiplayerOptions.button word"
+    );
+    let quit = by_id(&app, "saveandquit");
+    assert_eq!(
+        (quit.x, quit.y, quit.w),
+        (58, 149, 204),
+        "the 204w span the exact fit wears"
+    );
+    assert_eq!(
+        quit.label, "Save and Quit to Title",
+        "the disconnectButtonLabel(isLocalServer) the returnToMenu word answers"
+    );
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`

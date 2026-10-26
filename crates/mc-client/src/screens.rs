@@ -68308,48 +68308,135 @@ impl App {
         }
     }
 
-    /// Vanilla pause menu (PauseScreen): "Game Paused" + Back to Game,
-    /// Options..., Save and Quit to Title over a dimmed frozen world.
+    /// Vanilla pause menu (PauseScreen): the 26.2 createPauseMenu
+    /// GridLayout — "Game Paused" title seat, Back to Game / the
+    /// advancements+stats pair / the centered sprite quartet / the
+    /// options+multiplayer-options pair / Save and Quit to Title over
+    /// a dimmed frozen world.
     fn render_pause(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        // THE PAUSE TITLE'S OWN SEAT (the PauseScreen.init's StringWidget
+        // law — the showPauseMenu arm the y-40 seat wears [the 10 the
+        // menu-less arm never ours], the width/2 - textwidth/2 x the
+        // centered walk answers, the 9-high band the 8px glyphs the
+        // top edge keeps)
         g.text_centered(
             a,
             w / 2,
-            h / 4 - 20,
+            40,
             tr("menu.paused").unwrap_or("Game Paused"),
             WHITE,
             true,
         );
-        let cx = w / 2;
-        let y0 = h / 4 + 8;
-        let half = 200 / 2 - 2;
+        // THE PAUSE MENU'S OWN VANILLA GRID (the 26.2 createPauseMenu's
+        // GridLayout law the javap walk banks): the two columns the
+        // 98w openScreenButton cells wear [the openScreenButton the
+        // 98-width builder law speaks], the 204w spans the 2*98+8 the
+        // exact fit answers, the default cell padding(4,4,4,0) the gaps
+        // keep, the backtogame cell the paddingTop-50 arm wears. The
+        // FrameLayout.alignInRectangle(0,0,w,h,0.5,0.25) the grid-in-
+        // screen seat answers — the alignInDimension the
+        // lerp(alignment, 0, size-element) walk the f2i TRUNCATION
+        // wears (the 320x180 frame the (54,3) origin speaks: 0.5*108,
+        // 0.25*14 the 3.5 the floor keeps). The five rows:
+        // backtogame (row h 70 = 20 + paddingTop 50) /
+        // advancements+stats (24) / the centered 20w sprite quartet
+        // (24: the LinearLayout spacing-4 band 4*20+3*4=92 the
+        // alignHorizontallyCenter cell seats at +60 — bug, social,
+        // friends, player-reporting, the icons the 15x15 the
+        // extractSprite law stretches at the +3 seat [the 20/2-15/2
+        // center], the background the plain button trio keeps, the
+        // player-reporting the seenPlayers-minus-self-empty law the
+        // INACTIVE state wears) / options+multiplayer-options (24:
+        // the hasSingleplayerServer arm the pair serves, the
+        // multiplayer seat the menu.multiplayerOptions.button word
+        // wears) / the 204w disconnect (24: the
+        // disconnectButtonLabel(isLocalServer) the GUI_RETURN_TO_MENU
+        // key answers).
+        let grid_w = 212; // the 106-wide columns the 98w cell + 4/4 padding wears, both
+        let grid_h = 166; // the 70 (paddingTop-50 row) + the 24*4 the rest speak
+        let gx = (w - grid_w) / 2;
+        let gy = (h - grid_h) / 4;
+        let col0 = gx + 4;
+        let col1 = gx + 106 + 4;
+        let row1 = gy + 50; // backtogame: the paddingTop-50 cell
+        let row2 = gy + 70 + 4;
+        let row3 = gy + 94 + 4; // the sprite quartet's row
+        let row4 = gy + 118 + 4;
+        let row5 = gy + 142 + 4;
         self.buttons.push(Button::new(
             "backtogame",
             tr("menu.returnToGame")
                 .unwrap_or("Back to Game")
                 .to_string(),
-            cx,
-            y0,
-            200,
+            col0 + 102,
+            row1,
+            204,
         ));
+        self.buttons.push(Button::new(
+            "advancements",
+            tr("gui.advancements").unwrap_or("Advancements").to_string(),
+            col0 + 49,
+            row2,
+            98,
+        ));
+        self.buttons.push(Button::new(
+            "stats",
+            tr("gui.stats").unwrap_or("Statistics").to_string(),
+            col1 + 49,
+            row2,
+            98,
+        ));
+        // the sprite quartet (the vanilla creation order the addChild
+        // walk keeps): the 20x20 label-free icon buttons the spacing-4
+        // band seats at +24 steps, the player-reporting the inactive
+        // singleplayer law wears (the seenPlayers the minus-self walk
+        // empties, the NO_PLAYERS tooltip the vanilla law pairs)
+        let sprite_row: [(&str, &str, bool); 4] = [
+            ("reportbugs", "pause_menu/bug", true),
+            ("sendfeedback", "pause_menu/social_interactions", true),
+            ("friends", "friends/friends", true),
+            ("playerreporting", "pause_menu/player_reporting", false),
+        ];
+        for (i, (id, _icon, active)) in sprite_row.iter().enumerate() {
+            let mut b = Button::new(id, String::new(), gx + 70 + i as i32 * 24, row3, 20);
+            b.active = *active;
+            self.buttons.push(b);
+        }
         self.buttons.push(Button::new(
             "options",
             tr("menu.options").unwrap_or("Options...").to_string(),
-            cx - half / 2,
-            y0 + 24,
-            half,
+            col0 + 49,
+            row4,
+            98,
+        ));
+        self.buttons.push(Button::new(
+            "multiplayeroptions",
+            tr("menu.multiplayerOptions.button")
+                .unwrap_or("Open to LAN")
+                .to_string(),
+            col1 + 49,
+            row4,
+            98,
         ));
         self.buttons.push(Button::new(
             "saveandquit",
             tr("menu.returnToMenu")
                 .unwrap_or("Save and Quit to Title")
                 .to_string(),
-            cx + half / 2 + 2,
-            y0 + 24,
-            half,
+            col0 + 102,
+            row5,
+            204,
         ));
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
+            // THE ICON'S OWN LAYER (the CenteredIcon.extractContents
+            // walk — the sprite the 15x15 the builder law stretches,
+            // the +3 seat the 20/2-15/2 center answers, the button
+            // background the render's own trio already drew)
+            if let Some((_, icon, _)) = sprite_row.iter().find(|(id, _, _)| id == &b.id) {
+                g.sprite_at(a, icon, b.x + 3, b.y + 3, 15, 15);
+            }
         }
     }
 
