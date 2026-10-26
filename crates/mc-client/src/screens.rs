@@ -6646,6 +6646,21 @@ pub enum ScreenKind {
     /// INACTIVE the onAddressChange walk speaks, the Cancel/Escape the
     /// lastScreen the server list returns.
     DirectConnect,
+    /// THE ADD SERVER'S OWN ENTRY FORM (javap 26.2 EditServerScreen the
+    /// add-mode walk — the server list's `selectServer.add` button the
+    /// lambda `setScreen(new EditServerScreen(this, new
+    /// ServerData(I18n.format("selectServer.defaultName"), "", false)))`
+    /// opens): the name + address EditBox pair the typed words the save
+    /// banks, the fresh ctor the `selectServer.defaultName` value the
+    /// name field keeps (the EMPTY address the fresh form speaks, the
+    /// initial focus the name box the setInitialFocus arms), the Done
+    /// (addServer.add) + Cancel (gui.cancel) pair the footer row keeps,
+    /// the save the fields the ServerData updates + the selectScreen
+    /// .addServer the list appends + the setSelected the new row wears,
+    /// the Cancel/Escape the lastScreen the server list returns. The
+    /// PRE-FILLED edit walk (the selected row's own seat) the later
+    /// round banks.
+    EditServer,
     /// Vanilla DisconnectedScreen: the join outcome (server-side login
     /// disconnect reason, transport error, or the offline profile line).
     Disconnect,
@@ -7545,6 +7560,21 @@ pub struct App {
     pub direct_address: String,
     pub direct_focus: bool,
     pub direct_box_rect: (i32, i32, i32, i32),
+    /// THE ADD SERVER FORM'S OWN EDITBOX PAIR (javap 26.2
+    /// EditServerScreen — the `serverNameField` + `ipField` fields the
+    /// ctor's EditBoxes wrap: the typed words the save's ServerData
+    /// update banks, the NAME the 32-char cap the EditBox default
+    /// keeps, the ADDRESS the 128 the setMaxLength speaks). The FOCUS
+    /// pair the EditBox's own `isFocused` fields keep (the init's
+    /// setInitialFocus the name box arms, the click walk the widget's
+    /// own transfer serves), the RECTS the render's own bank the click
+    /// geometry wears (the direct form's own rect law the pair shares).
+    pub es_name: String,
+    pub es_name_focus: bool,
+    pub es_name_rect: (i32, i32, i32, i32),
+    pub es_address: String,
+    pub es_address_focus: bool,
+    pub es_address_rect: (i32, i32, i32, i32),
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11060,6 +11090,12 @@ impl App {
             direct_address: String::new(),
             direct_focus: false,
             direct_box_rect: (0, 0, 0, 0),
+            es_name: String::new(),
+            es_name_focus: false,
+            es_name_rect: (0, 0, 0, 0),
+            es_address: String::new(),
+            es_address_focus: false,
+            es_address_rect: (0, 0, 0, 0),
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -21771,6 +21807,21 @@ impl App {
             self.direct_address.clear();
             self.direct_focus = true;
         }
+        // THE ADD SERVER'S OWN FRESH CTOR (the vanilla lambda the
+        // `new ServerData(I18n.format("selectServer.defaultName"), "",
+        // false)` the form carries — the name the defaultName value
+        // keeps, the address the EMPTY the fresh form speaks, the
+        // initial focus the name box the setInitialFocus arms; the
+        // setScreen re-creation the typed word the stale form never
+        // inherits — the reopen the defaultName the ctor re-speaks)
+        if kind == ScreenKind::EditServer {
+            self.es_name = tr("selectServer.defaultName")
+                .unwrap_or("Minecraft Server")
+                .to_string();
+            self.es_address.clear();
+            self.es_name_focus = true;
+            self.es_address_focus = false;
+        }
         // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
         // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
         // screen-OPEN arm rides, the pc 265
@@ -28993,6 +29044,13 @@ impl App {
             // onClose() ride speaks, the lastScreen the server list
             // the join flow's own parent returns)
             self.open(ScreenKind::Servers);
+        } else if self.screen == ScreenKind::EditServer {
+            // THE ENTRY FORM'S OWN ESCAPE LANE (the same
+            // shouldCloseOnEsc default the EditServerScreen class never
+            // overrides — the lastScreen the server list the entry
+            // flow's own parent returns, the fields the typed words the
+            // save never banks)
+            self.open(ScreenKind::Servers);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -35595,6 +35653,70 @@ impl App {
         inside
     }
 
+    /// THE ENTRY FORM'S OWN CHARS (the EditBox.charTyped walk the
+    /// focused field answers — the name the 32-char cap the EditBox
+    /// default keeps, the address the 128 the setMaxLength speaks; the
+    /// unfocused pair the silence keeps, the stale screens the gate
+    /// never passes).
+    pub fn on_editserver_char(&mut self, c: char) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            if self.es_name.chars().count() < 32 {
+                self.es_name.push(c);
+            }
+        } else if self.es_address_focus && self.es_address.chars().count() < 128 {
+            self.es_address.push(c);
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN BACKSPACE (the EditBox.keyPressed's 14 arm
+    /// the focused field answers — the pop the typed word's tail
+    /// speaks, the empty field the pop the no-op keeps, the stale
+    /// screens the gate never passes).
+    pub fn on_editserver_backspace(&mut self) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            self.es_name.pop();
+        } else if self.es_address_focus {
+            self.es_address.pop();
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN BOX CLICK (the EditBox.mouseClicked walk
+    /// the TWO-box seat serves — the inside click the `setFocused(true)`
+    /// re-arm the TRUE consumed answer wears [the sibling the focus
+    /// transfer clears — the pair's exclusivity the widget walk keeps],
+    /// the outside click the FALSE the caller the focus-transfer
+    /// answers [both the boxes lose, the footer pair the buttons walk
+    /// arms]; the rect pair the render's own bank the vanilla bounds
+    /// keeps).
+    pub fn on_editserver_box_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::EditServer {
+            return false;
+        }
+        let (nx, ny, nw, nh) = self.es_name_rect;
+        let (ax, ay, aw, ah) = self.es_address_rect;
+        let in_name = mx >= nx && mx < nx + nw && my >= ny && my < ny + nh;
+        let in_addr = mx >= ax && mx < ax + aw && my >= ay && my < ay + ah;
+        if in_name {
+            self.es_name_focus = true;
+            self.es_address_focus = false;
+            return true;
+        }
+        if in_addr {
+            self.es_address_focus = true;
+            self.es_name_focus = false;
+            return true;
+        }
+        self.es_name_focus = false;
+        self.es_address_focus = false;
+        false
+    }
+
     /// THE SEARCH BOX'S OWN CLICK FOCUS (the EditBox.mouseClicked walk
     /// — the inside click the `setFocused(true)` re-arm serves, the
     /// TRUE the consumed click returns (the caller's buttons walk the
@@ -38942,6 +39064,39 @@ impl App {
                 // `setScreen(this.lastScreen)` walk the server list
                 // returns)
                 "directcancel" => self.open(ScreenKind::Servers),
+                // THE ADD SERVER'S OWN OPENER (vanilla
+                // JoinMultiplayerScreen's `selectServer.add` lambda — the
+                // EditServerScreen the `setScreen(new
+                // EditServerScreen(this, new ServerData(...)))` walk
+                // opens, the list the parent screen the form keeps)
+                "addserver" => self.open(ScreenKind::EditServer),
+                // THE ENTRY FORM'S OWN SAVE WALK (vanilla
+                // EditServerScreen.onSave — the fields the ServerData
+                // updates, the selectScreen.addServer the list appends,
+                // the setSelected the new row the focus wears, the
+                // setScreen the parent the walk returns; the save the
+                // isEmpty gate the vanilla NEVER wears — the empty IP
+                // the entry the `None` host the offline row banks [the
+                // placeholder law the struct's own doc keeps], the
+                // unpinged ServerData the red default motd the ctor
+                // speaks)
+                "essave" => {
+                    let addr = self.es_address.trim().to_string();
+                    self.servers.push(ServerEntry {
+                        name: self.es_name.clone(),
+                        motd: "§4Can't connect to server".to_string(),
+                        ping_ms: 0,
+                        online: false,
+                        version: String::new(),
+                        host: if addr.is_empty() { None } else { Some(addr) },
+                    });
+                    self.selected_server = self.servers.len() - 1;
+                    self.open(ScreenKind::Servers);
+                }
+                // THE ENTRY FORM'S OWN CANCEL (the vanilla Cancel lambda —
+                // the lastScreen the server list returns, the fields the
+                // list never touches)
+                "escancel" => self.open(ScreenKind::Servers),
                 // vanilla ConnectScreen Cancel: abandon the in-flight join
                 // (late results carry unknown ids and are ignored)
                 "cancel" => self.open(ScreenKind::Servers),
@@ -59473,6 +59628,7 @@ impl App {
             }
             ScreenKind::Connect => self.render_connect(&mut g, a, w, h),
             ScreenKind::DirectConnect => self.render_direct_connect(&mut g, a, w, h),
+            ScreenKind::EditServer => self.render_edit_server(&mut g, a, w, h),
             ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
                 // 3D world first (full framebuffer resolution), then the
@@ -67337,12 +67493,13 @@ impl App {
         // THE ACTION ROWS' OWN VANILLA LAYOUT (javap 26.2
         // JoinMultiplayerScreen.init the bounds walk keeps: the TOP row
         // the `height - 52` band the Join Selection
-        // [`width / 2 - 154`] + Direct Connection [`width / 2 - 50`]
-        // pair wears — the ADD SERVER slot the entry-form rounds owe,
-        // the honest absence the row keeps —, the BOTTOM row the
-        // `height - 28` band the Edit/Delete/Refresh/Cancel quartet's
-        // Refresh [`width / 2 + 2`] + Cancel [`width / 2 + 80`] seats
-        // wear, the 74-wide the bounds walk speaks)
+        // [`width / 2 - 154`] + Direct Connection [`width / 2 - 50`] +
+        // Add Server [`width / 2 + 54`] trio wears — the entry-form
+        // round's own slot the third opener answers, the EditServer
+        // lambda the walk opens —, the BOTTOM row the `height - 28`
+        // band the Edit/Delete/Refresh/Cancel quartet's Refresh
+        // [`width / 2 + 2`] + Cancel [`width / 2 + 80`] seats wear, the
+        // 74-wide the bounds walk speaks)
         self.buttons.push(Button::new(
             "join",
             tr("selectServer.select")
@@ -67358,6 +67515,13 @@ impl App {
                 .unwrap_or("Direct Connection")
                 .to_string(),
             cx,
+            h - 52,
+            100,
+        ));
+        self.buttons.push(Button::new(
+            "addserver",
+            tr("selectServer.add").unwrap_or("Add Server").to_string(),
+            cx + 104,
             h - 52,
             100,
         ));
@@ -67434,6 +67598,85 @@ impl App {
         self.buttons.push(join);
         self.buttons.push(Button::new(
             "directcancel",
+            tr("gui.cancel").unwrap_or("Cancel").to_string(),
+            cx,
+            h / 4 + 120,
+            200,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE ADD SERVER'S OWN ENTRY FORM (vanilla EditServerScreen the
+    /// add-mode walk): the title (addServer.title) the
+    /// `height / 4 - 15` band the form family wears, the name +
+    /// address EditBox pair the vanilla init's ABSOLUTE seats keep
+    /// (`width / 2 - 100` x, `52` / `92` y — the 200x20 the
+    /// `widget/text_field` 9-slice the direct form's own render wears,
+    /// the hint the EMPTY box keeps — `addServer.enterName` /
+    /// `addServer.enterIp` the EditBox's message the empty value
+    /// answers, the caret the focused blink law), the Done
+    /// (addServer.add) + Cancel (gui.cancel) pair the
+    /// `height / 4 + 96 / + 120` footer row the DirectConnect form's
+    /// own band wears — the save the ALWAYS-ACTIVE field keeps (the
+    /// vanilla save the isEmpty gate never wears; the empty IP the
+    /// entry the `None` host the offline row banks).
+    fn render_edit_server(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
+        let cx = w / 2;
+        g.text_centered(
+            a,
+            cx,
+            h / 4 - 15,
+            tr("addServer.title").unwrap_or("Edit Server Info"),
+            WHITE,
+            true,
+        );
+        // THE NAME BOX'S OWN SEAT (the vanilla init the absolute y
+        // keeps — the rect the render banks, the click walk the same
+        // geometry the store wears)
+        let (nx, ny) = (cx - 100, 52);
+        self.es_name_rect = (nx, ny, 200, 20);
+        g.sprite_9slice(a, "widget/text_field", nx, ny, 200, 20);
+        if self.es_name.is_empty() {
+            let hint = tr("addServer.enterName").unwrap_or("Server Name");
+            g.text(a, nx + 4, ny + 6, &hint, [0.55, 0.55, 0.55], false);
+        } else {
+            g.text(a, nx + 4, ny + 6, &self.es_name, WHITE, false);
+            let tw = g.text_width(&self.es_name);
+            if (self.frame / 6) % 2 == 0 && self.es_name_focus {
+                g.fill(nx + 4 + tw + 1, ny + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
+            }
+        }
+        // THE ADDRESS BOX'S OWN SEAT (the `92` y the init walk keeps —
+        // the 128 cap the setMaxLength speaks, the same hint/caret law
+        // the name box wears)
+        let (ax, ay) = (cx - 100, 92);
+        self.es_address_rect = (ax, ay, 200, 20);
+        g.sprite_9slice(a, "widget/text_field", ax, ay, 200, 20);
+        if self.es_address.is_empty() {
+            let hint = tr("addServer.enterIp").unwrap_or("Server Address");
+            g.text(a, ax + 4, ay + 6, &hint, [0.55, 0.55, 0.55], false);
+        } else {
+            g.text(a, ax + 4, ay + 6, &self.es_address, WHITE, false);
+            let tw = g.text_width(&self.es_address);
+            if (self.frame / 6) % 2 == 0 && self.es_address_focus {
+                g.fill(ax + 4 + tw + 1, ay + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
+            }
+        }
+        // THE FOOTER PAIR'S OWN ROW (the DirectConnect form's own band
+        // the family wears — the save the vanilla law the ALWAYS-ACTIVE
+        // field keeps, the cancel the parent returns)
+        self.buttons.push(Button::new(
+            "essave",
+            tr("addServer.add").unwrap_or("Done").to_string(),
+            cx,
+            h / 4 + 96,
+            200,
+        ));
+        self.buttons.push(Button::new(
+            "escancel",
             tr("gui.cancel").unwrap_or("Cancel").to_string(),
             cx,
             h / 4 + 120,

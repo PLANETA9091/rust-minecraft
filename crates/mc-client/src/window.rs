@@ -1909,6 +1909,13 @@ pub fn run_gui_app(
             else if app.screen == crate::screens::ScreenKind::DirectConnect {
                 app.on_direct_char(c);
             }
+            // THE ADD SERVER FORM'S OWN CHARS (the charTyped lane the
+            // focused field answers — the name/address pair the
+            // internal gates route, the other screens the gate never
+            // passes)
+            else if app.screen == crate::screens::ScreenKind::EditServer {
+                app.on_editserver_char(c);
+            }
             // THE CREATIVE SEARCH'S OWN CHARS (the charTyped lane the
             // focused search box answers — the open chat the drain's
             // arm keeps, the closed chat + the picker's search
@@ -1995,6 +2002,10 @@ pub fn run_gui_app(
             // keyPressed arm the same lane serves — the form's box the
             // internal gates the screen state alone keeps)
             app.on_direct_backspace();
+            // THE ADD SERVER FORM'S OWN BACKSPACE (the EditBox's own
+            // keyPressed arm the same lane serves — the form's pair the
+            // internal gates the screen state alone keeps)
+            app.on_editserver_backspace();
         }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
@@ -2364,6 +2375,13 @@ pub fn run_gui_app(
                 // THE DIRECT CONNECTION'S OWN BOX CONSUME (the same
                 // EditBox mouseClicked law — the inside click the focus
                 // re-arms, the buttons walk the consume skips)
+            } else if app.screen == crate::screens::ScreenKind::EditServer
+                && app.on_editserver_box_click(gmx, gmy)
+            {
+                // THE ADD SERVER FORM'S OWN BOX CONSUME (the same
+                // EditBox mouseClicked law the two-box seat serves —
+                // the inside click the focus re-arms, the buttons walk
+                // the consume skips)
             } else {
                 if app.screen == crate::screens::ScreenKind::DebugOptions {
                     app.debug_search_focus = false;

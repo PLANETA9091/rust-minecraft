@@ -22981,3 +22981,222 @@ fn the_direct_connection_form_own_seat_wears() {
     app.on_escape();
     assert_eq!(app.screen, ScreenKind::Servers);
 }
+
+/// THE ADD SERVER'S OWN ENTRY FORM (javap 26.2 EditServerScreen the
+/// add-mode walk the whole seat answers: the selectServer.add lambda
+/// the form opens, the fresh ctor the `selectServer.defaultName` the
+/// name keeps + the EMPTY address + the name focus the setInitialFocus
+/// arms, the vanilla box seats the 52/92 the rect pair banks, the
+/// footer pair the DirectConnect band wears — the save the
+/// ALWAYS-ACTIVE field keeps, the box click the two-box transfer walk
+/// serves, the typing lanes the focused field the caps the 32/128
+/// keep, the save the entry the list appends + the setSelected the new
+/// row wears, the empty IP the `None` host the offline row banks, the
+/// cancel + the Escape the lastScreen the list returns, the stale
+/// screens the typing gates keep silent).
+#[test]
+fn the_add_server_entry_form_own_seat_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Servers);
+    app.render_title_buttons_for_test();
+    // THE THIRD SLOT'S OWN GEOMETRY (the vanilla init's top row the
+    // THREE 100-wide openers keep — the Add Server the `width / 2 +
+    // 54` left edge the 320 frame the 214 answers, the height-52 band
+    // the pair's own y the seat wears)
+    let add = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "addserver")
+        .expect("addserver");
+    assert_eq!((add.x, add.w, add.y), (214, 100, 180 - 52));
+
+    // THE OPENER'S OWN HAND-OFF (the selectServer.add lambda the form
+    // opens — the fresh ctor the defaultName value the name field
+    // keeps [the `new ServerData(I18n.format("selectServer.defaultName"),
+    // "", false)` the lambda speaks], the EMPTY address the fresh form
+    // keeps, the name focus the setInitialFocus arms, the click the ui
+    // sound the every-button law keeps)
+    app.on_click(add.x + add.w / 2, add.y + add.h / 2);
+    assert_eq!(app.screen, ScreenKind::EditServer);
+    assert_eq!(
+        app.es_name, "Minecraft Server",
+        "the defaultName the fresh ctor keeps"
+    );
+    assert!(
+        app.es_address.is_empty(),
+        "the empty address the fresh form keeps"
+    );
+    assert!(app.es_name_focus, "the setInitialFocus the name box arms");
+    assert!(!app.es_address_focus);
+
+    // THE FORM'S OWN GEOMETRY (the vanilla init the ABSOLUTE box seats
+    // the 52/92 keeps, the footer pair the DirectConnect band wears —
+    // the save the vanilla law the ALWAYS-ACTIVE field keeps [the
+    // isEmpty gate the save never wears], the render the rect pair the
+    // store banks)
+    app.render_title_buttons_for_test();
+    let save = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    assert_eq!((save.x, save.w, save.y), (60, 200, 45 + 96));
+    assert!(save.active, "the vanilla save the isEmpty gate never wears");
+    let esc = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "escancel")
+        .expect("escancel")
+        .clone();
+    assert_eq!((esc.x, esc.w, esc.y), (60, 200, 45 + 120));
+    let (nx, ny, nw, nh) = app.es_name_rect;
+    assert_eq!((nx, ny, nw, nh), (60, 52, 200, 20));
+    let (ax, ay, aw, ah) = app.es_address_rect;
+    assert_eq!((ax, ay, aw, ah), (60, 92, 200, 20));
+
+    // THE BOX CLICK'S OWN TRANSFER WALK (the EditBox.mouseClicked law
+    // the TWO-box seat serves — the inside click the focus re-arm the
+    // TRUE consumes, the sibling the cleared keeps, the outside the
+    // transfer the FALSE the buttons walk answers)
+    assert!(
+        app.on_editserver_box_click(ax + 5, ay + 5),
+        "the inside the address box consumes"
+    );
+    assert!(app.es_address_focus);
+    assert!(!app.es_name_focus);
+    assert!(
+        app.on_editserver_box_click(nx + 5, ny + 5),
+        "the inside the name box consumes"
+    );
+    assert!(app.es_name_focus);
+    assert!(!app.es_address_focus);
+    assert!(!app.on_editserver_box_click(nx - 1, ny + 5));
+    assert!(
+        !app.es_name_focus && !app.es_address_focus,
+        "the outside the transfer speaks"
+    );
+
+    // THE TYPING'S OWN LANES (the focused field the chars + the pops
+    // answer, the unfocused pair the silence keeps — the defaultName
+    // value the ctor armed the unfocused char never extends)
+    app.on_editserver_char('M');
+    assert_eq!(
+        app.es_name, "Minecraft Server",
+        "the unfocused pair the chars never land"
+    );
+    app.on_editserver_box_click(nx + 5, ny + 5);
+    app.on_editserver_char('M');
+    assert_eq!(app.es_name, "Minecraft ServerM");
+    app.on_editserver_backspace();
+    assert_eq!(app.es_name, "Minecraft Server");
+    app.on_editserver_box_click(ax + 5, ay + 5);
+    for c in "mc.example.net".chars() {
+        app.on_editserver_char(c);
+    }
+    assert_eq!(app.es_address, "mc.example.net");
+    app.on_editserver_backspace();
+    assert_eq!(app.es_address, "mc.example.ne");
+    app.on_editserver_char('t');
+    assert_eq!(app.es_address, "mc.example.net");
+
+    // THE CAPS' OWN REFUSAL (the name the 32 the EditBox default
+    // keeps, the address the 128 the setMaxLength speaks — the
+    // over-cap char the lane never lands)
+    app.on_editserver_box_click(nx + 5, ny + 5);
+    app.es_name = "x".repeat(32);
+    app.on_editserver_char('y');
+    assert_eq!(
+        app.es_name.chars().count(),
+        32,
+        "the 32 cap the name refuses"
+    );
+    app.on_editserver_box_click(ax + 5, ay + 5);
+    app.es_address = "z".repeat(128);
+    app.on_editserver_char('w');
+    assert_eq!(
+        app.es_address.chars().count(),
+        128,
+        "the 128 cap the address refuses"
+    );
+
+    // THE STALE SCREEN'S OWN SILENCE (the other screens the typing
+    // gates keep — the Title the chars + the pops never land)
+    app.open(ScreenKind::Title);
+    app.on_editserver_char('x');
+    app.on_editserver_backspace();
+    assert_eq!(app.es_address.chars().count(), 128);
+
+    // THE SAVE'S OWN WALK (the fields the entry banks — the
+    // selectScreen.addServer the list appends, the setSelected the new
+    // row wears, the setScreen the parent returns)
+    app.open(ScreenKind::EditServer);
+    app.es_name = "My Server".to_string();
+    app.es_address = "mc.example.net".to_string();
+    let before = app.servers.len();
+    app.render_title_buttons_for_test();
+    let save = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    app.on_click(save.x + save.w / 2, save.y + save.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(
+        app.servers.len(),
+        before + 1,
+        "the addServer the list appends"
+    );
+    let entry = &app.servers[app.servers.len() - 1];
+    assert_eq!(entry.name, "My Server");
+    assert_eq!(entry.host.as_deref(), Some("mc.example.net"));
+    assert!(!entry.online, "the unpinged entry the offline keeps");
+    assert_eq!(
+        app.selected_server,
+        app.servers.len() - 1,
+        "the setSelected the new row wears"
+    );
+
+    // THE EMPTY ADDRESS'S OWN OFFLINE LAW (the vanilla save the empty
+    // IP the entry banks — the host the None the placeholder row
+    // keeps, the re-open the defaultName the fresh ctor re-speaks)
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    let save = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "essave")
+        .expect("essave")
+        .clone();
+    app.on_click(save.x + save.w / 2, save.y + save.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    let entry = &app.servers[app.servers.len() - 1];
+    assert!(
+        entry.host.is_none(),
+        "the empty IP the None host the offline row banks"
+    );
+    assert_eq!(
+        entry.name, "Minecraft Server",
+        "the defaultName the re-open the fresh ctor keeps"
+    );
+
+    // THE CANCEL + THE ESCAPE (the lastScreen the list returns, the
+    // fields the list never touches)
+    let len = app.servers.len();
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    let esc = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "escancel")
+        .expect("escancel")
+        .clone();
+    app.on_click(esc.x + esc.w / 2, esc.y + esc.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), len);
+    app.open(ScreenKind::EditServer);
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.servers.len(), len);
+}
