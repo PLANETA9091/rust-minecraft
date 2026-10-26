@@ -45596,11 +45596,18 @@ impl App {
         // seats serve, the armed flag the screen's own row wears)
         if let Some(b) = self
             .buttons
-            .iter()
+            .iter_mut()
             .find(|b| b.id == "opt_sensitivity" || b.id == "opt_ms_sensitivity")
         {
             let (bx, bw) = (b.x, b.w);
-            self.look_sensitivity = slider_value_from_x(mx, bx, bw);
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the AbstractSliderButton's onDrag
+            // the SAME setValueFromMousePosition walk the mouseDown
+            // wears — the raw unit the field keeps, the applyValue the
+            // store mirrors, the release the keyboard walk the
+            // CONTINUOUS seat reads)
+            self.look_sensitivity = unit;
+            b.value = Some(unit);
         }
     }
 
@@ -45613,9 +45620,13 @@ impl App {
         if !self.wheel_drag || self.screen != ScreenKind::MouseSettings {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_ms_wheel") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_ms_wheel") {
             let (bx, bw) = (b.x, b.w);
-            self.mouse_wheel_sensitivity = wheel_from_unit(slider_value_from_x(mx, bx, bw));
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the store the log-scale fold wears)
+            self.mouse_wheel_sensitivity = wheel_from_unit(unit);
+            b.value = Some(unit);
         }
     }
 
@@ -45626,9 +45637,13 @@ impl App {
         if !self.fov_drag || self.screen != ScreenKind::Options {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_fov") {
             let (bx, bw) = (b.x, b.w);
-            self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the store the degrees fold wears)
+            self.fov = fov_from_value(unit);
+            b.value = Some(unit);
         }
     }
 
@@ -45639,9 +45654,13 @@ impl App {
         if !self.volume_drag || self.screen != ScreenKind::Options {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_music") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_music") {
             let (bx, bw) = (b.x, b.w);
-            self.volume = slider_value_from_x(mx, bx, bw);
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the applyValue the store mirrors)
+            self.volume = unit;
+            b.value = Some(unit);
         }
     }
 
@@ -45653,9 +45672,13 @@ impl App {
         if !self.fov_effect_drag || self.screen != ScreenKind::Accessibility {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_fov_effect") {
             let (bx, bw) = (b.x, b.w);
-            self.fov_effect_scale = slider_value_from_x(mx, bx, bw);
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the applyValue the store mirrors)
+            self.fov_effect_scale = unit;
+            b.value = Some(unit);
         }
     }
 
@@ -45667,10 +45690,13 @@ impl App {
         if !self.notification_drag || self.screen != ScreenKind::Accessibility {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_notification") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_notification") {
             let (bx, bw) = (b.x, b.w);
-            self.notification_display_time =
-                notification_from_unit(slider_value_from_x(mx, bx, bw));
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the store the 96-seat fold wears)
+            self.notification_display_time = notification_from_unit(unit);
+            b.value = Some(unit);
         }
     }
 
@@ -45685,11 +45711,16 @@ impl App {
         }
         if let Some(b) = self
             .buttons
-            .iter()
+            .iter_mut()
             .find(|b| b.id == "opt_ctl_sprint_window")
         {
             let (bx, bw) = (b.x, b.w);
-            self.sprint_window = sprint_window_from_unit(slider_value_from_x(mx, bx, bw));
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the store the 1-tick seat wears:
+            // the coarse grid the residue the field never loses)
+            self.sprint_window = sprint_window_from_unit(unit);
+            b.value = Some(unit);
         }
     }
 
@@ -45701,9 +45732,13 @@ impl App {
         if !self.textbg_drag || self.screen != ScreenKind::Accessibility {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_textbg") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_textbg") {
             let (bx, bw) = (b.x, b.w);
-            self.text_background_opacity = slider_value_from_x(mx, bx, bw);
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the applyValue the store mirrors)
+            self.text_background_opacity = unit;
+            b.value = Some(unit);
         }
     }
 
@@ -45715,9 +45750,13 @@ impl App {
         if !self.chat_opacity_drag || self.screen != ScreenKind::Accessibility {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_opacity") {
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_chat_opacity") {
             let (bx, bw) = (b.x, b.w);
-            self.chat_opacity = slider_value_from_x(mx, bx, bw);
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the applyValue the store mirrors)
+            self.chat_opacity = unit;
+            b.value = Some(unit);
         }
     }
 
@@ -45731,11 +45770,15 @@ impl App {
         }
         if let Some(b) = self
             .buttons
-            .iter()
+            .iter_mut()
             .find(|b| b.id == "opt_chat_line_spacing")
         {
             let (bx, bw) = (b.x, b.w);
-            self.chat_line_spacing = slider_value_from_x(mx, bx, bw);
+            let unit = slider_value_from_x(mx, bx, bw);
+            // THE WHILEDRAGGING LAW (the same onDrag walk — the raw
+            // unit the field keeps, the applyValue the store mirrors)
+            self.chat_line_spacing = unit;
+            b.value = Some(unit);
         }
     }
 

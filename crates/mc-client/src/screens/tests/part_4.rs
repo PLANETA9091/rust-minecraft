@@ -10467,6 +10467,177 @@ fn the_sub_screen_sliders_own_grab_walk_the_rows_the_class_law_wears() {
     );
 }
 
+/// THE DRAG LANES' OWN WIDGET VALUE (the AbstractSliderButton's
+/// onDrag the SAME setValueFromMousePosition walk the mouseDown
+/// wears — the held frames the raw unit the field keeps, the
+/// applyValue the store mirrors, the release the keyboard walk the
+/// CONTINUOUS seat reads: the coarse seat grids the re-quantize
+/// trap the field never eats).
+#[test]
+fn the_drag_lanes_own_widget_value_the_while_dragging_law_wears() {
+    let mut app = App::new(3);
+
+    // THE OPTIONS' OWN SENSITIVITY LANE (the direct 0..1 store — the
+    // press the center seat claims, the drag the sub-seat position
+    // the field AND store wear, the stale press seat the field dies)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    let sens = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the sensitivity row")
+        .clone();
+    app.on_press(sens.x + sens.w / 2, sens.y + sens.h / 2);
+    assert_eq!(app.options_focus, Some("opt_sensitivity"));
+    assert!(app.options_grab);
+    let u_press = slider_value_from_x(sens.x + sens.w / 2, sens.x, sens.w);
+    let dx = sens.x + 4 + (sens.w - 8) / 4;
+    let u_drag = slider_value_from_x(dx, sens.x, sens.w);
+    assert!(u_drag < u_press, "the quarter drag the left half rides");
+    app.on_sensitivity_slider_drag(dx);
+    assert_eq!(
+        app.look_sensitivity, u_drag,
+        "the applyValue the store the drag unit wears"
+    );
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity")
+            .unwrap()
+            .value,
+        Some(u_drag),
+        "the WHILEDRAGGING law the field wears — the stale press seat dies"
+    );
+    // THE RELEASE'S OWN DISARM (the flag dies, the field the last
+    // drag seat keeps, the grab the focus the release never clears)
+    app.on_left_release();
+    assert!(!app.sensitivity_drag, "the release the drag disarms");
+    assert!(
+        app.options_grab && app.options_focus == Some("opt_sensitivity"),
+        "the release the claim never clears"
+    );
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity")
+            .unwrap()
+            .value,
+        Some(u_drag),
+        "the release the field never rewrites"
+    );
+    // THE ARROW'S OWN CONTINUOUS SEAT (the keyboard walk the DRAG's
+    // unit reads — NOT the stale press seat the pre-drag field kept)
+    let step = (1.0f32 / (sens.w - 8) as f32) as f64;
+    app.on_options_key_arrow(false);
+    assert_eq!(
+        app.look_sensitivity,
+        u_drag - step,
+        "the Left the drag's continuous seat the step lands"
+    );
+    assert_ne!(
+        app.look_sensitivity,
+        u_press - step,
+        "the stale press seat the walk never reads"
+    );
+
+    // THE MOUSE SETTINGS' OWN SEAT (the SAME drag fn the second row
+    // serves — the ms id the field wears, the store the same lane
+    // keeps)
+    app.open(ScreenKind::MouseSettings);
+    app.render_title_buttons_for_test();
+    let ms = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_sensitivity")
+        .expect("the ms row")
+        .clone();
+    app.on_press(ms.x + ms.w / 2, ms.y + ms.h / 2);
+    assert_eq!(app.options_focus, Some("opt_ms_sensitivity"));
+    let dmx = ms.x + 4 + (ms.w - 8) / 4;
+    let mu = slider_value_from_x(dmx, ms.x, ms.w);
+    app.on_sensitivity_slider_drag(dmx);
+    assert_eq!(app.look_sensitivity, mu);
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_ms_sensitivity")
+            .unwrap()
+            .value,
+        Some(mu),
+        "the ms seat the same fn the field wears"
+    );
+
+    // THE SPRINT WINDOW'S OWN RESIDUE (the IntRange(0,10)'s coarse
+    // grid — the drag the sub-seat unit the field keeps, the store
+    // the 4-tick seat rounds, the arrow the CONTINUOUS seat steps:
+    // the 4-seat landing the stale press seat's 5 never wears)
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    let sw = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ctl_sprint_window")
+        .expect("the sprint window row")
+        .clone();
+    app.on_press(sw.x + sw.w / 2, sw.y + sw.h / 2);
+    assert!(app.options_grab);
+    let u_press = slider_value_from_x(sw.x + sw.w / 2, sw.x, sw.w);
+    assert_eq!(
+        app.sprint_window,
+        sprint_window_from_unit(u_press),
+        "the press the center seat the grid rounds"
+    );
+    let dsw = sw.x + 4 + (sw.w - 8) * 44 / 100;
+    let u_drag = slider_value_from_x(dsw, sw.x, sw.w);
+    app.on_sprint_window_slider_drag(dsw);
+    assert_eq!(app.sprint_window, 4, "the store the 1-tick seat rounds");
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_ctl_sprint_window")
+            .unwrap()
+            .value,
+        Some(u_drag),
+        "the field the sub-seat residue keeps"
+    );
+    app.on_left_release();
+    let step_s = (1.0f32 / (sw.w - 8) as f32) as f64;
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.sprint_window,
+        sprint_window_from_unit((u_drag + step_s).clamp(0.0, 1.0)),
+        "the Right the continuous seat the grid rounds — NOT the press seat"
+    );
+    assert_ne!(
+        app.sprint_window, 5,
+        "the stale press seat's 5 the re-quantize trap the fix refuses"
+    );
+    // THE REBUILD'S OWN SYNC (the render's store re-wear the residue
+    // eats — the live loop's own truth the build wears, the noted
+    // nuance the 245 round banked)
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_ctl_sprint_window")
+            .unwrap()
+            .value,
+        Some(app.sprint_window as f64 / 10.0),
+        "the rebuild the store sync wears"
+    );
+
+    // THE DISARMED DRAG'S OWN SILENCE (the release the flag cleared —
+    // the held frames the store never rewrites, the seat the field
+    // keeps)
+    let before = app.look_sensitivity;
+    app.on_sensitivity_slider_drag(0);
+    assert_eq!(
+        app.look_sensitivity, before,
+        "the disarmed lane the silence keeps"
+    );
+}
+
 /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
 /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
 /// the caption the ends law speaks (the 30 the options.fov.min
