@@ -9932,6 +9932,12 @@ pub struct App {
     /// the plain motion the `moveCursorTo(pos)` one-arg reset the
     /// anchor collapses).
     pub chat_highlight: Option<usize>,
+    /// THE DRAG SEAT'S OWN ARM (the AbstractWidget.setDragging law the
+    /// chat input wears — the inside press arms the flag, the HELD
+    /// button's every frame the drag walk answers, the release the
+    /// disarm speaks; the outside/unconsumed press the flag never
+    /// arms — the suggestion click the band never owns).
+    pub chat_drag_armed: bool,
     /// THE CHAT BOX'S OWN DISPLAY WINDOW (the same `displayPos` law
     /// the input band keeps — the long chat line the window the caret
     /// answers, the short line the zero the same bytes wears).
@@ -11718,6 +11724,7 @@ impl App {
             chat_input: String::new(),
             chat_cursor: 0,
             chat_highlight: None,
+            chat_drag_armed: false,
             chat_display: 0,
             chat_input_rect: None,
             chat_ghost_seat: None,
@@ -41453,6 +41460,7 @@ impl App {
         // the dev-174 round's entry-form law the chat input keeps)
         self.chat_cursor = self.chat_input.chars().count();
         self.chat_highlight = None; // the setValue the anchor collapses
+        self.chat_drag_armed = false; // the fresh session the arm clears
         self.chat_window_sync();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
@@ -41520,6 +41528,7 @@ impl App {
         // fresh open the one-char end banks)
         self.chat_cursor = self.chat_input.chars().count();
         self.chat_highlight = None; // the setValue the anchor collapses
+        self.chat_drag_armed = false; // the fresh session the arm clears
         self.chat_window_sync();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
@@ -41561,6 +41570,7 @@ impl App {
         self.chat_cursor = 0;
         self.chat_display = 0;
         self.chat_highlight = None; // the take's zero the anchor collapses
+        self.chat_drag_armed = false; // the close the arm clears
         let text = std::mem::take(&mut self.chat_input);
         if text.trim().is_empty() {
             // the blank close the discard arm keeps (the shouldDiscard
@@ -41658,6 +41668,7 @@ impl App {
             self.chat_cursor = 0;
             self.chat_display = 0;
             self.chat_highlight = None; // the setValue("") the anchor collapses
+            self.chat_drag_armed = false; // the clear the arm clears
             self.chat_input_is_draft = false;
             self.refresh_command_suggestions();
             return true;
@@ -41956,7 +41967,9 @@ impl App {
     /// index positions, the box padding the +4 the render's own text
     /// origin wears, the dev-175 round's entry-form law the chat
     /// input keeps; the y-band the 12-tall row keeps, the outside
-    /// click the FALSE the caller keeps).
+    /// click the FALSE the caller keeps; the consumed press the drag
+    /// arm banks — the AbstractWidget.setDragging law the held walk
+    /// the same flag answers).
     pub fn on_chat_box_click(&mut self, mx: i32, my: i32) -> bool {
         if !self.chat_open {
             return false;
@@ -41973,17 +41986,77 @@ impl App {
         // two-step answers, the x the prefix length + the displayPos
         // the seat wears, the box padding the +4 the text origin
         // speaks)
+        // the plain click the `moveCursorTo(pos)` one-arg law the
+        // anchor collapses (the shift-click the two-arg lane the
+        // shift arm answers) — the consumed press the DRAG ARM banks
+        self.chat_highlight = None;
+        self.chat_cursor = self.chat_click_seat(mx, rw);
+        self.chat_drag_armed = true;
+        self.chat_window_sync();
+        true
+    }
+
+    /// THE SELECTION'S OWN DRAG SEAT (the private seat compute — the
+    /// x-band walk the click/shift-click/drag lanes the same law
+    /// shares: the VISIBLE WINDOW the `trimStringToWidth` law the
+    /// two-step answers, the x the prefix length + the displayPos the
+    /// seat wears, the past-tail the clamp parks).
+    fn chat_click_seat(&self, mx: i32, rw: i32) -> usize {
         let inner = rw - 8;
         let visible: String = self.chat_input.chars().skip(self.chat_display).collect();
         let vis_len = caret_char_index_at(&visible, inner);
         let window: String = visible.chars().take(vis_len).collect();
-        // the plain click the `moveCursorTo(pos)` one-arg law the
-        // anchor collapses (the shift-click the selectText lane the
-        // follow-up round owes)
-        self.chat_highlight = None;
-        self.chat_cursor = caret_char_index_at(&window, mx - 4) + self.chat_display;
+        caret_char_index_at(&window, mx - 4) + self.chat_display
+    }
+
+    /// THE SELECTION'S OWN SHIFT CLICK (the EditBox.mouseClicked's
+    /// hasShiftDown branch the `moveCursorTo(pos, true)` walk serves —
+    /// the live anchor the same seat keeps, the no-anchor first ride
+    /// the PRE-CLICK cursor the anchor banks, the cursor the clicked
+    /// seat wears, the range the [anchor, seat) opens, the outside
+    /// click the false the caller keeps).
+    pub fn on_chat_box_shift_click(&mut self, mx: i32, my: i32) -> bool {
+        if !self.chat_open {
+            return false;
+        }
+        let Some((rx, ry, rw, rh)) = self.chat_input_rect else {
+            return false;
+        };
+        if mx < rx || mx >= rx + rw || my < ry || my >= ry + rh {
+            return false; // the outside click the band never owns
+        }
+        let seat = self.chat_click_seat(mx, rw);
+        if self.chat_highlight.is_none() {
+            self.chat_highlight = Some(self.chat_cursor);
+        }
+        self.chat_cursor = seat;
         self.chat_window_sync();
         true
+    }
+
+    /// THE SELECTION'S OWN DRAG (the EditBox.onDrag walk — the armed
+    /// press's held frames the cursor the seat follows, the anchor the
+    /// press seat the range opens [the vanilla drag the highlight
+    /// walk serves], the y-band the row keeps, the past-tail the
+    /// clamp parks, the closed/ unarmed chat the lane never answers).
+    pub fn on_chat_box_drag(&mut self, mx: i32, my: i32) {
+        if !self.chat_open || !self.chat_drag_armed {
+            return;
+        }
+        let Some((rx, ry, rw, rh)) = self.chat_input_rect else {
+            return;
+        };
+        if my < ry || my >= ry + rh {
+            return; // the outside row the drag never owns
+        }
+        let seat = self.chat_click_seat(mx, rw);
+        if self.chat_highlight.is_none() {
+            // the press seat the anchor banks (the vanilla drag the
+            // first-click place the range opens)
+            self.chat_highlight = Some(self.chat_cursor);
+        }
+        self.chat_cursor = seat;
+        self.chat_window_sync();
     }
 
     /// THE HISTORY ARROWS (javap ChatScreen.moveInHistory — the Up the

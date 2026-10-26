@@ -2539,10 +2539,25 @@ pub fn run_gui_app(
             // THE VANILLA ORDER (ChatScreen.mouseClicked's walk — the
             // suggestions list the first consumed click keeps, the
             // unconsumed click the EditBox's own x-band the caret
-            // positions)
+            // positions; the hasShiftDown query the two arms keeps —
+            // the shift the `moveCursorTo(pos, true)` walk the anchor
+            // preserves, the plain the one-arg the collapse wears)
+            let shift_down =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if !app.on_chat_click(gmx, gmy) {
-                app.on_chat_box_click(gmx, gmy);
+                if shift_down {
+                    app.on_chat_box_shift_click(gmx, gmy);
+                } else {
+                    app.on_chat_box_click(gmx, gmy);
+                }
             }
+        }
+        // THE SELECTION'S OWN DRAG WALK (the EditBox.onDrag lane — the
+        // armed press's held frames the cursor the seat follows, the
+        // anchor the press place the range opens; the unarmed/outside
+        // lanes the drag never answers)
+        if left_down && app.chat_drag_armed {
+            app.on_chat_box_drag(gmx, gmy);
         }
         // THE PICKER'S OWN SCROLL DRAG (the mouseDragged walk's armed
         // lane — the scrollbar press armed the flag, the HELD button's
@@ -2626,9 +2641,12 @@ pub fn run_gui_app(
         }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
-        // continueAttack(false) tail — the crack overlay clears)
+        // continueAttack(false) tail — the crack overlay clears) — the
+        // chat's DRAG ARM the same release disarms (the setDragging
+        // false tail the held walk ends)
         if !left_down && was_left_down {
             app.on_left_release();
+            app.chat_drag_armed = false;
         }
         was_left_down = left_down;
         // the RIGHT press's rising edge: the container screen's own

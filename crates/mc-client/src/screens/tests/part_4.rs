@@ -24598,6 +24598,115 @@ fn the_chat_selection_own_shift_seat_wears() {
     assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
 }
 
+/// THE SELECTION'S OWN DRAG SEAT (the vanilla EditBox mouse walk the
+/// chat input wears — the shift-click the `moveCursorTo(pos, true)`
+/// branch the anchor preserves [the no-anchor first ride the pre-
+/// click cursor banks], the armed press's drag walk the cursor the
+/// seat follows [the anchor the press place the range opens], the
+/// release the disarm speaks, the outside/unconsumed lanes the arm
+/// never banks, the closed chat the gates keep).
+#[test]
+fn the_chat_selection_own_drag_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_chat_key();
+    for c in "hello world".chars() {
+        app.on_chat_char(c);
+    }
+    assert_eq!(app.chat_cursor, 11, "the typing the tail parks");
+    assert!(!app.chat_drag_armed, "the fresh open the arm clears");
+
+    // THE RECT'S OWN BANK (the render the walk banks — the mouse
+    // lanes the same geometry the tests wear)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (rx, ry, rw, rh) = app.chat_input_rect.expect("the drawn band's rect");
+    assert_eq!((rx, ry, rw, rh), (2, 166, 316, 12), "the band's own bounds");
+
+    // THE OUTSIDE PRESS'S OWN KEEP (the band never owns — the arm
+    // never banks)
+    assert!(
+        !app.on_chat_box_click(rx + 4, ry - 1),
+        "the above-band the false keeps"
+    );
+    assert!(!app.chat_drag_armed, "the outside press the arm keeps");
+
+    // THE PLAIN PRESS'S OWN ARM (the consumed press the flag banks —
+    // the one-arg moveCursorTo the anchor collapses)
+    assert!(app.on_chat_box_click(rx + 4, ry + 5), "the inside the true");
+    assert!(app.chat_drag_armed, "the consumed press the arm banks");
+    assert_eq!(app.chat_cursor, 0, "the left edge the zero parks");
+    assert_eq!(app.chat_highlight, None, "the plain press the collapse");
+
+    // THE DRAG'S OWN RANGE (the armed walk the cursor follows — the
+    // anchor the press place the [0, 11) opens)
+    app.on_chat_box_drag(rx + 4 + 100, ry + 5);
+    assert_eq!(app.chat_cursor, 11, "the past-tail drag the len parks");
+    assert_eq!(app.chat_highlight, Some(0), "the press place the anchor");
+    assert_eq!(app.chat_input, "hello world", "the drag the value keeps");
+
+    // THE OUTSIDE ROW'S OWN KEEP (the y-band the drag never owns)
+    app.on_chat_box_drag(rx + 4, ry - 1);
+    assert_eq!(app.chat_cursor, 11, "the above-band the seat keeps");
+    assert_eq!(
+        app.chat_highlight,
+        Some(0),
+        "the above-band the anchor keeps"
+    );
+
+    // THE SHIFT CLICK'S OWN EXTEND (the two-arg walk the live anchor
+    // preserves — the seat the click wears)
+    app.on_chat_caret_arrow(true); // the plain ride the collapse + the seat 10
+    assert_eq!(app.chat_highlight, None, "the plain ride the collapse");
+    assert_eq!(app.chat_cursor, 10, "the plain ride the -1 step");
+    assert!(
+        app.on_chat_box_shift_click(rx + 4, ry + 5),
+        "the shift-click the band owns"
+    );
+    assert_eq!(app.chat_cursor, 0, "the shift-click the left edge");
+    assert_eq!(
+        app.chat_highlight,
+        Some(10),
+        "the pre-click seat the anchor"
+    );
+
+    // THE SECOND SHIFT CLICK'S OWN ANCHOR KEEP (the live anchor the
+    // same seat never re-seats)
+    assert!(app.on_chat_box_shift_click(rx + 4 + 40, ry + 5));
+    assert_eq!(
+        app.chat_highlight,
+        Some(10),
+        "the live anchor the seat keeps"
+    );
+
+    // THE UNARMED DRAG'S OWN SILENCE (the flag the release cleared —
+    // the drag walk never answers)
+    app.chat_drag_armed = false;
+    let unarmed_seat = app.chat_cursor;
+    app.on_chat_box_drag(rx + 4 + 100, ry + 5);
+    assert_eq!(app.chat_cursor, unarmed_seat, "the unarmed the seat keeps");
+
+    // THE CLOSED CHAT'S OWN GATES (the submit the close the take
+    // answers — the mouse lanes the closed screen never wear, the
+    // fresh open the arm the false keeps)
+    app.on_chat_submit();
+    assert!(!app.chat_open);
+    assert!(
+        !app.on_chat_box_click(rx + 4, ry + 5),
+        "the closed the false"
+    );
+    assert!(
+        !app.on_chat_box_shift_click(rx + 4, ry + 5),
+        "the closed the false"
+    );
+    app.on_chat_box_drag(rx + 4 + 100, ry + 5);
+    assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
+    app.on_chat_key();
+    assert!(!app.chat_drag_armed, "the fresh open the arm clears");
+    assert_eq!(app.chat_highlight, None, "the fresh open the anchor clears");
+}
+
 #[test]
 fn the_entry_forms_own_delete_key_wears() {
     let mut app = App::new(3);
