@@ -24737,6 +24737,117 @@ fn the_caret_own_ctrl_word_trio_wears() {
 }
 
 #[test]
+fn the_search_boxes_own_ctrl_word_pair_wears() {
+    let mut app = App::new(3);
+    // THE CREATIVE SEARCH'S OWN SEAT (the picker the tab-6 arms — the
+    // typed word the box the end-seat model wears)
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    assert_eq!(app.creative_tab, 6, "the search tab the seat wears");
+    for c in "stone stairs".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(
+        app.creative_search, "stone stairs",
+        "the box the typed word keeps"
+    );
+
+    // THE BACKWARD BITE (the Ctrl+Backspace the `deleteWords(-1)`
+    // walk serves — the tail word the walk removes, the palette the
+    // refresh re-filters, the scroll the top wears)
+    app.on_creative_ctrl_words(false);
+    assert_eq!(
+        app.creative_search, "stone ",
+        "the tail word the walk removes"
+    );
+
+    // THE SECOND BITE (the trailing space the skip the range the
+    // walk removes — the head word the same law answers, the empty
+    // box the source list the walk keeps)
+    app.on_creative_ctrl_words(false);
+    assert_eq!(
+        app.creative_search, "",
+        "the head the space the walk removes"
+    );
+    assert_eq!(
+        app.creative_items, app.creative_source,
+        "the empty box the source list keeps"
+    );
+
+    // THE EMPTY'S OWN NO-OP + THE FORWARD END-SEAT (the walk the
+    // delta never answers — the end seat the bound never passes)
+    app.on_creative_ctrl_words(false);
+    app.on_creative_ctrl_words(true);
+    assert_eq!(app.creative_search, "", "the end seat the no-op keeps");
+
+    // THE STALE TAB'S OWN GATE (the category tab the walk never
+    // passes — the cleared box the lane keeps)
+    app.select_creative_tab(0);
+    assert_eq!(app.creative_search, "", "the category the box clears");
+    app.on_creative_ctrl_words(false);
+    assert_eq!(app.creative_search, "", "the stale tab the gate keeps");
+
+    // THE DEBUG SEARCH'S OWN PAIR (the focused box the same laws
+    // wears — the tail word the backward walk removes, the scroll
+    // the rebuild's top wears)
+    app.enter_world();
+    app.on_debug_options_key();
+    assert!(
+        app.debug_search_focus,
+        "the fresh screen the box the focus wears"
+    );
+    for c in "fps overlay".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(
+        app.debug_search, "fps overlay",
+        "the box the typed word keeps"
+    );
+
+    // THE BACKWARD BITE (the tail word the walk removes)
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(app.debug_search, "fps ", "the tail word the walk removes");
+
+    // THE SECOND BITE (the head word the same law answers)
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(app.debug_search, "", "the head the space the walk removes");
+
+    // THE SCROLL'S OWN REBUILD TAIL (the pre-bite wheel the scrollable
+    // "chunk" list the step wears, the bite the WHOLE word the walk
+    // removes — the scroll the rebuild's top the same tail wears)
+    for c in "chunk".chars() {
+        app.on_debug_options_char(c);
+    }
+    app.on_debug_options_scroll(-2.0, 180);
+    assert_eq!(app.debug_scroll, 48.0, "the pre-bite wheel the step wears");
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(app.debug_search, "", "the whole word the walk removes");
+    assert_eq!(app.debug_scroll, 0.0, "the rebuild the top wears");
+
+    // THE RE-ARMED FORWARD END-SEAT (the typed the seat re-arms —
+    // the end seat the forward bound the no-op keeps)
+    for c in "render".chars() {
+        app.on_debug_options_char(c);
+    }
+    app.on_debug_options_ctrl_words(true);
+    assert_eq!(
+        app.debug_search, "render",
+        "the end seat the forward no-op keeps"
+    );
+
+    // THE UNFOCUSED BOX'S OWN GATE (the internal gate the walk never
+    // passes — the word + the scroll the same state keeps)
+    app.debug_search_focus = false;
+    let (kept, kept_scroll) = (app.debug_search.clone(), app.debug_scroll);
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(app.debug_search, kept, "the unfocused the gate keeps");
+    assert_eq!(
+        app.debug_scroll, kept_scroll,
+        "the unfocused the scroll keeps"
+    );
+}
+
+#[test]
 fn the_caret_own_ctrl_word_arrows_wears() {
     let mut app = App::new(3);
     app.open(ScreenKind::EditServer);

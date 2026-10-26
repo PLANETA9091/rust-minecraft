@@ -23351,6 +23351,32 @@ impl App {
         }
     }
 
+    /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
+    /// `Screen.hasControlDown()` branch the `deleteWords(-1)` walk
+    /// serves — the END-SEAT model the cursor the string's tail
+    /// wears, the backward arm the tail word the space-run skip the
+    /// walk removes [the plain pop's ctrl sibling the same
+    /// `word_boundary` law answers], the forward arm the end
+    /// seat the bound never passes — the zero delta the no-op keeps;
+    /// the refresh + the scroll the backspace's own tails the same
+    /// laws wear)
+    pub fn on_creative_ctrl_words(&mut self, forward: bool) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        let len = self.creative_search.chars().count();
+        let bound = word_boundary(&self.creative_search, len, forward);
+        if bound != len {
+            let start = caret_byte_index(&self.creative_search, bound);
+            self.creative_search.replace_range(start.., "");
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+        }
+    }
+
     /// THE MIDDLE-CLICK CLONE (the slotClicked walk's CLONE arm —
     /// `if getCarried().isEmpty() && slot.hasItem():
     /// setCarried(hovered.copyWithCount(hovered.getMaxStackSize()))`:
@@ -35867,6 +35893,25 @@ impl App {
             return;
         }
         if self.debug_search.pop().is_some() {
+            self.debug_scroll = 0.0;
+        }
+    }
+
+    /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
+    /// `Screen.hasControlDown()` branch the `deleteWords(-1)` walk
+    /// serves — the END-SEAT model the tail word the backward walk
+    /// removes, the forward arm the end seat the zero delta the
+    /// no-op keeps; the unfocused box the internal gate never passes,
+    /// the scroll the rebuild's top reset the same tail wears)
+    pub fn on_debug_options_ctrl_words(&mut self, forward: bool) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let len = self.debug_search.chars().count();
+        let bound = word_boundary(&self.debug_search, len, forward);
+        if bound != len {
+            let start = caret_byte_index(&self.debug_search, bound);
+            self.debug_search.replace_range(start.., "");
             self.debug_scroll = 0.0;
         }
     }

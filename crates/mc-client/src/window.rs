@@ -2012,17 +2012,24 @@ pub fn run_gui_app(
         // pair the plain arms the non-ctrl keys keep)
         let ctrl_down = window.is_key_down(Key::LeftCtrl) || window.is_key_down(Key::RightCtrl);
         if !app.chat_open && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
-            app.on_creative_backspace();
-            app.on_debug_options_backspace();
             if ctrl_down {
                 // THE CARET'S OWN CTRL WORD (the EditBox keyPressed's
                 // 259 arm the `Screen.hasControlDown()` branch the
                 // `deleteWords(-1)` walk serves — the whole word the
                 // backward bound removes, the internal gates the
-                // screen state alone keep)
+                // screen state alone keep; the SEARCH BOXES' own pair
+                // the same branch the tail word answers — the
+                // end-seat model the plain pop's ctrl siblings wear)
+                app.on_creative_ctrl_words(false);
+                app.on_debug_options_ctrl_words(false);
                 app.on_direct_ctrl_words(false);
                 app.on_editserver_ctrl_words(false);
             } else {
+                // THE SEARCH BOXES' OWN BACKSPACE (the EditBox's own
+                // keyPressed arm the same lane serves — the two boxes
+                // the internal gates the screen state alone keep)
+                app.on_creative_backspace();
+                app.on_debug_options_backspace();
                 // THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
                 // keyPressed arm the same lane serves — the form's box the
                 // internal gates the screen state alone keeps)
