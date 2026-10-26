@@ -7049,6 +7049,41 @@ pub enum ScreenKind {
     /// packet lane the follow-up round owes — the offline world the
     /// picker's own seat holds).
     Creative,
+    /// THE PAUSE DESTINATION'S OWN ADVANCEMENTS SCREEN (javap 26.2
+    /// AdvancementsScreen — the PauseScreen.openScreenButton supplier
+    /// the `new AdvancementsScreen(advancements, this)` lambda opens):
+    /// the `HeaderAndFooterLayout` chrome the default (33, 33) ctor
+    /// banks — the title the `addTitleHeader` StringWidget the 33-tall
+    /// header's centered seat wears (the text top the y-12 the
+    /// round((33-9)/2) answer speaks), the zero-advancement lane the
+    /// EMPTY tab map the client's wire-less state keeps (the tab
+    /// widget the selectedTab-null arm never installs, the content
+    /// the header-footer band the silence wears), the footer the
+    /// GUI_DONE 200w button the addToFooter walk banks (the y = h-26
+    /// seat the (33-20)/2 round-up answer speaks), the Escape/Done
+    /// the onClose walk the lastScreen (the pause) returns.
+    Advancements,
+    /// THE PAUSE DESTINATION'S OWN STATS SCREEN (javap 26.2
+    /// StatsScreen — the PauseScreen.openScreenButton supplier the
+    /// `new StatsScreen(this, stats)` lambda opens): the
+    /// `HeaderAndFooterLayout` chrome the same default ctor banks —
+    /// the header the tab bar's own seat keeps EMPTY (the
+    /// MenuTabBar the addRenderableWidget walk the layout's header
+    /// never joins), the three LoadingTabs the MenuTabBar.builder
+    /// walk adds (the `stat.generalButton`/`stat.itemsButton`/
+    /// `stat.mobsButton` words the tab labels speak, the
+    /// `(min(400,w)-28)/3` roundToward-2 width law the 320x180
+    /// frame the 98w buttons at x 14/112/210 wears, the y=0 the 24
+    /// tall tab sprites the widget/tab nine-slice family keeps, the
+    /// tab-0 the setTabActiveState walk the SELECTED state wears),
+    /// the content the LoadingTab law serves (the
+    /// LoadingDotsWidget the `multiplayer.downloadingStats` word the
+    /// band-center seat wears [the paddingBottom-30 the layout the
+    /// y-66 top speaks], the REQUEST_STATS wire the stats lane the
+    /// pending state holds), the footer the GUI_DONE 200w button the
+    /// addToFooter walk banks, the Escape/Done the onClose walk the
+    /// lastScreen (the pause) returns.
+    Stats,
 }
 
 /// THE GAME MODE THE SWITCHER SPEAKS (javap 26.2 GameType's own client
@@ -9233,6 +9268,13 @@ pub struct App {
     /// clamp the maxScrollAmount law keeps; the fresh screen the
     /// vanilla list rebuild the zero wears).
     pub kb_scroll: f64,
+    /// THE STATS SCREEN'S OWN TAB SEAT (the StatsScreen's
+    /// `tabNavigationBar` the selectTab walk's index keeps — the
+    /// tab-0 the init's setTabActiveState law the General seat
+    /// wears, the tab buttons' click the index the content swap
+    /// serves, the three LoadingTabs the pending state the same
+    /// content keeps).
+    pub stats_tab: usize,
     /// THE FOV'S OWN STORE (the `options.fov` OptionInstance the 26.2
     /// clinit banks — the IntRange(30, 110) the default 70 wears, the
     /// CAMERA.calculateFov fold the degrees the body's modifier
@@ -11547,6 +11589,7 @@ impl App {
             key_binds: crate::options_file::key_binds::DEFAULTS,
             kb_selected: None,
             kb_scroll: 0.0,
+            stats_tab: 0,
             fov: 70.0,
             fov_drag: false,
             volume: 1.0,
@@ -29250,6 +29293,18 @@ impl App {
             // wears; the selectedKey the rebind lane's own Escape
             // seat the store round banks)
             self.open(ScreenKind::Controls);
+        } else if self.screen == ScreenKind::Advancements {
+            // THE ADVANCEMENTS SCREEN'S OWN ESCAPE LANE (the vanilla
+            // shouldCloseOnEsc default the keyPressed walk answers —
+            // the onClose moment the Done chord wears: the lastScreen
+            // the setScreen ride returns, the paused world the pause
+            // re-wears)
+            self.open(ScreenKind::World);
+        } else if self.screen == ScreenKind::Stats {
+            // THE STATS SCREEN'S OWN ESCAPE LANE (the same default —
+            // the lastScreen the pause the onClose ride returns, the
+            // Done chord the same walk wears)
+            self.open(ScreenKind::World);
         } else if self.screen == ScreenKind::Options {
             // THE OPTIONS SCREEN'S OWN ESCAPE LANE (the vanilla Escape
             // the Screen.shouldCloseOnEsc default the keyPressed walk
@@ -39004,6 +39059,29 @@ impl App {
                 // WorldOptionsScreen opens, the lastScreen chain the
                 // Done footer wears)
                 "worldoptions" => self.open(ScreenKind::WorldOptions),
+                // THE PAUSE DESTINATIONS' OWN WALK (the 26.2
+                // PauseScreen.openScreenButton suppliers — the
+                // advancements lambda the `new
+                // AdvancementsScreen(advancements, this)` speaks, the
+                // stats lambda the `new StatsScreen(this, stats)`
+                // answers: the open() the setScreen replacement the
+                // pause's lastScreen keeps, the paused flag the
+                // return walk re-serves)
+                "advancements" => self.open(ScreenKind::Advancements),
+                "stats" => self.open(ScreenKind::Stats),
+                // THE DESTINATION SCREENS' OWN DONE (the vanilla
+                // onClose law — the Done lambda the `onClose()` ride
+                // speaks: the lastScreen the setScreen walk returns,
+                // the paused world the pause re-wears)
+                "advancementsdone" | "statsdone" => self.open(ScreenKind::World),
+                // THE STATS TABS' OWN SELECT (the MenuTabButton's
+                // onPress walk — the tabManager.selectTab the index
+                // the content swap serves, the three LoadingTabs the
+                // pending state the same content keeps, the
+                // selected-tab sprite law the seat swap answers)
+                "statstab0" => self.stats_tab = 0,
+                "statstab1" => self.stats_tab = 1,
+                "statstab2" => self.stats_tab = 2,
                 // THE ACCESSIBILITY SCREEN'S OWN WALK (the 26.2
                 // OptionsScreen.init's openScreenButton walk — the
                 // lambda$init$8 supplier the `new
@@ -60851,6 +60929,22 @@ impl App {
                 let (gw, gh) = (g.w(), g.h());
                 self.render_debug_options(&mut g, a, gw, gh);
             }
+            ScreenKind::Advancements => {
+                // THE PAUSE DESTINATION'S OWN ROUND (the vanilla
+                // AdvancementsScreen — the HeaderAndFooterLayout chrome
+                // the full screen wears, the Options-family shape the
+                // pause's setScreen replacement keeps): the gradient
+                // backdrop, the title header, the zero-tab band, the
+                // Done footer.
+                self.render_advancements(&mut g, a, w, h);
+            }
+            ScreenKind::Stats => {
+                // THE PAUSE DESTINATION'S OWN ROUND (the vanilla
+                // StatsScreen — the same chrome the tab bar's own shape
+                // wears): the gradient backdrop, the three LoadingTab
+                // buttons, the pending content, the Done footer.
+                self.render_stats(&mut g, a, w, h);
+            }
         }
     }
 
@@ -68437,6 +68531,141 @@ impl App {
             if let Some((_, icon, _)) = sprite_row.iter().find(|(id, _, _)| id == &b.id) {
                 g.sprite_at(a, icon, b.x + 3, b.y + 3, 15, 15);
             }
+        }
+    }
+
+    /// THE PAUSE DESTINATION'S OWN ADVANCEMENTS SCREEN (javap 26.2
+    /// AdvancementsScreen — the HeaderAndFooterLayout(33, 33) default
+    /// chrome the addTitleHeader + addToFooter walks bank): the title
+    /// the header's centered StringWidget the y-12 seat wears, the
+    /// zero-advancement lane the empty tab band keeps, the Done the
+    /// footer's 200w button the h-26 seat answers, the Escape/Done
+    /// the lastScreen (the pause) the open() walk returns.
+    fn render_advancements(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        // THE HEADER'S OWN TITLE (the addTitleHeader StringWidget — the
+        // 33-tall frame the align(0.5,0.5) child law centers, the text
+        // top the round((33-9)/2) = 12 seat wears)
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("gui.advancements").unwrap_or("Advancements"),
+            WHITE,
+            true,
+        );
+        // THE ZERO-TAB BAND (the init's empty tabs map the
+        // selectedTab-null arm keeps — the tab widget never installs,
+        // the content the silence wears)
+        // THE FOOTER'S OWN DONE (the addToFooter Button — the 200w the
+        // builder law speaks, the y the footer frame's h-33 + the
+        // round((33-20)/2) = 7 seat answers [the Math.round half-up
+        // the 6.5 the 7 keeps])
+        self.buttons.push(Button::new(
+            "advancementsdone",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            w / 2,
+            h - 26,
+            200,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE PAUSE DESTINATION'S OWN STATS SCREEN (javap 26.2
+    /// StatsScreen — the same HeaderAndFooterLayout(33, 33) chrome,
+    /// the header EMPTY the MenuTabBar the addRenderableWidget lane
+    /// keeps): the three LoadingTabs the 98w tab buttons the
+    /// (min(400,w)-28)/3 law wears, the pending content the
+    /// LoadingTab's band-center law serves, the Done the footer's
+    /// 200w button answers.
+    fn render_stats(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        // THE TAB BAR'S OWN ROW (the MenuTabBar.arrangeElements walk —
+        // the total the min(400,w)-28 band keeps, the per-tab width
+        // the roundToward(total/3, 2) law wears [the 320x180 frame:
+        // 292/3=97 -> 98], the row the roundToward((w-total)/2, 2)
+        // x seat answers [14], the y=0 the 24-tall tab buttons the
+        // widget/tab nine-slice family keeps — the selected the
+        // tab_selected sprite the WidgetSprites.get law speaks, the
+        // inactive label the 0xA0A0A0 gray the AbstractButton law
+        // wears)
+        let total = w.min(400) - 28;
+        let per = (total / 3 + 1) / 2 * 2; // the roundToward(2) law
+        let x0 = (w.min(400) - total) / 2;
+        let tabs = [
+            ("statstab0", tr("stat.generalButton").unwrap_or("General")),
+            ("statstab1", tr("stat.itemsButton").unwrap_or("Items")),
+            ("statstab2", tr("stat.mobsButton").unwrap_or("Mobs")),
+        ];
+        for (i, &(id, label)) in tabs.iter().enumerate() {
+            let x = x0 + i as i32 * per;
+            let selected = self.stats_tab == i;
+            let sprite = if selected {
+                "widget/tab_selected"
+            } else {
+                "widget/tab"
+            };
+            g.sprite_9slice(a, sprite, x, 0, per, 24);
+            g.text_centered(
+                a,
+                x + per / 2,
+                8,
+                label,
+                if selected {
+                    WHITE
+                } else {
+                    [0.627, 0.627, 0.627]
+                },
+                true,
+            );
+            self.buttons.push(Button {
+                x,
+                y: 0,
+                w: per,
+                h: 24,
+                label: label.to_string(),
+                active: true,
+                id,
+                value: None,
+                focused: false,
+                can_change_value: false,
+            });
+        }
+        // THE PENDING'S OWN SEAT (the LoadingTab law — the
+        // LoadingDotsWidget the `multiplayer.downloadingStats` word
+        // wears, the LinearLayout the paddingBottom-30 cell keeps, the
+        // alignInRectangle(0.5, 0.5) the tab-footer band centers: the
+        // 320x180 frame the 24..147 band the 39-tall layout the y-66
+        // top speaks [round((123-39)/2) = 42])
+        g.text_centered(
+            a,
+            w / 2,
+            24 + (h - 33 - 24 - (9 + 30)) / 2,
+            tr("multiplayer.downloadingStats").unwrap_or("Retrieving statistics..."),
+            WHITE,
+            true,
+        );
+        // THE FOOTER'S OWN DONE (the addToFooter Button — the same
+        // 200w h-26 seat the advancements footer wears)
+        self.buttons.push(Button::new(
+            "statsdone",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            w / 2,
+            h - 26,
+            200,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
         }
     }
 

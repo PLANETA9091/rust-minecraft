@@ -1108,6 +1108,140 @@ fn the_pause_menu_own_vanilla_grid_wears() {
     );
 }
 
+/// THE PAUSE DESTINATIONS' OWN SCREEN PAIR (javap the 26.2 jar the
+/// AdvancementsScreen + StatsScreen walks speak): the pause grid's
+/// openScreenButton pair the screens the setScreen replacement opens,
+/// the advancements the HeaderAndFooterLayout chrome wears (the title
+/// the y-12 header seat, the zero-tab band the silence keeps, the
+/// Done the 200w h-26 footer seat), the stats the tab bar + the
+/// pending content the LoadingTab law serves (the three 98w 24-tall
+/// tab buttons the 14/112/210 seats wear, the stat.* words the labels
+/// speak, the tab click the index the seat swap serves), the
+/// Escape/Done the lastScreen (the pause) the onClose walk returns.
+#[test]
+fn the_pause_destinations_own_screens_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.paused = true;
+    app.render_title_buttons_for_test();
+    let adv = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "advancements")
+        .expect("advancements opener")
+        .clone();
+    app.on_click(adv.x + adv.w / 2, adv.y + adv.h / 2);
+    assert_eq!(app.screen, ScreenKind::Advancements);
+    assert!(app.paused, "the destination the paused state keeps");
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.buttons.len(),
+        1,
+        "the zero-tab band the lone Done the chrome wears"
+    );
+    let done = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "advancementsdone")
+        .expect("done")
+        .clone();
+    assert_eq!(
+        (done.x, done.y, done.w),
+        (60, 154, 200),
+        "the footer frame the h-26 seat answers"
+    );
+    assert_eq!(done.label, "Done", "the gui.done word");
+    app.on_click(done.x + done.w / 2, done.y + done.h / 2);
+    assert_eq!(app.screen, ScreenKind::World);
+    assert!(app.paused, "the pause re-wears");
+
+    app.paused = true;
+    app.render_title_buttons_for_test();
+    let stats = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "stats")
+        .expect("stats opener")
+        .clone();
+    app.on_click(stats.x + stats.w / 2, stats.y + stats.h / 2);
+    assert_eq!(app.screen, ScreenKind::Stats);
+    app.render_title_buttons_for_test();
+    for (id, x) in [("statstab0", 14), ("statstab1", 112), ("statstab2", 210)] {
+        let t = app
+            .buttons
+            .iter()
+            .find(|b| b.id == id)
+            .unwrap_or_else(|| panic!("{id} missing"))
+            .clone();
+        assert_eq!(
+            (t.x, t.y, t.w, t.h),
+            (x, 0, 98, 24),
+            "{id} the roundToward-2 row seat wears"
+        );
+    }
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "statstab0")
+            .expect("tab0")
+            .label,
+        "General",
+        "the stat.generalButton word"
+    );
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "statstab1")
+            .expect("tab1")
+            .label,
+        "Items",
+        "the stat.itemsButton word"
+    );
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "statstab2")
+            .expect("tab2")
+            .label,
+        "Mobs",
+        "the stat.mobsButton word"
+    );
+    assert_eq!(app.stats_tab, 0, "the init's tab-0 the General seat wears");
+    let tab1 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "statstab1")
+        .expect("tab1")
+        .clone();
+    app.on_click(tab1.x + tab1.w / 2, tab1.y + tab1.h / 2);
+    assert_eq!(app.stats_tab, 1, "the tab click the index serves");
+    app.render_title_buttons_for_test();
+    let done = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "statsdone")
+        .expect("statsdone fresh")
+        .clone();
+    assert_eq!(
+        (done.x, done.y, done.w),
+        (60, 154, 200),
+        "the stats footer the same Done seat wears"
+    );
+    app.on_click(done.x + done.w / 2, done.y + done.h / 2);
+    assert_eq!(app.screen, ScreenKind::World);
+    assert!(app.paused, "the stats Done the pause re-wears");
+
+    // the ESC lanes the same onClose walk wears
+    app.open(ScreenKind::Advancements);
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World);
+    assert!(app.paused, "the advancements Escape the pause re-wears");
+    app.open(ScreenKind::Stats);
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World);
+    assert!(app.paused, "the stats Escape the pause re-wears");
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`
