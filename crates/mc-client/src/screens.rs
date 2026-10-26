@@ -134,6 +134,11 @@ fn entry_delete_selection(
         return false;
     };
     if a == *cursor {
+        // THE COLLAPSED PAIR'S OWN RE-PARK (the vanilla insertText the
+        // setHighlightPos(cursorPos) tail wears — the banked-but-
+        // collapsed seat the insert the same state keeps, the phantom
+        // range the never-opens law keeps)
+        *anchor = None;
         return false;
     }
     let lo = a.min(*cursor);
@@ -175,6 +180,19 @@ fn entry_shift_home_end(value: &str, cursor: &mut usize, anchor: &mut Option<usi
     if anchor.is_none() {
         *anchor = Some(prev);
     }
+}
+
+/// THE ENTRY BOXES' OWN X-BAND SEAT (the 269 click walk the free
+/// helper the mouse lanes share — the VISIBLE WINDOW the
+/// `trimStringToWidth` law the two-step answers, the x the prefix
+/// length + the displayPos the seat wears, the box padding the +4
+/// the text origin speaks, the past-tail the clamp parks; the 267
+/// `chat_click_seat` law the trio wears).
+fn entry_click_seat(value: &str, display: usize, mx: i32, bx: i32) -> usize {
+    let visible: String = value.chars().skip(display).collect();
+    let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+    let window: String = visible.chars().take(vis_len).collect();
+    caret_char_index_at(&window, mx - (bx + 4)) + display
 }
 
 fn load_splashes() -> Vec<String> {
@@ -7823,6 +7841,14 @@ pub struct App {
     pub es_name_highlight: Option<usize>,
     pub es_address_highlight: Option<usize>,
     pub direct_highlight: Option<usize>,
+    /// THE ENTRY BOXES' OWN DRAG ARMS (the 267 chat law the
+    /// AbstractWidget `setDragging` field keeps — the inside press
+    /// the flag arms, the held frames the drag walk answers, the
+    /// release the disarm speaks; the editserver form the ONE flag
+    /// the focused-field dispatch wears, the outside/unconsumed
+    /// press the flag never banks).
+    pub direct_drag_armed: bool,
+    pub es_drag_armed: bool,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11402,6 +11428,8 @@ impl App {
             es_name_highlight: None,
             es_address_highlight: None,
             direct_highlight: None,
+            direct_drag_armed: false,
+            es_drag_armed: false,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -22124,6 +22152,10 @@ impl App {
             // collapsed highlightPos == cursorPos state banks — the stale
             // anchor the re-created screen never inherits)
             self.direct_highlight = None;
+            // THE DRAG ARM'S OWN FRESH SEAT (the re-created screen the
+            // stale arm never inherits — the fresh EditBox the dragging
+            // false state the ctor keeps)
+            self.direct_drag_armed = false;
             // THE CARET'S OWN FRESH SEAT (the vanilla setText walk the
             // cursor the empty tail parks — the zero the end the same
             // seat the empty box speaks)
@@ -22157,6 +22189,10 @@ impl App {
             // re-created form never inherits)
             self.es_name_highlight = None;
             self.es_address_highlight = None;
+            // THE DRAG ARM'S OWN FRESH SEAT (the re-created form the
+            // stale arm never inherits — the same law the direct form
+            // the pair wears)
+            self.es_drag_armed = false;
             // THE CARETS' OWN FRESH SEATS (the vanilla setText walk the
             // cursor the tail parks — the defaultName the end seat
             // speaks, the EMPTY address the zero the same end keeps)
@@ -36248,6 +36284,10 @@ impl App {
         let (bx, by, bw, bh) = self.direct_box_rect;
         let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
         self.direct_focus = inside;
+        // THE DRAG ARM'S OWN BANK (the vanilla `setDragging(flag &&
+        // button == 0)` walk the inside press serves — the arm the held
+        // frames the drag walk answers, the outside the false disarms)
+        self.direct_drag_armed = inside;
         if inside {
             // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
             // re-seats — the 266 law the box wears; the outside click the
@@ -36275,6 +36315,68 @@ impl App {
             );
         }
         inside
+    }
+
+    /// THE ENTRY BOXES' OWN SHIFT CLICK (the 267 chat law the EditBox
+    /// mouseClick's hasShiftDown branch wears — the two-arg
+    /// `moveCursorTo(pos, true)` walk the anchor preserves: the
+    /// no-anchor first ride the PRE-CLICK cursor the anchor banks, the
+    /// cursor the clicked seat wears, the focus the plain click's
+    /// re-arm keeps, the outside click the false the caller's buttons
+    /// walk keeps).
+    pub fn on_direct_box_shift_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::DirectConnect {
+            return false;
+        }
+        let (bx, by, bw, bh) = self.direct_box_rect;
+        // THE FOCUS TRANSFER'S OWN WALK (the plain click's law the
+        // outside click wears — the losing box's focus the vanilla
+        // walk drops, the selection the same honesty keeps)
+        let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
+        self.direct_focus = inside;
+        if !inside {
+            return false; // the outside click the band never owns
+        }
+        let seat = entry_click_seat(&self.direct_address, self.direct_display, mx, bx);
+        if self.direct_highlight.is_none() {
+            self.direct_highlight = Some(self.direct_cursor);
+        }
+        self.direct_cursor = seat;
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
+        true
+    }
+
+    /// THE ENTRY BOXES' OWN DRAG (the 267 chat law the EditBox.onDrag
+    /// walk wears — the armed press's held frames the cursor the seat
+    /// follows, the anchor the press place the range opens, the y-band
+    /// the row keeps, the past-tail the clamp parks, the closed/
+    /// unarmed box the lane never answers).
+    pub fn on_direct_box_drag(&mut self, mx: i32, my: i32) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_drag_armed {
+            return;
+        }
+        let (bx, by, _, bh) = self.direct_box_rect;
+        if my < by || my >= by + bh {
+            return; // the outside row the drag never owns
+        }
+        let seat = entry_click_seat(&self.direct_address, self.direct_display, mx, bx);
+        if self.direct_highlight.is_none() {
+            // the press seat the anchor banks (the vanilla drag the
+            // first-click place the range opens)
+            self.direct_highlight = Some(self.direct_cursor);
+        }
+        self.direct_cursor = seat;
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
     }
 
     /// THE ENTRY FORM'S OWN CHARS (the EditBox.charTyped walk the
@@ -36892,6 +36994,10 @@ impl App {
         if in_name {
             self.es_name_focus = true;
             self.es_address_focus = false;
+            // THE DRAG ARM'S OWN BANK (the vanilla setDragging walk the
+            // inside press serves — the arm the held frames the focused
+            // dispatch's drag walk answers)
+            self.es_drag_armed = true;
             // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
             // re-seats — the 266 law the box wears)
             self.es_name_highlight = None;
@@ -36917,6 +37023,8 @@ impl App {
         if in_addr {
             self.es_address_focus = true;
             self.es_name_focus = false;
+            // THE DRAG ARM'S OWN BANK (the same arm the name lane wears)
+            self.es_drag_armed = true;
             self.es_address_highlight = None;
             let visible: String = self
                 .es_address
@@ -36937,7 +37045,113 @@ impl App {
         }
         self.es_name_focus = false;
         self.es_address_focus = false;
+        // THE OUTSIDE PRESS'S OWN DISARM (the vanilla flag && walk the
+        // unconsumed press serves — the arm the release lane the same
+        // honesty keeps)
+        self.es_drag_armed = false;
         false
+    }
+
+    /// THE ENTRY FORMS' OWN SHIFT CLICK (the 267 chat law the
+    /// EditServer pair wears — the in-band box the two-arg
+    /// `moveCursorTo(pos, true)` walk the anchor banks serves, the
+    /// focus transfer the plain click's law keeps, the losing box's
+    /// own selection the walk never touches, the outside click the
+    /// false the caller keeps).
+    pub fn on_editserver_box_shift_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::EditServer {
+            return false;
+        }
+        let (nx, ny, nw, nh) = self.es_name_rect;
+        let in_name = mx >= nx && mx < nx + nw && my >= ny && my < ny + nh;
+        let (ax, ay, aw, ah) = self.es_address_rect;
+        let in_addr = mx >= ax && mx < ax + aw && my >= ay && my < ay + ah;
+        if !in_name && !in_addr {
+            // THE OUTSIDE'S OWN TRANSFER (the plain click's law the
+            // pair wears — the both-false the same walk keeps)
+            self.es_name_focus = false;
+            self.es_address_focus = false;
+            return false;
+        }
+        if in_name {
+            self.es_name_focus = true;
+            self.es_address_focus = false;
+            let seat = entry_click_seat(&self.es_name, self.es_name_display, mx, nx);
+            if self.es_name_highlight.is_none() {
+                self.es_name_highlight = Some(self.es_name_cursor);
+            }
+            self.es_name_cursor = seat;
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+            return true;
+        }
+        if in_addr {
+            self.es_address_focus = true;
+            self.es_name_focus = false;
+            let seat = entry_click_seat(&self.es_address, self.es_address_display, mx, ax);
+            if self.es_address_highlight.is_none() {
+                self.es_address_highlight = Some(self.es_address_cursor);
+            }
+            self.es_address_cursor = seat;
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
+            return true;
+        }
+        false
+    }
+
+    /// THE ENTRY FORMS' OWN DRAG (the 267 chat law the pair wears —
+    /// the armed press's held frames the FOCUSED field's own lane the
+    /// cursor the seat follows, the anchor the press place the range
+    /// opens, the y-band the row keeps, the unarmed form the lane
+    /// never answers).
+    pub fn on_editserver_box_drag(&mut self, mx: i32, my: i32) {
+        if self.screen != ScreenKind::EditServer || !self.es_drag_armed {
+            return;
+        }
+        if self.es_name_focus {
+            let (nx, ny, _, nh) = self.es_name_rect;
+            if my < ny || my >= ny + nh {
+                return; // the outside row the drag never owns
+            }
+            let seat = entry_click_seat(&self.es_name, self.es_name_display, mx, nx);
+            if self.es_name_highlight.is_none() {
+                // the press seat the anchor banks (the vanilla drag
+                // the first-click place the range opens)
+                self.es_name_highlight = Some(self.es_name_cursor);
+            }
+            self.es_name_cursor = seat;
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+        } else if self.es_address_focus {
+            let (ax, ay, _, ah) = self.es_address_rect;
+            if my < ay || my >= ay + ah {
+                return; // the outside row the drag never owns
+            }
+            let seat = entry_click_seat(&self.es_address, self.es_address_display, mx, ax);
+            if self.es_address_highlight.is_none() {
+                self.es_address_highlight = Some(self.es_address_cursor);
+            }
+            self.es_address_cursor = seat;
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
     }
 
     /// THE ENTRY FORM'S OWN TAB RIDE (javap 26.2 the Screen.keyPressed
@@ -42153,7 +42367,13 @@ impl App {
             return false;
         };
         if anchor == self.chat_cursor {
-            return false; // the collapsed pair the deleteText char-branch keeps
+            // THE COLLAPSED PAIR'S OWN RE-PARK (the 270 entry round the
+            // same vanilla law the chat helper wears — the insertText
+            // the setHighlightPos(cursorPos) tail serves, the banked-
+            // but-collapsed seat the insert the collapsed state keeps,
+            // the phantom range the never-opens law keeps)
+            self.chat_highlight = None;
+            return false;
         }
         let lo = anchor.min(self.chat_cursor);
         let hi = anchor.max(self.chat_cursor);

@@ -24893,6 +24893,238 @@ fn the_entry_selection_own_seat_wears() {
     );
 }
 
+/// THE ENTRY BOXES' OWN DRAG SEAT (the 267 chat law the direct/
+/// editserver forms wear — the plain press the drag arm banks [the
+/// outside press the flag never banks], the armed press's drag walk
+/// the cursor the seat follows [the anchor the press place the range
+/// opens, the past-tail the clamp parks], the y-band the row keeps,
+/// the shift-click the two-arg walk the anchor banks [the pre-click
+/// cursor the seat the range opens, the second shift-click the
+/// anchor keeps, the arm never banks], the losing box's own
+/// selection the walks never touch, the stale screens the gates
+/// keep, the fresh ctors the arms the stale seats never inherit).
+#[test]
+fn the_entry_boxes_own_drag_seat_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::DirectConnect);
+    assert!(!app.direct_drag_armed, "the fresh open the arm keeps");
+    for c in "hello world".chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_cursor, 11, "the typing the tail parks");
+    // THE RECT'S OWN BANK (the render the walk banks — the mouse lanes
+    // the same geometry the tests wear)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (bx, by, bw, _) = app.direct_box_rect;
+
+    // THE PLAIN PRESS'S OWN ARM (the inside click the drag arm banks,
+    // the left edge the zero parks, the anchor the collapse keeps)
+    assert!(
+        app.on_direct_box_click(bx + 4, by + 5),
+        "the inside press the TRUE consumes"
+    );
+    assert!(app.direct_drag_armed, "the press the arm banks");
+    assert_eq!(app.direct_cursor, 0, "the left edge the zero parks");
+    assert_eq!(app.direct_highlight, None, "the press the collapse keeps");
+
+    // THE ARMED DRAG'S OWN WALK (the past-tail the clamp parks — the
+    // [0, 11) range the press place the anchor opens)
+    app.on_direct_box_drag(bx + 1000, by + 5);
+    assert_eq!(app.direct_cursor, 11, "the past-tail the len parks");
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the drag the press place the anchor opens"
+    );
+
+    // THE ABOVE-BAND DRAG'S OWN KEEP (the y-band the row keeps — the
+    // outside row the drag never owns)
+    app.on_direct_box_drag(bx + 40, by - 5);
+    assert_eq!(app.direct_cursor, 11, "the outside row the seat keeps");
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the outside row the anchor keeps"
+    );
+
+    // THE UNARMED DRAG'S OWN SILENCE (the release the disarm speaks —
+    // the held walk the honest lane only answers)
+    app.direct_drag_armed = false;
+    app.on_direct_box_drag(bx + 4, by + 5);
+    assert_eq!(app.direct_cursor, 11, "the unarmed the seat keeps");
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the unarmed the anchor keeps"
+    );
+
+    // THE SHIFT CLICK'S OWN ANCHOR (the plain click the pre-click
+    // cursor re-seats, the shift the two-arg walk the [0, 11) opens,
+    // the second shift the anchor keeps, the arm never banks)
+    assert!(
+        app.on_direct_box_click(bx + 4, by + 5),
+        "the re-press the TRUE wears"
+    );
+    assert_eq!(app.direct_cursor, 0, "the re-press the zero parks");
+    app.direct_drag_armed = false; // the release the disarm speaks
+                                   // the past-tail-inside seat the band's right edge wears (the
+                                   // shift-click the inside gate the vanilla walk keeps)
+    app.on_direct_box_shift_click(bx + bw - 5, by + 5);
+    assert_eq!(app.direct_cursor, 11, "the shift-click the tail parks");
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the shift the pre-click cursor the anchor banks"
+    );
+    app.on_direct_box_shift_click(bx + bw - 5, by + 5);
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the second shift the anchor keeps"
+    );
+    assert!(!app.direct_drag_armed, "the shift lane the arm never banks");
+
+    // THE OUTSIDE PRESS'S OWN KEEP (the band never owns — the losing
+    // box's selection the vanilla walk never touches, the outside the
+    // focus transfers)
+    assert!(
+        !app.on_direct_box_shift_click(bx - 1, by + 5),
+        "the outside shift the FALSE wears"
+    );
+    assert!(!app.direct_focus, "the outside the focus transfers");
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the outside the losing box's selection keeps"
+    );
+    assert!(
+        !app.on_direct_box_click(bx + 1000, by + 5),
+        "the outside press the FALSE wears"
+    );
+    assert!(!app.direct_drag_armed, "the outside press the arm clears");
+
+    // THE STALE SCREEN'S OWN SILENCE (the other screens the lanes
+    // never answer, the fresh open the arm the stale seat never
+    // inherits)
+    app.open(ScreenKind::Title);
+    app.on_direct_box_drag(bx + 4, by + 5);
+    assert_eq!(app.direct_cursor, 11, "the stale screen the seat keeps");
+    app.open(ScreenKind::DirectConnect);
+    assert!(!app.direct_drag_armed, "the reopen the arm clears");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the reopen the anchor collapses"
+    );
+
+    // THE EDIT FORM'S OWN WALK (the name box the same law the pair
+    // wears — the press the arm banks, the drag the [0, 16) opens;
+    // the fresh form's render the rects the same walk banks)
+    app.open(ScreenKind::EditServer);
+    assert!(!app.es_drag_armed, "the fresh form the arm keeps");
+    app.render(&mut fb, &mut assets);
+    let (nx, ny, _, _) = app.es_name_rect;
+    assert!(
+        app.on_editserver_box_click(nx + 4, ny + 5),
+        "the name press the TRUE consumes"
+    );
+    assert!(app.es_drag_armed, "the name press the arm banks");
+    assert_eq!(app.es_name_cursor, 0, "the left edge the zero parks");
+    app.on_editserver_box_drag(nx + 1000, ny + 5);
+    assert_eq!(app.es_name_cursor, 16, "the past-tail the len parks");
+    assert_eq!(
+        app.es_name_highlight,
+        Some(0),
+        "the drag the press place the anchor opens"
+    );
+    app.es_drag_armed = false; // the release the disarm speaks
+
+    // THE ADDRESS'S OWN SHIFT WALK (the pair the same law wears — the
+    // focus transfer the plain click's law keeps, the losing box's
+    // selection the walk never touches, the empty value the collapsed
+    // pair keeps, the shift lane the arm never banks)
+    let (ax, ay, aw, _) = app.es_address_rect;
+    assert!(
+        app.on_editserver_box_shift_click(ax + aw - 5, ay + 5),
+        "the address shift the TRUE wears"
+    );
+    assert!(app.es_address_focus, "the shift the address arms");
+    assert!(!app.es_name_focus, "the shift the name loses");
+    assert_eq!(
+        app.es_address_highlight,
+        Some(0),
+        "the empty value the pre-click zero banks"
+    );
+    assert_eq!(app.es_address_cursor, 0, "the empty tail the zero parks");
+    assert_eq!(
+        app.es_name_highlight,
+        Some(0),
+        "the shift the losing box's selection keeps"
+    );
+    app.on_editserver_box_drag(ax + 1000, ay + 5);
+    assert_eq!(app.es_address_cursor, 0, "the unarmed drag the seat keeps");
+
+    // THE TYPED WALK'S OWN RANGE (the chars the collapse wears, the
+    // left-edge shift the [0, 2) opens)
+    for c in "ip".chars() {
+        app.on_editserver_char(c);
+    }
+    assert_eq!(app.es_address, "ip", "the chars the focused seat land");
+    assert_eq!(
+        app.es_address_highlight, None,
+        "the insert the anchor collapses"
+    );
+    assert!(
+        app.on_editserver_box_shift_click(ax + 4, ay + 5),
+        "the left-edge shift the TRUE wears"
+    );
+    assert_eq!(app.es_address_cursor, 0, "the shift the zero parks");
+    assert_eq!(
+        app.es_address_highlight,
+        Some(2),
+        "the pre-click tail the anchor banks"
+    );
+
+    // THE NOTHING-FOCUSED DRAG'S OWN SILENCE (the both-focus-false
+    // pair the lane never answers — the fields the seats keep)
+    app.es_drag_armed = true;
+    app.es_name_focus = false;
+    app.es_address_focus = false;
+    app.on_editserver_box_drag(nx + 40, ny + 5);
+    assert_eq!(app.es_name_cursor, 16, "the nothing-focused the name keeps");
+    assert_eq!(
+        app.es_address_cursor, 0,
+        "the nothing-focused the addr keeps"
+    );
+
+    // THE OUTSIDE PRESS'S OWN DISARM + THE STALE SCREEN'S OWN GATES
+    assert!(
+        !app.on_editserver_box_click(nx - 1, ny + 5),
+        "the outside press the FALSE wears"
+    );
+    assert!(!app.es_drag_armed, "the outside press the arm clears");
+    app.open(ScreenKind::Title);
+    app.on_editserver_box_drag(nx + 4, ny + 5);
+    assert_eq!(
+        app.es_name_cursor, 16,
+        "the stale screen the name seat keeps"
+    );
+
+    // THE FRESH CTOR'S OWN ARMS (the reopen the stale arms the
+    // re-created forms never inherit)
+    app.open(ScreenKind::EditServer);
+    assert!(!app.es_drag_armed, "the reopen the arm clears");
+    assert_eq!(
+        app.es_name_highlight, None,
+        "the reopen the name anchor collapses"
+    );
+    assert_eq!(
+        app.es_address_highlight, None,
+        "the reopen the address anchor collapses"
+    );
+}
+
 /// THE SELECTION'S OWN DRAG SEAT (the vanilla EditBox mouse walk the
 /// chat input wears — the shift-click the `moveCursorTo(pos, true)`
 /// branch the anchor preserves [the no-anchor first ride the pre-

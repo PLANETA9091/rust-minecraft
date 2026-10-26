@@ -2516,18 +2516,32 @@ pub fn run_gui_app(
             // consumed answer wears — the caller's buttons walk the
             // return skips —, the outside click the focus-transfer law
             // the widget loses, the pills the next focusable arms)
+            // THE ENTRY BOXES' OWN SHIFT QUERY (the 267 chat lane's own
+            // hasShiftDown walk the entry forms wear — the rising edge
+            // the two arms branches, the shift the shift-click lane,
+            // the plain the one-arg seek)
+            let shift_down =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if app.screen == crate::screens::ScreenKind::DebugOptions
                 && app.on_debug_options_box_click(gmx, gmy, width as i32 / 2)
             {
                 // the box the click consumes — the buttons walk skips
             } else if app.screen == crate::screens::ScreenKind::DirectConnect
-                && app.on_direct_box_click(gmx, gmy)
+                && (if shift_down {
+                    app.on_direct_box_shift_click(gmx, gmy)
+                } else {
+                    app.on_direct_box_click(gmx, gmy)
+                })
             {
                 // THE DIRECT CONNECTION'S OWN BOX CONSUME (the same
                 // EditBox mouseClicked law — the inside click the focus
                 // re-arms, the buttons walk the consume skips)
             } else if app.screen == crate::screens::ScreenKind::EditServer
-                && app.on_editserver_box_click(gmx, gmy)
+                && (if shift_down {
+                    app.on_editserver_box_shift_click(gmx, gmy)
+                } else {
+                    app.on_editserver_box_click(gmx, gmy)
+                })
             {
                 // THE ADD SERVER FORM'S OWN BOX CONSUME (the same
                 // EditBox mouseClicked law the two-box seat serves —
@@ -2593,6 +2607,16 @@ pub fn run_gui_app(
         // lanes the drag never answers)
         if left_down && app.chat_drag_armed {
             app.on_chat_box_drag(gmx, gmy);
+        }
+        // THE ENTRY BOXES' OWN DRAG WALK (the 267 chat law the 269
+        // anchors wear — the armed press's held frames the focused
+        // field's own lane the cursor the seat follows, the range the
+        // press place opens; the unarmed boxes the lane never answers)
+        if left_down && app.direct_drag_armed {
+            app.on_direct_box_drag(gmx, gmy);
+        }
+        if left_down && app.es_drag_armed {
+            app.on_editserver_box_drag(gmx, gmy);
         }
         // THE PICKER'S OWN SCROLL DRAG (the mouseDragged walk's armed
         // lane — the scrollbar press armed the flag, the HELD button's
@@ -2682,6 +2706,8 @@ pub fn run_gui_app(
         if !left_down && was_left_down {
             app.on_left_release();
             app.chat_drag_armed = false;
+            app.direct_drag_armed = false;
+            app.es_drag_armed = false;
         }
         was_left_down = left_down;
         // the RIGHT press's rising edge: the container screen's own
