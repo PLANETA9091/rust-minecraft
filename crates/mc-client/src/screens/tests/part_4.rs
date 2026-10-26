@@ -24248,3 +24248,124 @@ fn the_chat_input_own_caret_ride_wears() {
     app.on_chat_box_click(rx + 4, ry + 5);
     assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
 }
+
+#[test]
+fn the_entry_forms_own_delete_key_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.es_name_cursor,
+        "Minecraft Server".chars().count(),
+        "the fresh ctor the end-parked seat wears"
+    );
+
+    // THE MID-STRING DELETE (the 261 arm the `deleteText(1)` walk
+    // serves — the char AT the seat the removal answers, the cursor
+    // the seat keeps)
+    for _ in 0..4 {
+        app.on_editserver_caret_arrow(true);
+    }
+    assert_eq!(app.es_name_cursor, 12);
+    app.on_editserver_delete();
+    assert_eq!(app.es_name, "Minecraft Sever", "the seat the char removes");
+    assert_eq!(app.es_name_cursor, 12, "the delete the seat never moves");
+
+    // THE TAIL SEAT'S OWN NO-OP (the len the past-end the walk never
+    // answers — the string the byte the same keeps)
+    app.on_editserver_caret_home_end(true);
+    let tail = app.es_name.clone();
+    app.on_editserver_delete();
+    assert_eq!(app.es_name, tail, "the tail seat the no-op keeps");
+    assert_eq!(
+        app.es_name_cursor,
+        app.es_name.chars().count(),
+        "the tail the seat parks"
+    );
+
+    // THE ZERO SEAT'S OWN BITE (the head the char AT the seat the
+    // removal answers — the cursor the zero keeps)
+    app.on_editserver_caret_home_end(false);
+    app.on_editserver_delete();
+    assert_eq!(app.es_name, "inecraft Sever", "the head the char drops");
+    assert_eq!(app.es_name_cursor, 0, "the zero the seat keeps");
+
+    // THE STALE SCREEN'S OWN GATE (the lane the open form only
+    // answers — the other screens the walk never passes)
+    app.open(ScreenKind::Servers);
+    let (gate_name, gate_cursor) = (app.es_name.clone(), app.es_name_cursor);
+    app.on_editserver_delete();
+    assert_eq!(app.es_name, gate_name, "the stale the name keeps");
+    assert_eq!(app.es_name_cursor, gate_cursor, "the stale the seat keeps");
+
+    // THE ADDRESS BOX'S OWN DELETE (the Tab the focus hands — the
+    // seat the char AT removes, the same law the pair wears)
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    app.on_editserver_tab(true);
+    assert!(app.es_address_focus);
+    for c in "ab".chars() {
+        app.on_editserver_char(c);
+    }
+    app.on_editserver_caret_arrow(true);
+    assert_eq!(app.es_address_cursor, 1);
+    app.on_editserver_delete();
+    assert_eq!(app.es_address, "a", "the seat the char removes");
+    assert_eq!(app.es_address_cursor, 1, "the seat the cursor keeps");
+
+    // THE DIRECT BOX'S OWN DELETE (the one-box form the same 261 arm
+    // answers — the mid-string seat the walk serves)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    assert!(app.direct_focus, "the fresh ctor the box arms");
+    for c in "host:1".chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_cursor, 6);
+    for _ in 0..2 {
+        app.on_direct_caret_arrow(true);
+    }
+    assert_eq!(app.direct_cursor, 4);
+    app.on_direct_delete();
+    assert_eq!(app.direct_address, "host1", "the colon the seat drops");
+    assert_eq!(app.direct_cursor, 4, "the seat the cursor keeps");
+    app.on_direct_caret_home_end(true);
+    app.on_direct_delete();
+    assert_eq!(app.direct_address, "host1", "the tail seat the no-op keeps");
+
+    // THE UNFOCUSED BOX'S OWN SILENCE (the outside click the focus
+    // loses — the Delete the unfocused seat never reads)
+    let (dx, dy, _, _) = app.direct_box_rect;
+    app.on_direct_box_click(dx - 10, dy + 5);
+    assert!(!app.direct_focus, "the outside click the focus drops");
+    app.on_direct_delete();
+    assert_eq!(app.direct_address, "host1", "the unfocused the text keeps");
+
+    // THE CHAT'S OWN DELETE (the same 261 arm the chat input wears —
+    // the head seat the char drops, the mid-string the walk serves)
+    app.enter_world();
+    app.on_chat_key();
+    assert!(app.chat_open);
+    for c in "abc".chars() {
+        app.on_chat_char(c);
+    }
+    app.on_chat_caret_home_end(false);
+    app.on_chat_delete();
+    assert_eq!(app.chat_input, "bc", "the head the char drops");
+    assert_eq!(app.chat_cursor, 0, "the seat the cursor keeps");
+    app.on_chat_caret_arrow(false);
+    app.on_chat_delete();
+    assert_eq!(app.chat_input, "b", "the tail char the seat drops");
+    assert_eq!(app.chat_cursor, 1, "the seat the cursor keeps");
+    app.on_chat_delete();
+    assert_eq!(app.chat_input, "b", "the tail seat the no-op keeps");
+
+    // THE CLOSED CHAT'S OWN GATE (the lane the open screen only
+    // answers — the closed chat the delete silent)
+    app.on_chat_submit();
+    assert!(!app.chat_open);
+    let (closed_input, closed_cursor) = (app.chat_input.clone(), app.chat_cursor);
+    app.on_chat_delete();
+    assert_eq!(app.chat_input, closed_input, "the closed the input keeps");
+    assert_eq!(app.chat_cursor, closed_cursor, "the closed the seat keeps");
+}

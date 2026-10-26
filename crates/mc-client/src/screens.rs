@@ -35813,6 +35813,22 @@ impl App {
         self.direct_cursor -= 1;
     }
 
+    /// THE DIRECT CONNECTION'S OWN DELETE (the EditBox.keyPressed's
+    /// 261 arm the `deleteText(1)` walk serves — the char AT the
+    /// caret the mid-string seat removes, the cursor the seat keeps,
+    /// the tail seat the no-op keeps, the other screens the gate
+    /// keeps silent).
+    pub fn on_direct_delete(&mut self) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        if self.direct_cursor < self.direct_address.chars().count() {
+            let start = caret_byte_index(&self.direct_address, self.direct_cursor);
+            let end = caret_byte_index(&self.direct_address, self.direct_cursor + 1);
+            self.direct_address.replace_range(start..end, "");
+        }
+    }
+
     /// THE DIRECT CONNECTION'S OWN CLICK FOCUS (the EditBox
     /// .mouseClicked walk the debug search box's law shares — the
     /// inside click the `setFocused(true)` re-arm serves, the TRUE the
@@ -35885,6 +35901,27 @@ impl App {
             let start = caret_byte_index(&self.es_address, self.es_address_cursor - 1);
             self.es_address.replace_range(start..end, "");
             self.es_address_cursor -= 1;
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN DELETE (the EditBox.keyPressed's 261 arm
+    /// the `deleteText(1)` walk the focused field answers — the char
+    /// AT the caret the mid-string seat removes, the cursor the seat
+    /// keeps, the tail seat the no-op keeps, the stale screens the
+    /// gate never passes).
+    pub fn on_editserver_delete(&mut self) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus && self.es_name_cursor < self.es_name.chars().count() {
+            let start = caret_byte_index(&self.es_name, self.es_name_cursor);
+            let end = caret_byte_index(&self.es_name, self.es_name_cursor + 1);
+            self.es_name.replace_range(start..end, "");
+        } else if self.es_address_focus && self.es_address_cursor < self.es_address.chars().count()
+        {
+            let start = caret_byte_index(&self.es_address, self.es_address_cursor);
+            let end = caret_byte_index(&self.es_address, self.es_address_cursor + 1);
+            self.es_address.replace_range(start..end, "");
         }
     }
 
@@ -41169,6 +41206,25 @@ impl App {
             let start = caret_byte_index(&self.chat_input, self.chat_cursor - 1);
             self.chat_input.replace_range(start..end, "");
             self.chat_cursor -= 1;
+        }
+        // the edit the responder fires (the isDraft purity the same
+        // onEdited walk drops)
+        self.chat_input_is_draft = false;
+        self.refresh_command_suggestions();
+    }
+
+    /// THE EDITBOX'S OWN DELETE (the EditBox keyPressed's 261 arm —
+    /// the char AT the caret the mid-string seat removes, the cursor
+    /// the seat keeps, the tail seat the no-op keeps, the closed chat
+    /// the gate never passes).
+    pub fn on_chat_delete(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        if self.chat_cursor < self.chat_input.chars().count() {
+            let start = caret_byte_index(&self.chat_input, self.chat_cursor);
+            let end = caret_byte_index(&self.chat_input, self.chat_cursor + 1);
+            self.chat_input.replace_range(start..end, "");
         }
         // the edit the responder fires (the isDraft purity the same
         // onEdited walk drops)

@@ -2067,6 +2067,14 @@ pub fn run_gui_app(
                 app.on_editserver_caret_home_end(true);
                 app.on_direct_caret_home_end(true);
             }
+            // THE CARET'S OWN DELETE (the tableswitch's 261 arm the
+            // `deleteText(1)` walk serves — the char AT the seat the
+            // mid-string caret removes, the focused box the lane
+            // consumes, the sibling methods the internal gates keep)
+            if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
+                app.on_editserver_delete();
+                app.on_direct_delete();
+            }
         }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
@@ -2700,6 +2708,13 @@ pub fn run_gui_app(
             }
             if window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
                 app.on_chat_backspace();
+            }
+            // THE CARET'S OWN DELETE (the EditBox keyPressed's 261 arm
+            // the `deleteText(1)` walk serves — the char AT the seat
+            // the mid-string caret removes, the closed chat the gate
+            // never passes)
+            if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
+                app.on_chat_delete();
             }
             // THE CARET'S OWN RIDE (the EditBox keyPressed tableswitch
             // the 262/263 cases the LEFT/RIGHT moveCursorBy ±1 serves,
