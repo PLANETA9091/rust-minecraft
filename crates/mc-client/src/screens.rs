@@ -45,6 +45,28 @@ fn caret_byte_index(s: &str, chars: usize) -> usize {
         .unwrap_or(s.len())
 }
 
+/// THE CARET'S OWN X-BAND SEAT (the vanilla mouseClick walk the
+/// `trimStringToWidth(text, i)` prefix the cursor length answers —
+/// the clicked x the longest prefix whose accumulated width the
+/// offset fits speaks, the left edge the zero wears, the past-tail
+/// the len the same seat answers).
+fn caret_char_index_at(text: &str, x_off: i32) -> usize {
+    if x_off <= 0 {
+        return 0;
+    }
+    let mut acc = 0i32;
+    let mut count = 0usize;
+    for c in text.chars() {
+        let cw = crate::gui::font_text_width(&c.to_string());
+        if acc + cw > x_off {
+            break;
+        }
+        acc += cw;
+        count += 1;
+    }
+    count
+}
+
 fn load_splashes() -> Vec<String> {
     for prefix in [
         "assets-cache/jar",
@@ -35795,11 +35817,12 @@ impl App {
         let (bx, by, bw, bh) = self.direct_box_rect;
         let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
         self.direct_focus = inside;
-        // THE CARET'S OWN CLICK PARK (the vanilla mouseClick walk the
-        // cursor the x-position wears — the minimal round the end seat
-        // the re-arm parks, the x-band the follow-up wears)
+        // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
+        // clicked char the cursor positions — the x offset the prefix
+        // length the trim walk answers, the box padding the +4 the
+        // render's own text origin wears)
         if inside {
-            self.direct_cursor = self.direct_address.chars().count();
+            self.direct_cursor = caret_char_index_at(&self.direct_address, mx - (bx + 4));
         }
         inside
     }
@@ -35947,17 +35970,17 @@ impl App {
         if in_name {
             self.es_name_focus = true;
             self.es_address_focus = false;
-            // THE CARET'S OWN CLICK PARK (the vanilla mouseClick walk
-            // the cursor the x-position wears — the minimal round the
-            // end seat the re-arm parks, the x-band the follow-up
-            // wears)
-            self.es_name_cursor = self.es_name.chars().count();
+            // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
+            // clicked char the cursor positions — the x offset the
+            // prefix length the trim walk answers, the box padding
+            // the +4 the render's own text origin wears)
+            self.es_name_cursor = caret_char_index_at(&self.es_name, mx - (nx + 4));
             return true;
         }
         if in_addr {
             self.es_address_focus = true;
             self.es_name_focus = false;
-            self.es_address_cursor = self.es_address.chars().count();
+            self.es_address_cursor = caret_char_index_at(&self.es_address, mx - (ax + 4));
             return true;
         }
         self.es_name_focus = false;

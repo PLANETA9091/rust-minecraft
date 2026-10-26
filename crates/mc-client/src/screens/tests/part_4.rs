@@ -23079,13 +23079,36 @@ fn the_add_server_entry_form_own_seat_wears() {
 
     // THE TYPING'S OWN LANES (the focused field the chars + the pops
     // answer, the unfocused pair the silence keeps — the defaultName
-    // value the ctor armed the unfocused char never extends)
+    // value the ctor armed the unfocused char never extends; the
+    // x-band click the LEFT edge the zero seat parks — the typed char
+    // the head the insert wears, the vanilla trim law the click the
+    // cursor positions)
     app.on_editserver_char('M');
     assert_eq!(
         app.es_name, "Minecraft Server",
         "the unfocused pair the chars never land"
     );
     app.on_editserver_box_click(nx + 5, ny + 5);
+    assert_eq!(
+        app.es_name_cursor, 0,
+        "the left edge the x-band the zero parks"
+    );
+    app.on_editserver_char('M');
+    assert_eq!(
+        app.es_name, "MMinecraft Server",
+        "the clicked seat the char inserts"
+    );
+    app.on_editserver_backspace();
+    assert_eq!(app.es_name, "Minecraft Server");
+    // THE PAST-TAIL CLICK'S OWN TYPING (the full width the offset
+    // exceeds — the len the seat parks, the typed char the append
+    // the same insert walk wears)
+    let full = crate::gui::font_text_width("Minecraft Server");
+    app.on_editserver_box_click(nx + 4 + full + 2, ny + 5);
+    assert_eq!(
+        app.es_name_cursor, 16,
+        "the past-tail the x-band the len parks"
+    );
     app.on_editserver_char('M');
     assert_eq!(app.es_name, "Minecraft ServerM");
     app.on_editserver_backspace();
@@ -23862,15 +23885,27 @@ fn the_entry_forms_own_caret_ride_wears() {
     );
     assert_eq!(app.es_address_cursor, 2);
 
-    // THE BOX CLICK'S OWN PARK (the re-arm the end seat the focus
-    // parks — the name the walk the tail wears)
-    let (nx, ny, _, _) = app.es_name_rect;
+    // THE BOX CLICK'S OWN X-BAND (the vanilla trim law the click the
+    // cursor positions — the left edge the zero parks, the past-tail
+    // the len the same seat answers)
+    let (nx, ny, nw, _) = app.es_name_rect;
     app.on_editserver_box_click(nx + 5, ny + 5);
     assert!(app.es_name_focus);
     assert_eq!(
+        app.es_name_cursor, 0,
+        "the left edge the x-band the zero parks"
+    );
+    let tail = crate::gui::font_text_width(&app.es_name);
+    app.on_editserver_box_click(nx + 4 + tail + 2, ny + 5);
+    assert!(app.es_name_focus, "the in-box click the focus keeps");
+    assert!(
+        nx + 4 + tail + 2 < nx + nw,
+        "the tail click the box the bounds keeps"
+    );
+    assert_eq!(
         app.es_name_cursor,
         app.es_name.chars().count(),
-        "the click the end seat parks"
+        "the past-tail the x-band the len parks"
     );
 
     // THE EDIT OPENER'S OWN PREFILL PARK (the ServerData the fields
@@ -23942,4 +23977,134 @@ fn the_entry_forms_own_caret_ride_wears() {
         "the cap the insert refuses"
     );
     assert_eq!(app.es_name_cursor, 16, "the refused char the seat keeps");
+}
+
+// THE CARET'S OWN X-BAND CLICK (the vanilla EditBox.mouseClicked walk
+// the `trimStringToWidth(text, i)` prefix the cursor length answers —
+// the clicked x the longest prefix whose accumulated width the offset
+// fits speaks, the left edge the zero wears, the past-tail the len
+// the same seat answers)
+#[test]
+fn the_caret_own_x_band_click_positions_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    let (nx, ny) = (app.es_name_rect.0, app.es_name_rect.1);
+    let full = crate::gui::font_text_width("Minecraft Server");
+
+    // THE LEFT EDGE'S OWN SEAT (the box padding the offset speaks —
+    // the first char's width the x the prefix never fits, the zero
+    // the seat wears)
+    app.on_editserver_box_click(nx + 5, ny + 5);
+    assert_eq!(app.es_name_cursor, 0, "the left edge the zero parks");
+
+    // THE PAST-TAIL'S OWN SEAT (the full width the offset exceeds —
+    // the len the same seat answers)
+    app.on_editserver_box_click(nx + 4 + full + 2, ny + 5);
+    assert_eq!(app.es_name_cursor, 16, "the past-tail the len parks");
+
+    // THE MID-BAND'S OWN SEAT (the prefix walk the trim law answers —
+    // the clicked x the longest fitting prefix the cursor wears, the
+    // helper the same walk the test computes)
+    let probe = full / 2;
+    let expected = caret_prefix_probe("Minecraft Server", probe);
+    app.on_editserver_box_click(nx + 4 + probe, ny + 5);
+    assert_eq!(
+        app.es_name_cursor, expected,
+        "the mid-band the trim law the prefix answers"
+    );
+
+    // THE CLICKED SEAT'S OWN TYPING (the char the x-band seat the
+    // insert serves — the mid-string edit the caret walk banks)
+    let before = app.es_name.clone();
+    let seat = app.es_name_cursor;
+    app.on_editserver_char('#');
+    assert_eq!(
+        app.es_name,
+        format!(
+            "{}#{}",
+            &before[..before
+                .char_indices()
+                .nth(seat)
+                .map(|(i, _)| i)
+                .unwrap_or(before.len())],
+            &before[before
+                .char_indices()
+                .nth(seat)
+                .map(|(i, _)| i)
+                .unwrap_or(before.len())..]
+        ),
+        "the clicked seat the char inserts"
+    );
+    assert_eq!(app.es_name_cursor, seat + 1);
+
+    // THE ADDRESS BOX'S OWN BAND (the same law the pair wears — the
+    // Tab the focus the seat hands, the typed word the x-band the
+    // cursor positions)
+    app.on_editserver_tab(true);
+    assert!(app.es_address_focus, "the Tab the address focus arms");
+    for c in "play.example.net".chars() {
+        app.on_editserver_char(c);
+    }
+    let a_full = crate::gui::font_text_width("play.example.net");
+    let a_expected = caret_prefix_probe("play.example.net", a_full / 3);
+    let (ax, ay) = (app.es_address_rect.0, app.es_address_rect.1);
+    app.on_editserver_box_click(ax + 4 + a_full / 3, ay + 5);
+    assert_eq!(
+        app.es_address_cursor, a_expected,
+        "the address the x-band the same law wears"
+    );
+
+    // THE OUTSIDE CLICK'S OWN KEEP (the focus the pair loses — the
+    // cursor the seat the walk never moves)
+    let seat_before = app.es_name_cursor;
+    app.on_editserver_box_click(nx - 1, ny + 5);
+    assert!(!app.es_name_focus);
+    assert_eq!(
+        app.es_name_cursor, seat_before,
+        "the outside the seat keeps"
+    );
+
+    // THE DIRECT BOX'S OWN BAND (the same law the one-box form wears —
+    // the typed word the x-band the cursor positions, the typing the
+    // seat the insert serves)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    for c in "host:25565".chars() {
+        app.on_direct_char(c);
+    }
+    let (bx, by) = (app.direct_box_rect.0, app.direct_box_rect.1);
+    let d_full = crate::gui::font_text_width("host:25565");
+    let d_expected = caret_prefix_probe("host:25565", d_full / 2);
+    app.on_direct_box_click(bx + 4 + d_full / 2, by + 5);
+    assert!(app.direct_focus);
+    assert_eq!(
+        app.direct_cursor, d_expected,
+        "the direct box the x-band the same law wears"
+    );
+    app.on_direct_char('@');
+    assert!(
+        app.direct_address.chars().nth(app.direct_cursor - 1) == Some('@'),
+        "the clicked seat the char inserts"
+    );
+}
+
+/// THE X-BAND'S OWN PROBE (the trim walk the test re-computes — the
+/// longest prefix whose accumulated width the offset fits, the same
+/// law the helper wears).
+fn caret_prefix_probe(text: &str, x_off: i32) -> usize {
+    if x_off <= 0 {
+        return 0;
+    }
+    let mut acc = 0i32;
+    let mut count = 0usize;
+    for c in text.chars() {
+        let cw = crate::gui::font_text_width(&c.to_string());
+        if acc + cw > x_off {
+            break;
+        }
+        acc += cw;
+        count += 1;
+    }
+    count
 }
