@@ -119,6 +119,64 @@ fn display_window_sync(text: &str, display: &mut usize, cursor: usize, inner_w: 
 /// `-8` padding speaks, the drawn text the `x + 4` origin wears).
 const ENTRY_BOX_INNER: i32 = 192;
 
+/// THE ENTRY SELECTION'S OWN DELETE (the vanilla EditBox
+/// `deleteSelection` walk the three entry boxes the 266 chat law
+/// shares — the live [min(anchor, cursor), max) range the removal
+/// answers, the cursor the lo seat re-parks, the anchor the collapse
+/// wears; the collapsed/None pair the FALSE the caller's own arm
+/// keeps — the first step the walk never wore).
+fn entry_delete_selection(
+    value: &mut String,
+    cursor: &mut usize,
+    anchor: &mut Option<usize>,
+) -> bool {
+    let Some(a) = *anchor else {
+        return false;
+    };
+    if a == *cursor {
+        return false;
+    }
+    let lo = a.min(*cursor);
+    let hi = a.max(*cursor);
+    let start = caret_byte_index(value, lo);
+    let end = caret_byte_index(value, hi);
+    value.replace_range(start..end, "");
+    *cursor = lo;
+    *anchor = None;
+    true
+}
+
+/// THE ENTRY SELECTION'S OWN SHIFT RIDE (the two-arg
+/// `moveCursorTo(pos, hasShiftDown())` walk the arrows the trio
+/// wears — the ±1 step the bounds clamp answers, the no-anchor
+/// first ride the PRE-step cursor the anchor banks, the live
+/// anchor the same seat the ride keeps [the vanilla field the
+/// reset never wears]).
+fn entry_shift_arrow(value: &str, cursor: &mut usize, anchor: &mut Option<usize>, left: bool) {
+    let len = value.chars().count();
+    let prev = *cursor;
+    *cursor = if left {
+        prev.saturating_sub(1)
+    } else {
+        (prev + 1).min(len)
+    };
+    if anchor.is_none() {
+        *anchor = Some(prev);
+    }
+}
+
+/// THE ENTRY SELECTION'S OWN SHIFT PARK (the 268/269 arms the
+/// `moveCursorTo(0 / len, hasShiftDown())` walk the HOME/END the
+/// trio wears — the bound park the same anchor law keeps, the
+/// no-anchor first ride the old seat the anchor banks).
+fn entry_shift_home_end(value: &str, cursor: &mut usize, anchor: &mut Option<usize>, end: bool) {
+    let prev = *cursor;
+    *cursor = if end { value.chars().count() } else { 0 };
+    if anchor.is_none() {
+        *anchor = Some(prev);
+    }
+}
+
 fn load_splashes() -> Vec<String> {
     for prefix in [
         "assets-cache/jar",
@@ -7756,6 +7814,15 @@ pub struct App {
     pub es_name_display: usize,
     pub es_address_display: usize,
     pub direct_display: usize,
+    /// THE ENTRY BOXES' OWN SELECTION ANCHORS (the vanilla EditBox the
+    /// `highlightPos` field keeps — the collapsed pair the None wears
+    /// [the fresh ctor the cursorPos == highlightPos state banks], the
+    /// live anchor the [min, max) range the shift/selection walks the
+    /// three boxes the same law wears; the plain motion the one-arg
+    /// seek the anchor collapses, the 266 chat law the trio shares).
+    pub es_name_highlight: Option<usize>,
+    pub es_address_highlight: Option<usize>,
+    pub direct_highlight: Option<usize>,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11332,6 +11399,9 @@ impl App {
             es_name_display: 0,
             es_address_display: 0,
             direct_display: 0,
+            es_name_highlight: None,
+            es_address_highlight: None,
+            direct_highlight: None,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -22050,6 +22120,10 @@ impl App {
         if kind == ScreenKind::DirectConnect {
             self.direct_address.clear();
             self.direct_focus = true;
+            // THE SELECTION'S OWN FRESH SEAT (the fresh EditBox ctor the
+            // collapsed highlightPos == cursorPos state banks — the stale
+            // anchor the re-created screen never inherits)
+            self.direct_highlight = None;
             // THE CARET'S OWN FRESH SEAT (the vanilla setText walk the
             // cursor the empty tail parks — the zero the end the same
             // seat the empty box speaks)
@@ -22078,6 +22152,11 @@ impl App {
             self.es_address.clear();
             self.es_name_focus = true;
             self.es_address_focus = false;
+            // THE SELECTION'S OWN FRESH SEATS (the fresh ctor the pair
+            // the collapsed state banks — the stale anchors the
+            // re-created form never inherits)
+            self.es_name_highlight = None;
+            self.es_address_highlight = None;
             // THE CARETS' OWN FRESH SEATS (the vanilla setText walk the
             // cursor the tail parks — the defaultName the end seat
             // speaks, the EMPTY address the zero the same end keeps)
@@ -36003,10 +36082,18 @@ impl App {
     /// parse never outgrows — the 128 the walk banks, the overflow
     /// the silence wears).
     pub fn on_direct_char(&mut self, c: char) {
-        if self.screen != ScreenKind::DirectConnect
-            || !self.direct_focus
-            || self.direct_address.chars().count() >= 128
-        {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        // THE SELECTION'S OWN FIRST STEP (the vanilla insertText walk
+        // the live range the swap answers — the 266 chat law the box
+        // wears, the cap the removal alone the blocked insert keeps)
+        entry_delete_selection(
+            &mut self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+        );
+        if self.direct_address.chars().count() >= 128 {
             return;
         }
         // THE CARET'S OWN INSERT (the vanilla charTyped walk the
@@ -36028,8 +36115,26 @@ impl App {
     /// mid-string seat removes, the cursor the -1 step banks, the
     /// other screens the gate keeps silent).
     pub fn on_direct_backspace(&mut self) {
-        if self.screen != ScreenKind::DirectConnect || !self.direct_focus || self.direct_cursor == 0
-        {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        // THE SELECTION'S OWN FIRST STEP (the deleteText(-1) walk the
+        // live range the removal answers — the plain walk the collapsed
+        // pair only wears)
+        if entry_delete_selection(
+            &mut self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+        ) {
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
+            return;
+        }
+        if self.direct_cursor == 0 {
             return;
         }
         let end = caret_byte_index(&self.direct_address, self.direct_cursor);
@@ -36051,6 +36156,22 @@ impl App {
     /// keeps silent).
     pub fn on_direct_delete(&mut self) {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        // THE SELECTION'S OWN FIRST STEP (the deleteText(1) walk the
+        // live range the removal answers — the plain walk the collapsed
+        // pair only wears)
+        if entry_delete_selection(
+            &mut self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+        ) {
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
             return;
         }
         if self.direct_cursor < self.direct_address.chars().count() {
@@ -36076,6 +36197,22 @@ impl App {
     /// gate never passes).
     pub fn on_direct_ctrl_words(&mut self, forward: bool) {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        // THE SELECTION'S OWN FIRST STEP (the deleteWords' own
+        // deleteText walk the live range the removal answers — the
+        // word walk the collapsed pair only wears)
+        if entry_delete_selection(
+            &mut self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+        ) {
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
             return;
         }
         let bound = word_boundary(&self.direct_address, self.direct_cursor, forward);
@@ -36112,6 +36249,10 @@ impl App {
         let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
         self.direct_focus = inside;
         if inside {
+            // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
+            // re-seats — the 266 law the box wears; the outside click the
+            // vanilla walk the losing box's selection never touches)
+            self.direct_highlight = None;
             // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
             // clicked char the cursor positions — the VISIBLE WINDOW
             // the `trimStringToWidth(value.substring(displayPos))` law
@@ -36149,6 +36290,14 @@ impl App {
             return;
         }
         if self.es_name_focus {
+            // THE SELECTION'S OWN FIRST STEP (the insertText walk the
+            // live range the swap answers — the cap the removal alone
+            // the blocked insert keeps)
+            entry_delete_selection(
+                &mut self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+            );
             if self.es_name.chars().count() < 32 {
                 let idx = caret_byte_index(&self.es_name, self.es_name_cursor);
                 self.es_name.insert(idx, c);
@@ -36160,16 +36309,23 @@ impl App {
                     ENTRY_BOX_INNER,
                 );
             }
-        } else if self.es_address_focus && self.es_address.chars().count() < 128 {
-            let idx = caret_byte_index(&self.es_address, self.es_address_cursor);
-            self.es_address.insert(idx, c);
-            self.es_address_cursor += 1;
-            display_window_sync(
-                &self.es_address,
-                &mut self.es_address_display,
-                self.es_address_cursor,
-                ENTRY_BOX_INNER,
+        } else if self.es_address_focus {
+            entry_delete_selection(
+                &mut self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
             );
+            if self.es_address.chars().count() < 128 {
+                let idx = caret_byte_index(&self.es_address, self.es_address_cursor);
+                self.es_address.insert(idx, c);
+                self.es_address_cursor += 1;
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
         }
     }
 
@@ -36183,6 +36339,22 @@ impl App {
             return;
         }
         if self.es_name_focus {
+            // THE SELECTION'S OWN FIRST STEP (the deleteText(-1) walk
+            // the live range the removal answers — the plain walk the
+            // collapsed pair only wears)
+            if entry_delete_selection(
+                &mut self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+            ) {
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+                return;
+            }
             if self.es_name_cursor > 0 {
                 let end = caret_byte_index(&self.es_name, self.es_name_cursor);
                 let start = caret_byte_index(&self.es_name, self.es_name_cursor - 1);
@@ -36195,17 +36367,32 @@ impl App {
                     ENTRY_BOX_INNER,
                 );
             }
-        } else if self.es_address_focus && self.es_address_cursor > 0 {
-            let end = caret_byte_index(&self.es_address, self.es_address_cursor);
-            let start = caret_byte_index(&self.es_address, self.es_address_cursor - 1);
-            self.es_address.replace_range(start..end, "");
-            self.es_address_cursor -= 1;
-            display_window_sync(
-                &self.es_address,
-                &mut self.es_address_display,
-                self.es_address_cursor,
-                ENTRY_BOX_INNER,
-            );
+        } else if self.es_address_focus {
+            if entry_delete_selection(
+                &mut self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+            ) {
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+                return;
+            }
+            if self.es_address_cursor > 0 {
+                let end = caret_byte_index(&self.es_address, self.es_address_cursor);
+                let start = caret_byte_index(&self.es_address, self.es_address_cursor - 1);
+                self.es_address.replace_range(start..end, "");
+                self.es_address_cursor -= 1;
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
         }
     }
 
@@ -36218,27 +36405,59 @@ impl App {
         if self.screen != ScreenKind::EditServer {
             return;
         }
-        if self.es_name_focus && self.es_name_cursor < self.es_name.chars().count() {
-            let start = caret_byte_index(&self.es_name, self.es_name_cursor);
-            let end = caret_byte_index(&self.es_name, self.es_name_cursor + 1);
-            self.es_name.replace_range(start..end, "");
-            display_window_sync(
-                &self.es_name,
-                &mut self.es_name_display,
-                self.es_name_cursor,
-                ENTRY_BOX_INNER,
-            );
-        } else if self.es_address_focus && self.es_address_cursor < self.es_address.chars().count()
-        {
-            let start = caret_byte_index(&self.es_address, self.es_address_cursor);
-            let end = caret_byte_index(&self.es_address, self.es_address_cursor + 1);
-            self.es_address.replace_range(start..end, "");
-            display_window_sync(
-                &self.es_address,
-                &mut self.es_address_display,
-                self.es_address_cursor,
-                ENTRY_BOX_INNER,
-            );
+        if self.es_name_focus {
+            // THE SELECTION'S OWN FIRST STEP (the deleteText(1) walk
+            // the live range the removal answers — the plain walk the
+            // collapsed pair only wears)
+            if entry_delete_selection(
+                &mut self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+            ) {
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+                return;
+            }
+            if self.es_name_cursor < self.es_name.chars().count() {
+                let start = caret_byte_index(&self.es_name, self.es_name_cursor);
+                let end = caret_byte_index(&self.es_name, self.es_name_cursor + 1);
+                self.es_name.replace_range(start..end, "");
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
+        } else if self.es_address_focus {
+            if entry_delete_selection(
+                &mut self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+            ) {
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+                return;
+            }
+            if self.es_address_cursor < self.es_address.chars().count() {
+                let start = caret_byte_index(&self.es_address, self.es_address_cursor);
+                let end = caret_byte_index(&self.es_address, self.es_address_cursor + 1);
+                self.es_address.replace_range(start..end, "");
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
         }
     }
 
@@ -36255,6 +36474,21 @@ impl App {
             return;
         }
         if self.es_name_focus {
+            // THE SELECTION'S OWN FIRST STEP (the deleteWords' own
+            // deleteText walk the live range the removal answers)
+            if entry_delete_selection(
+                &mut self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+            ) {
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+                return;
+            }
             let bound = word_boundary(&self.es_name, self.es_name_cursor, forward);
             if bound != self.es_name_cursor {
                 let start = caret_byte_index(&self.es_name, bound.min(self.es_name_cursor));
@@ -36271,6 +36505,19 @@ impl App {
                 );
             }
         } else if self.es_address_focus {
+            if entry_delete_selection(
+                &mut self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+            ) {
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+                return;
+            }
             let bound = word_boundary(&self.es_address, self.es_address_cursor, forward);
             if bound != self.es_address_cursor {
                 let start = caret_byte_index(&self.es_address, bound.min(self.es_address_cursor));
@@ -36300,6 +36547,9 @@ impl App {
             return;
         }
         if self.es_name_focus {
+            // THE PLAIN MOTION'S OWN COLLAPSE (the one-arg moveCursorTo
+            // walk the anchor re-seats — the 266 law the box wears)
+            self.es_name_highlight = None;
             let len = self.es_name.chars().count();
             self.es_name_cursor = if left {
                 self.es_name_cursor.saturating_sub(1)
@@ -36313,6 +36563,7 @@ impl App {
                 ENTRY_BOX_INNER,
             );
         } else if self.es_address_focus {
+            self.es_address_highlight = None;
             let len = self.es_address.chars().count();
             self.es_address_cursor = if left {
                 self.es_address_cursor.saturating_sub(1)
@@ -36340,6 +36591,8 @@ impl App {
             return;
         }
         if self.es_name_focus {
+            // the one-arg word-hop the anchor collapses (the plain law)
+            self.es_name_highlight = None;
             self.es_name_cursor = word_boundary(&self.es_name, self.es_name_cursor, !left);
             display_window_sync(
                 &self.es_name,
@@ -36348,6 +36601,7 @@ impl App {
                 ENTRY_BOX_INNER,
             );
         } else if self.es_address_focus {
+            self.es_address_highlight = None;
             self.es_address_cursor = word_boundary(&self.es_address, self.es_address_cursor, !left);
             display_window_sync(
                 &self.es_address,
@@ -36367,6 +36621,8 @@ impl App {
             return;
         }
         if self.es_name_focus {
+            // the plain park the anchor collapses (the same one-arg law)
+            self.es_name_highlight = None;
             self.es_name_cursor = if end { self.es_name.chars().count() } else { 0 };
             display_window_sync(
                 &self.es_name,
@@ -36375,6 +36631,7 @@ impl App {
                 ENTRY_BOX_INNER,
             );
         } else if self.es_address_focus {
+            self.es_address_highlight = None;
             self.es_address_cursor = if end {
                 self.es_address.chars().count()
             } else {
@@ -36396,6 +36653,8 @@ impl App {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
+        // the plain ride the anchor collapses (the one-arg law)
+        self.direct_highlight = None;
         let len = self.direct_address.chars().count();
         self.direct_cursor = if left {
             self.direct_cursor.saturating_sub(1)
@@ -36419,6 +36678,8 @@ impl App {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
+        // the one-arg word-hop the anchor collapses (the plain law)
+        self.direct_highlight = None;
         self.direct_cursor = word_boundary(&self.direct_address, self.direct_cursor, !left);
         display_window_sync(
             &self.direct_address,
@@ -36435,6 +36696,8 @@ impl App {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
+        // the plain park the anchor collapses (the same one-arg law)
+        self.direct_highlight = None;
         self.direct_cursor = if end {
             self.direct_address.chars().count()
         } else {
@@ -36446,6 +36709,168 @@ impl App {
             self.direct_cursor,
             ENTRY_BOX_INNER,
         );
+    }
+
+    /// THE DIRECT SELECTION'S OWN SHIFT RIDE (the two-arg
+    /// `moveCursorTo(pos, hasShiftDown())` walk the 266 chat law the
+    /// box wears — the first ride the PRE-step cursor the anchor
+    /// banks, the next rides the same seat keep, the bounds the ±1
+    /// clamp answers, the unfocused box the gate never passes).
+    pub fn on_direct_caret_shift_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        entry_shift_arrow(
+            &self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+            left,
+        );
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
+    }
+
+    /// THE DIRECT SELECTION'S OWN SHIFT PARK (the 268/269 arms the
+    /// `moveCursorTo(0 / len, hasShiftDown())` walk the HOME/END the
+    /// box wears — the anchor law the ride shares).
+    pub fn on_direct_caret_shift_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        entry_shift_home_end(
+            &self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+            end,
+        );
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
+    }
+
+    /// THE DIRECT SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm
+    /// the `Screen.hasControlDown()` branch the `selectAll()` walk
+    /// serves — the cursorPos the value's end wears, the highlightPos
+    /// the zero parks, the [0, len) range the whole value answers).
+    pub fn on_direct_select_all(&mut self) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        self.direct_cursor = self.direct_address.chars().count();
+        self.direct_highlight = Some(0);
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
+    }
+
+    /// THE ENTRY FORM'S OWN SHIFT RIDE (the two-arg walk the FOCUSED
+    /// field serves — the name/address pair the same anchor law the
+    /// direct box wears, the nothing-focused arm the walk never
+    /// answers, the stale screens the gate never passes).
+    pub fn on_editserver_caret_shift_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            entry_shift_arrow(
+                &self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+                left,
+            );
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+        } else if self.es_address_focus {
+            entry_shift_arrow(
+                &self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+                left,
+            );
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN SHIFT PARK (the 268/269 arms the focused
+    /// field serves — the anchor law the ride shares).
+    pub fn on_editserver_caret_shift_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            entry_shift_home_end(
+                &self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+                end,
+            );
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+        } else if self.es_address_focus {
+            entry_shift_home_end(
+                &self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+                end,
+            );
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN ALL (the 65 arm the focused field serves —
+    /// the cursor the len wears, the highlight the zero parks, the
+    /// nothing-focused arm the silence keeps).
+    pub fn on_editserver_select_all(&mut self) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            self.es_name_cursor = self.es_name.chars().count();
+            self.es_name_highlight = Some(0);
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+        } else if self.es_address_focus {
+            self.es_address_cursor = self.es_address.chars().count();
+            self.es_address_highlight = Some(0);
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
     }
 
     /// THE ENTRY FORM'S OWN BOX CLICK (the EditBox.mouseClicked walk
@@ -36467,6 +36892,9 @@ impl App {
         if in_name {
             self.es_name_focus = true;
             self.es_address_focus = false;
+            // THE PLAIN CLICK'S OWN COLLAPSE (the one-arg seek the anchor
+            // re-seats — the 266 law the box wears)
+            self.es_name_highlight = None;
             // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
             // clicked char the cursor positions — the VISIBLE WINDOW
             // the `trimStringToWidth(value.substring(displayPos))` law
@@ -36489,6 +36917,7 @@ impl App {
         if in_addr {
             self.es_address_focus = true;
             self.es_name_focus = false;
+            self.es_address_highlight = None;
             let visible: String = self
                 .es_address
                 .chars()
@@ -40026,6 +40455,11 @@ impl App {
                         // the edits continue the end answers)
                         self.es_name_cursor = self.es_name.chars().count();
                         self.es_address_cursor = self.es_address.chars().count();
+                        // THE SELECTION'S OWN PREFILL COLLAPSE (the setText
+                        // walk the highlightPos the same seat re-parks —
+                        // the stale anchors the prefilled form never keeps)
+                        self.es_name_highlight = None;
+                        self.es_address_highlight = None;
                         display_window_sync(
                             &self.es_name,
                             &mut self.es_name_display,
@@ -69319,6 +69753,26 @@ impl App {
                 .collect();
             let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
             let drawn: String = visible.chars().take(vis_len).collect();
+            // THE SELECTION'S OWN BAND (the EditBox.render's highlight
+            // walk the 266 chat law the box wears — the min/max(cursor,
+            // anchor) the visible window's clamp the prefix widths the
+            // 0xFF808080 gray fill the text's y-1 band draws, the
+            // collapsed/empty seat the band never wears)
+            if let Some(anchor) = self.direct_highlight {
+                if anchor != self.direct_cursor {
+                    let lo = anchor.min(self.direct_cursor);
+                    let hi = anchor.max(self.direct_cursor);
+                    let vlo = lo.saturating_sub(self.direct_display).min(vis_len);
+                    let vhi = hi.saturating_sub(self.direct_display).min(vis_len);
+                    if vhi > vlo {
+                        let pre: String = drawn.chars().take(vlo).collect();
+                        let sel: String = drawn.chars().take(vhi).collect();
+                        let x1 = bx + 4 + g.text_width(&pre);
+                        let x2 = bx + 4 + g.text_width(&sel);
+                        g.fill(x1, by + 5, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                    }
+                }
+            }
             g.text(a, bx + 4, by + 6, &drawn, WHITE, false);
             // THE CARET'S OWN SEAT (the vanilla render the text-before-
             // cursor width wears — the on-screen caret the
@@ -69402,6 +69856,24 @@ impl App {
             let visible: String = self.es_name.chars().skip(self.es_name_display).collect();
             let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
             let drawn: String = visible.chars().take(vis_len).collect();
+            // THE SELECTION'S OWN BAND (the same highlight walk the name
+            // box wears — the min/max clamp the prefix widths the gray
+            // fill the text's y-1 band draws)
+            if let Some(anchor) = self.es_name_highlight {
+                if anchor != self.es_name_cursor {
+                    let lo = anchor.min(self.es_name_cursor);
+                    let hi = anchor.max(self.es_name_cursor);
+                    let vlo = lo.saturating_sub(self.es_name_display).min(vis_len);
+                    let vhi = hi.saturating_sub(self.es_name_display).min(vis_len);
+                    if vhi > vlo {
+                        let pre: String = drawn.chars().take(vlo).collect();
+                        let sel: String = drawn.chars().take(vhi).collect();
+                        let x1 = nx + 4 + g.text_width(&pre);
+                        let x2 = nx + 4 + g.text_width(&sel);
+                        g.fill(x1, ny + 5, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                    }
+                }
+            }
             g.text(a, nx + 4, ny + 6, &drawn, WHITE, false);
             // THE CARET'S OWN SEAT (the vanilla render the text-before-
             // cursor width wears — the on-screen caret the
@@ -69439,6 +69911,24 @@ impl App {
                 .collect();
             let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
             let drawn: String = visible.chars().take(vis_len).collect();
+            // THE SELECTION'S OWN BAND (the same highlight walk the pair
+            // wears — the min/max clamp the prefix widths the gray fill
+            // the text's y-1 band draws)
+            if let Some(anchor) = self.es_address_highlight {
+                if anchor != self.es_address_cursor {
+                    let lo = anchor.min(self.es_address_cursor);
+                    let hi = anchor.max(self.es_address_cursor);
+                    let vlo = lo.saturating_sub(self.es_address_display).min(vis_len);
+                    let vhi = hi.saturating_sub(self.es_address_display).min(vis_len);
+                    if vhi > vlo {
+                        let pre: String = drawn.chars().take(vlo).collect();
+                        let sel: String = drawn.chars().take(vhi).collect();
+                        let x1 = ax + 4 + g.text_width(&pre);
+                        let x2 = ax + 4 + g.text_width(&sel);
+                        g.fill(x1, ay + 5, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                    }
+                }
+            }
             g.text(a, ax + 4, ay + 6, &drawn, WHITE, false);
             // THE CARET'S OWN SEAT (the same cursorPos law the pair
             // wears — the on-screen caret the `cursorPos - displayPos`

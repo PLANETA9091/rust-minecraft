@@ -2072,6 +2072,18 @@ pub fn run_gui_app(
                 crate::screens::ScreenKind::EditServer | crate::screens::ScreenKind::DirectConnect
             )
         {
+            // THE SELECTION'S OWN SHIFT SEAT (the hasShiftDown query the
+            // two-arg moveCursorTo branches — the 266 chat law the
+            // entry boxes wear, the ride the anchor keeps)
+            let shift_down =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
+            // THE SELECTION'S OWN ALL (the 65 arm the
+            // hasControlDown branch the selectAll walk serves — the
+            // focused field the whole value answers)
+            if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
+                app.on_direct_select_all();
+                app.on_editserver_select_all();
+            }
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
                 if ctrl_down {
                     // THE CARET'S OWN CTRL HOP (the 263 arm the
@@ -2080,6 +2092,12 @@ pub fn run_gui_app(
                     // word the backward bound the seat hops)
                     app.on_editserver_ctrl_caret_arrow(true);
                     app.on_direct_ctrl_caret_arrow(true);
+                } else if shift_down {
+                    // THE SELECTION'S OWN SHIFT RIDE (the two-arg
+                    // moveCursorTo(pos, true) walk the anchor
+                    // preserves — the range the ride extends)
+                    app.on_editserver_caret_shift_arrow(true);
+                    app.on_direct_caret_shift_arrow(true);
                 } else {
                     app.on_editserver_caret_arrow(true);
                     app.on_direct_caret_arrow(true);
@@ -2092,18 +2110,35 @@ pub fn run_gui_app(
                     // the whole word the forward bound the seat hops
                     app.on_editserver_ctrl_caret_arrow(false);
                     app.on_direct_ctrl_caret_arrow(false);
+                } else if shift_down {
+                    // the shift branch the anchor preserves (the
+                    // same two-arg law the ride wears)
+                    app.on_editserver_caret_shift_arrow(false);
+                    app.on_direct_caret_shift_arrow(false);
                 } else {
                     app.on_editserver_caret_arrow(false);
                     app.on_direct_caret_arrow(false);
                 }
             }
             if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
-                app.on_editserver_caret_home_end(false);
-                app.on_direct_caret_home_end(false);
+                if shift_down {
+                    // the shift park the anchor keeps (the two-arg
+                    // law the bounds wear)
+                    app.on_editserver_caret_shift_home_end(false);
+                    app.on_direct_caret_shift_home_end(false);
+                } else {
+                    app.on_editserver_caret_home_end(false);
+                    app.on_direct_caret_home_end(false);
+                }
             }
             if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
-                app.on_editserver_caret_home_end(true);
-                app.on_direct_caret_home_end(true);
+                if shift_down {
+                    app.on_editserver_caret_shift_home_end(true);
+                    app.on_direct_caret_shift_home_end(true);
+                } else {
+                    app.on_editserver_caret_home_end(true);
+                    app.on_direct_caret_home_end(true);
+                }
             }
             // THE CARET'S OWN DELETE (the tableswitch's 261 arm the
             // `deleteText(1)` walk serves — the char AT the seat the

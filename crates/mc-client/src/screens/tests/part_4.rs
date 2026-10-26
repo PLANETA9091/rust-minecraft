@@ -24602,6 +24602,297 @@ fn the_chat_selection_own_shift_seat_wears() {
     assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
 }
 
+/// THE ENTRY BOXES' OWN SELECTION SEAT (the vanilla EditBox
+/// `highlightPos` walk the direct/editserver forms the 266 chat law
+/// wears — the shift rides the anchor keeps, the editing arms the
+/// deleteSelection first step answers, the plain motion/click the
+/// one-arg seek the anchor collapses, the fresh ctor the stale
+/// anchors never inherits, the render the band the same law draws).
+#[test]
+fn the_entry_selection_own_seat_wears() {
+    let mut app = App::new(3);
+    // THE DIRECT BOX'S OWN WALK (the fresh ctor the focus arms, the
+    // collapsed anchor the None wears)
+    app.open(ScreenKind::DirectConnect);
+    assert!(app.direct_focus, "the fresh open the focus arms");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the fresh ctor the anchor keeps"
+    );
+    for c in "hello world".chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_cursor, 11, "the typing the tail parks");
+
+    // THE SHIFT RIDE'S OWN ANCHOR (the five lefts the [6, 11) opens)
+    for _ in 0..5 {
+        app.on_direct_caret_shift_arrow(true);
+    }
+    assert_eq!(app.direct_cursor, 6, "the shift-LEFT the -1 steps");
+    assert_eq!(
+        app.direct_highlight,
+        Some(11),
+        "the first ride the anchor banks"
+    );
+
+    // THE CHAR'S OWN REPLACE (the insertText the deleteSelection
+    // first step answers — the cap the removal the blocked insert keeps)
+    app.on_direct_char('X');
+    assert_eq!(app.direct_address, "hello X", "the range the char replaces");
+    assert_eq!(app.direct_cursor, 7, "the replace the lo+1 seat wears");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the replace the anchor collapses"
+    );
+
+    // THE BACKSPACE'S OWN SELECTION (the live range the first step
+    // removes — the char-before walk never answers)
+    app.on_direct_caret_shift_arrow(true);
+    assert_eq!(
+        app.direct_highlight,
+        Some(7),
+        "the re-ride the anchor banks"
+    );
+    app.on_direct_backspace();
+    assert_eq!(
+        app.direct_address, "hello ",
+        "the range the backspace removes"
+    );
+    assert_eq!(app.direct_cursor, 6, "the removal the lo seat re-parks");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the removal the anchor collapses"
+    );
+
+    // THE ALL'S OWN PARK (the 65 arm the selectAll walk serves)
+    app.on_direct_select_all();
+    assert_eq!(app.direct_cursor, 6, "the all the cursor the len wears");
+    assert_eq!(app.direct_highlight, Some(0), "the all the zero parks");
+
+    // THE DELETE'S OWN SELECTION (the whole value the range removes)
+    app.on_direct_delete();
+    assert_eq!(app.direct_address, "", "the all the delete wipes");
+    assert_eq!(app.direct_cursor, 0, "the wipe the zero re-parks");
+    assert_eq!(app.direct_highlight, None, "the wipe the anchor collapses");
+
+    // THE SHIFT PARK'S OWN OPEN + THE PLAIN MOTION'S OWN COLLAPSE
+    for c in "abc".chars() {
+        app.on_direct_char(c);
+    }
+    app.on_direct_caret_shift_home_end(false);
+    assert_eq!(app.direct_cursor, 0, "the shift-HOME the zero parks");
+    assert_eq!(app.direct_highlight, Some(3), "the park the old seat banks");
+    app.on_direct_caret_shift_arrow(false);
+    assert_eq!(app.direct_cursor, 1, "the shift-RIGHT the +1 step");
+    assert_eq!(app.direct_highlight, Some(3), "the anchor the park keeps");
+    app.on_direct_caret_arrow(false);
+    assert_eq!(app.direct_cursor, 2, "the plain ride the +1 step");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the plain ride the collapse wears"
+    );
+
+    // THE CTRL WORD'S OWN SELECTION STEP (the live range the first
+    // step removes)
+    app.on_direct_caret_shift_home_end(true);
+    assert_eq!(app.direct_cursor, 3, "the shift-END the len parks");
+    assert_eq!(
+        app.direct_highlight,
+        Some(2),
+        "the ride the pre-END seat banks"
+    );
+    app.on_direct_ctrl_words(false);
+    assert_eq!(
+        app.direct_address, "ab",
+        "the live range the first step removes"
+    );
+    assert_eq!(app.direct_cursor, 2, "the removal the lo seat re-parks");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the removal the anchor collapses"
+    );
+    app.on_direct_ctrl_words(false);
+    assert_eq!(app.direct_address, "", "the second walk the word removes");
+
+    // THE CLICK'S OWN RESET (the render the rect banks the same
+    // geometry, the inside click the anchor collapses, the band the
+    // live seat draws)
+    for c in "hi".chars() {
+        app.on_direct_char(c);
+    }
+    app.on_direct_caret_shift_home_end(false);
+    assert_eq!(
+        app.direct_highlight,
+        Some(2),
+        "the second park the seat banks"
+    );
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (bx, by, _, _) = app.direct_box_rect;
+    app.on_direct_box_click(bx + 5, by + 5);
+    assert_eq!(app.direct_highlight, None, "the click the anchor collapses");
+    assert_eq!(app.direct_cursor, 0, "the left-edge click the zero parks");
+
+    // THE OUTSIDE CLICK'S OWN KEEP (the vanilla walk the losing box's
+    // selection never touches — the unfocused lanes the walks never
+    // answer)
+    app.on_direct_caret_home_end(true);
+    app.on_direct_caret_shift_home_end(false);
+    assert_eq!(app.direct_highlight, Some(2), "the re-park the seat banks");
+    assert!(
+        !app.on_direct_box_click(bx - 1, by + 5),
+        "the outside the FALSE"
+    );
+    assert!(!app.direct_focus, "the outside the focus transfers");
+    assert_eq!(
+        app.direct_highlight,
+        Some(2),
+        "the outside the losing box's selection keeps"
+    );
+    let seat = app.direct_cursor;
+    app.on_direct_caret_shift_arrow(true);
+    app.on_direct_select_all();
+    assert_eq!(
+        app.direct_cursor, seat,
+        "the unfocused box the rides never answer"
+    );
+    assert_eq!(
+        app.direct_highlight,
+        Some(2),
+        "the unfocused box the all never answers"
+    );
+
+    // THE EDIT FORM'S OWN WALK (the name box the same law the pair wears)
+    app.open(ScreenKind::EditServer);
+    assert_eq!(
+        app.es_name, "Minecraft Server",
+        "the defaultName the fresh ctor speaks"
+    );
+    assert!(app.es_name_focus, "the fresh form the name box arms");
+    assert_eq!(
+        app.es_name_highlight, None,
+        "the fresh ctor the anchor keeps"
+    );
+    for _ in 0..5 {
+        app.on_editserver_caret_shift_arrow(true);
+    }
+    assert_eq!(app.es_name_cursor, 11, "the shift-LEFT the -1 steps");
+    assert_eq!(
+        app.es_name_highlight,
+        Some(16),
+        "the first ride the anchor banks"
+    );
+    app.on_editserver_char('X');
+    assert_eq!(app.es_name, "Minecraft SX", "the range the char replaces");
+    assert_eq!(app.es_name_cursor, 12, "the replace the lo+1 seat wears");
+    assert_eq!(
+        app.es_name_highlight, None,
+        "the replace the anchor collapses"
+    );
+    app.on_editserver_caret_shift_arrow(true);
+    app.on_editserver_backspace();
+    assert_eq!(
+        app.es_name, "Minecraft S",
+        "the range the backspace removes"
+    );
+    assert_eq!(app.es_name_cursor, 11, "the removal the lo seat re-parks");
+    app.on_editserver_select_all();
+    assert_eq!(app.es_name_cursor, 11, "the all the len wears");
+    assert_eq!(app.es_name_highlight, Some(0), "the all the zero parks");
+    app.on_editserver_delete();
+    assert_eq!(app.es_name, "", "the all the delete wipes");
+    assert_eq!(app.es_name_highlight, None, "the wipe the anchor collapses");
+
+    // THE TAB RIDE'S OWN KEEP (the focus ride the boxes cycle — the
+    // selections the vanilla walk the losing box never touches, the
+    // address box the same law the pair wears)
+    for c in "abc".chars() {
+        app.on_editserver_char(c);
+    }
+    app.on_editserver_caret_shift_home_end(false);
+    assert_eq!(app.es_name_cursor, 0, "the shift-HOME the zero parks");
+    assert_eq!(
+        app.es_name_highlight,
+        Some(3),
+        "the park the old seat banks"
+    );
+    app.on_editserver_tab(true);
+    assert!(app.es_address_focus, "the tab the address arms");
+    assert_eq!(
+        app.es_name_highlight,
+        Some(3),
+        "the ride the losing box's selection keeps"
+    );
+    for c in "ip".chars() {
+        app.on_editserver_char(c);
+    }
+    assert_eq!(app.es_address, "ip", "the address box the chars land");
+    app.on_editserver_caret_shift_home_end(false);
+    assert_eq!(app.es_address_cursor, 0, "the shift-HOME the zero parks");
+    assert_eq!(
+        app.es_address_highlight,
+        Some(2),
+        "the park the old seat banks"
+    );
+    app.on_editserver_char('X');
+    assert_eq!(app.es_address, "X", "the range the char replaces");
+    assert_eq!(app.es_address_cursor, 1, "the replace the lo+1 seat wears");
+    assert_eq!(
+        app.es_address_highlight, None,
+        "the replace the anchor collapses"
+    );
+    app.on_editserver_select_all();
+    assert_eq!(app.es_address_highlight, Some(0), "the all the zero parks");
+    app.on_editserver_delete();
+    assert_eq!(app.es_address, "", "the all the delete wipes");
+
+    // THE STALE SCREEN'S OWN SILENCE (the other screens the lanes
+    // never answer)
+    app.open(ScreenKind::Title);
+    app.on_direct_caret_shift_arrow(true);
+    app.on_direct_caret_shift_home_end(true);
+    app.on_direct_select_all();
+    app.on_editserver_caret_shift_arrow(true);
+    app.on_editserver_caret_shift_home_end(true);
+    app.on_editserver_select_all();
+    assert_eq!(
+        app.direct_cursor, 0,
+        "the stale screen the direct seat keeps"
+    );
+    assert_eq!(
+        app.direct_highlight,
+        Some(2),
+        "the stale screen the anchor keeps"
+    );
+    assert_eq!(
+        app.es_name_cursor, 0,
+        "the stale screen the name seat keeps"
+    );
+    assert_eq!(
+        app.es_name_highlight,
+        Some(3),
+        "the stale screen the name anchor keeps"
+    );
+
+    // THE FRESH CTOR'S OWN COLLAPSE (the reopen the stale anchors the
+    // re-created screens never inherit)
+    app.open(ScreenKind::DirectConnect);
+    assert_eq!(
+        app.direct_highlight, None,
+        "the reopen the anchor collapses"
+    );
+    app.open(ScreenKind::EditServer);
+    assert_eq!(
+        app.es_name_highlight, None,
+        "the reopen the name anchor collapses"
+    );
+    assert_eq!(
+        app.es_address_highlight, None,
+        "the reopen the address anchor collapses"
+    );
+}
+
 /// THE SELECTION'S OWN DRAG SEAT (the vanilla EditBox mouse walk the
 /// chat input wears — the shift-click the `moveCursorTo(pos, true)`
 /// branch the anchor preserves [the no-anchor first ride the pre-
