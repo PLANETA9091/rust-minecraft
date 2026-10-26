@@ -2092,6 +2092,16 @@ pub fn run_gui_app(
                 if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
                     app.on_key_binds_arrow(true, height as i32 / 2);
                 }
+                // THE ROW'S OWN LEFT/RIGHT PAIR RIDE (the within-row
+                // lane the change↔reset pair serves — the same y band
+                // the store's own seats answer, the inactive reset the
+                // refusal keeps)
+                if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                    app.on_key_binds_row_arrow(false);
+                }
+                if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                    app.on_key_binds_row_arrow(true);
+                }
             }
         }
         // THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen

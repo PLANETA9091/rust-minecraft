@@ -35656,6 +35656,62 @@ impl App {
         self.options_focus = Some(target);
     }
 
+    /// THE ROW'S OWN LEFT/RIGHT PAIR RIDE (javap 26.2 the same
+    /// keyPressed walk the 262/263 cases the within-row lane serves —
+    /// the focused seat the pair's other column answers: the change
+    /// seat the Right the reset column banks, the reset seat the Left
+    /// the change column wears, the pair the row's own y band the
+    /// store's own seats share [the b.y equality the row band
+    /// answers — the model the ride never reads, the built seats the
+    /// ONE lookup serves]; the INACTIVE reset the isActive refusal
+    /// keeps [the default bind the Right the silence wears], the
+    /// pair's own ends the ride refuses [the Right from the reset,
+    /// the Left from the change the silence keeps], the ARMED rebind
+    /// the ANY key the capture wears FIRST, the footer pair the
+    /// entry gate refuses, the grab the kb class never carries).
+    pub fn on_key_binds_row_arrow(&mut self, right: bool) {
+        if self.screen != ScreenKind::KeyBinds || self.kb_selected.is_some() {
+            return;
+        }
+        let id = match self.options_focus {
+            Some(id) => id,
+            None => return,
+        };
+        // THE DIRECTION'S OWN GATE (the Right the change seat the
+        // reset column answers, the Left the reset seat the change
+        // column wears — the pair's own ends the ride refuses)
+        let from_ok = if right {
+            id.starts_with("kb_change_")
+        } else {
+            id.starts_with("kb_rowreset_")
+        };
+        if !from_ok {
+            return;
+        }
+        let seat_y = match self.buttons.iter().find(|b| b.id == id) {
+            Some(b) => b.y,
+            None => return,
+        };
+        // THE ROW BAND'S OWN SEAT (the same y the row's own pair
+        // shares — the other column the store's own id carries, the
+        // ACTIVE gate the default arm refuses, the off-band row the
+        // built seats never carry the silence keeps)
+        let target = self
+            .buttons
+            .iter()
+            .find(|b| {
+                b.y == seat_y
+                    && b.id != id
+                    && b.id
+                        .starts_with(if right { "kb_rowreset_" } else { "kb_change_" })
+                    && b.active
+            })
+            .map(|b| b.id);
+        if let Some(t) = target {
+            self.options_focus = Some(t);
+        }
+    }
+
     /// THE STORES' OWN LAZY LOAD (the dev-68 round — the hotbar lane's
     /// `HotbarManager.get(I)` pcs 1-13 once-flag walk the store access
     /// rides: the first open/flush/spill the file parse answers, the

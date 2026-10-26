@@ -22692,3 +22692,127 @@ fn the_key_binds_list_own_arrow_ride_the_rows_the_scroll_wear() {
     );
     assert!(!app.options_grab, "the ride the grab never carries");
 }
+
+/// THE ROW'S OWN LEFT/RIGHT PAIR RIDE (the within-row lane the
+/// change↔reset pair serves — the Right the change seat the reset
+/// column banks, the Left the reset seat the change column wears,
+/// the pair's own ends the ride refuses, the INACTIVE reset the
+/// isActive refusal keeps [the default bind the Right silences],
+/// the armed rebind the ANY key the capture wears FIRST, the footer
+/// the entry gate refuses, the stale seat the built rows refuse,
+/// the grab the kb class never carries).
+#[test]
+fn the_key_binds_rows_own_left_right_pair_ride_wears() {
+    let mut app = App::new(3);
+    use crate::options_file::key_binds as kb;
+
+    // THE WRONG SCREEN'S OWN SILENCE (the title's arrows the walk
+    // never wears — the stale seat the belief keeps)
+    app.open(ScreenKind::Title);
+    app.options_focus = Some("kb_change_jump");
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(app.screen, ScreenKind::Title, "the wrong screen silent");
+    assert_eq!(app.options_focus, Some("kb_change_jump"));
+
+    // THE DEFAULT ARM'S OWN REFUSAL (the fresh list the resets
+    // inactive keep — the Right the change seat the silence wears)
+    app.open(ScreenKind::KeyBinds);
+    app.kb_scroll = 0.0;
+    app.render_title_buttons_for_test();
+    let (x, y, w, h) = {
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "kb_change_jump")
+            .expect("the change seat")
+            .clone();
+        (b.x, b.y, b.w, b.h)
+    };
+    app.on_press(x + w / 2, y + h / 2);
+    assert_eq!(app.options_focus, Some("kb_change_jump"));
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_jump"),
+        "the default arm the Right refuses"
+    );
+
+    // THE ARMED RESET'S OWN RIDE (the non-default bind the reset
+    // column the Right banks — the Left the change column wears,
+    // the round trip the pair's own lane keeps)
+    app.key_binds[kb::JUMP] = Some(kb::Bind::Keyboard(minifb::Key::C));
+    app.render_title_buttons_for_test();
+    let (x, y, w, h) = {
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "kb_change_jump")
+            .expect("the change seat")
+            .clone();
+        (b.x, b.y, b.w, b.h)
+    };
+    app.on_press(x + w / 2, y + h / 2);
+    assert_eq!(app.options_focus, Some("kb_change_jump"));
+    assert!(!app.options_grab, "the kb class the grab never carries");
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_rowreset_jump"),
+        "the Right the reset column banks"
+    );
+    app.on_key_binds_row_arrow(false);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_jump"),
+        "the Left the change column wears"
+    );
+    // THE PAIR'S OWN ENDS (the Right from the reset the silence
+    // keeps, the Left from the change the same refusal wears)
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(app.options_focus, Some("kb_rowreset_jump"));
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_rowreset_jump"),
+        "the reset's Right the pair's end refuses"
+    );
+    app.on_key_binds_row_arrow(false);
+    app.on_key_binds_row_arrow(false);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_jump"),
+        "the change's Left the pair's end refuses"
+    );
+
+    // THE ARMED REBIND'S OWN SILENCE (the ANY key the capture wears
+    // FIRST — the pair ride the armed frame never reaches)
+    app.kb_selected = Some(kb::JUMP);
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_jump"),
+        "the armed seat the ride never wears"
+    );
+    app.kb_selected = None;
+
+    // THE FOOTER'S OWN REFUSAL (the addFooter pair the entry gate
+    // refuses — the kbdone the Left/Right the silence keeps)
+    app.options_focus = Some("kbdone");
+    app.on_key_binds_row_arrow(true);
+    app.on_key_binds_row_arrow(false);
+    assert_eq!(
+        app.options_focus,
+        Some("kbdone"),
+        "the footer the entry gate refuses"
+    );
+
+    // THE STALE SEAT'S OWN SILENCE (the off-band row the store never
+    // carries — the pair ride the built seats refuse)
+    app.options_focus = Some("kb_change_debuglightmaptexture");
+    app.on_key_binds_row_arrow(true);
+    assert_eq!(
+        app.options_focus,
+        Some("kb_change_debuglightmaptexture"),
+        "the stale seat the silence keeps"
+    );
+}
