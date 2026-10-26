@@ -2038,6 +2038,36 @@ pub fn run_gui_app(
             app.on_editserver_tab(!shift);
             app.on_direct_tab();
         }
+        // THE ENTRY FORMS' OWN CARET RIDE (javap 26.2 the EditBox
+        // keyPressed walk the tableswitch answers — the 262/263 cases
+        // the LEFT/RIGHT moveCursorBy ±1 serve, the 268/269 the
+        // Home/End the bounds park, the focused box the lane consumes
+        // [the focus the move never wears — the focused box the
+        // arrows the cursor law eats], the stale screens the gates
+        // never pass)
+        if !app.chat_open
+            && matches!(
+                app.screen,
+                crate::screens::ScreenKind::EditServer | crate::screens::ScreenKind::DirectConnect
+            )
+        {
+            if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                app.on_editserver_caret_arrow(true);
+                app.on_direct_caret_arrow(true);
+            }
+            if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                app.on_editserver_caret_arrow(false);
+                app.on_direct_caret_arrow(false);
+            }
+            if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
+                app.on_editserver_caret_home_end(false);
+                app.on_direct_caret_home_end(false);
+            }
+            if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
+                app.on_editserver_caret_home_end(true);
+                app.on_direct_caret_home_end(true);
+            }
+        }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
         // `createTabEvent(!hasShiftDown())` the focus navigation

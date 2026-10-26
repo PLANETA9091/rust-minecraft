@@ -33,6 +33,18 @@ fn parse_splashes(bytes: &[u8]) -> Vec<String> {
         .collect()
 }
 
+/// THE CARET'S OWN BYTE SEAT (the char index the string the insertion
+/// byte answers — the `cursorPos` char coordinate the EditBox keeps,
+/// the UTF-8 the byte lane the String stores: the nth char's byte
+/// start the insert serves, the past-end the tail the same seat
+/// answers).
+fn caret_byte_index(s: &str, chars: usize) -> usize {
+    s.char_indices()
+        .nth(chars)
+        .map(|(i, _)| i)
+        .unwrap_or(s.len())
+}
+
 fn load_splashes() -> Vec<String> {
     for prefix in [
         "assets-cache/jar",
@@ -2496,9 +2508,10 @@ pub fn chat_line_y(gui_h: i32, index: i32, spacing: f64) -> i32 {
 /// argument type's local providers yet). The unknown literal at a
 /// literal-only node the empty list keeps (the server's own tree
 /// refuses the command anyway — no round-trip the honest silence
-/// spends). The cursor is the END-PARKED one the house EditBox keeps
-/// (`push`/`pop` the only edits — the mid-string carets the vanilla
-/// EditBox allows the honest divergence keeps).
+/// spends). The cursor is the END-PARKED one the CHAT box keeps
+/// (`push`/`pop` the only edits — the chat the honest divergence
+/// keeps; the ENTRY FORMS the caret walk the vanilla cursorPos law
+/// the mid-string edits bank).
 #[derive(Debug, Clone, PartialEq)]
 pub enum ChatSuggestionSource {
     /// The tree answered locally: the (start, length) replace range
@@ -7614,6 +7627,17 @@ pub struct App {
     /// every later touch the in-memory rows keep: the vanilla ctor the
     /// load the boot's own single moment speaks).
     pub servers_loaded: bool,
+    /// THE ENTRY FORMS' OWN CARET SEATS (javap 26.2 the EditBox the
+    /// `cursorPos` field keeps — the char index the typed word the
+    /// mid-string edits answer: the LEFT/RIGHT the moveCursorBy ±1
+    /// steps, the charTyped the INSERT at the seat serves, the
+    /// Backspace the char BEFORE the seat removes, the Home/End the
+    /// bounds park — the END-PARKED default the fresh ctor wears [the
+    /// vanilla setText walk the cursor the tail speaks], the three
+    /// boxes the trio the pair + the direct seat keeps).
+    pub es_name_cursor: usize,
+    pub es_address_cursor: usize,
+    pub direct_cursor: usize,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11138,6 +11162,9 @@ impl App {
             es_edit: None,
             servers_file: None,
             servers_loaded: false,
+            es_name_cursor: "Minecraft Server".chars().count(),
+            es_address_cursor: 0,
+            direct_cursor: 0,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -21848,6 +21875,10 @@ impl App {
         if kind == ScreenKind::DirectConnect {
             self.direct_address.clear();
             self.direct_focus = true;
+            // THE CARET'S OWN FRESH SEAT (the vanilla setText walk the
+            // cursor the empty tail parks — the zero the end the same
+            // seat the empty box speaks)
+            self.direct_cursor = 0;
         }
         // THE ADD SERVER'S OWN FRESH CTOR (the vanilla lambda the
         // `new ServerData(I18n.format("selectServer.defaultName"), "",
@@ -21863,6 +21894,11 @@ impl App {
             self.es_address.clear();
             self.es_name_focus = true;
             self.es_address_focus = false;
+            // THE CARETS' OWN FRESH SEATS (the vanilla setText walk the
+            // cursor the tail parks — the defaultName the end seat
+            // speaks, the EMPTY address the zero the same end keeps)
+            self.es_name_cursor = self.es_name.chars().count();
+            self.es_address_cursor = 0;
             // THE MODE'S OWN RESET (the add-mode the fresh ctor speaks —
             // the edit opener the seat the open AFTER re-arms, the stale
             // row the next add the walk never overwrites)
@@ -35720,17 +35756,27 @@ impl App {
         {
             return;
         }
-        self.direct_address.push(c);
+        // THE CARET'S OWN INSERT (the vanilla charTyped walk the
+        // cursorPos seat serves — the char the mid-string seat
+        // inserts, the cursor the +1 step banks)
+        let idx = caret_byte_index(&self.direct_address, self.direct_cursor);
+        self.direct_address.insert(idx, c);
+        self.direct_cursor += 1;
     }
 
     /// THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
-    /// keyPressed Backspace arm — the popped char the field answers,
-    /// the other screens the gate keeps silent).
+    /// keyPressed Backspace arm — the char BEFORE the caret the
+    /// mid-string seat removes, the cursor the -1 step banks, the
+    /// other screens the gate keeps silent).
     pub fn on_direct_backspace(&mut self) {
-        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus || self.direct_cursor == 0
+        {
             return;
         }
-        self.direct_address.pop();
+        let end = caret_byte_index(&self.direct_address, self.direct_cursor);
+        let start = caret_byte_index(&self.direct_address, self.direct_cursor - 1);
+        self.direct_address.replace_range(start..end, "");
+        self.direct_cursor -= 1;
     }
 
     /// THE DIRECT CONNECTION'S OWN CLICK FOCUS (the EditBox
@@ -35749,6 +35795,12 @@ impl App {
         let (bx, by, bw, bh) = self.direct_box_rect;
         let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
         self.direct_focus = inside;
+        // THE CARET'S OWN CLICK PARK (the vanilla mouseClick walk the
+        // cursor the x-position wears — the minimal round the end seat
+        // the re-arm parks, the x-band the follow-up wears)
+        if inside {
+            self.direct_cursor = self.direct_address.chars().count();
+        }
         inside
     }
 
@@ -35756,33 +35808,124 @@ impl App {
     /// focused field answers — the name the 32-char cap the EditBox
     /// default keeps, the address the 128 the setMaxLength speaks; the
     /// unfocused pair the silence keeps, the stale screens the gate
-    /// never passes).
+    /// never passes). THE CARET'S OWN INSERT (the vanilla charTyped
+    /// walk the `cursorPos` seat serves — the char the typed word the
+    /// mid-string seat inserts, the cursor the +1 step banks, the cap
+    /// the whole-string count the honest bound keeps).
     pub fn on_editserver_char(&mut self, c: char) {
         if self.screen != ScreenKind::EditServer {
             return;
         }
         if self.es_name_focus {
             if self.es_name.chars().count() < 32 {
-                self.es_name.push(c);
+                let idx = caret_byte_index(&self.es_name, self.es_name_cursor);
+                self.es_name.insert(idx, c);
+                self.es_name_cursor += 1;
             }
         } else if self.es_address_focus && self.es_address.chars().count() < 128 {
-            self.es_address.push(c);
+            let idx = caret_byte_index(&self.es_address, self.es_address_cursor);
+            self.es_address.insert(idx, c);
+            self.es_address_cursor += 1;
         }
     }
 
-    /// THE ENTRY FORM'S OWN BACKSPACE (the EditBox.keyPressed's 14 arm
-    /// the focused field answers — the pop the typed word's tail
-    /// speaks, the empty field the pop the no-op keeps, the stale
-    /// screens the gate never passes).
+    /// THE ENTRY FORM'S OWN BACKSPACE (the EditBox.keyPressed's 259 arm
+    /// the focused field answers — the char BEFORE the caret the
+    /// mid-string seat removes, the cursor the -1 step banks, the zero
+    /// seat the pop the no-op keeps, the stale screens the gate never
+    /// passes).
     pub fn on_editserver_backspace(&mut self) {
         if self.screen != ScreenKind::EditServer {
             return;
         }
         if self.es_name_focus {
-            self.es_name.pop();
-        } else if self.es_address_focus {
-            self.es_address.pop();
+            if self.es_name_cursor > 0 {
+                let end = caret_byte_index(&self.es_name, self.es_name_cursor);
+                let start = caret_byte_index(&self.es_name, self.es_name_cursor - 1);
+                self.es_name.replace_range(start..end, "");
+                self.es_name_cursor -= 1;
+            }
+        } else if self.es_address_focus && self.es_address_cursor > 0 {
+            let end = caret_byte_index(&self.es_address, self.es_address_cursor);
+            let start = caret_byte_index(&self.es_address, self.es_address_cursor - 1);
+            self.es_address.replace_range(start..end, "");
+            self.es_address_cursor -= 1;
         }
+    }
+
+    /// THE ENTRY FORM'S OWN CARET ARROWS (the EditBox.keyPressed
+    /// tableswitch the 262/263 cases — the RIGHT/LEFT the
+    /// moveCursorBy ±1 serves: the focused box the seat the bounds
+    /// [0, len] clamps, the zero the left the no-op keeps, the tail
+    /// the right the park wears, the stale screens the gate never
+    /// passes).
+    pub fn on_editserver_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            let len = self.es_name.chars().count();
+            self.es_name_cursor = if left {
+                self.es_name_cursor.saturating_sub(1)
+            } else {
+                (self.es_name_cursor + 1).min(len)
+            };
+        } else if self.es_address_focus {
+            let len = self.es_address.chars().count();
+            self.es_address_cursor = if left {
+                self.es_address_cursor.saturating_sub(1)
+            } else {
+                (self.es_address_cursor + 1).min(len)
+            };
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN CARET BOUNDS (the tableswitch the 268/269
+    /// cases — the HOME/END the [0, len] park serves: the focused box
+    /// the seat the bound speaks, the stale screens the gate never
+    /// passes).
+    pub fn on_editserver_caret_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            self.es_name_cursor = if end { self.es_name.chars().count() } else { 0 };
+        } else if self.es_address_focus {
+            self.es_address_cursor = if end {
+                self.es_address.chars().count()
+            } else {
+                0
+            };
+        }
+    }
+
+    /// THE DIRECT CONNECTION'S OWN CARET ARROWS (the same EditBox walk
+    /// the one-box form answers — the moveCursorBy ±1 the [0, len]
+    /// bounds clamp, the stale screens the gate never passes).
+    pub fn on_direct_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        let len = self.direct_address.chars().count();
+        self.direct_cursor = if left {
+            self.direct_cursor.saturating_sub(1)
+        } else {
+            (self.direct_cursor + 1).min(len)
+        };
+    }
+
+    /// THE DIRECT CONNECTION'S OWN CARET BOUNDS (the same tableswitch
+    /// the HOME/END cases the one-box form answers — the [0, len]
+    /// park the focused seat wears).
+    pub fn on_direct_caret_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        self.direct_cursor = if end {
+            self.direct_address.chars().count()
+        } else {
+            0
+        };
     }
 
     /// THE ENTRY FORM'S OWN BOX CLICK (the EditBox.mouseClicked walk
@@ -35804,11 +35947,17 @@ impl App {
         if in_name {
             self.es_name_focus = true;
             self.es_address_focus = false;
+            // THE CARET'S OWN CLICK PARK (the vanilla mouseClick walk
+            // the cursor the x-position wears — the minimal round the
+            // end seat the re-arm parks, the x-band the follow-up
+            // wears)
+            self.es_name_cursor = self.es_name.chars().count();
             return true;
         }
         if in_addr {
             self.es_address_focus = true;
             self.es_name_focus = false;
+            self.es_address_cursor = self.es_address.chars().count();
             return true;
         }
         self.es_name_focus = false;
@@ -39302,6 +39451,12 @@ impl App {
                             self.es_name = entry.name.clone();
                             self.es_address = entry.host.clone().unwrap_or_default();
                         }
+                        // THE CARETS' OWN PREFILL SEATS (the vanilla ctor
+                        // the ServerData the fields wrap — the setText
+                        // walk the cursor the tail parks, the typed word
+                        // the edits continue the end answers)
+                        self.es_name_cursor = self.es_name.chars().count();
+                        self.es_address_cursor = self.es_address.chars().count();
                         self.es_edit = Some(idx);
                     }
                 }
@@ -67849,7 +68004,15 @@ impl App {
             g.text(a, bx + 4, by + 6, &hint, [0.55, 0.55, 0.55], false);
         } else {
             g.text(a, bx + 4, by + 6, &self.direct_address, WHITE, false);
-            let tw = g.text_width(&self.direct_address);
+            // THE CARET'S OWN SEAT (the vanilla render the text-before-
+            // cursor width wears — the cursorPos the caret x answers,
+            // the END-PARKED default the tail the same pixels keeps)
+            let before: String = self
+                .direct_address
+                .chars()
+                .take(self.direct_cursor)
+                .collect();
+            let tw = g.text_width(&before);
             if (self.frame / 6) % 2 == 0 && self.direct_focus {
                 g.fill(bx + 4 + tw + 1, by + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
             }
@@ -67915,7 +68078,11 @@ impl App {
             g.text(a, nx + 4, ny + 6, &hint, [0.55, 0.55, 0.55], false);
         } else {
             g.text(a, nx + 4, ny + 6, &self.es_name, WHITE, false);
-            let tw = g.text_width(&self.es_name);
+            // THE CARET'S OWN SEAT (the vanilla render the text-before-
+            // cursor width wears — the cursorPos the caret x answers,
+            // the END-PARKED default the tail the same pixels keeps)
+            let before: String = self.es_name.chars().take(self.es_name_cursor).collect();
+            let tw = g.text_width(&before);
             if (self.frame / 6) % 2 == 0 && self.es_name_focus {
                 g.fill(nx + 4 + tw + 1, ny + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
             }
@@ -67931,7 +68098,15 @@ impl App {
             g.text(a, ax + 4, ay + 6, &hint, [0.55, 0.55, 0.55], false);
         } else {
             g.text(a, ax + 4, ay + 6, &self.es_address, WHITE, false);
-            let tw = g.text_width(&self.es_address);
+            // THE CARET'S OWN SEAT (the same cursorPos law the pair
+            // wears — the END-PARKED default the tail the same pixels
+            // keeps)
+            let before: String = self
+                .es_address
+                .chars()
+                .take(self.es_address_cursor)
+                .collect();
+            let tw = g.text_width(&before);
             if (self.frame / 6) % 2 == 0 && self.es_address_focus {
                 g.fill(ax + 4 + tw + 1, ay + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
             }

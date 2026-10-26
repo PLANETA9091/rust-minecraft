@@ -23763,3 +23763,183 @@ fn the_entry_forms_own_tab_ride_wears() {
         "the stale screen the re-arm the gate never passes"
     );
 }
+
+// THE ENTRY FORMS' OWN CARET RIDE (javap 26.2 the EditBox the
+// cursorPos field keeps — the LEFT/RIGHT the moveCursorBy ±1 serves,
+// the charTyped the INSERT at the mid-string seat answers, the
+// Backspace the char BEFORE the seat removes, the Home/End the bounds
+// park, the END-PARKED default the fresh ctor wears)
+#[test]
+fn the_entry_forms_own_caret_ride_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    // THE RECTS' OWN RENDER BANK (the render walk the box geometry the
+    // store keeps — the click walk the same rects the later reads wear)
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.es_name_cursor,
+        "Minecraft Server".chars().count(),
+        "the fresh ctor the end-parked seat wears"
+    );
+
+    // THE END-PARKED TYPING (the cursor the tail parks — the char the
+    // append the same walk the mid-string law banks)
+    app.on_editserver_char('X');
+    assert_eq!(app.es_name, "Minecraft ServerX");
+    assert_eq!(app.es_name_cursor, 17, "the append the cursor the +1 steps");
+
+    // THE MID-STRING INSERT (the LEFT the seat steps — the char the
+    // seat the insert serves, the tail the shift wears)
+    app.on_editserver_caret_arrow(true);
+    assert_eq!(app.es_name_cursor, 16);
+    app.on_editserver_char('Y');
+    assert_eq!(
+        app.es_name, "Minecraft ServerYX",
+        "the mid-string seat the char inserts"
+    );
+    assert_eq!(app.es_name_cursor, 17);
+
+    // THE MID-STRING BACKSPACE (the char BEFORE the seat removes — the
+    // tail the Y the walk drops, the cursor the -1 steps)
+    app.on_editserver_backspace();
+    assert_eq!(app.es_name, "Minecraft ServerX");
+    assert_eq!(app.es_name_cursor, 16);
+
+    // THE ZERO CLAMP (the left walk the [0, len] bounds keeps — the
+    // zero the further left the no-op wears)
+    for _ in 0..20 {
+        app.on_editserver_caret_arrow(true);
+    }
+    assert_eq!(app.es_name_cursor, 0, "the zero the clamp banks");
+    app.on_editserver_caret_arrow(true);
+    assert_eq!(app.es_name_cursor, 0, "the zero the left the no-op keeps");
+    app.on_editserver_char('A');
+    assert_eq!(
+        app.es_name, "AMinecraft ServerX",
+        "the head the insert wears"
+    );
+    assert_eq!(app.es_name_cursor, 1);
+
+    // THE TAIL CLAMP (the right walk the len the park keeps)
+    for _ in 0..25 {
+        app.on_editserver_caret_arrow(false);
+    }
+    assert_eq!(
+        app.es_name_cursor,
+        app.es_name.chars().count(),
+        "the len the right clamp banks"
+    );
+    app.on_editserver_caret_arrow(false);
+    assert_eq!(
+        app.es_name_cursor,
+        app.es_name.chars().count(),
+        "the tail the right the no-op keeps"
+    );
+
+    // THE HOME/END BOUNDS (the 268/269 cases the [0, len] park serves)
+    app.on_editserver_caret_home_end(false);
+    assert_eq!(app.es_name_cursor, 0, "the Home the zero parks");
+    app.on_editserver_caret_home_end(true);
+    assert_eq!(
+        app.es_name_cursor,
+        app.es_name.chars().count(),
+        "the End the len parks"
+    );
+
+    // THE ADDRESS BOX'S OWN RIDE (the Tab the focus the seat hands —
+    // the typing the mid-string edit the same law wears)
+    app.on_editserver_tab(true);
+    assert!(app.es_address_focus);
+    for c in "ab".chars() {
+        app.on_editserver_char(c);
+    }
+    assert_eq!(app.es_address, "ab");
+    app.on_editserver_caret_arrow(true);
+    app.on_editserver_char('c');
+    assert_eq!(
+        app.es_address, "acb",
+        "the address the mid-string seat the same law wears"
+    );
+    assert_eq!(app.es_address_cursor, 2);
+
+    // THE BOX CLICK'S OWN PARK (the re-arm the end seat the focus
+    // parks — the name the walk the tail wears)
+    let (nx, ny, _, _) = app.es_name_rect;
+    app.on_editserver_box_click(nx + 5, ny + 5);
+    assert!(app.es_name_focus);
+    assert_eq!(
+        app.es_name_cursor,
+        app.es_name.chars().count(),
+        "the click the end seat parks"
+    );
+
+    // THE EDIT OPENER'S OWN PREFILL PARK (the ServerData the fields
+    // wrap — the caret the pre-filled word the tail parks)
+    app.open(ScreenKind::Servers);
+    app.render_title_buttons_for_test();
+    let edit = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "edit")
+        .expect("edit")
+        .clone();
+    app.on_click(edit.x + edit.w / 2, edit.y + edit.h / 2);
+    assert_eq!(app.screen, ScreenKind::EditServer);
+    assert_eq!(app.es_name, "mc2rs sandbox", "the row's own name pre-fills");
+    assert_eq!(
+        app.es_name_cursor,
+        "mc2rs sandbox".chars().count(),
+        "the prefill the end seat parks"
+    );
+
+    // THE DIRECT BOX'S OWN RIDE (the same cursorPos law the one-box
+    // form answers — the arrows the bounds clamp, the backspace the
+    // mid-string seat removes, the Home/End the bounds park)
+    app.open(ScreenKind::DirectConnect);
+    for c in "host".chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_address, "host");
+    assert_eq!(app.direct_cursor, 4);
+    app.on_direct_caret_arrow(true);
+    assert_eq!(app.direct_cursor, 3);
+    app.on_direct_backspace();
+    // THE SEAT'S OWN CHAR (the caret the s/t boundary sits — the char
+    // BEFORE the seat the 's' drops, the 't' the tail keeps, the
+    // cursor the removal seat the -1 step banks)
+    assert_eq!(app.direct_address, "hot", "the mid-string seat the s drops");
+    assert_eq!(app.direct_cursor, 2);
+    app.on_direct_caret_home_end(false);
+    assert_eq!(app.direct_cursor, 0, "the Home the zero parks");
+    app.on_direct_caret_home_end(true);
+    assert_eq!(app.direct_cursor, 3, "the End the len parks");
+    app.on_direct_caret_arrow(false);
+    assert_eq!(app.direct_cursor, 3, "the tail the right the no-op keeps");
+
+    // THE STALE SCREENS' OWN GATE (the Servers seat the lanes silent —
+    // the carets the gates never pass)
+    app.open(ScreenKind::Servers);
+    app.on_editserver_caret_arrow(true);
+    app.on_direct_caret_arrow(true);
+    app.on_editserver_caret_home_end(true);
+    app.on_direct_caret_home_end(true);
+    assert!(
+        app.es_name_cursor <= app.es_name.chars().count()
+            && app.direct_cursor <= app.direct_address.chars().count(),
+        "the stale screens the seats the gates never move"
+    );
+
+    // THE CAPS' OWN REFUSAL (the 32 the name the whole-string count
+    // keeps — the over-cap char the insert never lands, the cursor
+    // the seat keeps)
+    app.open(ScreenKind::EditServer);
+    app.es_name = "x".repeat(32);
+    app.es_name_cursor = 16;
+    app.on_editserver_char('y');
+    assert_eq!(
+        app.es_name.chars().count(),
+        32,
+        "the cap the insert refuses"
+    );
+    assert_eq!(app.es_name_cursor, 16, "the refused char the seat keeps");
+}
