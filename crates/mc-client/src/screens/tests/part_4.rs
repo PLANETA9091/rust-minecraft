@@ -22111,3 +22111,199 @@ fn the_key_binds_own_tab_ride_the_list_rows_the_capture_guard_wear() {
         "the change row the stale flag the sweep clears"
     );
 }
+
+/// THE KEY BINDS ROWS' OWN PRESS CLAIM + ACTIVATION (the
+/// autopush-249 round — the 247/248 family law the list rows join:
+/// the press INSIDE a row's button the focus banks [the vanilla
+/// click the changeFocus walk answers, the grab the kb class never
+/// carries, the INACTIVE reset row the claim never seats, the
+/// armed rebind the press the capture walk owns], the focused row
+/// the Enter the SAME action the on_click walk banks [the vanilla
+/// AbstractSelectionList's keyPressed the focused entry the onPress
+/// wears — the change row the capture arms, the rowreset the reset
+/// speaks, the footer pair the reset-all + the parent ride serve,
+/// the stale id + the INACTIVE seat the silence keeps, the armed
+/// seat the selection dispatch never reaches]).
+#[test]
+fn the_key_binds_rows_own_press_claim_the_enter_activation_wear() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::KeyBinds);
+    app.render_title_buttons_for_test();
+    use crate::options_file::key_binds as kb;
+
+    // THE WRONG SCREEN'S OWN SILENCE (the title's Enter the walk
+    // never wears)
+    app.options_focus = Some("kbdone");
+    app.open(ScreenKind::Title);
+    app.on_options_key_selection();
+    assert_eq!(app.screen, ScreenKind::Title, "the wrong screen silent");
+
+    // THE FRESH KEY BINDS' OWN RIDE (the open() the focus death
+    // wears — the rows re-built)
+    app.open(ScreenKind::KeyBinds);
+    app.render_title_buttons_for_test();
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the fresh ctor keeps"
+    );
+
+    // THE PLAIN CLICK'S OWN CLAIM (the change row the press the
+    // focus banks — the grab the kb class never carries)
+    let row = app
+        .buttons
+        .iter()
+        .find(|b| b.id.starts_with("kb_change_"))
+        .expect("the change row")
+        .clone();
+    app.on_press(row.x + row.w / 2, row.y + row.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some(row.id),
+        "the row press the focus banks"
+    );
+    assert!(!app.options_grab, "the kb class the grab never carries");
+
+    // THE FOOTER'S OWN CLAIM (the kbdone the press the focus banks)
+    let done = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kbdone")
+        .expect("the footer")
+        .clone();
+    app.on_press(done.x + done.w / 2, done.y + done.h / 2);
+    assert_eq!(app.options_focus, Some("kbdone"));
+
+    // THE OUTSIDE PRESS'S OWN CLEAR (the clearFocus walk wears)
+    app.on_press(2, 2);
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the outside press the belief clears"
+    );
+
+    // THE INACTIVE RESET ROW'S OWN REFUSAL (the default bind the row
+    // the store pushes but the active arm refuses — the press the
+    // claim never seats)
+    let rb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_jump")
+        .expect("the inactive reset row")
+        .clone();
+    assert!(!rb.active, "the default bind the reset row inactive keeps");
+    app.on_press(rb.x + rb.w / 2, rb.y + rb.h / 2);
+    assert!(
+        app.options_focus.is_none(),
+        "the inactive row the claim never seats"
+    );
+
+    // THE ARMED PRESS'S OWN SILENCE (the armed rebind the ANY press
+    // the MOUSE bind the capture walk owns — the claim never banks)
+    app.kb_selected = Some(kb::JUMP);
+    let row2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id.starts_with("kb_change_"))
+        .expect("the change row")
+        .clone();
+    app.on_press(row2.x + row2.w / 2, row2.y + row2.h / 2);
+    assert!(
+        app.options_focus.is_none(),
+        "the armed press the claim never banks"
+    );
+    app.kb_selected = None;
+
+    // THE ENTER'S OWN CAPTURE ARM (the focused change row the
+    // selection dispatch the on_click walk wears — the selectedKey
+    // the lambda banks, the screen the arm keeps)
+    app.on_press(row.x + row.w / 2, row.y + row.h / 2);
+    assert_eq!(app.options_focus, Some(row.id));
+    app.on_options_key_selection();
+    assert_eq!(app.screen, ScreenKind::KeyBinds, "the arm the screen keeps");
+    assert!(app.kb_selected.is_some(), "the change row the capture arms");
+    // THE ARMED SEAT'S OWN SILENCE (the rebind branch the ANY key
+    // wears FIRST — the selection dispatch the armed frame never
+    // reaches, the arm the same slot keeps)
+    let armed = app.kb_selected;
+    app.on_options_key_selection();
+    assert_eq!(
+        app.kb_selected, armed,
+        "the armed seat the selection dispatch never reaches"
+    );
+    app.kb_selected = None;
+
+    // THE ENTER'S OWN RESET (the non-default bind the rowreset the
+    // reset speaks — the setKey(getDefaultKey()) walk the store
+    // banks, the selection cleared)
+    app.key_binds[kb::LEFT] = Some(crate::options_file::key_binds::Bind::Keyboard(
+        minifb::Key::C,
+    ));
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("kb_rowreset_left");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.key_binds[kb::LEFT],
+        kb::DEFAULTS[kb::LEFT],
+        "the rowreset the default bind banks"
+    );
+    assert!(
+        app.kb_selected.is_none(),
+        "the reset the selection cleared keeps"
+    );
+
+    // THE RESET-ALL'S OWN LANE (the footer the key_binds the
+    // DEFAULTS wear)
+    app.key_binds[kb::LEFT] = Some(crate::options_file::key_binds::Bind::Keyboard(
+        minifb::Key::C,
+    ));
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("kb_reset");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.key_binds[kb::LEFT],
+        kb::DEFAULTS[kb::LEFT],
+        "the reset-all the defaults wear"
+    );
+
+    // THE DONE'S OWN RIDE (the footer the Controls parent opens —
+    // the open() the focus death wears)
+    app.open(ScreenKind::KeyBinds);
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("kbdone");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the done the parent ride opens"
+    );
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the focus death wears"
+    );
+
+    // THE STALE ID'S OWN SILENCE (the off-band row the built store
+    // never carries — the dispatch never speaks)
+    app.open(ScreenKind::KeyBinds);
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("kb_change_debugoptions");
+    app.on_options_key_selection();
+    assert_eq!(app.screen, ScreenKind::KeyBinds);
+    assert!(
+        app.kb_selected.is_none(),
+        "the stale id the arm never speaks"
+    );
+
+    // THE INACTIVE SEAT'S OWN REFUSAL (the default bind's reset row
+    // the store carries but the active gate refuses — the Enter the
+    // reset never speaks)
+    app.options_focus = Some("kb_rowreset_jump");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.key_binds[kb::JUMP],
+        kb::DEFAULTS[kb::JUMP],
+        "the default bind the reset never disturbs"
+    );
+    assert!(
+        app.kb_selected.is_none(),
+        "the inactive seat the silence keeps"
+    );
+}

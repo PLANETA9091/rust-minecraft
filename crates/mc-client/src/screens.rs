@@ -32109,6 +32109,35 @@ impl App {
             self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
         }
+        if self.screen == ScreenKind::KeyBinds {
+            // THE CAPTURE'S OWN EVENT (the armed rebind the press the
+            // MOUSE bind the on_click's capture walk owns — the press
+            // the claim never banks, the vanilla mouseClicked the
+            // selected branch the ANY click consumes FIRST)
+            if self.kb_selected.is_some() {
+                return;
+            }
+            // THE LIST ROWS' OWN CLAIM (the 247 family law the list
+            // rows join — the press INSIDE a row's button the focus
+            // banks [the vanilla click the changeFocus walk answers],
+            // the grab the kb class never carries, the capture arm +
+            // the resets the on_click dispatch serves; the INACTIVE
+            // reset row the nextFocusPath refusal the claim never
+            // seats)
+            let mut claimed: Option<&'static str> = None;
+            for b in &self.buttons {
+                if b.active && b.hovered(mx, my) && b.id.starts_with("kb") {
+                    claimed = Some(b.id);
+                    break;
+                }
+            }
+            // THE APPLY'S OWN LAW (the same setFocused fold the family
+            // wears — the kb ids the slider class never carry, the
+            // no-claim the clearFocus the belief clears)
+            self.options_focus = claimed;
+            self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
+            return;
+        }
         if self.screen == ScreenKind::Dispenser {
             // THE 3x3 CANVAS'S OWN PRESS (the quickcraft drag's own arm
             // the table/furnace's own gate shape wears — dev-148's own
@@ -35130,6 +35159,7 @@ impl App {
                 | ScreenKind::MouseSettings
                 | ScreenKind::Controls
                 | ScreenKind::Accessibility
+                | ScreenKind::KeyBinds
         ) {
             return;
         }
@@ -35154,6 +35184,32 @@ impl App {
                         "worldoptions" => self.open(ScreenKind::WorldOptions),
                         _ => {}
                     }
+                }
+            }
+            // THE KEY BINDS' OWN ROWS (the same Screen family the
+            // list extends — the focused row the id dispatches, the
+            // SAME action the on_click walk banks: the vanilla
+            // AbstractSelectionList's keyPressed the focused entry
+            // the onPress wears — the change row the capture arms
+            // [the selectedKey the lambda banks], the rowreset the
+            // reset speaks [the setKey(getDefaultKey()) walk], the
+            // footer pair the reset-all + the parent ride serve; the
+            // INACTIVE seat the isActive gate refuses, the stale id
+            // the built rows never carry the silence keeps)
+            Some(id) if id.starts_with("kb") => {
+                // THE ARMED SEAT'S OWN SILENCE (the rebind branch the
+                // ANY key the bind wears FIRST — the selection
+                // dispatch the armed frame never reaches)
+                if self.kb_selected.is_some() {
+                    return;
+                }
+                let seat = self
+                    .buttons
+                    .iter()
+                    .find(|b| b.id == id && b.active)
+                    .map(|b| (b.x, b.y, b.w, b.h));
+                if let Some((bx, by, bw, bh)) = seat {
+                    self.on_click(bx + bw / 2, by + bh / 2);
                 }
             }
             _ => {}

@@ -2052,14 +2052,21 @@ pub fn run_gui_app(
         // wears). THE OPTIONS FAMILY'S OWN GATE (the sub-screens the
         // same Screen base class extends — the MouseSettings/Controls/
         // Accessibility houses the walk the family's slider rows
-        // serve, the world's camera lanes the gate never shares)
+        // serve, the world's camera lanes the gate never shares). THE
+        // KEY BINDS' OWN ROWS (the list the focused row the Enter the
+        // onPress dispatch serves — the capture arm, the reset, the
+        // footer pair; the REBIND'S OWN CONSUMPTION the event law the
+        // Tab lane shares — the armed rebind the ANY key the bind
+        // banks FIRST, the lanes the consumed key never ride)
         if matches!(
             app.screen,
             crate::screens::ScreenKind::Options
                 | crate::screens::ScreenKind::MouseSettings
                 | crate::screens::ScreenKind::Controls
                 | crate::screens::ScreenKind::Accessibility
-        ) {
+                | crate::screens::ScreenKind::KeyBinds
+        ) && !rebind_consumed
+        {
             if window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No)
                 || window.is_key_pressed(Key::Space, minifb::KeyRepeat::No)
             {
