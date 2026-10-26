@@ -34951,17 +34951,19 @@ impl App {
         // same seat keeps — the vanilla null the apply never wears)
     }
 
-    /// THE SLIDER'S OWN SELECTION TOGGLE (javap 26.2
-    /// AbstractSliderButton.keyPressed walk's FIRST arm — the
-    /// `KeyEvent.isSelection()` ask the Enter/Space answers: the
-    /// `canChangeValue` TOGGLE the grab arms/releases, the TRUE the
-    /// consumed verdict keeps [the screen's own lanes the key never
-    /// reaches]). THE FOCUSED SEAT'S OWN GATE (the Screen's
-    /// focusedWidget belief the walk rides — the None the silence
-    /// keeps, the NON-slider seat [the plain button rows the
-    /// Tab-walk round banks] the same silence wears: the
-    /// AbstractButton's own isSelection walk the follow-up round
-    /// serves).
+    /// THE SLIDER'S OWN SELECTION TOGGLE + THE BUTTONS' OWN
+    /// ACTIVATION (javap 26.2 the Screen keyPressed walk's
+    /// widget-FIRST lane the isSelection ask serves — the FOCUSED
+    /// widget's own keyPressed answers FIRST: the SLIDER class the
+    /// `canChangeValue` TOGGLE the grab arms/releases [the
+    /// AbstractSliderButton's own walk], the ABSTRACTBUTTON class
+    /// the `isActive()` gate + the `playDownSound` + the `onPress`
+    /// fold the press serves — the focused Done/Controls/
+    /// Accessibility/WorldOptions rows the keyboard the SAME press
+    /// the click walks, the open() the next screen the focus death
+    /// wears). THE ISACTIVE GATE (the AbstractButton's own walk —
+    /// the inactive the refusal keeps, the stale belief the built
+    /// rows never carry the silence answers).
     pub fn on_options_key_selection(&mut self) {
         if self.screen != ScreenKind::Options {
             return;
@@ -34969,6 +34971,25 @@ impl App {
         match self.options_focus {
             Some("opt_sensitivity") | Some("opt_music") | Some("opt_fov") => {
                 self.options_grab = !self.options_grab;
+            }
+            // THE PLAIN BUTTONS' OWN PRESS (the AbstractButton
+            // keyPressed walk — the isActive gate the built+active
+            // rows answer, the onPress fold the same actions the
+            // on_click dispatch wears: the done the return lane, the
+            // pair + the header the openScreenButton walk)
+            Some(id @ ("back" | "controls" | "accessibility" | "worldoptions")) => {
+                if self.buttons.iter().any(|b| b.id == id && b.active) {
+                    match id {
+                        "back" => {
+                            let ret = self.options_return;
+                            self.open(ret);
+                        }
+                        "controls" => self.open(ScreenKind::Controls),
+                        "accessibility" => self.open(ScreenKind::Accessibility),
+                        "worldoptions" => self.open(ScreenKind::WorldOptions),
+                        _ => {}
+                    }
+                }
             }
             _ => {}
         }

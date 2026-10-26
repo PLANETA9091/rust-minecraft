@@ -10001,6 +10001,109 @@ fn the_options_house_s_own_tab_ride_the_add_order_the_tab_grab_wears() {
     );
 }
 
+/// THE OPTIONS BUTTONS' OWN ACTIVATION (the autopush-244 round — the
+/// Screen keyPressed's widget-FIRST lane the isSelection ask serves:
+/// the SLIDER class the grab toggle keeps, the ABSTRACTBUTTON class
+/// the isActive gate + the onPress fold the press wears — the
+/// focused Done/Controls/Accessibility/WorldOptions rows the
+/// keyboard the SAME press the click walks, the open() the next
+/// screen the focus death keeps, the stale belief the silence
+/// answers, the wrong screen the walk never speaks).
+#[test]
+fn the_options_buttons_own_activation_the_selection_press_serves() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    // THE TAB RIDE'S OWN ARRIVAL (the controls seat the 4th place —
+    // the Enter the openScreenButton walk serves)
+    app.on_options_tab(true);
+    app.on_options_tab(true);
+    app.on_options_tab(true);
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("controls"));
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the Enter the controls screen opens"
+    );
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the next screen the focus death keeps"
+    );
+
+    // THE PAIR'S RIGHT SEAT (the accessibility the same walk wears)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("accessibility");
+    app.on_options_key_selection();
+    assert_eq!(app.screen, ScreenKind::Accessibility);
+
+    // THE DONE'S OWN RETURN (the back the `open(options_return)` ride
+    // serves — the title lane the Title wears)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("back");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Title,
+        "the Done the title return wears"
+    );
+
+    // THE IN-WORLD HEADER'S OWN OPENER (the worldoptions row the
+    // WorldOptionsScreen opens — the add-order seat the same press
+    // serves)
+    app.open(ScreenKind::Options);
+    app.options_return = ScreenKind::World;
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("worldoptions");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::WorldOptions,
+        "the header row the World Options opens"
+    );
+
+    // THE SLIDER SEAT'S OWN TOGGLE (the widget-FIRST lane the slider
+    // class answers — the screen the grab toggle never moves)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_sensitivity"));
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the slider seat the Enter the grab toggles, the screen stays"
+    );
+    assert!(!app.options_grab, "the toggle the grab releases");
+
+    // THE ISACTIVE GATE'S OWN SILENCE (the stale belief the built
+    // rows never carry — the worldoptions the title lane never
+    // builds, the Enter the walk never speaks)
+    app.options_return = ScreenKind::Title;
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("worldoptions");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the stale seat the activation refuses"
+    );
+
+    // THE WRONG SCREEN'S OWN SILENCE (the title's keys the walk
+    // never wears)
+    app.open(ScreenKind::Title);
+    app.options_focus = Some("back");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Title,
+        "the wrong screen the walk never speaks"
+    );
+}
+
 /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
 /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
 /// the caption the ends law speaks (the 30 the options.fov.min
