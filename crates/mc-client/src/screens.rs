@@ -9860,6 +9860,11 @@ pub struct App {
     /// click walk the same geometry the store wears, the entry-form
     /// rect trio the same law shares).
     pub chat_input_rect: Option<(i32, i32, i32, i32)>,
+    /// THE GHOST'S OWN SEAT (the render the drawn x banks — the
+    /// cursor's-tail law the test reads: the BEFORE-cursor prefix
+    /// width the seat answers, the blink the underscore the seat
+    /// never oscillates, the empty ghost the None keeps).
+    pub chat_ghost_seat: Option<i32>,
     pub chat_messages: Vec<(String, u32)>,
     pub recent_chat: Vec<String>,
     pub chat_history_pos: usize,
@@ -11633,6 +11638,7 @@ impl App {
             chat_cursor: 0,
             chat_display: 0,
             chat_input_rect: None,
+            chat_ghost_seat: None,
             chat_messages: Vec::new(),
             recent_chat: Vec::new(),
             chat_save_drafts: true,
@@ -45413,10 +45419,18 @@ impl App {
         // selected suggestion's completion the cursor's tail speaks,
         // the -8355712 = 0x808080 gray the EditBox's own draw keeps,
         // the shadowless glyph law the vanilla suggestion never wears)
+        // THE GHOST'S OWN CURSOR SEAT (the vanilla setSuggestion walk
+        // the ghost the cursor's tail draws — the BEFORE-cursor prefix
+        // width the seat answers, the blink the underscore the seat
+        // never oscillates, the mid-string caret the same law the
+        // tail re-seats, the empty ghost the seat the None keeps)
         let ghost = self.chat_ghost_suffix();
         if !ghost.is_empty() {
-            let gx = 4 + g.text_width(&typed);
+            let gx = 4 + g.text_width(&before);
+            self.chat_ghost_seat = Some(gx);
             g.text_faded(a, gx, h - 10, &ghost, [0.502, 0.502, 0.502], 1.0, false);
+        } else {
+            self.chat_ghost_seat = None;
         }
         // THE SUGGESTION LIST (the shown rows the reply carries — the
         // hidden list the empty vec never draws)

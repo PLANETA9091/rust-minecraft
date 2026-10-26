@@ -24495,3 +24495,72 @@ fn the_editbox_own_scroll_band_wears() {
     assert!(!app.chat_open);
     assert_eq!(app.chat_display, 0, "the close the reset wears");
 }
+
+#[test]
+fn the_chat_ghost_own_cursor_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    app.attach_live_clicks(tx);
+    app.on_chat_key();
+    for c in "/tp".chars() {
+        app.on_chat_char(c);
+    }
+    // THE REPLY'S OWN LIST (the matching id the rows land — the ghost
+    // the selected row's completion the common prefix the trim wears)
+    app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+        id: app.chat_suggestion_pending.unwrap(),
+        start: 1,
+        length: 2,
+        matches: vec![mc_protocol::play::CommandSuggestionsMatch {
+            text: "teleport".to_string(),
+            tooltip: None,
+        }],
+    });
+    assert_eq!(
+        app.chat_ghost_suffix(),
+        "eleport",
+        "the ghost the suffix wears"
+    );
+
+    // THE END-PARK'S OWN SEAT (the fresh render the drawn x banks —
+    // the whole typed prefix the cursor's tail answers, the blink the
+    // underscore the seat never oscillates)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let expected = 4 + crate::gui::font_text_width("/tp");
+    assert_eq!(
+        app.chat_ghost_seat,
+        Some(expected),
+        "the end-park the seat wears"
+    );
+
+    // THE HOME'S OWN RE-SEAT (the mid-string caret the ghost the
+    // zero-prefix tail answers — the seat the cursor follows)
+    app.on_chat_caret_home_end(false);
+    app.render(&mut fb, &mut assets);
+    assert_eq!(
+        app.chat_ghost_seat,
+        Some(4),
+        "the Home the zero-prefix seat wears"
+    );
+
+    // THE MID-SEAT'S OWN WIDTH (the one-char prefix the seat the
+    // prefix width answers — the same law the tail speaks)
+    app.on_chat_caret_arrow(false);
+    app.render(&mut fb, &mut assets);
+    let expected = 4 + crate::gui::font_text_width("/");
+    assert_eq!(
+        app.chat_ghost_seat,
+        Some(expected),
+        "the mid-seat the prefix wears"
+    );
+
+    // THE FRESH OPEN'S OWN NONE (the reopen the list the clear walk
+    // empties — the empty ghost the seat the None keeps)
+    app.on_chat_escape();
+    app.on_chat_key();
+    app.render(&mut fb, &mut assets);
+    assert_eq!(app.chat_ghost_seat, None, "the empty ghost the None keeps");
+}
