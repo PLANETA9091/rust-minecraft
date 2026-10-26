@@ -24735,3 +24735,105 @@ fn the_caret_own_ctrl_word_trio_wears() {
     );
     assert_eq!(app.chat_cursor, closed_cursor, "the closed the seat keeps");
 }
+
+#[test]
+fn the_caret_own_ctrl_word_arrows_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.es_name_cursor,
+        "Minecraft Server".chars().count(),
+        "the fresh ctor the end-parked seat wears"
+    );
+
+    // THE BACKWARD HOP (the Ctrl+Left the 263 arm the
+    // `moveCursorTo(getWordPosition(-1))` walk serves — the seat the
+    // whole-word bound re-parks)
+    app.on_editserver_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.es_name_cursor, 10,
+        "the backward hop the bound re-parks"
+    );
+    app.on_editserver_ctrl_caret_arrow(true);
+    assert_eq!(app.es_name_cursor, 0, "the second hop the head parks");
+
+    // THE HEAD'S OWN NO-OP (the zero the bound the seat keeps)
+    app.on_editserver_ctrl_caret_arrow(true);
+    assert_eq!(app.es_name_cursor, 0, "the zero the seat keeps");
+
+    // THE FORWARD HOP (the Ctrl+Right the 262 arm the
+    // `moveCursorTo(getWordPosition(1))` walk serves — the space the
+    // seek+skip the seat answers, the tail the park wears)
+    app.on_editserver_ctrl_caret_arrow(false);
+    assert_eq!(app.es_name_cursor, 10, "the forward hop the space skips");
+    app.on_editserver_ctrl_caret_arrow(false);
+    assert_eq!(app.es_name_cursor, 16, "the second hop the tail parks");
+    app.on_editserver_ctrl_caret_arrow(false);
+    assert_eq!(app.es_name_cursor, 16, "the tail the seat keeps");
+
+    // THE STALE SCREEN'S OWN GATE (the lane the open form only
+    // answers — the other screens the walk never passes)
+    app.open(ScreenKind::Servers);
+    let gate_cursor = app.es_name_cursor;
+    app.on_editserver_ctrl_caret_arrow(true);
+    assert_eq!(app.es_name_cursor, gate_cursor, "the stale the seat keeps");
+
+    // THE ADDRESS BOX'S OWN HOP PAIR (the Tab the focus hands — the
+    // backward the word-bound the seat walks, the forward the same
+    // law speaks)
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    app.on_editserver_tab(true);
+    assert!(app.es_address_focus);
+    for c in "mc server:25565".chars() {
+        app.on_editserver_char(c);
+    }
+    app.on_editserver_ctrl_caret_arrow(true);
+    assert_eq!(app.es_address_cursor, 3, "the backward hop the bound parks");
+    app.on_editserver_ctrl_caret_arrow(true);
+    assert_eq!(app.es_address_cursor, 0, "the second hop the head parks");
+    app.on_editserver_ctrl_caret_arrow(false);
+    assert_eq!(app.es_address_cursor, 3, "the forward hop the space skips");
+
+    // THE DIRECT BOX'S OWN HOP PAIR (the one-box form the same laws
+    // wears — the forward the space-bound parks, the backward the
+    // head answers, the unfocused box the gate never passes)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    assert!(app.direct_focus, "the fresh ctor the box arms");
+    for c in "host: 25565".chars() {
+        app.on_direct_char(c);
+    }
+    app.on_direct_caret_home_end(false);
+    app.on_direct_ctrl_caret_arrow(false);
+    assert_eq!(app.direct_cursor, 6, "the forward hop the space skips");
+    app.on_direct_ctrl_caret_arrow(true);
+    assert_eq!(app.direct_cursor, 0, "the backward hop the head parks");
+    app.direct_focus = false;
+    app.on_direct_ctrl_caret_arrow(false);
+    assert_eq!(app.direct_cursor, 0, "the unfocused the seat keeps");
+
+    // THE CHAT'S OWN HOP PAIR (the open input the same laws wears —
+    // the closed chat the gate never passes)
+    app.enter_world();
+    let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    app.attach_live_clicks(tx);
+    app.on_chat_key();
+    for c in "hello world".chars() {
+        app.on_chat_char(c);
+    }
+    app.on_chat_ctrl_caret_arrow(true);
+    assert_eq!(app.chat_cursor, 6, "the backward hop the bound parks");
+    app.on_chat_ctrl_caret_arrow(true);
+    assert_eq!(app.chat_cursor, 0, "the second hop the head parks");
+    app.on_chat_ctrl_caret_arrow(false);
+    assert_eq!(app.chat_cursor, 6, "the forward hop the space skips");
+    app.on_chat_escape();
+    let closed_cursor = app.chat_cursor;
+    app.on_chat_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.chat_cursor, closed_cursor,
+        "the closed chat the gate keeps"
+    );
+}

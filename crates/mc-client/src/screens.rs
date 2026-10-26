@@ -36205,6 +36205,36 @@ impl App {
         }
     }
 
+    /// THE ENTRY FORM'S OWN CTRL CARET ARROWS (the tableswitch's
+    /// 262/263 arms the `Screen.hasControlDown()` branch the
+    /// `moveCursorTo(this.getWordPosition(±1))` walk the focused
+    /// field serves — the whole-word hop the bound the seat answers,
+    /// the backward arm the space-skip-then-word walk the left wears,
+    /// the forward arm the seek-then-skip the right speaks, the
+    /// stale screens the gate never passes).
+    pub fn on_editserver_ctrl_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            self.es_name_cursor = word_boundary(&self.es_name, self.es_name_cursor, !left);
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+        } else if self.es_address_focus {
+            self.es_address_cursor = word_boundary(&self.es_address, self.es_address_cursor, !left);
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
+    }
+
     /// THE ENTRY FORM'S OWN CARET BOUNDS (the tableswitch the 268/269
     /// cases — the HOME/END the [0, len] park serves: the focused box
     /// the seat the bound speaks, the stale screens the gate never
@@ -36249,6 +36279,24 @@ impl App {
         } else {
             (self.direct_cursor + 1).min(len)
         };
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
+    }
+
+    /// THE DIRECT CONNECTION'S OWN CTRL CARET ARROWS (the tableswitch's
+    /// 262/263 arms the `Screen.hasControlDown()` branch the
+    /// `moveCursorTo(this.getWordPosition(±1))` walk the one-box form
+    /// answers — the whole-word hop the bound the seat wears, the
+    /// unfocused box the gate never passes).
+    pub fn on_direct_ctrl_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        self.direct_cursor = word_boundary(&self.direct_address, self.direct_cursor, !left);
         display_window_sync(
             &self.direct_address,
             &mut self.direct_display,
@@ -41612,6 +41660,19 @@ impl App {
         } else {
             (self.chat_cursor + 1).min(len)
         };
+        self.chat_window_sync();
+    }
+
+    /// THE CHAT CARET'S OWN CTRL ARROWS (the tableswitch's 262/263
+    /// arms the `Screen.hasControlDown()` branch the
+    /// `moveCursorTo(this.getWordPosition(±1))` walk serves — the
+    /// whole-word hop the bound the seat wears, the closed chat the
+    /// gate never passes).
+    pub fn on_chat_ctrl_caret_arrow(&mut self, left: bool) {
+        if !self.chat_open {
+            return;
+        }
+        self.chat_cursor = word_boundary(&self.chat_input, self.chat_cursor, !left);
         self.chat_window_sync();
     }
 

@@ -2066,12 +2066,29 @@ pub fn run_gui_app(
             )
         {
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
-                app.on_editserver_caret_arrow(true);
-                app.on_direct_caret_arrow(true);
+                if ctrl_down {
+                    // THE CARET'S OWN CTRL HOP (the 263 arm the
+                    // hasControlDown branch the `moveCursorTo(
+                    // getWordPosition(-1))` walk serves — the whole
+                    // word the backward bound the seat hops)
+                    app.on_editserver_ctrl_caret_arrow(true);
+                    app.on_direct_ctrl_caret_arrow(true);
+                } else {
+                    app.on_editserver_caret_arrow(true);
+                    app.on_direct_caret_arrow(true);
+                }
             }
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
-                app.on_editserver_caret_arrow(false);
-                app.on_direct_caret_arrow(false);
+                if ctrl_down {
+                    // the 262 arm the ctrl branch the
+                    // `moveCursorTo(getWordPosition(1))` walk serves —
+                    // the whole word the forward bound the seat hops
+                    app.on_editserver_ctrl_caret_arrow(false);
+                    app.on_direct_ctrl_caret_arrow(false);
+                } else {
+                    app.on_editserver_caret_arrow(false);
+                    app.on_direct_caret_arrow(false);
+                }
             }
             if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
                 app.on_editserver_caret_home_end(false);
@@ -2760,10 +2777,23 @@ pub fn run_gui_app(
             // forms' own caret lane the same law the chat input
             // wears, the closed chat the gate never passes)
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
-                app.on_chat_caret_arrow(true);
+                if ctrl_down {
+                    // THE CHAT CARET'S OWN CTRL HOP (the 263 arm the
+                    // hasControlDown branch the `moveCursorTo(
+                    // getWordPosition(-1))` walk serves)
+                    app.on_chat_ctrl_caret_arrow(true);
+                } else {
+                    app.on_chat_caret_arrow(true);
+                }
             }
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
-                app.on_chat_caret_arrow(false);
+                if ctrl_down {
+                    // the 262 arm the ctrl branch the `moveCursorTo(
+                    // getWordPosition(1))` walk serves
+                    app.on_chat_ctrl_caret_arrow(false);
+                } else {
+                    app.on_chat_caret_arrow(false);
+                }
             }
             if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
                 app.on_chat_caret_home_end(false);
