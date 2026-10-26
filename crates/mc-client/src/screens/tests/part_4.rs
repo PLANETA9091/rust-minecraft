@@ -24564,3 +24564,174 @@ fn the_chat_ghost_own_cursor_seat_wears() {
     app.render(&mut fb, &mut assets);
     assert_eq!(app.chat_ghost_seat, None, "the empty ghost the None keeps");
 }
+
+#[test]
+fn the_caret_own_ctrl_word_trio_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.es_name_cursor,
+        "Minecraft Server".chars().count(),
+        "the fresh ctor the end-parked seat wears"
+    );
+
+    // THE BACKWARD WORD'S OWN BITE (the Ctrl+Backspace the
+    // `deleteWords(-1)` walk serves — the "Server" tail the whole
+    // word the walk removes, the cursor the bound re-seats)
+    app.on_editserver_ctrl_words(false);
+    assert_eq!(
+        app.es_name, "Minecraft ",
+        "the word the backward bound removes"
+    );
+    assert_eq!(app.es_name_cursor, 10, "the cursor the bound re-seats");
+
+    // THE SECOND BITE (the "Minecraft " the same walk removes — the
+    // trailing space the skip the range the walk wears, the head the
+    // seat parks)
+    app.on_editserver_ctrl_words(false);
+    assert_eq!(app.es_name, "", "the word the space the walk removes");
+    assert_eq!(app.es_name_cursor, 0, "the head the seat parks");
+
+    // THE EMPTY'S OWN NO-OP (the walk the delta never answers)
+    app.on_editserver_ctrl_words(false);
+    assert_eq!(app.es_name, "", "the empty the no-op keeps");
+
+    // THE RE-ARMED FORWARD BITE (the typed the seat re-arms — the
+    // head word the forward bound the walk removes, the cursor the
+    // seat keeps)
+    for c in "mc server".chars() {
+        app.on_editserver_char(c);
+    }
+    app.on_editserver_caret_home_end(false);
+    app.on_editserver_ctrl_words(true);
+    assert_eq!(
+        app.es_name, "server",
+        "the head word the forward bound removes"
+    );
+    assert_eq!(app.es_name_cursor, 0, "the forward the seat keeps");
+
+    // THE STALE SCREEN'S OWN GATE (the lane the open form only
+    // answers — the other screens the walk never passes)
+    app.open(ScreenKind::Servers);
+    let (gate_name, gate_cursor) = (app.es_name.clone(), app.es_name_cursor);
+    app.on_editserver_ctrl_words(false);
+    assert_eq!(app.es_name, gate_name, "the stale the name keeps");
+    assert_eq!(app.es_name_cursor, gate_cursor, "the stale the seat keeps");
+
+    // THE ADDRESS BOX'S OWN CTRL WORD (the Tab the focus hands — the
+    // space-bound the same law the walk answers)
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    app.on_editserver_tab(true);
+    assert!(app.es_address_focus);
+    for c in "mc server:25565".chars() {
+        app.on_editserver_char(c);
+    }
+    app.on_editserver_ctrl_words(false);
+    assert_eq!(app.es_address, "mc ", "the tail word the walk removes");
+    assert_eq!(app.es_address_cursor, 3, "the bound the seat re-parks");
+
+    // THE FORWARD BITE (the Ctrl+Delete the `deleteWords(1)` walk
+    // serves — the head word the space the seek+skip the walk
+    // answers, the cursor the seat keeps)
+    app.on_editserver_caret_home_end(false);
+    app.on_editserver_ctrl_words(true);
+    assert_eq!(app.es_address, "", "the head word the walk removes");
+    assert_eq!(app.es_address_cursor, 0, "the forward the seat keeps");
+
+    // THE RE-ARMED FORWARD BITE (the typed the seat re-arms — the
+    // head word the same bound answers)
+    for c in "mc server:25565".chars() {
+        app.on_editserver_char(c);
+    }
+    app.on_editserver_caret_home_end(false);
+    app.on_editserver_ctrl_words(true);
+    assert_eq!(
+        app.es_address, "server:25565",
+        "the re-armed the head word the walk removes"
+    );
+    assert_eq!(app.es_address_cursor, 0, "the forward the seat keeps");
+
+    // THE DIRECT BOX'S OWN CTRL WORD PAIR (the one-box form the same
+    // laws wears — the backward the word the walk removes, the tail
+    // the no-op keeps, the Home the forward the same bound answers)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    assert!(app.direct_focus, "the fresh ctor the box arms");
+    for c in "host: 25565".chars() {
+        app.on_direct_char(c);
+    }
+    app.on_direct_ctrl_words(false);
+    assert_eq!(app.direct_address, "host: ", "the port the word removes");
+    assert_eq!(app.direct_cursor, 6, "the bound the seat re-parks");
+    app.on_direct_ctrl_words(true);
+    assert_eq!(
+        app.direct_address, "host: ",
+        "the tail seat the no-op keeps"
+    );
+    app.on_direct_caret_home_end(false);
+    app.on_direct_ctrl_words(true);
+    assert_eq!(app.direct_address, "", "the host word the walk removes");
+    assert_eq!(app.direct_cursor, 0, "the forward the seat keeps");
+
+    // THE RE-ARMED FORWARD BITE (the typed the seat re-arms — the
+    // head word the same bound answers)
+    for c in "host: 25565".chars() {
+        app.on_direct_char(c);
+    }
+    app.on_direct_caret_home_end(false);
+    app.on_direct_ctrl_words(true);
+    assert_eq!(
+        app.direct_address, "25565",
+        "the re-armed the host word the walk removes"
+    );
+    assert_eq!(app.direct_cursor, 0, "the forward the seat keeps");
+
+    // THE CHAT'S OWN CTRL WORD PAIR (the open input the same laws
+    // wears — the responder the edit the same walk fires, the closed
+    // chat the gate never passes)
+    app.enter_world();
+    let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    app.attach_live_clicks(tx);
+    app.on_chat_key();
+    for c in "hello world".chars() {
+        app.on_chat_char(c);
+    }
+    app.on_chat_ctrl_words(false);
+    assert_eq!(
+        app.chat_input, "hello ",
+        "the chat word the backward bound removes"
+    );
+    assert_eq!(app.chat_cursor, 6, "the chat cursor the bound re-seats");
+    assert!(!app.chat_input_is_draft, "the edit the responder drops");
+
+    // THE FORWARD WORD'S OWN BITE (the Ctrl+Delete the
+    // `deleteWords(1)` walk serves — the head word the space the
+    // walk answers, the cursor the seat keeps)
+    app.on_chat_caret_home_end(false);
+    app.on_chat_ctrl_words(true);
+    assert_eq!(app.chat_input, "", "the hello the space the walk removes");
+    assert_eq!(app.chat_cursor, 0, "the forward the seat keeps");
+
+    // THE RE-ARMED PAIR (the typed the seat re-arms — the head word
+    // the forward bound the walk answers, the tail word the same
+    // bound the walk removes)
+    for c in "hello world".chars() {
+        app.on_chat_char(c);
+    }
+    app.on_chat_caret_home_end(false);
+    app.on_chat_ctrl_words(true);
+    assert_eq!(app.chat_input, "world", "the head word the walk removes");
+    assert_eq!(app.chat_cursor, 0, "the forward the seat keeps");
+    app.on_chat_ctrl_words(true);
+    assert_eq!(app.chat_input, "", "the tail word the walk removes");
+    app.on_chat_escape();
+    let (closed_input, closed_cursor) = (app.chat_input.clone(), app.chat_cursor);
+    app.on_chat_ctrl_words(false);
+    assert_eq!(
+        app.chat_input, closed_input,
+        "the closed chat the gate keeps"
+    );
+    assert_eq!(app.chat_cursor, closed_cursor, "the closed the seat keeps");
+}

@@ -2007,17 +2007,31 @@ pub fn run_gui_app(
         // gate never passes; the debug options' own box the same lane
         // serves — the internal gates the two seats the screen state
         // alone keeps)
+        // THE CARET'S OWN CTRL SEAT (the vanilla Screen.hasControlDown
+        // query the ctrl branch the key-lane wears — the word arms the
+        // pair the plain arms the non-ctrl keys keep)
+        let ctrl_down = window.is_key_down(Key::LeftCtrl) || window.is_key_down(Key::RightCtrl);
         if !app.chat_open && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
             app.on_creative_backspace();
             app.on_debug_options_backspace();
-            // THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
-            // keyPressed arm the same lane serves — the form's box the
-            // internal gates the screen state alone keeps)
-            app.on_direct_backspace();
-            // THE ADD SERVER FORM'S OWN BACKSPACE (the EditBox's own
-            // keyPressed arm the same lane serves — the form's pair the
-            // internal gates the screen state alone keeps)
-            app.on_editserver_backspace();
+            if ctrl_down {
+                // THE CARET'S OWN CTRL WORD (the EditBox keyPressed's
+                // 259 arm the `Screen.hasControlDown()` branch the
+                // `deleteWords(-1)` walk serves — the whole word the
+                // backward bound removes, the internal gates the
+                // screen state alone keep)
+                app.on_direct_ctrl_words(false);
+                app.on_editserver_ctrl_words(false);
+            } else {
+                // THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
+                // keyPressed arm the same lane serves — the form's box the
+                // internal gates the screen state alone keeps)
+                app.on_direct_backspace();
+                // THE ADD SERVER FORM'S OWN BACKSPACE (the EditBox's own
+                // keyPressed arm the same lane serves — the form's pair the
+                // internal gates the screen state alone keeps)
+                app.on_editserver_backspace();
+            }
         }
         // THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the same law the
@@ -2072,8 +2086,17 @@ pub fn run_gui_app(
             // mid-string caret removes, the focused box the lane
             // consumes, the sibling methods the internal gates keep)
             if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
-                app.on_editserver_delete();
-                app.on_direct_delete();
+                if ctrl_down {
+                    // THE CARET'S OWN CTRL WORD (the 261 arm the
+                    // hasControlDown branch the `deleteWords(1)` walk
+                    // serves — the whole word the forward bound
+                    // removes, the cursor the seat keeps)
+                    app.on_editserver_ctrl_words(true);
+                    app.on_direct_ctrl_words(true);
+                } else {
+                    app.on_editserver_delete();
+                    app.on_direct_delete();
+                }
             }
         }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
@@ -2707,14 +2730,29 @@ pub fn run_gui_app(
                 app.on_chat_submit();
             }
             if window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
-                app.on_chat_backspace();
+                if ctrl_down {
+                    // THE CHAT CARET'S OWN CTRL WORD (the 259 arm the
+                    // hasControlDown branch the `deleteWords(-1)` walk
+                    // serves — the whole word the backward bound
+                    // removes)
+                    app.on_chat_ctrl_words(false);
+                } else {
+                    app.on_chat_backspace();
+                }
             }
             // THE CARET'S OWN DELETE (the EditBox keyPressed's 261 arm
             // the `deleteText(1)` walk serves — the char AT the seat
             // the mid-string caret removes, the closed chat the gate
             // never passes)
             if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
-                app.on_chat_delete();
+                if ctrl_down {
+                    // the 261 arm the ctrl branch the `deleteWords(1)`
+                    // walk serves — the whole word the forward bound
+                    // removes, the cursor the seat keeps
+                    app.on_chat_ctrl_words(true);
+                } else {
+                    app.on_chat_delete();
+                }
             }
             // THE CARET'S OWN RIDE (the EditBox keyPressed tableswitch
             // the 262/263 cases the LEFT/RIGHT moveCursorBy ±1 serves,

@@ -45,6 +45,36 @@ fn caret_byte_index(s: &str, chars: usize) -> usize {
         .unwrap_or(s.len())
 }
 
+/// THE WORD'S OWN BOUNDARY (the vanilla EditBox getWordPosition walk
+/// the `deleteWords` ±1 the border answers — the backward arm the
+/// space run the skip then the non-space run the walk wears, the
+/// forward arm the space seek then the run skip serves, the zero the
+/// tail the bounds the same seat keeps, the ctrl arms the pair the
+/// whole-word removal the trio answers).
+fn word_boundary(s: &str, from: usize, forward: bool) -> usize {
+    let chars: Vec<char> = s.chars().collect();
+    let n = chars.len();
+    let mut i = from.min(n);
+    if forward {
+        // the vanilla `indexOf(' ', i)` the seek then the run skip —
+        // the -1 miss the length the same seat speaks
+        while i < n && chars[i] != ' ' {
+            i += 1;
+        }
+        while i < n && chars[i] == ' ' {
+            i += 1;
+        }
+    } else {
+        while i > 0 && chars[i - 1] == ' ' {
+            i -= 1;
+        }
+        while i > 0 && chars[i - 1] != ' ' {
+            i -= 1;
+        }
+    }
+    i
+}
+
 /// THE CARET'S OWN X-BAND SEAT (the vanilla mouseClick walk the
 /// `trimStringToWidth(text, i)` prefix the cursor length answers —
 /// the clicked x the longest prefix whose accumulated width the
@@ -35913,6 +35943,35 @@ impl App {
         }
     }
 
+    /// THE DIRECT CONNECTION'S OWN CTRL WORD (the EditBox.keyPressed's
+    /// 259/261 arms the `Screen.hasControlDown()` branch the
+    /// `deleteWords(±1)` walk serves — the getWordPosition bound the
+    /// whole-word removal answers: the backward arm the [bound..seat)
+    /// the walk removes, the cursor the bound re-seats, the forward
+    /// arm the [seat..bound) the same law speaks, the cursor the seat
+    /// keeps, the zero-delta the no-op keeps, the unfocused box the
+    /// gate never passes).
+    pub fn on_direct_ctrl_words(&mut self, forward: bool) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        let bound = word_boundary(&self.direct_address, self.direct_cursor, forward);
+        if bound != self.direct_cursor {
+            let start = caret_byte_index(&self.direct_address, bound.min(self.direct_cursor));
+            let end = caret_byte_index(&self.direct_address, bound.max(self.direct_cursor));
+            self.direct_address.replace_range(start..end, "");
+            if !forward {
+                self.direct_cursor = bound;
+            }
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
+    }
+
     /// THE DIRECT CONNECTION'S OWN CLICK FOCUS (the EditBox
     /// .mouseClicked walk the debug search box's law shares — the
     /// inside click the `setFocused(true)` re-arm serves, the TRUE the
@@ -36057,6 +36116,53 @@ impl App {
                 self.es_address_cursor,
                 ENTRY_BOX_INNER,
             );
+        }
+    }
+
+    /// THE ENTRY FORM'S OWN CTRL WORD (the EditBox.keyPressed's
+    /// 259/261 arms the `Screen.hasControlDown()` branch the
+    /// `deleteWords(±1)` walk the focused field serves — the
+    /// getWordPosition bound the whole-word removal answers: the
+    /// backward arm the [bound..seat) the walk removes, the cursor
+    /// the bound re-seats, the forward arm the [seat..bound) the
+    /// same law speaks, the cursor the seat keeps, the stale screens
+    /// the gate never passes).
+    pub fn on_editserver_ctrl_words(&mut self, forward: bool) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            let bound = word_boundary(&self.es_name, self.es_name_cursor, forward);
+            if bound != self.es_name_cursor {
+                let start = caret_byte_index(&self.es_name, bound.min(self.es_name_cursor));
+                let end = caret_byte_index(&self.es_name, bound.max(self.es_name_cursor));
+                self.es_name.replace_range(start..end, "");
+                if !forward {
+                    self.es_name_cursor = bound;
+                }
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
+        } else if self.es_address_focus {
+            let bound = word_boundary(&self.es_address, self.es_address_cursor, forward);
+            if bound != self.es_address_cursor {
+                let start = caret_byte_index(&self.es_address, bound.min(self.es_address_cursor));
+                let end = caret_byte_index(&self.es_address, bound.max(self.es_address_cursor));
+                self.es_address.replace_range(start..end, "");
+                if !forward {
+                    self.es_address_cursor = bound;
+                }
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
         }
     }
 
@@ -41454,6 +41560,35 @@ impl App {
             let start = caret_byte_index(&self.chat_input, self.chat_cursor);
             let end = caret_byte_index(&self.chat_input, self.chat_cursor + 1);
             self.chat_input.replace_range(start..end, "");
+            self.chat_window_sync();
+        }
+        // the edit the responder fires (the isDraft purity the same
+        // onEdited walk drops)
+        self.chat_input_is_draft = false;
+        self.refresh_command_suggestions();
+    }
+
+    /// THE CHAT CARET'S OWN CTRL WORD (the EditBox.keyPressed's
+    /// 259/261 arms the `Screen.hasControlDown()` branch the
+    /// `deleteWords(±1)` walk serves — the getWordPosition bound the
+    /// whole-word removal answers: the backward arm the [bound..seat)
+    /// the walk removes, the cursor the bound re-seats, the forward
+    /// arm the [seat..bound) the same law speaks, the cursor the seat
+    /// keeps, the closed chat the gate never passes, the edit the
+    /// responder fires — the isDraft purity the same onEdited walk
+    /// drops).
+    pub fn on_chat_ctrl_words(&mut self, forward: bool) {
+        if !self.chat_open {
+            return;
+        }
+        let bound = word_boundary(&self.chat_input, self.chat_cursor, forward);
+        if bound != self.chat_cursor {
+            let start = caret_byte_index(&self.chat_input, bound.min(self.chat_cursor));
+            let end = caret_byte_index(&self.chat_input, bound.max(self.chat_cursor));
+            self.chat_input.replace_range(start..end, "");
+            if !forward {
+                self.chat_cursor = bound;
+            }
             self.chat_window_sync();
         }
         // the edit the responder fires (the isDraft purity the same
