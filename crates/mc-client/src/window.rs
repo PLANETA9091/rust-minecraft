@@ -2034,8 +2034,17 @@ pub fn run_gui_app(
         // the store's own lane adjusts, the un-armed/unfocused seat
         // the FALSE the silence keeps; the click the MOUSE focus the
         // setFocused law banks, the outside press the clearFocus
-        // wears)
-        if app.screen == crate::screens::ScreenKind::Options {
+        // wears). THE OPTIONS FAMILY'S OWN GATE (the sub-screens the
+        // same Screen base class extends — the MouseSettings/Controls/
+        // Accessibility houses the walk the family's slider rows
+        // serve, the world's camera lanes the gate never shares)
+        if matches!(
+            app.screen,
+            crate::screens::ScreenKind::Options
+                | crate::screens::ScreenKind::MouseSettings
+                | crate::screens::ScreenKind::Controls
+                | crate::screens::ScreenKind::Accessibility
+        ) {
             if window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No)
                 || window.is_key_pressed(Key::Space, minifb::KeyRepeat::No)
             {

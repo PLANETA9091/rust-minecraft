@@ -5921,6 +5921,31 @@ fn wheel_unit(v: f64) -> f64 {
     ((i + 200.0) / 300.0).clamp(0.0, 1.0)
 }
 
+/// THE SLIDER CLASS'S OWN ID SET (the AbstractSliderButton family
+/// the options house's rows wear — the Options screen's own trio
+/// the 242 round banks, the sub-screens' rows the same class every
+/// seat carries: the MouseSettings pair, the Controls sprint-window
+/// row, the Accessibility five — the grab the class ALONE carries,
+/// the plain bool/footer/nav rows the CycleButton/AbstractButton
+/// classes never bank [the canChangeValue field the slider alone
+/// wears]).
+fn is_slider_seat_id(id: &str) -> bool {
+    matches!(
+        id,
+        "opt_sensitivity"
+            | "opt_music"
+            | "opt_fov"
+            | "opt_ms_sensitivity"
+            | "opt_ms_wheel"
+            | "opt_ctl_sprint_window"
+            | "opt_textbg"
+            | "opt_chat_opacity"
+            | "opt_chat_line_spacing"
+            | "opt_notification"
+            | "opt_fov_effect"
+    )
+}
+
 /// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
 /// chatbgonly_179b/c probes bank — the label law the
 /// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
@@ -31756,10 +31781,16 @@ impl App {
             // done/controls rows the cleared belief the same outcome
             // keeps: the old slider seat dies BOTH walks wear])
             let mut claimed: Option<&'static str> = None;
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_sensitivity") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.look_sensitivity = slider_value_from_x(mx, bx, bw);
+                    // THE WIDGET'S OWN VALUE (the mouseDown law — the
+                    // raw unit the field wears, the applyValue the
+                    // store mirrors, the keyboard walk the continuous
+                    // seat reads)
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.look_sensitivity = unit;
+                    b.value = Some(unit);
                     self.sensitivity_drag = true;
                     claimed = Some("opt_sensitivity");
                 }
@@ -31767,10 +31798,12 @@ impl App {
             // THE FOV SLIDER'S OWN ARM (the same press walk the FOV row
             // wears — the IntRange's own step the store's degrees
             // keeps, the flag the drag rides)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_fov") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.fov = fov_from_value(unit);
+                    b.value = Some(unit);
                     self.fov_drag = true;
                     claimed = Some("opt_fov");
                 }
@@ -31778,10 +31811,12 @@ impl App {
             // THE VOLUME SLIDER'S OWN ARM (the same press walk the
             // Music & Sounds row wears — the 0..1 the value IS, the
             // flag the drag rides)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_music") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_music") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.volume = slider_value_from_x(mx, bx, bw);
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.volume = unit;
+                    b.value = Some(unit);
                     self.volume_drag = true;
                     claimed = Some("opt_music");
                 }
@@ -31811,7 +31846,7 @@ impl App {
             match claimed {
                 Some(id) => {
                     self.options_focus = Some(id);
-                    self.options_grab = matches!(id, "opt_sensitivity" | "opt_music" | "opt_fov");
+                    self.options_grab = is_slider_seat_id(id);
                 }
                 None => {
                     self.options_focus = None;
@@ -31827,11 +31862,22 @@ impl App {
             // the track answers, the SAME caption/store law the
             // Options screen's own row wears: the UnitDouble 0..1 the
             // value IS, the armed flag the held drag rides)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_ms_sensitivity") {
+            let mut claimed: Option<&'static str> = None;
+            if let Some(b) = self
+                .buttons
+                .iter_mut()
+                .find(|b| b.id == "opt_ms_sensitivity")
+            {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.look_sensitivity = slider_value_from_x(mx, bx, bw);
+                    // THE WIDGET'S OWN VALUE (the mouseDown law the
+                    // Options row wears — the raw unit the field
+                    // keeps, the keyboard walk the seat reads)
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.look_sensitivity = unit;
+                    b.value = Some(unit);
                     self.sensitivity_drag = true;
+                    claimed = Some("opt_ms_sensitivity");
                 }
             }
             // THE WHEEL'S OWN ARM (the index-1 seat the IntRange(-200,
@@ -31839,13 +31885,23 @@ impl App {
             // the `min + round(unit * (max - min))` int the xmap's
             // logMouse fold answers, the armed flag the held drag
             // rides, the outside press the slider never claims)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_ms_wheel") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_ms_wheel") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.mouse_wheel_sensitivity = wheel_from_unit(slider_value_from_x(mx, bx, bw));
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.mouse_wheel_sensitivity = wheel_from_unit(unit);
+                    b.value = Some(unit);
                     self.wheel_drag = true;
+                    claimed = Some("opt_ms_wheel");
                 }
             }
+            // THE APPLY'S OWN LAW (the same setFocused fold the Options
+            // house wears — the MOUSE press the slider seat's focus AND
+            // grab banks [the canChangeValue the class arms], the
+            // no-claim the clearFocus the belief clears; the bool rows'
+            // plain claim the Tab-ride round banks)
+            self.options_focus = claimed;
+            self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
         }
         if self.screen == ScreenKind::Controls {
@@ -31856,20 +31912,38 @@ impl App {
             // (max - min))` fold the IntRange's fromSlider law speaks],
             // the armed flag the held drag rides, the outside press the
             // slider never claims)
+            let mut claimed: Option<&'static str> = None;
             if let Some(b) = self
                 .buttons
-                .iter()
+                .iter_mut()
                 .find(|b| b.id == "opt_ctl_sprint_window")
             {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.sprint_window = sprint_window_from_unit(slider_value_from_x(mx, bx, bw));
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.sprint_window = sprint_window_from_unit(unit);
+                    b.value = Some(unit);
                     self.sprint_window_drag = true;
+                    claimed = Some("opt_ctl_sprint_window");
                 }
             }
+            // THE APPLY'S OWN LAW (the same setFocused fold the Options
+            // house wears — the slider seat the focus AND grab banks,
+            // the no-claim the clearFocus the belief clears; the
+            // toggle/nav rows' plain claim the Tab-ride round banks)
+            self.options_focus = claimed;
+            self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
         }
         if self.screen == ScreenKind::Accessibility {
+            // THE CLAIM'S OWN WALK (the same Screen mouseClicked law the
+            // Options house wears — the rows the build order's own
+            // seats keep, the non-overlap rects the one-press one-claim
+            // law speaks, the bool rows the plain class the claim never
+            // carries [the Tab-ride round banks — the fold the
+            // no-claim clearFocus wears], the slider rows the focus
+            // AND the grab bank)
+            let mut claimed: Option<&'static str> = None;
             // THE CLOSED CAPTIONS' OWN ARM (the CycleButton's own press
             // walk the bool row wears — the press INSIDE the row the
             // value's own toggle answers, the TRUE/FALSE pair the
@@ -31879,7 +31953,6 @@ impl App {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.show_subtitles = !self.show_subtitles;
-                    return;
                 }
             }
             // THE SLIDERS' OWN ARMS (the AbstractSliderButton's
@@ -31887,20 +31960,24 @@ impl App {
             // INSIDE the track the value's own seat answers, the armed
             // flag the held drag rides, the UnitDouble 0..1 the store's
             // own unit keeps)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_textbg") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_textbg") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.text_background_opacity = slider_value_from_x(mx, bx, bw);
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.text_background_opacity = unit;
+                    b.value = Some(unit);
                     self.textbg_drag = true;
-                    return;
+                    claimed = Some("opt_textbg");
                 }
             }
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_opacity") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_chat_opacity") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.chat_opacity = slider_value_from_x(mx, bx, bw);
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.chat_opacity = unit;
+                    b.value = Some(unit);
                     self.chat_opacity_drag = true;
-                    return;
+                    claimed = Some("opt_chat_opacity");
                 }
             }
             // THE CHAT LINES' OWN ARM (the same AbstractSliderButton's
@@ -31910,14 +31987,16 @@ impl App {
             // store's own unit keeps)
             if let Some(b) = self
                 .buttons
-                .iter()
+                .iter_mut()
                 .find(|b| b.id == "opt_chat_line_spacing")
             {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.chat_line_spacing = slider_value_from_x(mx, bx, bw);
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.chat_line_spacing = unit;
+                    b.value = Some(unit);
                     self.chat_line_spacing_drag = true;
-                    return;
+                    claimed = Some("opt_chat_line_spacing");
                 }
             }
             // THE BAND SCOPE'S OWN ARM (the CycleButton's own press walk
@@ -31928,7 +32007,6 @@ impl App {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.background_for_chat_only = !self.background_for_chat_only;
-                    return;
                 }
             }
             // THE NOTIFICATIONS' OWN ARM (the same AbstractSliderButton's
@@ -31938,22 +32016,32 @@ impl App {
             // IntRange(5, 100).xmap walk keeps: the unit the track's
             // 0..1 the 96-seat grid the `round(unit * 95) + 5, / 10.0`
             // fold answers)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_notification") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_notification") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.notification_display_time =
-                        notification_from_unit(slider_value_from_x(mx, bx, bw));
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.notification_display_time = notification_from_unit(unit);
+                    b.value = Some(unit);
                     self.notification_drag = true;
-                    return;
+                    claimed = Some("opt_notification");
                 }
             }
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
+            if let Some(b) = self.buttons.iter_mut().find(|b| b.id == "opt_fov_effect") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.fov_effect_scale = slider_value_from_x(mx, bx, bw);
+                    let unit = slider_value_from_x(mx, bx, bw);
+                    self.fov_effect_scale = unit;
+                    b.value = Some(unit);
                     self.fov_effect_drag = true;
+                    claimed = Some("opt_fov_effect");
                 }
             }
+            // THE APPLY'S OWN LAW (the same setFocused fold the Options
+            // house wears — the slider rows the focus AND grab banks,
+            // the bool rows + the no-claim the clearFocus the belief
+            // clears)
+            self.options_focus = claimed;
+            self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
         }
         if self.screen == ScreenKind::Dispenser {
@@ -34956,20 +35044,32 @@ impl App {
     /// widget-FIRST lane the isSelection ask serves — the FOCUSED
     /// widget's own keyPressed answers FIRST: the SLIDER class the
     /// `canChangeValue` TOGGLE the grab arms/releases [the
-    /// AbstractSliderButton's own walk], the ABSTRACTBUTTON class
-    /// the `isActive()` gate + the `playDownSound` + the `onPress`
-    /// fold the press serves — the focused Done/Controls/
-    /// Accessibility/WorldOptions rows the keyboard the SAME press
-    /// the click walks, the open() the next screen the focus death
-    /// wears). THE ISACTIVE GATE (the AbstractButton's own walk —
-    /// the inactive the refusal keeps, the stale belief the built
-    /// rows never carry the silence answers).
+    /// AbstractSliderButton's own walk — the Options trio the 242
+    /// round banks, the sub-screens' rows the same class every seat
+    /// carries], the ABSTRACTBUTTON class the `isActive()` gate + the
+    /// `playDownSound` + the `onPress` fold the press serves — the
+    /// focused Done/Controls/Accessibility/WorldOptions rows the
+    /// keyboard the SAME press the click walks, the open() the next
+    /// screen the focus death wears). THE ISACTIVE GATE (the
+    /// AbstractButton's own walk — the inactive the refusal keeps,
+    /// the stale belief the built rows never carry the silence
+    /// answers). THE OPTIONS FAMILY'S OWN GATE (the sub-screens the
+    /// same Screen base class extends — the MouseSettings/Controls/
+    /// Accessibility houses the walk the family serves, the slider
+    /// seats the toggle arms, the plain rows the claim the Tab-ride
+    /// round banks).
     pub fn on_options_key_selection(&mut self) {
-        if self.screen != ScreenKind::Options {
+        if !matches!(
+            self.screen,
+            ScreenKind::Options
+                | ScreenKind::MouseSettings
+                | ScreenKind::Controls
+                | ScreenKind::Accessibility
+        ) {
             return;
         }
         match self.options_focus {
-            Some("opt_sensitivity") | Some("opt_music") | Some("opt_fov") => {
+            Some(id) if is_slider_seat_id(id) => {
                 self.options_grab = !self.options_grab;
             }
             // THE PLAIN BUTTONS' OWN PRESS (the AbstractButton
@@ -35003,43 +35103,82 @@ impl App {
     /// keep, the `applyValue` the store speaks [the caption the
     /// render's own rebuild the updateMessage wears], the TRUE the
     /// consumed verdict keeps; the UN-ARMED seat the FALSE returns —
-    /// the screen's own lanes the keys never consumed serve).
+    /// the screen's own lanes the keys never consumed serve). THE
+    /// OPTIONS FAMILY'S OWN ROWS (the sub-screens' sliders the same
+    /// class walk serves — the ms pair the same store/xmap lanes
+    /// answers, the sprint window the IntRange(0,10) seat grid, the
+    /// Accessibility five the unit/xmap stores wear).
     pub fn on_options_key_arrow(&mut self, right: bool) {
-        if self.screen != ScreenKind::Options || !self.options_grab {
+        if !matches!(
+            self.screen,
+            ScreenKind::Options
+                | ScreenKind::MouseSettings
+                | ScreenKind::Controls
+                | ScreenKind::Accessibility
+        ) || !self.options_grab
+        {
             return;
         }
-        // THE WIDGET'S OWN VALUE (the `value` field the store's
-        // current seat mirrors — the sensitivity/volume the 0..1
-        // units ARE, the FOV the IntRange xmap's unit the degrees'
-        // own fold wears)
+        // THE FOCUSED SEAT'S OWN ID (the belief the id-string wears —
+        // the slider class the is_slider_seat_id set answers)
         let focused = match self.options_focus {
             Some(id) => id,
             None => return,
         };
-        let unit = match focused {
-            "opt_sensitivity" => self.look_sensitivity,
-            "opt_music" => self.volume,
-            "opt_fov" => fov_value(self.fov),
-            _ => return,
-        };
-        // THE WIDTH'S OWN SEAT (the render build's own geometry the
-        // last pass banks — the missing build the silence keeps)
-        let bw = match self.buttons.iter().find(|b| b.id == focused) {
-            Some(b) => b.w,
+        // THE WIDGET'S OWN SEAT (the AbstractSliderButton's `value`
+        // field the CONTINUOUS accumulator wears — the build's own
+        // seat the last render banks, the press the mouse law writes,
+        // the vanilla widget the applyValue's store write the field
+        // never re-reads: the coarse seat grids the re-quantize trap
+        // never eats [the sprint window's 1-tick seats the 1/(width-8)
+        // step the residue keeps], the arrow spam the CONTINUOUS seat
+        // accumulates; the unbuilt row the store folds answer)
+        let (widget_value, bw) = match self.buttons.iter().find(|b| b.id == focused) {
+            Some(b) => (b.value, b.w),
             None => return,
         };
-        // THE STEP'S OWN SHAPE (the bytecode's `fload -1.0`/`fconst_1`
-        // the f32 divisor divides, the `f2d` the double widens — the
-        // FLOAT precision the honest port keeps)
+        let unit = match widget_value {
+            Some(v) => v,
+            None => match focused {
+                "opt_sensitivity" => self.look_sensitivity,
+                "opt_music" => self.volume,
+                "opt_fov" => fov_value(self.fov),
+                "opt_ms_sensitivity" => self.look_sensitivity,
+                "opt_ms_wheel" => wheel_unit(self.mouse_wheel_sensitivity),
+                "opt_ctl_sprint_window" => self.sprint_window as f64 / 10.0,
+                "opt_textbg" => self.text_background_opacity,
+                "opt_chat_opacity" => self.chat_opacity,
+                "opt_chat_line_spacing" => self.chat_line_spacing,
+                "opt_notification" => (self.notification_display_time - 0.5) / 9.5,
+                "opt_fov_effect" => self.fov_effect_scale,
+                _ => return,
+            },
+        };
         let dir = if right { 1.0f32 } else { -1.0f32 };
         let step = (dir / (bw - 8) as f32) as f64;
         let next = (unit + step).clamp(0.0, 1.0);
+        // THE WIDGET'S OWN WRITE-BACK (the stepped unit the field
+        // keeps — the NEXT press the continuous seat reads, the
+        // vanilla accumulation the arrow spam answers; the rebuild
+        // the render's own store sync re-wears)
+        if let Some(b) = self.buttons.iter_mut().find(|b| b.id == focused) {
+            b.value = Some(next);
+        }
         // THE APPLY VALUE'S OWN LANE (the store the id answers — the
-        // FOV the xmap's degrees the IntRange's own step lands)
+        // FOV the xmap's degrees the IntRange's own step lands, the
+        // sub-screens' rows the same fromUnit folds wear)
         match focused {
             "opt_sensitivity" => self.look_sensitivity = next,
             "opt_music" => self.volume = next,
             "opt_fov" => self.fov = fov_from_value(next),
+            "opt_ms_sensitivity" => self.look_sensitivity = next,
+            "opt_ms_wheel" => self.mouse_wheel_sensitivity = wheel_from_unit(next),
+            "opt_ctl_sprint_window" => self.sprint_window = sprint_window_from_unit(next),
+            "opt_textbg" => self.text_background_opacity = next,
+            "opt_chat_opacity" => self.chat_opacity = next,
+            "opt_chat_line_spacing" => self.chat_line_spacing = next,
+            "opt_notification" => self.notification_display_time = notification_from_unit(next),
+            "opt_fov_effect" => self.fov_effect_scale = next,
             _ => {}
         }
     }
@@ -35128,7 +35267,7 @@ impl App {
         // wears, the old seat's grab the same fold dies)
         let id = order[next];
         self.options_focus = Some(id);
-        self.options_grab = matches!(id, "opt_sensitivity" | "opt_music" | "opt_fov");
+        self.options_grab = is_slider_seat_id(id);
     }
 
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
@@ -66900,6 +67039,10 @@ impl App {
             bw,
         );
         tb.value = Some(self.text_background_opacity);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // textbg row answers)
+        tb.focused = self.options_focus == Some("opt_textbg");
+        tb.can_change_value = self.options_grab && tb.focused;
         self.buttons.push(tb);
         // THE BAND SCOPE'S OWN ROW (the array's index-5 seat the store
         // the input band's fill wears — the caption the VALUE display
@@ -66926,6 +67069,10 @@ impl App {
             bw,
         );
         co.value = Some(self.chat_opacity);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // chat-text row answers)
+        co.focused = self.options_focus == Some("opt_chat_opacity");
+        co.can_change_value = self.options_grab && co.focused;
         self.buttons.push(co);
         // THE CHAT LINES' OWN ROW (the array's index-7 seat the store
         // the chat history's pitch wears — the caption the percent/OFF
@@ -66940,6 +67087,10 @@ impl App {
             bw,
         );
         ls.value = Some(self.chat_line_spacing);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // line-spacing row answers)
+        ls.focused = self.options_focus == Some("opt_chat_line_spacing");
+        ls.can_change_value = self.options_grab && ls.focused;
         self.buttons.push(ls);
         // THE NOTIFICATIONS' OWN ROW (the array's index-9 seat the
         // store the overlay's own window multiplier wears — the slider
@@ -66956,6 +67107,10 @@ impl App {
             bw,
         );
         nd.value = Some((self.notification_display_time - 0.5) / 9.5);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // notification row answers)
+        nd.focused = self.options_focus == Some("opt_notification");
+        nd.can_change_value = self.options_grab && nd.focused;
         self.buttons.push(nd);
         // THE FOV EFFECTS' OWN ROW (the array's index 12 the store the
         // camera's read wears — the caption the percent the OFF end
@@ -66969,6 +67124,10 @@ impl App {
             bw,
         );
         fes.value = Some(self.fov_effect_scale);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // fov-effect row answers)
+        fes.focused = self.options_focus == Some("opt_fov_effect");
+        fes.can_change_value = self.options_grab && fes.focused;
         self.buttons.push(fes);
         self.buttons.push(Button::new(
             "accdone",
@@ -67129,6 +67288,10 @@ impl App {
             bw,
         );
         sw.value = Some(self.sprint_window as f64 / 10.0);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // sprint-window row answers)
+        sw.focused = self.options_focus == Some("opt_ctl_sprint_window");
+        sw.can_change_value = self.options_grab && sw.focused;
         self.buttons.push(sw);
         // THE OPERATOR TAB'S OWN ROW (the array's index-6 the tail's
         // own LEFT seat the addSmall odd-one law keeps — the ms/keybinds
@@ -67249,6 +67412,10 @@ impl App {
             bw,
         );
         sens.value = Some(self.look_sensitivity);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the 241 two-sprite laws the
+        // live seat answers — the focused track frame the grab arms)
+        sens.focused = self.options_focus == Some("opt_ms_sensitivity");
+        sens.can_change_value = self.options_grab && sens.focused;
         self.buttons.push(sens);
         // THE WHEEL'S OWN SLIDER (the array's index-1 seat the
         // IntRange(-200, 100) the xmap's log-scale wears — the slider's
@@ -67266,6 +67433,10 @@ impl App {
             bw,
         );
         wheel.value = Some(wheel_unit(self.mouse_wheel_sensitivity));
+        // THE FOCUS FLAGS' OWN RE-WEAR (the same two-sprite laws the
+        // wheel row answers)
+        wheel.focused = self.options_focus == Some("opt_ms_wheel");
+        wheel.can_change_value = self.options_grab && wheel.focused;
         self.buttons.push(wheel);
         // THE (2,3) PAIR'S OWN SEATS (the discrete/invertX rows the
         // createBoolean captions wear)

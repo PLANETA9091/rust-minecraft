@@ -10104,6 +10104,369 @@ fn the_options_buttons_own_activation_the_selection_press_serves() {
     );
 }
 
+/// THE SUB-SCREEN SLIDERS' OWN GRAB WALK (the autopush-245 round —
+/// the 242/243 pattern the MouseSettings/Controls/Accessibility
+/// rows copy: the press INSIDE a slider row the focus AND the grab
+/// banks [the AbstractSliderButton class EVERY row carries — the
+/// ms pair, the sprint-window row, the Accessibility five], the
+/// Enter/Space the isSelection toggle serves, the armed Left/Right
+/// the ±1/(width-8) f32-division step the store's own lanes adjust
+/// [the wheel the unlogMouse/fromUnit log fold, the sprint window
+/// the IntRange(0,10) seat grid, the notification the 96-seat
+/// 0.5..10.0 band], the bool rows the plain class the claim never
+/// carries [the no-claim fold the clearFocus wears — the plain
+/// claims the Tab-ride round banks], the build sites the focused/
+/// can_change_value flags re-wear, the no-claim press the belief
+/// clears, the re-open the fresh ctor keeps).
+#[test]
+fn the_sub_screen_sliders_own_grab_walk_the_rows_the_class_law_wears() {
+    let mut app = App::new(3);
+    // THE WRONG SCREEN'S OWN SILENCE (the title's keys the walk
+    // never wears — the store the defaults keep)
+    app.on_options_key_selection();
+    app.on_options_key_arrow(true);
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the unfocused seat the silence keeps"
+    );
+
+    // THE MOUSE SETTINGS' OWN SENSITIVITY ROW (the SAME store lane
+    // the Options row wears — the click the focus AND grab banks,
+    // the build the flags re-wear)
+    app.open(ScreenKind::MouseSettings);
+    app.render_title_buttons_for_test();
+    let s = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_sensitivity")
+        .expect("the ms row")
+        .clone();
+    assert!(
+        !s.focused && !s.can_change_value,
+        "the fresh screen the nothing-focused ctor keeps"
+    );
+    app.on_press(s.x + s.w / 2, s.y + s.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_sensitivity"),
+        "the click the slider seat claims"
+    );
+    assert!(app.options_grab, "the MOUSE input the grab banks");
+    app.render_title_buttons_for_test();
+    let s2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_sensitivity")
+        .expect("the ms row")
+        .clone();
+    assert!(s2.focused, "the build the focused flag wears");
+    assert!(s2.can_change_value, "the build the grab flag wears");
+
+    // THE ENTER'S OWN TOGGLE (the isSelection arm — the grab dies,
+    // the focus keeps; the un-armed arrow the silence speaks)
+    app.on_options_key_selection();
+    assert!(
+        !app.options_grab && app.options_focus == Some("opt_ms_sensitivity"),
+        "the Enter the grab toggles off, the focus the same seat keeps"
+    );
+    let v0 = app.look_sensitivity;
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.look_sensitivity, v0,
+        "the un-armed seat the arrows never speak"
+    );
+    // THE RE-ARM'S OWN STEP (the Space the grab re-banks, the Right
+    // the f32 division's f2d widen wears — NOT the f64 fold)
+    app.on_options_key_selection();
+    assert!(app.options_grab, "the Space the grab re-arms");
+    let v0 = app.look_sensitivity;
+    app.on_options_key_arrow(true);
+    let step = (1.0f32 / (s.w - 8) as f32) as f64;
+    assert_eq!(
+        app.look_sensitivity,
+        v0 + step,
+        "the Right the +1/(width-8) step lands"
+    );
+
+    // THE WHEEL'S OWN LANE (the log-scale xmap — the unit the
+    // unlogMouse fold reads, the apply the fromUnit's 10^(i/100)
+    // seat wears, the caption the rebuild the %sx word keeps)
+    let w = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_wheel")
+        .expect("the wheel row")
+        .clone();
+    app.on_press(w.x + w.w / 2, w.y + w.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_wheel"),
+        "the second click the focus moves"
+    );
+    assert!(app.options_grab, "the wheel seat the grab banks");
+    // THE WIDGET'S OWN BASE (the press the raw unit the field wears —
+    // the CONTINUOUS seat the arrow walk reads, NOT the store's
+    // re-quantized round trip)
+    let u0 = slider_value_from_x(w.x + w.w / 2, w.x, w.w);
+    let step_w = (1.0f32 / (w.w - 8) as f32) as f64;
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.mouse_wheel_sensitivity,
+        wheel_from_unit((u0 + step_w).clamp(0.0, 1.0)),
+        "the Right the wheel unit's own step the log fold lands"
+    );
+    app.render_title_buttons_for_test();
+    let w2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_wheel")
+        .expect("the wheel row")
+        .clone();
+    assert_eq!(
+        w2.label,
+        format!(
+            "{}: {}x",
+            tr("options.mouseWheelSensitivity").unwrap_or("Scroll Sensitivity"),
+            crate::options_file::java_double(app.mouse_wheel_sensitivity)
+        ),
+        "the applyValue the caption rebuild wears"
+    );
+
+    // THE CONTROLS' OWN SPRINT WINDOW LANE (the IntRange(0,10) seat
+    // grid — the center press the round seat lands, the armed step
+    // the fromUnit's 1-tick grid quantizes, the spam the ends keep)
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    let sw = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ctl_sprint_window")
+        .expect("the sprint window row")
+        .clone();
+    app.on_press(sw.x + sw.w / 2, sw.y + sw.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ctl_sprint_window"),
+        "the sprint window seat the click claims"
+    );
+    assert!(app.options_grab, "the sprint window the grab banks");
+    // THE WIDGET'S OWN BASE (the same continuous seat the press
+    // writes — the 1-tick grid the accumulation the seat never eats)
+    let u0 = slider_value_from_x(sw.x + sw.w / 2, sw.x, sw.w);
+    let step_s = (1.0f32 / (sw.w - 8) as f32) as f64;
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.sprint_window,
+        sprint_window_from_unit((u0 + step_s).clamp(0.0, 1.0)),
+        "the Right the seat grid's own round lands"
+    );
+    for _ in 0..500 {
+        app.on_options_key_arrow(true);
+    }
+    assert_eq!(app.sprint_window, 10, "the Right spam the 10 ceiling keeps");
+    for _ in 0..500 {
+        app.on_options_key_arrow(false);
+    }
+    assert_eq!(app.sprint_window, 0, "the Left spam the 0 floor keeps");
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_ctl_sprint_window")
+            .unwrap()
+            .label,
+        format!(
+            "{}: {}",
+            tr("options.sprintWindow").unwrap_or("Sprint Window"),
+            0
+        ),
+        "the min end the seat's own word wears"
+    );
+
+    // THE ACCESSIBILITY'S OWN FIVE (the rows the same walk the list
+    // wears — the fov-effect lane the 0..1 store keeps, the OFF end
+    // the caption speaks, the textbg/chat/lines the unit steps
+    // land, the notification the 96-seat fold quantizes)
+    app.open(ScreenKind::Accessibility);
+    app.render_title_buttons_for_test();
+    let fes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_fov_effect")
+        .expect("the fov effect row")
+        .clone();
+    app.on_press(fes.x + fes.w / 2, fes.y + fes.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_fov_effect"),
+        "the fov effect seat the click claims"
+    );
+    assert!(app.options_grab, "the fov effect the grab banks");
+    let u0 = app.fov_effect_scale;
+    let step_f = (1.0f32 / (fes.w - 8) as f32) as f64;
+    app.on_options_key_arrow(false);
+    assert_eq!(
+        app.fov_effect_scale,
+        (u0 - step_f).clamp(0.0, 1.0),
+        "the Left the unit's own step lands"
+    );
+    for _ in 0..500 {
+        app.on_options_key_arrow(false);
+    }
+    assert_eq!(
+        app.fov_effect_scale, 0.0,
+        "the Left spam the 0.0 floor keeps"
+    );
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_fov_effect")
+            .unwrap()
+            .label,
+        fov_effect_caption(0.0),
+        "the OFF end the caption law wears"
+    );
+    assert!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_fov_effect")
+            .unwrap()
+            .label
+            .contains("OFF"),
+        "the OFF word the end speaks"
+    );
+
+    // THE TEXTBG'S OWN LANE (the UnitDouble 0..1 the direct store
+    // keeps — the click the claim banks, the Right the step lands)
+    let tb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_textbg")
+        .expect("the textbg row")
+        .clone();
+    app.on_press(tb.x + tb.w / 2, tb.y + tb.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_textbg"),
+        "the textbg seat the click claims"
+    );
+    assert!(app.options_grab, "the textbg the grab banks");
+    let v0 = app.text_background_opacity;
+    app.on_options_key_arrow(true);
+    let step_t = (1.0f32 / (tb.w - 8) as f32) as f64;
+    assert_eq!(
+        app.text_background_opacity,
+        v0 + step_t,
+        "the Right the textbg unit's own step lands"
+    );
+
+    // THE CHAT TEXT'S OWN LANE (the same UnitDouble law the
+    // chatOpacity row wears)
+    let co = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_opacity")
+        .expect("the chat opacity row")
+        .clone();
+    app.on_press(co.x + co.w / 2, co.y + co.h / 2);
+    assert_eq!(app.options_focus, Some("opt_chat_opacity"));
+    assert!(app.options_grab);
+    let v0 = app.chat_opacity;
+    app.on_options_key_arrow(true);
+    let step_c = (1.0f32 / (co.w - 8) as f32) as f64;
+    assert_eq!(app.chat_opacity, v0 + step_c);
+
+    // THE CHAT LINES' OWN LANE (the same UnitDouble law the
+    // line-spacing row wears)
+    let ls = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_line_spacing")
+        .expect("the line spacing row")
+        .clone();
+    app.on_press(ls.x + ls.w / 2, ls.y + ls.h / 2);
+    assert_eq!(app.options_focus, Some("opt_chat_line_spacing"));
+    assert!(app.options_grab);
+    let v0 = app.chat_line_spacing;
+    app.on_options_key_arrow(true);
+    let step_l = (1.0f32 / (ls.w - 8) as f32) as f64;
+    assert_eq!(app.chat_line_spacing, v0 + step_l);
+
+    // THE NOTIFICATIONS' OWN LANE (the 96-seat IntRange(5,100) xmap
+    // — the unit the (v-0.5)/9.5 inverse reads, the apply the
+    // fromUnit's round grid quantizes)
+    let nd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_notification")
+        .expect("the notification row")
+        .clone();
+    app.on_press(nd.x + nd.w / 2, nd.y + nd.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_notification"),
+        "the notification seat the click claims"
+    );
+    assert!(app.options_grab);
+    // THE WIDGET'S OWN BASE (the same continuous seat the press
+    // writes — the 96-seat grid the accumulation quantizes)
+    let u0 = slider_value_from_x(nd.x + nd.w / 2, nd.x, nd.w);
+    app.on_options_key_arrow(true);
+    let step_n = (1.0f32 / (nd.w - 8) as f32) as f64;
+    assert_eq!(
+        app.notification_display_time,
+        notification_from_unit((u0 + step_n).clamp(0.0, 1.0)),
+        "the Right the 96-seat grid's own round lands"
+    );
+
+    // THE BOOL ROW'S OWN NO-CLAIM (the CycleButton class the grab
+    // never carries — the toggle the press serves, the fold the
+    // belief clears [the plain claims the Tab-ride round banks])
+    let ss = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_show_subtitles")
+        .expect("the subtitles row")
+        .clone();
+    let sub0 = app.show_subtitles;
+    app.on_press(ss.x + ss.w / 2, ss.y + ss.h / 2);
+    assert_eq!(
+        app.show_subtitles, !sub0,
+        "the press the bool row's own toggle serves"
+    );
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the bool row the claim never carries, the fold the belief clears"
+    );
+
+    // THE OUTSIDE PRESS'S OWN CLEAR (the clearFocus walk — the
+    // stale seat's keys the silence keeps)
+    app.on_press(fes.x + 4, fes.y + fes.h / 2);
+    assert!(app.options_grab, "the re-click the grab banks");
+    app.on_press(2, 2);
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the outside press the clearFocus wears"
+    );
+    let v = app.fov_effect_scale;
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.fov_effect_scale, v,
+        "the cleared seat the arrows never speak"
+    );
+
+    // THE RE-OPEN'S OWN FRESH CTOR (the stale seat the mid-grab
+    // Escape never inherits — the None/False the rebuild arms)
+    app.on_press(fes.x + 4, fes.y + fes.h / 2);
+    assert!(app.options_grab);
+    app.open(ScreenKind::Accessibility);
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the re-open the fresh ctor's cleared belief keeps"
+    );
+}
+
 /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
 /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
 /// the caption the ends law speaks (the 30 the options.fov.min
