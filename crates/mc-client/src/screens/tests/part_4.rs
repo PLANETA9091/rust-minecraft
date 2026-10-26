@@ -22307,3 +22307,174 @@ fn the_key_binds_rows_own_press_claim_the_enter_activation_wear() {
         "the inactive seat the silence keeps"
     );
 }
+
+/// THE SUB-SCREEN PLAIN ROWS' OWN ACTIVATION (the focused
+/// msdone/controlsdone/accdone footers + the mousesettings/keybinds
+/// nav pair the Enter the activation wears — the on_options_key_
+/// selection the sub-screen arm the center law serves [the SAME
+/// on_click dispatch the kb arm wears]: the done footers the parent
+/// rides speak, the pair the Mouse/KeyBinds houses open [the
+/// keybinds the fresh list's own reset banks], the stale id the
+/// built rows never carry the silence keeps, the open() the focus
+/// death wears, the plain class the grab never carries, the armed
+/// kb state the pair's own open the reset keeps).
+#[test]
+fn the_sub_screen_plain_rows_own_enter_activation_wears() {
+    let mut app = App::new(3);
+    use crate::options_file::key_binds as kb;
+
+    // THE WRONG SCREEN'S OWN SILENCE (the title's Enter the walk
+    // never wears — the stale seat the belief keeps)
+    app.open(ScreenKind::Title);
+    app.options_focus = Some("msdone");
+    app.on_options_key_selection();
+    assert_eq!(app.screen, ScreenKind::Title, "the wrong screen silent");
+
+    // THE MOUSE SETTINGS' OWN DONE RIDE (the focused footer the
+    // Enter the parent ride serves — the open() the focus death
+    // wears, the grab the plain class never carries)
+    app.open(ScreenKind::MouseSettings);
+    app.render_title_buttons_for_test();
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the fresh ctor keeps"
+    );
+    let done = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "msdone")
+        .expect("the done footer")
+        .clone();
+    app.on_press(done.x + done.w / 2, done.y + done.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("msdone"),
+        "the footer press the focus banks"
+    );
+    assert!(!app.options_grab, "the plain class the grab never carries");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the done the parent ride wears"
+    );
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the focus death wears"
+    );
+
+    // THE CONTROLS PAIR'S OWN LEFT RIDE (the mousesettings seat the
+    // Mouse house opens)
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    let ms = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "mousesettings")
+        .expect("the pair's left seat")
+        .clone();
+    app.on_press(ms.x + ms.w / 2, ms.y + ms.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("mousesettings"),
+        "the nav press the focus banks"
+    );
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::MouseSettings,
+        "the pair the Mouse house opens"
+    );
+
+    // THE PAIR'S OWN RIGHT RIDE (the keybinds seat the list opens —
+    // the fresh list's own reset the stale armed state clears)
+    app.kb_selected = Some(kb::JUMP);
+    app.kb_scroll = 3.0;
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    let kbr = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "keybinds")
+        .expect("the pair's right seat")
+        .clone();
+    app.on_press(kbr.x + kbr.w / 2, kbr.y + kbr.h / 2);
+    assert_eq!(app.options_focus, Some("keybinds"));
+    app.on_options_key_selection();
+    assert_eq!(app.screen, ScreenKind::KeyBinds, "the pair the list opens");
+    assert!(app.kb_selected.is_none(), "the open the armed seat clears");
+    assert_eq!(app.kb_scroll, 0.0, "the fresh list the scroll resets");
+
+    // THE CONTROLS DONE'S OWN RIDE (the footer the Options serves)
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    let cd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "controlsdone")
+        .expect("the controls footer")
+        .clone();
+    app.on_press(cd.x + cd.w / 2, cd.y + cd.h / 2);
+    assert_eq!(app.options_focus, Some("controlsdone"));
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the done the Options ride wears"
+    );
+
+    // THE ACCESSIBILITY DONE'S OWN RIDE (the footer the Options
+    // serves)
+    app.open(ScreenKind::Accessibility);
+    app.render_title_buttons_for_test();
+    let ad = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "accdone")
+        .expect("the access footer")
+        .clone();
+    app.on_press(ad.x + ad.w / 2, ad.y + ad.h / 2);
+    assert_eq!(app.options_focus, Some("accdone"));
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the access done the Options ride wears"
+    );
+
+    // THE STALE ID'S OWN SILENCE (the Controls store the msdone row
+    // never carries — the dispatch the built rows refuse, the seat
+    // the belief keeps)
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    app.options_focus = Some("msdone");
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the stale id the silence keeps"
+    );
+    assert_eq!(
+        app.options_focus,
+        Some("msdone"),
+        "the stale seat the belief keeps"
+    );
+
+    // THE TAB RIDE'S OWN SEAT THE ACTIVATION ANSWERS (the backward
+    // arm the tail footers — the Enter the same parent ride wears:
+    // the keyboard walk the click walk's action the full lane keeps)
+    app.open(ScreenKind::Accessibility);
+    app.render_title_buttons_for_test();
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus,
+        Some("accdone"),
+        "the backward arm the tail wears"
+    );
+    app.on_options_key_selection();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the tab-ride seat the same ride answers"
+    );
+}

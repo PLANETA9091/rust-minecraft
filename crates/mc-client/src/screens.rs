@@ -35151,7 +35151,10 @@ impl App {
     /// same Screen base class extends — the MouseSettings/Controls/
     /// Accessibility houses the walk the family serves, the slider
     /// seats the toggle arms, the plain rows the claim the Tab-ride
-    /// round banks).
+    /// round banks, the SUB-SCREEN rows the activation the center
+    /// law serves [the done footers the parent rides speak, the
+    /// Controls pair the Mouse/KeyBinds opens answer — the SAME
+    /// on_click dispatch the kb arm's center law wears]).
     pub fn on_options_key_selection(&mut self) {
         if !matches!(
             self.screen,
@@ -35203,6 +35206,25 @@ impl App {
                 if self.kb_selected.is_some() {
                     return;
                 }
+                let seat = self
+                    .buttons
+                    .iter()
+                    .find(|b| b.id == id && b.active)
+                    .map(|b| (b.x, b.y, b.w, b.h));
+                if let Some((bx, by, bw, bh)) = seat {
+                    self.on_click(bx + bw / 2, by + bh / 2);
+                }
+            }
+            // THE SUB-SCREENS' OWN PLAIN ROWS (the same Screen family
+            // the houses wear — the focused row the id the CENTER LAW
+            // dispatches, the SAME action the on_click walk banks: the
+            // done footers the parent rides speak [the msdone the
+            // Controls return wears, the controlsdone/accdone the
+            // Options serves], the Controls pair the Mouse/KeyBinds
+            // opens answer [the keybinds the fresh list's own reset
+            // wears]; the INACTIVE seat the active find refuses, the
+            // stale id the built rows never carry the silence keeps)
+            Some(id @ ("mousesettings" | "keybinds" | "controlsdone" | "msdone" | "accdone")) => {
                 let seat = self
                     .buttons
                     .iter()
