@@ -2481,7 +2481,13 @@ pub fn run_gui_app(
         // the outside the false keeps; the open chat's other lanes the
         // world gates above keep silent)
         if left_down && !was_left_down && app.chat_open {
-            app.on_chat_click(gmx, gmy);
+            // THE VANILLA ORDER (ChatScreen.mouseClicked's walk — the
+            // suggestions list the first consumed click keeps, the
+            // unconsumed click the EditBox's own x-band the caret
+            // positions)
+            if !app.on_chat_click(gmx, gmy) {
+                app.on_chat_box_click(gmx, gmy);
+            }
         }
         // THE PICKER'S OWN SCROLL DRAG (the mouseDragged walk's armed
         // lane — the scrollbar press armed the flag, the HELD button's
@@ -2694,6 +2700,23 @@ pub fn run_gui_app(
             }
             if window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
                 app.on_chat_backspace();
+            }
+            // THE CARET'S OWN RIDE (the EditBox keyPressed tableswitch
+            // the 262/263 cases the LEFT/RIGHT moveCursorBy ±1 serves,
+            // the 268/269 the Home/End the bounds park — the entry
+            // forms' own caret lane the same law the chat input
+            // wears, the closed chat the gate never passes)
+            if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                app.on_chat_caret_arrow(true);
+            }
+            if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                app.on_chat_caret_arrow(false);
+            }
+            if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
+                app.on_chat_caret_home_end(false);
+            }
+            if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
+                app.on_chat_caret_home_end(true);
             }
             // THE ARROWS' OWN BRANCH (the vanilla keyPressed walk — the
             // shown suggestions the Up/Down cycle answers FIRST

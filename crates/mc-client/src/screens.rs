@@ -9815,6 +9815,16 @@ pub struct App {
     pub chat_input_is_draft: bool,
     pub chat_open: bool,
     pub chat_input: String,
+    /// THE CHAT CARET'S OWN SEAT (the vanilla EditBox cursorPos field
+    /// the walk keeps — the char index the mid-string edits the seat
+    /// answers, the END-PARKED default the fresh open/restore/apply
+    /// tails the setValue law banks — the dev-174 round's entry-form
+    /// law the chat input wears).
+    pub chat_cursor: usize,
+    /// THE CHAT BAND'S OWN HIT-BOX (the render the rect banks — the
+    /// click walk the same geometry the store wears, the entry-form
+    /// rect trio the same law shares).
+    pub chat_input_rect: Option<(i32, i32, i32, i32)>,
     pub chat_messages: Vec<(String, u32)>,
     pub recent_chat: Vec<String>,
     pub chat_history_pos: usize,
@@ -11582,6 +11592,8 @@ impl App {
             chat_input_is_draft: false,
             chat_open: false,
             chat_input: String::new(),
+            chat_cursor: 0,
+            chat_input_rect: None,
             chat_messages: Vec::new(),
             recent_chat: Vec::new(),
             chat_save_drafts: true,
@@ -40904,6 +40916,10 @@ impl App {
             self.chat_input.clear();
             self.chat_input_is_draft = false;
         }
+        // THE CARET'S OWN TAIL PARK (the EditBox.setValue law the
+        // restore walks — the cursorPos the fresh value's end wears,
+        // the dev-174 round's entry-form law the chat input keeps)
+        self.chat_cursor = self.chat_input.chars().count();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
         // the screen never keeps (the vanilla init's fresh walk); the
@@ -40965,6 +40981,10 @@ impl App {
                 self.chat_input_is_draft = false;
             }
         }
+        // THE CARET'S OWN TAIL PARK (the same setValue law the MESSAGE
+        // open wears — the restored draft the tail speaks, the '/'
+        // fresh open the one-char end banks)
+        self.chat_cursor = self.chat_input.chars().count();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
         // the screen never keeps (the vanilla init's fresh walk); the
@@ -41000,7 +41020,9 @@ impl App {
         self.chat_history_pos = self.recent_chat.len();
         // the initial the input's raw value keeps (the removed walk's
         // `initial = input.getValue()` — the trim the submit alone
-        // answers)
+        // answers); the caret the take's own clear the zero wears
+        // (the next open the fresh walk re-parks)
+        self.chat_cursor = 0;
         let text = std::mem::take(&mut self.chat_input);
         if text.trim().is_empty() {
             // the blank close the discard arm keeps (the shouldDiscard
@@ -41092,8 +41114,10 @@ impl App {
         if self.chat_input_is_draft {
             // the first ESC the untouched draft clears (the setValue("")
             // walk — the responder the onEdited isDraft drop fires, the
-            // suggestions the fresh refresh answers)
+            // suggestions the fresh refresh answers, the caret the
+            // cleared value's zero seat wears)
             self.chat_input.clear();
+            self.chat_cursor = 0;
             self.chat_input_is_draft = false;
             self.refresh_command_suggestions();
             return true;
@@ -41111,13 +41135,17 @@ impl App {
 
     /// THE EDITBOX'S OWN CHAR (the window's input callback the
     /// set_input_callback lane feeds — the char the 256 setMaxLength
-    /// cap gates, the open screen the lane only answers).
+    /// cap gates, the open screen the lane only answers; the INSERT
+    /// at the caret seat the cursorPos law serves — the refused char
+    /// the seat never moves).
     pub fn on_chat_char(&mut self, c: char) {
         if !self.chat_open || c.is_control() {
             return;
         }
         if self.chat_input.chars().count() < 256 {
-            self.chat_input.push(c);
+            let idx = caret_byte_index(&self.chat_input, self.chat_cursor);
+            self.chat_input.insert(idx, c);
+            self.chat_cursor += 1;
             // THE RESPONDER'S OWN WALK (the EditBox.setResponder lane —
             // the edit the suggestions refresh answers, the isDraft
             // purity the onEdited walk drops — the restored draft the
@@ -41130,16 +41158,73 @@ impl App {
     }
 
     /// THE EDITBOX'S OWN BACKSPACE (the EditBox's deleteText walk —
-    /// the last char the empty gate keeps).
+    /// the char BEFORE the caret the mid-string seat removes, the
+    /// cursor the -1 step banks, the zero seat the no-op keeps).
     pub fn on_chat_backspace(&mut self) {
         if !self.chat_open {
             return;
         }
-        self.chat_input.pop();
+        if self.chat_cursor > 0 {
+            let end = caret_byte_index(&self.chat_input, self.chat_cursor);
+            let start = caret_byte_index(&self.chat_input, self.chat_cursor - 1);
+            self.chat_input.replace_range(start..end, "");
+            self.chat_cursor -= 1;
+        }
         // the edit the responder fires (the isDraft purity the same
         // onEdited walk drops)
         self.chat_input_is_draft = false;
         self.refresh_command_suggestions();
+    }
+
+    /// THE CHAT CARET'S OWN ARROWS (the EditBox.keyPressed tableswitch
+    /// the 262/263 cases — the RIGHT/LEFT the moveCursorBy ±1 serves:
+    /// the seat the bounds [0, len] clamps, the zero the left the
+    /// no-op keeps, the tail the right the park wears, the closed
+    /// chat the gate never passes).
+    pub fn on_chat_caret_arrow(&mut self, left: bool) {
+        if !self.chat_open {
+            return;
+        }
+        let len = self.chat_input.chars().count();
+        self.chat_cursor = if left {
+            self.chat_cursor.saturating_sub(1)
+        } else {
+            (self.chat_cursor + 1).min(len)
+        };
+    }
+
+    /// THE CHAT CARET'S OWN BOUNDS (the tableswitch the 268/269 cases
+    /// — the HOME/END the [0, len] park serves, the closed chat the
+    /// gate never passes).
+    pub fn on_chat_caret_home_end(&mut self, end: bool) {
+        if !self.chat_open {
+            return;
+        }
+        self.chat_cursor = if end {
+            self.chat_input.chars().count()
+        } else {
+            0
+        };
+    }
+
+    /// THE CHAT BAND'S OWN X-BAND CLICK (the EditBox.mouseClicked walk
+    /// the input band serves — the inside click the caret the char
+    /// index positions, the box padding the +4 the render's own text
+    /// origin wears, the dev-175 round's entry-form law the chat
+    /// input keeps; the y-band the 12-tall row keeps, the outside
+    /// click the FALSE the caller keeps).
+    pub fn on_chat_box_click(&mut self, mx: i32, my: i32) -> bool {
+        if !self.chat_open {
+            return false;
+        }
+        let Some((rx, ry, rw, rh)) = self.chat_input_rect else {
+            return false;
+        };
+        if mx < rx || mx >= rx + rw || my < ry || my >= ry + rh {
+            return false; // the outside click the band never owns
+        }
+        self.chat_cursor = caret_char_index_at(&self.chat_input, mx - 4);
+        true
     }
 
     /// THE HISTORY ARROWS (javap ChatScreen.moveInHistory — the Up the
@@ -41176,6 +41261,9 @@ impl App {
         } else {
             self.recent_chat[self.chat_history_pos].clone()
         };
+        // THE CARET'S OWN TAIL PARK (the recall the EditBox.setValue
+        // walk answers — the cursorPos the fresh value's end wears)
+        self.chat_cursor = self.chat_input.chars().count();
         // the recall the EditBox.setValue walk answers — the responder
         // the onEdited isDraft drop fires (the restored draft the
         // history nav disclaims, the jar's own setValue chain)
@@ -41455,6 +41543,9 @@ impl App {
         completed.push_str(&text);
         completed.extend(original[e..].iter());
         self.chat_input = completed;
+        // THE CARET'S OWN TAIL PARK (the apply the EditBox.setValue
+        // walk answers — the cursorPos the fresh value's end wears)
+        self.chat_cursor = self.chat_input.chars().count();
         self.chat_suggestion_tab_cycles = true;
         self.refresh_command_suggestions();
     }
@@ -44988,10 +45079,18 @@ impl App {
         let band_alpha =
             chat_band_alpha(self.background_for_chat_only, self.text_background_opacity);
         g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, band_alpha]);
+        // THE INPUT RECT THE RENDER BANKS (the hit-box cache the
+        // click walk reads — the entry-form rect trio the same law
+        // shares)
+        self.chat_input_rect = Some((2, h - 14, w - 4, 12));
         // THE INPUT TEXT (the EditBox's borderless draw — the text at
         // x + 0 the borderless law keeps, the y + 2 the 12-tall band
-        // centers, the blink the millis/500 fold answers)
-        let shown: String = self.chat_input.chars().collect();
+        // centers, the blink the millis/500 fold answers; the caret
+        // the cursorPos seat the BEFORE/AFTER split wears — the
+        // underscore the mid-string seat the whole string the split
+        // draws, the END-PARKED default the same typed bytes keeps)
+        let before: String = self.chat_input.chars().take(self.chat_cursor).collect();
+        let after: String = self.chat_input.chars().skip(self.chat_cursor).collect();
         let blink = (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis())
@@ -45000,7 +45099,7 @@ impl App {
             % 2
             == 0;
         let cursor = if blink { "_" } else { "" };
-        let typed = format!("{shown}{cursor}");
+        let typed = format!("{before}{cursor}{after}");
         g.text_faded(a, 4, h - 10, &typed, [0.878, 0.878, 0.878], 1.0, true);
         // THE GHOST SUFFIX (the EditBox's setSuggestion lane — the
         // selected suggestion's completion the cursor's tail speaks,

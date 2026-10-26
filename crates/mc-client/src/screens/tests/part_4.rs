@@ -24108,3 +24108,143 @@ fn caret_prefix_probe(text: &str, x_off: i32) -> usize {
     }
     count
 }
+
+/// THE CHAT INPUT'S OWN CARET RIDE (the vanilla EditBox cursorPos law
+/// the chat input wears — the dev-174 round's entry-form walk the
+/// end-parked chat lane retires: the INSERT at the caret seat the
+/// char serves, the Backspace the char BEFORE the seat removes, the
+/// arrows the moveCursorBy ±1 the [0, len] bounds keep, the
+/// Home/End the parks answer, the x-band click the caret the char
+/// index positions — the render the rect banks, the click walk the
+/// same geometry the store wears).
+#[test]
+fn the_chat_input_own_caret_ride_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_chat_key();
+    assert!(app.chat_open);
+    assert_eq!(app.chat_cursor, 0, "the fresh open the empty tail parks");
+
+    // THE END-PARKED TYPING (the fresh open the zero seat the tail
+    // speaks — the char the insert the +1 steps the same walk banks)
+    for c in "hello".chars() {
+        app.on_chat_char(c);
+    }
+    assert_eq!(app.chat_input, "hello");
+    assert_eq!(app.chat_cursor, 5, "the typing the tail the +1 steps");
+
+    // THE ARROWS' OWN SEATS (the moveCursorBy ±1 the bounds keep —
+    // the LEFT the -1 steps, the zero the further left the no-op
+    // keeps, the tail the right the park wears)
+    app.on_chat_caret_arrow(true);
+    app.on_chat_caret_arrow(true);
+    assert_eq!(app.chat_cursor, 3, "the LEFT the -1 steps answer");
+    app.on_chat_caret_arrow(false);
+    app.on_chat_caret_arrow(false);
+    app.on_chat_caret_arrow(false);
+    assert_eq!(app.chat_cursor, 5, "the RIGHT the tail the park keeps");
+    app.on_chat_caret_arrow(false);
+    assert_eq!(app.chat_cursor, 5, "the past-tail the right the no-op");
+
+    // THE MID-STRING'S OWN INSERT (the caret the seat the char
+    // serves — the tail the shift the same walk banks)
+    app.on_chat_caret_arrow(true);
+    app.on_chat_caret_arrow(true);
+    assert_eq!(app.chat_cursor, 3);
+    app.on_chat_char('X');
+    assert_eq!(app.chat_input, "helXlo", "the seat the char inserts");
+    assert_eq!(app.chat_cursor, 4, "the insert the +1 step wears");
+
+    // THE MID-STRING'S OWN BACKSPACE (the char BEFORE the seat the
+    // removal answers — the cursor the -1 step banks)
+    app.on_chat_backspace();
+    assert_eq!(app.chat_input, "hello", "the seat the char removes");
+    assert_eq!(app.chat_cursor, 3, "the removal the -1 step banks");
+    app.on_chat_caret_home_end(false);
+    assert_eq!(app.chat_cursor, 0, "the HOME the zero parks");
+    app.on_chat_backspace();
+    assert_eq!(app.chat_input, "hello", "the zero seat the no-op keeps");
+    assert_eq!(app.chat_cursor, 0, "the zero the seat never moves");
+    app.on_chat_caret_home_end(true);
+    assert_eq!(app.chat_cursor, 5, "the END the len parks");
+
+    // THE CLOSED CHAT'S OWN GATE (the lane the open screen only
+    // answers — the closed chat the walks silent)
+    app.on_chat_submit();
+    assert!(!app.chat_open);
+    let (closed_input, closed_cursor) = (app.chat_input.clone(), app.chat_cursor);
+    app.on_chat_char('?');
+    app.on_chat_backspace();
+    app.on_chat_caret_arrow(true);
+    app.on_chat_caret_home_end(true);
+    assert_eq!(app.chat_input, closed_input, "the closed the input keeps");
+    assert_eq!(app.chat_cursor, closed_cursor, "the closed the seat keeps");
+
+    // THE RECALL'S OWN TAIL PARK (the history the EditBox.setValue
+    // walk answers — the recalled entry the cursor the end wears)
+    app.on_chat_key();
+    app.on_chat_history_key(true);
+    assert_eq!(app.chat_input, "hello", "the recall the entry wears");
+    assert_eq!(app.chat_cursor, 5, "the recall the tail parks");
+
+    // THE X-BAND'S OWN SEAT (the render the rect banks — the click
+    // walk the same geometry the store wears, the box padding the
+    // +4 the text origin speaks)
+    assert!(
+        app.chat_input_rect.is_none(),
+        "the unrendered the None keeps"
+    );
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (rx, ry, rw, rh) = app.chat_input_rect.expect("the drawn band's rect");
+    assert_eq!((rx, ry, rw, rh), (2, 166, 316, 12), "the band's own bounds");
+
+    // THE LEFT EDGE + THE PAST-TAIL (the trim law the prefix the
+    // helper re-computes — the zero the left edge wears, the len
+    // the past-tail answers)
+    app.on_chat_box_click(rx + 4, ry + 5);
+    assert_eq!(app.chat_cursor, 0, "the left edge the zero parks");
+    app.on_chat_box_click(rx + 4 + 100, ry + 5);
+    assert_eq!(app.chat_cursor, 5, "the past-tail the len parks");
+    let full = crate::gui::font_text_width("hello");
+    let expected = caret_prefix_probe("hello", full / 2);
+    app.on_chat_box_click(rx + 4 + full / 2, ry + 5);
+    assert_eq!(app.chat_cursor, expected, "the mid-band the trim law wears");
+
+    // THE CLICKED SEAT'S OWN TYPING (the char the x-band seat the
+    // insert serves — the mid-string edit the caret walk banks)
+    let mid_input = app.chat_input.clone();
+    let seat = app.chat_cursor;
+    app.on_chat_char('#');
+    let mut expect_inserted = String::new();
+    for (i, c) in mid_input.chars().enumerate() {
+        if i == seat {
+            expect_inserted.push('#');
+        }
+        expect_inserted.push(c);
+    }
+    assert_eq!(app.chat_input, expect_inserted, "the seat the char inserts");
+    assert_eq!(app.chat_cursor, seat + 1, "the insert the +1 step wears");
+    assert_eq!(
+        app.chat_input.chars().nth(seat),
+        Some('#'),
+        "the clicked seat the char wears"
+    );
+
+    // THE OUTSIDE BAND'S OWN KEEP (the y-band the row keeps — the
+    // above band the FALSE the seat never moves)
+    let seat = app.chat_cursor;
+    app.on_chat_box_click(rx + 4, ry - 1);
+    assert_eq!(app.chat_cursor, seat, "the above the seat keeps");
+    app.on_chat_box_click(rx + 4, ry + rh + 1);
+    assert_eq!(app.chat_cursor, seat, "the below the seat keeps");
+
+    // THE CLOSED CHAT'S OWN REFUSAL (the gate the open screen only
+    // answers — the ESC close the take's own clear the zero wears,
+    // the closed chat the click the seat never moves)
+    app.on_chat_escape();
+    assert_eq!(app.chat_cursor, 0, "the close the clear the zero wears");
+    app.on_chat_box_click(rx + 4, ry + 5);
+    assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
+}
