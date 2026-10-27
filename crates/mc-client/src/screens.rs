@@ -26068,6 +26068,18 @@ impl App {
         // player's own stock shows, the transfer clicks the real rows
         // mutate)
         self.chest_mirror_sync_from_inventory();
+        // THE OPEN'S OWN FILL BANK (the autopush-294 round — the
+        // container lane the open walk the load's fill banks: the
+        // reopen the stored stacks the analog re-reads [the RESTART
+        // the map's empty truth the same bank restores — the
+        // container_fill the world's own field the journal never
+        // replays], the fresh open the empty store the 0 the override
+        // keeps, the double the union law the sync's own walk wears,
+        // the ENDER the jar's own silence the sync's lane refuses;
+        // the stamp tail's own attach ride the comparators the fresh
+        // fill re-consults — the vanilla open the menu the analog the
+        // stateless read serves)
+        let _ = self.container_fill_sync(pos, None);
         // THE BARREL'S OWN LID (the dev-65 round — javap BarrelBlock.
         // useWithoutItem the openMenu walk the barrel_open model the
         // OPEN bit swaps: the opened cell the bit sets [the variant

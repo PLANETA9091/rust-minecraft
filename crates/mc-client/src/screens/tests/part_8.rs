@@ -8978,3 +8978,127 @@ fn the_do_mob_spawning_rule_round_trips_the_save() {
     let _ = std::fs::remove_file(&path);
     let _ = std::fs::remove_dir(&dir);
 }
+
+/// THE CHEST OPEN'S OWN FILL BANK (the autopush-294 round — the
+/// container lane the open walk the load's fill banks: javap 26.2
+/// the formula the bank wears — ChestBlock.getAnalogOutputSignal the
+/// getContainer(combine) + getRedstoneSignalFromContainer pair
+/// answers, the AbstractContainerMenu.getRedstoneSignalFromContainer
+/// pc 0-75 the `f / getContainerSize()` FULL-slot divide +
+/// `Mth.lerpDiscrete(f, 0, 15)` the `from + floor(delta * (range-1))
+/// + (delta > 0 ? 1 : 0)` fold speaks [the ONE full stack the 1/27
+/// the fill's 1 banks, the 27 the f=1 the fill's 15 speaks, the
+/// empty the 0 the same override keeps] — the RESTART the map's
+/// empty truth the open arm re-banks [the container_fill the
+/// world's own field the journal never replays], the comparator the
+/// fresh fill the back read answers, the ENDER the jar's own
+/// silence the sync's lane refuses).
+#[test]
+fn the_chest_open_own_fill_bank_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (kx, ky, kz) = (c, top - 1, c); // the comparator (facing EAST)
+    let (cx, cy, cz) = (c + 1, top - 1, c); // the chest (the back cell)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(kx, ky, kz, w::COMPARATOR);
+        world.set_variant(kx, ky, kz, w::comparator_variant(1, false, false, 0));
+        world.set(cx, cy, cz, w::CHEST);
+    }
+    // THE FIRST OPEN'S OWN EMPTY BANK (the fresh store the or_insert
+    // 27 empties the fill's 0 the override keeps — the comparator
+    // the through-wall probe the container answer never rides)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&0),
+            "the fresh open the empty store the 0 banks"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    // THE STORE'S OWN SEED + THE RESTART'S OWN WIPE (the one full
+    // stone stack the f=1/27 the fill's 1 speaks; the wipe the
+    // honest restart simulation — the container_fill the field the
+    // journal never replays, the ghost-0 the reopen the bank restores)
+    {
+        let mut store = vec![(0, 0); 27];
+        store[0] = (1, 64);
+        app.container_stores.insert((cx, cy, cz), store);
+    }
+    app.offline_world.as_mut().unwrap().container_fill.clear();
+    // THE REOPEN'S OWN BANK (the open arm the load's fill re-banks —
+    // the comparator the fresh fill the back read answers, the
+    // refresh the powered verdict the nibble wears)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&1),
+            "the reopen the stored stack the fill's 1 banks"
+        );
+        assert_eq!(
+            crate::world::comparator_output_signal(world, kx, ky, kz),
+            1,
+            "the comparator the fresh fill the back read answers"
+        );
+        let fresh = crate::world::comparator_refresh_variant(world, kx, ky, kz);
+        assert!(fresh.is_some(), "the fill the verdict the refresh arms");
+        let fresh = fresh.unwrap();
+        assert_eq!(
+            crate::world::comparator_output_of(fresh),
+            1,
+            "the nibble the output the fill wears"
+        );
+        assert!(
+            crate::world::comparator_powered_of(fresh),
+            "the nonzero input the powered bit speaks"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    // THE FULL STORE'S OWN 15 (the 27 full stacks the f=1 the max
+    // speaks — the lerpDiscrete the delta 1 the floor's 14 + 1 the
+    // 15 banks)
+    {
+        let full = vec![(1, 64); 27];
+        app.container_stores.insert((cx, cy, cz), full);
+    }
+    app.open_chest_for((cx, cy, cz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&15),
+            "the full store the f=1 the fill's 15 banks"
+        );
+        assert_eq!(
+            crate::world::comparator_output_signal(world, kx, ky, kz),
+            15,
+            "the comparator the max fill the output wears"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    // THE ENDER'S OWN SILENCE (the shared open the sync's lane the
+    // refusal keeps — the stale entry the map the absence restores)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::ENDER_CHEST);
+        world.container_fill.insert((cx, cy, cz), 9);
+    }
+    app.open_chest_for((cx, cy, cz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !world.container_fill.contains_key(&(cx, cy, cz)),
+            "the ender the silence the stale entry the map drops"
+        );
+    }
+}
