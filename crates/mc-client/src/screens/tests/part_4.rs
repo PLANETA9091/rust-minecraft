@@ -1905,6 +1905,96 @@ fn the_stats_file_legacy_flat_the_1_12_rows_decode() {
     );
 }
 
+/// THE STATS LEGACY FILE'S OWN RESTART WALK (the stats_file lane the
+/// legacy FILE the boot decode wears — the 1.12 flat file the on-disk
+/// boot the rows decode, the Save and Quit the modern 4903 nested
+/// shape rewrites, the fresh boot the rewritten file the same truth
+/// wears, the once-flag the double load keeps). The decode test the
+/// json shape answered, the temp-dir restart the flat file the same
+/// outlives.
+#[test]
+fn the_stats_file_legacy_restart_the_flat_file_outlives() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_stats_legacy_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("stats").join("legacy.json");
+    let _ = std::fs::remove_file(&path);
+    // THE 1.12 FILE ON DISK (the flat rows the pre-1.13 stats page
+    // wrote — the nested `stats` object the file never keeps)
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(
+        &path,
+        r#"{"stat.playOneMinute": 777, "stat.jump": 9, "stat.mined.minecraft:stone": 4, "stat.killEntity.Zombie": 2}"#,
+    )
+    .unwrap();
+    // THE LEGACY BOOT (the decode-compat lane the flat file answers —
+    // the absent-`stats`-object guard the flat walk rides)
+    let mut app = App::new(64);
+    app.stats_file = Some(path.clone());
+    app.stats_file_load_once();
+    assert_eq!(
+        app.stats.play_time, 777,
+        "the legacy play row the boot decodes"
+    );
+    assert_eq!(app.stats.jump, 9, "the legacy jump row the boot decodes");
+    let stone = crate::world::STONE;
+    assert_eq!(
+        app.stats.mined.get(&stone),
+        Some(&4),
+        "the legacy mined row the boot decodes"
+    );
+    assert_eq!(
+        app.stats.mob_kills.get("minecraft:zombie"),
+        Some(&2),
+        "the legacy kill row the boot decodes"
+    );
+    // THE QUIT'S OWN REWRITE (the save the modern 4903 nested shape
+    // banks — the flat rows the file the walk retires)
+    app.stats.jump = 10; // the session's own tick banks a fresh count
+    app.stats_file_save();
+    let text = std::fs::read_to_string(&path).expect("the rewrite the file keeps");
+    assert!(
+        text.contains("\"DataVersion\": 4903"),
+        "the rewrite the DataVersion row wears"
+    );
+    assert!(
+        text.contains("\"stats\""),
+        "the rewrite the nested object wears"
+    );
+    assert!(
+        !text.contains("stat.jump"),
+        "the rewrite the flat rows retires"
+    );
+    // THE FRESH BOOT'S OWN TRUTH (the rewritten file the modern decode
+    // wears — the session's counts the restart outlives)
+    let mut fresh = App::new(64);
+    fresh.stats_file = Some(path.clone());
+    fresh.stats_file_load_once();
+    assert_eq!(
+        fresh.stats.play_time, 777,
+        "the play row the modern file keeps"
+    );
+    assert_eq!(
+        fresh.stats.jump, 10,
+        "the session's count the modern file keeps"
+    );
+    assert_eq!(
+        fresh.stats.mined.get(&stone),
+        Some(&4),
+        "the mined row the modern file keeps"
+    );
+    assert_eq!(
+        fresh.stats.mob_kills.get("minecraft:zombie"),
+        Some(&2),
+        "the kill row the modern file keeps"
+    );
+    // THE ONCE-FLAG (the double load the counter keeps — the later
+    // touches the in-memory counts never re-parse)
+    fresh.stats.jump += 2;
+    fresh.stats_file_load_once();
+    assert_eq!(fresh.stats.jump, 12, "the flag the second load skips");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`
