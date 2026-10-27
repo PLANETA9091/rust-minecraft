@@ -70678,8 +70678,10 @@ impl App {
                 true,
             ));
             for (kind, count) in &self.stats.mined {
-                let plain =
-                    crate::world::NAME_OF.get(*kind as usize).copied().unwrap_or("unknown");
+                let plain = crate::world::NAME_OF
+                    .get(*kind as usize)
+                    .copied()
+                    .unwrap_or("unknown");
                 let name = tr(&format!("block.minecraft.{plain}")).unwrap_or(plain);
                 rows.push((name.to_string(), count.to_string(), false));
             }

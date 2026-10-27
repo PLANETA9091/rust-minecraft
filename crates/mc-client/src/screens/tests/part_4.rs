@@ -1424,7 +1424,10 @@ fn the_stats_items_own_mined_crafted_rows_wear() {
     // the BTreeMap order the stable rows keep)
     let rows = app.stats_items_rows();
     assert_eq!(rows.len(), 5, "the two sections the rows wear");
-    assert_eq!(rows[0].0, "Times Mined", "the mined header the jar lang wears");
+    assert_eq!(
+        rows[0].0, "Times Mined",
+        "the mined header the jar lang wears"
+    );
     assert!(rows[0].2, "the header the flag wears");
     assert_eq!(rows[1].0, "Stone", "the block.minecraft.stone word");
     assert_eq!(rows[1].1, "2", "the count the right edge wears");
