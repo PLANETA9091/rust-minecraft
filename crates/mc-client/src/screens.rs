@@ -9220,6 +9220,22 @@ pub struct App {
     /// the rows ride home to), the single chest the None keeps — the
     /// close walk the whole grid banks.
     pub container_open_cell_b: Option<(i32, i32, i32)>,
+    /// THE ENDER'S OWN SHARED STORE (the autopush-289 round — javap
+    /// 26.2 EnderChestBlock.useWithoutItem the `getEnderChestInventory`
+    /// walk the PLAYER'S OWN container answers: the ONE 27-slot
+    /// inventory the EVERY ender cell binds — the per-cell map the
+    /// entry NEVER banks, the break the store never eats, the
+    /// restart the same stacks the reopen wears). open_chest_for's
+    /// ender arm LOADS the shared grid (the fresh 27-slot vec the
+    /// field init keeps), the close arm FLUSHES the edited grid back
+    /// (container_store_flush's ender route), the disk bank the same
+    /// file the "ender" row rides.
+    pub ender_chest_store: Vec<(i32, i32)>,
+    /// THE OPEN ENDER'S OWN FLAG (the open arm the shared law arms,
+    /// the flush the route the flag consumes — the per-cell insert
+    /// the flag refuses, the close the honest shared bank speaks;
+    /// the cell_b pair the ender never wears).
+    pub container_open_ender: bool,
     /// THE FURNACES' OWN PER-CELL STORES (the dev-69 round — the
     /// placed furnace cells the THREE block-entity slots the vanilla
     /// FurnaceMenu ctor speaks: INPUT 0, FUEL 1, RESULT 2 — the cell
@@ -11415,6 +11431,56 @@ pub fn container_stores_from_nbt(
     parse_stores_list(entries, 27)
 }
 
+/// THE ENDER BANK'S OWN ROW (the autopush-289 round — the shared
+/// per-player inventory the bare Items list the file root wears:
+/// the same stack encoding the [`store_entries_list`] rows speak,
+/// the 27 the shared grid caps, the (0,0) the empty slots keep).
+fn ender_bank_to_nbt(slots: &[(i32, i32)]) -> mc_protocol::nbt::Nbt {
+    mc_protocol::nbt::Nbt::List(
+        slots
+            .iter()
+            .copied()
+            .take(27)
+            .map(store_slot_compound)
+            .collect(),
+    )
+}
+
+/// THE ENDER BANK'S OWN PARSE (the tolerant walk the stores parse
+/// wears: the missing row the honest None keeps — the caller's own
+/// default the absent law banks, the unknown name the empty stack
+/// keeps, the over-long list the 27 cap truncates, the short list
+/// the pad fills — the fresh grid's own shape the menu law wears).
+fn ender_slots_from_nbt(value: &mc_protocol::nbt::Nbt) -> Option<Vec<(i32, i32)>> {
+    let Some(mc_protocol::nbt::Nbt::List(items)) = value.get("ender") else {
+        return None;
+    };
+    let mut slots = vec![(0i32, 0i32); 27];
+    for (i, item) in items.iter().enumerate().take(27) {
+        let mc_protocol::nbt::Nbt::Compound(item_fields) = item else {
+            continue;
+        };
+        if item_fields.is_empty() {
+            continue; // the OPTIONAL empty map the empty stack wears
+        }
+        let Some((_, mc_protocol::nbt::Nbt::String(id))) =
+            item_fields.iter().find(|(k, _)| k == "id")
+        else {
+            continue;
+        };
+        let count = item_fields
+            .iter()
+            .find(|(k, _)| k == "count")
+            .and_then(|(_, v)| v.as_i32())
+            .unwrap_or(1);
+        let plain = id.strip_prefix("minecraft:").unwrap_or(id);
+        if let Some(wire_id) = mc_registry::item_id_by_name(plain) {
+            slots[i] = (wire_id, count);
+        }
+    }
+    Some(slots)
+}
+
 /// THE FURNACE BANK'S OWN PARSE (the dev-69 round — the "furnaces"
 /// list the trio cap wears: the same tolerant walk the chest parse
 /// serves, the missing/corrupt list the honest empties keep).
@@ -11868,6 +11934,8 @@ impl App {
             container_stores_loaded: false,
             container_open_cell: None,
             container_open_cell_b: None,
+            ender_chest_store: vec![(0i32, 0i32); 27],
+            container_open_ender: false,
             furnace_stores: std::collections::HashMap::new(),
             furnace_open_cell: None,
             furnace_word_stores: std::collections::HashMap::new(),
@@ -25754,7 +25822,20 @@ impl App {
             return;
         };
         let kind = w.get(pos.0, pos.1, pos.2);
-        let event = if crate::world::is_chest(kind) {
+        // THE ENDER'S OWN EVENT NAMES (the autopush-289 round — javap
+        // 26.2 EnderChestBlockEntity$1 the ContainerOpenersCounter's
+        // own callback: the onOpen the SoundEvents.ENDER_CHEST_OPEN
+        // getstatic the playSound fold wears, the onClose the
+        // ENDER_CHEST_CLOSE the same fold keeps — the ender the
+        // chest family's block.chest events NEVER wears, its own
+        // block.ender_chest pair the counter lane speaks)
+        let event = if kind == crate::world::ENDER_CHEST {
+            if open {
+                "block.ender_chest.open"
+            } else {
+                "block.ender_chest.close"
+            }
+        } else if crate::world::is_chest(kind) {
             if open {
                 "block.chest.open"
             } else {
@@ -25777,8 +25858,11 @@ impl App {
         };
         // THE TYPE-STATE WALK (the chest pair alone the variant reads —
         // the LEFT the silence, the RIGHT the junction shift, the
-        // SINGLE the own center)
-        let junction = if crate::world::is_chest(kind) {
+        // SINGLE the own center). THE ENDER the variant lane NEVER
+        // wears (the shared one the every cell binds — the stale
+        // variant a replaced cell could carry the LEFT-return silence
+        // never eats: the bypass the own center keeps).
+        let junction = if crate::world::is_chest(kind) && kind != crate::world::ENDER_CHEST {
             let v = w.variant(pos.0, pos.1, pos.2);
             let ctype = crate::world::chest_variant_type(v);
             if ctype == crate::world::CHEST_TYPE_LEFT {
@@ -25843,8 +25927,12 @@ impl App {
         // the codec the per-cell shape keeps.
         let partner: Option<(i32, i32, i32)> = self.offline_world.as_ref().and_then(|w| {
             let kind = w.get(pos.0, pos.1, pos.2);
-            if !crate::world::is_chest(kind) {
-                return None; // the barrel the family gate refuses — no pair
+            if !crate::world::is_chest(kind) || kind == crate::world::ENDER_CHEST {
+                // the barrel the family gate refuses — no pair; the
+                // ender the pair NEVER banks (the shared one the
+                // every cell binds — the vanilla's own law the
+                // DoubleBlockCombiner walk the ender never rides)
+                return None;
             }
             let v = w.variant(pos.0, pos.1, pos.2);
             let ctype = crate::world::chest_variant_type(v);
@@ -25866,14 +25954,30 @@ impl App {
         });
         // THE CELL'S OWN STORE (the RandomizableContainer contents the
         // map key keeps — the first open the fresh 27-slot grid
-        // inserts, the reopen the stored stacks load)
-        let store = self
-            .container_stores
-            .entry(pos)
-            .or_insert_with(|| vec![(0i32, 0i32); 27]);
+        // inserts, the reopen the stored stacks load). THE ENDER'S
+        // OWN SHARED LAW (javap 26.2 EnderChestBlock.useWithoutItem
+        // pc 41-125 the getEnderChestInventory walk the player's own
+        // PlayerEnderChestContainer answers — the ONE 27-slot
+        // inventory the EVERY ender cell binds, the per-cell map the
+        // entry never banks): the ender cell the SHARED grid loads,
+        // the flag the flush's own route arms.
+        let is_ender = self
+            .offline_world
+            .as_ref()
+            .is_some_and(|w| w.get(pos.0, pos.1, pos.2) == crate::world::ENDER_CHEST);
+        let store = if is_ender {
+            self.container_open_ender = true;
+            self.ender_chest_store.clone()
+        } else {
+            self.container_open_ender = false;
+            self.container_stores
+                .entry(pos)
+                .or_insert_with(|| vec![(0i32, 0i32); 27])
+                .clone()
+        };
         self.container_open_cell = Some(pos);
         self.container_open_cell_b = None;
-        self.chest_slots = store.clone();
+        self.chest_slots = store;
         if let Some(ppos) = partner {
             let pstore = self
                 .container_stores
@@ -26134,6 +26238,13 @@ impl App {
     pub fn container_store_flush(&mut self) {
         self.container_stores_load_once();
         if let Some(pos) = self.container_open_cell.take() {
+            // THE ENDER'S OWN ROUTE (the flag the open arm set — the
+            // shared store the field banks, the per-cell map the
+            // entry never wears: the vanilla's own getEnderChestInventory
+            // law the close walk honors — the break the store never
+            // eats, the every-cell binding the one grid keeps)
+            let was_ender = self.container_open_ender;
+            self.container_open_ender = false;
             // THE DOUBLE'S OWN SPLIT (the dev-71 round — the compound
             // the two 27-slot stores' own projection is: the close the
             // halves SEPARATE, the partner's 0..27 rows the partner
@@ -26141,6 +26252,8 @@ impl App {
             // keeps — the per-cell stores the codec's own shape wear,
             // the file the same two-list walk banks). The single the
             // whole grid banks (the None the 27-slot shape keeps).
+            // THE ENDER the double arm never rides (the partner walk
+            // the pair refuses — the cell_b the None keeps).
             if let Some(ppos) = self.container_open_cell_b.take() {
                 let partner_half: Vec<(i32, i32)> =
                     self.chest_slots.iter().take(27).copied().collect();
@@ -26148,6 +26261,8 @@ impl App {
                     self.chest_slots.iter().skip(27).take(27).copied().collect();
                 self.container_stores.insert(ppos, partner_half);
                 self.container_stores.insert(pos, opened_half);
+            } else if was_ender {
+                self.ender_chest_store = self.chest_slots.clone();
             } else {
                 self.container_stores.insert(pos, self.chest_slots.clone());
             }
@@ -38863,6 +38978,13 @@ impl App {
                 // extend law the in-memory entry keeps)
                 self.furnace_word_stores
                     .extend(furnace_words_from_nbt(&root));
+                // THE ENDER BANK'S OWN PARSE (the autopush-289 round —
+                // the "ender" row the shared store the boot banks:
+                // the missing row the honest empties keep, the present
+                // row the same stacks the reopen wears)
+                if let Some(slots) = ender_slots_from_nbt(&root) {
+                    self.ender_chest_store = slots;
+                }
                 // THE FRAME BANK'S OWN PARSE (the autopush-136 round —
                 // the fourth list the wall frames' boot bank answers:
                 // the offline world alone the restore serves [the wire
@@ -38920,6 +39042,16 @@ impl App {
             (
                 "furnace_words".to_string(),
                 furnace_words_bank_to_nbt(&self.furnace_word_stores),
+            ),
+            // THE ENDER BANK'S OWN ROW (the autopush-289 round — the
+            // shared per-player inventory the same file the fifth
+            // list wears: the bare Items encoding the entries row
+            // shares, the 27 the shared grid speaks, the restart the
+            // same stacks the reopen wears — the vanilla's own
+            // playerdata law the disk lane honors)
+            (
+                "ender".to_string(),
+                ender_bank_to_nbt(&self.ender_chest_store),
             ),
             // THE FRAME BANK'S OWN LIST (the autopush-136 round — the
             // wall frames the same file the fourth list wears, the

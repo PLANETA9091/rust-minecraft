@@ -21184,6 +21184,242 @@ fn the_trapped_chest_the_same_voice_law_wears() {
     );
 }
 
+/// THE ENDER CHEST'S OWN SHARED LAW (the autopush-289 round — javap
+/// the 26.2 EnderChestBlock the use walk the PLAYER'S OWN container
+/// answers: the useWithoutItem pc 41-125 the `getEnderChestInventory`
+/// call the PlayerEnderChestContainer the every cell binds — the ONE
+/// 27-slot inventory the EVERY ender chest reads, the per-cell store
+/// the map NEVER banks, the break the store never eats; the
+/// EnderChestBlockEntity$1 the ContainerOpenersCounter's own
+/// callback the SOUND lane wears — the onOpen the
+/// SoundEvents.ENDER_CHEST_OPEN getstatic the `pos + 0.5` dadd
+/// fold speaks, the onClose the ENDER_CHEST_CLOSE the same fold
+/// keeps [the volume the #45 0.5, the pitch the nextFloat * 0.1 +
+/// 0.9 band] — the ender its OWN block.ender_chest pair the chest
+/// family's block.chest events never wears).
+#[test]
+fn the_ender_chest_the_shared_inventory_law_wears() {
+    let wire_id_of = |name: &str| {
+        mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == name)
+            .expect("the item rides the wire") as i32
+    };
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let y = surface + 1;
+    let cell_a = (c + 2, y, c + 2);
+    let cell_b = (c - 3, y, c - 3);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(cell_a.0, cell_a.1, cell_a.2, crate::world::ENDER_CHEST);
+        w.set(cell_b.0, cell_b.1, cell_b.2, crate::world::ENDER_CHEST);
+    }
+    // THE OPEN'S OWN VOICE (the ender its OWN pair the counter lane
+    // speaks — the block.chest family the events never wear)
+    app.open_chest_for(cell_a);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the ender the chest seat arms"
+    );
+    assert_eq!(app.container_open_ender, true, "the shared flag arms");
+    assert!(
+        app.sounds.events[0].starts_with("block.ender_chest.open @"),
+        "the ender its own open voice wears: {}",
+        app.sounds.events[0]
+    );
+    // THE SHARED EDIT'S OWN RIDE (the grid the ONE store edits — the
+    // per-cell map the entry never banks)
+    app.chest_slots[4] = (wire_id_of("diamond"), 7);
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds.events[0].starts_with("block.ender_chest.close @"),
+        "the ender its own close voice wears: {}",
+        app.sounds.events[0]
+    );
+    assert_eq!(
+        app.ender_chest_store[4],
+        (wire_id_of("diamond"), 7),
+        "the close the shared store banks"
+    );
+    assert!(
+        app.container_stores.get(&cell_a).is_none(),
+        "the per-cell map the ender entry NEVER banks"
+    );
+    // THE EVERY-CELL BINDING'S OWN WALK (the far cell the SAME grid
+    // reads — the shared one the shared law serves)
+    app.sounds.events.clear();
+    app.open_chest_for(cell_b);
+    assert_eq!(
+        app.chest_slots[4],
+        (wire_id_of("diamond"), 7),
+        "the far cell the SAME stack wears"
+    );
+    assert!(
+        app.sounds.events[0].starts_with("block.ender_chest.open @"),
+        "the far cell the same voice wears: {}",
+        app.sounds.events[0]
+    );
+    // THE BREAK'S OWN SURVIVAL (the cell the store never eats — the
+    // vanilla's own law the obsidian the floor wears, the contents
+    // the shared inventory keeps)
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell_a.0, cell_a.1, cell_a.2, crate::world::AIR);
+    app.container_store_spilled(cell_a);
+    app.open_chest_for(cell_b);
+    assert_eq!(
+        app.chest_slots[4],
+        (wire_id_of("diamond"), 7),
+        "the break the store never eats"
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    // THE STALE VARIANT'S OWN BYPASS (a replaced cell the variant
+    // could carry — the LEFT-return silence the ender never wears,
+    // the own center the bypass keeps)
+    app.offline_world.as_mut().unwrap().set_variant(
+        cell_b.0,
+        cell_b.1,
+        cell_b.2,
+        (crate::world::CHEST_TYPE_LEFT << 2) | crate::world::CHEST_FACING_NORTH,
+    );
+    app.sounds.events.clear();
+    app.open_chest_for(cell_b);
+    assert!(
+        app.sounds.events[0].starts_with("block.ender_chest.open @"),
+        "the stale variant the bypass keeps: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    // THE PLAIN CHEST'S OWN CONTRAST (the per-cell law the family
+    // keeps — the shared route the plain kind never rides)
+    let plain = (c + 2, y, c - 3);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(plain.0, plain.1, plain.2, crate::world::CHEST);
+    app.sounds.events.clear();
+    app.open_chest_for(plain);
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the plain chest the family voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.chest_slots[0] = (wire_id_of("stone"), 3);
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(
+        app.container_stores.get(&plain).cloned(),
+        Some(vec![
+            (wire_id_of("stone"), 3),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0)
+        ]),
+        "the plain chest the per-cell store keeps"
+    );
+}
+
+/// THE ENDER BANK'S OWN RESTART RIDE (the autopush-289 round — the
+/// "ender" row the same file the fifth list wears: the flush the
+/// write banks, the FRESH APP the once-flag's parse the same stacks
+/// reopens — the vanilla's own playerdata law the restart outlives).
+#[test]
+fn the_ender_bank_the_restart_ride_wears() {
+    let wire_id_of = |name: &str| {
+        mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == name)
+            .expect("the item rides the wire") as i32
+    };
+    let dir = std::env::temp_dir().join(format!("mc2rs-enderbank-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("the temp dir");
+    let file = dir.join("enderbank-round.nbt");
+    let _ = std::fs::remove_file(&file);
+    let mut app = App::new(11);
+    app.enter_world();
+    app.container_stores_file = Some(file.clone());
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let y = app.spawn_y;
+    let cell = (c, y, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ENDER_CHEST);
+    app.open_chest_for(cell);
+    app.chest_slots[2] = (wire_id_of("diamond"), 5);
+    app.close_chest_container(ScreenKind::World);
+    assert!(file.exists(), "the flush the file write banks");
+    // THE FILE'S OWN ROW (the ender list the bare Items encoding
+    // wears — the diamond compound the shared grid's own slot speaks)
+    let bytes = std::fs::read(&file).expect("the banked file");
+    let (_, root) =
+        mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the file's own nbt");
+    let Some(mc_protocol::nbt::Nbt::List(items)) = root.get("ender") else {
+        panic!("the ender row the file wears");
+    };
+    assert_eq!(items.len(), 27, "the shared grid the 27 the cap speaks");
+    // THE RESTART'S OWN REOPEN (the fresh app the once-flag's parse
+    // the shared store banks — the same stack the every cell wears)
+    let mut fresh = App::new(11);
+    fresh.enter_world();
+    fresh.container_stores_file = Some(file.clone());
+    fresh.container_stores_load_once();
+    assert_eq!(
+        fresh.ender_chest_store[2],
+        (wire_id_of("diamond"), 5),
+        "the restart the shared store reopens"
+    );
+    // THE EVERY-CELL LAW THE RESTART KEEPS (the fresh cell the same
+    // grid reads — the shared one the boot law serves)
+    let cell2 = (c + 3, y, c + 3);
+    fresh
+        .offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell2.0, cell2.1, cell2.2, crate::world::ENDER_CHEST);
+    fresh.open_chest_for(cell2);
+    assert_eq!(
+        fresh.chest_slots[2],
+        (wire_id_of("diamond"), 5),
+        "the fresh boot the far cell the same stack wears"
+    );
+}
+
 /// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
 /// walk the OLD screen's removed() FIRST answers — the autopush-224
 /// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE
