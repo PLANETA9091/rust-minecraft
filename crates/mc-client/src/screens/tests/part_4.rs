@@ -27018,7 +27018,10 @@ fn the_creative_search_own_click_seat_wears() {
     );
     // THE LEFT EDGE'S OWN ZERO PARK + THE PAST-TAIL'S OWN LEN CLAMP
     // (the past-tail x the box band keeps — the inner right edge the
-    // 72px the 66px word's tail the clamp parks)
+    // 72px the 66px word's tail the clamp parks; the epoch stamp the
+    // fast re-press the double law the stale window pre-banks — the
+    // 271/274 precedent the same lesson speaks)
+    app.creative_search_last_click = Some((0, 0));
     assert!(
         app.on_creative_box_click(bx + 4, by + 4),
         "the left edge the TRUE wears"
@@ -27027,6 +27030,7 @@ fn the_creative_search_own_click_seat_wears() {
         app.creative_search_cursor, 0,
         "the left edge the zero parks"
     );
+    app.creative_search_last_click = Some((0, 0));
     assert!(
         app.on_creative_box_click(bx + 74, by + 4),
         "the past-tail the TRUE wears"
@@ -27037,6 +27041,7 @@ fn the_creative_search_own_click_seat_wears() {
     );
     // THE MID-STRING'S OWN SEAT (the 'e' left edge the seat 1 wears)
     let ex = bx + 4 + crate::gui::font_text_width("h");
+    app.creative_search_last_click = Some((0, 0));
     assert!(
         app.on_creative_box_click(ex, by + 4),
         "the mid click the TRUE wears"
@@ -27323,5 +27328,154 @@ fn the_creative_search_own_selection_seat_wears() {
     assert_eq!(
         app.creative_search_cursor, 0,
         "the reopen the cursor resets"
+    );
+}
+
+/// THE CREATIVE SEARCH BOX'S OWN DOUBLE CLICK (the 268 chat + the 271
+/// entry + the 274 debug laws the EditBox lastClickTime window the
+/// box wears — the <250ms second press the climb answers: the
+/// collapsed pair the WORD select, the live selection the WHOLE
+/// value, the stale window the plain seek re-wears, the outside
+/// press the stamp never banks, the reopen the stamp the reset
+/// retires).
+#[test]
+fn the_creative_search_own_double_click_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    // the drawn panel's rect (the render banks the origin the click
+    // lane reads — the (82, 6, 80x9) EditBox law the band speaks)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (px, py) = app.creative_panel;
+    let bx = px + 82;
+    let by = py + 6;
+    // THE FIRST CLICK'S OWN PLAIN SEEK (the fresh stamp the plain walk
+    // banks — the 'w' left edge the seat 6 wears, the anchor the
+    // collapse keeps)
+    let wx = bx + 4 + crate::gui::font_text_width("hello ");
+    assert!(
+        app.on_creative_box_click(wx, by + 4),
+        "the inside press the TRUE consumes"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the 'w' left edge the seat 6"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the plain seek the collapse"
+    );
+    assert!(
+        app.creative_search_last_click.is_some(),
+        "the plain click the stamp banks"
+    );
+    // THE SECOND CLICK'S OWN WORD (the <250ms window the collapsed
+    // pair the [6, 11) "world" run answers — the cursor the word end,
+    // the anchor the word start)
+    app.on_creative_box_click(wx, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the double the word end parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(6),
+        "the word the start banks"
+    );
+    // THE THIRD CLICK'S OWN ALL (the live selection the whole value
+    // the selectText(0, len) law answers)
+    app.on_creative_box_click(wx, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the all the cursor the len wears"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the all the zero anchor"
+    );
+    // THE FOURTH CLICK'S OWN ALL (the live pair the climb re-answers)
+    app.on_creative_box_click(wx, by + 4);
+    assert_eq!(app.creative_search_cursor, 11, "the re-all the len wears");
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the re-all the zero parks"
+    );
+    // THE STALE WINDOW'S OWN PLAIN SEEK (the backdated stamp the plain
+    // walk re-wears — the anchor the collapse, the seat the clicked x)
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    app.creative_search_last_click = Some((now.saturating_sub(400), 6));
+    app.on_creative_box_click(wx, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the stale the plain seat wears"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the stale the collapse keeps"
+    );
+    // THE MID-WORD'S OWN RUN (the 'e' seat the [0, 5) "hello" range
+    // the same law answers)
+    let ex = bx + 4 + crate::gui::font_text_width("h");
+    app.creative_search_last_click = Some((now.saturating_sub(400), 1));
+    app.on_creative_box_click(ex, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 1,
+        "the 'e' seat the plain wears"
+    );
+    app.on_creative_box_click(ex, by + 4);
+    assert_eq!(app.creative_search_cursor, 5, "the word the end parks");
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the word the start banks"
+    );
+    // THE SPACE SEAT'S OWN EMPTY WORD (the between-words click the
+    // collapsed pair the None anchor wears — the empty word the climb
+    // never opens)
+    let sx = bx + 4 + crate::gui::font_text_width("hello");
+    app.creative_search_last_click = Some((now.saturating_sub(400), 5));
+    app.on_creative_box_click(sx, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 5,
+        "the space seat the plain wears"
+    );
+    app.on_creative_box_click(sx, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 5,
+        "the empty word the end keeps"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the empty word the None anchor"
+    );
+    // THE OUTSIDE CLICK'S OWN KEEP (the band the walk never owns —
+    // the stamp never banks)
+    app.creative_search_last_click = None;
+    assert!(
+        !app.on_creative_box_click(bx + 40, by + 100),
+        "the outside the FALSE wears"
+    );
+    assert!(
+        app.creative_search_last_click.is_none(),
+        "the outside the stamp never banks"
+    );
+    // THE FRESH REOPEN'S OWN RESET (the stale stamp the re-created
+    // picker never inherits — the open walk the same law wears)
+    app.creative_search_last_click = Some((1, 1));
+    app.open_creative_picker();
+    assert_eq!(
+        app.creative_search_last_click, None,
+        "the reopen the stamp clears"
     );
 }

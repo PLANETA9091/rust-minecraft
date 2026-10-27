@@ -9347,6 +9347,11 @@ pub struct App {
     /// range the [min, max) pair speaks, the collapsed/absent seat
     /// the None keeps)
     pub creative_search_highlight: Option<usize>,
+    /// THE DOUBLE'S OWN STAMP (the EditBox lastClickTime law the 268
+    /// chat + the 271 entry + the 274 debug rounds the boxes wear —
+    /// the <250ms second press the climb answers, the fresh ctor the
+    /// None keeps, the re-open walk the same reset wears)
+    pub creative_search_last_click: Option<(u128, usize)>,
     /// THE SCROLL OFFSET (the `scrollOffs` field — 0..1 the
     /// subtractInputFromScroll clamp keeps, the wheel the delta /
     /// scrollableRows walk drives).
@@ -11756,6 +11761,7 @@ impl App {
             creative_search: String::new(),
             creative_search_cursor: 0,
             creative_search_highlight: None,
+            creative_search_last_click: None,
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
@@ -23441,6 +23447,10 @@ impl App {
         self.creative_search.clear();
         self.creative_search_cursor = 0;
         self.creative_search_highlight = None;
+        // THE DOUBLE'S OWN RESET (the setScreen walk builds a NEW
+        // picker every open — the stale stamp the re-creation the
+        // same reset retires — the 274 debug law the sibling speaks)
+        self.creative_search_last_click = None;
         self.creative_items = self.creative_source.clone();
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
@@ -23845,7 +23855,13 @@ impl App {
     /// answers; the rect the render's own (82, 6, 80x9) EditBox law
     /// keeps, the panel the render banks; the entry_click_seat law
     /// the display-less box the same x-band walk wears, the past-tail
-    /// the clamp parks, the left edge the zero keeps).
+    /// the clamp parks, the left edge the zero keeps). THE DOUBLE'S
+    /// OWN WINDOW the 268 chat + the 271 entry + the 274 debug laws
+    /// the box wears — the <250ms second press the climb answers: the
+    /// live anchor+cursor pair the WHOLE value answers, the collapsed
+    /// pair the WORD select the entry_word_at run answers, the stamp
+    /// the every consumed press re-banks, the stale window the plain
+    /// seek re-wears, the outside press the stamp never banks.
     pub fn on_creative_box_click(&mut self, mx: i32, my: i32) -> bool {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
@@ -23860,12 +23876,44 @@ impl App {
         let by = py + 6;
         let inside = mx >= bx && mx < bx + 80 && my >= by && my < by + 9;
         if inside {
-            // the caret's own x-band seek (the vanilla mouseClick the
-            // one-arg moveCursorTo walk serves) — the plain click the
-            // anchor collapses (the setHighlightPos(cursorPos) tail
-            // wears — the 266 chat + the 272 debug laws the box wears)
+            // the caret's own x-band seek the seat first computes (the
+            // vanilla mouseClick walk the window the same seat wears)
+            let seat = entry_click_seat(&self.creative_search, 0, mx, bx);
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis())
+                .unwrap_or(0);
+            if let Some((t, _)) = self.creative_search_last_click {
+                if now.saturating_sub(t) < 250 {
+                    let live = matches!(
+                        self.creative_search_highlight,
+                        Some(h) if h != self.creative_search_cursor
+                    );
+                    if live {
+                        // the whole value the climb answers (the 277
+                        // select-all law the same park wears)
+                        self.creative_search_cursor = self.creative_search.chars().count();
+                        self.creative_search_highlight = Some(0);
+                    } else {
+                        // the collapsed pair the WORD select the
+                        // entry_word_at run answers (the cursor the
+                        // word end, the anchor the word start, the
+                        // space seat the empty pair the None keeps)
+                        let (ws, we) = entry_word_at(&self.creative_search, seat);
+                        self.creative_search_cursor = we;
+                        self.creative_search_highlight = if ws == we { None } else { Some(ws) };
+                    }
+                    // the stamp the every consumed press re-banks
+                    self.creative_search_last_click = Some((now, seat));
+                    return true;
+                }
+            }
+            // the stale window the plain seek the collapse re-wears
+            // (the one-arg moveCursorTo the setHighlightPos(cursorPos)
+            // tail wears) — the consumed press the stamp banks
+            self.creative_search_last_click = Some((now, seat));
             self.creative_search_highlight = None;
-            self.creative_search_cursor = entry_click_seat(&self.creative_search, 0, mx, bx);
+            self.creative_search_cursor = seat;
         }
         inside
     }
