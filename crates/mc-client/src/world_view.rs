@@ -2641,6 +2641,11 @@ pub enum ContainerCommand {
     /// action — the server respawns the player and re-streams the
     /// position and the vitals).
     Respawn,
+    /// THE STATS SCREEN'S OWN WIRE (the vanilla open walk's
+    /// serverbound echo: the Client Command packet's REQUEST_STATS
+    /// action — the server the award-stats broadcast answers, the
+    /// decode the follow-up round serves).
+    RequestStats,
     /// THE INPUT WIRE (the vanilla `LocalPlayer.tick`'s own echo —
     /// `lastSentInput != input.keyPresses()` sends one
     /// ServerboundPlayerInputPacket): the seven booleans' record the

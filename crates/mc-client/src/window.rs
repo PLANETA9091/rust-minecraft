@@ -726,6 +726,13 @@ fn run_join(
                             // Command's PERFORM_RESPAWN action 0
                             session.client_command(0)
                         }
+                        crate::world_view::ContainerCommand::RequestStats => {
+                            // the stats screen's own wire: the Client
+                            // Command's REQUEST_STATS action 1 (the
+                            // server the award-stats broadcast answers —
+                            // the decode the follow-up round serves)
+                            session.client_command(1)
+                        }
                         crate::world_view::ContainerCommand::PlayerInput {
                             forward,
                             backward,

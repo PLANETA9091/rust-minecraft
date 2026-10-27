@@ -1242,6 +1242,108 @@ fn the_pause_destinations_own_screens_wear() {
     assert!(app.paused, "the stats Escape the pause re-wears");
 }
 
+/// THE STATS COUNTER'S OWN BANKS (the vanilla StatsCounter walk the
+/// client's own lanes feed — the tick the playTime speaks, the jump
+/// the jumpFromGround banks, the death the die verdict counts, the
+/// General tab the nonzero rows serves, the zero set the vanilla
+/// filter hides).
+#[test]
+fn the_stats_counter_own_banks_and_general_rows_wear() {
+    // THE FRESH SEAT (the default counter the zero set keeps — the
+    // rows the filter hides, the pending word the empty list wears)
+    let mut app = App::new(3);
+    assert_eq!(
+        app.stats,
+        crate::screens::StatsCounter::default(),
+        "the fresh session the zero set keeps"
+    );
+    assert!(
+        app.stats_general_rows().is_empty(),
+        "the zero set the rows hide"
+    );
+    // THE FORMAT LAWS (the vanilla formatter family — the time the
+    // h:mm the tick count speaks, the distance the m/km the cm wears)
+    assert_eq!(
+        crate::screens::stat_time_display(0),
+        "0:00",
+        "the zero the h:mm wears"
+    );
+    assert_eq!(
+        crate::screens::stat_time_display(72000),
+        "1:00",
+        "the hour the 72000 ticks speaks"
+    );
+    assert_eq!(
+        crate::screens::stat_time_display(73200),
+        "1:01",
+        "the minute sweep the 1200-tick fold wears"
+    );
+    assert_eq!(
+        crate::screens::stat_distance_display(50),
+        "0 m",
+        "the cm the m speaks"
+    );
+    assert_eq!(
+        crate::screens::stat_distance_display(12345),
+        "123 m",
+        "the hundredth the plain m answers"
+    );
+    assert_eq!(
+        crate::screens::stat_distance_display(123456),
+        "1.2 km",
+        "the km the decimal wears"
+    );
+    // THE WORLD'S OWN BANKS (the enter walk the body wears — the
+    // jump the jumpFromGround banks, the drain the update takes, the
+    // tick the time banks)
+    app.enter_world();
+    app.spawn_offline_body();
+    app.body.as_mut().unwrap().jump_from_ground();
+    app.update();
+    assert_eq!(app.stats.jump, 1, "the jump the drain takes");
+    assert_eq!(app.stats.play_time, 1, "the tick the time banks");
+    app.update();
+    assert_eq!(app.stats.play_time, 2, "the second tick the time banks");
+    // THE DEATH'S OWN BANK (the die verdict the once-per-death gate
+    // wears — the second hurt the dead body the bank never re-wears)
+    app.hurt_keyed(1000.0, "death.attack.generic");
+    assert_eq!(app.stats.deaths, 1, "the death the verdict banks");
+    app.hurt_keyed(1000.0, "death.attack.generic");
+    assert_eq!(app.stats.deaths, 1, "the dead body the bank never re-wears");
+    // THE ROWS' OWN SERVE (the nonzero filter the vanilla list wears
+    // — the values the formatter family speaks, the zeros the same
+    // filter hides; the jar lang the stat.minecraft.* words wears)
+    app.stats.walk_cm = 12345;
+    app.stats.sprint_cm = 123456;
+    app.stats.sneak_time = 60;
+    let rows = app.stats_general_rows();
+    assert_eq!(rows.len(), 6, "the nonzero set the rows serve");
+    assert_eq!(rows[0].1, "0:00", "the playTime the h:mm speaks");
+    assert_eq!(rows[1].1, "123 m", "the walk the m wears");
+    assert_eq!(rows[2].1, "1.2 km", "the sprint the km wears");
+    assert_eq!(rows[3].1, "0:00", "the sneak the h:mm speaks");
+    assert_eq!(rows[4].1, "1", "the jump the plain count speaks");
+    assert_eq!(rows[5].1, "1", "the deaths the plain count speaks");
+    assert_eq!(
+        rows[0].0, "Time Played",
+        "the jar lang the play_time word wears"
+    );
+    assert_eq!(
+        rows[1].0, "Distance Walked",
+        "the jar lang the walk word wears"
+    );
+    assert_eq!(
+        rows[2].0, "Distance Sprinted",
+        "the jar lang the sprint word wears"
+    );
+    assert_eq!(rows[3].0, "Sneak Time", "the jar lang the sneak word wears");
+    assert_eq!(rows[4].0, "Jumps", "the jar lang the jump word wears");
+    assert_eq!(
+        rows[5].0, "Number of Deaths",
+        "the jar lang the deaths word wears"
+    );
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`

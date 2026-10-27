@@ -224,6 +224,52 @@ fn entry_word_at(value: &str, seat: usize) -> (usize, usize) {
     }
 }
 
+/// THE STATS COUNTER'S OWN BANK (the vanilla StatsCounter walk — the
+/// custom stats the client's own lanes feed: the tick the playTime
+/// speaks, the jump the jumpFromGround banks, the death the die walk
+/// counts, the movement the checkMovementStatistics cm law wears).
+/// The fresh session the default keeps, the General tab the nonzero
+/// rows serves.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct StatsCounter {
+    /// `stat.playTime` — the in-world ticking ticks the update lane
+    /// banks (the pause the same freeze the day clock wears)
+    pub play_time: i64,
+    /// `stat.sneakTime` — the crouched ticks the same lane counts
+    pub sneak_time: i64,
+    /// `stat.walkOneCm` — the on-ground walk centimetres the body's
+    /// own cm law banks
+    pub walk_cm: i64,
+    /// `stat.sprintOneCm` — the sprint split the same lane wears
+    pub sprint_cm: i64,
+    /// `stat.swimOneCm` — the in-water split the same lane wears
+    pub swim_cm: i64,
+    /// `stat.jump` — the jumpFromGround events the tick drain takes
+    pub jump: i64,
+    /// `stat.deaths` — the die walk the actually_hurt verdict banks
+    pub deaths: i64,
+}
+
+/// THE TIME STAT'S OWN FORMAT (the vanilla TimeFormatter walk — the
+/// h:mm the tick count speaks: the hour the 72 000-tick day share,
+/// the minute the 1 200-tick sweep the %60 fold wears).
+pub fn stat_time_display(ticks: i64) -> String {
+    let h = ticks / (20 * 60 * 60);
+    let m = (ticks / (20 * 60)) % 60;
+    format!("{}:{:02}", h, m)
+}
+
+/// THE DISTANCE STAT'S OWN FORMAT (the vanilla DistanceFormatter walk
+/// — the cm the metre count speaks: the ≥100 000 cm the one-decimal
+/// km wears, the rest the plain m answers).
+pub fn stat_distance_display(cm: i64) -> String {
+    if cm >= 100_000 {
+        format!("{:.1} km", cm as f64 / 100_000.0)
+    } else {
+        format!("{} m", cm / 100)
+    }
+}
+
 fn load_splashes() -> Vec<String> {
     for prefix in [
         "assets-cache/jar",
@@ -9432,6 +9478,13 @@ pub struct App {
     /// serves, the three LoadingTabs the pending state the same
     /// content keeps).
     pub stats_tab: usize,
+    /// THE STATS COUNTER'S OWN BANK (the vanilla StatsCounter walk —
+    /// the custom stats the client's own lanes feed: the tick the
+    /// playTime speaks, the jump/death the awardStat lanes bank, the
+    /// movement the checkMovementStatistics cm law wears; the General
+    /// tab the nonzero rows serves, the reset the fresh session
+    /// keeps).
+    pub stats: StatsCounter,
     /// THE FOV'S OWN STORE (the `options.fov` OptionInstance the 26.2
     /// clinit banks — the IntRange(30, 110) the default 70 wears, the
     /// CAMERA.calculateFov fold the degrees the body's modifier
@@ -11809,6 +11862,7 @@ impl App {
             kb_selected: None,
             kb_scroll: 0.0,
             stats_tab: 0,
+            stats: StatsCounter::default(),
             fov: 70.0,
             fov_drag: false,
             volume: 1.0,
@@ -14058,6 +14112,22 @@ impl App {
                     // the server's own observation, the client folds
                     // nothing there)
                     exhaustion_cost = std::mem::take(&mut b.exhaustion_event);
+                    // THE STATS' OWN DRAIN (the vanilla awardStat lanes
+                    // the same walk serves — the jump the
+                    // jumpFromGround banks, the movement cm the
+                    // checkMovementStatistics split wears; the time
+                    // banks the in-world tick speaks, the pause the
+                    // same freeze the day clock wears)
+                    self.stats.jump += std::mem::take(&mut b.stat_jump_event) as i64;
+                    self.stats.walk_cm += std::mem::take(&mut b.stat_walk_cm);
+                    self.stats.sprint_cm += std::mem::take(&mut b.stat_sprint_cm);
+                    self.stats.swim_cm += std::mem::take(&mut b.stat_swim_cm);
+                    if !self.clock_paused {
+                        self.stats.play_time += 1;
+                        if b.want_crouch {
+                            self.stats.sneak_time += 1;
+                        }
+                    }
                 }
             }
             if let Some(dmg) = fall_event {
@@ -40688,7 +40758,19 @@ impl App {
                 // pause's lastScreen keeps, the paused flag the
                 // return walk re-serves)
                 "advancements" => self.open(ScreenKind::Advancements),
-                "stats" => self.open(ScreenKind::Stats),
+                "stats" => {
+                    // THE STATS SCREEN'S OWN WIRE (the vanilla open
+                    // walk's serverbound echo — the Client Command's
+                    // REQUEST_STATS action the networked session
+                    // spends, the offline world the local counter the
+                    // rows answer)
+                    if self.world_is_network {
+                        if let Some(sink) = self.live_clicks.as_ref() {
+                            let _ = sink.send(crate::world_view::ContainerCommand::RequestStats);
+                        }
+                    }
+                    self.open(ScreenKind::Stats);
+                }
                 // THE DESTINATION SCREENS' OWN DONE (the vanilla
                 // onClose law — the Done lambda the `onClose()` ride
                 // speaks: the lastScreen the setScreen walk returns,
@@ -62054,6 +62136,10 @@ impl App {
             .set_absorption(self.effects.absorption() - health_share);
         if self.health <= 0.0 && !self.dead {
             self.dead = true;
+            // THE STATS' OWN DEATH BANK (the vanilla die walk's
+            // awardStat(Stats.DEATHS) the same verdict wears — the
+            // once-per-death the !dead gate speaks)
+            self.stats.deaths += 1;
             // THE DEATH'S OWN MESSAGE (the vanilla die's CombatTracker
             // walk — the damage source's own lang key the death
             // message speaks, the %1$s the player's own name answers:
@@ -70495,6 +70581,57 @@ impl App {
     /// (min(400,w)-28)/3 law wears, the pending content the
     /// LoadingTab's band-center law serves, the Done the footer's
     /// 200w button answers.
+    /// THE GENERAL TAB'S OWN ROWS (the vanilla StatsScreen's
+    /// updateListStatistics walk — the custom stats the nonzero value
+    /// the list adds, the name the left seat the value the right edge
+    /// wears; the zero values the vanilla filter hides).
+    pub fn stats_general_rows(&self) -> Vec<(&'static str, String)> {
+        let mut rows: Vec<(&'static str, String)> = Vec::new();
+        if self.stats.play_time > 0 {
+            rows.push((
+                tr("stat.minecraft.play_time").unwrap_or("Time Played"),
+                stat_time_display(self.stats.play_time),
+            ));
+        }
+        if self.stats.walk_cm > 0 {
+            rows.push((
+                tr("stat.minecraft.walk_one_cm").unwrap_or("Distance Walked"),
+                stat_distance_display(self.stats.walk_cm),
+            ));
+        }
+        if self.stats.sprint_cm > 0 {
+            rows.push((
+                tr("stat.minecraft.sprint_one_cm").unwrap_or("Distance Sprinted"),
+                stat_distance_display(self.stats.sprint_cm),
+            ));
+        }
+        if self.stats.swim_cm > 0 {
+            rows.push((
+                tr("stat.minecraft.swim_one_cm").unwrap_or("Distance Swum"),
+                stat_distance_display(self.stats.swim_cm),
+            ));
+        }
+        if self.stats.sneak_time > 0 {
+            rows.push((
+                tr("stat.minecraft.sneak_time").unwrap_or("Sneak Time"),
+                stat_time_display(self.stats.sneak_time),
+            ));
+        }
+        if self.stats.jump > 0 {
+            rows.push((
+                tr("stat.minecraft.jump").unwrap_or("Jumps"),
+                self.stats.jump.to_string(),
+            ));
+        }
+        if self.stats.deaths > 0 {
+            rows.push((
+                tr("stat.minecraft.deaths").unwrap_or("Number of Deaths"),
+                self.stats.deaths.to_string(),
+            ));
+        }
+        rows
+    }
+
     fn render_stats(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         for y in 0..h {
             let t = y as f32 / h.max(1) as f32;
@@ -70552,20 +70689,38 @@ impl App {
                 can_change_value: false,
             });
         }
-        // THE PENDING'S OWN SEAT (the LoadingTab law — the
-        // LoadingDotsWidget the `multiplayer.downloadingStats` word
-        // wears, the LinearLayout the paddingBottom-30 cell keeps, the
-        // alignInRectangle(0.5, 0.5) the tab-footer band centers: the
-        // 320x180 frame the 24..147 band the 39-tall layout the y-66
-        // top speaks [round((123-39)/2) = 42])
-        g.text_centered(
-            a,
-            w / 2,
-            24 + (h - 33 - 24 - (9 + 30)) / 2,
-            tr("multiplayer.downloadingStats").unwrap_or("Retrieving statistics..."),
-            WHITE,
-            true,
-        );
+        // THE GENERAL TAB'S OWN ROWS (the vanilla updateListStatistics
+        // walk — the nonzero stats the list serves, the name the left
+        // seat the value the right edge wears, the zero set the
+        // vanilla filter hides; the empty list the pending word keeps
+        // — the Items/Mobs tabs the same pending law the follow-up
+        // rounds answer)
+        let rows = self.stats_general_rows();
+        if self.stats_tab == 0 && !rows.is_empty() {
+            let row_h = 12;
+            let y0 = 28;
+            for (i, (name, value)) in rows.iter().enumerate() {
+                let y = y0 + i as i32 * row_h;
+                g.text(a, x0 + 2, y, name, WHITE, true);
+                let vw = g.text_width(value);
+                g.text(a, x0 + total - 2 - vw, y, value, WHITE, true);
+            }
+        } else {
+            // THE PENDING'S OWN SEAT (the LoadingTab law — the
+            // LoadingDotsWidget the `multiplayer.downloadingStats` word
+            // wears, the LinearLayout the paddingBottom-30 cell keeps, the
+            // alignInRectangle(0.5, 0.5) the tab-footer band centers: the
+            // 320x180 frame the 24..147 band the 39-tall layout the y-66
+            // top speaks [round((123-39)/2) = 42])
+            g.text_centered(
+                a,
+                w / 2,
+                24 + (h - 33 - 24 - (9 + 30)) / 2,
+                tr("multiplayer.downloadingStats").unwrap_or("Retrieving statistics..."),
+                WHITE,
+                true,
+            );
+        }
         // THE FOOTER'S OWN DONE (the addToFooter Button — the same
         // 200w h-26 seat the advancements footer wears)
         self.buttons.push(Button::new(

@@ -1741,6 +1741,14 @@ pub struct PlayerBody {
     /// the client folds nothing). The body never clears it, the reader
     /// does.
     pub exhaustion_event: f32,
+    /// THE STATS' OWN EVENT BANKS (the vanilla StatsCounter walk the
+    /// same lanes feed — the jump the jumpFromGround banks, the
+    /// movement the checkMovementStatistics cm law wears). The body
+    /// never clears them, the App's tick drain takes.
+    pub stat_jump_event: u32,
+    pub stat_walk_cm: i64,
+    pub stat_sprint_cm: i64,
+    pub stat_swim_cm: i64,
     // sendPosition's bookkeeping
     position_reminder: i32,
     x_last: f64,
@@ -1860,6 +1868,10 @@ impl PlayerBody {
             supporting_pos: None,
             fall_event: None,
             exhaustion_event: 0.0,
+            stat_jump_event: 0,
+            stat_walk_cm: 0,
+            stat_sprint_cm: 0,
+            stat_swim_cm: 0,
             position_reminder: 0,
             x_last: x,
             y_last: y,
@@ -1925,6 +1937,10 @@ impl PlayerBody {
         } else {
             crate::food::EXHAUSTION_JUMP
         };
+        // THE STATS' OWN JUMP BANK (the vanilla Player.jumpFromGround's
+        // awardStat(Stats.JUMP) walk the same method the exhaustion
+        // wears — the event the App's tick drain takes)
+        self.stat_jump_event += 1;
         self.no_jump_delay = JUMP_REPEAT_TICKS;
     }
 
@@ -3198,11 +3214,22 @@ impl PlayerBody {
         let cm = (horizontal * 100.0).round() as i32;
         if cm > 0 {
             if self.touches_water(world) {
-                self.exhaustion_event +=
-                    crate::food::EXHAUSTION_SWIM * cm as f32 * 0.01;
+                self.exhaustion_event += crate::food::EXHAUSTION_SWIM * cm as f32 * 0.01;
+                // THE STATS' OWN SWIM BANK (the vanilla
+                // checkMovementStatistics's swim split the same cm
+                // law wears)
+                self.stat_swim_cm += cm as i64;
             } else if self.on_ground && self.sprinting {
-                self.exhaustion_event +=
-                    crate::food::EXHAUSTION_SPRINT * cm as f32 * 0.01;
+                self.exhaustion_event += crate::food::EXHAUSTION_SPRINT * cm as f32 * 0.01;
+                // THE STATS' OWN SPRINT BANK (the vanilla's sprint
+                // split the same lane wears)
+                self.stat_sprint_cm += cm as i64;
+            } else if self.on_ground {
+                // THE STATS' OWN WALK BANK (the vanilla's walk split —
+                // the on-ground horizontal distance the same cm law
+                // counts, the exhaustion the walk lane's own 0.0 never
+                // banks)
+                self.stat_walk_cm += cm as i64;
             }
             // the WALK and CROUCH lanes' EXHAUSTION_WALK /
             // EXHAUSTION_CROUCH — the modern law's own 0.0, the
@@ -6141,6 +6168,53 @@ mod tests {
         b.sprinting = true;
         b.tick(&w, false);
         assert_eq!(b.exhaustion_event, crate::food::EXHAUSTION_SPRINT_JUMP);
+    }
+
+    /// THE STATS' OWN BANKS (the vanilla StatsCounter walk the same
+    /// lanes feed — the jump the jumpFromGround banks, the walk/sprint
+    /// cm the checkMovementStatistics split wears; the App's tick
+    /// drain the values take).
+    #[test]
+    fn the_movement_banks_the_stat_cm_split_and_the_jump_event() {
+        let w = flat_world();
+        // the plain walk: the on-ground forward walk the walk cm banks
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        b.forward = 1.0;
+        for _ in 0..10 {
+            b.tick(&w, false);
+        }
+        assert!(b.stat_walk_cm > 0, "the walk the cm banks");
+        assert_eq!(
+            b.stat_sprint_cm, 0,
+            "the plain walk the sprint lane never banks"
+        );
+        assert_eq!(b.stat_swim_cm, 0, "the dry walk the swim lane never banks");
+        assert_eq!(b.stat_jump_event, 0, "the walk the jump never banks");
+        // the sprint split: the held sprint the sprint cm banks (the
+        // walk lane the same distance never double-wears)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        b.sprinting = true;
+        b.forward = 1.0;
+        for _ in 0..10 {
+            b.tick(&w, false);
+        }
+        assert!(b.stat_sprint_cm > 0, "the sprint the cm banks");
+        assert_eq!(b.stat_walk_cm, 0, "the sprint lane the walk never wears");
+        // the jump event: the jumpFromGround the event banks (the
+        // exhaustion the same method wears)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        b.jumping = true;
+        b.tick(&w, false);
+        assert_eq!(b.stat_jump_event, 1, "the jump the event banks");
     }
 
     /// THE FOV EFFECT SCALE'S OWN LERP (the 26.2 tail the
