@@ -42518,6 +42518,53 @@ impl App {
         self.open(ScreenKind::Connect);
     }
 
+    /// THE SERVERS LIST'S OWN ARROW RIDE (javap 26.2 the
+    /// ServerSelectionList$OnlineServerEntry.keyPressed walk the base
+    /// AbstractSelectionList ride serves — the Up/Down keys the list's
+    /// own order steps, the selection the neighbouring row's seat
+    /// wears, the last row the isDown `idx < size-1` gate the boundary
+    /// keeps, the first row the isUp `idx > 0` gate the same refusal
+    /// speaks, the empty list the no-row walk never arms).
+    pub fn on_servers_arrow(&mut self, down: bool) {
+        if self.servers.is_empty() {
+            return;
+        }
+        if down {
+            if self.selected_server + 1 < self.servers.len() {
+                self.selected_server += 1;
+            }
+        } else {
+            self.selected_server = self.selected_server.saturating_sub(1);
+        }
+    }
+
+    /// THE SERVERS LIST'S OWN SHIFT SWAP (javap 26.2 the
+    /// OnlineServerEntry.keyPressed walk the hasShiftDown branch serves
+    /// — the shift+Down the next seat the selected row trades, the
+    /// shift+Up the previous one the same swap answers, the edge rows
+    /// the boundary gates the no-op keeps [the last row the
+    /// `idx < size-1` gate, the first the `idx > 0` gate], the trade
+    /// the ServerList.swap walk the `save()` call rides — the file the
+    /// mutation rewrites, the rows the RESTART OUTLIVES, the selection
+    /// the moved row's own new seat follows — the vanilla selected
+    /// entry the same data the new index wears).
+    pub fn on_servers_swap(&mut self, down: bool) {
+        let idx = self.selected_server;
+        if down {
+            if idx + 1 < self.servers.len() {
+                self.servers.swap(idx, idx + 1);
+                self.selected_server = idx + 1;
+                self.servers_file_save();
+            }
+        } else {
+            if idx > 0 && idx < self.servers.len() {
+                self.servers.swap(idx, idx - 1);
+                self.selected_server = idx - 1;
+                self.servers_file_save();
+            }
+        }
+    }
+
     /// Feed one finished join back into the UI (vanilla flow: a login
     /// disconnect, config kick or play-state kick lands on the
     /// DisconnectedScreen with the flattened reason; a Loaded outcome means

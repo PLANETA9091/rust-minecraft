@@ -25713,6 +25713,127 @@ fn the_servers_list_own_persistence_file_round_wears() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+// THE SERVERS LIST'S OWN KEYBOARD RIDE (javap 26.2 the
+// ServerSelectionList$OnlineServerEntry.keyPressed walk — the Up/Down
+// keys the base list's moveSelection ride the selection steps, the
+// SHIFT the hasShiftDown branch the same keys the swap arms [the
+// swap(idx, idx±1) walk the ServerList.save() call rides, the
+// selection the moved row's own new seat follows], the edge rows the
+// boundary gates the no-op keeps, the isSelection() ask the Enter
+// press the selected row's join answers — the placeholder row the
+// no-host guard refuses, the real host the login request banks)
+#[test]
+fn the_servers_list_own_keyboard_ride_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_servers_kbd_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("servers.dat");
+
+    let mut app = App::new(3);
+    app.servers_file = Some(path.clone());
+    app.open(ScreenKind::Servers);
+    assert_eq!(app.servers.len(), 2, "the fresh ctor the demo rows keeps");
+    assert_eq!(app.selected_server, 0, "the fresh seat the first row wears");
+
+    // THE ARROW'S OWN STEP (the Down the selection steps, the second
+    // Down the LAST row the boundary keeps — the two rows the list
+    // holds, the past-end the refusal wears)
+    app.on_servers_arrow(true);
+    assert_eq!(app.selected_server, 1, "the Down the second row wears");
+    app.on_servers_arrow(true);
+    assert_eq!(
+        app.selected_server, 1,
+        "the past-end Down the boundary keeps"
+    );
+
+    // THE SWAP'S OWN RIDE (the shift+Up the selected row the previous
+    // seat trades — the hypixel row the first seat wears, the
+    // selection the moved row's own new seat follows, the file the
+    // save rides)
+    app.on_servers_swap(false);
+    assert_eq!(
+        app.servers[0].name, "hypixel.net",
+        "the swap the traded row the first seat wears"
+    );
+    assert_eq!(
+        app.servers[1].name, "mc2rs sandbox",
+        "the placeholder row the second seat keeps"
+    );
+    assert_eq!(
+        app.selected_server, 0,
+        "the selection the moved row's new seat follows"
+    );
+    let text = std::fs::read_to_string(&path).expect("the swap the file saves");
+    let rows: Vec<ServerEntry> = serde_json::from_str(&text).expect("the JSON the store encodes");
+    assert_eq!(
+        rows[0].name, "hypixel.net",
+        "the file the swapped order banks"
+    );
+
+    // THE FIRST ROW'S OWN UP-BOUNDARY (the shift+Up the first row the
+    // no-op keeps — the order the file the same wears)
+    app.on_servers_swap(false);
+    assert_eq!(
+        app.servers[0].name, "hypixel.net",
+        "the first row the Up-boundary keeps"
+    );
+    assert_eq!(app.selected_server, 0, "the seat the boundary never moves");
+
+    // THE SWAP BACK'S OWN RIDE (the shift+Down the traded row the
+    // second seat returns, the selection follows — the vanilla order
+    // the list restores, the file the rewrite wears)
+    app.on_servers_swap(true);
+    assert_eq!(
+        app.servers[0].name, "mc2rs sandbox",
+        "the Down-swap the original order restores"
+    );
+    assert_eq!(app.selected_server, 1, "the seat the return rides");
+
+    // THE SECOND ROW'S OWN DOWN-BOUNDARY (the shift+Down the last row
+    // the no-op keeps)
+    app.on_servers_swap(true);
+    assert_eq!(
+        app.servers[0].name, "mc2rs sandbox",
+        "the last row the Down-boundary keeps"
+    );
+    assert_eq!(app.selected_server, 1, "the seat the boundary keeps");
+
+    // THE SELECTION'S OWN ARROW RETURN (the Up the first row's seat
+    // speaks, the past-top the boundary keeps)
+    app.on_servers_arrow(false);
+    assert_eq!(app.selected_server, 0, "the Up the first row wears");
+    app.on_servers_arrow(false);
+    assert_eq!(app.selected_server, 0, "the past-top Up the boundary keeps");
+
+    // THE ENTER'S OWN JOIN WALK (the selected placeholder row the
+    // no-host guard refuses — the screen the list keeps, the login
+    // log the request never banks; the real host's row the same walk
+    // the Connect screen opens, the login request the entry banks)
+    app.join_selected_server();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Servers,
+        "the placeholder row the join refuses"
+    );
+    assert!(
+        app.login_requests.is_empty(),
+        "the refused join the log keeps clean"
+    );
+    app.selected_server = 1;
+    app.join_selected_server();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Connect,
+        "the real host the join opens"
+    );
+    assert_eq!(app.login_requests.len(), 1, "the join the request banks");
+    assert_eq!(
+        app.login_requests[0].entry, 1,
+        "the request the selected row's entry wears"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 // THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen.keyPressed walk
 // the 258 case answers — the EditServer the two-box seat the
 // name/address cycle speaks, the DirectConnect the one-box seat the

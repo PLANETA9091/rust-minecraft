@@ -2393,6 +2393,38 @@ pub fn run_gui_app(
                 }
             }
         }
+        // THE SERVERS LIST'S OWN KEYBOARD RIDE (javap 26.2 the
+        // ServerSelectionList$OnlineServerEntry.keyPressed walk — the
+        // `isSelection()` ask the Enter/Space press answers: the
+        // join() call the selected row's own seat serves, the
+        // placeholder row the no-host guard the same join refuses;
+        // the Up/Down keys the base list's moveSelection ride the
+        // selection steps, the SHIFT the hasShiftDown branch the same
+        // keys the swap arms — the swap(idx, idx±1) walk the
+        // ServerList.save() call rides, the edge rows the boundary
+        // gates the no-op keeps, the selection the moved row's own new
+        // seat follows)
+        if app.screen == crate::screens::ScreenKind::Servers {
+            if window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No)
+                || window.is_key_pressed(Key::Space, minifb::KeyRepeat::No)
+            {
+                app.join_selected_server();
+            }
+            if window.is_key_pressed(Key::Up, minifb::KeyRepeat::No) {
+                if window.is_key_down(Key::LeftShift) {
+                    app.on_servers_swap(false);
+                } else {
+                    app.on_servers_arrow(false);
+                }
+            }
+            if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
+                if window.is_key_down(Key::LeftShift) {
+                    app.on_servers_swap(true);
+                } else {
+                    app.on_servers_arrow(true);
+                }
+            }
+        }
         // THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen
         // keyPressed walk's 262-265 cases the ArrowNavigation events
         // serve — the LEFT/RIGHT/UP/DOWN keys the geometric walk the
