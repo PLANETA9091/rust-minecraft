@@ -10444,6 +10444,12 @@ pub struct App {
     /// plain seek re-wears; the fresh ctor the None keeps, the re-open
     /// walk the same reset wears).
     pub debug_search_last_click: Option<(u128, usize)>,
+    /// THE DEBUG BOX'S OWN WINDOW (the 267 chat law the EditBox
+    /// displayPos keeps — the visible window the caret's own seat
+    /// scrolls: the scrolled-out tail the clip answers, the same
+    /// `display_window_sync` walk the chat + the entry + the picker
+    /// boxes wear).
+    pub debug_search_display: usize,
     /// THE DEBUG OPTIONS' OWN FOCUS SEAT (the vanilla `getFocused` law
     /// the button widgets wear — the preset pair + the entry pills the
     /// Tab walk's own store banks, the BOX the `debug_search_focus`
@@ -12121,6 +12127,7 @@ impl App {
             debug_search_highlight: None,
             debug_search_drag_armed: false,
             debug_search_last_click: None,
+            debug_search_display: 0,
             debug_focus: None,
             debug_box_rect: (0, 0, 0, 0),
             debug_profile: Some(false),
@@ -22423,6 +22430,7 @@ impl App {
         if kind == ScreenKind::DebugOptions {
             self.debug_search.clear();
             self.debug_search_cursor = 0;
+            self.debug_search_display = 0;
             self.debug_search_highlight = None;
             self.debug_search_drag_armed = false;
             // THE DOUBLE STAMP'S OWN FRESH SEAT (the re-created screen
@@ -28696,33 +28704,54 @@ impl App {
             let hint = tr("debug.options.search").unwrap_or("Search...");
             g.text(a, bx + 4, 26, &hint, [0.55, 0.55, 0.55], false);
         } else {
+            // THE VISIBLE WINDOW'S OWN CLIP (the 267 chat law the
+            // EditBox.render walk wears — the `value.substring
+            // (displayPos)` the display offset skips, the
+            // `plainSubstrByWidth` the visible window the inner width
+            // the box's -8 padding speaks, the scrolled-out tail the
+            // clip answers)
+            let inner = box_w - 8;
+            let visible_full: String = self
+                .debug_search
+                .chars()
+                .skip(self.debug_search_display)
+                .collect();
+            let vis_len = caret_char_index_at(&visible_full, inner);
+            let drawn: String = visible_full.chars().take(vis_len).collect();
             // THE SELECTION'S OWN BAND (the EditBox.render's highlight
             // walk the 266 law the box wears — the min/max(cursor,
             // anchor) the prefix widths the 0xFF808080 gray fill the
             // text's y-1..y+9 band draws, the collapsed/absent seat
-            // the band never wears)
+            // the band never wears; the display offset the relative
+            // window the band the vis_len clamp serves)
             if let Some(anchor) = self.debug_search_highlight {
                 if anchor != self.debug_search_cursor {
                     let lo = anchor.min(self.debug_search_cursor);
                     let hi = anchor.max(self.debug_search_cursor);
-                    let pre: String = self.debug_search.chars().take(lo).collect();
-                    let sel: String = self.debug_search.chars().take(hi).collect();
-                    let x1 = bx + 4 + g.text_width(&pre);
-                    let x2 = bx + 4 + g.text_width(&sel);
-                    g.fill(x1, 25, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                    let vlo = lo.saturating_sub(self.debug_search_display).min(vis_len);
+                    let vhi = hi.saturating_sub(self.debug_search_display).min(vis_len);
+                    if vhi > vlo {
+                        let pre: String = drawn.chars().take(vlo).collect();
+                        let sel: String = drawn.chars().take(vhi).collect();
+                        let x1 = bx + 4 + g.text_width(&pre);
+                        let x2 = bx + 4 + g.text_width(&sel);
+                        g.fill(x1, 25, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                    }
                 }
             }
-            g.text(a, bx + 4, 26, &self.debug_search, WHITE, false);
+            g.text(a, bx + 4, 26, &drawn, WHITE, false);
             if (self.frame / 6) % 2 == 0 && self.debug_search_focus {
                 // THE CARET'S OWN PREFIX (the cursorPos the
                 // trimStringToWidth law the before-seat chars the band
                 // width wears — the mid-string caret the seat speaks,
-                // the end seat the whole word the same width keeps)
-                let prefix: String = self
-                    .debug_search
-                    .chars()
-                    .take(self.debug_search_cursor)
-                    .collect();
+                // the end seat the whole word the same width keeps; the
+                // display offset the relative seat the vis_len clamp
+                // parks)
+                let k = self
+                    .debug_search_cursor
+                    .saturating_sub(self.debug_search_display)
+                    .min(vis_len);
+                let prefix: String = drawn.chars().take(k).collect();
                 let tw = g.text_width(&prefix);
                 g.fill(bx + 4 + tw + 1, 26, 1, 8, [1.0, 1.0, 1.0, 1.0]);
             }
@@ -36921,6 +36950,25 @@ impl App {
         true
     }
 
+    /// THE DEBUG BOX'S OWN WINDOW SYNC (the same `setCursorPos` law
+    /// the chat + the entry + the picker boxes wear — the inner width
+    /// the banked rect's `-8` padding the render answers, the fresh
+    /// ctor the un-banked rect the `(gui_w / 3).max(80) - 8` fallback
+    /// keeps [the render's own row-width law]).
+    fn debug_search_window_sync(&mut self) {
+        let inner = if self.debug_box_rect.2 > 8 {
+            self.debug_box_rect.2 - 8
+        } else {
+            (320 / 3).max(80) - 8
+        };
+        display_window_sync(
+            &self.debug_search,
+            &mut self.debug_search_display,
+            self.debug_search_cursor,
+            inner,
+        );
+    }
+
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
     /// lambda serves — the charTyped lane the focused box answers,
     /// the `updateSearch` rebuild the typed word wears, the max
@@ -36950,6 +36998,7 @@ impl App {
             // separate walk serves)
             self.debug_scroll = 0.0;
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed Backspace arm —
@@ -36962,6 +37011,7 @@ impl App {
         }
         // the live range the deleteText's own first step answers
         if self.debug_delete_selection() {
+            self.debug_search_window_sync();
             return;
         }
         if self.debug_search_cursor > 0 {
@@ -36971,6 +37021,7 @@ impl App {
             self.debug_search_cursor -= 1;
             self.debug_scroll = 0.0;
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN DELETE (the EditBox keyPressed's 261 arm
@@ -36984,6 +37035,7 @@ impl App {
         }
         // the live range the deleteText's own first step answers
         if self.debug_delete_selection() {
+            self.debug_search_window_sync();
             return;
         }
         let len = self.debug_search.chars().count();
@@ -36993,6 +37045,7 @@ impl App {
             self.debug_search.replace_range(start..end, "");
             self.debug_scroll = 0.0;
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
@@ -37010,6 +37063,7 @@ impl App {
         }
         // the live range the deleteWords' own first step answers
         if self.debug_delete_selection() {
+            self.debug_search_window_sync();
             return;
         }
         let cursor = self.debug_search_cursor;
@@ -37021,6 +37075,7 @@ impl App {
             self.debug_search_cursor = bound.min(cursor);
             self.debug_scroll = 0.0;
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN CTRL HOP (the EditBox keyPressed's
@@ -37039,6 +37094,7 @@ impl App {
         self.debug_search_highlight = None;
         self.debug_search_cursor =
             word_boundary(&self.debug_search, self.debug_search_cursor, !left);
+        self.debug_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN ARROWS (the EditBox keyPressed's 262/263
@@ -37060,6 +37116,7 @@ impl App {
         } else {
             self.debug_search_cursor = (self.debug_search_cursor + 1).min(len);
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN PARKS (the tableswitch's 268/269 the
@@ -37078,6 +37135,7 @@ impl App {
         } else {
             0
         };
+        self.debug_search_window_sync();
     }
 
     /// THE SELECTION'S OWN SHIFT RIDE (the 262/263 arms the no-ctrl
@@ -37101,6 +37159,7 @@ impl App {
             // keeps — the first shift step the range opens)
             self.debug_search_highlight = Some(prev);
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SELECTION'S OWN SHIFT PARK (the 268/269 arms the
@@ -37120,6 +37179,7 @@ impl App {
         if self.debug_search_highlight.is_none() {
             self.debug_search_highlight = Some(prev);
         }
+        self.debug_search_window_sync();
     }
 
     /// THE SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm the
@@ -37132,6 +37192,7 @@ impl App {
         }
         self.debug_search_cursor = self.debug_search.chars().count();
         self.debug_search_highlight = Some(0);
+        self.debug_search_window_sync();
     }
 
     /// THE DIRECT CONNECTION'S OWN CHARS (the EditBox the
@@ -38360,9 +38421,9 @@ impl App {
             // THE SEAT'S OWN SEEK (the vanilla mouseClick the one-arg
             // moveCursorTo walk serves — the x-band the prefix widths
             // answers, the past-tail the clamp parks, the left edge
-            // the zero keeps; the entry_click_seat law the
-            // display-less box the same walk wears)
-            let seat = entry_click_seat(&self.debug_search, 0, mx, bx);
+            // the zero keeps; the entry_click_seat law the scrolled
+            // window's own display the same walk wears)
+            let seat = entry_click_seat(&self.debug_search, self.debug_search_display, mx, bx);
             // THE DOUBLE'S OWN WINDOW (the 268 chat + the 270/271 entry
             // laws the EditBox lastClickTime walk wears — the <250ms
             // second click the climb answers: the live selection the
@@ -38392,6 +38453,7 @@ impl App {
                         self.debug_search_highlight = if ws == we { None } else { Some(ws) };
                     }
                     self.debug_search_last_click = Some((now, seat));
+                    self.debug_search_window_sync();
                     return true;
                 }
             }
@@ -38402,6 +38464,7 @@ impl App {
             self.debug_search_last_click = Some((now, seat));
             self.debug_search_highlight = None;
             self.debug_search_cursor = seat;
+            self.debug_search_window_sync();
         }
         inside
     }
@@ -38426,13 +38489,14 @@ impl App {
             return false; // the outside click the band never owns
         }
         self.debug_search_focus = true;
-        let seat = entry_click_seat(&self.debug_search, 0, mx, bx);
+        let seat = entry_click_seat(&self.debug_search, self.debug_search_display, mx, bx);
         if self.debug_search_highlight.is_none() {
             // the pre-click cursor the anchor banks (the two-arg
             // moveCursorTo the highlightPos law keeps)
             self.debug_search_highlight = Some(self.debug_search_cursor);
         }
         self.debug_search_cursor = seat;
+        self.debug_search_window_sync();
         true
     }
 
@@ -38451,13 +38515,14 @@ impl App {
         if my < 20 || my >= 40 {
             return; // the outside row the drag never owns
         }
-        let seat = entry_click_seat(&self.debug_search, 0, mx, bx);
+        let seat = entry_click_seat(&self.debug_search, self.debug_search_display, mx, bx);
         if self.debug_search_highlight.is_none() {
             // the press seat the anchor banks (the vanilla drag the
             // first-click place the range opens)
             self.debug_search_highlight = Some(self.debug_search_cursor);
         }
         self.debug_search_cursor = seat;
+        self.debug_search_window_sync();
     }
 
     /// THE FILTER'S OWN LAW (the updateSearch `path.contains(query)`

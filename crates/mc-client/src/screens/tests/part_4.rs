@@ -27440,6 +27440,88 @@ fn the_debug_box_own_double_click_wears() {
     );
 }
 
+/// THE DEBUG SEARCH BOX'S OWN WINDOW CLIP (the 267 chat law the
+/// EditBox.render walk the debug options box wears — the `value
+/// .substring(displayPos)` the display offset skips, the visible
+/// window the inner width the box's -8 padding speaks: the short
+/// line the zero keeps, the long line the caret's tail the window
+/// pins, the Home the head returns, the End the tail re-pins, the
+/// reopen the reset keeps).
+#[test]
+fn the_debug_search_box_the_window_clip_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+    assert_eq!(app.debug_search_display, 0, "the fresh open the zero wears");
+    // THE SHORT LINE'S OWN ZERO (the in-window query the offset the
+    // zero keeps)
+    for c in "hello".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search_display, 0, "the short line the zero keeps");
+    // THE LONG LINE'S OWN PIN (the 50-cap query the window the tail
+    // wears — the scrolled-out head the clip answers, the caret the
+    // in-window seat keeps)
+    for c in "a".repeat(45).chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search_cursor, 50, "the cap the seat keeps");
+    assert!(
+        app.debug_search_display > 0,
+        "the long line the window pins"
+    );
+    let visible: String = app
+        .debug_search
+        .chars()
+        .skip(app.debug_search_display)
+        .collect();
+    // the inner width the 640-wide gui's box speaks (the row-width
+    // law the render wears — (640/3).max(80) - 8)
+    let inner = (640 / 3).max(80) - 8;
+    let vis_len = crate::screens::caret_char_index_at(&visible, inner as i32);
+    assert!(
+        app.debug_search_display + vis_len >= 50,
+        "the caret the in-window seat keeps"
+    );
+    // THE HOME'S OWN RETURN (the zero park the window the head wears)
+    app.on_debug_options_caret_home_end(false);
+    assert_eq!(app.debug_search_display, 0, "the Home the window returns");
+    // THE END'S OWN PIN (the len park the window the tail re-wears)
+    app.on_debug_options_caret_home_end(true);
+    assert!(app.debug_search_display > 0, "the End the window pins");
+    // THE BACKSPACE'S OWN TRACK (the tail char the removal the caret
+    // pulls — the window the caret the same law follows)
+    app.on_debug_options_backspace();
+    assert_eq!(app.debug_search_cursor, 49, "the bite the seat pulls");
+    let visible: String = app
+        .debug_search
+        .chars()
+        .skip(app.debug_search_display)
+        .collect();
+    let vis_len = crate::screens::caret_char_index_at(&visible, inner as i32);
+    assert!(
+        app.debug_search_display + vis_len >= 49,
+        "the caret the tracked seat keeps"
+    );
+    // THE CLICK'S OWN WINDOW SEAT (the scrolled window the left edge
+    // the display's own head wears)
+    app.debug_search_last_click = Some((0, 0));
+    let bx = 640 / 2 - ((640 / 3).max(80)) / 2;
+    assert!(
+        app.on_debug_options_box_click(bx + 4, 25, 640),
+        "the left edge the TRUE wears"
+    );
+    assert!(
+        app.debug_search_cursor >= app.debug_search_display,
+        "the click the in-window seat wears"
+    );
+    // THE REOPEN'S OWN RESET (the away lane the clear the zero window
+    // wears — the stale pin the re-creation never inherits)
+    app.on_debug_options_key(); // the close arm wears
+    app.on_debug_options_key(); // the fresh open the second tap wears
+    assert_eq!(app.debug_search_display, 0, "the reopen the reset wears");
+}
+
 /// THE CREATIVE SEARCH BOX'S OWN CARET SEAT (the 178 dev round the
 /// debug box the same cursorPos law wears — the char lane the
 /// insert-at-seat walk serves, the Backspace the before-seat char
