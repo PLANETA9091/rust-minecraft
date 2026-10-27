@@ -3716,3 +3716,21 @@ Stage Summary:
 - v0.3.1044: the stats counter the RESTART OUTLIVES — the boot the file's truth wears, the Save and Quit the journal banks, the five categories the vanilla shape speaks, the killed-by the registry inverse the display tr re-wears.
 - The mc-client bank the twelve windows rc=0 (2528 unique, 0 failed), the fast trio 338, the goldens the 19/19 rms 0.000 (NO regen, double-verified), the fmt the zero-diff law keeps.
 - NEXT CANDIDATES: THE DEBUG PROFILE'S OWN DATAFIXER ROUND (the EntryList ctor the DataFixTypes.DEBUG_PROFILE wrapCodec the 4649 version wears), THE DEBUG BOX'S OWN TRIPLE-CLICK COUNT (the formatter clickCount the 265 law wears), THE CREATIVE SEARCH BOX'S OWN LIVE RENDER (the visible-window clip the 267 chat law wears), THE ENTRY BOXES' OWN LIVE RENDER (the direct/editserver the same clip answers), THE STATS FILE'S OWN LEGACY FLAT READ (the 1.12's `stat.jump` rows the decode-compat lane wears).
+---
+Task ID: autopush-285
+Agent: cron-agent-loop (Job 384923, trace 1a0a02c3c1060631-cron-agent-loop-202610271436)
+Task: rust-minecraft auto-push maintenance — git status check, ONE minimal step, cargo test green, push, worklog entry
+
+Work Log:
+- Tree clean, HEAD 1b0180fd (autopush-284 v0.3.1044 stats persistence) in sync with origin — the auto-sync step the no-op keeps.
+- Picked THE CREATIVE SEARCH BOX'S OWN LIVE RENDER from the autopush-284 NEXT CANDIDATES: the search tab's EditBox the 267 chat law the visible-window clip wears — the long query the scrolled-out tail the clip answers, the caret's scrolled-out seat the display follows.
+- screens.rs: NEW creative_search_display field (the EditBox displayPos the App keeps — the chat/entry-boxes family the same display_window_sync walk shares); NEW creative_search_window_sync (the inner 72 the 80-wide band's -8 speaks) — the walk the THIRTEEN caret walk' arms the tail wears (char/backspace/delete/arrow/home-end/shift-rides/select-all/box-click double+plain/shift-click/drag/ctrl-words/ctrl-hop); the THREE mouse seats the entry_click_seat the display feeds now; the FIVE reset walks (open-picker + select-tab's Inventory/Operator/Search/Category arms) the zero window wear; the RENDER the substring(displayPos) skip + the relative selection band + the relative caret prefix.
+- First window-4 run FAILED (the tab-switch reset the stale pin kept): the replace_all the 16-space arm indent the four select_creative_tab resets never matched — the one open-reset only. FIXED: the four 16-space arms the display=0 the same reset wears (5 total); window 4 re-run rc=0.
+- part_4 test: the_creative_search_box_the_window_clip_wears (the fresh zero + the short-line zero + the 50-cap tail pin [display+vis_len >= 50] + the Home return + the End re-pin + the backspace track + the render-banked panel the in-window click seat + the tab-switch reset).
+- THE WALK: WALL-GATE 12 windows in five batches (p1 1477 / p2 1495 / p3 1453 / p4 1657 [+1] / p5 1466 / p6 1484 / p7 1499 / p8 1478 / p9 1476 / p10 1514 / p11 1391 / rest 1386, each rc=0 MOD-RESTORED-CLEAN) — mc-client 2529 unique + trio 338; rustfmt the two touched files zero-diff; bump 0.3.1044 -> 0.3.1045, release rebuild 2m14s, goldens 19/19 rms 0.000 pre- AND post-bump — NO regen (the pinned gui_creative scene the building-blocks tab the search branch never renders).
+- Commit 491c9e35 pushed (1b0180fd..491c9e35); mirror_worklog_285.py the tail-verified append the logs/worklog.md mirror rides.
+
+Stage Summary:
+- v0.3.1045: the search box the LIVE window wears — the long query the real Minecraft's own overflow the clip speaks, the caret the display follows, the click the scrolled window's own head seats, the tab switch the zero resets.
+- The mc-client bank the twelve windows rc=0 (2529 unique, 0 failed), the fast trio 338, the goldens the 19/19 rms 0.000 (NO regen, double-verified), the fmt the zero-diff law keeps.
+- NEXT CANDIDATES: THE ENTRY BOXES' OWN LIVE RENDER (the direct/editserver the same clip answers — the entry_click_seat the display feeds, the 269 walk the family wears), THE DEBUG BOX'S OWN TRIPLE-CLICK COUNT (the formatter clickCount the 265 law wears), THE DEBUG PROFILE'S OWN DATAFIXER ROUND (the EntryList ctor the DataFixTypes.DEBUG_PROFILE wrapCodec the 4649 version wears), THE STATS FILE'S OWN LEGACY FLAT READ (the 1.12's `stat.jump` rows the decode-compat lane wears).
