@@ -9775,3 +9775,131 @@ fn the_chest_transfer_own_live_fill_ride_wears() {
         "the second half the flush banks"
     );
 }
+
+/// THE LAMP'S OWN CHEST WALK-THROUGH (the autopush-297 round — the
+/// consumer family's end-to-end the lamp seats speak: javap 26.2 the
+/// evidence chain the earlier rounds banked the ADJACENT seat the one
+/// walk answers — TrappedChestBlock.ownSignal the viewer-count the
+/// weak walk reads [the autopush-293 round], ChestBlockEntity
+/// .startOpen/stopOpen the openersCounter the openerCountChanged hook
+/// the signalOpenCount block event the neighbors re-arms [the
+/// dev-188 round], RedstoneLampBlock the lamp among the flips' own
+/// neighborhoods the consult answers [the autopush-672/116 rounds]).
+/// THE SEAT'S OWN RIDE: the open chest the byte stamps the attach
+/// walk the changed cell + its own six the lamp seeds banks — the
+/// lamp BESIDE the chest the one-signal the LIT kind the verdict
+/// banks [the relight the lit row's own glow the grid re-paints],
+/// the close walk the dead read the dark kind restores. THE DOUBLE'S
+/// OWN FAR SEAT (the autopush-296 round the pair stamps): the ONE
+/// open the BOTH halves the attach voices speak — the lamp beside
+/// the FAR half the partner's own ride the lit kind banks, the one
+/// close the dark kind restores. THE PLAIN CHEST'S OWN SILENCE (the
+/// autopush-293 round the family law): the ownSignal override the
+/// plain/copper/ender kinds never wear — the open chest the lamp
+/// the dark kind keeps.
+#[test]
+fn the_lamp_own_chest_walk_through_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (cx, cy, cz) = (c, top - 1, c);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::TRAPPED_CHEST);
+        // THE SEAT'S OWN NEIGHBOR (the lamp BESIDE the chest the
+        // weak scan's own six the direct seat answers)
+        world.set(cx + 1, cy, cz, w::REDSTONE_LAMP);
+    }
+    // THE CLOSED CHEST'S OWN DARK SEAT (the count the 0 the clamp
+    // banks — the lamp the dark kind keeps)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz),
+            w::REDSTONE_LAMP,
+            "the closed chest the lamp the dark kind banks"
+        );
+    }
+    // THE OPEN'S OWN LIT SEAT (the container walk the byte stamps +
+    // the attach walk the lamp consult serves — the one-signal the
+    // LIT kind the verdict banks)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz),
+            w::REDSTONE_LAMP_LIT,
+            "the open chest the adjacent lamp the lit kind banks"
+        );
+    }
+    // THE CLOSE'S OWN DARK RESTORE (the release walk the byte clears
+    // + the same consult the dead read answers)
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz),
+            w::REDSTONE_LAMP,
+            "the closed chest the dark kind the consumer arm restores"
+        );
+    }
+    // THE DOUBLE'S OWN FAR SEAT (the pair the BOTH halves the ONE
+    // open stamps — the lamp beside the FAR half the partner's own
+    // attach voice the lit kind banks)
+    let face = 1u8;
+    let (a_var, b_var) = (
+        face | (w::CHEST_TYPE_LEFT << 2),
+        face | (w::CHEST_TYPE_RIGHT << 2),
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::TRAPPED_CHEST);
+        world.set_variant(cx, cy, cz, a_var);
+        world.set(cx, cy, cz + 1, w::TRAPPED_CHEST);
+        world.set_variant(cx, cy, cz + 1, b_var);
+        // THE FAR SEAT'S OWN LAMP (the lamp BESIDE the far half —
+        // the pre-pair law the opened half alone the seat never armed)
+        world.set(cx + 1, cy, cz + 1, w::REDSTONE_LAMP);
+    }
+    app.open_chest_for((cx, cy, cz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz + 1),
+            w::REDSTONE_LAMP_LIT,
+            "the one open the far half's own lamp the pair's ride lights"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz + 1),
+            w::REDSTONE_LAMP,
+            "the one close the far seat the dark kind restores"
+        );
+    }
+    // THE PLAIN CHEST'S OWN SILENCE (the ownSignal override the
+    // family never wears — the open chest the lamp the dark kind
+    // keeps)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::CHEST);
+        world.set_variant(cx, cy, cz, 0u8);
+        world.set(cx + 1, cy, cz, w::REDSTONE_LAMP);
+    }
+    app.open_chest_for((cx, cy, cz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz),
+            w::REDSTONE_LAMP,
+            "the plain chest's open the lamp the dark kind keeps"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+}
