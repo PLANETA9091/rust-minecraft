@@ -1344,6 +1344,99 @@ fn the_stats_counter_own_banks_and_general_rows_wear() {
     );
 }
 
+/// THE STATS ITEMS TAB'S OWN ROWS (the vanilla stat-list walk the
+/// Times Mined / Times Crafted sections wear — the survival dig the
+/// mined map banks, the result takes the crafted map banks, the
+/// creative instabuild the same gate the drops refuse).
+#[test]
+fn the_stats_items_own_mined_crafted_rows_wear() {
+    let mut app = App::new(3);
+    // THE FRESH SEAT (the empty maps the rows hide — the Items tab
+    // the pending word the empty list wears)
+    assert!(
+        app.stats_items_rows().is_empty(),
+        "the fresh maps the rows hide"
+    );
+    // THE MINED BANK (the dig lane's survival walk — the block kind
+    // the map banks)
+    app.enter_world();
+    app.spawn_offline_body();
+    app.dig_break_effects(crate::world::STONE, (8, 1, 8));
+    assert_eq!(
+        app.stats.mined.get(&crate::world::STONE),
+        Some(&1),
+        "the dig the map banks"
+    );
+    app.dig_break_effects(crate::world::STONE, (9, 1, 8));
+    app.dig_break_effects(crate::world::DIRT, (10, 1, 8));
+    assert_eq!(
+        app.stats.mined.get(&crate::world::STONE),
+        Some(&2),
+        "the stone the count wears"
+    );
+    assert_eq!(
+        app.stats.mined.get(&crate::world::DIRT),
+        Some(&1),
+        "the dirt row banks"
+    );
+    // THE CREATIVE'S OWN REFUSAL (the instabuild the same gate the
+    // drops refuse — the mined map the creative dig never wears)
+    app.game_mode = GameMode::Creative;
+    app.dig_break_effects(crate::world::STONE, (11, 1, 8));
+    assert_eq!(
+        app.stats.mined.get(&crate::world::STONE),
+        Some(&2),
+        "the creative dig the map never wears"
+    );
+    app.game_mode = GameMode::Survival;
+    // THE CRAFTED BANK (the table's own result take — the pickup arm
+    // the taken count wears)
+    let stick = mc_registry::item_id_by_name("stick").unwrap();
+    app.craft_result = (stick, 4);
+    app.click_craft_result(0);
+    assert_eq!(app.inv_carried, (stick, 4), "the pickup the carried wears");
+    assert_eq!(
+        app.stats.crafted.get(&stick),
+        Some(&4),
+        "the craft the map banks"
+    );
+    // the merge arm the space caps (the carried's room the take wears)
+    app.inv_carried = (stick, 62);
+    app.craft_result = (stick, 4);
+    app.click_craft_result(0);
+    assert_eq!(
+        app.stats.crafted.get(&stick),
+        Some(&6),
+        "the space cap the take wears"
+    );
+    // the half take (the secondary's round-up the (count+1)/2 law
+    // wears)
+    app.inv_carried = (0, 0);
+    app.craft_result = (stick, 5);
+    app.click_craft_result(1);
+    assert_eq!(
+        app.stats.crafted.get(&stick),
+        Some(&9),
+        "the half take the round-up wears"
+    );
+    // THE ROWS' OWN SERVE (the Times Mined / Times Crafted sections —
+    // the header the gray flag wears, the jar lang the words speak,
+    // the BTreeMap order the stable rows keep)
+    let rows = app.stats_items_rows();
+    assert_eq!(rows.len(), 5, "the two sections the rows wear");
+    assert_eq!(rows[0].0, "Times Mined", "the mined header the jar lang wears");
+    assert!(rows[0].2, "the header the flag wears");
+    assert_eq!(rows[1].0, "Stone", "the block.minecraft.stone word");
+    assert_eq!(rows[1].1, "2", "the count the right edge wears");
+    assert!(!rows[1].2, "the item row the plain flag wears");
+    assert_eq!(rows[2].0, "Dirt", "the dirt word wears");
+    assert_eq!(rows[2].1, "1", "the dirt count wears");
+    assert_eq!(rows[3].0, "Times Crafted", "the crafted header wears");
+    assert!(rows[3].2, "the crafted header the flag wears");
+    assert_eq!(rows[4].0, "Stick", "the item.minecraft.stick word");
+    assert_eq!(rows[4].1, "9", "the crafted count wears");
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`

@@ -248,6 +248,14 @@ pub struct StatsCounter {
     pub jump: i64,
     /// `stat.deaths` — the die walk the actually_hurt verdict banks
     pub deaths: i64,
+    /// `stat_type.minecraft.mined` — the block kinds the survival dig
+    /// banks (the vanilla Stats.MINED the Block-keyed map wears; the
+    /// BTreeMap the rows' stable order keeps)
+    pub mined: std::collections::BTreeMap<u16, i64>,
+    /// `stat_type.minecraft.crafted` — the item ids the result-take
+    /// lanes bank (the vanilla Stats.ITEM_CRAFTED the Item-keyed map
+    /// wears)
+    pub crafted: std::collections::BTreeMap<i32, i64>,
 }
 
 /// THE TIME STAT'S OWN FORMAT (the vanilla TimeFormatter walk — the
@@ -27032,6 +27040,10 @@ impl App {
             // the half-rounded-up the secondary speaks)
             let taken = if button == 0 { count } else { (count + 1) / 2 };
             self.inv_carried = (id, taken);
+            // THE STATS' OWN CRAFTED BANK (the vanilla ResultSlot
+            // .onTake's awardStat(Stats.ITEM_CRAFTED) walk the taken
+            // stack's count wears)
+            *self.stats.crafted.entry(id).or_insert(0) += taken as i64;
             self.craft_on_take();
         } else if self.inv_carried.0 == id {
             // THE MERGE ARM (the 1020 walk — the carried's space caps
@@ -27040,6 +27052,8 @@ impl App {
             if space > 0 {
                 let taken = space.min(count);
                 self.inv_carried.1 += taken;
+                // the taken stack the same crafted law wears
+                *self.stats.crafted.entry(id).or_insert(0) += taken as i64;
                 self.craft_on_take();
             }
         }
@@ -27079,6 +27093,10 @@ impl App {
             }
             let leftover = count - moved;
             self.craft_on_take();
+            // THE STATS' OWN CRAFTED BANK (the onTake stack the full
+            // recipe output wears — the moved/leftover split the store
+            // and the throw answer, the count the craft itself speaks)
+            *self.stats.crafted.entry(id).or_insert(0) += count as i64;
             if leftover > 0 {
                 // THE LEFTOVER DROP (the index-0 tail — the aimed
                 // throw the store's own lane keeps)
@@ -31375,6 +31393,12 @@ impl App {
             // verdict speaks
             self.inventory_set_hover(hover, (0, 0));
             self.inventory_set_row(button, (hover_id, hover_count));
+            // THE STATS' OWN CRAFTED BANK (the result seat's own take —
+            // the vanilla ResultSlot.onTake's awardStat law the ride
+            // wears, the Result arm the plain rows never bank)
+            if let InventoryHover::Result = hover {
+                *self.stats.crafted.entry(hover_id).or_insert(0) += hover_count as i64;
+            }
             self.inventory_seat_on_take(hover);
             self.hotbar_slots = self.inventory.hotbar();
             return true;
@@ -51727,6 +51751,13 @@ impl App {
                 crate::particles::terrain_burst(tile, pos.0, pos.1, pos.2, &mut self.mob_rng);
             self.particles.extend(burst);
         }
+        // THE STATS' OWN MINED BANK (the vanilla Block.playerDestroy's
+        // awardStat(Stats.BLOCK_MINED) walk the survival dig wears —
+        // the creative instabuild the same gate the drops refuse, the
+        // networked world the server's own counter answers)
+        if !self.world_is_network && !self.abilities_instabuild() {
+            *self.stats.mined.entry(kind).or_insert(0) += 1;
+        }
         // THE REWARD HALF (the vanilla destroyBlock's own
         // dropResources): the loot roll, the item entities
         // spawning by the popResource law
@@ -70632,6 +70663,46 @@ impl App {
         rows
     }
 
+    /// THE ITEMS TAB'S OWN ROWS (the vanilla StatsScreen's item-list
+    /// walk — the Times Mined / Times Crafted sections the nonzero
+    /// entries serve, the block/item names the jar lang words wear,
+    /// the section header the stat_type word speaks).
+    pub fn stats_items_rows(&self) -> Vec<(String, String, bool)> {
+        let mut rows: Vec<(String, String, bool)> = Vec::new();
+        if !self.stats.mined.is_empty() {
+            rows.push((
+                tr("stat_type.minecraft.mined")
+                    .unwrap_or("Times Mined")
+                    .to_string(),
+                String::new(),
+                true,
+            ));
+            for (kind, count) in &self.stats.mined {
+                let plain =
+                    crate::world::NAME_OF.get(*kind as usize).copied().unwrap_or("unknown");
+                let name = tr(&format!("block.minecraft.{plain}")).unwrap_or(plain);
+                rows.push((name.to_string(), count.to_string(), false));
+            }
+        }
+        if !self.stats.crafted.is_empty() {
+            rows.push((
+                tr("stat_type.minecraft.crafted")
+                    .unwrap_or("Times Crafted")
+                    .to_string(),
+                String::new(),
+                true,
+            ));
+            for (id, count) in &self.stats.crafted {
+                let plain = mc_registry::item_name(*id).unwrap_or("unknown");
+                let name = tr(&format!("item.minecraft.{plain}"))
+                    .or_else(|| tr(&format!("block.minecraft.{plain}")))
+                    .unwrap_or(plain);
+                rows.push((name.to_string(), count.to_string(), false));
+            }
+        }
+        rows
+    }
+
     fn render_stats(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         for y in 0..h {
             let t = y as f32 / h.max(1) as f32;
@@ -70693,9 +70764,10 @@ impl App {
         // walk — the nonzero stats the list serves, the name the left
         // seat the value the right edge wears, the zero set the
         // vanilla filter hides; the empty list the pending word keeps
-        // — the Items/Mobs tabs the same pending law the follow-up
-        // rounds answer)
+        // — the Mobs tab the same pending law the follow-up round
+        // answers)
         let rows = self.stats_general_rows();
+        let item_rows = self.stats_items_rows();
         if self.stats_tab == 0 && !rows.is_empty() {
             let row_h = 12;
             let y0 = 28;
@@ -70704,6 +70776,26 @@ impl App {
                 g.text(a, x0 + 2, y, name, WHITE, true);
                 let vw = g.text_width(value);
                 g.text(a, x0 + total - 2 - vw, y, value, WHITE, true);
+            }
+        } else if self.stats_tab == 1 && !item_rows.is_empty() {
+            // THE ITEMS TAB'S OWN LIST (the vanilla stat-list walk the
+            // sections wear — the header row the stat_type word the
+            // 0xA0A0A0 gray speaks, the item rows the name the left
+            // seat the count the right edge wears)
+            let row_h = 12;
+            let y0 = 28;
+            for (i, (name, value, header)) in item_rows.iter().enumerate() {
+                let y = y0 + i as i32 * row_h;
+                let color = if *header {
+                    [0.627, 0.627, 0.627]
+                } else {
+                    WHITE
+                };
+                g.text(a, x0 + 2, y, name, color, true);
+                if !value.is_empty() {
+                    let vw = g.text_width(value);
+                    g.text(a, x0 + total - 2 - vw, y, value, WHITE, true);
+                }
             }
         } else {
             // THE PENDING'S OWN SEAT (the LoadingTab law — the
