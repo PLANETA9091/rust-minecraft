@@ -2764,6 +2764,13 @@ pub fn run_gui_app(
         if left_down && app.debug_search_drag_armed {
             app.on_debug_options_box_drag(gmx, gmy, width as i32 / 2);
         }
+        // THE CREATIVE BOX'S OWN DRAG WALK (the 273 debug law the
+        // sibling wears — the armed press's held frames the cursor the
+        // seat follows, the anchor the press place the range opens;
+        // the unarmed box the lane never answers)
+        if left_down && app.creative_search_drag_armed {
+            app.on_creative_box_drag(gmx, gmy);
+        }
         // THE PICKER'S OWN SCROLL DRAG (the mouseDragged walk's armed
         // lane — the scrollbar press armed the flag, the HELD button's
         // every frame the track math answers ((y - y1 - 7.5) / 97 the
@@ -2855,6 +2862,7 @@ pub fn run_gui_app(
             app.direct_drag_armed = false;
             app.es_drag_armed = false;
             app.debug_search_drag_armed = false;
+            app.creative_search_drag_armed = false;
         }
         was_left_down = left_down;
         // the RIGHT press's rising edge: the container screen's own

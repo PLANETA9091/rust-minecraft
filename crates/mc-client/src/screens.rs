@@ -9352,6 +9352,11 @@ pub struct App {
     /// the <250ms second press the climb answers, the fresh ctor the
     /// None keeps, the re-open walk the same reset wears)
     pub creative_search_last_click: Option<(u128, usize)>,
+    /// THE DRAG'S OWN ARM (the vanilla `setDragging(flag && button == 0)`
+    /// law the 273 debug round the box wears — the inside press the
+    /// flag banks, the outside press the false disarms, the fresh ctor
+    /// the unarmed seat keeps, the re-open walk the same reset wears)
+    pub creative_search_drag_armed: bool,
     /// THE SCROLL OFFSET (the `scrollOffs` field — 0..1 the
     /// subtractInputFromScroll clamp keeps, the wheel the delta /
     /// scrollableRows walk drives).
@@ -11762,6 +11767,7 @@ impl App {
             creative_search_cursor: 0,
             creative_search_highlight: None,
             creative_search_last_click: None,
+            creative_search_drag_armed: false,
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
@@ -23451,6 +23457,9 @@ impl App {
         // picker every open — the stale stamp the re-creation the
         // same reset retires — the 274 debug law the sibling speaks)
         self.creative_search_last_click = None;
+        // THE DRAG'S OWN RESET (the same fresh-screen law — the stale
+        // arm a mid-drag close the rebuild never inherits)
+        self.creative_search_drag_armed = false;
         self.creative_items = self.creative_source.clone();
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
@@ -23875,6 +23884,12 @@ impl App {
         let bx = px + 82;
         let by = py + 6;
         let inside = mx >= bx && mx < bx + 80 && my >= by && my < by + 9;
+        // THE DRAG ARM'S OWN BANK (the vanilla `setDragging(flag &&
+        // button == 0)` walk the 273 debug law the box wears — the
+        // inside press the flag banks, the outside press the false
+        // disarms; the double branch the armed state the press
+        // inherits — the 274 law the sibling arms wear)
+        self.creative_search_drag_armed = inside;
         if inside {
             // the caret's own x-band seek the seat first computes (the
             // vanilla mouseClick walk the window the same seat wears)
@@ -23949,6 +23964,37 @@ impl App {
         }
         self.creative_search_cursor = seat;
         true
+    }
+
+    /// THE SELECTION'S OWN DRAG (the EditBox.onDrag walk the 273 debug
+    /// law the box wears — the armed press's held frames the cursor
+    /// the seat follows, the anchor the press place the range opens,
+    /// the y-band the row keeps, the past-tail the clamp parks, the
+    /// closed/unarmed box the lane never answers; the entry_click_seat
+    /// law the display-less box the same x-band wears).
+    pub fn on_creative_box_drag(&mut self, mx: i32, my: i32) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+            || !self.creative_search_drag_armed
+        {
+            return;
+        }
+        let (px, py) = self.creative_panel;
+        if px == 0 && py == 0 {
+            return; // the un-banked panel the render never spoke
+        }
+        let bx = px + 82;
+        let by = py + 6;
+        if my < by || my >= by + 9 {
+            return; // the outside row the drag never owns
+        }
+        let seat = entry_click_seat(&self.creative_search, 0, mx, bx);
+        if self.creative_search_highlight.is_none() {
+            // the press seat the anchor banks (the vanilla drag the
+            // first-click place the range opens)
+            self.creative_search_highlight = Some(self.creative_search_cursor);
+        }
+        self.creative_search_cursor = seat;
     }
 
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's

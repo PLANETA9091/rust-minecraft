@@ -27479,3 +27479,158 @@ fn the_creative_search_own_double_click_wears() {
         "the reopen the stamp clears"
     );
 }
+
+/// THE CREATIVE SEARCH BOX'S OWN MOUSE DRAG SEAT (the 273 debug law
+/// the box wears — the armed press the drag walk answers, the shift
+/// lane the arm never banks, the release the disarm speaks, the
+/// stale seats the gates keep).
+#[test]
+fn the_creative_search_own_drag_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    assert!(
+        !app.creative_search_drag_armed,
+        "the fresh open the unarmed seat keeps"
+    );
+    for c in "hello world".chars() {
+        app.on_creative_char(c);
+    }
+    // the drawn panel's rect (the render banks the origin the drag
+    // lane reads — the (82, 6, 80x9) EditBox law the band speaks)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (px, py) = app.creative_panel;
+    let bx = px + 82;
+    let by = py + 6;
+    // THE PLAIN PRESS'S OWN ARM (the inside press the flag banks —
+    // the left edge the zero parks, the collapse keeps)
+    assert!(
+        app.on_creative_box_click(bx + 4, by + 4),
+        "the press the TRUE wears"
+    );
+    assert!(
+        app.creative_search_drag_armed,
+        "the inside press the arm banks"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the left edge the zero parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the plain press the collapse keeps"
+    );
+    // THE ARMED DRAG'S OWN RANGE (the past-tail the len parks — the
+    // press place the [0, 11) anchor opens)
+    app.on_creative_box_drag(bx + 74, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the armed drag the len parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the press place the anchor banks"
+    );
+    // THE OUTSIDE-BAND DRAG'S OWN KEEP (the y-band the row keeps —
+    // the seats hold)
+    app.on_creative_box_drag(bx + 40, by + 100);
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the outside drag the seat keeps"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the outside drag the anchor keeps"
+    );
+    // THE UNARMED DRAG'S OWN SILENCE (the closed lane the walk never
+    // answers)
+    app.creative_search_drag_armed = false;
+    app.on_creative_box_drag(bx + 4, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 11,
+        "the unarmed drag the silence wears"
+    );
+    // THE RE-PRESS'S OWN RE-SEAT (the epoch stamp the double law the
+    // stale window pre-banks — the 271/274 precedent the lesson speaks)
+    app.creative_search_last_click = Some((0, 0));
+    assert!(
+        app.on_creative_box_click(bx + 4, by + 4),
+        "the re-press the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the re-press the zero re-seats"
+    );
+    assert!(
+        app.creative_search_drag_armed,
+        "the re-press the arm re-banks"
+    );
+    // THE SHIFT LANE'S OWN KEEP (the shift-click the inside TRUE the
+    // pre-click cursor the anchor banks — the arm the shift press
+    // never banks)
+    let wx = bx + 4 + crate::gui::font_text_width("hello ");
+    let arm_before = app.creative_search_drag_armed;
+    assert!(
+        app.on_creative_box_shift_click(wx, by + 4),
+        "the shift click the TRUE wears"
+    );
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the 'w' seat the shift wears"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the pre-click cursor the anchor banks"
+    );
+    assert_eq!(
+        app.creative_search_drag_armed, arm_before,
+        "the shift lane the arm never banks"
+    );
+    // THE OUTSIDE SHIFT'S OWN KEEP (the FALSE the caller answers —
+    // the selection keeps)
+    assert!(
+        !app.on_creative_box_shift_click(bx + 40, by + 100),
+        "the outside shift the FALSE wears"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the outside shift the selection keeps"
+    );
+    // THE OUTSIDE PRESS'S OWN DISARM (the plain press the false the
+    // arm clears)
+    assert!(
+        !app.on_creative_box_click(bx + 40, by + 100),
+        "the outside press the FALSE wears"
+    );
+    assert!(
+        !app.creative_search_drag_armed,
+        "the outside press the arm clears"
+    );
+    // THE STALE SCREEN'S OWN GATE (the armed gate the seat keeps)
+    app.creative_search_drag_armed = true;
+    app.open(ScreenKind::Title);
+    app.on_creative_box_drag(bx + 74, by + 4);
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the stale screen the armed gate the seat keeps"
+    );
+    // THE REOPEN'S OWN RESET (the arm + anchor + word the reset
+    // retires)
+    app.open_creative_picker();
+    assert!(
+        !app.creative_search_drag_armed,
+        "the reopen the arm resets"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the reopen the anchor resets"
+    );
+    assert_eq!(app.creative_search, "", "the reopen the word resets");
+}
