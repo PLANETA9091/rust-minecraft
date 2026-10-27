@@ -1629,6 +1629,168 @@ fn the_award_stats_wire_merge_sets_the_counter() {
     );
 }
 
+/// THE STATS FILE'S OWN ROUND TRIP (the vanilla world stats law —
+/// the minecraft.wiki's own 5023 example the shape speaks: the
+/// `stats` root the categories nest, the entries the `minecraft:`
+/// prefixed names wear, the `DataVersion` the 4903 pin keeps, the
+/// SPARSE law the zero counts the map never carries). The fresh
+/// counter the same JSON the counts wear — the restart the same
+/// counts the session speaks.
+#[test]
+fn the_stats_file_json_the_vanilla_shape_round_trips() {
+    let mut app = App::new(48);
+    let stone = crate::world::STONE;
+    let stick = mc_registry::item_id_by_name("stick").expect("the stick item");
+    {
+        let s = &mut app.stats;
+        s.play_time = 12345;
+        s.sneak_time = 6;
+        s.walk_cm = 0; // the zero the sparse law never writes
+        s.jump = 77;
+        s.deaths = 2;
+        s.mined.insert(stone, 5);
+        s.crafted.insert(stick, 3);
+        s.mob_kills.insert("minecraft:zombie", 2);
+        s.killed_by.insert("Zombie".to_string(), 1);
+    }
+    let v = app.stats_save_json();
+    // THE SHAPE (the nested categories the file speaks, the entries
+    // the `minecraft:` prefix wear, the DataVersion the pin keeps)
+    assert_eq!(v["DataVersion"], 4903, "the DataVersion the pin wears");
+    assert_eq!(
+        v["stats"]["minecraft:mined"]["minecraft:stone"], 5,
+        "the mined entry the block name speaks"
+    );
+    assert_eq!(
+        v["stats"]["minecraft:crafted"]["minecraft:stick"], 3,
+        "the crafted entry the item name speaks"
+    );
+    assert_eq!(
+        v["stats"]["minecraft:killed"]["minecraft:zombie"], 2,
+        "the killed entry the registry id speaks"
+    );
+    assert_eq!(
+        v["stats"]["minecraft:killed_by"]["minecraft:zombie"], 1,
+        "the killed-by entry the registry inverse answers"
+    );
+    assert_eq!(
+        v["stats"]["minecraft:custom"]["minecraft:play_time"], 12345,
+        "the custom entry the word speaks"
+    );
+    assert_eq!(v["stats"]["minecraft:custom"]["minecraft:jump"], 77);
+    assert_eq!(v["stats"]["minecraft:custom"]["minecraft:sneak_time"], 6);
+    assert_eq!(v["stats"]["minecraft:custom"]["minecraft:deaths"], 2);
+    assert!(
+        v["stats"]["minecraft:custom"]["minecraft:walk_one_cm"].is_null(),
+        "the zero count the sparse law skips"
+    );
+    // THE RESTART (the fresh counter the same JSON the counts wear —
+    // the SET law the file's entries the fields replace)
+    let mut fresh = App::new(48);
+    fresh.stats_load_json(&v);
+    assert_eq!(fresh.stats.play_time, 12345);
+    assert_eq!(fresh.stats.sneak_time, 6);
+    assert_eq!(fresh.stats.walk_cm, 0, "the absent word the field keeps");
+    assert_eq!(fresh.stats.jump, 77);
+    assert_eq!(fresh.stats.deaths, 2);
+    assert_eq!(fresh.stats.mined.get(&stone), Some(&5));
+    assert_eq!(fresh.stats.crafted.get(&stick), Some(&3));
+    assert_eq!(fresh.stats.mob_kills.get("minecraft:zombie"), Some(&2));
+    assert_eq!(
+        fresh.stats.killed_by.get("Zombie"),
+        Some(&1),
+        "the registry word the display tr re-wears"
+    );
+    // THE UNKNOWN NAMES' OWN SKIP (the foreign words the decode never
+    // claims — the honest keep the wire merge wears)
+    let foreign = serde_json::json!({
+        "stats": {
+            "minecraft:mined": { "minecraft:not_a_block": 5 },
+            "minecraft:killed": { "minecraft:blaze": 1 },
+            "minecraft:custom": { "minecraft:leave_game": 9 }
+        },
+        "DataVersion": 4903
+    });
+    let mut keeper = App::new(48);
+    keeper.stats_load_json(&foreign);
+    assert!(
+        keeper.stats.mined.is_empty(),
+        "the unknown block the skip keeps"
+    );
+    assert!(
+        keeper.stats.mob_kills.is_empty(),
+        "the unknown mob the skip keeps"
+    );
+    assert_eq!(
+        keeper.stats.play_time, 0,
+        "the unbanked custom the field keeps"
+    );
+}
+
+/// THE STATS FILE LANE'S OWN RESTART (the vanilla world stats law —
+/// the boot the file's truth wears, the Save and Quit the counter's
+/// journal banks, the once-flag the double load keeps, the missing
+/// file the defaults answer).
+#[test]
+fn the_stats_file_lane_the_restart_outlives() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_stats_lane_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("stats").join("mc2rs.json");
+    let _ = std::fs::remove_file(&path);
+    let mut app = App::new(74);
+    app.stats_file = Some(path.clone());
+    // THE MISSING FILE the defaults keep (the exists() gate the load
+    // head wears — no file, no guess)
+    app.stats_file_load_once();
+    assert_eq!(app.stats.play_time, 0, "the fresh boot the zero keeps");
+    assert!(
+        app.stats.mob_kills.is_empty(),
+        "the fresh combat the empty keeps"
+    );
+    // THE SESSION'S OWN COUNTS (the tick lanes' play bank, the kill's
+    // award, the die walk's killer word — the counter the counts wear)
+    app.stats.play_time = 999;
+    app.stats.jump = 12;
+    app.stats.mob_kills.insert("minecraft:cow", 4);
+    app.stats.killed_by.insert("Zombie".to_string(), 3);
+    // THE QUIT'S OWN BANK (the Save and Quit chord the file writes —
+    // the stats/ folder the mkdir the write precedes)
+    app.stats_file_save();
+    assert!(path.exists(), "the quit the stats/ file writes");
+    let text = std::fs::read_to_string(&path).expect("the file the write keeps");
+    assert!(
+        text.contains("\"DataVersion\": 4903"),
+        "the file the DataVersion row wears"
+    );
+    assert!(
+        text.contains("\"minecraft:killed\""),
+        "the file the killed category speaks"
+    );
+    // THE RESTART (the fresh boot the file's truth wears — the
+    // session's counts the RESTART OUTLIVES)
+    let mut fresh = App::new(74);
+    fresh.stats_file = Some(path.clone());
+    fresh.stats_file_load_once();
+    assert_eq!(fresh.stats.play_time, 999, "the play bank the reload wears");
+    assert_eq!(fresh.stats.jump, 12, "the jump count the reload wears");
+    assert_eq!(
+        fresh.stats.mob_kills.get("minecraft:cow"),
+        Some(&4),
+        "the kill count the reload wears"
+    );
+    assert_eq!(
+        fresh.stats.killed_by.get("Zombie"),
+        Some(&3),
+        "the killer word the reload re-wears"
+    );
+    // THE ONCE-FLAG (the double load the counter keeps — the later
+    // touches the in-memory counts never re-parse)
+    fresh.stats.jump += 5;
+    fresh.stats_file_load_once();
+    assert_eq!(fresh.stats.jump, 17, "the flag the second load skips");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`

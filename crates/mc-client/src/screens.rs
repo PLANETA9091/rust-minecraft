@@ -269,6 +269,11 @@ pub struct StatsCounter {
     pub killed_by: std::collections::BTreeMap<String, i64>,
 }
 
+/// THE STATS FILE'S OWN DATA VERSION (the same 4903 pin the hotbar/
+/// containers/options lanes wear — the `DataVersion` row the vanilla
+/// save() walk appends, the load the honest keep answers).
+pub const STATS_DATA_VERSION: i64 = 4903;
+
 /// THE TIME STAT'S OWN FORMAT (the vanilla TimeFormatter walk — the
 /// h:mm the tick count speaks: the hour the 72 000-tick day share,
 /// the minute the 1 200-tick sweep the %60 fold wears).
@@ -2962,6 +2967,37 @@ fn mob_kind_static_id(name: &str) -> Option<&'static str> {
     ] {
         let id = mob_kind_entity_id(kind);
         if id == name {
+            return Some(id);
+        }
+    }
+    None
+}
+
+/// THE KILLER WORD'S OWN INVERSE (the stats save-file lane's resolve —
+/// the counter's killed_by keys the display names bank [the death
+/// message's %2$s arg], the vanilla file the registry ids speaks:
+/// `"minecraft:killed_by": {"minecraft:zombie": 1}`. The ten known
+/// kinds' own tr walk the SAME resolution the forward keeps — the
+/// `mob_kind_display_name` walk re-read — the display word matches,
+/// the unknown words the None keeps [the counter's wire-fed foreign
+/// names the file lane never claims]).
+fn mob_kind_registry_from_display(display: &str) -> Option<&'static str> {
+    for kind in [
+        crate::mob::MobKind::Zombie,
+        crate::mob::MobKind::Pig,
+        crate::mob::MobKind::Cow,
+        crate::mob::MobKind::Sheep,
+        crate::mob::MobKind::Chicken,
+        crate::mob::MobKind::Skeleton,
+        crate::mob::MobKind::Spider,
+        crate::mob::MobKind::Wolf,
+        crate::mob::MobKind::Creeper,
+        crate::mob::MobKind::Warden,
+    ] {
+        let id = mob_kind_entity_id(kind);
+        let key = format!("entity.{}", id.replace(':', "."));
+        let resolved = tr(&key).unwrap_or(key.as_str());
+        if resolved == display {
             return Some(id);
         }
     }
@@ -9600,6 +9636,17 @@ pub struct App {
     /// map's words wear; the headless boot the None the determinism
     /// keeps — the goldens' own boots the lane never spends).
     pub debug_profile_file: Option<std::path::PathBuf>,
+    /// THE STATS FILE'S OWN GAME DIR (the vanilla world stats law —
+    /// the `stats/<player>.json` the cwd's stats/ folder names, the
+    /// counter's journal the RESTART OUTLIVES: the boot the file's
+    /// truth wears, the Save and Quit the file rewrites; the headless
+    /// boot the None the determinism keeps — the goldens' own boots
+    /// the lane never spends).
+    pub stats_file: Option<std::path::PathBuf>,
+    /// THE STATS LOAD'S OWN ONCE-FLAG (the same lazy bank the
+    /// hotbar/options lanes wear — the boot call the file's truth
+    /// speaks, the later chords the in-memory counter keep).
+    stats_file_loaded: bool,
     /// THE LOAD'S OWN ONCE-FLAG (the same lazy bank the hotbar/container
     /// lanes wear — the boot call the file's truth speaks, the later
     /// chords the in-memory stores keep).
@@ -11923,6 +11970,8 @@ impl App {
             notification_display_time: 1.0,
             options_file: None,
             debug_profile_file: None,
+            stats_file: None,
+            stats_file_loaded: false,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
@@ -41645,6 +41694,11 @@ impl App {
                     // journal the file banks before the title screen's
                     // own lanes the walk serves)
                     self.offline_world_file_save();
+                    // THE STATS' OWN JOURNAL (the vanilla Save and Quit
+                    // law — the counter's counts the `stats/<player>.json`
+                    // the world-exit moment banks, the restart the same
+                    // counts the session speaks)
+                    self.stats_file_save();
                     if self.world_is_network {
                         // vanilla Save and Quit unloads the level: the
                         // network mesh drops (a newer join rematerializes
@@ -70850,6 +70904,203 @@ impl App {
                 }
                 _ => {}
             }
+        }
+    }
+
+    /// THE STATS FILE'S OWN ENCODE (the vanilla world stats law — the
+    /// minecraft.wiki's own 5023 example the shape speaks: the `stats`
+    /// root the categories nest, the `minecraft:mined` the block names
+    /// the `minecraft:` prefix wears, the `DataVersion` row the 4903
+    /// pin keeps). The SPARSE law the vanilla save walk banks — the
+    /// zero counts the map never carries (the wiki's own words the
+    /// fresh player's absent jump row echoes), the empty categories
+    /// the root the absent speak, the unknown names the entry the
+    /// skip keeps.
+    pub fn stats_save_json(&self) -> serde_json::Value {
+        let s = &self.stats;
+        let mut root = serde_json::Map::new();
+        // THE MINED CATEGORY (the state ids the NAME_OF words answer,
+        // the file the `minecraft:`-prefixed block names speak)
+        if !s.mined.is_empty() {
+            let mut m = serde_json::Map::new();
+            for (id, count) in s.mined.iter() {
+                if *count == 0 {
+                    continue;
+                }
+                if let Some(name) = crate::world::NAME_OF.get(*id as usize) {
+                    m.insert(format!("minecraft:{name}"), serde_json::json!(*count));
+                }
+            }
+            if !m.is_empty() {
+                root.insert("minecraft:mined".into(), serde_json::Value::Object(m));
+            }
+        }
+        // THE CRAFTED CATEGORY (the item ids the registry words answer)
+        if !s.crafted.is_empty() {
+            let mut m = serde_json::Map::new();
+            for (id, count) in s.crafted.iter() {
+                if *count == 0 {
+                    continue;
+                }
+                if let Some(name) = mc_registry::item_name(*id) {
+                    m.insert(format!("minecraft:{name}"), serde_json::json!(*count));
+                }
+            }
+            if !m.is_empty() {
+                root.insert("minecraft:crafted".into(), serde_json::Value::Object(m));
+            }
+        }
+        // THE KILLED CATEGORY (the counter's keys the registry ids
+        // already wear — the file the same words speaks)
+        if !s.mob_kills.is_empty() {
+            let mut m = serde_json::Map::new();
+            for (name, count) in s.mob_kills.iter() {
+                if *count == 0 {
+                    continue;
+                }
+                m.insert(name.to_string(), serde_json::json!(*count));
+            }
+            if !m.is_empty() {
+                root.insert("minecraft:killed".into(), serde_json::Value::Object(m));
+            }
+        }
+        // THE KILLED-BY CATEGORY (the display words the registry
+        // inverse answers — the ten known kinds' tr walk resolves)
+        if !s.killed_by.is_empty() {
+            let mut m = serde_json::Map::new();
+            for (display, count) in s.killed_by.iter() {
+                if *count == 0 {
+                    continue;
+                }
+                if let Some(id) = mob_kind_registry_from_display(display) {
+                    m.insert(id.to_string(), serde_json::json!(*count));
+                }
+            }
+            if !m.is_empty() {
+                root.insert("minecraft:killed_by".into(), serde_json::Value::Object(m));
+            }
+        }
+        // THE CUSTOM CATEGORY (the seven the counter's own fields
+        // keep — the nonzero the sparse law writes)
+        let mut m = serde_json::Map::new();
+        let customs: [(&str, i64); 7] = [
+            ("play_time", s.play_time),
+            ("sneak_time", s.sneak_time),
+            ("walk_one_cm", s.walk_cm),
+            ("sprint_one_cm", s.sprint_cm),
+            ("swim_one_cm", s.swim_cm),
+            ("jump", s.jump),
+            ("deaths", s.deaths),
+        ];
+        for (word, count) in customs {
+            if count == 0 {
+                continue;
+            }
+            m.insert(format!("minecraft:{word}"), serde_json::json!(count));
+        }
+        if !m.is_empty() {
+            root.insert("minecraft:custom".into(), serde_json::Value::Object(m));
+        }
+        serde_json::json!({ "stats": root, "DataVersion": STATS_DATA_VERSION })
+    }
+
+    /// THE STATS FILE'S OWN DECODE (the wire merge's SET law the file
+    /// lane wears — the file's entries the counter's fields replace,
+    /// the missing words the fields keep, the unknown names the skip
+    /// keeps: the mined the NAME_OF position inverse answers, the
+    /// crafted the item id inverse banks, the killed the static id
+    /// walk resolves, the killed-by the display tr the SAME resolve
+    /// the wire merge wears, the custom the seven words the fields
+    /// speak).
+    pub fn stats_load_json(&mut self, v: &serde_json::Value) {
+        let Some(all) = v.get("stats").and_then(|s| s.as_object()) else {
+            return;
+        };
+        let s = &mut self.stats;
+        if let Some(m) = all.get("minecraft:mined").and_then(|x| x.as_object()) {
+            for (k, c) in m {
+                let Some(count) = c.as_i64() else { continue };
+                let bare = k.strip_prefix("minecraft:").unwrap_or(k);
+                if let Some(pos) = crate::world::NAME_OF.iter().position(|n| *n == bare) {
+                    s.mined.insert(pos as u16, count);
+                }
+            }
+        }
+        if let Some(m) = all.get("minecraft:crafted").and_then(|x| x.as_object()) {
+            for (k, c) in m {
+                let Some(count) = c.as_i64() else { continue };
+                let bare = k.strip_prefix("minecraft:").unwrap_or(k);
+                if let Some(id) = mc_registry::item_id_by_name(bare) {
+                    s.crafted.insert(id, count);
+                }
+            }
+        }
+        if let Some(m) = all.get("minecraft:killed").and_then(|x| x.as_object()) {
+            for (k, c) in m {
+                let Some(count) = c.as_i64() else { continue };
+                if let Some(id) = mob_kind_static_id(k) {
+                    s.mob_kills.insert(id, count);
+                }
+            }
+        }
+        if let Some(m) = all.get("minecraft:killed_by").and_then(|x| x.as_object()) {
+            for (k, c) in m {
+                let Some(count) = c.as_i64() else { continue };
+                let display = tr(&format!("entity.{}", k.replace(':', "."))).unwrap_or(k);
+                s.killed_by.insert(display.to_string(), count);
+            }
+        }
+        if let Some(m) = all.get("minecraft:custom").and_then(|x| x.as_object()) {
+            for (k, c) in m {
+                let Some(count) = c.as_i64() else { continue };
+                match k.strip_prefix("minecraft:").unwrap_or(k) {
+                    "play_time" => s.play_time = count,
+                    "sneak_time" => s.sneak_time = count,
+                    "walk_one_cm" => s.walk_cm = count,
+                    "sprint_one_cm" => s.sprint_cm = count,
+                    "swim_one_cm" => s.swim_cm = count,
+                    "jump" => s.jump = count,
+                    "deaths" => s.deaths = count,
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    /// THE STATS FILE'S OWN LOAD WALK (the same lazy once-flag law the
+    /// hotbar/options lanes wear — the boot call the file's truth
+    /// speaks, the missing/corrupt file the counter keeps, the None
+    /// boot the no-game-dir stand-in keeps — the headless goldens'
+    /// own determinism).
+    pub fn stats_file_load_once(&mut self) {
+        if self.stats_file_loaded {
+            return;
+        }
+        self.stats_file_loaded = true;
+        let Some(path) = self.stats_file.clone() else {
+            return;
+        };
+        if let Ok(text) = std::fs::read_to_string(&path) {
+            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&text) {
+                self.stats_load_json(&v);
+            }
+        }
+    }
+
+    /// THE STATS FILE'S OWN SAVE WALK (the vanilla Save and Quit law —
+    /// the world-exit moment the file rewrites, the `stats/` folder
+    /// the mkdir the write precedes, the failure the silent keep
+    /// answers — the in-memory counter the truth stays). THE NONE BOOT
+    /// the no-game-dir stand-in keeps.
+    pub fn stats_file_save(&self) {
+        let Some(path) = &self.stats_file else {
+            return;
+        };
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        if let Ok(text) = serde_json::to_string_pretty(&self.stats_save_json()) {
+            let _ = std::fs::write(path, text);
         }
     }
 

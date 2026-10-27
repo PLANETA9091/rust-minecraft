@@ -1699,6 +1699,20 @@ pub fn run_gui_app(
     );
     app.servers_file_load_once();
     app.options_file_load();
+    // THE STATS FILE'S OWN GAME DIR (the vanilla world stats law —
+    // the `stats/<player>.json` the cwd's stats/ folder names, the
+    // PLAYER_NAME the file seat wears, the counter's journal the
+    // RESTART OUTLIVES: the boot the file's truth wears [the load
+    // BEFORE the tick lanes bank], the Save and Quit the file
+    // rewrites; the headless boot the None the determinism keeps —
+    // the goldens' own boots the lane never spends)
+    app.stats_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("stats")
+            .join(format!("{}.json", crate::screens::PLAYER_NAME)),
+    );
+    app.stats_file_load_once();
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
     // THE SAVE-DRAFTS OPTION'S OWN SEED (the --no-save-chat-drafts flag
