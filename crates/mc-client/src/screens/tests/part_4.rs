@@ -1520,6 +1520,115 @@ fn the_stats_mobs_own_killed_pairs_wear() {
     );
 }
 
+/// THE AWARD STATS' OWN MERGE (javap `ClientPacketListener
+/// .handleAwardStats` walk — the wire's own map the SET law speaks:
+/// the custom stats the seven lanes set, the combat pairs the entity
+/// names resolve, the mined/crafted the registry orders answer).
+#[test]
+fn the_award_stats_wire_merge_sets_the_counter() {
+    let mut app = App::new(3);
+    // THE SET LAW (the server's own truth the local bank REPLACES —
+    // the vanilla setValue the merge speaks, never an add)
+    app.stats.walk_cm = 999;
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "custom".to_string(),
+        value: "walk_one_cm".to_string(),
+        value_id: 6,
+        count: 12345,
+    }]);
+    assert_eq!(app.stats.walk_cm, 12345, "the wire the local replaces");
+    // the jump + deaths lanes the same SET wears
+    app.merge_award_stats(&[
+        mc_protocol::play::AwardStatEntry {
+            category: "custom".to_string(),
+            value: "jump".to_string(),
+            value_id: 23,
+            count: 77,
+        },
+        mc_protocol::play::AwardStatEntry {
+            category: "custom".to_string(),
+            value: "deaths".to_string(),
+            value_id: 32,
+            count: 2,
+        },
+    ]);
+    assert_eq!(app.stats.jump, 77, "the jump the SET wears");
+    assert_eq!(app.stats.deaths, 2, "the deaths the SET wears");
+    // THE COMBAT PAIRS' OWN RESOLVE (the killed map the entity name
+    // the static id answers, the killed-by the display name the
+    // entity.* tr speaks)
+    app.merge_award_stats(&[
+        mc_protocol::play::AwardStatEntry {
+            category: "killed".to_string(),
+            value: "minecraft:zombie".to_string(),
+            value_id: 0,
+            count: 3,
+        },
+        mc_protocol::play::AwardStatEntry {
+            category: "killed_by".to_string(),
+            value: "minecraft:zombie".to_string(),
+            value_id: 0,
+            count: 1,
+        },
+    ]);
+    assert_eq!(
+        app.stats.mob_kills.get("minecraft:zombie"),
+        Some(&3),
+        "the killed map the entity name banks"
+    );
+    assert_eq!(
+        app.stats.killed_by.get("Zombie"),
+        Some(&1),
+        "the killed-by the display name banks"
+    );
+    // the unknown entity name the skip keeps (the honest absence)
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "killed".to_string(),
+        value: "minecraft:blaze".to_string(),
+        value_id: 0,
+        count: 5,
+    }]);
+    assert!(
+        app.stats.mob_kills.get("minecraft:blaze").is_none(),
+        "the unknown entity the skip keeps"
+    );
+    // THE MINED MAP'S OWN RESOLVE (the block registry id the BLOCKS
+    // bank names — the stone id the client's own state id banks)
+    let stone_registry_id = mc_registry::generated::blocks::BLOCKS
+        .iter()
+        .position(|b| b.name == "stone")
+        .expect("the stone block the registry carries") as i32;
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "mined".to_string(),
+        value: String::new(),
+        value_id: stone_registry_id,
+        count: 12,
+    }]);
+    assert_eq!(
+        app.stats.mined.get(&crate::world::STONE),
+        Some(&12),
+        "the mined map the registry id banks"
+    );
+    // THE CRAFTED MAP'S OWN RESOLVE (the item registry id the name
+    // the item id inverse answers — the stick the map banks)
+    let stick_registry_id = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+        .iter()
+        .position(|n| *n == "stick")
+        .expect("the stick item the registry carries") as i32;
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "crafted".to_string(),
+        value: String::new(),
+        value_id: stick_registry_id,
+        count: 9,
+    }]);
+    let stick = mc_registry::item_id_by_name("stick").unwrap();
+    assert_eq!(
+        app.stats.crafted.get(&stick),
+        Some(&9),
+        "the crafted map the item id banks"
+    );
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`

@@ -90,7 +90,8 @@ use crate::DEFAULT_TIMEOUT_SECS;
 /// Runtime facts: login = 49, respawn = 82, chunk data = 45.
 pub mod clientbound {
     pub use crate::generated::packet_ids::{
-        CB_ADD_ENTITY as ADD_ENTITY, CB_BLOCK_UPDATE as BLOCK_UPDATE,
+        CB_ADD_ENTITY as ADD_ENTITY, CB_AWARD_STATS as AWARD_STATS,
+        CB_BLOCK_UPDATE as BLOCK_UPDATE,
         CB_CHUNK_BATCH_START as BATCH_START, CB_DISCONNECT as DISCONNECT,
         CB_ENTITY_POSITION_SYNC as ENTITY_POSITION_SYNC,
         CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
@@ -10812,6 +10813,184 @@ pub fn parse_container_set_data(payload: &[u8]) -> Result<ContainerSetData> {
     Ok(ContainerSetData { container_id, id: slot, value })
 }
 
+/// THE AWARD STATS' OWN STAT-TYPE ORDER (javap `Stats.<clinit>`'s
+/// makeRegistryStatType call order — the BuiltInRegistries.STAT_TYPE
+/// ids the Award Statistics packet's key varint speaks; the 26.2
+/// bytecode's own call sequence the registration order pins:
+/// mined 0, crafted 1, used 2, broken 3, picked_up 4, dropped 5,
+/// killed 6, killed_by 7, custom 8).
+pub static STAT_TYPE_ORDER: [&str; 9] = [
+    "mined",
+    "crafted",
+    "used",
+    "broken",
+    "picked_up",
+    "dropped",
+    "killed",
+    "killed_by",
+    "custom",
+];
+
+/// THE CUSTOM STAT REGISTRY'S OWN ORDER (javap `Stats.<clinit>`'s
+/// makeCustomStat call order — the BuiltInRegistries.CUSTOM_STAT ids
+/// the `custom` category's value varint resolves through; 77 entries,
+/// leave_game 0 .. interact_with_smithing_table 76).
+pub static CUSTOM_STAT_ORDER: [&str; 77] = [
+    "leave_game",
+    "play_time",
+    "total_world_time",
+    "time_since_death",
+    "time_since_rest",
+    "sneak_time",
+    "walk_one_cm",
+    "crouch_one_cm",
+    "sprint_one_cm",
+    "walk_on_water_one_cm",
+    "fall_one_cm",
+    "climb_one_cm",
+    "fly_one_cm",
+    "walk_under_water_one_cm",
+    "minecart_one_cm",
+    "boat_one_cm",
+    "pig_one_cm",
+    "happy_ghast_one_cm",
+    "horse_one_cm",
+    "aviate_one_cm",
+    "swim_one_cm",
+    "strider_one_cm",
+    "nautilus_one_cm",
+    "jump",
+    "drop",
+    "damage_dealt",
+    "damage_dealt_absorbed",
+    "damage_dealt_resisted",
+    "damage_taken",
+    "damage_blocked_by_shield",
+    "damage_absorbed",
+    "damage_resisted",
+    "deaths",
+    "mob_kills",
+    "animals_bred",
+    "player_kills",
+    "fish_caught",
+    "talked_to_villager",
+    "traded_with_villager",
+    "eat_cake_slice",
+    "fill_cauldron",
+    "use_cauldron",
+    "clean_armor",
+    "clean_banner",
+    "clean_shulker_box",
+    "interact_with_brewingstand",
+    "interact_with_beacon",
+    "inspect_dropper",
+    "inspect_hopper",
+    "inspect_dispenser",
+    "play_noteblock",
+    "tune_noteblock",
+    "pot_flower",
+    "trigger_trapped_chest",
+    "open_enderchest",
+    "enchant_item",
+    "play_record",
+    "interact_with_furnace",
+    "interact_with_crafting_table",
+    "open_chest",
+    "sleep_in_bed",
+    "open_shulker_box",
+    "open_barrel",
+    "interact_with_blast_furnace",
+    "interact_with_smoker",
+    "interact_with_lectern",
+    "interact_with_campfire",
+    "interact_with_cartography_table",
+    "interact_with_loom",
+    "interact_with_stonecutter",
+    "bell_ring",
+    "raid_trigger",
+    "raid_win",
+    "interact_with_anvil",
+    "interact_with_grindstone",
+    "target_hit",
+    "interact_with_smithing_table",
+];
+
+/// ONE award-stat entry the Award Statistics decode carried — the map's
+/// own (Stat, value) pair the count speaks.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AwardStatEntry {
+    /// The stat type's own word — the `STAT_TYPE_ORDER` id the wire
+    /// spoke, resolved (`"custom"`, `"killed"`, `"mined"`...). An
+    /// out-of-table id the entry SKIPS (the honest unknown, never a
+    /// guessed category).
+    pub category: String,
+    /// The value's NAME the registry order resolves: the custom stats
+    /// the `CUSTOM_STAT_ORDER` word (`"play_time"`), the entity
+    /// categories the session's synced `entity_type` table's own name
+    /// (`"minecraft:zombie"`). The block/item categories the NAME the
+    /// empty string keeps — the raw id the `value_id` carries.
+    pub value: String,
+    /// The raw registry id the value varint spoke (the block/item
+    /// categories the client's own block/item order bank answers).
+    pub value_id: i32,
+    /// The stat's own value (the map entry's VarInt — the SET law's
+    /// own word).
+    pub count: i32,
+}
+
+/// THE AWARD STATS' OWN DECODE (javap `ClientboundAwardStatsPacket` the
+/// 26.2 clinit speaks — `ByteBufCodecs.map(LinkedHashMap, Stat.STREAM_CODEC,
+/// VAR_INT)` the map the VarInt size prefix carries): the Stat key
+/// `StreamCodec.dispatch(ByteBufCodecs.registry(Registries.STAT_TYPE))` —
+/// the stat type's registry id the first VarInt speaks, then the
+/// StatType's OWN streamCodec (`ByteBufCodecs.registry(type.registry
+/// .key())`) the value's registry id answers, then the count VarInt.
+/// ALL VarInts — the entry the (stat-type id, value id, value) triple.
+///
+/// The names the tables resolve where the protocol's own vocabulary
+/// reaches: the custom stats the `CUSTOM_STAT_ORDER` bank, the entity
+/// categories the caller's synced `entity_type` table (the
+/// configuration phase's arrival order). An id outside its table the
+/// entry skips — the honest unknown, never a guessed name.
+pub fn parse_award_stats(payload: &[u8], entity_types: &[String]) -> Result<Vec<AwardStatEntry>> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::AWARD_STATS,
+        "not a play award-stats packet (0x{id:02X})"
+    );
+    let n = read_varint(&mut c)?;
+    let mut out = Vec::new();
+    for _ in 0..n {
+        let category_id = read_varint(&mut c)?;
+        let value_id = read_varint(&mut c)?;
+        let count = read_varint(&mut c)?;
+        let Some(cat) = STAT_TYPE_ORDER.get(category_id.max(0) as usize).copied() else {
+            continue;
+        };
+        let value = match cat {
+            "custom" => match CUSTOM_STAT_ORDER.get(value_id.max(0) as usize) {
+                Some(v) => (*v).to_string(),
+                None => continue,
+            },
+            "killed" | "killed_by" => match entity_types.get(value_id.max(0) as usize) {
+                Some(v) => v.clone(),
+                None => continue,
+            },
+            // the block/item categories the value_id carries — the
+            // name the client's own registry bank answers
+            _ => String::new(),
+        };
+        out.push(AwardStatEntry {
+            category: cat.to_string(),
+            value,
+            value_id,
+            count,
+        });
+    }
+    Ok(out)
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -10882,6 +11061,14 @@ pub enum PlayEvent {
     /// nanosecond slots the sample carries, the chart's stacked
     /// columns the dims speak).
     DebugSample(DebugSample),
+    /// Award Statistics: the server's own stat broadcast — the
+    /// REQUEST_STATS reply the stats screen's open spends (the
+    /// Client Command action 1 the wire's own answer). The entries the
+    /// map decode carries — the stat type's own word, the value's
+    /// resolved name (or the raw block/item id the client's registry
+    /// answers), the count the SET law speaks. See
+    /// [`parse_award_stats`].
+    AwardStats(Vec<AwardStatEntry>),
     /// Chunk batch started; the pacing reply was sent.
     ChunkBatch,
     /// The server closed the play session (flattened reason).
@@ -11129,6 +11316,10 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::DEBUG_SAMPLE => {
                 Ok(PlayEvent::DebugSample(parse_debug_sample(&pkt)?))
             }
+            clientbound::AWARD_STATS => Ok(PlayEvent::AwardStats(parse_award_stats(
+                &pkt,
+                &self.registry.entity_types,
+            )?)),
             clientbound::BATCH_START => {
                 self.conn
                     .send_packet(&encode_chunk_batch_received(DESIRED_CHUNKS_PER_TICK))?;
@@ -12189,6 +12380,109 @@ mod tests {
         let mut p = Vec::new();
         write_hashed_stack(&mut p, stack)?;
         Ok(p)
+    }
+
+    #[test]
+    fn award_stats_wire_the_dispatch_triple_decodes() {
+        // THE PACKET ID: the generated table's runtime fact (the 26.2
+        // bootstrapped protocol dump) — `minecraft:award_stats` id 3.
+        assert_eq!(clientbound::AWARD_STATS, 3);
+        // THE STAT-TYPE ORDER: the 26.2 Stats clinit's own
+        // makeRegistryStatType call sequence the wire ids speak.
+        assert_eq!(
+            STAT_TYPE_ORDER,
+            [
+                "mined",
+                "crafted",
+                "used",
+                "broken",
+                "picked_up",
+                "dropped",
+                "killed",
+                "killed_by",
+                "custom",
+            ]
+        );
+        // THE CUSTOM BANK'S OWN HEAD + TAIL (the makeCustomStat call
+        // order — leave_game 0 the head, the 26.2's own
+        // interact_with_smithing_table 76 the tail; the seven the
+        // client's counter merges the ids speak)
+        assert_eq!(CUSTOM_STAT_ORDER[0], "leave_game");
+        assert_eq!(CUSTOM_STAT_ORDER[1], "play_time");
+        assert_eq!(CUSTOM_STAT_ORDER[5], "sneak_time");
+        assert_eq!(CUSTOM_STAT_ORDER[6], "walk_one_cm");
+        assert_eq!(CUSTOM_STAT_ORDER[8], "sprint_one_cm");
+        assert_eq!(CUSTOM_STAT_ORDER[20], "swim_one_cm");
+        assert_eq!(CUSTOM_STAT_ORDER[23], "jump");
+        assert_eq!(CUSTOM_STAT_ORDER[32], "deaths");
+        assert_eq!(CUSTOM_STAT_ORDER[76], "interact_with_smithing_table");
+        // THE WIRE WALK (the map the VarInt size prefix carries — the
+        // (stat-type id, value id, value) triple the entry speaks):
+        // play_time 12345, jump 77, zombie killed 3 (the entity table
+        // the id resolves), mined stone-id 5, plus the OUT-OF-TABLE
+        // category id the honest skip keeps.
+        let entity_types = vec!["minecraft:pig".to_string(), "minecraft:zombie".to_string()];
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::AWARD_STATS);
+        write_varint(&mut p, 5); // five entries
+        // custom play_time = 12345
+        write_varint(&mut p, 8); // STAT_TYPE custom
+        write_varint(&mut p, 1); // CUSTOM_STAT play_time
+        write_varint(&mut p, 12345);
+        // custom jump = 77
+        write_varint(&mut p, 8);
+        write_varint(&mut p, 23);
+        write_varint(&mut p, 77);
+        // killed zombie (entity table id 1) = 3
+        write_varint(&mut p, 6); // STAT_TYPE killed
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 3);
+        // mined block id 5 = 12
+        write_varint(&mut p, 0); // STAT_TYPE mined
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 12);
+        // the out-of-table category id 42 the skip keeps
+        write_varint(&mut p, 42);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 1);
+        let entries = parse_award_stats(&p, &entity_types).expect("award stats parse");
+        assert_eq!(entries.len(), 4, "the unknown category the skip keeps");
+        assert_eq!(
+            entries[0],
+            AwardStatEntry {
+                category: "custom".to_string(),
+                value: "play_time".to_string(),
+                value_id: 1,
+                count: 12345,
+            }
+        );
+        assert_eq!(
+            entries[1],
+            AwardStatEntry {
+                category: "custom".to_string(),
+                value: "jump".to_string(),
+                value_id: 23,
+                count: 77,
+            }
+        );
+        assert_eq!(
+            entries[2],
+            AwardStatEntry {
+                category: "killed".to_string(),
+                value: "minecraft:zombie".to_string(),
+                value_id: 1,
+                count: 3,
+            }
+        );
+        assert_eq!(
+            entries[3],
+            AwardStatEntry {
+                category: "mined".to_string(),
+                value: String::new(),
+                value_id: 5,
+                count: 12,
+            }
+        );
     }
 
     #[test]

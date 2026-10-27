@@ -5713,6 +5713,10 @@ impl WorldModel {
             | PlayEvent::PongResponse(_)
             | PlayEvent::ChunkBatch => false,
             PlayEvent::DebugSample(_) => false,
+            // THE AWARD STATS' OWN PASS (the stats lane the frame
+            // thread's drain consumes — the model's world state the
+            // broadcast never touches)
+            PlayEvent::AwardStats(_) => false,
             PlayEvent::GameEvent(g) => {
                 // THE GAME EVENT'S OWN WALK (javap
                 // ClientPacketListener.handleGameEvent + Level, the 26.2

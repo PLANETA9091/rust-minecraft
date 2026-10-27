@@ -235,6 +235,7 @@ fn run_join(
     chat_tx: std::sync::mpsc::Sender<String>,
     suggestion_tx: std::sync::mpsc::Sender<mc_protocol::play::CommandSuggestionsReply>,
     commands_tx: std::sync::mpsc::Sender<mc_protocol::play::CommandTree>,
+    stats_tx: std::sync::mpsc::Sender<Vec<mc_protocol::play::AwardStatEntry>>,
     run: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) {
     // the REAL protocol number (login tolerates no 0-ping) and the
@@ -1009,6 +1010,15 @@ fn run_join(
                                 // re-syncs).
                                 let _ = commands_tx.send(m.clone());
                             }
+                            mc_protocol::PlayEvent::AwardStats(entries) => {
+                                // THE AWARD STATS' OWN LANE (the vanilla
+                                // handleAwardStats walk — the REQUEST_STATS
+                                // reply's decoded entries the stats merge
+                                // consumes: the SET law the counter's own
+                                // fields speak, the frame thread's drain
+                                // the merge rides)
+                                let _ = stats_tx.send(entries.clone());
+                            }
                             _ => {}
                         }
                         if view.apply(event) || ping_changed || bw_changed || tick_changed {
@@ -1729,6 +1739,11 @@ pub fn run_gui_app(
     // graph the frame thread's drain hands the App's local suggestion
     // lane, the re-send the replace walk answers)
     let (commands_tx, commands_rx) = std::sync::mpsc::channel::<mc_protocol::play::CommandTree>();
+    // THE AWARD STATS' OWN LANE: ONE shared channel the per-join workers
+    // clone the sender of (the pump's AwardStats arm — the REQUEST_STATS
+    // reply's decoded entries the frame thread's drain hands the App's
+    // merge, the SET law the counter's own fields speak)
+    let (stats_tx, stats_rx) = std::sync::mpsc::channel::<Vec<mc_protocol::play::AwardStatEntry>>();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
                                    // THE MOUSE HANDLER'S OWN LAST-CLICK (the `MouseHandler.onButton`
@@ -3689,6 +3704,7 @@ pub fn run_gui_app(
             let chat_tx = chat_tx.clone();
             let suggestion_tx = suggestion_tx.clone();
             let commands_tx = commands_tx.clone();
+            let stats_tx = stats_tx.clone();
             std::thread::spawn(move || {
                 run_join(
                     id,
@@ -3700,6 +3716,7 @@ pub fn run_gui_app(
                     chat_tx,
                     suggestion_tx,
                     commands_tx,
+                    stats_tx,
                     run,
                 )
             });
@@ -4265,6 +4282,12 @@ pub fn run_gui_app(
         // lane the literals answer from now on)
         while let Ok(tree) = commands_rx.try_recv() {
             app.on_command_tree(tree);
+        }
+        // THE AWARD STATS' OWN DRAIN (the pump's AwardStats lane ships
+        // the decoded entries here — the App's merge the SET law
+        // speaks, the stats screen's rows the merged counter answers)
+        while let Ok(entries) = stats_rx.try_recv() {
+            app.merge_award_stats(&entries);
         }
         music.sync(&app.music);
         // THE MASTER'S OWN LANE (the Options seat's "Music & Sounds" slider

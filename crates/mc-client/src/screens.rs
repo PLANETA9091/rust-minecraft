@@ -2944,6 +2944,30 @@ fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
     }
 }
 
+/// THE ENTITY NAME'S OWN STATIC ID (the award-stats merge's own
+/// inverse — the wire's entity name the ten known kinds' own ids
+/// answer, the unknown names the None the skip keeps).
+fn mob_kind_static_id(name: &str) -> Option<&'static str> {
+    for kind in [
+        crate::mob::MobKind::Zombie,
+        crate::mob::MobKind::Pig,
+        crate::mob::MobKind::Cow,
+        crate::mob::MobKind::Sheep,
+        crate::mob::MobKind::Chicken,
+        crate::mob::MobKind::Skeleton,
+        crate::mob::MobKind::Spider,
+        crate::mob::MobKind::Wolf,
+        crate::mob::MobKind::Creeper,
+        crate::mob::MobKind::Warden,
+    ] {
+        let id = mob_kind_entity_id(kind);
+        if id == name {
+            return Some(id);
+        }
+    }
+    None
+}
+
 /// THE ATTACKER'S OWN DISPLAY NAME (vanilla `Entity.getDisplayName()`'s
 /// walk — the entity-type lang key the en_us table answers,
 /// `entity.minecraft.zombie` = "Zombie"): the killer word the death
@@ -70760,6 +70784,73 @@ impl App {
             rows.push(format_positional(fmt, &[name, &count.to_string()]));
         }
         rows
+    }
+
+    /// THE AWARD STATS' OWN MERGE (javap `ClientPacketListener
+    /// .handleAwardStats`'s walk — `this.stats.setValue(entry.getKey(),
+    /// entry.getValue())` the SET law the wire's own map speaks, the
+    /// client's own counters the server's truth REPLACES): the custom
+    /// category the seven own lanes set, the combat pairs the entity
+    /// name resolves, the mined/crafted the block/item registry orders
+    /// answer. The unknown words the honest skip keeps — the merge
+    /// never guesses.
+    pub fn merge_award_stats(&mut self, entries: &[mc_protocol::play::AwardStatEntry]) {
+        for e in entries {
+            match e.category.as_str() {
+                // THE CUSTOM STATS' OWN SET (the seven the General tab
+                // serves — the wire's word the counter's own field
+                // replaces, the unknown customs the skip keeps)
+                "custom" => match e.value.as_str() {
+                    "play_time" => self.stats.play_time = e.count as i64,
+                    "sneak_time" => self.stats.sneak_time = e.count as i64,
+                    "walk_one_cm" => self.stats.walk_cm = e.count as i64,
+                    "sprint_one_cm" => self.stats.sprint_cm = e.count as i64,
+                    "swim_one_cm" => self.stats.swim_cm = e.count as i64,
+                    "jump" => self.stats.jump = e.count as i64,
+                    "deaths" => self.stats.deaths = e.count as i64,
+                    _ => {}
+                },
+                // THE COMBAT PAIRS' OWN RESOLVE (the killed map the
+                // entity id the static word answers, the killed-by the
+                // display name the entity.* tr speaks — the unknown
+                // entity names the skip keeps)
+                "killed" => {
+                    if let Some(id) = mob_kind_static_id(&e.value) {
+                        *self.stats.mob_kills.entry(id).or_insert(0) = e.count.max(0) as i64;
+                    }
+                }
+                "killed_by" => {
+                    let key = tr(&format!("entity.{}", e.value.replace(':', ".")))
+                        .unwrap_or(e.value.as_str());
+                    *self.stats.killed_by.entry(key.to_string()).or_insert(0) =
+                        e.count.max(0) as i64;
+                }
+                // THE MINED MAP'S OWN RESOLVE (the block registry id
+                // the generated BLOCKS bank names, the client's own
+                // state id the NAME_OF inverse answers)
+                "mined" => {
+                    if let Some(name) = mc_registry::generated::blocks::BLOCKS
+                        .get(e.value_id.max(0) as usize)
+                        .map(|b| b.name)
+                    {
+                        if let Some(state) = crate::world::NAME_OF.iter().position(|n| *n == name) {
+                            *self.stats.mined.entry(state as u16).or_insert(0) =
+                                e.count.max(0) as i64;
+                        }
+                    }
+                }
+                // THE CRAFTED MAP'S OWN RESOLVE (the item registry id
+                // the name the item id inverse answers)
+                "crafted" => {
+                    if let Some(name) = mc_registry::item_name(e.value_id) {
+                        if let Some(id) = mc_registry::item_id_by_name(name) {
+                            *self.stats.crafted.entry(id).or_insert(0) = e.count.max(0) as i64;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
     }
 
     fn render_stats(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
