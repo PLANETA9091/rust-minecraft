@@ -3821,3 +3821,36 @@ Stage Summary:
 - v0.3.1050: the offline container lane the 26.2 count-transition voice wears — the chest/barrel/shulker open/close pair the first-opener/last-closer law speaks, the live session the wire lane keeps, the golden scene the silence banks (the interaction half the real Minecraft's own thud answers).
 - The mc-client bank the twelve windows rc=0 (2535 unique, 0 failed), the fast trio 338, the goldens the 19/19 rms 0.000 (NO regen, double-verified), the fmt the zero-diff law keeps.
 - NEXT CANDIDATES: THE DOUBLE CHEST'S OWN TYPE-STATE SEAT (the LEFT/RIGHT junction seat the variant's TYPE state the open walk's facing-aware pairing answers — the junction seat the exact vanilla wear), THE TRAPPED CHEST'S OWN VOICE (the trapped pair the same chest events the redstone lane never distinguishes — the honest same-voice law the family wears), THE ENDER CHEST'S OWN LANE (the offline ender chest the 27-slot the vanilla's own shared inventory banks — the bigger round the BE lane keeps), THE DOOR'S OWN OPEN VOICE (the wood/iron door the use walk the open/close creak the block's own SoundType wears — the door state lane the flip wears).
+---
+Task ID: dev-184
+Agent: cron-agent-loop (Job 384925, trace 1a0a02c3c1060631-cron-agent-loop-202610271743)
+Task: rust-minecraft dev round — ONE minimal interactive step, tests green, titled commit + push, worklog entry
+
+Work Log:
+- WIPED-SANDBOX HEAD (the 17:43 round the reset workspace opened — the repo dir EMPTY, the worklog.md GONE, the cargo MISSING): the fresh clone the token URL wears (HEAD 751d54b8 the dev-183 mirror), the worklog the logs/worklog.md mirror the cp ride restores, the rustup the curl -y install answers (cargo 1.99.1), the restore_env.sh the ONE-command lane the jar the sha1 the 2dc72797 walk verifies + the mc2rs-gen cache + the 5057 asset objects + the 10967 jar textures restores.
+- Candidate: dev-183's own NEXT #1 THE DOUBLE CHEST'S OWN TYPE-STATE SEAT — the junction seat the variant TYPE state the voice seat answers.
+- THE JAR WALK (sound_call_probe.py + full_disasm.py the 26.2 ChestBlockEntity — the slash-path the probe wants): playSound(Level, BlockPos, BlockState, SoundEvent) the type walk verbatim — pc 14-20 the `if_acmpne LEFT` the early `return` speaks (the LEFT half the voice never wears), pc 21-52 the seat the +0.5 dadd folds, pc 54-96 the `if_acmpne RIGHT` the getConnectedDirection step the x/z * 0.5 folds (the getStepY call the fold never makes), the SINGLE the arms never enter.
+- screens.rs: container_voice_emit the type-state lane — the chest family alone the variant reads (chest_variant_type the LEFT the silence return, the RIGHT the chest_connected_direction + stairs_facing_delta the junction shift arms, the +0.5 center first the step * 0.5 shift after the vanilla's own dadd order), the SINGLE the None the center keeps, the barrel/shulker the variant lane never carries; the doc the later-round deferral the banked law retires.
+- MID-ROUND OUTAGE (the 18:04-adjacent tail): the Bash lane the EOF failures wore (the window 5-7 batch + the probes) — the session's resume the same walk completed: the tree the +44/-7 screens.rs + the +179 part_4.rs the outage survived; the filemode churn the 1035-file 644->755 mount the core.fileMode=false law retires; the killed batch's ALL-GATED mod.rs the HEAD checkout restores (the corrupted-ORIGINAL lesson the pre-flight never inherits).
+- Tests: part_4.rs NEW the_container_voice_the_double_type_state_seat_wears (the LEFT half the open AND the close the silence keeps — the compound the 54-slot STILL arms; the RIGHT half the junction seat the gain the distance law folds + the pan tail the wire voices' shape wears + the SEAT'S OWN CONTRAST the junction the center seat never matches; the close the junction keeps; the SINGLE the center seat the own +0.5 keeps). FIRST-RUN PASS (window 4: 1686 tests).
+- THE WALK: WALL-GATE 12 windows in four batches (p1 1478 / p2 1496 / p3 1454 / p4 1686 [+1] / p5 1467 / p6 1485 / p7 1500 / p8 1479 / p9 1477 / p10 1515 / p11 1392 / rest 1387, each rc=0 MOD-RESTORED-CLEAN) — mc-client 2536 unique [+1], 0 failed + trio 338 (mc-protocol 158 + mc-registry 100 + mc2rs-gen 80) + zero-test pair rc=0; rustfmt the touched files the zero-diff law wears (the three hunks the new test's own lines answer); bump 0.3.1050 -> 0.3.1051, release rebuild 4m11s, goldens 19/19 rms 0.000 pre- AND post-bump — NO regen (the sound seat the pixels never touch).
+- Commit 0d1bb333 pushed.
+
+Stage Summary:
+- v0.3.1051: the double chest's own type-state seat wears — the LEFT half the vanilla's own silence keeps, the RIGHT half the junction seat the connected direction's step answers, the SINGLE the center seat the dev-183 law keeps (the double's open the honest junction thud the real Minecraft's own wear).
+- The mc-client bank the twelve windows rc=0 (2536 unique, 0 failed), the fast trio 338, the goldens the 19/19 rms 0.000 (NO regen, double-verified), the fmt the zero-diff law keeps; the wiped-sandbox restore the restore_env.sh lane the round banks.
+- NEXT CANDIDATES: THE TRAPPED CHEST'S OWN VOICE (the trapped pair the same chest events the redstone lane never distinguishes — the honest same-voice law the family wears), THE ENDER CHEST'S OWN LANE (the offline ender chest the 27-slot the vanilla's own shared inventory banks — the bigger round the BE lane keeps), THE DOOR'S OWN OPEN VOICE (the wood/iron door the use walk the open/close creak the block's own SoundType wears — the door state lane the flip wears), THE DEBUG PROFILE'S OWN DATAFIXER ROUND (the EntryList ctor the DataFixTypes.DEBUG_PROFILE wrapCodec 4649 — the new subsystem the bigger round keeps).
+
+---
+Task ID: autopush-288
+Agent: cron-agent-loop (Job 384923, trace 1a0a02c3c1060631-cron-agent-loop-202610271805)
+Task: rust-minecraft maintenance round — git status sweep, commit + push uncommitted, worklog entry
+
+Work Log:
+- The round the dev-184 resume-first ride wears (the 287 lesson the same walk answers): the interrupted dev round's chain the tail the outage ate the autopush lane completes BEFORE the maintenance sweep — the titled commit 0d1bb333 the v0.3.1051 bump the windows the trio the goldens the resume banks (the dev-184 entry the details wear).
+- git status the filemode churn the core.fileMode=false law retires (the 1035-file 644->755 mount the fresh clone's sandbox wears — the mode-only the add never stages); the killed batch's ALL-GATED mod.rs the HEAD checkout restores; the real diff the dev-184's own two files the tree keeps.
+- Push 751d54b8 -> 0d1bb333 (origin main); the worklog the dev-184 + autopush-288 entries the mirror rides.
+
+Stage Summary:
+- The dev-184 round CLOSED (v0.3.1051 titled commit + push + worklog + mirror); the tree clean, the HEAD the origin synced.
+- NEXT: the dev rounds the NEXT CANDIDATES list the dev-184 tail wears.
