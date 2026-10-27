@@ -71142,9 +71142,12 @@ impl App {
     /// crafted the item id inverse banks, the killed the static id
     /// walk resolves, the killed-by the display tr the SAME resolve
     /// the wire merge wears, the custom the seven words the fields
-    /// speak).
+    /// speak). THE NESTED GUARD the modern shape only wears — the
+    /// `stats` object the file keeps, the absent object the legacy
+    /// flat rows the 1.12 decode answers.
     pub fn stats_load_json(&mut self, v: &serde_json::Value) {
         let Some(all) = v.get("stats").and_then(|s| s.as_object()) else {
+            self.stats_load_legacy_flat(v);
             return;
         };
         let s = &mut self.stats;
@@ -71194,6 +71197,83 @@ impl App {
                     "deaths" => s.deaths = count,
                     _ => {}
                 }
+            }
+        }
+    }
+
+    /// THE STATS FILE'S OWN LEGACY FLAT READ (the 1.12 rows the
+    /// decode-compat lane wears — the pre-1.13 file the flat `stat.`
+    /// map speaks, the nested categories the modern shape keeps): the
+    /// mined/craftItem rows the block/item names the SAME inverses
+    /// decode (the `minecraft:` colon word AND the `minecraft.` dot
+    /// word the 1.7-1.11 rows wore, the bare strip the both answers),
+    /// the killEntity/entityKilledBy rows the class-shorthand word the
+    /// display tr resolves (the `Zombie` row the registry id speaks,
+    /// the already-namespaced word the static id answers), the seven
+    /// custom rows the vanilla 1.12 words the fields speak
+    /// (`stat.playOneMinute`/`stat.jump`/`stat.walkOneCm` the camels),
+    /// the unknown `stat.*` rows AND the non-stat keys the skip keeps,
+    /// the counts the as_i64 law the non-numbers never claim.
+    pub fn stats_load_legacy_flat(&mut self, v: &serde_json::Value) {
+        let Some(all) = v.as_object() else {
+            return;
+        };
+        let s = &mut self.stats;
+        for (k, c) in all {
+            let Some(count) = c.as_i64() else {
+                continue;
+            };
+            let Some(row) = k.strip_prefix("stat.") else {
+                continue;
+            };
+            let (family, name) = match row.split_once('.') {
+                Some((f, n)) => (f, Some(n)),
+                None => (row, None),
+            };
+            match family {
+                "mined" => {
+                    let Some(name) = name else { continue };
+                    let bare = name
+                        .strip_prefix("minecraft:")
+                        .unwrap_or_else(|| name.strip_prefix("minecraft.").unwrap_or(name));
+                    if let Some(pos) = crate::world::NAME_OF.iter().position(|n| *n == bare) {
+                        s.mined.insert(pos as u16, count);
+                    }
+                }
+                "craftItem" => {
+                    let Some(name) = name else { continue };
+                    let bare = name
+                        .strip_prefix("minecraft:")
+                        .unwrap_or_else(|| name.strip_prefix("minecraft.").unwrap_or(name));
+                    if let Some(id) = mc_registry::item_id_by_name(bare) {
+                        s.crafted.insert(id, count);
+                    }
+                }
+                "killEntity" | "entityKilledBy" => {
+                    let Some(name) = name else { continue };
+                    let Some(id) =
+                        mob_kind_static_id(name).or_else(|| mob_kind_registry_from_display(name))
+                    else {
+                        continue;
+                    };
+                    if family == "killEntity" {
+                        s.mob_kills.insert(id, count);
+                    } else {
+                        let display =
+                            tr(&format!("entity.{}", id.replace(':', "."))).unwrap_or(name);
+                        s.killed_by.insert(display.to_string(), count);
+                    }
+                }
+                _ => match row {
+                    "playOneMinute" | "playTime" => s.play_time = count,
+                    "sneakTime" => s.sneak_time = count,
+                    "walkOneCm" => s.walk_cm = count,
+                    "sprintOneCm" => s.sprint_cm = count,
+                    "swimOneCm" => s.swim_cm = count,
+                    "jump" => s.jump = count,
+                    "deaths" => s.deaths = count,
+                    _ => {}
+                },
             }
         }
     }

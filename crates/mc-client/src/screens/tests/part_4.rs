@@ -1791,6 +1791,120 @@ fn the_stats_file_lane_the_restart_outlives() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// THE STATS FILE'S OWN LEGACY FLAT READ (the 1.12 rows the
+/// decode-compat lane wears — the pre-1.13 file the flat `stat.` map
+/// speaks, the same counters the rows decode, the save the modern
+/// nested shape rewrites). The mined/craftItem rows the names the
+/// inverses decode, the kill rows the class-shorthand word the display
+/// tr resolves, the custom rows the vanilla camel words the fields
+/// speak, the unknown rows the skip keeps, the nested file the flat
+/// rows never touches.
+#[test]
+fn the_stats_file_legacy_flat_the_1_12_rows_decode() {
+    let stone = crate::world::STONE;
+    let stick = mc_registry::item_id_by_name("stick").expect("the stick item");
+    // THE 1.12 FLAT FILE (the rows the vanilla stats json wore — the
+    // nested `stats` object the file never keeps)
+    let legacy = serde_json::json!({
+        "stat.mined.minecraft:stone": 5,
+        "stat.craftItem.minecraft:stick": 3,
+        "stat.killEntity.Zombie": 2,
+        "stat.entityKilledBy.Creeper": 1,
+        "stat.playOneMinute": 999,
+        "stat.sneakTime": 7,
+        "stat.walkOneCm": 4000,
+        "stat.sprintOneCm": 2500,
+        "stat.swimOneCm": 300,
+        "stat.jump": 12,
+        "stat.deaths": 4,
+        "stat.leaveGame": 3
+    });
+    let mut app = App::new(48);
+    app.stats_load_json(&legacy);
+    assert_eq!(
+        app.stats.mined.get(&stone),
+        Some(&5),
+        "the mined row the block position decodes"
+    );
+    assert_eq!(
+        app.stats.crafted.get(&stick),
+        Some(&3),
+        "the crafted row the item id decodes"
+    );
+    assert_eq!(
+        app.stats.mob_kills.get("minecraft:zombie"),
+        Some(&2),
+        "the kill row the class word resolves"
+    );
+    assert_eq!(
+        app.stats.killed_by.get("Creeper"),
+        Some(&1),
+        "the killer row the display wears"
+    );
+    assert_eq!(app.stats.play_time, 999, "the playOneMinute row speaks");
+    assert_eq!(app.stats.sneak_time, 7);
+    assert_eq!(app.stats.walk_cm, 4000);
+    assert_eq!(app.stats.sprint_cm, 2500);
+    assert_eq!(app.stats.swim_cm, 300);
+    assert_eq!(app.stats.jump, 12);
+    assert_eq!(app.stats.deaths, 4);
+    // THE SAVE THE MODERN SHAPE REWRITES (the loaded legacy rows the
+    // 4903 nested file speaks — the upgrade the next Save and Quit banks)
+    let v = app.stats_save_json();
+    assert_eq!(
+        v["stats"]["minecraft:mined"]["minecraft:stone"], 5,
+        "the save the nested mined entry speaks"
+    );
+    assert_eq!(
+        v["stats"]["minecraft:custom"]["minecraft:jump"], 12,
+        "the save the nested custom word speaks"
+    );
+    // THE NAMESPACED KILL ROW (the `minecraft:pig` word the static id
+    // answers — the class shorthand AND the id the same resolve wears)
+    let mut ns = App::new(48);
+    ns.stats_load_json(&serde_json::json!({
+        "stat.killEntity.minecraft:pig": 1,
+        "stat.killEntity.minecraft:zombie": 2
+    }));
+    assert_eq!(ns.stats.mob_kills.get("minecraft:pig"), Some(&1));
+    assert_eq!(ns.stats.mob_kills.get("minecraft:zombie"), Some(&2));
+    // THE DOT-FORM ROW (the 1.7-1.11 `minecraft.stone` word the same
+    // bare decodes — the dot separator the colon strip answers)
+    let mut dotted = App::new(48);
+    dotted.stats_load_json(&serde_json::json!({ "stat.mined.minecraft.stone": 6 }));
+    assert_eq!(dotted.stats.mined.get(&stone), Some(&6));
+    // THE FOREIGN ROWS' OWN SKIP (the unknown names the decode never
+    // claims, the non-stat keys the map keeps, the honest zero)
+    let mut keeper = App::new(48);
+    keeper.stats_load_json(&serde_json::json!({
+        "stat.mined.minecraft:not_a_block": 5,
+        "stat.killEntity.Blaze": 1,
+        "stat.unknownRow": 9,
+        "loose": 1
+    }));
+    assert!(
+        keeper.stats.mined.is_empty(),
+        "the unknown block the skip keeps"
+    );
+    assert!(
+        keeper.stats.mob_kills.is_empty(),
+        "the unknown mob the skip keeps"
+    );
+    assert_eq!(keeper.stats.play_time, 0, "the loose key the field keeps");
+    // THE NESTED SHAPE WINS (the modern file's stat.* siblings the
+    // nested walk never touches — the same file's flat rows the
+    // legacy lane never answers)
+    let mut modern = App::new(48);
+    modern.stats_load_json(&serde_json::json!({
+        "stats": { "minecraft:custom": { "minecraft:jump": 3 } },
+        "stat.jump": 99
+    }));
+    assert_eq!(
+        modern.stats.jump, 3,
+        "the nested file the flat rows never overwrites"
+    );
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`
