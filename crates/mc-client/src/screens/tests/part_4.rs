@@ -27075,6 +27075,88 @@ fn the_creative_search_own_caret_seat_wears() {
     );
 }
 
+/// THE CREATIVE SEARCH BOX'S OWN CTRL HOP (the 280 debug + the 263
+/// direct/chat laws the hasControlDown branch the search tab wears —
+/// the whole word the bound the seat hops, the one-arg form the
+/// anchor collapses, the stale tab/screen the gates keep).
+#[test]
+fn the_creative_search_own_ctrl_hop_wears() {
+    let mut app = App::new(3);
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    // THE TYPED TAIL (the plain lane the same verdict keeps — the
+    // two words the space seam the boundary law answers)
+    for c in "stone wood".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(app.creative_search, "stone wood", "the typed word banks");
+    assert_eq!(app.creative_search_cursor, 10, "the tail seat wears");
+    // THE BACKWARD HOP'S OWN WORD BOUND (the ctrl branch the
+    // `moveCursorTo(getWordPosition(-1))` walk serves — the whole
+    // "wood" the backward bound the seat hops)
+    app.on_creative_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the first hop the word seam parks"
+    );
+    app.on_creative_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the second hop the head parks"
+    );
+    app.on_creative_ctrl_caret_arrow(true);
+    assert_eq!(app.creative_search_cursor, 0, "the head the clamp keeps");
+    // THE FORWARD HOP'S OWN RUN SKIP (the getWordPosition(1) walk
+    // the seek-then-skip law answers — the seam the word head parks)
+    app.on_creative_ctrl_caret_arrow(false);
+    assert_eq!(
+        app.creative_search_cursor, 6,
+        "the forward hop the seam parks"
+    );
+    app.on_creative_ctrl_caret_arrow(false);
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the second hop the tail parks"
+    );
+    app.on_creative_ctrl_caret_arrow(false);
+    assert_eq!(app.creative_search_cursor, 10, "the tail the clamp keeps");
+    // THE HOP'S OWN ANCHOR COLLAPSE (the one-arg moveCursorTo law —
+    // the banked anchor the hop resets, the 280 debug sibling the
+    // same tail wears)
+    app.creative_search_cursor = 10;
+    app.on_creative_caret_shift_arrow(true); // the ride the anchor banks
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(10),
+        "the ride the anchor banks"
+    );
+    app.on_creative_ctrl_caret_arrow(true);
+    assert_eq!(app.creative_search_cursor, 6, "the hop the word seam parks");
+    assert!(
+        app.creative_search_highlight.is_none(),
+        "the hop the anchor collapses"
+    );
+    // THE STALE TAB'S OWN SILENCE (the internal gate the seat keeps —
+    // the non-search tab the hop never wears)
+    app.select_creative_tab(0);
+    app.creative_search_cursor = 10;
+    app.on_creative_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the stale tab the silence wears"
+    );
+    // THE STALE SCREEN'S OWN SILENCE (the screen gate the same law
+    // keeps — the other screen the hop never wears)
+    app.enter_world();
+    app.on_debug_options_key(); // the debug screen the stale seat wears
+    app.creative_search_cursor = 10;
+    app.on_creative_ctrl_caret_arrow(false);
+    assert_eq!(
+        app.creative_search_cursor, 10,
+        "the stale screen the silence wears"
+    );
+}
+
 /// THE CREATIVE SEARCH BOX'S OWN CLICK SEAT (the 270/271 entry + the
 /// 272 debug laws the EditBox.mouseClicked walk the search tab wears
 /// — the inside click the caret the x-band seats, the outside the

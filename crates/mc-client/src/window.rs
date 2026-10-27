@@ -2420,14 +2420,27 @@ pub fn run_gui_app(
             let creative_shift =
                 window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
-                if creative_shift {
+                if ctrl_down {
+                    // THE CREATIVE BOX'S OWN CTRL HOP (the 262/263
+                    // arms the hasControlDown branch the
+                    // `moveCursorTo(getWordPosition(-1))` walk
+                    // serves — the whole word the backward bound
+                    // the seat hops, the 280 debug sibling the same
+                    // shape wears)
+                    app.on_creative_ctrl_caret_arrow(true);
+                } else if creative_shift {
                     app.on_creative_caret_shift_arrow(true);
                 } else {
                     app.on_creative_caret_arrow(true);
                 }
             }
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
-                if creative_shift {
+                if ctrl_down {
+                    // the ctrl branch the `moveCursorTo(getWordPosition(
+                    // 1))` walk serves — the forward bound the same law
+                    // wears
+                    app.on_creative_ctrl_caret_arrow(false);
+                } else if creative_shift {
                     app.on_creative_caret_shift_arrow(false);
                 } else {
                     app.on_creative_caret_arrow(false);

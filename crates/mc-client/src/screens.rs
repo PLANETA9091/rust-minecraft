@@ -24044,6 +24044,27 @@ impl App {
         }
     }
 
+    /// THE SEARCH BOX'S OWN CTRL HOP (the EditBox keyPressed's
+    /// 262/263 arms the `Screen.hasControlDown()` branch the
+    /// `moveCursorTo(this.getWordPosition(±1))` walk serves — the
+    /// whole word the bound the seat hops, the one-arg form the
+    /// anchor collapses; the 263 direct/chat + the 280 debug
+    /// siblings the same law the box wears).
+    pub fn on_creative_ctrl_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        // the one-arg word-hop the anchor collapses (the plain law
+        // the direct/chat/debug siblings wear — the highlightPos the
+        // cursorPos the tail resets)
+        self.creative_search_highlight = None;
+        let len = self.creative_search.chars().count();
+        let seat = self.creative_search_cursor.min(len);
+        self.creative_search_cursor = word_boundary(&self.creative_search, seat, !left);
+    }
+
     /// THE MIDDLE-CLICK CLONE (the slotClicked walk's CLONE arm —
     /// `if getCarried().isEmpty() && slot.hasItem():
     /// setCarried(hovered.copyWithCount(hovered.getMaxStackSize()))`:
