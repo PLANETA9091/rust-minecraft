@@ -2304,4 +2304,60 @@ mod tests {
         uniq.dedup();
         assert!(uniq.len() > 1000, "the walk visited {} cells", uniq.len());
     }
+
+    /// THE COPPER CHEST'S OWN DIG/PLACE LANES (the autopush-291 round —
+    /// the block_sounds table the jar's REAL bootstrapped registry
+    /// banks the rung rows wear: the COPPER SoundType the whole ladder
+    /// answers, the break/step/place/hit the block.copper.* family
+    /// speaks, the chest the wood family keeps, the ender the stone
+    /// family keeps [the SoundType rows the vanilla registration
+    /// wears]); the fold the SoundType's own (1.0, 1.0) base the
+    /// vanilla constants keep (the Break/Place the (v+1)/2 + p*0.8
+    /// fold speaks, the Hit the (v+1)/8 + p*0.5, the Step the *0.15,
+    /// the muffler the *0.05 + p*0.8 — the javap-quoted constants the
+    /// Lane doc names).
+    #[test]
+    fn the_copper_chest_the_dig_place_lanes_wear() {
+        // THE LADDER'S OWN ROWS (the eight rungs the same copper
+        // family wears — the waxed the base state the same SoundType
+        // keeps, the weather ladder the rows never move)
+        for name in [
+            "copper_chest",
+            "exposed_copper_chest",
+            "weathered_copper_chest",
+            "oxidized_copper_chest",
+            "waxed_copper_chest",
+            "waxed_exposed_copper_chest",
+            "waxed_weathered_copper_chest",
+            "waxed_oxidized_copper_chest",
+        ] {
+            let idx =
+                bs::sound_index(name).unwrap_or_else(|| panic!("{name} the row the table banks"));
+            assert_eq!(Lane::Break.event_of(idx), "block.copper.break", "{name}");
+            assert_eq!(Lane::Place.event_of(idx), "block.copper.place", "{name}");
+            assert_eq!(Lane::Hit.event_of(idx), "block.copper.hit", "{name}");
+            assert_eq!(Lane::Step.event_of(idx), "block.copper.step", "{name}");
+        }
+        // THE FAMILY'S OWN CONTRASTS (the chest the wood pair keeps —
+        // the trapped the same family the dev-185 law answers, the
+        // ender the stone pair the STONE SoundType keeps)
+        let chest = bs::sound_index("chest").expect("the chest row the table banks");
+        assert_eq!(Lane::Break.event_of(chest), "block.wood.break");
+        assert_eq!(Lane::Place.event_of(chest), "block.wood.place");
+        assert_eq!(Lane::Hit.event_of(chest), "block.wood.hit");
+        let trapped = bs::sound_index("trapped_chest").expect("the trapped row the table banks");
+        assert_eq!(Lane::Break.event_of(trapped), "block.wood.break");
+        assert_eq!(Lane::Place.event_of(trapped), "block.wood.place");
+        let ender = bs::sound_index("ender_chest").expect("the ender row the table banks");
+        assert_eq!(Lane::Break.event_of(ender), "block.stone.break");
+        assert_eq!(Lane::Place.event_of(ender), "block.stone.place");
+        assert_eq!(Lane::Hit.event_of(ender), "block.stone.hit");
+        // THE FOLD'S OWN NUMBERS (the (1.0, 1.0) base the vanilla rows
+        // wear — the exact f32 the nearest-literal law keeps)
+        assert_eq!(Lane::Break.fold(1.0, 1.0), (1.0, 0.8));
+        assert_eq!(Lane::Place.fold(1.0, 1.0), (1.0, 0.8));
+        assert_eq!(Lane::Hit.fold(1.0, 1.0), (0.25, 0.5));
+        assert_eq!(Lane::Step.fold(1.0, 1.0), (0.15, 1.0));
+        assert_eq!(Lane::StepMuffled.fold(1.0, 1.0), (0.05, 0.8));
+    }
 }
