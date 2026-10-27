@@ -25875,6 +25875,40 @@ impl App {
             } else {
                 "block.ender_chest.close"
             }
+        } else if crate::world::is_copper_chest(kind) {
+            // THE COPPER'S OWN HINGE LANE (the autopush-290 round —
+            // javap 26.2 the block-level sound pair the virtual
+            // dispatch wears: ChestBlockEntity$1.onOpen the
+            // `checkcast ChestBlock` the getOpenChestSound
+            // invokevirtual speaks, ChestBlock.getOpenChestSound the
+            // openSound field reads — the per-rung pair the Blocks'
+            // lambda$static$385/386 factories pass the ctor wear, the
+            // getHingeSound lookupswitch the states fold: the
+            // UNOXIDIZED + EXPOSED rungs the plain copper pair share
+            // [the default branch the two ordinals keep], the
+            // WEATHERED the weathered pair, the OXIDIZED the oxidized
+            // pair — the waxed rung the base state's own pair the
+            // same factory call keeps)
+            match (kind, open) {
+                (crate::world::WEATHERED_COPPER_CHEST, true)
+                | (crate::world::WAXED_WEATHERED_COPPER_CHEST, true) => {
+                    "block.copper_chest_weathered.open"
+                }
+                (crate::world::WEATHERED_COPPER_CHEST, false)
+                | (crate::world::WAXED_WEATHERED_COPPER_CHEST, false) => {
+                    "block.copper_chest_weathered.close"
+                }
+                (crate::world::OXIDIZED_COPPER_CHEST, true)
+                | (crate::world::WAXED_OXIDIZED_COPPER_CHEST, true) => {
+                    "block.copper_chest_oxidized.open"
+                }
+                (crate::world::OXIDIZED_COPPER_CHEST, false)
+                | (crate::world::WAXED_OXIDIZED_COPPER_CHEST, false) => {
+                    "block.copper_chest_oxidized.close"
+                }
+                (_, true) => "block.copper_chest.open",
+                (_, false) => "block.copper_chest.close",
+            }
         } else if crate::world::is_chest(kind) {
             if open {
                 "block.chest.open"

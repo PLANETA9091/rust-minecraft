@@ -21627,6 +21627,204 @@ fn the_chest_above_gate_the_solid_lid_refusal_wears() {
     app.close_chest_container(ScreenKind::World);
 }
 
+/// THE COPPER CHEST'S OWN HINGE VOICE (the autopush-290 round — javap
+/// 26.2 the block-level sound pair the virtual dispatch wears: the
+/// ChestBlockEntity$1.onOpen the `checkcast ChestBlock` the
+/// getOpenChestSound invokevirtual speaks, ChestBlock.getOpenChestSound
+/// the openSound field reads, the per-rung pair the Blocks'
+/// lambda$static$385/386 factories the getHingeSound call wear — the
+/// lookupswitch the weather states fold: the UNOXIDIZED + EXPOSED
+/// rungs the plain copper pair share [the default branch the two
+/// ordinals keep], the WEATHERED the weathered pair, the OXIDIZED the
+/// oxidized pair, the waxed rung the base state's own pair the same
+/// factory call keeps; the trapped the dev-185 law the plain pair
+/// keeps). THE GATE the family wears (the dev-186 round the is_chest
+/// range already banks): the trapped the solid lid refuses, the
+/// copper rung the same read — the release each its OWN voice speaks.
+#[test]
+fn the_copper_chest_the_own_hinge_voice_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        // THE BAND'S OWN CLEAR (the gate test's own lane — the stone
+        // floor the air rows the ray's own reach keeps)
+        for dx in -4..=4 {
+            for dz in -14..=14 {
+                w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                for dy in 0..=3 {
+                    w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        // THE LADDER'S OWN SEATS (the five rungs + the trapped the
+        // same-voice contrast)
+        w.set(c, top, c, crate::world::COPPER_CHEST);
+        w.set(c, top, c + 3, crate::world::EXPOSED_COPPER_CHEST);
+        w.set(c, top, c - 3, crate::world::WEATHERED_COPPER_CHEST);
+        w.set(c, top, c + 6, crate::world::OXIDIZED_COPPER_CHEST);
+        w.set(c, top, c - 6, crate::world::WAXED_OXIDIZED_COPPER_CHEST);
+        w.set(c, top, c + 9, crate::world::TRAPPED_CHEST);
+        // THE GATE'S OWN TWO SEATS (the trapped + the copper rung the
+        // solid lid wears — the release each its own voice speaks)
+        w.set(c, top, c + 12, crate::world::TRAPPED_CHEST);
+        w.set(c, top + 1, c + 12, crate::world::STONE);
+        w.set(c, top, c - 12, crate::world::COPPER_CHEST);
+        w.set(c, top + 1, c - 12, crate::world::STONE);
+    }
+    let mut press_at = |app: &mut App, cz: i32| {
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new((c - 3) as f32 + 0.5, top as f32 + 0.5, cz as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+    };
+    // THE PLAIN RUNG'S OWN PAIR (the UNOXIDIZED the default branch
+    // wears — the open the copper voice, the close the same pair)
+    press_at(&mut app, c);
+    assert!(app.on_right_press(0, 0), "the copper press consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the copper opens");
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest.open @"),
+        "the plain rung its own voice: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest.close @"),
+        "the plain rung the close pair keeps: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    // THE EXPOSED RUNG (the plain pair the default branch shares)
+    press_at(&mut app, c + 3);
+    assert!(app.on_right_press(0, 0), "the exposed press consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the exposed opens");
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest.open @"),
+        "the exposed the plain pair shares: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.sounds.events.clear();
+    // THE WEATHERED RUNG (its own weathered pair)
+    press_at(&mut app, c - 3);
+    assert!(app.on_right_press(0, 0), "the weathered press consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the weathered opens");
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest_weathered.open @"),
+        "the weathered its own voice: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.sounds.events.clear();
+    // THE OXIDIZED RUNG (its own oxidized pair)
+    press_at(&mut app, c + 6);
+    assert!(app.on_right_press(0, 0), "the oxidized press consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the oxidized opens");
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest_oxidized.open @"),
+        "the oxidized its own voice: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.sounds.events.clear();
+    // THE WAXED RUNG (the base state's own pair the wax keeps)
+    press_at(&mut app, c - 6);
+    assert!(app.on_right_press(0, 0), "the waxed press consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the waxed opens");
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest_oxidized.open @"),
+        "the waxed the base pair keeps: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.sounds.events.clear();
+    // THE TRAPPED'S OWN CONTRAST (the dev-185 law the plain chest
+    // pair keeps — the copper ladder the trapped never wears)
+    press_at(&mut app, c + 9);
+    assert!(app.on_right_press(0, 0), "the trapped press consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the trapped opens");
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the trapped the family voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.sounds.events.clear();
+    // THE GATE'S OWN TRAPPED SEAT (the solid lid the refusal the
+    // press consumes — the release the family voice speaks)
+    press_at(&mut app, c + 12);
+    assert!(
+        app.on_right_press(0, 0),
+        "the trapped gate the press consumes"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the trapped the solid lid refuses"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the trapped refusal the silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c, top + 1, c + 12, crate::world::AIR);
+    assert!(app.on_right_press(0, 0), "the trapped open consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the trapped releases");
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the trapped release the family voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    app.sounds.events.clear();
+    // THE GATE'S OWN COPPER SEAT (the same read the rung wears — the
+    // release the COPPER voice speaks, the family gate the ladder's
+    // own lane answers)
+    press_at(&mut app, c - 12);
+    assert!(
+        app.on_right_press(0, 0),
+        "the copper gate the press consumes"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the copper rung the solid lid refuses"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the copper refusal the silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c, top + 1, c - 12, crate::world::AIR);
+    assert!(app.on_right_press(0, 0), "the copper open consumes");
+    assert_eq!(app.screen, ScreenKind::Chest, "the copper releases");
+    assert!(
+        app.sounds.events[0].starts_with("block.copper_chest.open @"),
+        "the copper release its own voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+}
+
 /// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
 /// walk the OLD screen's removed() FIRST answers — the autopush-224
 /// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE
