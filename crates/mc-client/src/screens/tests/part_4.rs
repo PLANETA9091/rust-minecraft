@@ -20776,6 +20776,126 @@ fn the_debug_chord_interrupt_the_container_map_the_removed_wears() {
     );
 }
 
+/// THE CONTAINER VOICE'S OWN WALK (javap the 26.2 ContainerOpenersCounter
+/// the count-transition gate the offline lane wears): the chest's open
+/// the block.chest.open voice speaks, the close the block.chest.close
+/// answers, the barrel the barrel events the same fold wears, the
+/// shulker the box's own pair speaks, the cell-less golden scene the
+/// silence keeps, the pitch the [0.9, 1.0] band the LCG's own draw
+/// speaks.
+#[test]
+fn the_container_voice_the_open_close_walk_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    // THE OPEN HALF (the chest event the block kind names — the log
+    // the count transition's 0->1 arm banks, the volume 0.5 the
+    // playSound fold wears)
+    app.open_chest_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the chest seat arms");
+    assert_eq!(app.sounds.events.len(), 1, "the open the one voice banks");
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the open event: {}",
+        app.sounds.events[0]
+    );
+    assert!(
+        app.sounds.events[0].contains(" v0.500000 p"),
+        "the volume fold: {}",
+        app.sounds.events[0]
+    );
+    let pitch: f32 = app.sounds.events[0]
+        .split(" p")
+        .nth(1)
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!((0.9..=1.0).contains(&pitch), "the pitch band: {pitch}");
+    // THE CLOSE HALF (the flush's take the voice PRECEDES — the 1->0
+    // arm the block.chest.close event speaks)
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world returns");
+    assert_eq!(app.sounds.events.len(), 1, "the close the one voice banks");
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.close @"),
+        "the close event: {}",
+        app.sounds.events[0]
+    );
+    // THE BARREL'S OWN EVENTS (the same fold the barrel kind names —
+    // the open AND the close the barrel pair wears)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BARREL);
+    app.sounds.events.clear();
+    app.open_chest_for(cell);
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("block.barrel.open @")),
+        "the barrel open: {:?}",
+        app.sounds.events
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("block.barrel.close @")),
+        "the barrel close: {:?}",
+        app.sounds.events
+    );
+    // THE SHULKER'S OWN EVENTS (the box's own pair the same law wears)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::SHULKER_BOX);
+    app.sounds.events.clear();
+    app.open_shulker_for(cell);
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("block.shulker_box.open @")),
+        "the shulker open: {:?}",
+        app.sounds.events
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("block.shulker_box.close @")),
+        "the shulker close: {:?}",
+        app.sounds.events
+    );
+    // THE GOLDEN SCENE'S OWN SILENCE (the cell-less canvas the voice
+    // never banks — the open_chest scene the None the container keeps)
+    app.sounds.events.clear();
+    app.open_chest();
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .all(|e| !e.starts_with("block.chest.")
+                && !e.starts_with("block.barrel.")
+                && !e.starts_with("block.shulker_box.")),
+        "the golden scene the silence keeps: {:?}",
+        app.sounds.events
+    );
+}
+
 /// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
 /// walk the OLD screen's removed() FIRST answers — the autopush-224
 /// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE

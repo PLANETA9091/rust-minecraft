@@ -25724,6 +25724,61 @@ impl App {
     /// OUTLIVES, the reopen the same stacks banks). The barrel cell
     /// the same lane serves (the 27 the barrel's EXACT count the
     /// vanilla menu wears).
+    /// THE CONTAINER VOICE'S OWN SEAT (the offline lane's own law —
+    /// javap the 26.2 ContainerOpenersCounter the 0->1/1->0 transitions
+    /// the BE's playSound fold wears): the open/close pair the
+    /// chest/barrel/shulker family speaks through the sounds lane, the
+    /// event the block's own kind names, the seat the cell's own +0.5
+    /// center keeps (the #110 double the chest law's x/y/z dadd folds
+    /// wear — the SINGLE chest's exact vanilla seat; the double's
+    /// LEFT/RIGHT junction seat the type-state lane the later round
+    /// banks), the ear's distance + pan the wire voices' own shape
+    /// folds. The LIVE session the helper never speaks (the server's
+    /// own counter the wire lane's world_voices the sound packet
+    /// delivers), the cell-less scene (the golden canvas the
+    /// open_chest scene is) the None the silence keeps.
+    fn container_voice_emit(&mut self, open: bool) {
+        let Some(pos) = self.container_open_cell else {
+            return;
+        };
+        let Some(w) = self.offline_world.as_ref() else {
+            return;
+        };
+        let kind = w.get(pos.0, pos.1, pos.2);
+        let event = if crate::world::is_chest(kind) {
+            if open {
+                "block.chest.open"
+            } else {
+                "block.chest.close"
+            }
+        } else if crate::world::is_barrel(kind) {
+            if open {
+                "block.barrel.open"
+            } else {
+                "block.barrel.close"
+            }
+        } else if crate::world::is_shulker(kind) {
+            if open {
+                "block.shulker_box.open"
+            } else {
+                "block.shulker_box.close"
+            }
+        } else {
+            return; // the crafting/furnace family the vanilla never voices
+        };
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (x, y, z) = (
+            f64::from(pos.0) + 0.5,
+            f64::from(pos.1) + 0.5,
+            f64::from(pos.2) + 0.5,
+        );
+        let dist = ear_distance(ear, x, y, z);
+        let pan = ear_pan(ear, yaw, x, y, z);
+        self.sounds
+            .play_container_voice_at(self.frame, event, dist, pan);
+    }
+
     pub fn open_chest_for(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
         // THE DISK BANK'S OWN LAZY LOAD (the dev-68 round — the first
@@ -25815,6 +25870,10 @@ impl App {
                 self.chest_open_cell = Some(pos);
             }
         }
+        // THE CONTAINER VOICE'S OWN OPEN HALF (the counter's 0->1
+        // transition the first opener speaks — the chest/barrel event
+        // the block's own kind names)
+        self.container_voice_emit(true);
         self.open(ScreenKind::Chest);
     }
 
@@ -25876,6 +25935,9 @@ impl App {
         // reads — the container.shulkerBox default the vanilla menu
         // banks)
         self.chest_window_shulker = true;
+        // THE SHULKER'S OWN VOICE (the same counter law the box's own
+        // event names — the open half the first opener speaks)
+        self.container_voice_emit(true);
         self.open(ScreenKind::Chest);
     }
 
@@ -30136,6 +30198,14 @@ impl App {
         self.live_chest_title = None; // the title dies with the window
         self.container_carried_returned(was_live);
         self.chest_carried = (0, 0);
+        // THE CONTAINER VOICE'S OWN CLOSE HALF (the counter's 1->0
+        // transition the last closer speaks — the OFFLINE lane only:
+        // the live session the server's own counter the wire lane
+        // delivers, the double-speak the gate refuses; the cell the
+        // flush's own take RECLAIMS — the voice the flush precedes)
+        if !was_live {
+            self.container_voice_emit(false);
+        }
         self.container_store_flush();
         self.barrel_lid_released();
         self.container_removed_rode = true; // the removed law rode

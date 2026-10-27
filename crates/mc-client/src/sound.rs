@@ -30,8 +30,8 @@
 //! Rodio path decodes the official .ogg the log names, folds the gain and
 //! the pitch resample in, and hands the one-shot to the output.
 
-use mc_registry::generated::block_sounds as bs;
 use crate::sound_table as snd;
+use mc_registry::generated::block_sounds as bs;
 
 /// Which vanilla voice a lane speaks (the SoundType event the law plays).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -505,7 +505,8 @@ impl BlockSounds {
         };
         self.events.push(format!(
             "entity.item.pickup @{tick} #{file} v{:.6} p{:.6}",
-            crate::drops::PICKUP_VOLUME, pitch
+            crate::drops::PICKUP_VOLUME,
+            pitch
         ));
     }
 
@@ -537,6 +538,38 @@ impl BlockSounds {
         (self.next_rand() % (1u64 << 24)) as f32 / (1u64 << 24) as f32
     }
 
+    /// THE CONTAINER VOICE (javap the 26.2 ContainerOpenersCounter's
+    /// own gate + the ChestBlockEntity/BarrelBlockEntity playSound
+    /// fold): the open/close pair the COUNT TRANSITION speaks —
+    /// incrementOpeners fires onOpen when the PRE-increment count was
+    /// zero (`iload 7; ifne +42`), decrementOpeners fires onClose when
+    /// the POST-decrement count lands zero (`ifne +42`), and the BE's
+    /// playSound folds `level.playSound(null, pos + 0.5, event,
+    /// SoundSource.BLOCKS, 0.5F, random.nextFloat() * 0.1F + 0.9F)`:
+    /// volume 0.5, pitch in [0.9, 1.0], the ONE random riding THIS
+    /// engine's LCG (the draw order: the pitch random first, then the
+    /// file pick — the pickup voice's own order). The seat the chest's
+    /// own +0.5 center speaks (the #110 double constant the x/y/z
+    /// dadd folds wear), the distance law's gain the positioned voices
+    /// fold, the pan the log's ` s` tail carries (the wire voices' own
+    /// shape the positioned lane keeps).
+    pub fn play_container_voice_at(&mut self, tick: u64, event: &str, dist: f64, pan: f32) {
+        let r = self.next_rand_f32();
+        let pitch = r * 0.1 + 0.9;
+        let gain = attenuate(0.5, dist, voice_max_distance(0.5));
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        if pan == 0.0 {
+            self.events
+                .push(format!("{event} @{tick} #{file} v{gain:.6} p{pitch:.6}"));
+        } else {
+            self.events.push(format!(
+                "{event} @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
+            ));
+        }
+    }
+
     /// The FALL VOICE (javap `LivingEntity.causeFallDamage`'s own
     /// call): `playSound(getFallDamageSound(damage), 1.0F, 1.0F)` —
     /// the FIXED volume and pitch lane (no randoms, the fall's own
@@ -552,10 +585,8 @@ impl BlockSounds {
         let Some(file) = self.pick_file(event) else {
             return;
         };
-        self.events.push(format!(
-            "{event} @{tick} #{file} v{:.6} p{:.6}",
-            1.0, 1.0
-        ));
+        self.events
+            .push(format!("{event} @{tick} #{file} v{:.6} p{:.6}", 1.0, 1.0));
     }
 
     /// The HURT VOICE (javap `LivingEntity.handleDamageEvent`'s own
@@ -683,7 +714,8 @@ impl BlockSounds {
         };
         self.events.push(format!(
             "entity.generic.extinguish_fire @{tick} #{file} v{:.6} p{:.6}",
-            crate::mob::EXTINGUISH_VOLUME, pitch
+            crate::mob::EXTINGUISH_VOLUME,
+            pitch
         ));
     }
 
@@ -772,9 +804,8 @@ impl BlockSounds {
         let Some(file) = self.pick_file(event) else {
             return;
         };
-        self.events.push(format!(
-            "{event} @{tick} #{file} v1.000000 p1.000000"
-        ));
+        self.events
+            .push(format!("{event} @{tick} #{file} v1.000000 p1.000000"));
     }
 
     /// The FIXED-VOICE lane (the fall voice's generalized shape — the
@@ -926,9 +957,8 @@ impl BlockSounds {
             return;
         };
         if pan == 0.0 {
-            self.events.push(format!(
-                "{event} @{tick} #{file} v{gain:.6} p{pitch:.6}"
-            ));
+            self.events
+                .push(format!("{event} @{tick} #{file} v{gain:.6} p{pitch:.6}"));
         } else {
             self.events.push(format!(
                 "{event} @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
@@ -980,10 +1010,8 @@ impl BlockSounds {
         let Some(file) = self.pick_file(EVENT) else {
             return;
         };
-        self.events.push(format!(
-            "{EVENT} @{tick} #{file} v{:.6} p{:.6}",
-            0.8, pitch
-        ));
+        self.events
+            .push(format!("{EVENT} @{tick} #{file} v{:.6} p{:.6}", 0.8, pitch));
     }
 
     /// THE ELYTRA VOICE'S OWN TICK (javap `ElytraOnPlayerSoundInstance.
@@ -1259,11 +1287,7 @@ mod tests {
             } else {
                 1.0
             };
-            assert_eq!(
-                v.pitch, expect_pitch,
-                "the pitch law tick {}",
-                v.time
-            );
+            assert_eq!(v.pitch, expect_pitch, "the pitch law tick {}", v.time);
         }
         assert_eq!(
             s.elytra_voice.as_ref().unwrap().volume,
@@ -1296,7 +1320,11 @@ mod tests {
         // THE CLAMP'S OWN FOLD (the speed² 100.0 the /4 = 25 the clamp
         // caps, the mid value 0.5 the same /4 fold answers)
         s.tick_elytra_voice(41, true, 100.0);
-        assert_eq!(s.elytra_voice.unwrap().volume, 1.0, "the cap the clamp keeps");
+        assert_eq!(
+            s.elytra_voice.unwrap().volume,
+            1.0,
+            "the cap the clamp keeps"
+        );
         s.tick_elytra_voice(42, true, 2.0);
         assert_eq!(
             s.elytra_voice.unwrap().volume,
@@ -1502,7 +1530,11 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v0.800000 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v0.800000 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
         // the exact pitch the same-seed draw pins (the ONE nextFloat
@@ -1512,8 +1544,7 @@ mod tests {
         let r = b.next_rand_f32();
         let expect = 0.8 + r * 0.4;
         assert!(
-            a.events[0]
-                .ends_with(&format!(" v0.800000 p{expect:.6}")),
+            a.events[0].ends_with(&format!(" v0.800000 p{expect:.6}")),
             "the draw order the exact pitch pins: {} vs {expect:.6}",
             a.events[0]
         );
@@ -1537,7 +1568,11 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v1.000000 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v1.000000 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
         a.play_death_voice(6);
@@ -1567,13 +1602,79 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v0.156520 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v0.156520 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((0.6..=1.4).contains(&pitch), "the pitch range: {pitch}");
         // determinism: the same seed speaks the same voice
         let mut b = BlockSounds::new(21);
         b.play_swim(9, 0.156_52);
         assert_eq!(a.events, b.events);
+    }
+
+    /// THE CONTAINER VOICE'S OWN FOLD (javap the 26.2
+    /// ContainerOpenersCounter the count-transition gate + the
+    /// ChestBlockEntity/BarrelBlockEntity playSound fold): the volume
+    /// 0.5 the gain fold wears, the pitch `nextFloat() * 0.1F + 0.9F`
+    /// in [0.9, 1.0], the ONE random riding THIS engine's LCG (the
+    /// draw order: the pitch random first, then the file pick — the
+    /// pickup voice's own order), the pan tail the positioned lane's
+    /// own shape wears, the distance law's gain the linear fold
+    /// answers (0.5 * (1 - 4/16) = 0.375), the unknown event the
+    /// honest silence keeps, the determinism the same seed speaks.
+    #[test]
+    fn the_container_voice_the_count_transition_fold_wears() {
+        let mut a = BlockSounds::new(29);
+        a.play_container_voice_at(4, "block.chest.open", 0.0, 0.0);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("block.chest.open @4 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(
+            a.events[0].contains(" v0.500000 p"),
+            "the volume fold: {}",
+            a.events[0]
+        );
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.9..=1.0).contains(&pitch), "the pitch band: {pitch}");
+        // THE PAN TAIL (the lateral seat the s-suffix the stereo fold
+        // wears) + THE GAIN'S OWN DISTANCE FOLD (the 4-block seat the
+        // linear law answers — 0.5 * (1 - 4/16) = 0.375)
+        a.play_container_voice_at(5, "block.barrel.close", 4.0, 0.25);
+        assert!(
+            a.events[1].starts_with("block.barrel.close @5 #"),
+            "the entry: {}",
+            a.events[1]
+        );
+        assert!(
+            a.events[1].contains(" s+0.250000"),
+            "the pan tail: {}",
+            a.events[1]
+        );
+        let gain: f32 = a.events[1]
+            .split(" v")
+            .nth(1)
+            .unwrap()
+            .split(' ')
+            .next()
+            .unwrap()
+            .parse()
+            .unwrap();
+        assert!((gain - 0.375).abs() < 1e-5, "the gain: {gain}");
+        // THE UNKNOWN EVENT'S OWN SILENCE (the missing table row the
+        // pick never answers — the honest skip the lanes wear)
+        let mut b = BlockSounds::new(29);
+        b.play_container_voice_at(4, "block.not_a_container.open", 0.0, 0.0);
+        assert!(b.events.is_empty(), "the unknown event the silence keeps");
+        // THE DETERMINISM (the same seed the same voice speaks)
+        let mut c = BlockSounds::new(29);
+        c.play_container_voice_at(4, "block.chest.open", 0.0, 0.0);
+        assert_eq!(a.events[0], c.events[0], "the same seed the same voice");
     }
 
     /// THE MUFFLED FOLD's law (javap playMuffledStepSound): the same
@@ -1614,7 +1715,11 @@ mod tests {
             "the high-speed event: {}",
             b.events[0]
         );
-        assert!(b.events[0].contains(" v0.320000 p"), "the volume: {}", b.events[0]);
+        assert!(
+            b.events[0].contains(" v0.320000 p"),
+            "the volume: {}",
+            b.events[0]
+        );
         let pitch: f32 = b.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((0.6..=1.4).contains(&pitch), "the pitch range: {pitch}");
         // determinism: the same seed speaks the same splash
@@ -1636,7 +1741,11 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v0.400000 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v0.400000 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((2.0..=2.4).contains(&pitch), "the pitch range: {pitch}");
         // determinism: the same seed speaks the same burn
@@ -1658,7 +1767,11 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v0.700000 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v0.700000 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((1.2..=2.0).contains(&pitch), "the pitch range: {pitch}");
         // determinism: the same seed speaks the same fizz
@@ -1680,7 +1793,11 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v1.000000 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v1.000000 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
         // determinism: the same seed speaks the same voice
@@ -1703,7 +1820,11 @@ mod tests {
             "the entry: {}",
             a.events[0]
         );
-        assert!(a.events[0].contains(" v1.000000 p"), "the volume: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v1.000000 p"),
+            "the volume: {}",
+            a.events[0]
+        );
         let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
         assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
         // determinism: the same seed speaks the same voice
@@ -1727,7 +1848,11 @@ mod tests {
             a.events[0]
         );
         // empty=4: volume 0.5 + 0.1*max(0,2) = 0.7, pitch 1.0 + 0.1*0 = 1.0
-        assert!(a.events[0].contains(" v0.700000 p1.000000"), "the fold: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v0.700000 p1.000000"),
+            "the fold: {}",
+            a.events[0]
+        );
         // the increments' own station: empty=8 folds 1.1 / 1.4
         a.events.clear();
         a.play_bubble_pop(9, 8);
@@ -1739,7 +1864,11 @@ mod tests {
         // the floor's own silence: empty=2 speaks the bare base
         a.events.clear();
         a.play_bubble_pop(9, 2);
-        assert!(a.events[0].contains(" v0.500000 p1.000000"), "the base: {}", a.events[0]);
+        assert!(
+            a.events[0].contains(" v0.500000 p1.000000"),
+            "the base: {}",
+            a.events[0]
+        );
     }
 
     /// THE BUBBLE COLUMN'S INSIDE VOICE's law (the handler's own fold):
@@ -1871,10 +2000,7 @@ mod tests {
             d.play(0, "glass", Lane::Break);
         }
         let Some(ev) = snd::event("block.glass.break") else {
-            assert!(
-                d.events.is_empty(),
-                "the empty table the silent lane keeps"
-            );
+            assert!(d.events.is_empty(), "the empty table the silent lane keeps");
             return;
         };
         for line in &d.events {
@@ -2007,7 +2133,6 @@ mod tests {
         d.play_lane_at_pan(36, "stone", Lane::Break, 4.0, -0.25);
         assert!(d.events[0].contains(" s-0.250000"), "{}", d.events[0]);
     }
-
 
     /// THE MOOD'S OWN LAW WALK (the lambda's arithmetic the tests bank):
     /// the darkness banks 1/6000 a tick, the fire at 6000 dark ticks, the
