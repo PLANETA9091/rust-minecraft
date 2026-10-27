@@ -1,0 +1,18 @@
+
+---
+Task ID: autopush-286
+Agent: cron-agent-loop (Job 384923, trace 1a0a02c3c1060631-cron-agent-loop-202610271536)
+Task: rust-minecraft auto-push maintenance — git status check, ONE minimal step, cargo test green, push, worklog entry
+
+Work Log:
+- Tree clean, HEAD e15a55d6 (dev-181 v0.3.1046 debug search live render) in sync with origin — the auto-sync step the no-op keeps; max autopush-N = 285 → this round = autopush-286.
+- Picked THE STATS FILE'S OWN LEGACY FLAT READ from the dev-181 NEXT CANDIDATES: the stats lane (autopush-284's own round) the 1.12 decode-compat rows wears — the pre-1.13 file the flat `stat.` map speaks, the same counters the rows decode, the next Save and Quit the modern shape rewrites.
+- screens.rs: stats_load_json the nested guard's else arm the NEW stats_load_legacy_flat calls (the absent-`stats`-object file the flat walk answers, the mixed file the nested shape wins); the flat walk the mined/craftItem rows the SAME inverses decode (the `minecraft:` colon word AND the `minecraft.` dot word the bare strip answers, the NAME_OF position AND item_id_by_name the nested lane's own inverses), the killEntity/entityKilledBy rows the class-shorthand word the display tr resolves (`Zombie` → minecraft:zombie, the already-namespaced word the static_id first-answer), the seven customs the vanilla 1.12 camel words speak (playOneMinute + playTime alias / sneakTime / walkOneCm / sprintOneCm / swimOneCm / jump / deaths), the unknown `stat.*` rows AND non-stat keys the skip keeps, the as_i64 law the non-numbers never claim.
+- part_4 test: the_stats_file_legacy_flat_the_1_12_rows_decode (the eleven-row 1.12 file the counters decode + the save the nested shape rewrites + the namespaced kill rows the static id answers + the dot-form row the same bare decodes + the foreign rows and loose keys the skip keeps + the nested-shape file the stat.jump sibling never overwrites). FIRST-RUN PASS.
+- THE WALK: WALL-GATE 12 windows in four batches (p1 1475 / p2 / p3 1453 / p4 1681 [+1] / p5 1488 / p6 1484 / p7 / p8 1478 / p9 1476 / p10 / p11 1413 / rest 1408, each rc=0 MOD-RESTORED-CLEAN) — mc-client 2531 unique + trio 338 + zero-test pair rc=0; rustfmt the two touched files zero-diff; bump 0.3.1046 -> 0.3.1047, release rebuild 1m58s, goldens 19/19 rms 0.000 pre- AND post-bump — NO regen (the decode lane the counter's numbers only feeds).
+- Commit fa67c7b7 pushed (e15a55d6..fa67c7b7); mirror_worklog_286.py the tail-verified append the logs/worklog.md mirror rides.
+
+Stage Summary:
+- v0.3.1047: the stats file lane the 1.12 legacy rows decodes — the old flat file the fresh boot speaks, the class-shorthand kill words the registry resolves, the save the modern 4903 shape rewrites, the nested file the flat rows never touches (the upgrade the decode-compat law banks).
+- The mc-client bank the twelve windows rc=0 (2531 unique, 0 failed), the fast trio 338, the goldens the 19/19 rms 0.000 (NO regen, double-verified), the fmt the zero-diff law keeps.
+- NEXT CANDIDATES: THE ENTRY BOXES' OWN WINDOW TEST (the direct/editserver clip the walk-tests the family wears — the 267 law the part_4 tests the debug/picker rounds' own shape answers), THE DEBUG PROFILE'S OWN DATAFIXER ROUND (the EntryList ctor the DataFixTypes.DEBUG_PROFILE wrapCodec the 4649 version wears), THE SOUNDS' OWN LANE (the playSound the box's edit/insert ticks the picker search the same AudioComponent lane answers), THE STATS LEGACY FILE'S OWN RESTART WALK (the stats_file lane the legacy FILE the boot decode wears — the decode test the json shape answered, the temp-dir restart the flat file the same outlives).
