@@ -37491,6 +37491,50 @@ impl App {
         self.debug_search_window_sync();
     }
 
+    /// THE DIRECT CONNECTION'S OWN ENTER RIDE (javap 26.2
+    /// DirectJoinServerScreen.keyPressed — the `selectButton.active`
+    /// ask the EMPTY address the INACTIVE refusal keeps, the
+    /// `getFocused() == ipEdit` ask the UNFOCUSED box the walk never
+    /// arms, the `isConfirmation()` the Enter press the window lane
+    /// banks — the three-guard law the onSelect() join answer wears:
+    /// the parse_address the login request the Connect screen serves,
+    /// the SAME walk the clicked join button fires).
+    pub fn on_direct_enter(&mut self) {
+        if self.screen != ScreenKind::DirectConnect {
+            return; // the stale screens the lane never serves
+        }
+        if self.direct_address.trim().is_empty() {
+            return; // the selectButton.active ask the INACTIVE refusal keeps
+        }
+        if !self.direct_focus {
+            return; // the getFocused() == ipEdit ask the unfocused box refuses
+        }
+        self.direct_join();
+    }
+
+    /// THE FORM'S OWN JOIN WALK (vanilla
+    /// DirectJoinServerScreen.onSelect — the parsed address the
+    /// ConnectScreen flow joins, the SAME login request the selected
+    /// row's join fires [the entry the sentinel the list-length keeps
+    /// — a direct join the list row never touches, the vanilla flow
+    /// the temp entry's absence keeps]; the EMPTY address the button's
+    /// INACTIVE the hovered() refusal answers — the arm's own guard
+    /// the same verdict keeps).
+    pub fn direct_join(&mut self) {
+        if self.direct_address.trim().is_empty() {
+            return;
+        }
+        let (host, port) = parse_address(self.direct_address.trim());
+        self.login_requests.push(LoginRequest {
+            id: self.next_login_id,
+            entry: self.servers.len(),
+            host,
+            port,
+        });
+        self.next_login_id += 1;
+        self.open(ScreenKind::Connect);
+    }
+
     /// THE DIRECT CONNECTION'S OWN CHARS (the EditBox the
     /// DirectConnectionScreen.init's setInitialFocus arm serves — the
     /// charTyped lane the FOCUSED box answers, the typed word the
@@ -42183,21 +42227,10 @@ impl App {
                 // touches, the vanilla flow the temp entry's absence
                 // keeps]; the EMPTY address the button's INACTIVE the
                 // hovered() refusal answers — the arm's own guard the
-                // same verdict keeps)
-                "directjoin" => {
-                    if self.direct_address.trim().is_empty() {
-                        return;
-                    }
-                    let (host, port) = parse_address(self.direct_address.trim());
-                    self.login_requests.push(LoginRequest {
-                        id: self.next_login_id,
-                        entry: self.servers.len(),
-                        host,
-                        port,
-                    });
-                    self.next_login_id += 1;
-                    self.open(ScreenKind::Connect);
-                }
+                // same verdict keeps. THE ENTER RIDE the same walk the
+                // on_direct_enter method serves — the keyPressed law
+                // the clicked lane the ONE walk answers)
+                "directjoin" => self.direct_join(),
                 // THE FORM'S OWN CANCEL (the vanilla Cancel lambda — the
                 // `setScreen(this.lastScreen)` walk the server list
                 // returns)

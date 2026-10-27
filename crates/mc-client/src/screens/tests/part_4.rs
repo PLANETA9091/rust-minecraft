@@ -25008,6 +25008,110 @@ fn the_direct_connection_form_own_seat_wears() {
     assert_eq!(app.screen, ScreenKind::Servers);
 }
 
+/// THE DIRECT CONNECTION'S OWN ENTER RIDE (javap 26.2
+/// DirectJoinServerScreen.keyPressed — the `selectButton.active` ask
+/// the EMPTY address the INACTIVE refusal keeps, the
+/// `getFocused() == ipEdit` ask the UNFOCUSED box the walk never
+/// arms, the `isConfirmation()` the Enter press the onSelect() join
+/// answer serves: the parse_address the login request the Connect
+/// screen banks, the SAME walk the clicked join button fires [the
+/// one walk the two lanes answer], the stale screens the lane never
+/// serves, the SPACE the confirmation never wears — the box's own
+/// seat the AbstractButton lane never shares).
+#[test]
+fn the_direct_connect_own_enter_ride_wears() {
+    let mut app = App::new(3);
+
+    // THE STALE SCREEN'S OWN SILENCE (the title seat the method never
+    // serves — the other screens the gate keeps)
+    app.open(ScreenKind::Title);
+    app.on_direct_enter();
+    assert!(
+        app.login_requests.is_empty(),
+        "the stale screen the enter lane never serves"
+    );
+    assert_eq!(app.screen, ScreenKind::Title);
+
+    // THE EMPTY ADDRESS'S OWN REFUSAL (the selectButton.active ask —
+    // the fresh ctor the empty box the INACTIVE join wears, the Enter
+    // press the request the silence keeps, the screen the form stays)
+    app.open(ScreenKind::DirectConnect);
+    assert!(app.direct_focus, "the setInitialFocus the box arms");
+    app.on_direct_enter();
+    assert!(
+        app.login_requests.is_empty(),
+        "the empty address the INACTIVE refusal keeps"
+    );
+    assert_eq!(app.screen, ScreenKind::DirectConnect);
+
+    // THE UNFOCUSED BOX'S OWN REFUSAL (the getFocused() == ipEdit ask
+    // — the outside click the focus transfers, the typed word the box
+    // keeps [the chars the FOCUSED gate banks before the transfer],
+    // the Enter press the walk never arms; the rect the render's own
+    // bank keeps — the pass the box seat the pixels bank)
+    app.render_title_buttons_for_test();
+    let (bx, by, _bw, _bh) = app.direct_box_rect;
+    assert!(app.on_direct_box_click(bx + 5, by + 5));
+    for c in "127.0.0.1:25566".chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_address, "127.0.0.1:25566");
+    assert!(!app.on_direct_box_click(bx - 1, by + 5));
+    assert!(!app.direct_focus, "the outside the focus transfers");
+    app.on_direct_enter();
+    assert!(
+        app.login_requests.is_empty(),
+        "the unfocused box the walk never arms"
+    );
+    assert_eq!(app.screen, ScreenKind::DirectConnect);
+
+    // THE ARMED WALK'S OWN BANK (the re-armed focus the three guards
+    // answer — the Enter press the onSelect() join serves: the parsed
+    // pair the explicit port the parse wears, the entry the sentinel
+    // the list-length keeps, the flow the Connect screen wears)
+    assert!(app.on_direct_box_click(bx + 5, by + 5));
+    assert!(app.direct_focus);
+    app.on_direct_enter();
+    assert_eq!(app.login_requests.len(), 1, "the enter the request banks");
+    let req = &app.login_requests[0];
+    assert_eq!(req.host, "127.0.0.1", "the explicit port the host splits");
+    assert_eq!(req.port, 25566, "the parsed port the request wears");
+    assert_eq!(req.entry, app.servers.len(), "the sentinel the list keeps");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Connect,
+        "the flow the Connect wears"
+    );
+
+    // THE ONE WALK'S OWN EQUIVALENCE (the clicked join button the SAME
+    // walk fires — the extracted direct_join the arm serves, the fresh
+    // form the second request the id-increment banks)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    let (bx2, by2, _, _) = app.direct_box_rect;
+    assert!(app.on_direct_box_click(bx2 + 5, by2 + 5));
+    for c in "mc.example.net".chars() {
+        app.on_direct_char(c);
+    }
+    app.render_title_buttons_for_test();
+    let dj = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "directjoin")
+        .expect("directjoin")
+        .clone();
+    assert!(dj.active, "the typed word the join button arms");
+    app.on_click(dj.x + dj.w / 2, dj.y + dj.h / 2);
+    assert_eq!(app.login_requests.len(), 2, "the click the same walk fires");
+    let req = &app.login_requests[1];
+    assert_eq!(
+        req.host, "mc.example.net",
+        "the bare host the default keeps"
+    );
+    assert_eq!(req.port, 25565, "the vanilla default port the parse wears");
+    assert_eq!(req.id, 1, "the next-login-id the walk increments");
+}
+
 /// THE ADD SERVER'S OWN ENTRY FORM (javap 26.2 EditServerScreen the
 /// add-mode walk the whole seat answers: the selectServer.add lambda
 /// the form opens, the fresh ctor the `selectServer.defaultName` the

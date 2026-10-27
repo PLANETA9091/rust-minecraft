@@ -2425,6 +2425,22 @@ pub fn run_gui_app(
                 }
             }
         }
+        // THE DIRECT CONNECTION'S OWN ENTER RIDE (javap 26.2 the
+        // DirectJoinServerScreen.keyPressed walk — the
+        // `selectButton.active` ask the empty address the INACTIVE
+        // refusal keeps, the `getFocused() == ipEdit` ask the
+        // unfocused box the walk never arms, the `isConfirmation()`
+        // the Enter press the onSelect() join answer serves [the
+        // parse_address the login request the Connect screen banks —
+        // the SAME walk the clicked join button fires]; the SPACE the
+        // confirmation never wears — the box's own seat the
+        // AbstractButton lane never shares, the unconsumed key the
+        // super walk serves)
+        if app.screen == crate::screens::ScreenKind::DirectConnect
+            && window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No)
+        {
+            app.on_direct_enter();
+        }
         // THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen
         // keyPressed walk's 262-265 cases the ArrowNavigation events
         // serve — the LEFT/RIGHT/UP/DOWN keys the geometric walk the
