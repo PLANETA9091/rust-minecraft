@@ -3411,6 +3411,27 @@ pub fn is_dispenser_kind(id: u16) -> bool {
     id == DISPENSER || id == DROPPER
 }
 
+/// THE CONTAINER'S OWN SLOT-COUNT LAW (javap 26.2 the BE sizes the
+/// stores walk wears: the DispenserBlockEntity/DropperBlockEntity
+/// `NonNullList.withSize(9, EMPTY)` the nine slots speak, the
+/// ChestBlockEntity's 27 the ChestMenu.threeRows grid keeps, the
+/// barrel/shulker the same 27 the shared bank answers — the
+/// `ContainerHelper.loadAllItems` walk `Math.min(list.size(),
+/// container.getContainerSize())` the load truncates, the kinds
+/// beyond the size the vanilla DROP keeps). THE PARSE'S OWN CAP the
+/// per-kind consumer wears: the world-less parse the 27-superset
+/// the tolerant keep rides [every stocked slot the file speaks the
+/// map holds], the world-present heal the kind's own width the row
+/// truncates — the nine the dispenser family alone wears, the chest
+/// grid the rest keeps.
+pub fn container_kind_slot_count(kind: u16) -> usize {
+    if is_dispenser_kind(kind) {
+        9
+    } else {
+        27
+    }
+}
+
 /// THE FAMILY'S OWN VARIANT ENCODE (the two fields the one byte
 /// wears — the facing the low 3 bits keep, the triggered bit the
 /// rising-edge walk's own setValue arms).

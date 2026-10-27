@@ -23128,6 +23128,13 @@ impl App {
             // session's journal wears)
             world.journaling = true;
             self.offline_world = Some(world);
+            // THE KIND'S OWN HEAL (the dev-190 round — the world-less
+            // boot parse the 27-pad the once-flag's spend wore, the
+            // blocks the replay now answers the kind's own size the
+            // row truncates: the vanilla loadAllItems walk the BE's
+            // own getContainerSize the load governs, the nine the
+            // dispenser family alone wears)
+            self.container_stores_kind_heal();
             // THE BOOT'S OWN FILL RE-DERIVE (the restart the every
             // container the comparator truth re-banks — the lazy parse
             // the boot's first tick the once-flag the spent speaks, the
@@ -26650,7 +26657,10 @@ impl App {
             // the getRedstoneSignalFromContainer walk answers, the SAME
             // fill formula over the NINE slots the DispenserMenu ctor
             // wears — the store map the pair banks, the container_fill
-            // entry the comparator's back read consumes)
+            // entry the comparator's back read consumes; the row the
+            // kind's own heal [`Self::container_stores_kind_heal`] the
+            // nine truncates — the parse's 27-pad the denominator the
+            // dev-190 round retires)
             let nine = self.container_stores.get(&pos).cloned().unwrap_or_default();
             let fill = crate::world::container_analog_signal(&nine);
             w.container_fill.insert(pos, fill);
@@ -26708,6 +26718,46 @@ impl App {
             w.container_fill.insert(ppos, fill);
         }
         partner
+    }
+
+    /// THE STORES' OWN PER-KIND HEAL (the dev-190 round — the parse's
+    /// own 27-cap the kind's own size retires: the vanilla
+    /// `ContainerHelper.loadAllItems` walk the load the BE's own
+    /// `getContainerSize()` governs, the list beyond the size the
+    /// Math.min DROP keeps — the DispenserBlockEntity's
+    /// `NonNullList.withSize(9, EMPTY)` the nine slots speak, the
+    /// world-less parse the 27-superset the tolerant pad rides [the
+    /// stocked slots the file speaks the map holds, the kind the
+    /// world-less walk never reads], the world-present heal the
+    /// [`crate::world::container_kind_slot_count`] law the row
+    /// truncates — the dispenser family's nine the denominator the
+    /// fill formula wears, the chest grid the 27 the menu law keeps).
+    /// THE BOTH-ORDERS RIDE: the parse tail the consumer-triggered
+    /// lazy load heals [the enter walk's own world the parse's same
+    /// tick speaks], the enter tail the world-less boot parse heals
+    /// [the once-flag the spent the blocks the replay answers] — the
+    /// truncation the idempotent second walk never doubles, the
+    /// honest rows the no-op keeps, the next save the file's own
+    /// widths the heal wears.
+    fn container_stores_kind_heal(&mut self) {
+        if self.offline_world.is_none() {
+            return;
+        }
+        let mut keys: Vec<(i32, i32, i32)> = self.container_stores.keys().copied().collect();
+        keys.sort();
+        for k in keys {
+            let kind = self
+                .offline_world
+                .as_ref()
+                .expect("the world the gate's own presence keeps")
+                .get(k.0, k.1, k.2);
+            let cap = crate::world::container_kind_slot_count(kind);
+            if let Some(row) = self.container_stores.get_mut(&k) {
+                if row.len() > cap {
+                    row.truncate(cap);
+                }
+            }
+        }
     }
 
     /// THE BOOT'S OWN FILL RE-DERIVE (the restart the every-container
@@ -39339,6 +39389,14 @@ impl App {
                 let parsed = container_stores_from_nbt(&root);
                 let keys: Vec<(i32, i32, i32)> = parsed.keys().copied().collect();
                 self.container_stores.extend(parsed);
+                // THE KIND'S OWN HEAL (the dev-190 round — the parse's
+                // own 27-cap the world-present ride the kind's own size
+                // truncates: the vanilla loadAllItems walk the BE's own
+                // getContainerSize the load governs, the nine the
+                // dispenser family's own denominator the fill wears —
+                // the world-less parse the no-op keeps, the enter tail
+                // the same walk heals)
+                self.container_stores_kind_heal();
                 // THE FILL'S OWN PARSE RIDE (the comparator's container
                 // lane the boot banks — the parsed stores the analog
                 // the same rows wear, the restart the stocked chest's

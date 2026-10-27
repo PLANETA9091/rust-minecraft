@@ -9347,7 +9347,7 @@ fn the_boot_own_fill_rederive_wears() {
     }
     // THE STORES' OWN STAGE (the session's stocks the maps wear — the
     // one full stack the f=1/27 the fill's 1 speaks, the trio the 1/3
-    // the 5, the nine the parse's 27-cap the restart the 1 wears)
+    // the 5, the nine the f=1/9 the kind's own heal the 2 wears)
     let mut chest_store = vec![(0, 0); 27];
     chest_store[0] = (stone, 64);
     app.container_stores.insert((cx, cy, cz), chest_store);
@@ -9416,8 +9416,8 @@ fn the_boot_own_fill_rederive_wears() {
         );
         assert_eq!(
             world.container_fill.get(&(px, py, pz)),
-            Some(&1),
-            "the nine the chest bank's 27-cap parse the restart wears — the boot fill the restored grid's own shape the formula answers (the per-kind cap the NEXT round's own gap speaks)"
+            Some(&2),
+            "the nine the kind's own heal the restart wears — the f=1/9 the floor(1.55)+1 the honest 2 banks (the parse's 27-pad the denominator the dev-190 round retires)"
         );
         // THE DOUBLE'S OWN UNION (the ONE stock the BOTH halves the
         // same fill banks — the mate the walk's own ride wears)
@@ -9442,6 +9442,140 @@ fn the_boot_own_fill_rederive_wears() {
             "the foreign key the air-arm drops"
         );
     }
+    let _ = std::fs::remove_file(&world_path);
+    let _ = std::fs::remove_file(&stores_path);
+    let _ = std::fs::remove_dir(&dir);
+}
+
+/// THE STORES' OWN PER-KIND CAP (the dev-190 round — the parse's own
+/// 27-cap the kind's own size retires: the vanilla
+/// `ContainerHelper.loadAllItems` walk the load the BE's own
+/// `getContainerSize()` governs — the list beyond the size the
+/// Math.min DROP keeps, the DispenserBlockEntity/DropperBlockEntity
+/// the `NonNullList.withSize(9, EMPTY)` the nine slots speak, the
+/// ChestBlockEntity's 27 the grid keeps. THE POLLUTED SHAPE the old
+/// kind-blind file wore: the dispenser row the 27-pad the parse
+/// padded, the fill formula's denominator the 27 the restart wore
+/// [the f=1/27 the 1 the honest f=1/9 the 2 never banks], the GUI's
+/// open the 27-row the canvas never speaks). THE HEAL the both
+/// orders the row truncates: the world-less parse the superset the
+/// tolerant keep rides, the enter walk the blocks the kind's own
+/// cap answers — the next save the file's own widths the heal wears.
+#[test]
+fn the_stores_own_per_kind_cap_wears() {
+    use crate::world as w;
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let dir = std::env::temp_dir().join(format!("mc2rs_kind_cap_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let world_path = dir.join("world_edits.nbt");
+    let stores_path = dir.join("container_stores.nbt");
+    // THE FIRST SESSION (the blocks the journal banks, the rows the
+    // containers file wears — the dispenser row the POLLUTED 27-pad
+    // the old kind-blind save spoke, the dropper the honest nine)
+    let mut app = App::new(3);
+    app.offline_world_file = Some(world_path.clone());
+    app.container_stores_file = Some(stores_path.clone());
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (px, py, pz) = (c, top - 1, c); // the dispenser
+    let (rx, ry, rz) = (c + 1, top - 1, c); // the dropper
+    let (cx, cy, cz) = (c + 2, top - 1, c); // the chest
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(px, py, pz, w::DISPENSER);
+        world.set(rx, ry, rz, w::DROPPER);
+        world.set(cx, cy, cz, w::CHEST);
+    }
+    // the polluted 27-wide dispenser row (the slots 9..26 the old
+    // parse's pads wear — the stocked slot 0 the same stack rides)
+    let mut padded = vec![(0, 0); 27];
+    padded[0] = (stone, 64);
+    app.container_stores.insert((px, py, pz), padded);
+    // the honest nine the fresh open's own shape keeps
+    let mut nine = vec![(0, 0); 9];
+    nine[0] = (stone, 64);
+    app.container_stores.insert((rx, ry, rz), nine);
+    // the chest grid the 27 the menu law wears
+    let mut grid = vec![(0, 0); 27];
+    grid[0] = (stone, 64);
+    app.container_stores.insert((cx, cy, cz), grid);
+    app.offline_world_file_save();
+    app.container_stores_file_save();
+    // THE RESTART'S OWN PARSE (the world-less ride the superset keeps
+    // — the 27-cap the every row pads, the kind the boot walk never
+    // reads, the heal the world's absence the honest no-op wears)
+    let mut app2 = App::new(3);
+    app2.offline_world_file = Some(world_path.clone());
+    app2.container_stores_file = Some(stores_path.clone());
+    app2.container_stores_load_once();
+    assert_eq!(
+        app2.container_stores.get(&(px, py, pz)).map(Vec::len),
+        Some(27),
+        "the world-less parse the 27-superset keeps"
+    );
+    // THE ENTER WALK'S OWN HEAL (the blocks the kind's own cap answer
+    // — the dispenser family's nine the pad truncates, the chest grid
+    // the 27 keeps, the dropper's honest row the no-op wears)
+    app2.enter_world();
+    assert_eq!(
+        app2.container_stores.get(&(px, py, pz)).map(Vec::len),
+        Some(9),
+        "the dispenser row the kind's own nine truncates"
+    );
+    assert_eq!(
+        app2.container_stores.get(&(rx, ry, rz)).map(Vec::len),
+        Some(9),
+        "the dropper's honest row the heal never doubles"
+    );
+    assert_eq!(
+        app2.container_stores.get(&(cx, cy, cz)).map(Vec::len),
+        Some(27),
+        "the chest grid the 27 the menu law keeps"
+    );
+    {
+        let world = app2.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.container_fill.get(&(px, py, pz)),
+            Some(&2),
+            "the dispenser's fill the f=1/9 the honest 2 banks"
+        );
+        assert_eq!(
+            world.container_fill.get(&(rx, ry, rz)),
+            Some(&2),
+            "the dropper's fill the same nine law banks"
+        );
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&1),
+            "the chest's fill the f=1/27 the 1 keeps"
+        );
+    }
+    // THE GUI'S OWN CANVAS (the open the healed row clones — the
+    // dispenser screen the menu's own nine speaks, the 27-pad the
+    // canvas never wears)
+    app2.open_dispenser_for((px, py, pz));
+    assert_eq!(app2.screen, ScreenKind::Dispenser);
+    assert_eq!(
+        app2.dispenser_slots.len(),
+        9,
+        "the canvas the menu's own nine the open clones"
+    );
+    assert_eq!(app2.dispenser_slots[0], (stone, 64), "the stock rides");
+    app2.close_dispenser(ScreenKind::World);
+    // THE FILE'S OWN HEAL (the close flush the honest widths the disk
+    // wears — the third session the parse the kind's own shape keeps)
+    let mut app3 = App::new(3);
+    app3.offline_world_file = Some(world_path.clone());
+    app3.container_stores_file = Some(stores_path.clone());
+    app3.container_stores_load_once();
+    app3.enter_world();
+    assert_eq!(
+        app3.container_stores.get(&(px, py, pz)).map(Vec::len),
+        Some(9),
+        "the disk row the healed width keeps"
+    );
     let _ = std::fs::remove_file(&world_path);
     let _ = std::fs::remove_file(&stores_path);
     let _ = std::fs::remove_dir(&dir);
