@@ -6470,6 +6470,76 @@ pub fn chest_open_bit_of(v: u8) -> bool {
     v & CHEST_OPEN_BIT != 0
 }
 
+/// THE CHEST LIDS' OWN SEED (the open walk's own entry — the
+/// controller state the ramp starts from: the (0.0, 0.0) fresh pair
+/// the first tick's +0.1 step arms, the EXISTING pair the mid-swing
+/// re-open the same value keeps — the vanilla controller the
+/// per-BE state the restart never wipes while the lid travels).
+pub fn chest_lid_seed(world: &mut World, pos: (i32, i32, i32)) {
+    world.chest_lids.entry(pos).or_insert((0.0, 0.0));
+}
+
+/// THE CHEST LIDS' OWN TICK (the dev-192 round — javap
+/// ChestLidController.tickLid pc 0-76 the 26.2 jar the law the walk
+/// mirrors verbatim: the `oOpenness = openness` snapshot the frame's
+/// own lerp base keeps, the `shouldBeOpen && openness < 1` arm the
+/// `min(openness + 0.1, 1.0)` ramp serves, the `!shouldBeOpen &&
+/// openness > 0` arm the `max(openness - 0.1, 0.0)` ramp answers;
+/// the shouldBeOpen the cell's own [`CHEST_OPEN_BIT`] byte reads —
+/// the container walk stamps, the close walk clears, the tick the
+/// live verdict reads). THE ENTRY'S OWN LIFE: the open walk seeds,
+/// the mid-swing close the ramp-down the law serves, the
+/// settled-closed pair the map removes (the rest the mesher's own
+/// no-entry fallback the closed builder answers), the mined cell the
+/// same tick retires (the block the lid state outlives — the BE the
+/// vanilla setRemoved kills). THE GEN the changed PAIR bumps (the
+/// settle tick's own snapshot the (0.9, 1.0) -> (1.0, 1.0) change
+/// the re-bake verdict arms — the final full-open pose the lerp's
+/// own identity renders; the settled-open hold the gen never
+/// touches). THE EMPTY MAP the walk never wakes (the every-tick
+/// early return the quiet world keeps).
+pub fn chest_lids_tick(world: &mut World) {
+    if world.chest_lids.is_empty() {
+        return;
+    }
+    let mut changed = false;
+    let keys: Vec<(i32, i32, i32)> = world.chest_lids.keys().copied().collect();
+    for pos in keys {
+        let kind = world.get(pos.0, pos.1, pos.2);
+        if !is_chest(kind) {
+            // THE MINED CELL'S OWN RETIREMENT (the block the lid
+            // state outlives — the entry the same tick drops, the
+            // gen the removal's own change bumps)
+            world.chest_lids.remove(&pos);
+            changed = true;
+            continue;
+        }
+        let should = chest_open_bit_of(world.variant(pos.0, pos.1, pos.2));
+        let (o, open) = world.chest_lids[&pos];
+        let o_new = open; // the tickLid's own `oOpenness = openness` first
+        let mut open_new = open;
+        if !should && open > 0.0 {
+            open_new = (open - 0.1f32).max(0.0);
+        } else if should && open < 1.0 {
+            open_new = (open + 0.1f32).min(1.0);
+        }
+        if o_new != o || open_new != open {
+            changed = true;
+        }
+        if !should && open_new <= 0.0 {
+            // THE SETTLED-CLOSED PAIR'S OWN RETIREMENT (the ramp the
+            // floor reached — the entry the map drops, the mesher's
+            // no-entry fallback the closed builder answers)
+            world.chest_lids.remove(&pos);
+        } else {
+            world.chest_lids.insert(pos, (o_new, open_new));
+        }
+    }
+    if changed {
+        world.lid_gen += 1;
+    }
+}
+
 /// THE CHEST FAMILY'S OWN RANGE (the 11 seats the registration walk
 /// the ladder answers — the kind-only predicates the range reads).
 #[inline]
@@ -14406,6 +14476,29 @@ pub struct World {
     /// compare speaks; the tick the App's update lane owns).
     pub saved_edits_mark: usize,
     pub saved_variants_mark: usize,
+    /// THE CHEST LIDS' OWN STATE (the dev-192 round — javap
+    /// ChestLidController the 26.2 jar the per-chest walk the law
+    /// serves: the (oOpenness, openness) pair the tickLid's ±0.1/t
+    /// ramp keeps, the getOpenness lerp the BE lane reads). THE
+    /// TRANSIENT RENDER STATE the file the vanilla never saves — the
+    /// journal row the map never wears, the reload the empty map the
+    /// bit fallback answers. The entry the open walk seeds, the
+    /// bit-stamped cell the NO-entry fallback the mesher's own static
+    /// pose keeps (the staged bits the goldens' own law wears), the
+    /// settled-closed entry the tick removes.
+    pub chest_lids: std::collections::HashMap<(i32, i32, i32), (f32, f32)>,
+    /// THE LIDS' OWN CHANGE EPOCH (the tick lane's own bump — the
+    /// changed pair the re-bake verdict speaks; the settled-open hold
+    /// the gen never touches, the render the static pose never
+    /// re-walks).
+    pub lid_gen: u64,
+    /// THE LIDS' OWN RENDER FRACTION (the fixed clock's remainder the
+    /// frame writes — the `getOpenness(partialTick)` lerp base the
+    /// vanilla law speaks: `lerp(oOpenness, openness, partialTick)`;
+    /// the default 1.0 the current tick position bit for bit keeps —
+    /// the headless lanes' (and the goldens') byte-identical
+    /// contract).
+    pub lid_partial: f32,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -14757,6 +14850,9 @@ impl World {
             variant_journal: Vec::new(), // the state rows: no variants yet
             saved_edits_mark: 0,  // the flush baseline: nothing written yet
             saved_variants_mark: 0,
+            chest_lids: std::collections::HashMap::new(), // the lid lane: no open chest, no pair
+            lid_gen: 0,           // the lids' own epoch: nothing changed yet
+            lid_partial: 1.0,     // the render fraction: the current tick position
         }
     }
 
@@ -29452,6 +29548,127 @@ mod tests {
         assert!(
             atlas::TILE_NAMES.iter().any(|n| *n == "oxidized_copper_chest_front"),
             "the oxidized rung its own tiles banks"
+        );
+    }
+
+    #[test]
+    fn the_chest_lids_tick_the_controller_law_wears() {
+        // THE LID WALK'S OWN LAW (the dev-192 round — javap
+        // ChestLidController.tickLid pc 0-76 the 26.2 jar the walk
+        // mirrors verbatim): the seed the (0,0) pair banks, the ten
+        // ticks the `min(openness + 0.1, 1.0)` ramp the full-open
+        // settle wears [the (0.9, 1.0) -> (1.0, 1.0) snapshot the
+        // gen's own final bump arms], the settled hold the gen the
+        // quiet law never wakes, the close the ten ticks the
+        // `max(openness - 0.1, 0.0)` ramp the removal answers [the
+        // no-entry cell the mesher's own closed fallback keeps], the
+        // mined cell the same tick retires.
+        let mut w = World::new(2, 7);
+        let n = w.size_blocks();
+        let c = n / 2;
+        let top = 8;
+        let pos = (c, top, c);
+        w.set(pos.0, pos.1, pos.2, CHEST);
+        // THE EMPTY MAP'S OWN QUIET (the tick the walk never wakes —
+        // the gen the early return never bumps)
+        chest_lids_tick(&mut w);
+        assert_eq!(w.lid_gen, 0, "the empty map the tick never wakes");
+        // THE SEED'S OWN FRESH PAIR (the open walk the (0,0) banks)
+        chest_lid_seed(&mut w, pos);
+        assert_eq!(
+            w.chest_lids[&pos],
+            (0.0, 0.0),
+            "the seed the fresh pair banks"
+        );
+        // THE OPEN'S OWN RAMP (the bit stamped the ten ticks the
+        // 0.1-step the full-open settle wears)
+        let v = w.variant(pos.0, pos.1, pos.2);
+        w.set_variant(pos.0, pos.1, pos.2, v | CHEST_OPEN_BIT);
+        for i in 1..=9 {
+            chest_lids_tick(&mut w);
+            let (o, open) = w.chest_lids[&pos];
+            let want = (i as f32) * 0.1;
+            assert!(
+                (open - want).abs() < 1e-6,
+                "the ramp's own step the tick {i} wears, got {open}"
+            );
+            assert!(
+                (o - (want - 0.1)).abs() < 1e-6,
+                "the oOpenness snapshot the previous value wears, got {o}"
+            );
+        }
+        let gen_mid = w.lid_gen;
+        assert!(gen_mid > 0, "the ramp the gen bumps");
+        // THE SETTLE TICK'S OWN STEP (the openness the 1.0 the min
+        // clamp reaches — the oOpenness the 0.9 the snapshot keeps)
+        chest_lids_tick(&mut w);
+        let (o, open) = w.chest_lids[&pos];
+        assert!(
+            (open - 1.0).abs() < 1e-6,
+            "the settle tick the full-open value wears, got {open}"
+        );
+        assert!(
+            (o - 0.9).abs() < 1e-6,
+            "the settle tick's own snapshot the previous value wears, got {o}"
+        );
+        // THE SNAPSHOT'S OWN TICK (the (0.9, 1.0) -> (1.0, 1.0) pair
+        // the gen's own final bump arms — the lerp the full-open pose
+        // the identity renders)
+        let gen_settled = w.lid_gen;
+        chest_lids_tick(&mut w);
+        assert_eq!(
+            w.chest_lids[&pos],
+            (1.0, 1.0),
+            "the snapshot tick the settled pair banks"
+        );
+        assert_eq!(
+            w.lid_gen,
+            gen_settled + 1,
+            "the snapshot's own change the gen bumps"
+        );
+        // THE SETTLED HOLD'S OWN QUIET (the gen the hold never wakes —
+        // the GUI-up frames the static pose the economy keeps)
+        for _ in 0..5 {
+            chest_lids_tick(&mut w);
+        }
+        assert_eq!(
+            w.lid_gen,
+            gen_settled + 1,
+            "the settled hold the gen never wakes"
+        );
+        // THE CLOSE'S OWN RAMP-DOWN (the bit cleared the ten ticks the
+        // floor wears — the settled-closed pair the map removes)
+        let v = w.variant(pos.0, pos.1, pos.2);
+        w.set_variant(pos.0, pos.1, pos.2, v & !CHEST_OPEN_BIT);
+        for i in 1..=9 {
+            chest_lids_tick(&mut w);
+            let (_, open) = w.chest_lids[&pos];
+            let want = 1.0 - (i as f32) * 0.1;
+            assert!(
+                (open - want).abs() < 1e-6,
+                "the ramp-down's own step the tick {i} wears, got {open}"
+            );
+        }
+        chest_lids_tick(&mut w);
+        assert!(
+            !w.chest_lids.contains_key(&pos),
+            "the settled-closed pair the map removes"
+        );
+        // THE MINED CELL'S OWN RETIREMENT (the block the lid state
+        // outlives — the entry the same tick drops)
+        let v = w.variant(pos.0, pos.1, pos.2);
+        w.set_variant(pos.0, pos.1, pos.2, v | CHEST_OPEN_BIT);
+        chest_lid_seed(&mut w, pos);
+        chest_lids_tick(&mut w);
+        assert!(
+            w.chest_lids.contains_key(&pos),
+            "the stamped cell the entry keeps"
+        );
+        w.set(pos.0, pos.1, pos.2, AIR);
+        chest_lids_tick(&mut w);
+        assert!(
+            !w.chest_lids.contains_key(&pos),
+            "the mined cell the entry retires"
         );
     }
 

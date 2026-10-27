@@ -2587,6 +2587,9 @@ fn the_networked_dial_wears_the_wires_own_word() {
         variant_journal: Vec::new(),
         saved_edits_mark: 0,
         saved_variants_mark: 0,
+        chest_lids: std::collections::HashMap::new(),
+        lid_gen: 0,
+        lid_partial: 1.0,
     });
     app.open(ScreenKind::WorldOptions);
     app.render_title_buttons_for_test();
@@ -3229,6 +3232,9 @@ fn login_outcomes_route_like_vanilla() {
                 variant_journal: Vec::new(),
                 saved_edits_mark: 0,
                 saved_variants_mark: 0,
+                chest_lids: std::collections::HashMap::new(),
+                lid_gen: 0,
+                lid_partial: 1.0,
             },
             camera: None,
             spawn_biome: Some("minecraft:plains".into()),
@@ -3745,6 +3751,9 @@ fn network_world_lands_in_the_world_screen_and_quits_cleanly() {
         variant_journal: Vec::new(),
         saved_edits_mark: 0,
         saved_variants_mark: 0,
+        chest_lids: std::collections::HashMap::new(),
+        lid_gen: 0,
+        lid_partial: 1.0,
     });
     app.enter_network_world(None, Skybox::Overworld, None, None);
     assert_eq!(app.screen, ScreenKind::World);
@@ -3867,6 +3876,9 @@ fn world_camera_follows_the_teleport_and_falls_back_to_the_flight_camera() {
         variant_journal: Vec::new(),
         saved_edits_mark: 0,
         saved_variants_mark: 0,
+        chest_lids: std::collections::HashMap::new(),
+        lid_gen: 0,
+        lid_partial: 1.0,
     });
     app.enter_network_world(None, Skybox::Overworld, None, None);
     let flight = app.world_camera();
@@ -3976,6 +3988,9 @@ fn late_loaded_join_after_escape_is_dropped() {
                 variant_journal: Vec::new(),
                 saved_edits_mark: 0,
                 saved_variants_mark: 0,
+                chest_lids: std::collections::HashMap::new(),
+                lid_gen: 0,
+                lid_partial: 1.0,
             },
             camera: None,
             spawn_biome: None,

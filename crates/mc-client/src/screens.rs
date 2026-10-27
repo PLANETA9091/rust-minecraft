@@ -8390,6 +8390,15 @@ pub struct App {
     /// grain the mesh re-walks — the pulse's per-tick drift the grain
     /// bounds, the same re-bake cadence the dawn ramp already pays.
     pub(crate) darkness_bake: Option<u32>,
+    /// THE LIDS' OWN BAKED EPOCH (the dev-192 round — the lid walk's
+    /// own re-bake marker: the gen the tick lane bumps the render's
+    /// compare speaks, the changed value the mesh re-walks — the
+    /// settled-open hold the gen the static pose never re-walks).
+    pub(crate) lid_bake_gen: u64,
+    /// THE LIDS' OWN BAKED FRACTION (the partial lerp the bake wore —
+    /// the mid-swing frames the changed fraction re-walks, the
+    /// settled hold the partial the static pose never re-answers).
+    pub(crate) lid_bake_partial: f32,
     /// THE FIXED CLOCK'S RENDER REMAINDER (vanilla `Minecraft.runTick`'s
     /// own partialTick): the fraction of the next 50ms tick the wall
     /// clock has already accrued when this frame renders — the windowed
@@ -11785,6 +11794,8 @@ impl App {
             clock_rate_carry: 0.0,
             day_bake: None,
             darkness_bake: None,
+            lid_bake_gen: 0,
+            lid_bake_partial: 1.0,
             partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
             rain_sound_time: 0,
@@ -12735,6 +12746,19 @@ impl App {
                         self.world_quads = Some(crate::mesher::mesh_world(world, None));
                     }
                 }
+            }
+        }
+        // THE CHEST LIDS' OWN TICK (the dev-192 round — javap
+        // ChestLidController.tickLid the 26.2 jar the per-chest law
+        // the walk serves: the ±0.1/t ramp the open/close bits read,
+        // the settled-closed entry the map retires, the changed pair
+        // the gen bumps — the render's own re-bake verdict the epoch
+        // compare speaks). THE OFFLINE GATE the network world the
+        // server's own BE words never wears (the same law the
+        // furnace's offline tick keeps).
+        if !self.world_is_network {
+            if let Some(world) = self.offline_world.as_mut() {
+                crate::world::chest_lids_tick(world);
             }
         }
         // THE LEVEL'S OWN ANIMATE TICK (javap Minecraft.tick's
@@ -26167,6 +26191,17 @@ impl App {
         // block event re-arms: the wire/lamp/door/torch consumers the
         // flood walk re-evaluates, the rail seeds the strong lane's
         // above seat the same pass serves)
+        // THE LIDS' OWN SEED (the dev-192 round — the controller
+        // state the ramp starts from: the fresh open the (0,0) pair
+        // the first tick's +0.1 arms, the mid-swing re-open the
+        // travelling value the or_insert keeps — the vanilla
+        // startOpen the same controller the per-BE state serves)
+        if let Some(world) = self.offline_world.as_mut() {
+            crate::world::chest_lid_seed(world, pos);
+            if let Some(ppos) = partner {
+                crate::world::chest_lid_seed(world, ppos);
+            }
+        }
         self.attach_wire_voice(pos.0, pos.1, pos.2);
         if let Some(ppos) = partner {
             self.attach_wire_voice(ppos.0, ppos.1, ppos.2);
@@ -64097,6 +64132,32 @@ impl App {
                     self.world_quads = Some(quads);
                 }
                 self.day_bake = current;
+            }
+            // THE LIDS' OWN RE-BAKE (the dev-192 round — javap
+            // ChestLidController.getOpenness the lerp law the BE lane
+            // reads: the ticked pair the map banks, the frame's own
+            // partial the render fraction writes — the mid-swing the
+            // changed fraction the mesh re-walks, the changed pair the
+            // gen the same verdict serves, the settle tick's snapshot
+            // the final full-open pose the lerp's own identity banks).
+            // THE SETTLED HOLD the gen the static pose never re-walks
+            // (the GUI-up frames the full-open pose the economy keeps),
+            // the empty map the epoch the quiet world never wakes.
+            if let Some(world) = self.offline_world.as_mut() {
+                world.lid_partial = self.partial_tick;
+            }
+            let lid_changed = self.offline_world.as_ref().is_some_and(|world| {
+                world.lid_gen != self.lid_bake_gen
+                    || (world.chest_lids.values().any(|(o, open)| o != open)
+                        && world.lid_partial != self.lid_bake_partial)
+            });
+            if lid_changed {
+                if let Some(world) = self.offline_world.as_ref() {
+                    let quads = crate::mesher::mesh_world(world, None);
+                    self.world_quads = Some(quads);
+                    self.lid_bake_gen = world.lid_gen;
+                    self.lid_bake_partial = world.lid_partial;
+                }
             }
         }
         // THE DARKNESS EFFECT'S OWN LIGHTMAP STATE (javap

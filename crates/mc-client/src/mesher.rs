@@ -6086,8 +6086,29 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // keeps, the open the quarter-turned lid the jar
                     // law banks — [`chest_open_model_quads`])
                     let chest_open = crate::world::chest_open_bit_of(v);
-                    for (pts_local, uvs, face) in if chest_open {
-                        chest_open_model_quads(facing, chest_type)
+                    // THE LID'S OWN RENDER OPENNESS (the dev-192 round
+                    // — javap ChestLidController.getOpenness the lerp
+                    // law the BE lane reads: `lerp(oOpenness,
+                    // openness, partialTick)` the ticked pair the map
+                    // banks, the world's own lid_partial the frame
+                    // writes — the mid-swing the partial angle the
+                    // smooth swing serves; the NO-entry cell the bit
+                    // fallback the static poses keep [the staged bits
+                    // the goldens' own law wears, the full-open the
+                    // 1.0 the quarter turn banks])
+                    let lid_render = match world.chest_lids.get(&(wx, wy, wz)).copied() {
+                        Some((o, open)) => o + (open - o) * world.lid_partial.clamp(0.0, 1.0),
+                        None => {
+                            if chest_open {
+                                1.0
+                            } else {
+                                0.0
+                            }
+                        }
+                    };
+                    let chest_open_pose = lid_render > 0.001;
+                    for (pts_local, uvs, face) in if chest_open_pose {
+                        chest_open_model_quads(facing, chest_type, lid_render)
                     } else {
                         chest_model_quads(facing, chest_type)
                     } {
@@ -8711,6 +8732,7 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
 fn chest_open_model_quads(
     facing: u8,
     chest_type: u8,
+    openness: f32,
 ) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
     // THE BOX'S OWN SPANS (the closed builder's own px vocabulary —
     // the same connected walk the doubles wear; the y_hi the lid
@@ -8853,36 +8875,63 @@ fn chest_open_model_quads(
     );
     // THE LID'S OWN QUARTER TURN (the y 9..14 band the hinge walks —
     // the closed coords the folds keep, the positions the facing's
-    // own rotation serves: the free edge the 14-px up the back tip
-    // the 5-px past-the-edge the jar law speaks)
+    // own rotation serves: the angle the openness·π/2 the setupAnim
+    // law names — the FULL open the quarter turn the dev-191 pose
+    // wears, the mid-swing the partial angle the lerp speaks: the
+    // free edge the sin arm the up reach answers, the cos arm the
+    // past-the-back tip the swing carries)
+    let angle = openness.clamp(0.0, 1.0) * std::f32::consts::FRAC_PI_2;
+    let (ca, sa) = (angle.cos(), angle.sin());
     let rot = |p: [f32; 3]| -> [f32; 3] {
         // the pts ride the 0..1 block units (the px fold the pushes
         // already wore) — the rotation the px space answers, the /16
-        // the block units restore
+        // the block units restore. THE PER-FACING QUARTER the
+        // dev-191 round banks: the north/south the X-axis pair the
+        // (dy,dz) plane turns, the east/west the Z-axis pair the
+        // (dx,dy) plane serves — the sign the swing direction names
+        // (the free edge the up-and-back the front side refuses)
         let x = p[0] * 16.0;
         let y = p[1] * 16.0;
         let z = p[2] * 16.0;
         let r = match facing {
-            crate::world::CHEST_FACING_SOUTH => [x, pivot + (z - z0), z0 - (y - pivot)],
-            crate::world::CHEST_FACING_EAST => [x0 - (y - pivot), pivot + (x - x0), z],
-            crate::world::CHEST_FACING_WEST => [x1 + (y - pivot), pivot + (x1 - x), z],
+            crate::world::CHEST_FACING_SOUTH => {
+                let (dy, dz) = (y - pivot, z - z0);
+                [x, pivot + dy * ca + dz * sa, z0 - dy * sa + dz * ca]
+            }
+            crate::world::CHEST_FACING_EAST => {
+                let (dx, dy) = (x - x0, y - pivot);
+                [x0 + dx * ca - dy * sa, pivot + dx * sa + dy * ca, z]
+            }
+            crate::world::CHEST_FACING_WEST => {
+                let (dx, dy) = (x - x1, y - pivot);
+                [x1 + dx * ca + dy * sa, pivot - dx * sa + dy * ca, z]
+            }
             // the north default (the registerDefaultState pin keeps):
             // the hinge z1 the south edge, the free edge the up-and-back
-            _ => [x, pivot + (z1 - z), z1 + (y - pivot)],
+            _ => {
+                let (dy, dz) = (y - pivot, z - z1);
+                [x, pivot + dy * ca - dz * sa, z1 + dy * sa + dz * ca]
+            }
         };
         [r[0] / 16.0, r[1] / 16.0, r[2] / 16.0]
     };
-    // the hinge face the facing names (the degenerate zero-area quad
-    // the skip keeps — the raster the sliver never wears)
+    // the hinge face the facing names (the FULL-open pose the
+    // zero-area collapse the skip keeps — the mid-swing the face the
+    // back plane the tilt reveals, the six faces the partial bakes;
+    // the static closed pose the split builder never wears)
     let hinge_face = match facing {
         crate::world::CHEST_FACING_SOUTH => 5usize, // the north face collapses
         crate::world::CHEST_FACING_EAST => 1usize,  // the west face collapses
         crate::world::CHEST_FACING_WEST => 0usize,  // the east face collapses
         _ => 4usize,                                // the north default: the south face
     };
+    let hinge_collapsed = openness >= 0.999;
+    // the hinge face the mid-swing emits (the tilt the back plane
+    // reveals — the FULL-open pose the collapse the skip keeps)
+    let emit_hinge = !hinge_collapsed;
     // DOWN (face 3): the lid's inner face the open pose the vertical
     // plane serves
-    if hinge_face != 3 {
+    if hinge_face != 3 || emit_hinge {
         push(
             [
                 px(x0, lid_lo, z1),
@@ -8900,7 +8949,7 @@ fn chest_open_model_quads(
         );
     }
     // UP (face 2): the lid's outer top the closed fold keeps
-    if hinge_face != 2 {
+    if hinge_face != 2 || emit_hinge {
         push(
             [
                 px(x0, lid_hi, z0),
@@ -8918,7 +8967,7 @@ fn chest_open_model_quads(
         );
     }
     // NORTH (face 5)
-    if hinge_face != 5 {
+    if hinge_face != 5 || emit_hinge {
         push(
             [
                 px(x1, lid_hi, z0),
@@ -8936,7 +8985,7 @@ fn chest_open_model_quads(
         );
     }
     // SOUTH (face 4)
-    if hinge_face != 4 {
+    if hinge_face != 4 || emit_hinge {
         push(
             [
                 px(x0, lid_hi, z1),
@@ -8954,7 +9003,7 @@ fn chest_open_model_quads(
         );
     }
     // WEST (face 1)
-    if hinge_face != 1 {
+    if hinge_face != 1 || emit_hinge {
         push(
             [
                 px(x0, lid_hi, z0),
@@ -8972,7 +9021,7 @@ fn chest_open_model_quads(
         );
     }
     // EAST (face 0)
-    if hinge_face != 0 {
+    if hinge_face != 0 || emit_hinge {
         push(
             [
                 px(x1, lid_hi, z1),
@@ -9514,6 +9563,9 @@ mod tests {
             variant_journal: Vec::new(),
             saved_edits_mark: 0,
             saved_variants_mark: 0,
+            chest_lids: std::collections::HashMap::new(),
+            lid_gen: 0,
+            lid_partial: 1.0,
         }
     }
 
@@ -15267,8 +15319,110 @@ mod tests {
             .map(|quad| y_max_of(quad))
             .fold(f32::MIN, f32::max);
         assert!(
-            (lid_topd - (8.0 + 24.0 / 16.0)).abs() < 1e-5,
+            (lid_topd - (8.0 + 24.0 / 16.0)).abs() < 1e-4,
             "the double's lid the 24/16 reach the 10-pivot wears, got {lid_topd}"
+        );
+    }
+
+    #[test]
+    fn the_chest_lid_own_partial_swing_wears() {
+        // THE LID'S OWN PARTIAL SWING (the dev-192 round — javap
+        // ChestLidController.getOpenness the lerp law the BE lane
+        // reads): the ticked pair the map banks the render openness
+        // the lerp answers, the mid-swing the partial angle the
+        // geometry serves — the free edge the sin arm the up reach
+        // wears [the 45-degree half-open the 19·√2/2 the tip speaks],
+        // the hinge face the tilt the back plane reveals [the six
+        // faces the partial bakes], the (0,0) pair the closed builder
+        // the static box keeps, the partial=0.5 frame the lerp the
+        // mid-value answers.
+        let tiles = mc_registry::generated::atlas::FACE_TILES[crate::world::CHEST as usize];
+        let _ = tiles;
+        // the near-cell filter (the mid-swing the lid the inside the
+        // cell the diagonal reach keeps)
+        let near_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 0.5 - 1e-4
+                    && p[0] <= 9.0 + 0.5 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1.5 + 1e-4
+                    && p[2] >= 8.0 - 0.5 - 1e-4
+                    && p[2] <= 9.0 + 1.5 + 1e-4
+            })
+        };
+        let y_max_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+        // THE HALF-OPEN PAIR'S OWN POSE (the entry (0.0, 0.5) the
+        // partial=1.0 the render 0.5 wears — the 45-degree angle the
+        // 19·√2/2 reach the free edge speaks)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        w.chest_lids.insert((8, 8, 8), (0.0, 0.5));
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| near_cell(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            12,
+            "the half-open the body 6 + the lid 6 (the hinge the tilt reveals) bakes, got {}",
+            cell.len()
+        );
+        let want_top = {
+            let a = 0.5f32 * std::f32::consts::FRAC_PI_2;
+            8.0 + (9.0 + 5.0 * a.cos() + 14.0 * a.sin()) / 16.0
+        };
+        let lid_top = cell
+            .iter()
+            .map(|quad| y_max_of(quad))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (lid_top - want_top).abs() < 1e-4,
+            "the half-open's lid the 45-degree reach wears, got {lid_top} want {want_top}"
+        );
+        // THE LERP'S OWN FRACTION (the pair (0.4, 0.5) the partial
+        // 0.5 the render 0.45 wears — the lerp the mid-swing frame
+        // answers)
+        let mut wl = empty_world();
+        put(&mut wl, 8, 8, 8, crate::world::CHEST);
+        wl.chest_lids.insert((8, 8, 8), (0.4, 0.5));
+        wl.lid_partial = 0.5;
+        let ql = mesh_chunk(&wl, 0, 0, None);
+        let celll: Vec<_> = ql.iter().filter(|quad| near_cell(quad)).collect();
+        assert_eq!(celll.len(), 12, "the lerp frame the same 12 bakes");
+        let want_topl = {
+            let a = 0.45f32 * std::f32::consts::FRAC_PI_2;
+            8.0 + (9.0 + 5.0 * a.cos() + 14.0 * a.sin()) / 16.0
+        };
+        let lid_topl = celll
+            .iter()
+            .map(|quad| y_max_of(quad))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (lid_topl - want_topl).abs() < 1e-4,
+            "the lerp's own render the 0.45 angle wears, got {lid_topl} want {want_topl}"
+        );
+        // THE FRESH PAIR'S OWN CLOSED POSE (the (0,0) entry the render
+        // 0.0 the closed builder the static box keeps — the split the
+        // zero openness never wears)
+        let mut wz = empty_world();
+        put(&mut wz, 8, 8, 8, crate::world::CHEST);
+        wz.chest_lids.insert((8, 8, 8), (0.0, 0.0));
+        let qz = mesh_chunk(&wz, 0, 0, None);
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let cellz: Vec<_> = qz.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cellz.len(),
+            6,
+            "the fresh pair the closed builder the 6 quads keeps, got {}",
+            cellz.len()
         );
     }
 

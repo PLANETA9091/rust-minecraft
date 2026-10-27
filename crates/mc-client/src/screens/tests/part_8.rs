@@ -9903,3 +9903,88 @@ fn the_lamp_own_chest_walk_through_wears() {
     }
     app.close_chest_container(ScreenKind::World);
 }
+
+/// THE CHEST'S OWN LID SWING WALK (the dev-192 round — javap
+/// ChestLidController.tickLid/getOpenness the 26.2 jar the per-chest
+/// law the client's own game loop wears): the open walk the entry
+/// seeds [the fresh (0,0) pair the ramp arms], the app's own ticks
+/// the ±0.1/t law serves [the five ticks the half-open the pair
+/// wears, the settle the full-open the snapshot tick banks], the
+/// close walk the bit clears [the ramp-down the floor the removal
+/// answers — the no-entry cell the mesher's own closed fallback
+/// keeps], the static poses the bit fallback the goldens' own law
+/// wears.
+#[test]
+fn the_chest_own_lid_swing_walk_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (cx, cy, cz) = (c, top - 1, c);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::CHEST);
+    }
+    // THE OPEN'S OWN SEED (the container walk the entry banks — the
+    // fresh (0,0) pair the first tick's +0.1 arms)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.chest_lids.get(&(cx, cy, cz)),
+            Some(&(0.0, 0.0)),
+            "the open walk the fresh pair seeds"
+        );
+    }
+    // THE RAMP'S OWN SWING (the app's own ticks the law serves — the
+    // five ticks the half-open the pair wears)
+    for _ in 0..5 {
+        app.update();
+    }
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        let (o, open) = world.chest_lids[&(cx, cy, cz)];
+        assert!(
+            (open - 0.5).abs() < 1e-6,
+            "the five ticks the half-open wears, got {open}"
+        );
+        assert!(
+            (o - 0.4).abs() < 1e-6,
+            "the oOpenness the previous step wears, got {o}"
+        );
+    }
+    // THE SETTLE'S OWN HOLD (the eleven more ticks the full-open the
+    // snapshot pair banks — the GUI-up frames the static pose the
+    // gen never wakes)
+    for _ in 0..11 {
+        app.update();
+    }
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.chest_lids[&(cx, cy, cz)],
+            (1.0, 1.0),
+            "the settled open the full-open pair banks"
+        );
+    }
+    // THE CLOSE'S OWN RAMP-DOWN (the close walk the bit clears — the
+    // ticks the floor the removal answers)
+    app.close_chest_container(ScreenKind::World);
+    for _ in 0..11 {
+        app.update();
+    }
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the close walk the byte releases"
+        );
+        assert!(
+            !world.chest_lids.contains_key(&(cx, cy, cz)),
+            "the settled-closed pair the map removes"
+        );
+    }
+}

@@ -1345,6 +1345,9 @@ fn the_body_reanchors_on_the_teleport_and_holds_the_prediction() {
         variant_journal: Vec::new(),
         saved_edits_mark: 0,
         saved_variants_mark: 0,
+        chest_lids: std::collections::HashMap::new(),
+        lid_gen: 0,
+        lid_partial: 1.0,
     });
     app.net_world
         .as_mut()

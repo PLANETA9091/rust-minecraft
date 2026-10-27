@@ -216,6 +216,11 @@ pub fn materialize(
         variant_journal: Vec::new(),
         saved_edits_mark: 0,
         saved_variants_mark: 0,
+        // the lid lane: the network view the server's own BE words
+        // never carries — the empty map the static poses keep
+        chest_lids: std::collections::HashMap::new(),
+        lid_gen: 0,
+        lid_partial: 1.0,
     };
     let side_i = side as i32;
     for gz in 0..side_i {

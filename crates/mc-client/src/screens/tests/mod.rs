@@ -243,6 +243,9 @@ fn air_net_world(side: usize, seed: u64) -> crate::world::World {
         variant_journal: Vec::new(),
         saved_edits_mark: 0,
         saved_variants_mark: 0,
+        chest_lids: std::collections::HashMap::new(),
+        lid_gen: 0,
+        lid_partial: 1.0,
     }
 }
 
