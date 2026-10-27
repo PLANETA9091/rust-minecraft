@@ -2877,6 +2877,193 @@ fn the_trapped_chest_own_redstone_lane_wears() {
     }
 }
 
+/// THE DOUBLE CHEST'S OWN SIGNAL PAIR (the autopush-296 round — javap
+/// 26.2 CompoundContainer.startOpen pc 0-20 the `container1.startOpen`
+/// + `container2.startOpen` pair the BOTH-halves forward speaks —
+/// stopOpen pc 0-20 the same shape the release serves, each half the
+/// openersCounter.incrementOpeners the openerCountChanged block event
+/// answers): the ONE open the BOTH cells the [`CHEST_OPEN_BIT`] stamps
+/// — the far half's own neighbors the weak scan the pair's second
+/// source arms [the opened half alone the pre-pair law the dead far
+/// read kept], the conductor above the far half the strong lane the
+/// same pair banks, the close walk the BOTH halves the one release
+/// clears, the reverse half's open the SAME pair stamps [the connected
+/// direction the walk reverses], the SINGLE type the neighbor the pair
+/// never stamps, the ender the pair never banks [the shared inventory
+/// the every cell binds].
+#[test]
+fn the_double_chest_own_signal_pair_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (cx, cy, cz) = (c, top - 1, c);
+    // THE PAIR'S OWN FACING (the EAST-facing pair the quarter walk
+    // banks: the LEFT half the cw quarter the south cell reads, the
+    // RIGHT half the ccw quarter the north cell answers — the SAME
+    // facing both halves wear)
+    let face = 1u8;
+    let (a_var, b_var) = (
+        face | (w::CHEST_TYPE_LEFT << 2),
+        face | (w::CHEST_TYPE_RIGHT << 2),
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::TRAPPED_CHEST);
+        world.set_variant(cx, cy, cz, a_var);
+        world.set(cx, cy, cz + 1, w::TRAPPED_CHEST);
+        world.set_variant(cx, cy, cz + 1, b_var);
+        // THE STRONG ARM'S OWN CONDUCTOR (the cell above the FAR half
+        // — the pair's second source the strong read carries)
+        world.set(cx, cy + 1, cz + 1, w::STONE);
+    }
+    // THE CLOSED PAIR'S OWN DEAD READ (the count the 0 the clamp
+    // banks — the both halves the closed byte wears, the east seats
+    // the weak scan refuses, the far strong lane the same verdict
+    // keeps)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the closed near half the weak scan refuses"
+        );
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz + 1),
+            "the closed far half the weak scan refuses"
+        );
+        assert!(
+            !crate::world::strong_signal_conductors_near(world, cx + 1, cy + 1, cz + 1),
+            "the closed far half the strong lane refuses"
+        );
+    }
+    // THE OPEN'S OWN PAIR STAMP (the ONE open the BOTH halves the
+    // CompoundContainer forward stamps — the far half's own weak
+    // seat the pre-pair law never armed)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the opened half the byte stamps"
+        );
+        assert!(
+            w::chest_open_bit_of(world.variant(cx, cy, cz + 1)),
+            "the partner half the SAME open stamps"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the opened half the weak scan arms"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx + 1, cy, cz + 1),
+            "the far half the pair's own weak seat arms"
+        );
+        assert!(
+            crate::world::strong_signal_conductors_near(world, cx + 1, cy + 1, cz + 1),
+            "the far half's conductor the strong lane arms"
+        );
+    }
+    // THE PAIR'S OWN RELEASE (the one close the BOTH halves the
+    // stopOpen forward clears — the dead reads the release restores)
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the close walk the opened half releases"
+        );
+        assert!(
+            !w::chest_open_bit_of(world.variant(cx, cy, cz + 1)),
+            "the close walk the partner half releases"
+        );
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the released near half the weak scan refuses"
+        );
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz + 1),
+            "the released far half the weak scan refuses"
+        );
+        assert!(
+            !crate::world::strong_signal_conductors_near(world, cx + 1, cy + 1, cz + 1),
+            "the released far half the strong lane refuses"
+        );
+    }
+    // THE REVERSE HALF'S OWN OPEN (the RIGHT half the ccw read the
+    // north cell pairs — the SAME pair stamps, the close the same
+    // release serves)
+    app.open_chest_for((cx, cy, cz + 1));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the reverse open the near half stamps"
+        );
+        assert!(
+            w::chest_open_bit_of(world.variant(cx, cy, cz + 1)),
+            "the reverse open the far half stamps"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the reverse pair the near weak seat arms"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    // THE SINGLE'S OWN REFUSAL (the SINGLE type the connected walk
+    // never speaks — the adjacent same-kind cell the neighbor the
+    // pair never stamps)
+    let (sx, sy, sz) = (cx + 5, cy, cz);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(sx, sy, sz, w::TRAPPED_CHEST);
+        world.set_variant(sx, sy, sz, 0u8);
+        world.set(sx, sy, sz + 1, w::TRAPPED_CHEST);
+        world.set_variant(sx, sy, sz + 1, 0u8);
+    }
+    app.open_chest_for((sx, sy, sz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::chest_open_bit_of(world.variant(sx, sy, sz)),
+            "the single open its own cell stamps"
+        );
+        assert!(
+            !w::chest_open_bit_of(world.variant(sx, sy, sz + 1)),
+            "the SINGLE type the neighbor never stamps"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, sx + 1, sy, sz),
+            "the single's own weak seat arms"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    // THE ENDER'S OWN SILENCE (the shared inventory the every cell
+    // binds — the pair the typed variant never banks)
+    let (ex, ey, ez) = (sx + 5, sy, sz);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(ex, ey, ez, w::ENDER_CHEST);
+        world.set_variant(ex, ey, ez, a_var);
+        world.set(ex, ey, ez + 1, w::ENDER_CHEST);
+        world.set_variant(ex, ey, ez + 1, b_var);
+    }
+    app.open_chest_for((ex, ey, ez));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::chest_open_bit_of(world.variant(ex, ey, ez)),
+            "the ender open its own cell stamps"
+        );
+        assert!(
+            !w::chest_open_bit_of(world.variant(ex, ey, ez + 1)),
+            "the ender the pair never banks"
+        );
+    }
+}
+
 /// THE TRAPPED CHEST'S OWN NEIGHBOUR RIDE (the dev-188 round — javap
 /// 26.2 the evidence chain the ride answers:
 /// ChestBlockEntity.startOpen/stopOpen the openersCounter

@@ -25974,6 +25974,30 @@ impl App {
             .play_container_voice_at(self.frame, event, dist, pan);
     }
 
+    fn chest_double_partner_of(
+        world: &crate::world::World,
+        pos: (i32, i32, i32),
+    ) -> Option<(i32, i32, i32)> {
+        let kind = world.get(pos.0, pos.1, pos.2);
+        if !crate::world::is_chest(kind) || kind == crate::world::ENDER_CHEST {
+            return None;
+        }
+        let v = world.variant(pos.0, pos.1, pos.2);
+        let ctype = crate::world::chest_variant_type(v);
+        if ctype == crate::world::CHEST_TYPE_SINGLE {
+            return None;
+        }
+        let dir =
+            crate::world::chest_connected_direction(crate::world::chest_variant_facing(v), ctype);
+        let (dx, dz) = crate::world::stairs_facing_delta(dir);
+        let ppos = (pos.0 + dx, pos.1, pos.2 + dz);
+        if world.get(ppos.0, ppos.1, ppos.2) == kind {
+            Some(ppos)
+        } else {
+            None
+        }
+    }
+
     pub fn open_chest_for(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
         // THE DISK BANK'S OWN LAZY LOAD (the dev-68 round — the first
@@ -26110,6 +26134,10 @@ impl App {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v | crate::world::CHEST_OPEN_BIT);
                 self.chest_open_cell = Some(pos);
+                if let Some(ppos) = partner {
+                    let pv = w.variant(ppos.0, ppos.1, ppos.2);
+                    w.set_variant(ppos.0, ppos.1, ppos.2, pv | crate::world::CHEST_OPEN_BIT);
+                }
             }
         }
         // THE CHEST'S OWN NEIGHBOUR RIDE (the dev-188 round — javap
@@ -26125,9 +26153,16 @@ impl App {
         // flood walk re-evaluates, the rail seeds the strong lane's
         // above seat the same pass serves)
         self.attach_wire_voice(pos.0, pos.1, pos.2);
+        if let Some(ppos) = partner {
+            self.attach_wire_voice(ppos.0, ppos.1, ppos.2);
+        }
         if let Some(w) = self.offline_world.as_mut() {
             let _ = w.rail_neighbor_updates(pos);
             let _ = w.rail_neighbor_updates((pos.0, pos.1 + 1, pos.2));
+            if let Some(ppos) = partner {
+                let _ = w.rail_neighbor_updates(ppos);
+                let _ = w.rail_neighbor_updates((ppos.0, ppos.1 + 1, ppos.2));
+            }
         }
         // THE CONTAINER VOICE'S OWN OPEN HALF (the counter's 0->1
         // transition the first opener speaks — the chest/barrel event
@@ -26166,15 +26201,27 @@ impl App {
             } else {
                 false
             };
+            let mut partner = None;
+            if cleared {
+                partner = Self::chest_double_partner_of(w, pos);
+                if let Some(ppos) = partner {
+                    let pv = w.variant(ppos.0, ppos.1, ppos.2);
+                    w.set_variant(ppos.0, ppos.1, ppos.2, pv & !crate::world::CHEST_OPEN_BIT);
+                }
+            }
             if cleared {
                 let _ = w.rail_neighbor_updates(pos);
                 let _ = w.rail_neighbor_updates((pos.0, pos.1 + 1, pos.2));
+                if let Some(ppos) = partner {
+                    let _ = w.rail_neighbor_updates(ppos);
+                    let _ = w.rail_neighbor_updates((ppos.0, ppos.1 + 1, ppos.2));
+                }
             }
-            cleared.then_some(pos)
+            cleared.then_some((pos, partner))
         } else {
             None
         };
-        if let Some(pos) = released {
+        if let Some((pos, partner)) = released {
             // THE RELEASE'S OWN NEIGHBOUR RIDE (the dev-188 round —
             // the same evidence chain the close speaks: the
             // decrementOpeners the count change the openerCountChanged
@@ -26184,6 +26231,9 @@ impl App {
             // walk the dead verdict restores, the rail seeds the same
             // pass wears)
             self.attach_wire_voice(pos.0, pos.1, pos.2);
+            if let Some(ppos) = partner {
+                self.attach_wire_voice(ppos.0, ppos.1, ppos.2);
+            }
         }
     }
 
