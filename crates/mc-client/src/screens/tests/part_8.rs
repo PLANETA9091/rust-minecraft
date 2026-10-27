@@ -9102,3 +9102,198 @@ fn the_chest_open_own_fill_bank_wears() {
         );
     }
 }
+
+/// THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295 round — javap
+/// 26.2 the per-mutation law the chain proves: Slot.set pc 0-18 the
+/// `container.setItem` + `setChanged` pair the GUI click speaks,
+/// BaseContainerBlockEntity.setItem pc 0-23 the `getItems().set` +
+/// `limitSize` + `setChanged` walk the chest BE inherits [the
+/// ChestBlockEntity method table the override never banks],
+/// BlockEntity.setChanged(Level, BlockPos, BlockState) pc 0-21 the
+/// `!isAir` gate the `updateNeighbourForOutputSignal(pos, block)`
+/// walk serves, Level.updateNeighbourForOutputSignal pc 0-130 the
+/// HORIZONTAL plane the direct comparator the neighborChanged
+/// re-read answers, the one-conductor seat the second probe the
+/// same walk serves): the MID-OPEN transfer the comparator the LIVE
+/// fill re-reads — the grid place AND the take the ride the beat
+/// serves, the quick-move the CHEST-side delta the same lane wears,
+/// the drag's painted seats the release beat answers, the
+/// inventory-side seat the store untouched the silence keeps, the
+/// close flush the ONLY lane the stale law never keeps.
+#[test]
+fn the_chest_transfer_own_live_fill_ride_wears() {
+    use crate::world as w;
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (kx, ky, kz) = (c, top - 1, c); // the comparator (facing EAST)
+    let (cx, cy, cz) = (c + 1, top - 1, c); // the chest (the back cell)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(kx, ky, kz, w::COMPARATOR);
+        world.set_variant(kx, ky, kz, w::comparator_variant(1, false, false, 0));
+        world.set(cx, cy, cz, w::CHEST);
+    }
+    // THE OPEN'S OWN EMPTY BANK (the fresh store the fill's 0 — the
+    // mid-open beats the comparator the LIVE law answers)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .container_fill
+            .get(&(cx, cy, cz)),
+        Some(&0),
+        "the fresh open the empty store the 0 banks"
+    );
+    // THE INVENTORY-SIDE PICKUP THE FILL NEVER BANKS (the hotbar row
+    // the stack rides the cursor — the chest's store UNTOUCHED, the
+    // comparator the stale 0 keeps: the vanilla setItem the chest BE
+    // alone speaks)
+    app.inventory.items[0] = (stone, 64);
+    app.chest_mirror_sync_from_inventory();
+    app.chest_slot_rects = vec![(100, 100, 54)];
+    app.mouse_pos = Some((108, 108));
+    app.click_chest_slot(100, 100, 0);
+    assert_eq!(app.chest_carried, (stone, 64), "the take rides");
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .container_fill
+            .get(&(cx, cy, cz)),
+        Some(&0),
+        "the inventory-side seat the fill never banks"
+    );
+    // THE GRID SEAT'S OWN PLACE (the stack lands the chest — the
+    // MID-OPEN beat the ride wears: the fill's 1 the comparator the
+    // back read answers, the close flush the ONLY lane the stale law
+    // never keeps)
+    app.chest_slot_rects = vec![(160, 100, 0)];
+    app.mouse_pos = Some((168, 108));
+    app.click_chest_slot(160, 100, 0);
+    assert_eq!(app.chest_slots[0], (stone, 64), "the stack landed");
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&1),
+            "the mid-open place the fill's 1 the ride banks"
+        );
+        assert_eq!(
+            crate::world::comparator_output_signal(world, kx, ky, kz),
+            1,
+            "the comparator the live fill the back read answers"
+        );
+    }
+    // THE GRID SEAT'S OWN TAKE (the same lane the whole stack rides
+    // back — the fill the dead 0 the mid-open beat restores)
+    app.chest_slot_rects = vec![(160, 100, 0)];
+    app.mouse_pos = Some((168, 108));
+    app.click_chest_slot(160, 100, 0);
+    assert_eq!(app.chest_slots[0], (0, 0), "the stack rode back");
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .container_fill
+            .get(&(cx, cy, cz)),
+        Some(&0),
+        "the mid-open take the fill the dead 0 restores"
+    );
+    // THE QUICK-MOVE'S OWN HOME RIDE (the shift-click the inventory
+    // stack the chest hands — the CHEST-side delta the ride answers,
+    // the cursor the lane never touches the carried keeps)
+    app.inventory.items[1] = (stone, 64);
+    app.chest_mirror_sync_from_inventory();
+    app.shift_down = true;
+    app.chest_slot_rects = vec![(100, 100, 55)];
+    app.mouse_pos = Some((108, 108));
+    app.click_chest_slot(100, 100, 0);
+    assert_eq!(
+        app.chest_carried,
+        (stone, 64),
+        "the quick-move the cursor never touches"
+    );
+    let seat = app
+        .chest_slots
+        .iter()
+        .position(|&p| p == (stone, 64))
+        .expect("the quick-move the grid seat lands");
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&1),
+            "the quick-move's chest-side delta the ride banks"
+        );
+        assert_eq!(
+            crate::world::comparator_output_signal(world, kx, ky, kz),
+            1,
+            "the comparator the quick-move beat the live read wears"
+        );
+    }
+    // THE QUICK-MOVE'S OWN OUT RIDE (the shift-click the grid seat
+    // the inventory hands back — the fill the dead 0 the beat
+    // restores)
+    app.chest_slot_rects = vec![(160, 100, seat as i16)];
+    app.mouse_pos = Some((168, 108));
+    app.click_chest_slot(160, 100, 0);
+    assert_eq!(
+        app.chest_slots[seat],
+        (0, 0),
+        "the quick-move out the grid empties"
+    );
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .container_fill
+            .get(&(cx, cy, cz)),
+        Some(&0),
+        "the quick-move out the fill the dead 0 restores"
+    );
+    app.shift_down = false;
+    // THE DRAG'S OWN PAINTED SEATS (the quickcraft the carried
+    // spreads — the press the arm speaks, the motion the seats
+    // paint, the release the floor split distributes, the
+    // chest_touched gate the ride the release beat serves)
+    app.chest_slot_rects = vec![(160, 100, 1), (200, 100, 2)];
+    app.chest_panel = chest_panel_origin(640, 360);
+    app.mouse_pos = Some((300, 300)); // the resting cursor the first motion the moved gate answers
+    app.on_press(168, 108);
+    assert!(app.qc_armed, "the carried press the arm speaks");
+    app.on_mouse_move(168, 108);
+    app.on_mouse_move(208, 108);
+    assert_eq!(app.qc_slots, vec![1, 2], "the two seats the motion paints");
+    app.on_left_release();
+    assert_eq!(app.chest_slots[1], (stone, 32), "the first seat's half");
+    assert_eq!(app.chest_slots[2], (stone, 32), "the second seat's half");
+    assert_eq!(app.chest_carried, (0, 0), "the spread the cursor empties");
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .container_fill
+            .get(&(cx, cy, cz)),
+        Some(&1),
+        "the drag's release beat the fill the ride re-banks"
+    );
+    // THE CLOSE'S OWN FLUSH (the dragged halves the map rides home —
+    // the disk bank the same walk keeps)
+    app.on_escape();
+    assert_eq!(
+        app.container_stores[&(cx, cy, cz)][1],
+        (stone, 32),
+        "the first half the flush banks"
+    );
+    assert_eq!(
+        app.container_stores[&(cx, cy, cz)][2],
+        (stone, 32),
+        "the second half the flush banks"
+    );
+}

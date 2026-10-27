@@ -26451,6 +26451,90 @@ impl App {
         }
     }
 
+    /// THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295 round —
+    /// javap 26.2 the per-mutation law the chain proves: Slot.set
+    /// pc 0-18 the `container.setItem` + `setChanged` pair the GUI
+    /// click speaks, BaseContainerBlockEntity.setItem pc 0-23 the
+    /// `getItems().set` + `limitSize` + `setChanged` walk the chest BE
+    /// inherits [the ChestBlockEntity method table the override never
+    /// banks], BlockEntity.setChanged(Level, BlockPos, BlockState)
+    /// pc 0-21 the `!isAir` gate the `updateNeighbourForOutputSignal
+    /// (pos, block)` walk serves, Level.updateNeighbourForOutputSignal
+    /// pc 0-130 the HORIZONTAL plane the direct comparator the
+    /// neighborChanged re-read answers, the one-conductor seat the
+    /// second probe the same walk serves) — the MID-OPEN transfer the
+    /// comparator the LIVE fill re-reads: the GUI's per-click store
+    /// mutation this ride wears, the close flush the ONLY lane the
+    /// stale law never keeps [the vanilla comparator-behind-the-chest
+    /// the item lands the beat the wire watches answers]. THE LIVE
+    /// PROJECTION THE READ SERVES (the menu's own slots the BE's
+    /// NonNullList the vanilla law IS — the client's chest_slots the
+    /// same live list mid-open wears, the map's banked snapshot the
+    /// close flush alone rides home: the fill the LIVE grid the
+    /// formula answers, the single the 27, the double the compound 54
+    /// the union law the one read speaks [the partner's rows the
+    /// CompoundContainer combine the GUI order keeps], the barrel the
+    /// same 27 wears). THE ENDER'S OWN SILENCE (javap EnderChestBlock
+    /// — the hasAnalogOutputSignal override the class never wears, the
+    /// entry the map's absence the honest keep) + the foreign kind the
+    /// same removal arm keeps. THE OFFLINE WORLD'S OWN LANE (the live
+    /// session the server's own authority owns — the container_fill
+    /// the offline field the guard keeps).
+    fn container_transfer_fill_ride(&mut self) {
+        if self.world_is_network {
+            return; // the live session the server's own authority owns
+        }
+        let Some(pos) = self.container_open_cell else {
+            return; // no open container — the click walk never reaches
+        };
+        let kind = self
+            .offline_world
+            .as_ref()
+            .map(|w| w.get(pos.0, pos.1, pos.2))
+            .unwrap_or(0);
+        let fill = if kind == crate::world::ENDER_CHEST
+            || (!crate::world::is_chest(kind) && !crate::world::is_barrel(kind))
+        {
+            // THE SILENCE'S OWN REMOVAL (the ender the jar's own
+            // refusal keeps, the foreign kind the map the absence
+            // restores — the stale entry the dead lane never speaks)
+            None
+        } else {
+            // THE LIVE GRID'S OWN FILL (the chest_slots projection the
+            // formula answers — the 27 the single wears, the 54 the
+            // double's compound speaks, the stale 0 the fresh edit
+            // replaces)
+            Some(crate::world::container_analog_signal(&self.chest_slots))
+        };
+        let partner = self.container_open_cell_b;
+        if let Some(w) = self.offline_world.as_mut() {
+            match fill {
+                Some(fill) => {
+                    w.container_fill.insert(pos, fill);
+                    if let Some(ppos) = partner {
+                        // THE UNION'S OWN MATE (both halves the one
+                        // read — the far face the same total the map
+                        // banks, the far front's comparator the same
+                        // beat the attach serves)
+                        w.container_fill.insert(ppos, fill);
+                    }
+                }
+                None => {
+                    w.container_fill.remove(&pos);
+                }
+            }
+        }
+        if fill.is_some() {
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
+            if let Some(ppos) = partner {
+                // THE PARTNER'S OWN FACE (the double's far half the
+                // front comparator the same union re-read serves — the
+                // one fill the two fronts the one ride answers)
+                self.attach_wire_voice(ppos.0, ppos.1, ppos.2);
+            }
+        }
+    }
+
     /// THE FILL'S OWN BANK (the comparator's container lane the store
     /// walk serves — javap ComparatorBlock.getInputSignal the 26.2 jar
     /// the hasAnalogOutputSignal read the world's analog answers: the
@@ -32633,6 +32717,7 @@ impl App {
         let painted = self.qc_slots.len();
         let n = self.chest_slots.len();
         let mut k = carried.1;
+        let mut chest_touched = false; // the grid seat the ride's own gate
         let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
         for &menu in &seats {
             let (seat_id, seat_count) = self.qc_seat_stack(menu);
@@ -32659,6 +32744,7 @@ impl App {
             if menu < n {
                 if menu < self.chest_slots.len() {
                     self.chest_slots[menu] = new;
+                    chest_touched = true;
                 }
             } else {
                 // THE WRITE-THROUGH (the projection the inventory IS —
@@ -32678,6 +32764,14 @@ impl App {
                                                                           // wears) + the HUD row the store's sync follows
         self.chest_mirror_sync_from_inventory();
         self.hotbar_slots = self.inventory.hotbar();
+        // THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295 round —
+        // the DRAG's own place the same per-mutation law the click
+        // lanes wear: the painted grid seats the store mutates, the
+        // comparator the release beat the ride re-reads, the
+        // mirror-only drag the silence keeps)
+        if chest_touched {
+            self.container_transfer_fill_ride();
+        }
     }
 
     /// THE DISPENSER DRAG'S OWN WIRE DISTRIBUTION (the offline walk's
@@ -40605,6 +40699,14 @@ impl App {
                 }
             }
             self.chest_mirror_sync_from_inventory();
+            // THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295
+            // round — the CHEST-SIDE delta the ride answers: the
+            // inventory-side rows the fill never banks [the vanilla
+            // setItem the chest BE alone speaks], the grid the stack
+            // lands the beat the comparator wears)
+            if changed.iter().any(|(i, _)| *i < n) {
+                self.container_transfer_fill_ride();
+            }
             return;
         }
         // the believed slot value: the grid's 0..N (27 the single, 54
@@ -40633,6 +40735,15 @@ impl App {
         }
         self.chest_carried = new_carried;
         self.chest_mirror_sync_from_inventory();
+        // THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295 round —
+        // the GRID seat the ride answers: the place AND the take the
+        // chest's own store mutates, the comparator the mid-open
+        // beat the vanilla updateNeighbourForOutputSignal law re-reads;
+        // the inventory-side seats the store untouched the silence
+        // keeps)
+        if menu < n {
+            self.container_transfer_fill_ride();
+        }
     }
 
     /// THE OFFLINE DISPENSER CLICK'S OWN WALK (the chest's own offline
