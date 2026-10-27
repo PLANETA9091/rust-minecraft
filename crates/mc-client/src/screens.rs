@@ -25771,6 +25771,46 @@ impl App {
         self.open(ScreenKind::Furnace);
     }
 
+    /// THE CHEST'S OWN ABOVE-CELL GATE (the autopush-290 round — the
+    /// use walk's own refusal the combine walk serves: the SINGLE
+    /// chest the ONE above-cell read [`crate::light::
+    /// redstone_conductor_at`] the isSolidRender verdict wears, the
+    /// DOUBLE the BOTH halves' above-cells the union law answers
+    /// [the one covered half the whole menu skips], the ENDER the
+    /// own above-cell the pair walk never rides, the barrel/shulker
+    /// the gate the vanilla use walk never carries — the cat lane
+    /// the entity model the honest gap keeps).
+    fn chest_above_gate_blocked(&self, pos: (i32, i32, i32)) -> bool {
+        let Some(w) = self.offline_world.as_ref() else {
+            return false;
+        };
+        let kind = w.get(pos.0, pos.1, pos.2);
+        if !crate::world::is_chest(kind) {
+            return false; // the barrel/shulker family the gate never wears
+        }
+        let mut blocked = crate::light::redstone_conductor_at(w, pos.0, pos.1 + 1, pos.2);
+        if !blocked && kind != crate::world::ENDER_CHEST {
+            // THE DOUBLE'S OWN UNION (the combine walk the predicate
+            // the both halves test — the same-kind partner the
+            // connected direction reads, the stale type the honest
+            // single keeps)
+            let v = w.variant(pos.0, pos.1, pos.2);
+            let t = crate::world::chest_variant_type(v);
+            if t != crate::world::CHEST_TYPE_SINGLE {
+                let dir = crate::world::chest_connected_direction(
+                    crate::world::chest_variant_facing(v),
+                    t,
+                );
+                let (dx, dz) = crate::world::stairs_facing_delta(dir);
+                let ppos = (pos.0 + dx, pos.1, pos.2 + dz);
+                if w.get(ppos.0, ppos.1, ppos.2) == kind {
+                    blocked = crate::light::redstone_conductor_at(w, ppos.0, ppos.1 + 1, ppos.2);
+                }
+            }
+        }
+        blocked
+    }
+
     /// THE CHEST'S OWN FRESH STAND-IN (the dev-64 round — javap 26.2
     /// ChestMenu.threeRows the 27-slot container the
     /// EnderChestBlock.useWithoutItem lambda speaks, the
@@ -52757,6 +52797,27 @@ impl App {
                     || crate::world::is_barrel(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
             })
         {
+            // THE ABOVE-CELL'S OWN GATE (the autopush-290 round —
+            // javap 26.2 ChestBlock the menu walk the combine
+            // predicate banks: getMenuProvider pc 0-26 the
+            // `combine(..., false)` walk the DoubleBlockCombiner's
+            // own predicate serves — the bootstrap pair the BM#1
+            // `isChestBlockedAt` the menu path resolves, the
+            // isBlockedChestByBlock the `pos.above()` the
+            // isRedstoneConductor read wears, the isCatSittingOnChest
+            // the entity lane the client's model never carries [the
+            // honest gap the sitting-pose walk keeps]; the DOUBLE the
+            // combineWithNeigbour walk the predicate the BOTH halves
+            // test — the one covered half the whole menu skips; the
+            // EnderChestBlock's own pc 41-65 gate the same
+            // above-cell read wears, the barrel the gate the vanilla
+            // use walk never carries): the solid lid the open
+            // REFUSES — the SUCCESS the vanilla still returns (the
+            // use the press consumes), the menu the voice the store
+            // the refusal never speaks
+            if self.chest_above_gate_blocked(hit.pos) {
+                return true;
+            }
             self.open_chest_for(hit.pos);
             return true;
         }

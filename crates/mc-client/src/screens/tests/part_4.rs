@@ -21420,6 +21420,213 @@ fn the_ender_bank_the_restart_ride_wears() {
     );
 }
 
+/// THE CHEST'S OWN ABOVE-CELL GATE (the autopush-290 round — javap
+/// the 26.2 ChestBlock the menu walk the combine predicate banks:
+/// the getMenuProvider pc 0-26 the `combine(..., false)` walk the
+/// bootstrap pair the BM#1 `isChestBlockedAt` the menu path
+/// resolves — the isBlockedChestByBlock the `pos.above()` the
+/// isRedstoneConductor read wears [the isSolidRender default the
+/// full-opaque-cube law speaks], the isCatSittingOnChest the entity
+/// lane the client's model never carries; the DOUBLE the predicate
+/// the BOTH halves test — the one covered half the whole menu
+/// skips; the EnderChestBlock's own pc 41-65 gate the same
+/// above-cell read wears, the barrel the gate the vanilla use walk
+/// never carries): the press the SUCCESS still consumes — the
+/// screen the World keeps, the voice the store the refusal never
+/// speaks.
+#[test]
+fn the_chest_above_gate_the_solid_lid_refusal_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        // THE PLATFORM'S OWN CLEAR (the lever tests' own lane — the
+        // stone floor the air rows the ray's own reach keeps)
+        for dx in -4..=8 {
+            for dz in -4..=7 {
+                w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                for dy in 0..=3 {
+                    w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        // THE SINGLE'S OWN LID (the chest the floor row carries, the
+        // stone the solid lid the above-cell wears)
+        w.set(c, top, c, crate::world::CHEST);
+        w.set(c, top + 1, c, crate::world::STONE);
+        // THE ENDER'S OWN LID (the same solid the shared chest wears)
+        w.set(c, top, c + 3, crate::world::ENDER_CHEST);
+        w.set(c, top + 1, c + 3, crate::world::STONE);
+        // THE BARREL'S OWN LID (the gate the family never wears —
+        // the solid the barrel the vanilla opens under)
+        w.set(c, top, c - 3, crate::world::BARREL);
+        w.set(c, top + 1, c - 3, crate::world::STONE);
+        // THE DOUBLE'S OWN ONE-SIDED LID (the east half the stone
+        // covers, the west half the sky keeps — the union the whole
+        // menu skips)
+        let west = (c + 3, top, c + 3);
+        let east = (c + 4, top, c + 3);
+        let facing = crate::world::CHEST_FACING_NORTH;
+        w.set(west.0, west.1, west.2, crate::world::CHEST);
+        w.set(east.0, east.1, east.2, crate::world::CHEST);
+        w.set_variant(
+            west.0,
+            west.1,
+            west.2,
+            (crate::world::CHEST_TYPE_LEFT << 2) | facing,
+        );
+        w.set_variant(
+            east.0,
+            east.1,
+            east.2,
+            (crate::world::CHEST_TYPE_RIGHT << 2) | facing,
+        );
+        w.set(east.0, east.1 + 1, east.2, crate::world::STONE);
+    }
+    // THE SINGLE'S OWN REFUSAL (the west eye's side ray the chest's
+    // face hits — the yaw the +x the FRAC_PI_2 speaks, the solid lid
+    // the press the SUCCESS consumes)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new((c - 3) as f32 + 0.5, top as f32 + 0.5, c as f32 + 0.5),
+        yaw: std::f32::consts::FRAC_PI_2,
+        pitch: 0.0,
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the refusal the use still consumes"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the solid lid the open refuses"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the refusal the silence keeps: {:?}",
+        app.sounds.events
+    );
+    assert!(
+        app.container_stores.get(&(c, top, c)).is_none(),
+        "the refusal the store never banks"
+    );
+    // THE LID'S OWN RELEASE (the air the same ray answers — the menu
+    // the voice the store the open banks)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c, top + 1, c, crate::world::AIR);
+    assert!(app.on_right_press(0, 0), "the open the press consumes");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the lid released the menu opens"
+    );
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the open the family voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    // THE ENDER'S OWN GATE (the same solid the shared chest refuses
+    // — the pc 41-65 walk the same above-cell read serves)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new((c - 3) as f32 + 0.5, top as f32 + 0.5, (c + 3) as f32 + 0.5),
+        yaw: std::f32::consts::FRAC_PI_2,
+        pitch: 0.0,
+    });
+    app.sounds.events.clear();
+    assert!(app.on_right_press(0, 0), "the ender refusal consumes");
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the ender the solid lid refuses"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the ender refusal the silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c, top + 1, c + 3, crate::world::AIR);
+    assert!(app.on_right_press(0, 0), "the ender open consumes");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the ender the lid released opens"
+    );
+    assert!(
+        app.sounds.events[0].starts_with("block.ender_chest.open @"),
+        "the ender its own voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    // THE BARREL'S OWN CONTRAST (the solid the barrel never refuses —
+    // the gate the vanilla use walk the family never carries)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new((c - 3) as f32 + 0.5, top as f32 + 0.5, (c - 3) as f32 + 0.5),
+        yaw: std::f32::consts::FRAC_PI_2,
+        pitch: 0.0,
+    });
+    app.sounds.events.clear();
+    assert!(app.on_right_press(0, 0), "the barrel press consumes");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the barrel the solid never refuses"
+    );
+    assert!(
+        app.sounds.events[0].starts_with("block.barrel.open @"),
+        "the barrel its own voice wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    // THE DOUBLE'S OWN UNION (the west half the press reads, the
+    // east half's lid the whole menu skips — the one covered half
+    // the combine predicate the pair refuses)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new((c + 1) as f32 + 0.5, top as f32 + 0.5, (c + 3) as f32 + 0.5),
+        yaw: std::f32::consts::FRAC_PI_2,
+        pitch: 0.0,
+    });
+    app.sounds.events.clear();
+    assert!(app.on_right_press(0, 0), "the double refusal consumes");
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the one covered half the whole menu skips"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the double refusal the silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c + 4, top + 1, c + 3, crate::world::AIR);
+    assert!(app.on_right_press(0, 0), "the double open consumes");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the lids released the double opens"
+    );
+    assert_eq!(
+        app.chest_slots.len(),
+        54,
+        "the double the 54-slot compound wears"
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+}
+
 /// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
 /// walk the OLD screen's removed() FIRST answers — the autopush-224
 /// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE

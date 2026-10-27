@@ -44,8 +44,14 @@ use crate::world::{LightGrid, World, CHUNK_X, CHUNK_Y, CHUNK_Z, LIGHT_UNKNOWN};
 
 /// The six flood directions: +X -X +Y -Y +Z -Z (the mesher's own
 /// NEIGHBOR order — the pair the two walks share).
-const NEIGHBORS: [(i32, i32, i32); 6] =
-    [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)];
+const NEIGHBORS: [(i32, i32, i32); 6] = [
+    (1, 0, 0),
+    (-1, 0, 0),
+    (0, 1, 0),
+    (0, -1, 0),
+    (0, 0, 1),
+    (0, 0, -1),
+];
 
 /// The cell's own sky opacity — `BlockState.lightBlock` over the
 /// client's palette (the rows the module doc names). The families the
@@ -192,12 +198,24 @@ fn sky_opacity(id: u16) -> u8 {
 fn sky_opacity_at(world: &crate::world::World, x: i32, y: i32, z: i32) -> u8 {
     let id = world.get(x, y, z);
     if crate::world::is_slab(id)
-        && crate::world::slab_variant_type(world.variant(x, y, z))
-            == crate::world::SLAB_TYPE_DOUBLE
+        && crate::world::slab_variant_type(world.variant(x, y, z)) == crate::world::SLAB_TYPE_DOUBLE
     {
         return 15;
     }
     sky_opacity(id)
+}
+
+/// THE REDSTONE CONDUCTOR'S OWN VERDICT (the autopush-290 round —
+/// javap 26.2 BlockState.isRedstoneConductor the `isSolidRender`
+/// default the full-opaque-cube law speaks: the canOcclude + the
+/// full-block shape the conductor rows answer — the above-cell read
+/// [`sky_opacity_at`] the SAME 15 rows wear [the DOUBLE slab the
+/// variant-aware walk the full cube banks, the glass/doors/leaves
+/// the 0 rows the conductor never keeps]). The chest family's own
+/// above-cell gate the verdict reads — the solid lid the open
+/// refuses.
+pub fn redstone_conductor_at(world: &crate::world::World, x: i32, y: i32, z: i32) -> bool {
+    sky_opacity_at(world, x, y, z) == 15
 }
 
 /// The cell's own emission — `BlockState.lightEmission` over the
@@ -776,7 +794,10 @@ mod tests {
     /// The light AT a world cell through the grid's own read (the
     /// packed layout the mesher's consumer rides).
     fn light_at(w: &World, x: i32, y: i32, z: i32) -> (Option<u8>, Option<u8>) {
-        w.light.as_ref().expect("relit").cell(w.chunks_per_side, x, y, z)
+        w.light
+            .as_ref()
+            .expect("relit")
+            .cell(w.chunks_per_side, x, y, z)
     }
 
     #[test]
@@ -853,7 +874,11 @@ mod tests {
         // THE POND'S WALL CELL: the open sky beside the pond the
         // sideways step shades — 14 at EVERY depth the outside column
         // keeps.
-        assert_eq!(light_at(&w, 3, 6, 4).0, Some(14), "the wall cell's side step");
+        assert_eq!(
+            light_at(&w, 3, 6, 4).0,
+            Some(14),
+            "the wall cell's side step"
+        );
         // THE CENTER'S DEPTH: the walls' 14 one more step shades — 13
         // the pond's middle keeps at every depth below the surface
         // (the sideways path through the water the two steps costs).
@@ -908,9 +933,16 @@ mod tests {
             w.set(12, y, 8, STONE);
         }
         w.relight();
-        assert_eq!(light_at(&w, 11, 6, 8).1, Some(11), "three steps before the wall");
-        assert_eq!(light_at(&w, 13, 6, 8).1, Some(7),
-            "the wall's far side the around-detour's reach speaks");
+        assert_eq!(
+            light_at(&w, 11, 6, 8).1,
+            Some(11),
+            "three steps before the wall"
+        );
+        assert_eq!(
+            light_at(&w, 13, 6, 8).1,
+            Some(7),
+            "the wall's far side the around-detour's reach speaks"
+        );
         // THE SKY CHANNEL NEVER MOVES: the torch emits no sky light.
         assert_eq!(light_at(&w, 8, 6, 8).0, Some(15));
     }
@@ -945,8 +977,16 @@ mod tests {
         assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the lantern's own cell");
         assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east of the lantern");
         assert_eq!(light_at(&w, 3, 7, 3).1, Some(14), "one above the lantern");
-        assert_eq!(light_at(&w, 8, 6, 3).1, Some(10), "the soul flame the dimmer row wears");
-        assert_eq!(light_at(&w, 9, 6, 3).1, Some(9), "one east of the soul flame");
+        assert_eq!(
+            light_at(&w, 8, 6, 3).1,
+            Some(10),
+            "the soul flame the dimmer row wears"
+        );
+        assert_eq!(
+            light_at(&w, 9, 6, 3).1,
+            Some(9),
+            "one east of the soul flame"
+        );
         // the copper rungs the SECOND world the cross-flood the
         // clean cells wear (the bare + the waxed rungs ALIKE the
         // same lambda banks)
@@ -954,8 +994,16 @@ mod tests {
         w2.set(4, 6, 3, COPPER_LANTERN);
         w2.set(4, 8, 3, WAXED_OXIDIZED_COPPER_LANTERN);
         w2.relight();
-        assert_eq!(light_at(&w2, 4, 6, 3).1, Some(15), "the copper rung the same 15 wears");
-        assert_eq!(light_at(&w2, 5, 6, 3).1, Some(14), "one east of the copper rung");
+        assert_eq!(
+            light_at(&w2, 4, 6, 3).1,
+            Some(15),
+            "the copper rung the same 15 wears"
+        );
+        assert_eq!(
+            light_at(&w2, 5, 6, 3).1,
+            Some(14),
+            "one east of the copper rung"
+        );
         assert_eq!(
             light_at(&w2, 4, 8, 3).1,
             Some(15),
@@ -1001,11 +1049,7 @@ mod tests {
         w.set(8, 6, 3, CANDLE_CAKE_LIT);
         w.relight();
         assert_eq!(light_at(&w, 3, 6, 3).1, Some(0), "the unlit kind dark");
-        assert_eq!(
-            light_at(&w, 8, 6, 3).1,
-            Some(3),
-            "the lit kind's own cell"
-        );
+        assert_eq!(light_at(&w, 8, 6, 3).1, Some(3), "the lit kind's own cell");
         assert_eq!(light_at(&w, 9, 6, 3).1, Some(2), "one east of the cake");
         assert_eq!(light_at(&w, 8, 7, 3).1, Some(2), "one above the cake");
     }
@@ -1024,7 +1068,11 @@ mod tests {
         w.relight();
         assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the fire's own cell");
         assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east of the fire");
-        assert_eq!(light_at(&w, 8, 6, 3).1, Some(10), "the soul fire's own cell");
+        assert_eq!(
+            light_at(&w, 8, 6, 3).1,
+            Some(10),
+            "the soul fire's own cell"
+        );
         assert_eq!(light_at(&w, 9, 6, 3).1, Some(9), "one east of the soul");
         assert_eq!(light_at(&w, 8, 7, 3).1, Some(9), "one above the soul");
     }
@@ -1175,8 +1223,18 @@ mod tests {
     #[test]
     fn the_incremental_walk_the_full_compute_wears() {
         const PALETTE: [u16; 12] = [
-            AIR, STONE, DIRT, WATER, LEAVES, PALE_LEAVES, LEAF_LITTER, LAVA, TORCH, DANDELION,
-            POPPY, SHORT_GRASS,
+            AIR,
+            STONE,
+            DIRT,
+            WATER,
+            LEAVES,
+            PALE_LEAVES,
+            LEAF_LITTER,
+            LAVA,
+            TORCH,
+            DANDELION,
+            POPPY,
+            SHORT_GRASS,
         ];
         for seed in [7u64, 1337, 90_210] {
             let mut w = World::new(2, seed); // the 32x32 real terrain
@@ -1218,17 +1276,37 @@ mod tests {
         // the side-flood's 14 the rim's boundary speaks (the open
         // columns the shaft's own cells lean on), the opaque cell the
         // zero verdict keeps.
-        assert_eq!(light_at(&w, 8, 20, 8).0, Some(0), "the slab's own cell dark");
-        assert_eq!(light_at(&w, 8, 19, 8).0, Some(14), "the shaft the side-flood lights");
-        assert_eq!(light_at(&w, 8, 10, 8).0, Some(14), "the deep shaft the same flood keeps");
-        assert_eq!(light_at(&w, 8, 21, 8).0, Some(15), "the slab's own top open");
+        assert_eq!(
+            light_at(&w, 8, 20, 8).0,
+            Some(0),
+            "the slab's own cell dark"
+        );
+        assert_eq!(
+            light_at(&w, 8, 19, 8).0,
+            Some(14),
+            "the shaft the side-flood lights"
+        );
+        assert_eq!(
+            light_at(&w, 8, 10, 8).0,
+            Some(14),
+            "the deep shaft the same flood keeps"
+        );
+        assert_eq!(
+            light_at(&w, 8, 21, 8).0,
+            Some(15),
+            "the slab's own top open"
+        );
         assert_eq!(light_at(&w, 9, 19, 8).0, Some(15), "the open column beside");
         // THE DIG BACK: the slab leaves, the column the direct walk
         // restores — the 15s the whole shaft speaks again.
         w.set(8, 20, 8, AIR);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 8, 10, 8).0, Some(15), "the shaft's own daylight back");
+        assert_eq!(
+            light_at(&w, 8, 10, 8).0,
+            Some(15),
+            "the shaft's own daylight back"
+        );
     }
 
     /// THE CAVE TORCH'S OWN FLOOD — the sealed chamber the torch's
@@ -1258,8 +1336,16 @@ mod tests {
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
         assert_eq!(light_at(&w, 6, 5, 6).1, Some(14), "the torch's own cell");
-        assert_eq!(light_at(&w, 8, 5, 6).1, Some(12), "the falloff two cells east");
-        assert_eq!(light_at(&w, 6, 5, 6).0, Some(0), "the sky the shell still blocks");
+        assert_eq!(
+            light_at(&w, 8, 5, 6).1,
+            Some(12),
+            "the falloff two cells east"
+        );
+        assert_eq!(
+            light_at(&w, 6, 5, 6).0,
+            Some(0),
+            "the sky the shell still blocks"
+        );
         // THE BREAK: the torch leaves, the darkening BFS the flood
         // un-makes — the chamber the dark the shell keeps again.
         w.set(6, 5, 6, AIR);
@@ -1286,15 +1372,27 @@ mod tests {
             }
         }
         w.relight();
-        assert_eq!(light_at(&w, 8, 10, 5).0, Some(0), "the wall's own cell dark");
+        assert_eq!(
+            light_at(&w, 8, 10, 5).0,
+            Some(0),
+            "the wall's own cell dark"
+        );
         // THE CARVE: the face cell leaves, no removal ran (the opaque
         // cell carried nothing) — the side's open 15 the seed re-floods
         // the one step down.
         w.set(8, 10, 5, AIR);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 8, 10, 5).0, Some(14), "the face's own side-lit air");
-        assert_eq!(light_at(&w, 7, 10, 5).0, Some(15), "the open neighbor's column");
+        assert_eq!(
+            light_at(&w, 8, 10, 5).0,
+            Some(14),
+            "the face's own side-lit air"
+        );
+        assert_eq!(
+            light_at(&w, 7, 10, 5).0,
+            Some(15),
+            "the open neighbor's column"
+        );
     }
 
     /// THE LAVA'S OWN EMISSION EDIT — the opaque emitter the both
@@ -1312,19 +1410,43 @@ mod tests {
         w.set(4, 12, 4, LAVA);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 4, 12, 4).0, Some(0), "the opaque cell's own sky");
+        assert_eq!(
+            light_at(&w, 4, 12, 4).0,
+            Some(0),
+            "the opaque cell's own sky"
+        );
         // the column STOPS at the lava — the direct 15 the cell below
         // never wears, the side-flood's own 14 the open columns lean in
-        assert_eq!(light_at(&w, 4, 11, 4).0, Some(14), "the column the lava stops");
-        assert_eq!(light_at(&w, 4, 12, 4).1, Some(15), "the lava's own emission");
-        assert_eq!(light_at(&w, 6, 12, 4).1, Some(13), "the flood's own falloff");
+        assert_eq!(
+            light_at(&w, 4, 11, 4).0,
+            Some(14),
+            "the column the lava stops"
+        );
+        assert_eq!(
+            light_at(&w, 4, 12, 4).1,
+            Some(15),
+            "the lava's own emission"
+        );
+        assert_eq!(
+            light_at(&w, 6, 12, 4).1,
+            Some(13),
+            "the flood's own falloff"
+        );
         // THE RETIRE: the stone takes the lava's cell — the emission's
         // flood the removal un-makes, the sky the opaque verdict keeps.
         w.set(4, 12, 4, STONE);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 6, 12, 4).1, Some(0), "the emission's flood gone");
-        assert_eq!(light_at(&w, 4, 12, 4).1, Some(0), "the stone's own cell dark");
+        assert_eq!(
+            light_at(&w, 6, 12, 4).1,
+            Some(0),
+            "the emission's flood gone"
+        );
+        assert_eq!(
+            light_at(&w, 4, 12, 4).1,
+            Some(0),
+            "the stone's own cell dark"
+        );
     }
 
     /// THE WATER COLUMN'S OWN PARTIAL EDIT — the attenuator the
@@ -1343,11 +1465,19 @@ mod tests {
         w.set(4, 20, 4, WATER);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 4, 20, 4).0, Some(14), "the water's own attenuated sky");
+        assert_eq!(
+            light_at(&w, 4, 20, 4).0,
+            Some(14),
+            "the water's own attenuated sky"
+        );
         // THE BELOW: the side-flood's own 14 the open columns lean in
         // (the water's own 13 the one step down speaks, the rim's 14
         // the max verdict wears).
-        assert_eq!(light_at(&w, 4, 19, 4).0, Some(14), "the below the side-flood lights");
+        assert_eq!(
+            light_at(&w, 4, 19, 4).0,
+            Some(14),
+            "the below the side-flood lights"
+        );
         // THE DIG OUT: the water leaves, the direct column the free
         // ride restores — the 15s the whole shaft speaks.
         w.set(4, 20, 4, AIR);
@@ -1381,15 +1511,27 @@ mod tests {
         w.relight();
         let top = CHUNK_Y as i32 - 1;
         assert_eq!(light_at(&w, 8, top, 8).0, Some(0), "the capped cell dark");
-        assert_eq!(light_at(&w, 8, top - 1, 8).0, Some(0), "the below the cap dark");
+        assert_eq!(
+            light_at(&w, 8, top - 1, 8).0,
+            Some(0),
+            "the below the cap dark"
+        );
         // THE CARVE: the ceiling cell leaves — the direct seed the
         // topmost transparent cell speaks (the up-neighbor the lower
         // cells' carrier), the free ride the column below floods.
         w.set(8, top, 8, AIR);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 8, top, 8).0, Some(15), "the ceiling's own direct 15");
-        assert_eq!(light_at(&w, 8, top - 1, 8).0, Some(15), "the free ride below");
+        assert_eq!(
+            light_at(&w, 8, top, 8).0,
+            Some(15),
+            "the ceiling's own direct 15"
+        );
+        assert_eq!(
+            light_at(&w, 8, top - 1, 8).0,
+            Some(15),
+            "the free ride below"
+        );
         // THE WATER LID: the attenuator takes the ceiling cell — the
         // direct seed the opacity refuses AND the old 15's own column
         // the removal cascade un-makes (the free ride the top cell fed
@@ -1397,8 +1539,16 @@ mod tests {
         w.set(8, top, 8, WATER);
         let expected = crate::light::compute(&w);
         assert_eq!(w.light.as_ref().expect("walked"), &expected);
-        assert_eq!(light_at(&w, 8, top, 8).0, Some(0), "the capped water no direct seed");
-        assert_eq!(light_at(&w, 8, top - 1, 8).0, Some(0), "the free ride the lid removed");
+        assert_eq!(
+            light_at(&w, 8, top, 8).0,
+            Some(0),
+            "the capped water no direct seed"
+        );
+        assert_eq!(
+            light_at(&w, 8, top - 1, 8).0,
+            Some(0),
+            "the free ride the lid removed"
+        );
     }
 
     /// THE BATCH'S OWN TRENCH — the explosion-shaped multi-cell dig
@@ -1418,7 +1568,14 @@ mod tests {
         w.relight();
         // THE TRENCH: the L-shaped dig the explosion lane's own batch
         // wears — after EVERY set the grid the full compute keeps.
-        let cells = [(4, 1, 4), (5, 1, 4), (6, 1, 4), (6, 1, 5), (6, 0, 4), (4, 0, 4)];
+        let cells = [
+            (4, 1, 4),
+            (5, 1, 4),
+            (6, 1, 4),
+            (6, 1, 5),
+            (6, 0, 4),
+            (4, 0, 4),
+        ];
         for (i, (x, y, z)) in cells.iter().enumerate() {
             w.set(*x, *y, *z, AIR);
             let expected = crate::light::compute(&w);
@@ -1428,8 +1585,16 @@ mod tests {
                 "trench set {i} the walk the compute never splits"
             );
         }
-        assert_eq!(light_at(&w, 4, 1, 4).0, Some(15), "the trench's own daylight");
-        assert_eq!(light_at(&w, 6, 0, 4).0, Some(15), "the deep end the shaft lights");
+        assert_eq!(
+            light_at(&w, 4, 1, 4).0,
+            Some(15),
+            "the trench's own daylight"
+        );
+        assert_eq!(
+            light_at(&w, 6, 0, 4).0,
+            Some(15),
+            "the deep end the shaft lights"
+        );
     }
 
     /// THE TINTED GLASS'S OWN DARK WINDOW — the dev-81 round the
@@ -1452,7 +1617,11 @@ mod tests {
             }
         }
         w.relight();
-        assert_eq!(light_at(&w, 8, 6, 8).0, Some(15), "the lid cell itself lit (opacity 0)");
+        assert_eq!(
+            light_at(&w, 8, 6, 8).0,
+            Some(15),
+            "the lid cell itself lit (opacity 0)"
+        );
         assert_eq!(light_at(&w, 8, 5, 8).0, Some(15), "the plain glass passes");
         assert_eq!(light_at(&w, 8, 1, 8).0, Some(15), "the floor cell daylight");
         // THE TINTED HALF: the lid swaps — the cells under the lid
@@ -1464,9 +1633,17 @@ mod tests {
             }
         }
         w.relight();
-        assert_eq!(light_at(&w, 8, 6, 8).0, Some(0), "the tinted lid itself opaque");
+        assert_eq!(
+            light_at(&w, 8, 6, 8).0,
+            Some(0),
+            "the tinted lid itself opaque"
+        );
         assert_eq!(light_at(&w, 8, 5, 8).0, Some(0), "the tinted glass BLOCKS");
-        assert_eq!(light_at(&w, 8, 1, 8).0, Some(0), "the dark room the lid keeps");
+        assert_eq!(
+            light_at(&w, 8, 1, 8).0,
+            Some(0),
+            "the dark room the lid keeps"
+        );
         // THE SPLIT THE SAME ROOF ROW WEARS: one tinted pane, one
         // plain pane side by side — the floor cells the two verdicts
         // wear, the dark patch the daylight window borders.
@@ -1478,13 +1655,21 @@ mod tests {
         w.set(4, 6, 4, TINTED_GLASS);
         w.set(6, 6, 4, GLASS);
         w.relight();
-        assert_eq!(light_at(&w, 4, 6, 4).0, Some(0), "the tinted cell itself opaque");
+        assert_eq!(
+            light_at(&w, 4, 6, 4).0,
+            Some(0),
+            "the tinted cell itself opaque"
+        );
         assert_eq!(
             light_at(&w, 4, 5, 4).0,
             Some(14),
             "the tinted patch the flood's one horizontal step shades"
         );
-        assert_eq!(light_at(&w, 6, 6, 4).0, Some(15), "the plain cell itself lit");
+        assert_eq!(
+            light_at(&w, 6, 6, 4).0,
+            Some(15),
+            "the plain cell itself lit"
+        );
         assert_eq!(light_at(&w, 6, 5, 4).0, Some(15), "the plain pane lit");
     }
 }
