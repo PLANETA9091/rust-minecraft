@@ -25730,12 +25730,21 @@ impl App {
     /// chest/barrel/shulker family speaks through the sounds lane, the
     /// event the block's own kind names, the seat the cell's own +0.5
     /// center keeps (the #110 double the chest law's x/y/z dadd folds
-    /// wear — the SINGLE chest's exact vanilla seat; the double's
-    /// LEFT/RIGHT junction seat the type-state lane the later round
-    /// banks), the ear's distance + pan the wire voices' own shape
-    /// folds. The LIVE session the helper never speaks (the server's
-    /// own counter the wire lane's world_voices the sound packet
-    /// delivers), the cell-less scene (the golden canvas the
+    /// wear — the SINGLE chest's exact vanilla seat).
+    /// THE DOUBLE'S OWN TYPE-STATE SEAT (the dev-184 round — javap the
+    /// 26.2 ChestBlockEntity.playSound the type walk verbatim: pc 14-20
+    /// the LEFT arm the early `return` speaks — the LEFT half the voice
+    /// NEVER wears, the open AND the close the same static fold rides;
+    /// pc 54-96 the RIGHT arm the connected direction's step folds —
+    /// the x the getStepX * 0.5 dadd wears, the z the getStepZ * 0.5,
+    /// the y the shift never reads — the junction seat the two halves'
+    /// shared face answers; the SINGLE type the if_acmpne arms never
+    /// enter — the center seat the own +0.5 keeps). The barrel/shulker
+    /// family the type-state lane never carries — the chest pair alone
+    /// the variant reads. The ear's distance + pan the wire voices' own
+    /// shape folds. The LIVE session the helper never speaks (the
+    /// server's own counter the wire lane's world_voices the sound
+    /// packet delivers), the cell-less scene (the golden canvas the
     /// open_chest scene is) the None the silence keeps.
     fn container_voice_emit(&mut self, open: bool) {
         let Some(pos) = self.container_open_cell else {
@@ -25766,13 +25775,41 @@ impl App {
         } else {
             return; // the crafting/furnace family the vanilla never voices
         };
+        // THE TYPE-STATE WALK (the chest pair alone the variant reads —
+        // the LEFT the silence, the RIGHT the junction shift, the
+        // SINGLE the own center)
+        let junction = if crate::world::is_chest(kind) {
+            let v = w.variant(pos.0, pos.1, pos.2);
+            let ctype = crate::world::chest_variant_type(v);
+            if ctype == crate::world::CHEST_TYPE_LEFT {
+                return; // the LEFT-return law the vanilla speaks
+            }
+            if ctype == crate::world::CHEST_TYPE_RIGHT {
+                let dir = crate::world::chest_connected_direction(
+                    crate::world::chest_variant_facing(v),
+                    ctype,
+                );
+                let (dx, dz) = crate::world::stairs_facing_delta(dir);
+                Some((dx, dz))
+            } else {
+                None // the SINGLE type the if_acmpne arms never enter
+            }
+        } else {
+            None // the barrel/shulker family the variant never carries
+        };
         let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
-        let (x, y, z) = (
+        let (mut x, y, mut z) = (
             f64::from(pos.0) + 0.5,
             f64::from(pos.1) + 0.5,
             f64::from(pos.2) + 0.5,
         );
+        if let Some((dx, dz)) = junction {
+            // the pc 68-95 dadd folds the vanilla's own order keeps:
+            // the +0.5 center first, the step * 0.5 shift after
+            x += f64::from(dx) * 0.5;
+            z += f64::from(dz) * 0.5;
+        }
         let dist = ear_distance(ear, x, y, z);
         let pan = ear_pan(ear, yaw, x, y, z);
         self.sounds

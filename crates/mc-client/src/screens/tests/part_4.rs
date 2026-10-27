@@ -20896,6 +20896,180 @@ fn the_container_voice_the_open_close_walk_wears() {
     );
 }
 
+/// THE DOUBLE CHEST'S OWN TYPE-STATE SEAT (the dev-184 round — javap
+/// the 26.2 ChestBlockEntity.playSound the type walk the seat law
+/// banks): the LEFT half the pc 14-20 early `return` speaks — the
+/// open AND the close the voice never wears (the menu the compound
+/// STILL arms, the soundless seat the silence keeps); the RIGHT half
+/// the pc 54-96 junction seat answers — the x the connected
+/// direction's step * 0.5 dadd wears, the z the same fold, the y the
+/// shift never reads — the shared face the two halves' seat keeps,
+/// the gain the distance law folds, the pan tail the wire voices'
+/// shape carries; the SINGLE chest the center seat the own +0.5 keeps
+/// (the dev-183 law the type-state walk never touches — the shift the
+/// if_acmpne arms never enter).
+#[test]
+fn the_container_voice_the_double_type_state_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let y = surface + 1;
+    // THE PAIR (the facing north the quarter cycle answers: the LEFT
+    // half the WEST cell the cw partner east of it wears, the RIGHT
+    // half the EAST cell the ccw partner west of it — the variant byte
+    // the (type << 2) | facing pack fold stamps)
+    let west = (c - 1, y, c);
+    let east = (c + 1, y, c);
+    let facing = crate::world::CHEST_FACING_NORTH;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(west.0, west.1, west.2, crate::world::CHEST);
+        w.set(east.0, east.1, east.2, crate::world::CHEST);
+        w.set_variant(
+            west.0,
+            west.1,
+            west.2,
+            (crate::world::CHEST_TYPE_LEFT << 2) | facing,
+        );
+        w.set_variant(
+            east.0,
+            east.1,
+            east.2,
+            (crate::world::CHEST_TYPE_RIGHT << 2) | facing,
+        );
+    }
+    // THE EAR (the spawn staging the body None keeps — the seat the
+    // shift the honest ear alone answers: the body the test's own
+    // stand-in arms, the feet the chest row's own ground wears, the
+    // yaw the 0.0 the +Z forward speaks)
+    let feet = (c as f64 + 0.5, (y + 1) as f64, c as f64 + 8.5);
+    app.body = Some(crate::body::PlayerBody::new(
+        feet.0, feet.1, feet.2, 0.0, 0.0,
+    ));
+    let ear = app.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+    let yaw = app.listener_yaw();
+    // THE LEFT HALF'S OWN SILENCE (the pc 14-20 return the open walk
+    // answers — the compound the 54-slot arms, the voice the law never
+    // banks; the close the same static fold rides — the pair the
+    // silence keeps)
+    app.open_chest_for(west);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the left half the compound still arms"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the left half the open silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds.events.is_empty(),
+        "the left half the close silence keeps: {:?}",
+        app.sounds.events
+    );
+    // THE RIGHT HALF'S OWN JUNCTION SEAT (the pc 54-96 fold the
+    // connected direction's step answers — the seat the shared face's
+    // plane keeps: the helpers the same walk the variant reads)
+    app.open_chest_for(east);
+    assert_eq!(
+        app.sounds.events.len(),
+        1,
+        "the right half the open voice banks: {:?}",
+        app.sounds.events
+    );
+    let v = app
+        .offline_world
+        .as_ref()
+        .unwrap()
+        .variant(east.0, east.1, east.2);
+    let dir = crate::world::chest_connected_direction(
+        crate::world::chest_variant_facing(v),
+        crate::world::chest_variant_type(v),
+    );
+    let (dx, dz) = crate::world::stairs_facing_delta(dir);
+    let jx = f64::from(east.0) + 0.5 + f64::from(dx) * 0.5;
+    let jy = f64::from(east.1) + 0.5;
+    let jz = f64::from(east.2) + 0.5;
+    let dist = ear_distance(ear, jx, jy, jz);
+    let gain = crate::sound::attenuate(0.5, dist, crate::sound::voice_max_distance(0.5));
+    let pan = ear_pan(ear, yaw, jx, jy, jz);
+    let ev = app.sounds.events[0].clone();
+    assert!(ev.starts_with("block.chest.open @"), "the open event: {ev}");
+    assert!(
+        ev.contains(&format!(" v{gain:.6} ")),
+        "the junction gain the distance law folds: {ev} (want v{gain:.6})"
+    );
+    if pan == 0.0 {
+        assert!(
+            !ev.contains(" s"),
+            "the center pan the tail never wears: {ev}"
+        );
+    } else {
+        assert!(
+            ev.contains(&format!(" s{pan:+.6}")),
+            "the junction pan the tail wears: {ev} (want s{pan:+.6})"
+        );
+    }
+    // THE SEAT'S OWN CONTRAST (the junction the center seat never
+    // matches — the step * 0.5 the gain the seat's own move answers,
+    // the round's own point the fold speaks)
+    let cdist = ear_distance(ear, f64::from(east.0) + 0.5, jy, jz);
+    let cgain = crate::sound::attenuate(0.5, cdist, crate::sound::voice_max_distance(0.5));
+    assert!(
+        cgain != gain,
+        "the junction the center seat moves: {gain} vs {cgain}"
+    );
+    // THE CLOSE'S OWN JUNCTION (the 1->0 arm the same static fold
+    // rides — the close the junction seat the same law wears)
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(app.sounds.events.len(), 1, "the close the one voice banks");
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.close @"),
+        "the close event: {}",
+        app.sounds.events[0]
+    );
+    assert!(
+        app.sounds.events[0].contains(&format!(" v{gain:.6} ")),
+        "the close the junction gain keeps: {}",
+        app.sounds.events[0]
+    );
+    // THE SINGLE'S OWN CENTER (the dev-183 law the type-state walk
+    // never touches — the own +0.5 the shift never wears)
+    app.sounds.events.clear();
+    let lone = (c + 4, y, c);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(lone.0, lone.1, lone.2, crate::world::CHEST);
+        w.set_variant(
+            lone.0,
+            lone.1,
+            lone.2,
+            (crate::world::CHEST_TYPE_SINGLE << 2) | facing,
+        );
+    }
+    app.open_chest_for(lone);
+    assert_eq!(
+        app.sounds.events.len(),
+        1,
+        "the single the open voice banks"
+    );
+    let lx = f64::from(lone.0) + 0.5;
+    let ly = f64::from(lone.1) + 0.5;
+    let lz = f64::from(lone.2) + 0.5;
+    let ldist = ear_distance(ear, lx, ly, lz);
+    let lgain = crate::sound::attenuate(0.5, ldist, crate::sound::voice_max_distance(0.5));
+    assert!(
+        app.sounds.events[0].contains(&format!(" v{lgain:.6} ")),
+        "the single the center seat keeps: {} (want v{lgain:.6})",
+        app.sounds.events[0]
+    );
+}
+
 /// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
 /// walk the OLD screen's removed() FIRST answers — the autopush-224
 /// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE
