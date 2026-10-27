@@ -21070,6 +21070,120 @@ fn the_container_voice_the_double_type_state_seat_wears() {
     );
 }
 
+/// THE TRAPPED CHEST'S OWN SAME-VOICE LAW (the dev-185 round — javap
+/// the 26.2 TrappedChestBlockEntity the inheritance walk banks: the
+/// class the TWO methods alone carries — the `<init>` and the
+/// signalOpenCount the REDSTONE lane wears [the super
+/// signalOpenCount call first, the `if_icmpeq` count-change gate the
+/// updateNeighborsAt walk serves — the FACING.getOpposite()
+/// orientation the redstone the pair arms] — the playSound/triggerEvent
+/// /onOpen/onClose the override NEVER names: the sound lane the
+/// ChestBlockEntity fold VERBATIM wears, the SAME block.chest.open/
+/// close pair the ordinary chest speaks, the SAME type-state seat the
+/// LEFT silence the RIGHT junction answers — the redstone signal the
+/// ONLY difference the voice lane never hears).
+#[test]
+fn the_trapped_chest_the_same_voice_law_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let y = surface + 1;
+    // THE SINGLE TRAPPED (the block.chest pair the same events wear —
+    // the trapped the ordinary's voice the family keeps)
+    let lone = (c, y, c + 2);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(lone.0, lone.1, lone.2, crate::world::TRAPPED_CHEST);
+    app.open_chest_for(lone);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the trapped the chest seat arms"
+    );
+    assert_eq!(
+        app.sounds.events.len(),
+        1,
+        "the open the one voice banks: {:?}",
+        app.sounds.events
+    );
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the SAME chest event the trapped wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(app.sounds.events.len(), 1, "the close the one voice banks");
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.close @"),
+        "the close the same family keeps: {}",
+        app.sounds.events[0]
+    );
+    // THE TRAPPED DOUBLE'S OWN TYPE-STATE (the dev-184 law the
+    // inheritance verbatim wears — the LEFT half the silence, the
+    // RIGHT the junction seat the same walk answers)
+    app.sounds.events.clear();
+    let west = (c - 1, y, c + 4);
+    let east = (c + 1, y, c + 4);
+    let facing = crate::world::CHEST_FACING_NORTH;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(west.0, west.1, west.2, crate::world::TRAPPED_CHEST);
+        w.set(east.0, east.1, east.2, crate::world::TRAPPED_CHEST);
+        w.set_variant(
+            west.0,
+            west.1,
+            west.2,
+            (crate::world::CHEST_TYPE_LEFT << 2) | facing,
+        );
+        w.set_variant(
+            east.0,
+            east.1,
+            east.2,
+            (crate::world::CHEST_TYPE_RIGHT << 2) | facing,
+        );
+    }
+    app.open_chest_for(west);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the trapped LEFT the compound still arms"
+    );
+    assert!(
+        app.sounds.events.is_empty(),
+        "the trapped LEFT the open silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds.events.is_empty(),
+        "the trapped LEFT the close silence keeps: {:?}",
+        app.sounds.events
+    );
+    app.open_chest_for(east);
+    assert_eq!(
+        app.sounds.events.len(),
+        1,
+        "the trapped RIGHT the open voice banks: {:?}",
+        app.sounds.events
+    );
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.open @"),
+        "the trapped RIGHT the junction the same event wears: {}",
+        app.sounds.events[0]
+    );
+    app.sounds.events.clear();
+    app.close_chest_container(ScreenKind::World);
+    assert!(
+        app.sounds.events[0].starts_with("block.chest.close @"),
+        "the trapped close the family keeps: {}",
+        app.sounds.events[0]
+    );
+}
+
 /// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
 /// walk the OLD screen's removed() FIRST answers — the autopush-224
 /// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE
