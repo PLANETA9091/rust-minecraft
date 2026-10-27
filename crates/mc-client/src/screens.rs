@@ -26073,15 +26073,30 @@ impl App {
         // OPEN bit swaps: the opened cell the bit sets [the variant
         // byte the facing the open bit rides], the close walk the bit
         // releases — the lid the player watches swing the vanilla's
-        // own container law keeps). The chest kinds the lid never
-        // wears (the BE-rendered pair the animation the renderer's
-        // own openness walk drives — the client's static-box law the
-        // v1 round keeps).
+        // own container law keeps). THE CHEST FAMILY'S OWN OPEN BYTE
+        // (the autopush-293 round — the vanilla chest the OPEN
+        // blockstate the family never carries, the client's own
+        // [`crate::world::CHEST_OPEN_BIT`] byte the container walk
+        // stamps the TRAPPED CHEST's signal lane the read serves:
+        // the open chest the viewer-count source the redstone walks
+        // answer, the close walk the bit releases — the ender's own
+        // shared-inventory open the byte the same release clears,
+        // the trapped arm the TRAPPED kind alone reads). THE STALE
+        // CELL'S OWN RELEASE FIRST (the previous open the bit the
+        // leak never keeps — the close walk the live flow always
+        // speaks, the direct re-open the release the same walk
+        // answers: the stale bit the dead read the head restores).
+        self.barrel_lid_released();
         self.chest_open_cell = None;
         if let Some(w) = self.offline_world.as_mut() {
-            if crate::world::is_barrel(w.get(pos.0, pos.1, pos.2)) {
+            let kind = w.get(pos.0, pos.1, pos.2);
+            if crate::world::is_barrel(kind) {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v | crate::world::BARREL_OPEN_BIT);
+                self.chest_open_cell = Some(pos);
+            } else if crate::world::is_chest(kind) {
+                let v = w.variant(pos.0, pos.1, pos.2);
+                w.set_variant(pos.0, pos.1, pos.2, v | crate::world::CHEST_OPEN_BIT);
                 self.chest_open_cell = Some(pos);
             }
         }
@@ -26095,12 +26110,21 @@ impl App {
     /// THE BARREL LID'S OWN RELEASE (the close walk's own law — the
     /// OPEN bit the opened cell the close clears, the variant byte
     /// the facing the lid law keeps; the no-cell arm the offline
-    /// guard the chest kinds never bank).
+    /// guard the chest kinds never bank). THE CHEST FAMILY'S OWN
+    /// RELEASE (the autopush-293 round — the [`crate::world::
+    /// CHEST_OPEN_BIT`] byte the same close walk clears, the kind
+    /// read the right bit the release answers: the barrel the barrel
+    /// bit, the chest family the chest byte — the trapped chest's
+    /// signal lane the dead read the release restores).
     pub fn barrel_lid_released(&mut self) {
         if let (Some(pos), Some(w)) = (self.chest_open_cell.take(), self.offline_world.as_mut()) {
-            if crate::world::is_barrel(w.get(pos.0, pos.1, pos.2)) {
+            let kind = w.get(pos.0, pos.1, pos.2);
+            if crate::world::is_barrel(kind) {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
+            } else if crate::world::is_chest(kind) {
+                let v = w.variant(pos.0, pos.1, pos.2);
+                w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::CHEST_OPEN_BIT);
             }
         }
     }

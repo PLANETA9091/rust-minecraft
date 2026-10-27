@@ -2728,6 +2728,155 @@ fn the_redstone_lamp_the_consumer_lane_the_wire_and_the_lever_wear() {
     }
 }
 
+/// THE TRAPPED CHEST'S OWN REDSTONE LANE (the autopush-293 round —
+/// javap TrappedChestBlock the 26.2 jar the verdict banks: isSignalSource
+/// iconst_1 the source family arms, ownSignal pc 0-11 the
+/// `Mth.clamp(ChestBlockEntity.getOpenCount(level, pos), 0, 15)`
+/// viewer-count the weak walk reads [the base getSignal fold the six
+/// arms the no-facing gate wears], getDirectSignal pc 0-18 the
+/// dir==UP compare the asker ABOVE the chest the strong read wears
+/// [the OTHER five dirs the iconst_0 the refusal keeps]). THE
+/// CLIENT'S OWN BYTE (the [`w::CHEST_OPEN_BIT`] the container walk
+/// stamps — the open the viewer's 1 the armed verdict keeps, the
+/// close the count the 0 the dead read restores, the STALE CELL the
+/// re-open's release the leak refuses, the PLAIN/copper/ender kinds
+/// the ownSignal override the family never wears — the signal the
+/// trapped kind alone speaks).
+#[test]
+fn the_trapped_chest_own_redstone_lane_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (cx, cy, cz) = (c, top - 1, c);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::TRAPPED_CHEST);
+        // THE STRONG ARM'S OWN CONDUCTOR (the full-cube the cell
+        // ABOVE the chest the strong read carries — the
+        // can_support_rail verdict the gate keeps)
+        world.set(cx, cy + 1, cz, w::STONE);
+    }
+    // THE CLOSED CHEST'S OWN DEAD READ (the count the 0 the clamp
+    // banks — the weak six-arm scan the closed byte refuses, the
+    // strong lane the same count the dead read keeps)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the closed chest the weak scan refuses"
+        );
+        assert!(
+            !crate::world::strong_signal_conductors_near(world, cx + 1, cy + 1, cz),
+            "the closed chest the strong lane refuses"
+        );
+    }
+    // THE OPEN'S OWN ARMED READ (the container walk the byte stamps
+    // — the viewer's 1 the clamp's armed verdict keeps: the six
+    // neighbors the weak scan arms [the no-facing gate the fold
+    // wears], the conductor above the strong lane the same count
+    // banks)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the open walk the byte stamps"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the east neighbor the weak scan arms"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx - 1, cy, cz),
+            "the west neighbor the no-facing gate arms"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx, cy, cz + 1),
+            "the south neighbor the same fold arms"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx, cy, cz - 1),
+            "the north neighbor the same fold arms"
+        );
+        assert!(
+            crate::world::redstone_signal_at(world, cx, cy - 1, cz),
+            "the below neighbor the same fold arms"
+        );
+        assert!(
+            crate::world::strong_signal_conductors_near(world, cx + 1, cy + 1, cz),
+            "the conductor above the chest the strong lane arms"
+        );
+    }
+    // THE FAMILY'S OWN HONESTY + THE STALE CELL'S OWN RELEASE (the
+    // plain chest the byte the family wears, the signal the
+    // ownSignal override the plain kind never wears — the trapped
+    // cell's byte the re-open's release the leak refuses)
+    let (px, py, pz) = (cx + 3, cy, cz);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(px, py, pz, w::CHEST);
+    }
+    app.open_chest_for((px, py, pz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::chest_open_bit_of(world.variant(px, py, pz)),
+            "the byte the chest family wears"
+        );
+        assert!(
+            !crate::world::redstone_signal_at(world, px + 1, py, pz),
+            "the plain chest the signal never speaks"
+        );
+        assert!(
+            !w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the stale cell the re-open's release clears"
+        );
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the released chest the weak scan refuses"
+        );
+    }
+    // THE ENDER'S OWN SILENCE (the shared open the byte wears, the
+    // signal the family law the ender never speaks)
+    let (ex, ey, ez) = (px + 3, py, pz);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(ex, ey, ez, w::ENDER_CHEST);
+    }
+    app.open_chest_for((ex, ey, ez));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !crate::world::redstone_signal_at(world, ex + 1, ey, ez),
+            "the ender chest the signal never speaks"
+        );
+    }
+    // THE RELEASE'S OWN DEAD READ (the re-opened trapped chest the
+    // close walk releases — the weak + the strong lanes the dead
+    // read the release restores)
+    app.open_chest_for((cx, cy, cz));
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !w::chest_open_bit_of(world.variant(cx, cy, cz)),
+            "the close walk the byte releases"
+        );
+        assert!(
+            !crate::world::redstone_signal_at(world, cx + 1, cy, cz),
+            "the closed chest the weak scan refuses again"
+        );
+        assert!(
+            !crate::world::strong_signal_conductors_near(world, cx + 1, cy + 1, cz),
+            "the closed chest the strong lane refuses again"
+        );
+    }
+}
+
 #[test]
 fn the_oak_trapdoor_the_placement_the_toggle_and_the_consult_wear() {
     // THE TRAPDOOR'S OWN APP LANE (the autopush-668 round — the

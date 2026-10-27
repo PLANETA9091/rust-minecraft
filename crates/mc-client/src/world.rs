@@ -6413,6 +6413,29 @@ pub fn chest_variant_type(v: u8) -> u8 {
     (v >> 2) & 0b11
 }
 
+/// THE CHEST OPEN'S OWN BIT (the autopush-293 round — the client's
+/// own fourth-pair bit the variant byte wears: the vanilla chest the
+/// OPEN blockstate property never carries [the lid the BE-rendered
+/// openness walk drives — the client's static-box law the v1 round
+/// keeps], the bit the client's own container walk stamps the
+/// TRAPPED CHEST's signal lane the read serves — javap
+/// TrappedChestBlock the 26.2 jar the verdict banks: isSignalSource
+/// iconst_1 the source family arms, ownSignal pc 0-11 the
+/// `Mth.clamp(ChestBlockEntity.getOpenCount(level, pos), 0, 15)`
+/// viewer-count the weak walk reads [the ONE local viewer the
+/// clamp's 1 the armed verdict keeps, the closed chest the count
+/// the 0 the dead read banks]; the mesher's facing/type reads the
+/// masked pairs the bit never renders — the pixels the byte's high
+/// pair never touches).
+pub const CHEST_OPEN_BIT: u8 = 0b1_0000;
+
+/// THE CHEST OPEN'S OWN READ (the bit's own verdict — the set byte
+/// the open container answers, the cleared the closed keeps).
+#[inline]
+pub fn chest_open_bit_of(v: u8) -> bool {
+    v & CHEST_OPEN_BIT != 0
+}
+
 /// THE CHEST FAMILY'S OWN RANGE (the 11 seats the registration walk
 /// the ladder answers — the kind-only predicates the range reads).
 #[inline]
@@ -11117,6 +11140,47 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         // the below arm INCLUDED, the wall-mounted torch the cell
         // beneath it powers)
         || wall_torch_sources_near(world, x, y, z)
+        // THE TRAPPED CHEST'S OWN ARMS (the autopush-293 round —
+        // javap TrappedChestBlock the 26.2 jar the verdict banks:
+        // isSignalSource iconst_1 the source family arms, the
+        // ownSignal viewer-count the base getSignal fold the six
+        // arms the no-facing gate wears — the [`trapped_chest_sources_
+        // near`] walk the open-bit neighbors scan serves: the open
+        // trapped chest the ONE viewer the clamp's 1 the armed
+        // verdict keeps, the closed the count the 0 the dead read
+        // banks, the PLAIN/copper/ender kinds the ownSignal override
+        // the family never wears — the closed-signal law the
+        // trapped kind alone speaks)
+        || trapped_chest_sources_near(world, x, y, z)
+}
+
+/// THE TRAPPED CHEST'S OWN SOURCE ARMS (the autopush-293 round —
+/// javap TrappedChestBlock the 26.2 jar: isSignalSource iconst_1
+/// the source family arms, ownSignal pc 0-11 the
+/// `Mth.clamp(ChestBlockEntity.getOpenCount(level, pos), 0, 15)`
+/// viewer-count the weak walk reads, the base getSignal fold the
+/// six arms the no-facing gate wears [the DetectorRailBlock.ownSignal
+/// vocabulary the same refactor banks]). THE CLIENT'S OWN COUNT
+/// (the offline lane the local viewer alone banks — the
+/// [`CHEST_OPEN_BIT`] byte the container walk stamps, the close
+/// walk releases: the open chest the count's 1 the clamp's armed
+/// verdict keeps, the closed the 0 the dead read wears — the six
+/// neighbors the source-only scan the kind + bit pair answers).
+pub fn trapped_chest_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    for (dx, dy, dz) in [
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (sx, sy, sz) = (x + dx, y + dy, z + dz);
+        if world.get(sx, sy, sz) == TRAPPED_CHEST && chest_open_bit_of(world.variant(sx, sy, sz)) {
+            return true;
+        }
+    }
+    false
 }
 
 /// THE SUPPORT'S OWN STRONG VERDICT (the dev-102 round — javap
@@ -11217,6 +11281,21 @@ fn direct_signal_into_cell(world: &World, cx: i32, cy: i32, cz: i32) -> bool {
                 if (sx - fdx, sy - fdy, sz - fdz) == (cx, cy, cz) {
                     return true;
                 }
+            }
+            continue;
+        }
+        // THE TRAPPED CHEST'S OWN STRONG ARM (the autopush-293 round
+        // — javap TrappedChestBlock.getDirectSignal pc 0-18 the
+        // dir==UP compare the getSignal(UP) fold answers: the asker
+        // the cell ABOVE the chest the strong read wears, the OTHER
+        // five dirs the iconst_0 the refusal keeps — the open chest
+        // the below-conductor the same viewer count the strong lane
+        // carries [the clamp's 1 the dust-beside-the-block the lit
+        // verdict keeps], the closed chest the count the 0 the dead
+        // read banks)
+        if kind == TRAPPED_CHEST {
+            if (sx, sy + 1, sz) == (cx, cy, cz) && chest_open_bit_of(world.variant(sx, sy, sz)) {
+                return true;
             }
             continue;
         }
