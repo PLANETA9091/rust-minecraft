@@ -1440,6 +1440,86 @@ fn the_stats_items_own_mined_crafted_rows_wear() {
     assert_eq!(rows[4].1, "9", "the crafted count wears");
 }
 
+/// THE STATS MOBS TAB'S OWN ROWS (the vanilla StatsScreen's
+/// entity-list walk the two formatted directions wear — the fist's
+/// own kills the ENTITY_KILLED map banks, the die walk's entity
+/// sources the ENTITY_KILLED_BY pair banks, the templates the jar's
+/// own %s rows speak).
+#[test]
+fn the_stats_mobs_own_killed_pairs_wear() {
+    let mut app = App::new(3);
+    // THE FRESH SEAT (the empty maps the rows hide — the Mobs tab
+    // the pending word the empty list wears)
+    assert!(
+        app.stats_mobs_rows().is_empty(),
+        "the fresh maps the rows hide"
+    );
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE FIST'S OWN BANK (the direct kill the kind the map banks —
+    // the zombie's own id the stable key wears)
+    app.mobs
+        .push(crate::mob::Zombie::new(21, 0.0, 64.0, 0.0, 5));
+    app.mobs[0].health = 0.05;
+    app.attack_mob(0);
+    assert_eq!(
+        app.stats.mob_kills.get("minecraft:zombie"),
+        Some(&1),
+        "the fist the zombie kind banks"
+    );
+    // the second kill the same kind the count wears
+    app.mobs
+        .push(crate::mob::Zombie::new(22, 0.0, 64.0, 0.0, 6));
+    app.mobs[1].health = 0.05;
+    app.attack_mob(1);
+    assert_eq!(
+        app.stats.mob_kills.get("minecraft:zombie"),
+        Some(&2),
+        "the second kill the count wears"
+    );
+    // the other kind its own row (the cow the separate id wears)
+    let mut cow = crate::mob::Zombie::new(23, 0.0, 64.0, 0.0, 7);
+    cow.kind = crate::mob::MobKind::Cow;
+    cow.health = 0.05;
+    app.mobs.push(cow);
+    app.attack_mob(2);
+    assert_eq!(
+        app.stats.mob_kills.get("minecraft:cow"),
+        Some(&1),
+        "the cow the separate row banks"
+    );
+    // THE ENTITY SOURCE'S OWN PAIR (the die walk's
+    // ENTITY_KILLED_BY — the killer's own word the map banks)
+    app.hurt_keyed(2.0, "death.attack.generic");
+    assert!(
+        app.stats.killed_by.is_empty(),
+        "the anonymous source the map never wears"
+    );
+    app.hurt_by_named(1000.0, "death.attack.mob", "Zombie");
+    assert_eq!(
+        app.stats.killed_by.get("Zombie"),
+        Some(&1),
+        "the entity source the pair banks"
+    );
+    // THE ROWS' OWN SERVE (the two directions the templates wear —
+    // the kills the count+name args fill, the killed-by the
+    // name+count args fill, the BTreeMap order the cow's head keeps)
+    let rows = app.stats_mobs_rows();
+    assert_eq!(rows.len(), 3, "the two directions the rows serve");
+    assert_eq!(
+        rows[0], "You killed 1 Cow",
+        "the cow row the template wears"
+    );
+    assert_eq!(
+        rows[1], "You killed 2 Zombie",
+        "the zombie row the count wears"
+    );
+    assert_eq!(
+        rows[2], "Zombie killed you 1 time(s)",
+        "the killed-by row the template wears"
+    );
+}
+
 /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
 /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
 /// speak): the in-world opener the `options.worldOptions.button`

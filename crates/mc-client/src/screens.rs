@@ -256,6 +256,17 @@ pub struct StatsCounter {
     /// lanes bank (the vanilla Stats.ITEM_CRAFTED the Item-keyed map
     /// wears)
     pub crafted: std::collections::BTreeMap<i32, i64>,
+    /// `stat_type.minecraft.killed` — the entity kinds the fist's own
+    /// kills bank (the vanilla awardKillScore's
+    /// awardStat(Stats.ENTITY_KILLED) walk the direct kill AND the
+    /// sweep's own AoE verdict both wear; the entity id the stable
+    /// BTreeMap order keeps)
+    pub mob_kills: std::collections::BTreeMap<&'static str, i64>,
+    /// `stat_type.minecraft.killed_by` — the killer words the die walk
+    /// banks (the vanilla awardStat(Stats.ENTITY_KILLED_BY) the entity
+    /// sources wear, the anonymous sources the None keeps; the display
+    /// name the death message's %2$s arg carries)
+    pub killed_by: std::collections::BTreeMap<String, i64>,
 }
 
 /// THE TIME STAT'S OWN FORMAT (the vanilla TimeFormatter walk — the
@@ -20988,6 +20999,14 @@ impl App {
             None
         };
         if died {
+            // THE KILL'S OWN STAT (the vanilla awardKillScore's
+            // awardStat(Stats.ENTITY_KILLED) walk — the fist's own
+            // verdict the entity kind banks)
+            *self
+                .stats
+                .mob_kills
+                .entry(mob_kind_entity_id(kind))
+                .or_insert(0) += 1;
             self.sounds.play_voice_at_pan(
                 self.frame,
                 kind.voice_event(crate::mob::VoiceSlot::Death),
@@ -21116,6 +21135,14 @@ impl App {
             // speaks)
             for (j, nx, ny, nz, ndied, npitch, nkind) in outcomes {
                 if ndied {
+                    // THE SWEPT KILL'S OWN STAT (the same
+                    // awardKillScore walk the direct kill wears — the
+                    // AoE's own verdict the kind banks)
+                    *self
+                        .stats
+                        .mob_kills
+                        .entry(mob_kind_entity_id(nkind))
+                        .or_insert(0) += 1;
                     self.sounds.play_voice_at_pan(
                         self.frame,
                         nkind.voice_event(crate::mob::VoiceSlot::Death),
@@ -62171,6 +62198,14 @@ impl App {
             // awardStat(Stats.DEATHS) the same verdict wears — the
             // once-per-death the !dead gate speaks)
             self.stats.deaths += 1;
+            // THE ENTITY SOURCE'S OWN PAIR (the vanilla die walk's
+            // awardStat(Stats.ENTITY_KILLED_BY) the entity sources
+            // wear — the killer's own word the %2$s arg carries the
+            // map banks, the anonymous sources the starve/generic
+            // lane the None keeps)
+            if let Some(k) = killer {
+                *self.stats.killed_by.entry(k.to_string()).or_insert(0) += 1;
+            }
             // THE DEATH'S OWN MESSAGE (the vanilla die's CombatTracker
             // walk — the damage source's own lang key the death
             // message speaks, the %1$s the player's own name answers:
@@ -70705,6 +70740,28 @@ impl App {
         rows
     }
 
+    /// THE MOBS TAB'S OWN ROWS (the vanilla StatsScreen's entity-list
+    /// walk — the two directions the formatted rows serve: the kills
+    /// the `stat_type.minecraft.killed` template the count+name args
+    /// fill, the killed-by the `%s killed you %s time(s)` template the
+    /// name+count args fill, the empty maps the vanilla's own
+    /// !getKeys().isEmpty() gate the rows never seat — the header the
+    /// mobs tab the templates themselves wear, the row the single
+    /// sentence the EntityStatsList's own entry draws).
+    pub fn stats_mobs_rows(&self) -> Vec<String> {
+        let mut rows: Vec<String> = Vec::new();
+        for (id, count) in &self.stats.mob_kills {
+            let plain = tr(&format!("entity.{}", id.replace(':', "."))).unwrap_or(*id);
+            let fmt = tr("stat_type.minecraft.killed").unwrap_or("You killed %s %s");
+            rows.push(format_positional(fmt, &[&count.to_string(), plain]));
+        }
+        for (name, count) in &self.stats.killed_by {
+            let fmt = tr("stat_type.minecraft.killed_by").unwrap_or("%s killed you %s time(s)");
+            rows.push(format_positional(fmt, &[name, &count.to_string()]));
+        }
+        rows
+    }
+
     fn render_stats(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         for y in 0..h {
             let t = y as f32 / h.max(1) as f32;
@@ -70766,10 +70823,11 @@ impl App {
         // walk — the nonzero stats the list serves, the name the left
         // seat the value the right edge wears, the zero set the
         // vanilla filter hides; the empty list the pending word keeps
-        // — the Mobs tab the same pending law the follow-up round
-        // answers)
+        // — the Items/Mobs tabs the same pending law the empty maps
+        // wear)
         let rows = self.stats_general_rows();
         let item_rows = self.stats_items_rows();
+        let mob_rows = self.stats_mobs_rows();
         if self.stats_tab == 0 && !rows.is_empty() {
             let row_h = 12;
             let y0 = 28;
@@ -70798,6 +70856,17 @@ impl App {
                     let vw = g.text_width(value);
                     g.text(a, x0 + total - 2 - vw, y, value, WHITE, true);
                 }
+            }
+        } else if self.stats_tab == 2 && !mob_rows.is_empty() {
+            // THE MOBS TAB'S OWN LIST (the vanilla EntityStatsList
+            // walk — the formatted rows the single sentence the left
+            // seat draws, the count the template's own %s wears, the
+            // two directions the jar's own templates keep)
+            let row_h = 12;
+            let y0 = 28;
+            for (i, line) in mob_rows.iter().enumerate() {
+                let y = y0 + i as i32 * row_h;
+                g.text(a, x0 + 2, y, line, WHITE, true);
             }
         } else {
             // THE PENDING'S OWN SEAT (the LoadingTab law — the
