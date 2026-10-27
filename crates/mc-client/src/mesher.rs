@@ -6080,7 +6080,17 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             tiles[face]
                         }
                     };
-                    for (pts_local, uvs, face) in chest_model_quads(facing, chest_type) {
+                    // THE OPEN BIT'S OWN POSE (the dev-191 round — the
+                    // stamped byte the open builder the lid walk
+                    // serves: the closed pose the byte the static box
+                    // keeps, the open the quarter-turned lid the jar
+                    // law banks — [`chest_open_model_quads`])
+                    let chest_open = crate::world::chest_open_bit_of(v);
+                    for (pts_local, uvs, face) in if chest_open {
+                        chest_open_model_quads(facing, chest_type)
+                    } else {
+                        chest_model_quads(facing, chest_type)
+                    } {
                         // the FACE_SHADE table the cube path keeps (the
                         // direction the face's own slot answers)
                         let face_shade = match face {
@@ -8668,6 +8678,325 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
         ],
         0,
     );
+    out
+}
+
+/// THE CHEST'S OWN OPEN POSE (the dev-191 round — the [`CHEST_OPEN_BIT`]
+/// byte the container walk stamps the BE-rendered lid the static-box law
+/// animates: the 26.2 jar the evidence chain banks —
+/// `ChestModel.createSingleBodyLayer` the parts speak, the bottom
+/// `addBox(1,0,1,14,10,14)` `PartPose.ZERO` the body answers, the lid
+/// `addBox(1,0,0,14,5,14)` `PartPose.offset(0,9,1)` the five-px cap the
+/// back-edge hinge wears, the lock `addBox(7,-2,14,2,4,1)` the same
+/// pivot rides; `ChestModel.setupAnim` pc 0-34 the
+/// `lid.xRot = -openness * 1.5707964f` walk the quarter turn serves,
+/// the `lock.xRot = lid.xRot` the latch the same ride banks;
+/// `ChestLidController.tickLid` the openness the ±0.1/tick the [0,1]
+/// clamp keeps, `getOpenness` the lerp the BE lane reads — the client's
+/// own [`crate::world::CHEST_OPEN_BIT`] byte the openness-1 pose the
+/// static law wears, the per-tick lerp the BE-tick round keeps).
+/// THE BODY the y 0..10 band keeps (the side folds the closed
+/// `v = 14 - y` law the rows 4..14 sample — the seam the closed pixels
+/// the same rows continue, the up/down faces the centered band the
+/// closed folds wear). THE LID the y 9..14 band the quarter turn
+/// around the BACK-edge hinge walks (the facing the world quarter
+/// names — the north-facing chest the hinge z1 the south edge keeps,
+/// the free edge the 14-px up the 5-px past-the-back tip the jar's
+/// own verdict wears [the model frame the z-mirror the same geometry
+/// answers]; the degenerate hinge face the zero-area skip the raster
+/// law keeps, the five faces the open lid bakes). THE TILE LAWS the
+/// closed lane's own folds keep (the same per-face tiles the shade
+/// table serves — the call site the face assignment never re-answers,
+/// the UVs the closed folds the rotation never re-maps).
+fn chest_open_model_quads(
+    facing: u8,
+    chest_type: u8,
+) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
+    // THE BOX'S OWN SPANS (the closed builder's own px vocabulary —
+    // the same connected walk the doubles wear; the y_hi the lid
+    // band's own top the doubles' 15/16 the singles' 14/16 keeps)
+    let (x0, x1, z0, z1, y_hi) = if chest_type == crate::world::CHEST_TYPE_SINGLE {
+        (1.0f32, 15.0f32, 1.0f32, 15.0f32, 14.0f32)
+    } else {
+        let conn = crate::world::chest_connected_direction(facing, chest_type);
+        match conn {
+            crate::world::CHEST_FACING_NORTH => (1.0, 15.0, 0.0, 14.0, 15.0),
+            crate::world::CHEST_FACING_EAST => (2.0, 16.0, 1.0, 15.0, 15.0),
+            crate::world::CHEST_FACING_SOUTH => (1.0, 15.0, 2.0, 16.0, 15.0),
+            _ => (0.0, 14.0, 1.0, 15.0, 15.0),
+        }
+    };
+    let y0 = 0.0f32;
+    let body_hi = 10.0f32;
+    // THE LID'S OWN BAND (the top five px the box wears — the pivot
+    // the band's own bottom edge the hinge keeps: the singles the
+    // jar's offset(0,9,1) the 9 answers, the doubles the 15/16 band
+    // the 10 keeps)
+    let lid_lo = y_hi - 5.0f32;
+    let lid_hi = y_hi;
+    let pivot = lid_lo;
+    let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
+    // THE CLOSED LAW'S OWN FOLD (the v = 14 - y the rows continue —
+    // the body band the same rows the closed box samples for the same
+    // world y, the lid band the rows 0..5 the strip keeps)
+    let vert_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
+        let u = match face {
+            5 => x + 15.0 - x1,
+            0 => 16.0 - z + 1.0 - z0,
+            4 => x - x0 + 1.0,
+            _ => z - z0 + 1.0,
+        };
+        [u, 14.0 - y]
+    };
+    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(11);
+    let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
+        out.push((pts, uvs, face));
+    };
+    // THE BODY'S OWN SIX (the y 0..10 band the jar's bottom box keeps —
+    // the same folds the closed builder wears)
+    // DOWN (face 3)
+    push(
+        [
+            px(x0, y0, z1),
+            px(x0, y0, z0),
+            px(x1, y0, z0),
+            px(x1, y0, z1),
+        ],
+        [
+            [x0 - x0 + 1.0, z1 - z0 + 1.0],
+            [x0 - x0 + 1.0, z0 - z0 + 1.0],
+            [x1 - x0 + 1.0, z0 - z0 + 1.0],
+            [x1 - x0 + 1.0, z1 - z0 + 1.0],
+        ],
+        3,
+    );
+    // UP (face 2): the inside floor the open lid reveals — the same
+    // centered band the closed top fold wears
+    push(
+        [
+            px(x0, body_hi, z0),
+            px(x0, body_hi, z1),
+            px(x1, body_hi, z1),
+            px(x1, body_hi, z0),
+        ],
+        [
+            [x0 - x0 + 1.0, z0 - z0 + 1.0],
+            [x0 - x0 + 1.0, z1 - z0 + 1.0],
+            [x1 - x0 + 1.0, z1 - z0 + 1.0],
+            [x1 - x0 + 1.0, z0 - z0 + 1.0],
+        ],
+        2,
+    );
+    // NORTH (face 5)
+    push(
+        [
+            px(x1, body_hi, z0),
+            px(x1, y0, z0),
+            px(x0, y0, z0),
+            px(x0, body_hi, z0),
+        ],
+        [
+            vert_uv(x1, body_hi, z0, 5),
+            vert_uv(x1, y0, z0, 5),
+            vert_uv(x0, y0, z0, 5),
+            vert_uv(x0, body_hi, z0, 5),
+        ],
+        5,
+    );
+    // SOUTH (face 4)
+    push(
+        [
+            px(x0, body_hi, z1),
+            px(x0, y0, z1),
+            px(x1, y0, z1),
+            px(x1, body_hi, z1),
+        ],
+        [
+            vert_uv(x0, body_hi, z1, 4),
+            vert_uv(x0, y0, z1, 4),
+            vert_uv(x1, y0, z1, 4),
+            vert_uv(x1, body_hi, z1, 4),
+        ],
+        4,
+    );
+    // WEST (face 1)
+    push(
+        [
+            px(x0, body_hi, z0),
+            px(x0, y0, z0),
+            px(x0, y0, z1),
+            px(x0, body_hi, z1),
+        ],
+        [
+            vert_uv(x0, body_hi, z0, 1),
+            vert_uv(x0, y0, z0, 1),
+            vert_uv(x0, y0, z1, 1),
+            vert_uv(x0, body_hi, z1, 1),
+        ],
+        1,
+    );
+    // EAST (face 0)
+    push(
+        [
+            px(x1, body_hi, z1),
+            px(x1, y0, z1),
+            px(x1, y0, z0),
+            px(x1, body_hi, z0),
+        ],
+        [
+            vert_uv(x1, body_hi, z1, 0),
+            vert_uv(x1, y0, z1, 0),
+            vert_uv(x1, y0, z0, 0),
+            vert_uv(x1, body_hi, z0, 0),
+        ],
+        0,
+    );
+    // THE LID'S OWN QUARTER TURN (the y 9..14 band the hinge walks —
+    // the closed coords the folds keep, the positions the facing's
+    // own rotation serves: the free edge the 14-px up the back tip
+    // the 5-px past-the-edge the jar law speaks)
+    let rot = |p: [f32; 3]| -> [f32; 3] {
+        // the pts ride the 0..1 block units (the px fold the pushes
+        // already wore) — the rotation the px space answers, the /16
+        // the block units restore
+        let x = p[0] * 16.0;
+        let y = p[1] * 16.0;
+        let z = p[2] * 16.0;
+        let r = match facing {
+            crate::world::CHEST_FACING_SOUTH => [x, pivot + (z - z0), z0 - (y - pivot)],
+            crate::world::CHEST_FACING_EAST => [x0 - (y - pivot), pivot + (x - x0), z],
+            crate::world::CHEST_FACING_WEST => [x1 + (y - pivot), pivot + (x1 - x), z],
+            // the north default (the registerDefaultState pin keeps):
+            // the hinge z1 the south edge, the free edge the up-and-back
+            _ => [x, pivot + (z1 - z), z1 + (y - pivot)],
+        };
+        [r[0] / 16.0, r[1] / 16.0, r[2] / 16.0]
+    };
+    // the hinge face the facing names (the degenerate zero-area quad
+    // the skip keeps — the raster the sliver never wears)
+    let hinge_face = match facing {
+        crate::world::CHEST_FACING_SOUTH => 5usize, // the north face collapses
+        crate::world::CHEST_FACING_EAST => 1usize,  // the west face collapses
+        crate::world::CHEST_FACING_WEST => 0usize,  // the east face collapses
+        _ => 4usize,                                // the north default: the south face
+    };
+    // DOWN (face 3): the lid's inner face the open pose the vertical
+    // plane serves
+    if hinge_face != 3 {
+        push(
+            [
+                px(x0, lid_lo, z1),
+                px(x0, lid_lo, z0),
+                px(x1, lid_lo, z0),
+                px(x1, lid_lo, z1),
+            ],
+            [
+                [x0 - x0 + 1.0, z1 - z0 + 1.0],
+                [x0 - x0 + 1.0, z0 - z0 + 1.0],
+                [x1 - x0 + 1.0, z0 - z0 + 1.0],
+                [x1 - x0 + 1.0, z1 - z0 + 1.0],
+            ],
+            3,
+        );
+    }
+    // UP (face 2): the lid's outer top the closed fold keeps
+    if hinge_face != 2 {
+        push(
+            [
+                px(x0, lid_hi, z0),
+                px(x0, lid_hi, z1),
+                px(x1, lid_hi, z1),
+                px(x1, lid_hi, z0),
+            ],
+            [
+                [x0 - x0 + 1.0, z0 - z0 + 1.0],
+                [x0 - x0 + 1.0, z1 - z0 + 1.0],
+                [x1 - x0 + 1.0, z1 - z0 + 1.0],
+                [x1 - x0 + 1.0, z0 - z0 + 1.0],
+            ],
+            2,
+        );
+    }
+    // NORTH (face 5)
+    if hinge_face != 5 {
+        push(
+            [
+                px(x1, lid_hi, z0),
+                px(x1, lid_lo, z0),
+                px(x0, lid_lo, z0),
+                px(x0, lid_hi, z0),
+            ],
+            [
+                vert_uv(x1, lid_hi, z0, 5),
+                vert_uv(x1, lid_lo, z0, 5),
+                vert_uv(x0, lid_lo, z0, 5),
+                vert_uv(x0, lid_hi, z0, 5),
+            ],
+            5,
+        );
+    }
+    // SOUTH (face 4)
+    if hinge_face != 4 {
+        push(
+            [
+                px(x0, lid_hi, z1),
+                px(x0, lid_lo, z1),
+                px(x1, lid_lo, z1),
+                px(x1, lid_hi, z1),
+            ],
+            [
+                vert_uv(x0, lid_hi, z1, 4),
+                vert_uv(x0, lid_lo, z1, 4),
+                vert_uv(x1, lid_lo, z1, 4),
+                vert_uv(x1, lid_hi, z1, 4),
+            ],
+            4,
+        );
+    }
+    // WEST (face 1)
+    if hinge_face != 1 {
+        push(
+            [
+                px(x0, lid_hi, z0),
+                px(x0, lid_lo, z0),
+                px(x0, lid_lo, z1),
+                px(x0, lid_hi, z1),
+            ],
+            [
+                vert_uv(x0, lid_hi, z0, 1),
+                vert_uv(x0, lid_lo, z0, 1),
+                vert_uv(x0, lid_lo, z1, 1),
+                vert_uv(x0, lid_hi, z1, 1),
+            ],
+            1,
+        );
+    }
+    // EAST (face 0)
+    if hinge_face != 0 {
+        push(
+            [
+                px(x1, lid_hi, z1),
+                px(x1, lid_lo, z1),
+                px(x1, lid_lo, z0),
+                px(x1, lid_hi, z0),
+            ],
+            [
+                vert_uv(x1, lid_hi, z1, 0),
+                vert_uv(x1, lid_lo, z1, 0),
+                vert_uv(x1, lid_lo, z0, 0),
+                vert_uv(x1, lid_hi, z0, 0),
+            ],
+            0,
+        );
+    }
+    // THE QUARTER TURN'S OWN APPLY (the lid's faces the rotation the
+    // rigid walk serves — the winding the proper rotation preserves,
+    // the UVs the surface the glued law keeps)
+    for entry in out.iter_mut().skip(6) {
+        for p in entry.0.iter_mut() {
+            *p = rot(*p);
+        }
+    }
     out
 }
 
@@ -14748,6 +15077,198 @@ mod tests {
         assert!(
             cellw.iter().all(|quad| waxed_tiles.contains(&quad.tile)),
             "the waxed twin the bare copper tiles wears"
+        );
+    }
+
+    #[test]
+    fn the_chest_open_bit_the_lid_walk_wears() {
+        // THE CHEST'S OWN OPEN POSE (the dev-191 round — the jar law
+        // the builder banks): the CLOSED chest the 6-quads the static
+        // box keeps, the OPEN bit the body+lid split the
+        // quarter-turned lid bakes (the body the y 0..10 band the six
+        // faces, the lid the five the hinge face the zero-area skip
+        // keeps), the north-facing hinge the south edge the free edge
+        // the up-and-back tip wears, the doubles the same pose per
+        // half, the ender the family law keeps, the facing the world
+        // quarter the tip direction names
+        use mc_registry::generated::atlas as gen_atlas;
+        let tiles = gen_atlas::FACE_TILES[crate::world::CHEST as usize];
+        let front_tile = tiles[5];
+        let side_tile = tiles[0];
+        let top_tile = tiles[2];
+        // the near-cell filter (the open lid pokes past the cell — the
+        // y 23/16 reach the z 20/16 tip the quarter turn speaks)
+        let near_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 0.5 - 1e-4
+                    && p[0] <= 9.0 + 0.5 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1.5 + 1e-4
+                    && p[2] >= 8.0 - 0.5 - 1e-4
+                    && p[2] <= 9.0 + 1.5 + 1e-4
+            })
+        };
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let y_max_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+        let z_max_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[2]).fold(f32::MIN, f32::max);
+        let x_min_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
+        // THE CLOSED CHEST'S OWN STATIC BOX (the pre-round law the
+        // round never touches — the 6 quads the 14/16 band keeps)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            6,
+            "the closed chest the 6 quads the static box keeps, got {}",
+            cell.len()
+        );
+        // THE OPEN CHEST'S OWN LID WALK (the bit stamps the builder
+        // swaps — the 11 quads the body 6 + the lid 5 bakes)
+        let mut wo = empty_world();
+        put(&mut wo, 8, 8, 8, crate::world::CHEST);
+        wo.set_variant(8, 8, 8, crate::world::CHEST_OPEN_BIT);
+        let qo = mesh_chunk(&wo, 0, 0, None);
+        let opened: Vec<_> = qo.iter().filter(|quad| near_cell(quad)).collect();
+        assert_eq!(
+            opened.len(),
+            11,
+            "the open chest the body 6 + the lid 5 bakes, got {}",
+            opened.len()
+        );
+        // THE BODY'S OWN BAND (the y 0..10 the body quads keep — the
+        // six the inside floor the top plane 8 + 10/16 wears)
+        let body: Vec<_> = opened
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| p[1] <= 8.0 + 10.0 / 16.0 + 1e-5))
+            .collect();
+        assert_eq!(
+            body.len(),
+            6,
+            "the body the y 0..10 band the six faces keeps, got {}",
+            body.len()
+        );
+        let floor = body
+            .iter()
+            .find(|quad| {
+                quad.pts
+                    .iter()
+                    .all(|p| (p[1] - (8.0 + 10.0 / 16.0)).abs() < 1e-5)
+            })
+            .expect("the inside floor the open lid reveals");
+        assert_eq!(
+            floor.tile, top_tile,
+            "the inside floor the up-face tile the closed fold wears"
+        );
+        // THE LID'S OWN REACH (the free edge the pivot + 14 the up tip
+        // wears — the 23/16 the single's 9-pivot keeps)
+        let lid_top = opened
+            .iter()
+            .map(|quad| y_max_of(quad))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (lid_top - (8.0 + 23.0 / 16.0)).abs() < 1e-5,
+            "the lid's free edge the 23/16 reach wears, got {lid_top}"
+        );
+        // THE BACK TIP (the north default the hinge z1 the south edge
+        // — the lid's z the 5-px past-the-back 20/16 wears)
+        let back_tip = opened
+            .iter()
+            .map(|quad| z_max_of(quad))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (back_tip - (8.0 + 20.0 / 16.0)).abs() < 1e-5,
+            "the lid's back tip the 20/16 wears, got {back_tip}"
+        );
+        // THE LID'S OWN TILES (the rotated faces the closed folds keep
+        // — the side/top tiles the surface the glued law wears)
+        let lid: Vec<_> = opened
+            .iter()
+            .filter(|quad| quad.pts.iter().any(|p| p[1] > 8.0 + 10.0 / 16.0 + 1e-5))
+            .collect();
+        assert_eq!(
+            lid.len(),
+            5,
+            "the lid the five faces the hinge skip keeps, got {}",
+            lid.len()
+        );
+        assert!(
+            lid.iter().all(|quad| quad.tile == side_tile
+                || quad.tile == top_tile
+                || quad.tile == front_tile
+                || quad.tile == tiles[3]),
+            "the lid quads the chest tiles the glued law wears"
+        );
+        // THE FACING'S OWN QUARTER (the east-facing open chest the
+        // hinge x0 the west tip wears — the 5-px past-the-west the
+        // quarter answers)
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::CHEST);
+        we.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_EAST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ) | crate::world::CHEST_OPEN_BIT,
+        );
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let openede: Vec<_> = qe.iter().filter(|quad| near_cell(quad)).collect();
+        assert_eq!(openede.len(), 11, "the east open the same 11 bakes");
+        let west_tip = openede
+            .iter()
+            .map(|quad| x_min_of(quad))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (west_tip - (8.0 + 1.0 / 16.0 - 5.0 / 16.0)).abs() < 1e-5,
+            "the east chest's lid the west tip the 5-px past wears, got {west_tip}"
+        );
+        // THE ENDER'S OWN POSE (the ender chest the open bit the same
+        // walk keeps — the family law the builder never re-answers)
+        let mut wn = empty_world();
+        put(&mut wn, 8, 8, 8, crate::world::ENDER_CHEST);
+        wn.set_variant(8, 8, 8, crate::world::CHEST_OPEN_BIT);
+        let qn = mesh_chunk(&wn, 0, 0, None);
+        let openedn: Vec<_> = qn.iter().filter(|quad| near_cell(quad)).collect();
+        assert_eq!(openedn.len(), 11, "the ender open the same 11 bakes");
+        // THE DOUBLE'S OWN HALVES (the LEFT type the open pose the
+        // same 11 quads per half bakes — the 15/16 band the lid the
+        // 10-pivot keeps, the free edge the 24/16 reach wears)
+        let mut wd = empty_world();
+        put(&mut wd, 8, 8, 8, crate::world::CHEST);
+        wd.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_NORTH,
+                crate::world::CHEST_TYPE_LEFT,
+            ) | crate::world::CHEST_OPEN_BIT,
+        );
+        let qd = mesh_chunk(&wd, 0, 0, None);
+        let openedd: Vec<_> = qd.iter().filter(|quad| near_cell(quad)).collect();
+        assert_eq!(openedd.len(), 11, "the double open the same 11 bakes");
+        let lid_topd = openedd
+            .iter()
+            .map(|quad| y_max_of(quad))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (lid_topd - (8.0 + 24.0 / 16.0)).abs() < 1e-5,
+            "the double's lid the 24/16 reach the 10-pivot wears, got {lid_topd}"
         );
     }
 
