@@ -9482,6 +9482,12 @@ pub struct App {
     /// flag banks, the outside press the false disarms, the fresh ctor
     /// the unarmed seat keeps, the re-open walk the same reset wears)
     pub creative_search_drag_armed: bool,
+    /// THE SEARCH BOX'S OWN WINDOW (the 267 chat law the EditBox
+    /// displayPos keeps — the visible window the caret's own seat
+    /// scrolls: the scrolled-out tail the clip answers, the caret's
+    /// scrolled-out seat the display follows [the same
+    /// `display_window_sync` walk the chat + the entry boxes wear]).
+    pub creative_search_display: usize,
     /// THE SCROLL OFFSET (the `scrollOffs` field — 0..1 the
     /// subtractInputFromScroll clamp keeps, the wheel the delta /
     /// scrollableRows walk drives).
@@ -11911,6 +11917,7 @@ impl App {
             creative_search_highlight: None,
             creative_search_last_click: None,
             creative_search_drag_armed: false,
+            creative_search_display: 0,
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
@@ -23630,6 +23637,7 @@ impl App {
         }
         self.creative_search.clear();
         self.creative_search_cursor = 0;
+        self.creative_search_display = 0;
         self.creative_search_highlight = None;
         // THE DOUBLE'S OWN RESET (the setScreen walk builds a NEW
         // picker every open — the stale stamp the re-creation the
@@ -23717,6 +23725,7 @@ impl App {
                 // fresh-scroll tail the walk's own order keeps)
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_display = 0;
                 self.creative_search_highlight = None;
             }
             CreativeTabKind::SavedHotbar => {
@@ -23737,6 +23746,7 @@ impl App {
                 }
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_display = 0;
                 self.creative_search_highlight = None;
                 self.creative_items = Self::creative_operator_items();
             }
@@ -23746,6 +23756,7 @@ impl App {
                 // categories the same clear keep)
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_display = 0;
                 self.creative_search_highlight = None;
                 self.refresh_creative_search();
             }
@@ -23756,6 +23767,7 @@ impl App {
                 // grouping tables land)
                 self.creative_search.clear();
                 self.creative_search_cursor = 0;
+                self.creative_search_display = 0;
                 self.creative_search_highlight = None;
                 self.creative_items = self.creative_source.clone();
             }
@@ -23816,6 +23828,21 @@ impl App {
         self.creative_scroll_to(self.creative_scroll);
     }
 
+    /// THE SEARCH BOX'S OWN WINDOW SYNC (the same `setCursorPos` law
+    /// the chat + the entry boxes wear — the 267 walk the box answers:
+    /// the inner width the 80-wide band's `-8` padding speaks [the
+    /// render's own `x + 4` origin the both-pads answer], the
+    /// caret's scrolled-out seat the display follows, the scrolled-
+    /// back head the display returns).
+    fn creative_search_window_sync(&mut self) {
+        display_window_sync(
+            &self.creative_search,
+            &mut self.creative_search_display,
+            self.creative_search_cursor,
+            80 - 8,
+        );
+    }
+
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's (82, 6, 80x9)
     /// walk builds — the charTyped lane the focused box answers, the
     /// max length 50 the setMaxLength walk keeps, the refresh the
@@ -23866,6 +23893,7 @@ impl App {
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
         }
+        self.creative_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed's Backspace arm —
@@ -23889,6 +23917,7 @@ impl App {
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
+            self.creative_search_window_sync();
             return;
         }
         let len = self.creative_search.chars().count();
@@ -23902,6 +23931,7 @@ impl App {
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
         }
+        self.creative_search_window_sync();
     }
 
     /// THE CARET'S OWN DELETE (the tableswitch's 261 arm the
@@ -23925,6 +23955,7 @@ impl App {
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
+            self.creative_search_window_sync();
             return;
         }
         let len = self.creative_search.chars().count();
@@ -23937,6 +23968,7 @@ impl App {
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
         }
+        self.creative_search_window_sync();
     }
 
     /// THE CARET'S OWN RIDE (the tableswitch's 262/263 arms the
@@ -23960,6 +23992,7 @@ impl App {
         } else {
             (seat + 1).min(len)
         };
+        self.creative_search_window_sync();
     }
 
     /// THE CARET'S OWN PARK (the tableswitch's 268/269 arms the
@@ -23980,6 +24013,7 @@ impl App {
         } else {
             0
         };
+        self.creative_search_window_sync();
     }
 
     /// THE SELECTION'S OWN SHIFT RIDE (the 262/263 arms the no-ctrl
@@ -23999,6 +24033,7 @@ impl App {
             &mut self.creative_search_highlight,
             left,
         );
+        self.creative_search_window_sync();
     }
 
     /// THE SELECTION'S OWN SHIFT PARK (the 268/269 arms the
@@ -24017,6 +24052,7 @@ impl App {
             &mut self.creative_search_highlight,
             end,
         );
+        self.creative_search_window_sync();
     }
 
     /// THE SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm the
@@ -24032,6 +24068,7 @@ impl App {
         }
         self.creative_search_cursor = self.creative_search.chars().count();
         self.creative_search_highlight = Some(0);
+        self.creative_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN CLICK SEAT (the EditBox.mouseClicked walk
@@ -24070,8 +24107,10 @@ impl App {
         self.creative_search_drag_armed = inside;
         if inside {
             // the caret's own x-band seek the seat first computes (the
-            // vanilla mouseClick walk the window the same seat wears)
-            let seat = entry_click_seat(&self.creative_search, 0, mx, bx);
+            // vanilla mouseClick walk the window the same seat wears —
+            // the display offset the scrolled window's own seat keeps)
+            let seat =
+                entry_click_seat(&self.creative_search, self.creative_search_display, mx, bx);
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_millis())
@@ -24098,6 +24137,7 @@ impl App {
                     }
                     // the stamp the every consumed press re-banks
                     self.creative_search_last_click = Some((now, seat));
+                    self.creative_search_window_sync();
                     return true;
                 }
             }
@@ -24107,6 +24147,7 @@ impl App {
             self.creative_search_last_click = Some((now, seat));
             self.creative_search_highlight = None;
             self.creative_search_cursor = seat;
+            self.creative_search_window_sync();
         }
         inside
     }
@@ -24134,13 +24175,14 @@ impl App {
         if !inside {
             return false; // the outside click the band never owns
         }
-        let seat = entry_click_seat(&self.creative_search, 0, mx, bx);
+        let seat = entry_click_seat(&self.creative_search, self.creative_search_display, mx, bx);
         if self.creative_search_highlight.is_none() {
             // the pre-click cursor the anchor banks (the two-arg
             // moveCursorTo the highlightPos law keeps)
             self.creative_search_highlight = Some(self.creative_search_cursor);
         }
         self.creative_search_cursor = seat;
+        self.creative_search_window_sync();
         true
     }
 
@@ -24166,13 +24208,14 @@ impl App {
         if my < by || my >= by + 9 {
             return; // the outside row the drag never owns
         }
-        let seat = entry_click_seat(&self.creative_search, 0, mx, bx);
+        let seat = entry_click_seat(&self.creative_search, self.creative_search_display, mx, bx);
         if self.creative_search_highlight.is_none() {
             // the press seat the anchor banks (the vanilla drag the
             // first-click place the range opens)
             self.creative_search_highlight = Some(self.creative_search_cursor);
         }
         self.creative_search_cursor = seat;
+        self.creative_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
@@ -24201,6 +24244,7 @@ impl App {
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
+            self.creative_search_window_sync();
             return;
         }
         let len = self.creative_search.chars().count();
@@ -24220,6 +24264,7 @@ impl App {
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
         }
+        self.creative_search_window_sync();
     }
 
     /// THE SEARCH BOX'S OWN CTRL HOP (the EditBox keyPressed's
@@ -24241,6 +24286,7 @@ impl App {
         let len = self.creative_search.chars().count();
         let seat = self.creative_search_cursor.min(len);
         self.creative_search_cursor = word_boundary(&self.creative_search, seat, !left);
+        self.creative_search_window_sync();
     }
 
     /// THE MIDDLE-CLICK CLONE (the slotClicked walk's CLONE arm —
@@ -29251,33 +29297,53 @@ impl App {
                     g.text(a, tx, ty, &hint, [0.5, 0.5, 0.5], false);
                 }
             } else {
+                // THE VISIBLE WINDOW'S OWN CLIP (the 267 chat law the
+                // EditBox.render walk wears — the `value.substring
+                // (displayPos)` the display offset skips, the
+                // `plainSubstrByWidth` the visible window the inner
+                // 72 the 80-wide band's -8 padding speaks, the
+                // scrolled-out tail the clip answers)
+                let visible_full: String = self
+                    .creative_search
+                    .chars()
+                    .skip(self.creative_search_display)
+                    .collect();
+                let vis_len = caret_char_index_at(&visible_full, 80 - 8);
+                let visible: String = visible_full.chars().take(vis_len).collect();
                 // THE SELECTION'S OWN BAND (the EditBox.render's highlight
                 // walk the 266 law the box wears — the min/max(cursor,
                 // anchor) the prefix widths the 0xFF808080 gray fill the
                 // text's y-1..y+9 band draws, the collapsed/absent seat
                 // the band never wears — the pinned scenes the None seat
-                // the byte-identical law keeps)
+                // the byte-identical law keeps; the display offset the
+                // relative window the band the vis_len clamp serves)
                 if let Some(anchor) = self.creative_search_highlight {
                     if anchor != self.creative_search_cursor {
                         let lo = anchor.min(self.creative_search_cursor);
                         let hi = anchor.max(self.creative_search_cursor);
-                        let pre: String = self.creative_search.chars().take(lo).collect();
-                        let sel: String = self.creative_search.chars().take(hi).collect();
-                        let x1 = tx + g.text_width(&pre);
-                        let x2 = tx + g.text_width(&sel);
-                        g.fill(x1, ty - 1, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                        let vlo = lo.saturating_sub(self.creative_search_display).min(vis_len);
+                        let vhi = hi.saturating_sub(self.creative_search_display).min(vis_len);
+                        if vhi > vlo {
+                            let pre: String = visible.chars().take(vlo).collect();
+                            let sel: String = visible.chars().take(vhi).collect();
+                            let x1 = tx + g.text_width(&pre);
+                            let x2 = tx + g.text_width(&sel);
+                            g.fill(x1, ty - 1, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                        }
                     }
                 }
-                g.text(a, tx, ty, &self.creative_search, WHITE, false);
+                g.text(a, tx, ty, &visible, WHITE, false);
                 // THE CARET'S OWN PREFIX (the cursorPos the
                 // trimStringToWidth law the before-seat chars the band
                 // width wears — the mid-string caret the seat speaks,
-                // the end seat the whole word the same width keeps)
-                let prefix: String = self
-                    .creative_search
-                    .chars()
-                    .take(self.creative_search_cursor)
-                    .collect();
+                // the end seat the whole word the same width keeps; the
+                // display offset the relative seat the vis_len clamp
+                // parks)
+                let k = self
+                    .creative_search_cursor
+                    .saturating_sub(self.creative_search_display)
+                    .min(vis_len);
+                let prefix: String = visible.chars().take(k).collect();
                 let tw = g.text_width(&prefix);
                 if (self.frame / 6) % 2 == 0 {
                     g.fill(tx + tw + 1, ty, 1, 8, [1.0, 1.0, 1.0, 1.0]);

@@ -27801,6 +27801,105 @@ fn the_creative_search_own_click_seat_wears() {
     );
 }
 
+/// THE CREATIVE SEARCH BOX'S OWN WINDOW CLIP (the 267 chat law the
+/// EditBox.render walk the search tab wears — the `value.substring
+/// (displayPos)` the display offset skips, the visible window the
+/// inner 72 the 80-wide band's -8 padding speaks: the short line the
+/// zero keeps, the long line the caret's tail the window pins, the
+/// Home the head returns, the End the tail re-pins, the click the
+/// in-window seat wears, the tab switch the reset keeps).
+#[test]
+fn the_creative_search_box_the_window_clip_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    assert_eq!(
+        app.creative_search_display, 0,
+        "the fresh tab the zero wears"
+    );
+    // THE SHORT LINE'S OWN ZERO (the in-window query the offset the
+    // zero keeps — the whole word the visible window answers)
+    for c in "stone".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(
+        app.creative_search_display, 0,
+        "the short line the zero keeps"
+    );
+    // THE LONG LINE'S OWN PIN (the 50-cap query the window the tail
+    // wears — the scrolled-out head the clip answers, the caret the
+    // in-window seat keeps: the display + the vis_len the 50 the
+    // inner width answers)
+    for c in "a".repeat(45).chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(app.creative_search_cursor, 50, "the cap the seat keeps");
+    assert!(
+        app.creative_search_display > 0,
+        "the long line the window pins"
+    );
+    let visible: String = app
+        .creative_search
+        .chars()
+        .skip(app.creative_search_display)
+        .collect();
+    let vis_len = crate::screens::caret_char_index_at(&visible, 80 - 8);
+    assert!(
+        app.creative_search_display + vis_len >= 50,
+        "the caret the in-window seat keeps"
+    );
+    // THE HOME'S OWN RETURN (the zero park the window the head wears —
+    // the whole word the visible window answers again)
+    app.on_creative_caret_home_end(false);
+    assert_eq!(
+        app.creative_search_display, 0,
+        "the Home the window returns"
+    );
+    // THE END'S OWN PIN (the len park the window the tail re-wears)
+    app.on_creative_caret_home_end(true);
+    assert!(app.creative_search_display > 0, "the End the window pins");
+    // THE BACKSPACE'S OWN TRACK (the tail char the removal the caret
+    // pulls — the window the caret the same law follows)
+    app.on_creative_backspace();
+    assert_eq!(app.creative_search_cursor, 49, "the bite the seat pulls");
+    let visible: String = app
+        .creative_search
+        .chars()
+        .skip(app.creative_search_display)
+        .collect();
+    let vis_len = crate::screens::caret_char_index_at(&visible, 80 - 8);
+    assert!(
+        app.creative_search_display + vis_len >= 49,
+        "the caret the tracked seat keeps"
+    );
+    // THE CLICK'S OWN WINDOW SEAT (the render the panel banks, the
+    // scrolled window the left edge the display's own head wears)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (px, py) = app.creative_panel;
+    assert!(px != 0 || py != 0, "the render the panel banks");
+    let bx = px + 82;
+    let by = py + 6;
+    app.creative_search_last_click = Some((0, 0));
+    assert!(
+        app.on_creative_box_click(bx + 4, by + 4),
+        "the left edge the TRUE wears"
+    );
+    assert!(
+        app.creative_search_cursor >= app.creative_search_display,
+        "the click the in-window seat wears"
+    );
+    // THE TAB SWITCH'S OWN RESET (the away seat the clear the zero
+    // window wears — the stale pin the walk never inherits)
+    app.select_creative_tab(0);
+    assert_eq!(
+        app.creative_search_display, 0,
+        "the tab switch the reset wears"
+    );
+}
+
 /// THE CREATIVE SEARCH BOX'S OWN SELECTION SEAT (the 266 chat + the
 /// 272 debug laws the highlightPos anchor family the box wears — the
 /// shift rides the range opens, the select-all the whole value
