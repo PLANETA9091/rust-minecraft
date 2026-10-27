@@ -9290,6 +9290,163 @@ fn the_chest_open_own_fill_bank_wears() {
     }
 }
 
+/// THE BOOT'S OWN FILL RE-DERIVE (the dev-189 round — the vanilla chunk
+/// load's own law the BE restore the signal's live compute wears: the
+/// restart the stocked chest's comparator the ghost-0 the fresh
+/// world's empty map the once-spent parse rides the gap wore, the
+/// enter walk the restored stores the SAME open-arm law every cell
+/// re-banks — the single the own grid, the double the union's mate
+/// both halves the one total, the furnace the trio, the dispenser the
+/// nine, the ender the silence, the foreign cell the air-arm drops)
+#[test]
+fn the_boot_own_fill_rederive_wears() {
+    use crate::world as w;
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let dir = std::env::temp_dir().join(format!("mc2rs_boot_fill_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let world_path = dir.join("world_edits.nbt");
+    let stores_path = dir.join("container_stores.nbt");
+    // THE FIRST SESSION (the blocks the journal banks, the stocks the
+    // containers file wears — the two saves the restart's own disk
+    // rows speak)
+    let mut app = App::new(3);
+    app.offline_world_file = Some(world_path.clone());
+    app.container_stores_file = Some(stores_path.clone());
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (kx, ky, kz) = (c, top - 1, c); // the comparator (facing EAST)
+    let (cx, cy, cz) = (c + 1, top - 1, c); // the single chest (the back cell)
+    let (fx, fy, fz) = (c + 2, top - 1, c); // the furnace
+    let (px, py, pz) = (c + 3, top - 1, c); // the dispenser
+    let (ex, ey, ez) = (c + 4, top - 1, c); // the ender cell
+    let (sx, sy, sz) = (c + 5, top - 1, c); // the plain stone (the foreign key)
+                                            // THE DOUBLE'S OWN PAIR (the EAST-facing pair the +z walk banks —
+                                            // the LEFT half the south cell answers)
+    let (dx, dy, dz) = (c, top - 1, c + 2);
+    let (dx2, dy2, dz2) = (c, top - 1, c + 3);
+    let face = 1u8;
+    let (a_var, b_var) = (
+        face | (w::CHEST_TYPE_LEFT << 2),
+        face | (w::CHEST_TYPE_RIGHT << 2),
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(kx, ky, kz, w::COMPARATOR);
+        world.set_variant(kx, ky, kz, w::comparator_variant(1, false, false, 0));
+        world.set(cx, cy, cz, w::CHEST);
+        world.set(fx, fy, fz, w::FURNACE);
+        world.set(px, py, pz, w::DISPENSER);
+        world.set(ex, ey, ez, w::ENDER_CHEST);
+        world.set(sx, sy, sz, w::STONE);
+        world.set(dx, dy, dz, w::CHEST);
+        world.set_variant(dx, dy, dz, a_var);
+        world.set(dx2, dy2, dz2, w::CHEST);
+        world.set_variant(dx2, dy2, dz2, b_var);
+    }
+    // THE STORES' OWN STAGE (the session's stocks the maps wear — the
+    // one full stack the f=1/27 the fill's 1 speaks, the trio the 1/3
+    // the 5, the nine the parse's 27-cap the restart the 1 wears)
+    let mut chest_store = vec![(0, 0); 27];
+    chest_store[0] = (stone, 64);
+    app.container_stores.insert((cx, cy, cz), chest_store);
+    let mut trio = vec![(0, 0); 3];
+    trio[0] = (stone, 64);
+    app.furnace_stores.insert((fx, fy, fz), trio);
+    let mut nine = vec![(0, 0); 9];
+    nine[0] = (stone, 64);
+    app.container_stores.insert((px, py, pz), nine);
+    // the ender + the foreign keys the honest absence rows stage
+    app.container_stores.insert((ex, ey, ez), vec![(0, 0); 27]);
+    app.container_stores.insert((sx, sy, sz), vec![(0, 0); 27]);
+    let mut half_a = vec![(0, 0); 27];
+    half_a[0] = (stone, 64);
+    app.container_stores.insert((dx, dy, dz), half_a);
+    app.container_stores
+        .insert((dx2, dy2, dz2), vec![(0, 0); 27]);
+    app.offline_world_file_save();
+    app.container_stores_file_save();
+    // THE RESTART'S OWN FIRST TICK (the update walk the lazy parse the
+    // world-less ride speaks — the stores the file extends, the fill
+    // rides the no-op the offline world the None the sync's early
+    // return keeps: the once-flag the spend the gap's own shape wears)
+    let mut app2 = App::new(3);
+    app2.offline_world_file = Some(world_path.clone());
+    app2.container_stores_file = Some(stores_path.clone());
+    app2.container_stores_load_once();
+    assert!(
+        app2.container_stores.contains_key(&(cx, cy, cz)),
+        "the parse the stocks extends"
+    );
+    assert!(
+        app2.container_stores_loaded,
+        "the spent flag the first tick wears"
+    );
+    // THE ENTER WALK (the fresh world the journal replay wears — the
+    // re-derive the stores the file restored the SAME open-arm law
+    // every cell the fill re-banks)
+    app2.enter_world();
+    {
+        let world = app2.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx, cy, cz),
+            w::CHEST,
+            "the chest the replay wears"
+        );
+        assert_eq!(
+            world.get(dx, dy, dz),
+            w::CHEST,
+            "the double's half the replay wears"
+        );
+        assert_eq!(
+            world.container_fill.get(&(cx, cy, cz)),
+            Some(&1),
+            "the stocked chest the fill's 1 re-banks"
+        );
+        assert_eq!(
+            crate::world::comparator_output_signal(world, kx, ky, kz),
+            1,
+            "the comparator the back read the boot answers"
+        );
+        assert_eq!(
+            world.container_fill.get(&(fx, fy, fz)),
+            Some(&5),
+            "the stocked trio the fill's 5 banks"
+        );
+        assert_eq!(
+            world.container_fill.get(&(px, py, pz)),
+            Some(&1),
+            "the nine the chest bank's 27-cap parse the restart wears — the boot fill the restored grid's own shape the formula answers (the per-kind cap the NEXT round's own gap speaks)"
+        );
+        // THE DOUBLE'S OWN UNION (the ONE stock the BOTH halves the
+        // same fill banks — the mate the walk's own ride wears)
+        assert_eq!(
+            world.container_fill.get(&(dx, dy, dz)),
+            Some(&1),
+            "the double's stocked half the fill banks"
+        );
+        assert_eq!(
+            world.container_fill.get(&(dx2, dy2, dz2)),
+            Some(&1),
+            "the double's empty mate the SAME fill banks"
+        );
+        // THE ENDER'S OWN SILENCE + THE FOREIGN CELL'S OWN DROP (the
+        // keys the walk the verdicts the honest absences keep)
+        assert!(
+            !world.container_fill.contains_key(&(ex, ey, ez)),
+            "the ender key the silence keeps"
+        );
+        assert!(
+            !world.container_fill.contains_key(&(sx, sy, sz)),
+            "the foreign key the air-arm drops"
+        );
+    }
+    let _ = std::fs::remove_file(&world_path);
+    let _ = std::fs::remove_file(&stores_path);
+    let _ = std::fs::remove_dir(&dir);
+}
+
 /// THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295 round — javap
 /// 26.2 the per-mutation law the chain proves: Slot.set pc 0-18 the
 /// `container.setItem` + `setChanged` pair the GUI click speaks,

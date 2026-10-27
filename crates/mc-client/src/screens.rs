@@ -23128,6 +23128,14 @@ impl App {
             // session's journal wears)
             world.journaling = true;
             self.offline_world = Some(world);
+            // THE BOOT'S OWN FILL RE-DERIVE (the restart the every
+            // container the comparator truth re-banks — the lazy parse
+            // the boot's first tick the once-flag the spent speaks, the
+            // world-less ride the no-op the fresh world's empty map the
+            // ghost-0 gap wore; the restored stores the SAME open-arm
+            // law every cell the walk wears — the vanilla chunk load's
+            // own BE-restore the signal's live compute the law keeps)
+            self.container_fill_boot_rederive();
             // the fresh terrain's own honesty — the previous offline
             // session's hulls drop with the world that carried them;
             // the wire's lane the same word keeps (the eased copies the
@@ -26700,6 +26708,41 @@ impl App {
             w.container_fill.insert(ppos, fill);
         }
         partner
+    }
+
+    /// THE BOOT'S OWN FILL RE-DERIVE (the restart the every-container
+    /// the comparator truth re-banks — the vanilla chunk load's own law
+    /// the BE inventory's disk restore the signal's LIVE compute wears:
+    /// `LevelChunk` load the `BlockEntity.loadWithComponents` walk the
+    /// `ContainerHelper.loadAllItems` grid answers, the comparator's
+    /// `getAnalogOutputSignal` the SAME restored inventory the live
+    /// formula reads — the signal the vanilla never saves). THE GAP
+    /// the walk retires: the lazy parse the boot's first update tick
+    /// the once-flag the spend speaks (the world-less tick the parse
+    /// rides the no-op keeps — the offline world the None the sync's
+    /// own early return answers), the enter walk the fresh world the
+    /// EMPTY map the gap wore — every comparator behind a stocked
+    /// chest the ghost-0 the reopen alone restored. THE WALK the same
+    /// open-arm law every restored cell wears: the [`Self::container_fill_sync`]
+    /// call the chest the own grid + the partner's union, the furnace
+    /// the trio, the dispenser the nine, the ender the silence, the
+    /// foreign cell the air-arm drops — the sorted keys the
+    /// deterministic bank keep, the idempotent second half the
+    /// double's own walk never doubles. THE UN-SPENT FLAG the parse's
+    /// own world-present rides the same bank answers (the load-once
+    /// law the disk-bank round wears — the walk the already-restored
+    /// stores alone re-derives).
+    fn container_fill_boot_rederive(&mut self) {
+        if self.world_is_network || self.offline_world.is_none() {
+            return;
+        }
+        let mut keys: Vec<(i32, i32, i32)> = self.container_stores.keys().copied().collect();
+        keys.extend(self.furnace_stores.keys().copied());
+        keys.sort();
+        keys.dedup();
+        for k in keys {
+            self.container_fill_sync(k, None);
+        }
     }
 
     /// THE CARRIED'S OWN HOME RIDE (the vanilla AbstractContainerMenu.
