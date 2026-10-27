@@ -2377,14 +2377,26 @@ pub fn run_gui_app(
             let dbg_shift =
                 window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
-                if dbg_shift && app.debug_search_focus {
+                if ctrl_down && app.debug_search_focus {
+                    // THE DEBUG BOX'S OWN CTRL HOP (the 262/263 arms
+                    // the hasControlDown branch the `moveCursorTo(
+                    // getWordPosition(-1))` walk serves — the whole
+                    // word the backward bound the seat hops, the
+                    // anchor the one-arg form collapses)
+                    app.on_debug_options_ctrl_caret_arrow(true);
+                } else if dbg_shift && app.debug_search_focus {
                     app.on_debug_options_caret_shift_arrow(true);
                 } else {
                     app.on_debug_options_arrow(-1, 0);
                 }
             }
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
-                if dbg_shift && app.debug_search_focus {
+                if ctrl_down && app.debug_search_focus {
+                    // the ctrl branch the `moveCursorTo(getWordPosition(
+                    // 1))` walk serves — the forward bound the same law
+                    // wears
+                    app.on_debug_options_ctrl_caret_arrow(false);
+                } else if dbg_shift && app.debug_search_focus {
                     app.on_debug_options_caret_shift_arrow(false);
                 } else {
                     app.on_debug_options_arrow(1, 0);

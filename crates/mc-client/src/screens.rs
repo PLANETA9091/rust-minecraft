@@ -36742,6 +36742,24 @@ impl App {
         }
     }
 
+    /// THE SEARCH BOX'S OWN CTRL HOP (the EditBox keyPressed's
+    /// 262/263 arms the `Screen.hasControlDown()` branch the
+    /// `moveCursorTo(this.getWordPosition(±1))` walk serves — the
+    /// whole word the bound the seat hops, the one-arg form the
+    /// anchor collapses, the unfocused box the gate never passes;
+    /// the 263 direct/chat siblings the same law the box wears).
+    pub fn on_debug_options_ctrl_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        // the one-arg word-hop the anchor collapses (the plain law
+        // the direct/chat siblings wear — the highlightPos the
+        // cursorPos the tail resets)
+        self.debug_search_highlight = None;
+        self.debug_search_cursor =
+            word_boundary(&self.debug_search, self.debug_search_cursor, !left);
+    }
+
     /// THE SEARCH BOX'S OWN ARROWS (the EditBox keyPressed's 262/263
     /// arms the `moveCursorBy(±1)` walk serves — the seat the ±1
     /// re-parks, the bounds the clamp keeps; the box-focused arm the

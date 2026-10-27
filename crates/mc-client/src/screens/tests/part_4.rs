@@ -26537,6 +26537,99 @@ fn the_debug_selection_own_seat_wears() {
 }
 
 #[test]
+fn the_debug_search_own_ctrl_hop_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+                                // THE TYPED TAIL (the plain lane the same
+                                // verdict keeps — the two words the space
+                                // seam the boundary law answers)
+    for c in "minecraft debug".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "minecraft debug", "the typed word banks");
+    assert_eq!(app.debug_search_cursor, 15, "the tail seat wears");
+    // THE BACKWARD HOP'S OWN WORD BOUND (the ctrl branch the
+    // `moveCursorTo(getWordPosition(-1))` walk serves — the whole
+    // "debug" the backward bound the seat hops)
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 10,
+        "the first hop the word seam parks"
+    );
+    // the second hop the "minecraft" head wears
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(app.debug_search_cursor, 0, "the second hop the head parks");
+    // the head the clamp keeps (the [0, len] bound the hop wears)
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(app.debug_search_cursor, 0, "the head the clamp keeps");
+    // THE FORWARD HOP'S OWN RUN SKIP (the getWordPosition(1) walk
+    // the space run the seek-then-skip law answers — the seam the
+    // word head parks)
+    app.on_debug_options_ctrl_caret_arrow(false);
+    assert_eq!(
+        app.debug_search_cursor, 10,
+        "the forward hop the seam parks"
+    );
+    app.on_debug_options_ctrl_caret_arrow(false);
+    assert_eq!(app.debug_search_cursor, 15, "the second hop the tail parks");
+    app.on_debug_options_ctrl_caret_arrow(false);
+    assert_eq!(app.debug_search_cursor, 15, "the tail the clamp keeps");
+    // THE HOP'S OWN ANCHOR COLLAPSE (the one-arg moveCursorTo law —
+    // the banked anchor the hop resets, the plain siblings the same
+    // tail wears)
+    app.debug_search_cursor = 15;
+    app.on_debug_options_caret_shift_arrow(true); // the ride the anchor banks
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(15),
+        "the ride the anchor banks"
+    );
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(app.debug_search_cursor, 10, "the hop the word seam parks");
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the hop the anchor collapses"
+    );
+    // THE MULTI-SPACE'S OWN RUN (the vanilla indexOf the seek then
+    // the run skip the honest double-space law wears — "ab  cd" the
+    // backward hop the [4, 6) word parks, the next hop the space run
+    // the head parks)
+    app.on_debug_options_key(); // the toggle the fresh screen wears
+    app.on_debug_options_key(); // the reopen the reset state re-wears
+    for c in "ab  cd".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "ab  cd", "the double-space value banks");
+    assert_eq!(app.debug_search_cursor, 6, "the tail seat wears");
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 4,
+        "the first hop the 'cd' head parks"
+    );
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 0,
+        "the space run the 'ab' head parks"
+    );
+    app.on_debug_options_ctrl_caret_arrow(false);
+    assert_eq!(
+        app.debug_search_cursor, 4,
+        "the forward run the 'cd' head parks"
+    );
+    app.on_debug_options_ctrl_caret_arrow(false);
+    assert_eq!(app.debug_search_cursor, 6, "the tail seat re-parks");
+    // THE UNFOCUSED BOX'S OWN SILENCE (the internal gate the stale
+    // seat keeps — the focus the false verdict the hop never wears)
+    app.debug_search_focus = false;
+    app.on_debug_options_ctrl_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 6,
+        "the unfocused hop the silence wears"
+    );
+}
+
+#[test]
 fn the_debug_drag_own_seat_wears() {
     let mut app = App::new(3);
     app.enter_world();
@@ -27624,10 +27717,7 @@ fn the_creative_search_own_drag_seat_wears() {
     // THE REOPEN'S OWN RESET (the arm + anchor + word the reset
     // retires)
     app.open_creative_picker();
-    assert!(
-        !app.creative_search_drag_armed,
-        "the reopen the arm resets"
-    );
+    assert!(!app.creative_search_drag_armed, "the reopen the arm resets");
     assert_eq!(
         app.creative_search_highlight, None,
         "the reopen the anchor resets"
