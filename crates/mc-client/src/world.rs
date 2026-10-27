@@ -2325,6 +2325,19 @@ pub fn wire_source_strength_near(world: &World, x: i32, y: i32, z: i32) -> u8 {
     if let Some(out) = observer_back_output_near(world, x, y, z) {
         strength = strength.max(out);
     }
+    // THE TRAPPED CHEST'S OWN ARM (the dev-188 round — javap
+    // TrappedChestBlock.ownSignal pc 0-11 the
+    // `Mth.clamp(ChestBlockEntity.getOpenCount(level, pos), 0, 15)`
+    // viewer-count the strength the wire's own read wears: the ONE
+    // local viewer the clamp's 1 the run's first rung banks — the
+    // wire the chest's side the 1 the ON kind speaks, the next rung
+    // the -1 decay the 0 the dark keep [the 15-bools table the arm
+    // never joins — the viewer-count source the weak-1 law the
+    // vanilla wire speaks], the LEVER's 15 the max fold the stronger
+    // source never loses)
+    if trapped_chest_sources_near(world, x, y, z) {
+        strength = strength.max(1);
+    }
     strength
 }
 

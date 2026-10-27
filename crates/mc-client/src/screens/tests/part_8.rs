@@ -2877,6 +2877,116 @@ fn the_trapped_chest_own_redstone_lane_wears() {
     }
 }
 
+/// THE TRAPPED CHEST'S OWN NEIGHBOUR RIDE (the dev-188 round — javap
+/// 26.2 the evidence chain the ride answers:
+/// ChestBlockEntity.startOpen/stopOpen the openersCounter
+/// incrementOpeners/decrementOpeners walk serves, the
+/// ContainerOpenersCounter the count change the openerCountChanged
+/// hook answers, the ChestBlockEntity$1 the signalOpenCount override
+/// wears, the signalOpenCount pc 0-16 the
+/// `level.blockEvent(pos, block, 1, count)` walk the re-speak banks
+/// — the viewer-count source the neighbors the block event re-arms:
+/// the wire run the ONE-signal the first rung the ON kind the flood
+/// banks [the ownSignal clamp's 1 the strength speaks, the second
+/// rung the -1 decay the dark keep], the close the dead run the
+/// same walk restores, the door the verdict walk the open chest
+/// the hidden-door build the vanilla player banks — the consumer
+/// family the chest open/close the SAME ride the button
+/// press/release lane wears).
+#[test]
+fn the_trapped_chest_own_neighbour_ride_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let (cx, cy, cz) = (c, top - 1, c);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz, w::TRAPPED_CHEST);
+        world.set(cx + 1, cy, cz, w::REDSTONE_WIRE);
+        world.set(cx + 2, cy, cz, w::REDSTONE_WIRE);
+        world.set(cx + 3, cy, cz, w::REDSTONE_LAMP);
+    }
+    // THE CLOSED CHEST'S OWN DEAD RUN (the count the 0 the wire the
+    // OFF kinds the verdict keeps — the lamp the dark kind banks)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(world.get(cx + 1, cy, cz), w::REDSTONE_WIRE);
+        assert_eq!(world.get(cx + 3, cy, cz), w::REDSTONE_LAMP);
+    }
+    // THE OPEN'S OWN ARMED RIDE (the container walk the byte stamps
+    // + the flood the ride speaks — the wire run the ONE-signal the
+    // first rung the ON kind wears [the ownSignal viewer-count the
+    // clamp's 1 the strength speaks], the second rung the -1 decay
+    // the 0 the dark keep, the far lamp the run's death the dark
+    // kind keeps: the chest the ride the lever's own attach the
+    // same lane serves)
+    app.open_chest_for((cx, cy, cz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz),
+            w::REDSTONE_WIRE_P1,
+            "the open chest the run's first rung the P1 row wears"
+        );
+        assert_eq!(
+            world.get(cx + 2, cy, cz),
+            w::REDSTONE_WIRE,
+            "the second rung the -1 decay the dark keep"
+        );
+        assert_eq!(
+            world.get(cx + 3, cy, cz),
+            w::REDSTONE_LAMP,
+            "the far lamp the run's death the dark kind keeps"
+        );
+    }
+    // THE CLOSE'S OWN DEAD RIDE (the release walk the byte clears +
+    // the flood the ride speaks — the dead run the OFF kinds the
+    // sets wear, the lamp the dark kind the consumer arm restores)
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx + 1, cy, cz),
+            w::REDSTONE_WIRE,
+            "the closed chest the dead run the OFF kinds the sets speak"
+        );
+        assert_eq!(
+            world.get(cx + 3, cy, cz),
+            w::REDSTONE_LAMP,
+            "the dead run the dark kind the consumer arm restores"
+        );
+    }
+    // THE DOOR'S OWN RIDE (the open chest the door the verdict walk
+    // opens — the trapped chest the hidden-door build the vanilla
+    // player banks, the close the same ride the door closes)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(cx, cy, cz + 1, w::OAK_DOOR);
+    }
+    app.open_chest_for((cx, cy, cz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx, cy, cz + 1),
+            w::OAK_DOOR_OPEN,
+            "the open chest the door the verdict walk opens"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(cx, cy, cz + 1),
+            w::OAK_DOOR,
+            "the closed chest the same ride the door closes"
+        );
+    }
+}
+
 #[test]
 fn the_oak_trapdoor_the_placement_the_toggle_and_the_consult_wear() {
     // THE TRAPDOOR'S OWN APP LANE (the autopush-668 round — the

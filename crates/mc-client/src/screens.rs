@@ -26100,6 +26100,23 @@ impl App {
                 self.chest_open_cell = Some(pos);
             }
         }
+        // THE CHEST'S OWN NEIGHBOUR RIDE (the dev-188 round — javap
+        // 26.2 the evidence chain the ride answers:
+        // ChestBlockEntity.startOpen/stopOpen the openersCounter
+        // incrementOpeners/decrementOpeners walk serves, the
+        // ContainerOpenersCounter the count change the
+        // openerCountChanged hook answers, the ChestBlockEntity$1 the
+        // signalOpenCount override wears, the signalOpenCount pc 0-16
+        // the `level.blockEvent(pos, block, 1, count)` walk the
+        // re-speak banks — the viewer-count source the neighbors the
+        // block event re-arms: the wire/lamp/door/torch consumers the
+        // flood walk re-evaluates, the rail seeds the strong lane's
+        // above seat the same pass serves)
+        self.attach_wire_voice(pos.0, pos.1, pos.2);
+        if let Some(w) = self.offline_world.as_mut() {
+            let _ = w.rail_neighbor_updates(pos);
+            let _ = w.rail_neighbor_updates((pos.0, pos.1 + 1, pos.2));
+        }
         // THE CONTAINER VOICE'S OWN OPEN HALF (the counter's 0->1
         // transition the first opener speaks — the chest/barrel event
         // the block's own kind names)
@@ -26115,17 +26132,46 @@ impl App {
     /// CHEST_OPEN_BIT`] byte the same close walk clears, the kind
     /// read the right bit the release answers: the barrel the barrel
     /// bit, the chest family the chest byte — the trapped chest's
-    /// signal lane the dead read the release restores).
+    /// signal lane the dead read the release restores). THE RELEASE'S
+    /// OWN NEIGHBOUR RIDE (the dev-188 round — the same evidence
+    /// chain the close speaks: the decrementOpeners the count change
+    /// the openerCountChanged hook answers, the signalOpenCount the
+    /// `level.blockEvent(pos, block, 1, count)` re-speak serves —
+    /// the consumers the flood walk the dead verdict restores).
     pub fn barrel_lid_released(&mut self) {
-        if let (Some(pos), Some(w)) = (self.chest_open_cell.take(), self.offline_world.as_mut()) {
+        let released = if let (Some(pos), Some(w)) =
+            (self.chest_open_cell.take(), self.offline_world.as_mut())
+        {
             let kind = w.get(pos.0, pos.1, pos.2);
-            if crate::world::is_barrel(kind) {
+            let cleared = if crate::world::is_barrel(kind) {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
+                true
             } else if crate::world::is_chest(kind) {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::CHEST_OPEN_BIT);
+                true
+            } else {
+                false
+            };
+            if cleared {
+                let _ = w.rail_neighbor_updates(pos);
+                let _ = w.rail_neighbor_updates((pos.0, pos.1 + 1, pos.2));
             }
+            cleared.then_some(pos)
+        } else {
+            None
+        };
+        if let Some(pos) = released {
+            // THE RELEASE'S OWN NEIGHBOUR RIDE (the dev-188 round —
+            // the same evidence chain the close speaks: the
+            // decrementOpeners the count change the openerCountChanged
+            // hook answers, the signalOpenCount the
+            // `level.blockEvent(pos, block, 1, count)` re-speak
+            // serves — the wire/lamp/door/torch consumers the flood
+            // walk the dead verdict restores, the rail seeds the same
+            // pass wears)
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
         }
     }
 
