@@ -3854,3 +3854,21 @@ Work Log:
 Stage Summary:
 - The dev-184 round CLOSED (v0.3.1051 titled commit + push + worklog + mirror); the tree clean, the HEAD the origin synced.
 - NEXT: the dev rounds the NEXT CANDIDATES list the dev-184 tail wears.
+---
+Task ID: dev-185
+Agent: cron-agent-loop (Job 384925, trace 1a0a02c3c1060631-cron-agent-loop-202610271903)
+Task: rust-minecraft dev round — ONE minimal interactive step, tests green, titled commit + push, worklog entry
+
+Work Log:
+- Tree state: HEAD 6bfc12b6 (dev-184 v0.3.1051 double chest type-state seat + the autopush-288 ride) in sync; max dev-N = 184 → this round = dev-185. The working tree the part_4.rs +114-line trapped test the interrupted 19:03-adjacent attempt already wore — the round the resume-first walk the same ride the 288 lesson answers (the jar evidence the probe the round itself re-verifies, the test the walk never ran the round runs).
+- Candidate: dev-184's own NEXT #1 THE TRAPPED CHEST'S OWN VOICE — the same-voice law the inheritance verbatim wears.
+- THE JAR WALK (sound_call_probe.py the 26.2 TrappedChestBlockEntity — the slash-path the probe wants): the playSound needle the EMPTY scan + the onOpen/onClose/triggerEvent needle the same silence — the class the constant pool the <init> + the signalOpenCount the TWO own methods alone names (the superclass the ChestBlockEntity the class-file walk speaks): the sound lane the ChestBlockEntity fold verbatim wears (the same block.chest.open/close pair, the same type-state seat), the signalOpenCount the redstone lane the super call first the FACING.getOpposite() the updateNeighborsAt walk serves — the redstone the ONLY difference the voice lane never hears.
+- NO production change: the is_chest range the 737..=waxed band the trapped 738 seat the container_voice_emit the chest family already answers — the trapped the family ladder the same variant lane reads.
+- Tests: part_4.rs NEW the_trapped_chest_the_same_voice_law_wears (the SINGLE trapped the open the block.chest.open @ the same family event wears, the close the block.chest.close @ the same family keeps; the TRAPPED DOUBLE the type-state the dev-184 law verbatim wears — the LEFT the open AND the close the silence keeps, the RIGHT the open the one voice banks, the close the same family keeps — the variants the (type<<2)|facing pack the same walk wears). FIRST-RUN PASS (window 4: part_4 1665, the window total 1686 [+1]); the fmt reflow the window-4 re-run re-verifies.
+- THE WALK: WALL-GATE 12 windows in four batches (p1 1478 / p2 1496 / p3 1454 / p4 1686 / p5 1467 / p6 1485 / p7 1500 / p8 1479 / p9 1477 / p10 1515 / p11 1392 / rest 1387, each rc=0 MOD-RESTORED-CLEAN) — trio 338 (mc-protocol 158 + mc-registry 100 + mc2rs-gen 80, 0 failed) + zero-test pair rc=0 (mc-assets, mc2rs-pixel); rustfmt the new test's one assert reflow the pass banks, the zero-diff law wears; bump 0.3.1051 -> 0.3.1052 (bump_version.py the six crates + lock wear), release rebuild inside verify, goldens 19/19 rms 0.000 pre- AND post-bump — NO regen (the test-only round the pinned scenes the pixels never touch).
+- Commit fe7771bb pushed (6bfc12b6..fe7771bb); the mirror the tail-verified append the logs/worklog.md mirror rides.
+
+Stage Summary:
+- v0.3.1052: the trapped chest's own same-voice law wears — the inheritance the verbatim lane banks (the trapped the ordinary's open/close pair the same seat law speaks, the redstone the signal-only difference the voice never hears; NO production change the family ladder the honest walk keeps).
+- The mc-client bank the twelve windows rc=0 (0 failed), the fast trio 338, the goldens the 19/19 rms 0.000 (NO regen, double-verified), the fmt the zero-diff law keeps.
+- NEXT CANDIDATES: THE ENDER CHEST'S OWN LANE (the offline ender chest the 27-slot the vanilla's own shared inventory banks — the bigger round the BE lane keeps), THE DOOR'S OWN OPEN VOICE (the wood/iron door the use walk the open/close creak the block's own SoundType wears — the door state lane the flip wears), THE DEBUG PROFILE'S OWN DATAFIXER ROUND (the EntryList ctor the DataFixTypes.DEBUG_PROFILE wrapCodec 4649 — the new subsystem the bigger round keeps), THE SOUND_CALL_PROBE'S OWN FAMILY WALK (the AbstractButton/MultiLineEditBox/Button the same all-methods scan the silent/muting law the classes answer).
