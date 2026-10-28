@@ -8802,10 +8802,10 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
     // the 301 u-law walk the round never touches)
     let u_of = |x: f32, z: f32, face: usize| -> f32 {
         match face {
-            5 => x + 15.0 - x1,        // north: u = x + (15 - x1)
-            0 => 16.0 - z + 1.0 - z0,  // east: u = (16 - z) + (1 - z0)
-            4 => x - x0 + 1.0,         // south: u = x - x0 + 1
-            _ => z - z0 + 1.0,         // west: u = z - z0 + 1
+            5 => x + 15.0 - x1,       // north: u = x + (15 - x1)
+            0 => 16.0 - z + 1.0 - z0, // east: u = (16 - z) + (1 - z0)
+            4 => x - x0 + 1.0,        // south: u = x - x0 + 1
+            _ => z - z0 + 1.0,        // west: u = z - z0 + 1
         }
     };
     // the TWO-BAND V-FOLD LAW (the autopush-303 round — the jar's
@@ -8816,12 +8816,8 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
     // the body's v = y + 5 the tile's rows 5..14 the direct stack
     // maps, the lid's v = y - seam the rows 0..4 the strip keeps —
     // the v = y_hi - y top-edge-0 fold the round retires
-    let body_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
-        [u_of(x, z, face), y + 5.0]
-    };
-    let lid_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
-        [u_of(x, z, face), y - seam]
-    };
+    let body_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] { [u_of(x, z, face), y + 5.0] };
+    let lid_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] { [u_of(x, z, face), y - seam] };
     let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(10);
     let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
         out.push((pts, uvs, face));
@@ -9725,10 +9721,10 @@ fn chest_open_model_quads(
                 px(x0, lid_hi, z0),
             ],
             [
-                lid_uv(x1, lid_hi,z0, 5),
-                lid_uv(x1, lid_lo,z0, 5),
-                lid_uv(x0, lid_lo,z0, 5),
-                lid_uv(x0, lid_hi,z0, 5),
+                lid_uv(x1, lid_hi, z0, 5),
+                lid_uv(x1, lid_lo, z0, 5),
+                lid_uv(x0, lid_lo, z0, 5),
+                lid_uv(x0, lid_hi, z0, 5),
             ],
             5,
         );
@@ -9743,10 +9739,10 @@ fn chest_open_model_quads(
                 px(x1, lid_hi, z1),
             ],
             [
-                lid_uv(x0, lid_hi,z1, 4),
-                lid_uv(x0, lid_lo,z1, 4),
-                lid_uv(x1, lid_lo,z1, 4),
-                lid_uv(x1, lid_hi,z1, 4),
+                lid_uv(x0, lid_hi, z1, 4),
+                lid_uv(x0, lid_lo, z1, 4),
+                lid_uv(x1, lid_lo, z1, 4),
+                lid_uv(x1, lid_hi, z1, 4),
             ],
             4,
         );
@@ -9761,10 +9757,10 @@ fn chest_open_model_quads(
                 px(x0, lid_hi, z1),
             ],
             [
-                lid_uv(x0, lid_hi,z0, 1),
-                lid_uv(x0, lid_lo,z0, 1),
-                lid_uv(x0, lid_lo,z1, 1),
-                lid_uv(x0, lid_hi,z1, 1),
+                lid_uv(x0, lid_hi, z0, 1),
+                lid_uv(x0, lid_lo, z0, 1),
+                lid_uv(x0, lid_lo, z1, 1),
+                lid_uv(x0, lid_hi, z1, 1),
             ],
             1,
         );
@@ -9779,10 +9775,10 @@ fn chest_open_model_quads(
                 px(x1, lid_hi, z0),
             ],
             [
-                lid_uv(x1, lid_hi,z1, 0),
-                lid_uv(x1, lid_lo,z1, 0),
-                lid_uv(x1, lid_lo,z0, 0),
-                lid_uv(x1, lid_hi,z0, 0),
+                lid_uv(x1, lid_hi, z1, 0),
+                lid_uv(x1, lid_lo, z1, 0),
+                lid_uv(x1, lid_lo, z0, 0),
+                lid_uv(x1, lid_hi, z0, 0),
             ],
             0,
         );
