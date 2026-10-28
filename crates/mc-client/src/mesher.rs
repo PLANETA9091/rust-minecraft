@@ -8919,7 +8919,25 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
 /// the row 0 up/down pair the edge rows sample, the sides the
 /// west/east columns keep), the face index 6 the call site's table
 /// maps (the tile the kind row banks, the front shade the sliver
-/// nuance keeps). THE VANILLA 4-TALL BAND the seam straddles (the
+/// nuance keeps). THE U-LAW WALK the autopush-301 round banks: the
+/// ModelPart$Cube ctor's vertex orders the live disasm re-pins (the
+/// north polygon [v20=(x1,y0,z0), v19=(x0,y0,z0), v22=(x0,y1,z0),
+/// v21=(x1,y1,z0)], the south polygon [v23=(x0,y0,z1), v24=(x1,y0,z1),
+/// v25=(x1,y1,z1), v26=(x0,y1,z1)] the Polygon ctor's remap walk
+/// `v[0]->(u1,v0) v[1]->(u0,v0) v[2]->(u0,v1) v[3]->(u1,v1)` the
+/// bytecode answers) — the OUTWARD face's screen-left edge the band's
+/// texel-right edge samples (the u the viewer's left the law speaks:
+/// the model-x0 end the u 3 column the light pair wears, the model-x1
+/// end the u 1 the dark pair — the per-facing preimage the model
+/// x-axis's own world name answers: the south the ta end, the north
+/// the tb, the east the tb, the west the ta), the CAPS the row-0 pair
+/// the up/down bands seat (the UP face the (3,0)-(5,1) rect the
+/// x0->u3/x1->u5 law wears, the DOWN the (1,0)-(3,1) the x0->u1/x1->u3
+/// — the tip edge the v 0 row the body plane the v 1 keeps), the
+/// SIDES the west/east columns the own bands wear (the -X sliver the
+/// (0,1)-(1,5) column the u 0..1 seat, the +X the (3,1)-(4,5) the
+/// 3..4 — the body-plane edge the band-left texel the tip the
+/// band-right answers). THE VANILLA 4-TALL BAND the seam straddles (the
 /// jar's own box the pivot-relative dy -2..+2 speaks: the render y
 /// 7..11 band the 2-px-on-the-lid + the 2-px hang the vanilla look
 /// wears — the 3-row 9..12 bend the 4-tall law retires), 1-px proud
@@ -8965,7 +8983,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_far),
                     px(tb, ly1, d_far),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
                 6,
             );
             push(
@@ -8975,7 +8993,7 @@ fn chest_lock_quads(
                     px(tb, ly1, d_far),
                     px(tb, ly1, d_near),
                 ],
-                [[1.0, 2.0], [1.0, 1.0], [3.0, 1.0], [3.0, 2.0]],
+                [[3.0, 1.0], [3.0, 0.0], [5.0, 0.0], [5.0, 1.0]],
                 6,
             );
             push(
@@ -8985,7 +9003,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_near),
                     px(tb, ly0, d_far),
                 ],
-                [[1.0, 5.0], [1.0, 4.0], [3.0, 4.0], [3.0, 5.0]],
+                [[1.0, 0.0], [1.0, 1.0], [3.0, 1.0], [3.0, 0.0]],
                 6,
             );
             push(
@@ -8995,7 +9013,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_near),
                     px(tb, ly1, d_near),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [2.0, 5.0], [2.0, 1.0]],
+                [[4.0, 1.0], [4.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
                 6,
             );
             push(
@@ -9005,7 +9023,7 @@ fn chest_lock_quads(
                     px(ta, ly0, d_far),
                     px(ta, ly1, d_far),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [2.0, 5.0], [2.0, 1.0]],
+                [[1.0, 1.0], [1.0, 5.0], [0.0, 5.0], [0.0, 1.0]],
                 6,
             );
         }
@@ -9023,7 +9041,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, ta),
                     px(d_far, ly1, ta),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
                 6,
             );
             push(
@@ -9033,7 +9051,7 @@ fn chest_lock_quads(
                     px(d_far, ly1, tb),
                     px(d_far, ly1, ta),
                 ],
-                [[3.0, 2.0], [1.0, 2.0], [1.0, 1.0], [3.0, 1.0]],
+                [[5.0, 1.0], [3.0, 1.0], [3.0, 0.0], [5.0, 0.0]],
                 6,
             );
             push(
@@ -9043,7 +9061,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, ta),
                     px(d_far, ly0, tb),
                 ],
-                [[1.0, 4.0], [3.0, 4.0], [3.0, 5.0], [1.0, 5.0]],
+                [[1.0, 1.0], [3.0, 1.0], [3.0, 0.0], [1.0, 0.0]],
                 6,
             );
             push(
@@ -9053,7 +9071,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, tb),
                     px(d_far, ly1, tb),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [2.0, 5.0], [2.0, 1.0]],
+                [[1.0, 1.0], [1.0, 5.0], [0.0, 5.0], [0.0, 1.0]],
                 6,
             );
             push(
@@ -9063,7 +9081,7 @@ fn chest_lock_quads(
                     px(d_near, ly0, ta),
                     px(d_near, ly1, ta),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [2.0, 5.0], [2.0, 1.0]],
+                [[4.0, 1.0], [4.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
                 6,
             );
         }
@@ -9079,7 +9097,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, tb),
                     px(d_far, ly1, tb),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
                 6,
             );
             push(
@@ -9089,7 +9107,7 @@ fn chest_lock_quads(
                     px(d_near, ly1, tb),
                     px(d_near, ly1, ta),
                 ],
-                [[1.0, 1.0], [3.0, 1.0], [3.0, 2.0], [1.0, 2.0]],
+                [[3.0, 0.0], [5.0, 0.0], [5.0, 1.0], [3.0, 1.0]],
                 6,
             );
             push(
@@ -9099,7 +9117,7 @@ fn chest_lock_quads(
                     px(d_near, ly0, ta),
                     px(d_near, ly0, tb),
                 ],
-                [[3.0, 5.0], [1.0, 5.0], [1.0, 4.0], [3.0, 4.0]],
+                [[3.0, 0.0], [1.0, 0.0], [1.0, 1.0], [3.0, 1.0]],
                 6,
             );
             push(
@@ -9109,7 +9127,7 @@ fn chest_lock_quads(
                     px(d_near, ly0, tb),
                     px(d_near, ly1, tb),
                 ],
-                [[2.0, 1.0], [2.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[4.0, 1.0], [4.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
                 6,
             );
             push(
@@ -9119,7 +9137,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, ta),
                     px(d_far, ly1, ta),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [2.0, 5.0], [2.0, 1.0]],
+                [[1.0, 1.0], [1.0, 5.0], [0.0, 5.0], [0.0, 1.0]],
                 6,
             );
         }
@@ -9146,7 +9164,7 @@ fn chest_lock_quads(
                     px(tb, ly1, d_near),
                     px(tb, ly1, d_far),
                 ],
-                [[1.0, 1.0], [1.0, 2.0], [3.0, 2.0], [3.0, 1.0]],
+                [[5.0, 0.0], [5.0, 1.0], [3.0, 1.0], [3.0, 0.0]],
                 6,
             );
             push(
@@ -9156,7 +9174,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_far),
                     px(tb, ly0, d_near),
                 ],
-                [[1.0, 4.0], [1.0, 5.0], [3.0, 5.0], [3.0, 4.0]],
+                [[3.0, 1.0], [3.0, 0.0], [1.0, 0.0], [1.0, 1.0]],
                 6,
             );
             push(
@@ -9166,7 +9184,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_far),
                     px(tb, ly1, d_far),
                 ],
-                [[2.0, 1.0], [2.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[3.0, 1.0], [3.0, 5.0], [4.0, 5.0], [4.0, 1.0]],
                 6,
             );
             push(
@@ -9176,7 +9194,7 @@ fn chest_lock_quads(
                     px(ta, ly0, d_near),
                     px(ta, ly1, d_near),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [2.0, 5.0], [2.0, 1.0]],
+                [[0.0, 1.0], [0.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
                 6,
             );
         }
@@ -16330,6 +16348,293 @@ mod tests {
                 "the tip face the z 13..17 band the ride serves, got {p:?}"
             );
         }
+        // THE TIP'S OWN U-LAW (the ride the UVs the glued law keeps —
+        // the rotated outer face the north front's own law wears: the
+        // default world the north facing answers, the min-x end the
+        // model-x1 the u 1 the dark pair keeps)
+        for uv in tip.uvs.iter() {
+            assert!(
+                uv[0] >= 1.0 / 16.0 - 1e-6 && uv[0] <= 3.0 / 16.0 + 1e-6,
+                "the tip face the band 1..3 u span keeps, got {uv:?}"
+            );
+        }
+        let tip_min_x_uv = tip
+            .uvs
+            .iter()
+            .zip(tip.pts.iter())
+            .min_by(|a, b| a.1[0].total_cmp(&b.1[0]))
+            .map(|(uv, _)| uv[0])
+            .expect("the tip's own corners speak");
+        assert!(
+            (tip_min_x_uv - 1.0 / 16.0).abs() < 1e-6,
+            "the tip's min-x end the u 1 the north front's own law keeps, got {tip_min_x_uv}"
+        );
+    }
+
+    #[test]
+    fn the_latch_u_law_the_viewer_left_verdict_wears() {
+        // THE U-LAW WALK (the autopush-301 round — the ModelPart$Cube
+        // ctor's vertex orders the live disasm re-pins: the north
+        // polygon [v20=(x1,y0,z0), v19=(x0,y0,z0), v22=(x0,y1,z0),
+        // v21=(x1,y1,z0)], the south polygon [v23=(x0,y0,z1),
+        // v24=(x1,y0,z1), v25=(x1,y1,z1), v26=(x0,y1,z1)] — the
+        // Polygon ctor's remap walk v[0]->(u1,v0) v[1]->(u0,v0)
+        // v[2]->(u0,v1) v[3]->(u1,v1) the bytecode answers): the
+        // OUTWARD face's screen-left edge the band's texel-right edge
+        // samples (the u the viewer's left the law speaks — the
+        // model-x0 end the u 3 the light column wears, the model-x1
+        // end the u 1 the dark pair), the CAPS the row-0 bands seat
+        // (the UP the (3,0)-(5,1) rect the x0->u3/x1->u5 law, the DOWN
+        // the (1,0)-(3,1) the x0->u1/x1->u3 — the tip edge the v 0 row
+        // the body plane the v 1 keeps), the SIDES the west/east
+        // columns the own bands wear (the -X sliver the u 0..1 seat,
+        // the +X the 3..4)
+        use mc_registry::generated::atlas as gen_atlas;
+        let lock_tile = gen_atlas::CHEST_LOCK_TILES[crate::world::CHEST as usize];
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let latch_of = |quads: &[crate::mesher::Quad],
+                        far: fn(&[f32; 3]) -> bool|
+         -> Vec<crate::mesher::Quad> {
+            quads
+                .iter()
+                .filter(|quad| {
+                    in_cell(quad)
+                        && quad.tile == lock_tile
+                        && quad.pts.iter().all(|p| {
+                            let band = 8.0 - 1e-5;
+                            let tip = 9.0 + 1e-5;
+                            p[0] >= band
+                                && p[0] <= tip
+                                && p[1] >= 8.0 + 6.0 / 16.0 - 1e-5
+                                && p[1] <= 8.0 + 12.0 / 16.0 + 1e-5
+                                && p[2] >= band
+                                && p[2] <= tip
+                        })
+                        && quad.pts.iter().all(far)
+                })
+                .cloned()
+                .collect()
+        };
+        let uv_at =
+            |quad: &crate::mesher::Quad, pick: fn(&[f32; 3], &[[f32; 3]; 4]) -> bool| {
+                quad.uvs
+                    .iter()
+                    .zip(quad.pts.iter())
+                    .find(|(_, p)| pick(p, &quad.pts))
+                    .map(|(uv, _)| *uv)
+                    .unwrap_or_else(|| panic!("the picked corner speaks"))
+            };
+        let min_x =
+            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[0] <= all.iter().map(|q| q[0]).fold(f32::MAX, f32::min) + 1e-6;
+        let max_x =
+            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[0] >= all.iter().map(|q| q[0]).fold(f32::MIN, f32::max) - 1e-6;
+        let min_z =
+            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[2] <= all.iter().map(|q| q[2]).fold(f32::MAX, f32::min) + 1e-6;
+        let max_z =
+            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[2] >= all.iter().map(|q| q[2]).fold(f32::MIN, f32::max) - 1e-6;
+        // THE SOUTH'S OWN VERDICT (the front the +Z far plane — the ta
+        // end the model-x0 the u 3 the light column wears, the tb the u
+        // 1 the dark pair)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_SOUTH,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let q = mesh_chunk(&w, 0, 0, None);
+        let south: Vec<_> = latch_of(&q, |p| (p[2] - 9.0).abs() < 1e-5);
+        assert_eq!(south.len(), 1, "the south outer face the far plane bakes");
+        let uv_min = uv_at(&south[0], min_x)[0];
+        let uv_max = uv_at(&south[0], max_x)[0];
+        assert!(
+            (uv_min - 3.0 / 16.0).abs() < 1e-6,
+            "the south front's min-x end the u 3 the viewer-left law wears, got {uv_min}"
+        );
+        assert!(
+            (uv_max - 1.0 / 16.0).abs() < 1e-6,
+            "the south front's max-x end the u 1 the dark pair wears, got {uv_max}"
+        );
+        // THE CAPS THE ROW-0 PAIR (the top the (3,0)-(5,1) band the
+        // x0->u3/x1->u5 law wears, the bottom the (1,0)-(3,1) the
+        // x0->u1/x1->u3 — the v the 0..1 row the both bands keep)
+        let top: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                in_cell(quad)
+                    && quad.tile == lock_tile
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[1] - (8.0 + 11.0 / 16.0)).abs() < 1e-5)
+            })
+            .cloned()
+            .collect();
+        assert_eq!(top.len(), 1, "the top cap the ly1 plane bakes");
+        assert!(
+            top[0].uvs.iter().all(|uv| uv[0] >= 3.0 / 16.0 - 1e-6
+                && uv[0] <= 5.0 / 16.0 + 1e-6
+                && uv[1] >= -1e-6
+                && uv[1] <= 1.0 / 16.0 + 1e-6),
+            "the top cap the up band (3,0)-(5,1) samples, got {:?}",
+            top[0].uvs
+        );
+        assert!(
+            (uv_at(&top[0], min_x)[0] - 3.0 / 16.0).abs() < 1e-6,
+            "the top cap's min-x end the u 3 the x0 law wears"
+        );
+        assert!(
+            (uv_at(&top[0], max_x)[0] - 5.0 / 16.0).abs() < 1e-6,
+            "the top cap's max-x end the u 5 the x1 law wears"
+        );
+        let bottom: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                in_cell(quad)
+                    && quad.tile == lock_tile
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[1] - (8.0 + 7.0 / 16.0)).abs() < 1e-5)
+            })
+            .cloned()
+            .collect();
+        assert_eq!(bottom.len(), 1, "the bottom cap the ly0 plane bakes");
+        assert!(
+            bottom[0].uvs.iter().all(|uv| uv[0] >= 1.0 / 16.0 - 1e-6
+                && uv[0] <= 3.0 / 16.0 + 1e-6
+                && uv[1] >= -1e-6
+                && uv[1] <= 1.0 / 16.0 + 1e-6),
+            "the bottom cap the down band (1,0)-(3,1) samples, got {:?}",
+            bottom[0].uvs
+        );
+        assert!(
+            (uv_at(&bottom[0], min_x)[0] - 1.0 / 16.0).abs() < 1e-6,
+            "the bottom cap's min-x end the u 1 the x0 law wears"
+        );
+        // THE SIDES THE OWN COLUMNS (the -X sliver the west band's
+        // u 0..1 seat, the +X the east band's 3..4 — the dark 767676
+        // columns the vanilla look wears)
+        let ta_sliver: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                in_cell(quad)
+                    && quad.tile == lock_tile
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[0] - (8.0 + 7.0 / 16.0)).abs() < 1e-5)
+            })
+            .cloned()
+            .collect();
+        assert_eq!(ta_sliver.len(), 1, "the ta sliver the -X plane bakes");
+        assert!(
+            ta_sliver[0]
+                .uvs
+                .iter()
+                .all(|uv| uv[0] >= -1e-6 && uv[0] <= 1.0 / 16.0 + 1e-6),
+            "the -X sliver the west band (0,1)-(1,5) samples, got {:?}",
+            ta_sliver[0].uvs
+        );
+        let tb_sliver: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                in_cell(quad)
+                    && quad.tile == lock_tile
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[0] - (8.0 + 9.0 / 16.0)).abs() < 1e-5)
+            })
+            .cloned()
+            .collect();
+        assert_eq!(tb_sliver.len(), 1, "the tb sliver the +X plane bakes");
+        assert!(
+            tb_sliver[0]
+                .uvs
+                .iter()
+                .all(|uv| uv[0] >= 3.0 / 16.0 - 1e-6 && uv[0] <= 4.0 / 16.0 + 1e-6),
+            "the +X sliver the east band (3,1)-(4,5) samples, got {:?}",
+            tb_sliver[0].uvs
+        );
+        // THE NORTH'S OWN VERDICT (the front the -Z far plane — the tb
+        // end the model-x0 the u 3 wears: the 180-degree model turn the
+        // world-x preimage the larger end answers)
+        let mut wn = empty_world();
+        put(&mut wn, 8, 8, 8, crate::world::CHEST);
+        let qn = mesh_chunk(&wn, 0, 0, None);
+        let north: Vec<_> = latch_of(&qn, |p| (p[2] - 8.0).abs() < 1e-5);
+        assert_eq!(north.len(), 1, "the north outer face the far plane bakes");
+        assert!(
+            (uv_at(&north[0], min_x)[0] - 1.0 / 16.0).abs() < 1e-6,
+            "the north front's min-x end the u 1 the x1 end wears"
+        );
+        assert!(
+            (uv_at(&north[0], max_x)[0] - 3.0 / 16.0).abs() < 1e-6,
+            "the north front's max-x end the u 3 the x0 end wears"
+        );
+        // THE EAST'S OWN VERDICT (the front the +X far plane — the
+        // tangent the z axis rides, the tb end the model-x0 the u 3
+        // wears, the ta the u 1)
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::CHEST);
+        we.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_EAST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let east: Vec<_> = latch_of(&qe, |p| (p[0] - 9.0).abs() < 1e-5);
+        assert_eq!(east.len(), 1, "the east outer face the far plane bakes");
+        assert!(
+            (uv_at(&east[0], min_z)[0] - 1.0 / 16.0).abs() < 1e-6,
+            "the east front's min-z end the u 1 the x1 end wears"
+        );
+        assert!(
+            (uv_at(&east[0], max_z)[0] - 3.0 / 16.0).abs() < 1e-6,
+            "the east front's max-z end the u 3 the x0 end wears"
+        );
+        // THE WEST'S OWN VERDICT (the front the -X far plane — the ta
+        // end the model-x0 the u 3 wears, the tb the u 1)
+        let mut ww = empty_world();
+        put(&mut ww, 8, 8, 8, crate::world::CHEST);
+        ww.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_WEST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qw = mesh_chunk(&ww, 0, 0, None);
+        let west: Vec<_> = latch_of(&qw, |p| (p[0] - 8.0).abs() < 1e-5);
+        assert_eq!(west.len(), 1, "the west outer face the far plane bakes");
+        assert!(
+            (uv_at(&west[0], min_z)[0] - 3.0 / 16.0).abs() < 1e-6,
+            "the west front's min-z end the u 3 the x0 end wears"
+        );
+        assert!(
+            (uv_at(&west[0], max_z)[0] - 1.0 / 16.0).abs() < 1e-6,
+            "the west front's max-z end the u 1 the x1 end wears"
+        );
     }
 
     #[test]
