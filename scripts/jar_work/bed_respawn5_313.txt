@@ -1,0 +1,30 @@
+=== BlockBehaviour: the respawn-possible verdict ===
+=== Block: the override ===
+== Block :: isPossibleToRespawnInThis (Lnet/minecraft/world/level/block/state/BlockState;)Z ==
+    0 aload_1
+    1 invokevirtual #683  net/minecraft/world/level/block/state/BlockState.isSolid ()Z
+    4 ifne #14
+    7 aload_1
+    8 invokevirtual #686  net/minecraft/world/level/block/state/BlockState.liquid ()Z
+   11 ifne #7
+   14 iconst_1
+   15 goto #4
+   18 iconst_0
+   19 ireturn
+=== BedBlock: the shape walk ===
+== BedBlock :: getShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape; ==
+    0 getstatic #315  net/minecraft/world/level/block/BedBlock.SHAPES Ljava/util/Map;
+    3 aload_1
+    4 invokestatic #319  net/minecraft/world/level/block/BedBlock.getConnectedDirection (Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+    7 invokevirtual #149  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   10 invokeinterface java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object;
+   15 checkcast #327  net/minecraft/world/phys/shapes/VoxelShape
+   18 areturn
+=== the VALID_SPAWN tag rows ===
+data/minecraft/tags/block/valid_spawn.json
+{
+ "values": [
+  "minecraft:grass_block",
+  "minecraft:podzol"
+ ]
+}

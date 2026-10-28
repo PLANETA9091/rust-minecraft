@@ -1,0 +1,89 @@
+=== EntityType: the dangerous verdict ===
+== EntityType :: isBlockDangerous (Lnet/minecraft/world/level/block/state/BlockState;)Z ==
+    0 aload_1
+    1 aload_0
+    2 getfield #50  net/minecraft/world/entity/EntityType.immuneTo Lnet/minecraft/tags/TagKey;
+    5 invokevirtual #414  net/minecraft/world/level/block/state/BlockState.is (Lnet/minecraft/tags/TagKey;)Z
+    8 ifeq #5
+   11 iconst_0
+   12 ireturn
+   13 aload_0
+   14 getfield #47  net/minecraft/world/entity/EntityType.fireImmune Z
+   17 ifne #12
+   20 aload_1
+   21 invokestatic #420  net/minecraft/world/level/pathfinder/NodeEvaluator.isBurningBlock (Lnet/minecraft/world/level/block/state/BlockState;)Z
+   24 ifeq #5
+   27 iconst_1
+   28 ireturn
+   29 aload_1
+   30 getstatic #426  net/minecraft/world/level/block/Blocks.WITHER_ROSE Lnet/minecraft/world/level/block/Block;
+   33 invokevirtual #432  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   36 ifne #33
+   39 aload_1
+   40 getstatic #435  net/minecraft/world/level/block/Blocks.SWEET_BERRY_BUSH Lnet/minecraft/world/level/block/Block;
+   43 invokevirtual #432  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   46 ifne #23
+   49 aload_1
+   50 getstatic #438  net/minecraft/world/level/block/Blocks.CACTUS Lnet/minecraft/world/level/block/Block;
+   53 invokevirtual #432  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   56 ifne #13
+   59 aload_1
+   60 getstatic #441  net/minecraft/world/level/block/Blocks.POWDER_SNOW Lnet/minecraft/world/level/block/Block;
+   63 invokevirtual #432  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   66 ifeq #7
+   69 iconst_1
+   70 goto #4
+   73 iconst_0
+   74 ireturn
+=== DismountHelper: the floor walk ===
+== DismountHelper :: isBlockFloorValid (D)Z ==
+    0 dload_0
+    1 invokestatic #25  java/lang/Double.isInfinite (D)Z
+    4 ifne #13
+    7 dload_0
+    8 dconst_1
+    9 dcmpg
+   10 ifge #7
+   13 iconst_1
+   14 goto #4
+   17 iconst_0
+   18 ireturn
+== DismountHelper :: nonClimbableShape (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape; ==
+    0 aload_0
+    1 aload_1
+    2 invokeinterface net/minecraft/world/level/BlockGetter.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    7 astore_2
+    8 aload_2
+    9 getstatic #92  net/minecraft/tags/BlockTags.CLIMBABLE Lnet/minecraft/tags/TagKey;
+   12 invokevirtual #98  net/minecraft/world/level/block/state/BlockState.is (Lnet/minecraft/tags/TagKey;)Z
+   15 ifne #29
+   18 aload_2
+   19 invokevirtual #104  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+   22 instanceof #108  net/minecraft/world/level/block/TrapDoorBlock
+   25 ifeq #23
+   28 aload_2
+   29 getstatic #110  net/minecraft/world/level/block/TrapDoorBlock.OPEN Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   32 invokevirtual #114  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   35 checkcast #118  java/lang/Boolean
+   38 invokevirtual #120  java/lang/Boolean.booleanValue ()Z
+   41 ifeq #7
+   44 invokestatic #123  net/minecraft/world/phys/shapes/Shapes.empty ()Lnet/minecraft/world/phys/shapes/VoxelShape;
+   47 areturn
+   48 aload_2
+   49 aload_0
+   50 aload_1
+   51 invokevirtual #129  net/minecraft/world/level/block/state/BlockState.getCollisionShape (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+   54 areturn
+=== the INVALID_SPAWN_INSIDE tag rows ===
+{
+ "values": [
+  "minecraft:end_portal",
+  "minecraft:end_gateway"
+ ]
+}
+=== the fire / magma kinds (the dangerous vocabulary) ===
+block.minecraft.campfire = Campfire
+block.minecraft.fire = Fire
+block.minecraft.lava = Lava
+block.minecraft.magma_block = Magma Block
+block.minecraft.soul_campfire = Soul Campfire

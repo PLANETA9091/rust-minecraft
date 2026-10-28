@@ -64988,17 +64988,56 @@ impl App {
         // LivingEntity — the fresh CombatTracker's empty entries the
         // new body carries, the shover memory the None answers)
         self.last_hurt_by_mob = None;
-        // THE BED'S OWN RESPAWN RETURN (the autopush-312 round — javap
-        // 26.2 ServerPlayer.findRespawnPositionAndUseSpawnBlock pcs 23-82
-        // the respawnConfig the spawn point prefers: the banked bed
-        // spot the re-anchor serves, the world-spawn the no-bank walk
-        // keeps [the RespawnPosAngle's own around-bed scan the later
-        // round's law keeps — the honest anchor the bed's own center
-        // column the bank wears])
-        let anchor = if self.respawn_point.is_some() {
-            self.respawn_point
-        } else {
-            self.spawn_pose
+        // THE BED'S OWN RESPAWN RETURN (the autopush-313 round — javap
+        // 26.2 ServerPlayer.findRespawnPositionAndUseSpawnBlock pcs 23-94
+        // the static findRespawnAndUseSpawnBlock the scan law re-seats
+        // [scripts/jar_work/bed_respawn{,2,3}_313.txt the dumps serve]:
+        // the banked RespawnData the bed arm the around-bed scan answers
+        // — the RespawnPosAngle (position, yaw, pitch) record the walk
+        // wears, the generic arm the passable pair the 0.1 lift
+        // rides, the EMPTY verdict the missingRespawnBlock arm the
+        // shared spawn + the spawn.not_valid message serves [the
+        // built-over bed the obstructed spot the chat speaks]; the
+        // respawnConfig
+        // null the createDefault arm the no-message fallback keeps —
+        // the never-slept body the world spawn the quiet walk wears)
+        let anchor = match (self.offline_world.as_ref(), self.respawn_point) {
+            (Some(world), Some((x, y, z, yaw, pitch))) => {
+                // THE BLOCKPOS RECOVERY (the RespawnData.pos the anchor
+                // triple's own floor the head cell answers — the
+                // setPosToBed triple the +0.5/+0.6875 lifts the floor
+                // walk unwinds)
+                let pos = (
+                    crate::mth::floor(x),
+                    crate::mth::floor(y),
+                    crate::mth::floor(z),
+                );
+                match crate::world::bed_respawn_and_use_spawn_block(world, pos, yaw, pitch) {
+                    Some(spot) => Some(spot),
+                    None => {
+                        // THE MISSING RESPAWN BLOCK (the scan empty —
+                        // the bed broken, the obstructed scan, the
+                        // generic arm's refuse — the shared spawn the
+                        // fallback wears, the not_valid message the
+                        // chat speaks)
+                        self.push_chat_message(
+                            tr("block.minecraft.spawn.not_valid")
+                                .unwrap_or(
+                                    "You have no home bed or charged respawn anchor, or it was obstructed",
+                                )
+                                .to_string(),
+                        );
+                        self.spawn_pose
+                    }
+                }
+            }
+            // THE NETWORKED LANE (the offline world absent — the
+            // server's own findRespawnAndUseSpawnBlock the teleport
+            // decides, the banked spot the prediction seat keeps)
+            (_, Some(point)) => Some(point),
+            // THE CREATE-DEFAULT ARM (the respawnConfig null — the
+            // never-slept body the world spawn the quiet fallback)
+            (_, None) => self.spawn_pose,
         };
         if let (Some(b), Some((x, y, z, yaw, pitch))) = (self.body.as_mut(), anchor) {
             b.x = x;

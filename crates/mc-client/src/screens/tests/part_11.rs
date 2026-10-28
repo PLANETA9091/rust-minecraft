@@ -2351,3 +2351,334 @@ fn the_offline_bed_the_esc_the_leave_the_wake_wears() {
         "the ESC wake the clock the night keeps"
     );
 }
+
+/// THE BED'S OWN RESPAWN RETURN (the autopush-313 round — javap 26.2
+/// ServerPlayer.findRespawnPositionAndUseSpawnBlock pcs 23-94 the
+/// static findRespawnAndUseSpawnBlock the scan law re-seats —
+/// scripts/jar_work/bed_respawn{,2,3}_313.txt the dumps serve: the
+/// banked RespawnData the bed arm the around-bed scan answers, the
+/// RespawnPosAngle (position, yaw, pitch) record the walk wears —
+/// the REAL walk the placed bed the sleep the skip the far death the
+/// respawn the scan's own stand-up spot the body re-seats).
+#[test]
+fn the_offline_bed_the_respawn_return_the_scan_the_reseat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE PAD (the scan's own ring the ground the walk flattens — the
+    // bed's two cells + the surround rows the strict pass walks: the
+    // stone row the floor the fold lands on, the two air rows the
+    // bbox the overlap never finds)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -1i32..=1 {
+            for dz in -1i32..=2 {
+                world.set(c + dx, surface, c + dz, crate::world::STONE);
+                world.set(c + dx, surface + 1, c + dz, crate::world::AIR);
+                world.set(c + dx, surface + 2, c + dz, crate::world::AIR);
+            }
+        }
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    let head_cell = (c, surface + 1, c + 1);
+    // THE PLAYER'S OWN SEAT (the 312 walk's own pattern — the body the
+    // spawn cell the reach verdict reads, the yaw 180 the RespawnData
+    // the banked angle wears)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    // THE NIGHT PRESS (the sleep door the dark verdict the sleep
+    // stamps — the spawn bank the BEFORE canSleep order wears)
+    app.clock_total = 18_000;
+    assert!(app.on_right_press(0, 0), "the night press the sleep stamps");
+    assert_eq!(app.sleeping_bed, Some(head_cell));
+    let (ax, ay, az) = crate::world::bed_sleep_anchor(head_cell.0, head_cell.1, head_cell.2);
+    assert_eq!(
+        app.respawn_point.map(|(x, y, z, _, _)| (x, y, z)),
+        Some((ax, ay, az)),
+        "the press the RespawnData the head anchor banks"
+    );
+    // THE DEEP-SLEEP'S OWN SKIP (the 100 ticks the morning jump wears
+    // — the wake the walk's own loop completes)
+    for _ in 0..100 {
+        app.update();
+    }
+    assert!(app.sleeping_bed.is_none(), "the skip the wake serves");
+    assert_eq!(app.day_time_now(), 24_000, "the skip the dawn wears");
+    // THE WALK'S OWN DEPARTURE (the far spot the body the honest move
+    // wears — the respawn the teleport-back the distance never keeps)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.x = c as f64 + 6.5;
+        b.y = app.spawn_y as f64;
+        b.z = c as f64 + 0.5;
+        b.vx = 0.0;
+        b.vy = 0.0;
+        b.vz = 0.0;
+    }
+    // THE DEATH (the /kill the honest death walk the part-1 lane wears)
+    app.chat_open = true;
+    app.chat_input = "/kill".into();
+    app.on_chat_submit();
+    assert!(app.dead, "the kill the death arms");
+    // THE RESPAWN (the DeathScreen's own button walk — the static
+    // findRespawnAndUseSpawnBlock the scan law re-seats: the bed arm
+    // the intact bed the scan answers — the yaw-180 the table sine
+    // the EAST side pick serves, the row0 spot the head's east
+    // neighbour the strict pass lands)
+    app.respawn();
+    assert!(!app.dead, "the respawn the death clears");
+    let b = app.body.as_ref().unwrap();
+    assert_eq!(
+        (b.x, b.y, b.z),
+        (c as f64 + 1.5, (surface + 1) as f64, c as f64 + 1.5,),
+        "the scan's row0 spot the body re-seats (the east neighbour the ground floor wears)"
+    );
+    assert_eq!(
+        (b.yaw, b.pitch),
+        (180.0, 90.0),
+        "the RespawnPosAngle's own pair the banked angles wear"
+    );
+    // THE QUIET LANE (the bed intact — the not_valid message never
+    // speaks, the missingRespawnBlock arm never enters)
+    assert!(
+        !app.chat_messages
+            .iter()
+            .any(|(m, _)| m.contains("no home bed")),
+        "the intact bed the chat quiet keeps"
+    );
+    assert_eq!(app.health, MAX_HEALTH, "the respawn the vitals reset");
+}
+
+/// THE BED'S OWN BROKEN-BED RETURN (the autopush-313 round — the
+/// generic arm the passable pair the 0.1 lift rides: the bed broken
+/// the banked pos the air cells answer, the same spot the respawn
+/// keeps [the vanilla feel the broken bed the respawn wears] — the
+/// REAL walk the sleep the skip the dig the death the respawn the
+/// generic arm's own spot wears).
+#[test]
+fn the_offline_bed_the_broken_bed_the_generic_arm_the_spot_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -1i32..=1 {
+            for dz in -1i32..=2 {
+                world.set(c + dx, surface, c + dz, crate::world::STONE);
+                world.set(c + dx, surface + 1, c + dz, crate::world::AIR);
+                world.set(c + dx, surface + 2, c + dz, crate::world::AIR);
+            }
+        }
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    let head_cell = (c, surface + 1, c + 1);
+    let foot_cell = (c, surface + 1, c);
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    app.clock_total = 18_000;
+    assert!(app.on_right_press(0, 0), "the night press the sleep stamps");
+    assert_eq!(
+        app.respawn_point.map(|(x, y, z, _, _)| (x, y, z)),
+        Some(crate::world::bed_sleep_anchor(
+            head_cell.0,
+            head_cell.1,
+            head_cell.2
+        ))
+    );
+    for _ in 0..100 {
+        app.update();
+    }
+    assert!(app.sleeping_bed.is_none(), "the skip the wake serves");
+    // THE BED'S OWN BREAK (the REAL dig walk the 311 lane wears — the
+    // placement's own camera the foot cell the ray enters, the press
+    // arms the destroy, the ticks the cell breaks, the mate the
+    // updateShape the silent keep wears)
+    app.on_press(0, 0);
+    let mut ticks = 0;
+    while app
+        .offline_world
+        .as_ref()
+        .unwrap()
+        .get(foot_cell.0, foot_cell.1, foot_cell.2)
+        != crate::world::AIR
+    {
+        app.update();
+        ticks += 1;
+        assert!(ticks < 400, "the foot's dig completed in time");
+    }
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .get(head_cell.0, head_cell.1, head_cell.2),
+        crate::world::AIR,
+        "the head the mate the updateShape the silent keep wears"
+    );
+    // THE DEATH + THE RESPAWN (the generic arm the passable pair the
+    // 0.1 lift rides — the banked pos the air cells the same spot
+    // answers)
+    app.chat_open = true;
+    app.chat_input = "/kill".into();
+    app.on_chat_submit();
+    assert!(app.dead, "the kill the death arms");
+    app.respawn();
+    assert!(!app.dead, "the respawn the death clears");
+    let b = app.body.as_ref().unwrap();
+    assert_eq!(
+        (b.x, b.y, b.z),
+        (
+            head_cell.0 as f64 + 0.5,
+            head_cell.1 as f64 + 0.1,
+            head_cell.2 as f64 + 0.5,
+        ),
+        "the generic arm the 0.1-lift spot the body re-seats"
+    );
+    assert_eq!(
+        (b.yaw, b.pitch),
+        (180.0, 90.0),
+        "the RespawnPosAngle's own pair the banked angles wear"
+    );
+    // THE QUIET LANE (the generic arm answered — the not_valid message
+    // never speaks)
+    assert!(
+        !app.chat_messages
+            .iter()
+            .any(|(m, _)| m.contains("no home bed")),
+        "the generic arm the chat quiet keeps"
+    );
+}
+
+/// THE BED'S OWN BUILT-OVER FALLBACK (the autopush-313 round — the
+/// EMPTY verdict the missingRespawnBlock arm the shared spawn + the
+/// spawn.not_valid message serves: the bed broken AND the banked spot
+/// the stone occupies — the generic arm's passable pair refuses, the
+/// world spawn the fallback wears, the chat the obstruction speaks —
+/// the REAL walk the sleep the skip the dig the occupy the death the
+/// respawn the fallback plays).
+#[test]
+fn the_offline_bed_the_built_over_the_fallback_the_message_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -1i32..=1 {
+            for dz in -1i32..=2 {
+                world.set(c + dx, surface, c + dz, crate::world::STONE);
+                world.set(c + dx, surface + 1, c + dz, crate::world::AIR);
+                world.set(c + dx, surface + 2, c + dz, crate::world::AIR);
+            }
+        }
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    let head_cell = (c, surface + 1, c + 1);
+    let foot_cell = (c, surface + 1, c);
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    // THE SPAWN LANE'S OWN BANK (the spawn walk's own law — the pose
+    // the body materialized at is the pose the respawn restores: the
+    // manual seat the materialization wears, the spawn_pose the bank
+    // keeps — the offline lane's spawn_offline_body the same triple
+    // banks)
+    app.spawn_pose = app.body.as_ref().map(|b| (b.x, b.y, b.z, b.yaw, b.pitch));
+    app.clock_total = 18_000;
+    assert!(app.on_right_press(0, 0), "the night press the sleep stamps");
+    for _ in 0..100 {
+        app.update();
+    }
+    assert!(app.sleeping_bed.is_none(), "the skip the wake serves");
+    // THE BED'S OWN BREAK (the REAL dig — the foot the camera enters,
+    // the mate the silent keep wears)
+    app.on_press(0, 0);
+    let mut ticks = 0;
+    while app
+        .offline_world
+        .as_ref()
+        .unwrap()
+        .get(foot_cell.0, foot_cell.1, foot_cell.2)
+        != crate::world::AIR
+    {
+        app.update();
+        ticks += 1;
+        assert!(ticks < 400, "the foot's dig completed in time");
+    }
+    // THE BUILDER'S OWN OCCUPY (the head cell the stone takes — the
+    // generic arm's passable pair the refuse wears)
+    app.offline_world.as_mut().unwrap().set(
+        head_cell.0,
+        head_cell.1,
+        head_cell.2,
+        crate::world::STONE,
+    );
+    // THE DEATH + THE RESPAWN (the EMPTY verdict the missingRespawnBlock
+    // arm — the shared spawn the fallback, the not_valid the chat
+    // speaks)
+    app.chat_open = true;
+    app.chat_input = "/kill".into();
+    app.on_chat_submit();
+    assert!(app.dead, "the kill the death arms");
+    app.respawn();
+    assert!(!app.dead, "the respawn the death clears");
+    // THE SHARED SPAWN'S OWN RE-SEAT (the createDefault/missing
+    // fallback the spawn pose the body wears)
+    let (sx, sy, sz, _, _) = app.spawn_pose.expect("the offline spawn pose banks");
+    let b = app.body.as_ref().unwrap();
+    assert_eq!(
+        (b.x, b.y, b.z),
+        (sx, sy, sz),
+        "the fallback the world spawn the body re-seats"
+    );
+    // THE OBSTRUCTION'S OWN MESSAGE (javap the missingRespawnBlock
+    // flag — the spawn.not_valid row the chat speaks)
+    assert!(
+        app.chat_messages
+            .iter()
+            .any(|(m, _)| m.contains("no home bed")),
+        "the built-over spot the not_valid the chat speaks"
+    );
+}

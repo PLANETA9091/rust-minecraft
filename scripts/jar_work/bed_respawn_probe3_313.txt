@@ -1,0 +1,9 @@
+unknown tag 15 at cp 530
+cp#129 = ('num8', b'\xff\xf0\x00\x00\x00\x00\x00\x00')
+cp#111 = ('member', 112, 113)
+   -> cp#112 = ('ref', 114)
+   -> cp#113 = ('member', 115, 116)
+cp#117 = ('member', 77, 118)
+   -> cp#77 = ('ref', 79)
+   -> cp#118 = ('member', 119, 120)
+cp#129 double = -inf

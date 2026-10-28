@@ -1,0 +1,174 @@
+=== ServerPlayer: the static respawn walk ===
+== ServerPlayer :: findRespawnPositionAndUseSpawnBlock (ZLnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)Lnet/minecraft/world/level/portal/TeleportTransition; ==
+    0 aload_0
+    1 invokevirtual #1589  net/minecraft/server/level/ServerPlayer.getRespawnConfig ()Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;
+    4 astore_3
+    5 aload_0
+    6 getfield #195  net/minecraft/server/level/ServerPlayer.server Lnet/minecraft/server/MinecraftServer;
+    9 aload_3
+   10 invokestatic #1593  net/minecraft/server/level/ServerPlayer$RespawnConfig.getDimensionOrDefault (Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;)Lnet/minecraft/resources/ResourceKey;
+   13 invokevirtual #627  net/minecraft/server/MinecraftServer.getLevel (Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/server/level/ServerLevel;
+   16 astore 4
+   18 aload 4
+   20 ifnull #69
+   23 aload_3
+   24 ifnull #65
+   27 aload 4
+   29 aload_3
+   30 iload_1
+   31 invokestatic #1597  net/minecraft/server/level/ServerPlayer.findRespawnAndUseSpawnBlock (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;Z)Ljava/util/Optional;
+   34 astore 5
+   36 aload 5
+   38 invokevirtual #1556  java/util/Optional.isPresent ()Z
+   41 ifeq #42
+   44 aload 5
+   46 invokevirtual #512  java/util/Optional.get ()Ljava/lang/Object;
+   49 checkcast #1601  net/minecraft/server/level/ServerPlayer$RespawnPosAngle
+   52 astore 6
+   54 new #1603  net/minecraft/world/level/portal/TeleportTransition
+   57 dup
+   58 aload 4
+   60 aload 6
+   62 invokevirtual #1605  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.position ()Lnet/minecraft/world/phys/Vec3;
+   65 getstatic #130  net/minecraft/world/phys/Vec3.ZERO Lnet/minecraft/world/phys/Vec3;
+   68 aload 6
+   70 invokevirtual #1606  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.yaw ()F
+   73 aload 6
+   75 invokevirtual #1609  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.pitch ()F
+   78 aload_2
+   79 invokespecial #1612  net/minecraft/world/level/portal/TeleportTransition.<init> (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FFLnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)V
+   82 areturn
+   83 aload_0
+   84 aload_2
+   85 invokestatic #1615  net/minecraft/world/level/portal/TeleportTransition.missingRespawnBlock (Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)Lnet/minecraft/world/level/portal/TeleportTransition;
+   88 areturn
+   89 aload_0
+   90 aload_2
+   91 invokestatic #1619  net/minecraft/world/level/portal/TeleportTransition.createDefault (Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)Lnet/minecraft/world/level/portal/TeleportTransition;
+   94 areturn
+=== ServerPlayer: the respawn readers ===
+== ServerPlayer :: setRespawnPosition (Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;Z)V ==
+    0 iload_2
+    1 ifeq #25
+    4 aload_1
+    5 ifnull #21
+    8 aload_1
+    9 aload_0
+   10 getfield #373  net/minecraft/server/level/ServerPlayer.respawnConfig Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;
+   13 invokevirtual #2945  net/minecraft/server/level/ServerPlayer$RespawnConfig.isSamePosition (Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;)Z
+   16 ifne #10
+   19 aload_0
+   20 getstatic #2949  net/minecraft/server/level/ServerPlayer.SPAWN_SET_MESSAGE Lnet/minecraft/network/chat/Component;
+   23 invokevirtual #2952  net/minecraft/server/level/ServerPlayer.sendSystemMessage (Lnet/minecraft/network/chat/Component;)V
+   26 aload_0
+   27 aload_1
+   28 putfield #373  net/minecraft/server/level/ServerPlayer.respawnConfig Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;
+   31 return
+=== BedBlock: the stand-up scan ===
+== BedBlock :: findStandUpPosition (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;F)Ljava/util/Optional; ==
+    0 aload_3
+    1 invokevirtual #341  net/minecraft/core/Direction.getClockWise ()Lnet/minecraft/core/Direction;
+    4 astore 5
+    6 aload 5
+    8 fload 4
+   10 invokevirtual #344  net/minecraft/core/Direction.isFacingAngle (F)Z
+   13 ifeq #11
+   16 aload 5
+   18 invokevirtual #149  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   21 goto #5
+   24 aload 5
+   26 astore 6
+   28 aload_1
+   29 aload_2
+   30 invokestatic #348  net/minecraft/world/level/block/BedBlock.isBunkBed (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+   33 ifeq #13
+   36 aload_0
+   37 aload_1
+   38 aload_2
+   39 aload_3
+   40 aload 6
+   42 invokestatic #352  net/minecraft/world/level/block/BedBlock.findBunkBedStandUpPosition (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/Direction;)Ljava/util/Optional;
+   45 areturn
+   46 aload_3
+   47 aload 6
+   49 invokestatic #356  net/minecraft/world/level/block/BedBlock.bedStandUpOffsets (Lnet/minecraft/core/Direction;Lnet/minecraft/core/Direction;)[[I
+   52 astore 7
+   54 aload_0
+   55 aload_1
+   56 aload_2
+   57 aload 7
+   59 iconst_1
+   60 invokestatic #360  net/minecraft/world/level/block/BedBlock.findStandUpPositionAtOffset (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/core/BlockPos;[[IZ)Ljava/util/Optional;
+   63 astore 8
+   65 aload 8
+   67 invokevirtual #364  java/util/Optional.isPresent ()Z
+   70 ifeq #6
+   73 aload 8
+   75 areturn
+   76 aload_0
+   77 aload_1
+   78 aload_2
+   79 aload 7
+   81 iconst_0
+   82 invokestatic #360  net/minecraft/world/level/block/BedBlock.findStandUpPositionAtOffset (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/core/BlockPos;[[IZ)Ljava/util/Optional;
+   85 areturn
+== BedBlock :: <clinit> ()V ==
+    0 invokedynamic #526
+    5 invokestatic #527  com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec (Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8 putstatic #1  net/minecraft/world/level/block/BedBlock.CODEC Lcom/mojang/serialization/MapCodec;
+   11 getstatic #533  net/minecraft/world/level/block/state/properties/BlockStateProperties.BED_PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   14 putstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   17 getstatic #538  net/minecraft/world/level/block/state/properties/BlockStateProperties.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   20 putstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   23 invokedynamic #539
+   28 invokestatic #542  net/minecraft/util/Util.make (Ljava/util/function/Supplier;)Ljava/lang/Object;
+   31 checkcast #324  java/util/Map
+   34 putstatic #315  net/minecraft/world/level/block/BedBlock.SHAPES Ljava/util/Map;
+   37 return
+=== CollisionGetter: the free-position spiral ===
+!! net/minecraft/world/phys/shapes/CollisionGetter MISSING
+=== ServerLevel: the shared spawn ===
+=== RespawnPosAngle: the record ===
+== ServerPlayer$RespawnPosAngle :: <init> (Lnet/minecraft/world/phys/Vec3;FF)V ==
+    0 aload_0
+    1 invokespecial #1  java/lang/Record.<init> ()V
+    4 aload_0
+    5 aload_1
+    6 putfield #7  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.position Lnet/minecraft/world/phys/Vec3;
+    9 aload_0
+   10 fload_2
+   11 putfield #13  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.yaw F
+   14 aload_0
+   15 fload_3
+   16 putfield #17  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.pitch F
+   19 return
+=== the language rows (the respawn words) ===
+block.minecraft.frogspawn = Frogspawn
+block.minecraft.respawn_anchor = Respawn Anchor
+block.minecraft.set_spawn = Respawn point set
+block.minecraft.spawn.not_valid = You have no home bed or charged respawn anchor, or it was obstructed
+block.minecraft.spawner = Monster Spawner
+block.minecraft.spawner.desc1 = Interact with Spawn Egg:
+block.minecraft.spawner.desc2 = Sets Mob Type
+block.minecraft.trial_spawner = Trial Spawner
+subtitles.block.creaking_heart.spawn = Creaking Heart awakens
+subtitles.block.end_portal.spawn = End Portal opens
+subtitles.block.frogspawn.hatch = Tadpole hatches
+subtitles.block.respawn_anchor.ambient = Respawn Anchor whooshes
+subtitles.block.respawn_anchor.charge = Respawn Anchor is charged
+subtitles.block.respawn_anchor.deplete = Respawn Anchor depletes
+subtitles.block.respawn_anchor.set_spawn = Respawn Anchor sets spawn
+subtitles.block.trial_spawner.about_to_spawn_item = Ominous item prepares
+subtitles.block.trial_spawner.ambient = Trial Spawner crackles
+subtitles.block.trial_spawner.ambient_charged = Ominous crackling
+subtitles.block.trial_spawner.ambient_ominous = Ominous crackling
+subtitles.block.trial_spawner.charge_activate = Omen engulfs Trial Spawner
+subtitles.block.trial_spawner.close_shutter = Trial Spawner closes
+subtitles.block.trial_spawner.detect_player = Trial Spawner charges up
+subtitles.block.trial_spawner.eject_item = Trial Spawner ejects items
+subtitles.block.trial_spawner.ominous_activate = Omen engulfs Trial Spawner
+subtitles.block.trial_spawner.open_shutter = Trial Spawner opens
+subtitles.block.trial_spawner.spawn_item = Ominous item drops
+subtitles.block.trial_spawner.spawn_item_begin = Ominous item appears
+subtitles.block.trial_spawner.spawn_mob = Trial Spawner spawns a mob
+menu.returnToGame = Back to Game

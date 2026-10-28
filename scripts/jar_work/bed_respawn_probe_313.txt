@@ -1,0 +1,105 @@
+== DismountHelper :: isBlockFloorValid (D)Z ==
+     0: op=0x26
+     1: op=0xb8 operand=25
+     4: op=0x9a -> ABS 17
+     7: op=0x26
+     8: op=0x0f
+     9: op=0x98
+    10: op=0x9c -> ABS 17
+    13: op=0x04
+    14: op=0xa7 -> ABS 18
+    17: op=0x03
+    18: op=0xac
+== CollisionGetter :: getBlockCollisions (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/lang/Iterable; ==
+     0: op=0x2a
+     1: op=0x2b
+     2: op=0xc7 -> ABS 11
+     5: op=0xb8 operand=116
+     8: op=0xa7 -> ABS 15
+    11: op=0x2b
+    12: op=0xb8 operand=120
+    15: op=0x2c
+    16: op=0xb9 operand=112
+    19: op=0x03
+    20: op=0x00
+    21: op=0xb0
+== CollisionGetter :: findFreePosition (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/Vec3;DDD)Ljava/util/Optional; ==
+     0: op=0x2c
+     1: op=0xb6 operand=7
+     4: op=0x99 -> ABS 11
+     7: op=0xb8 operand=230
+    10: op=0xb0
+    11: op=0x2c
+    12: op=0xb6 operand=233
+    15: op=0x18
+    16: op=0x04
+    17: op=0x18
+    18: op=0x06
+    19: op=0x18
+    20: op=0x08
+    21: op=0xb6 operand=236
+    24: op=0x3a
+    25: op=0x0a
+    26: op=0x2a
+    27: op=0x2b
+    28: op=0x19 operand=2745
+    31: op=0x00
+    32: op=0x37
+    33: op=0x03
+    34: op=0x00
+    35: op=0xb9 operand=242
+    38: op=0x01
+    39: op=0x00
+    40: op=0x03
+    41: op=0xb8 operand=246
+    44: op=0x2a
+    45: op=0xba operand=252
+    48: op=0x00
+    49: op=0x00
+    50: op=0xb9 operand=256
+    53: op=0x02
+    54: op=0x00
+    55: op=0xba operand=262
+    58: op=0x00
+    59: op=0x00
+    60: op=0xb9 operand=265
+    63: op=0x02
+    64: op=0x00
+    65: op=0x18
+    66: op=0x04
+    67: op=0x18
+    68: op=0x06
+    69: op=0x18
+    70: op=0x08
+    71: op=0xba operand=269
+    74: op=0x00
+    75: op=0x00
+    76: op=0xb9 operand=272
+    79: op=0x02
+    80: op=0x00
+    81: op=0xba operand=275
+    84: op=0x00
+    85: op=0x00
+    86: op=0xb9 operand=272
+    89: op=0x02
+    90: op=0x00
+    91: op=0xb8 operand=276
+    94: op=0xba operand=278
+    97: op=0x00
+    98: op=0x00
+    99: op=0xb9 operand=281
+   102: op=0x03
+   103: op=0x00
+   104: op=0xc0 operand=8
+   107: op=0x3a
+   108: op=0x0b
+   109: op=0x2c
+   110: op=0x19 operand=2994
+   113: op=0x01
+   114: op=0x1d
+   115: op=0xb8 operand=288
+   118: op=0x3a
+   119: op=0x0c
+   120: op=0x19 operand=3117
+   123: op=0xb6 operand=292
+   126: op=0xb0

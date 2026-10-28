@@ -1,0 +1,73 @@
+== BlockGetter :: getBlockFloorHeight (Lnet/minecraft/world/phys/shapes/VoxelShape;Ljava/util/function/Supplier;)D ==
+     0: op=0x2b
+     1: op=0xb6 operand=107
+     4: op=0x9a -> ABS 15
+     7: op=0x2b
+     8: op=0xb2 operand=111
+    11: op=0xb6 operand=117
+    14: op=0xaf
+    15: op=0x2c
+    16: op=0xb9 operand=121
+    19: op=0x01
+    20: op=0x00
+    21: op=0xc0 operand=77
+    24: op=0xb2 operand=111
+    27: op=0xb6 operand=117
+    30: op=0x4a
+    31: op=0x29
+    32: op=0x0f
+    33: op=0x97
+    34: op=0x9b -> ABS 41
+    37: op=0x29
+    38: op=0x0f
+    39: op=0x67
+    40: op=0xaf
+    41: op=0x14 operand=129
+    44: op=0xaf
+== BlockGetter :: getBlockFloorHeight (Lnet/minecraft/core/BlockPos;)D ==
+     0: op=0x2a
+     1: op=0x2a
+     2: op=0x2b
+     3: op=0xb9 operand=23
+     6: op=0x02
+     7: op=0x00
+     8: op=0x2a
+     9: op=0x2b
+    10: op=0xb6 operand=131
+    13: op=0x2a
+    14: op=0x2b
+    15: op=0xba operand=134
+    18: op=0x00
+    19: op=0x00
+    20: op=0xb9 operand=137
+    23: op=0x03
+    24: op=0x00
+    25: op=0xaf
+== DismountHelper :: nonClimbableShape (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape; ==
+     0: op=0x2a
+     1: op=0x2b
+     2: op=0xb9 operand=86
+     5: op=0x02
+     6: op=0x00
+     7: op=0x4d
+     8: op=0x2c
+     9: op=0xb2 operand=92
+    12: op=0xb6 operand=98
+    15: op=0x9a -> ABS 44
+    18: op=0x2c
+    19: op=0xb6 operand=104
+    22: op=0xc1 operand=108
+    25: op=0x99 -> ABS 48
+    28: op=0x2c
+    29: op=0xb2 operand=110
+    32: op=0xb6 operand=114
+    35: op=0xc0 operand=118
+    38: op=0xb6 operand=120
+    41: op=0x99 -> ABS 48
+    44: op=0xb8 operand=123
+    47: op=0xb0
+    48: op=0x2c
+    49: op=0x2a
+    50: op=0x2b
+    51: op=0xb6 operand=129
+    54: op=0xb0

@@ -1,0 +1,52 @@
+== lambda$useWithoutItem$0 (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;)V ==
+    0 aload_1
+    1 invokevirtual #446  net/minecraft/world/entity/player/Player$BedSleepingProblem.message ()Lnet/minecraft/network/chat/Component;
+    4 ifnull #11
+    7 aload_0
+    8 aload_1
+    9 invokevirtual #446  net/minecraft/world/entity/player/Player$BedSleepingProblem.message ()Lnet/minecraft/network/chat/Component;
+   12 invokevirtual #195  net/minecraft/world/entity/player/Player.sendOverlayMessage (Lnet/minecraft/network/chat/Component;)V
+   15 return
+== lambda$static$1 ()Ljava/util/Map; ==
+    0 dconst_0
+    1 dconst_0
+    2 dconst_0
+    3 ldc2_w #452 = 3.0
+    6 ldc2_w #452 = 3.0
+    9 ldc2_w #452 = 3.0
+   12 invokestatic #454  net/minecraft/world/level/block/Block.box (DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+   15 astore_0
+   16 aload_0
+   17 getstatic #458  com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90 Lcom/mojang/math/OctahedralGroup;
+   20 invokestatic #464  net/minecraft/world/phys/shapes/Shapes.rotate (Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+   23 astore_1
+   24 ldc2_w #470 = 16.0
+   27 ldc2_w #452 = 3.0
+   30 ldc2_w #472 = 9.0
+   33 invokestatic #474  net/minecraft/world/level/block/Block.column (DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+   36 iconst_2
+   37 anewarray #327  net/minecraft/world/phys/shapes/VoxelShape
+   40 dup
+   41 iconst_0
+   42 aload_0
+   43 aastore
+   44 dup
+   45 iconst_1
+   46 aload_1
+   47 aastore
+   48 invokestatic #478  net/minecraft/world/phys/shapes/Shapes.or (Lnet/minecraft/world/phys/shapes/VoxelShape;[Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+   51 invokestatic #482  net/minecraft/world/phys/shapes/Shapes.rotateHorizontal (Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+   54 areturn
+== lambda$static$0 (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App; ==
+    0 aload_0
+    1 getstatic #486  net/minecraft/world/item/DyeColor.CODEC Lnet/minecraft/util/StringRepresentable$EnumCodec;
+    4 ldc_w #491 = color
+    7 invokevirtual #492  net/minecraft/util/StringRepresentable$EnumCodec.fieldOf (Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+   10 invokedynamic #498
+   15 invokevirtual #502  com/mojang/serialization/MapCodec.forGetter (Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+   18 invokestatic #508  net/minecraft/world/level/block/BedBlock.propertiesCodec ()Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+   21 invokevirtual #512  com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group (Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P2;
+   24 aload_0
+   25 invokedynamic #518
+   30 invokevirtual #521  com/mojang/datafixers/Products$P2.apply (Lcom/mojang/datafixers/kinds/Applicative;Ljava/util/function/BiFunction;)Lcom/mojang/datafixers/kinds/App;
+   33 areturn

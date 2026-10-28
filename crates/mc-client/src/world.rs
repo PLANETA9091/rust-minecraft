@@ -4184,6 +4184,409 @@ pub fn bed_fade_alpha(sleep_counter: u32) -> f32 {
     BED_FADE_ALPHA_MAX * a
 }
 
+// ===========================================================================
+// THE BED'S OWN RESPAWN RETURN WALK (the autopush-313 round — javap 26.2
+// the live disasm the walk banks — scripts/jar_work/bed_respawn{,2,3,4}_313.txt
+// the dumps serve, scripts/bed_respawn_probe{,2,3}_313.py the absolute-target
+// + constant-pool probes the branch law pins): ServerPlayer
+// .findRespawnAndUseSpawnBlock the static core the RespawnConfig
+// (RespawnData, forced) pair carries, the bed arm the BED_RULE.canSetSpawn
+// gate the ALWAYS row the default rule keeps, BedBlock.findStandUpPosition
+// the around-bed scan the clockwise side pick + the offset tables the
+// strict->loose two-pass fold answers, DismountHelper
+// .findSafeDismountLocation the per-cell verdict the dangerous rows + the
+// floor walk + the bbox collision + the INVALID_SPAWN_INSIDE pair + the
+// border the refuse chain serves, the RespawnPosAngle (position, yaw,
+// pitch) record the return shape wears, the generic arm the
+// isPossibleToRespawnInThis pair the 0.5/0.1/0.5 triple rides, the EMPTY
+// verdict the missingRespawnBlock arm the shared spawn + the not_valid
+// message speaks.
+// ===========================================================================
+
+/// THE DISMOUNT'S OWN DANGEROUS ROWS (javap EntityType.isBlockDangerous
+/// pcs 0-74 + NodeEvaluator.isBurningBlock — the player's own verdict:
+/// the burning block family the BaseFireBlock ∨ LAVA ∨ CampfireBlock
+/// rows speak, the WITHER_ROSE/SWEET_BERRY_BUSH/CACTUS/POWDER_SNOW the
+/// specialty tail answers). The offline palette the kinds it carries
+/// wears — the fire pair, the lava, the campfire quartet [the lit and
+/// the unlit the same CampfireBlock class the instanceof keeps]; the
+/// magma/wither-rose/berry/cactus/powder-snow rows the palette's own
+/// absence keeps (the kinds never registered, the verdict never
+/// enters — the honest gap the worklog notes keep).
+#[inline]
+pub fn bed_dismount_dangerous(kind: u16) -> bool {
+    kind == FIRE || kind == SOUL_FIRE || kind == LAVA || is_campfire(kind)
+}
+
+/// THE GENERIC ARM'S OWN VERDICT (javap Block.isPossibleToRespawnInThis
+/// pcs 0-19 — the branch targets the relative operands pin: the
+/// `isSolid()` TRUE arm the FALSE answer wears, the `liquid()` TRUE arm
+/// the same — the verdict the PASSABLE block keeps [the air the pass,
+/// the solid/liquid the refuse]: "possible to respawn IN this" — the
+/// generic arm the pos + the above pair the passable reads serve, the
+/// broken bed's own spot the 0.1-lift respawn the air cells answer,
+/// the built-over spot the refuse the not_valid fallback speaks).
+#[inline]
+pub fn bed_respawn_possible(kind: u16) -> bool {
+    matches!(collision_shape(kind), CollisionShape::Empty) && kind != WATER && kind != LAVA
+}
+
+/// THE INVALID-SPAWN-INSIDE PAIR (the 26.2 tag rows the jar's own
+/// data/minecraft/tags/block/invalid_spawn_inside.json speaks — the
+/// end portal + the end gateway the two values keep; the player-only
+/// arm the dismount's refuse chain wears).
+#[inline]
+pub fn bed_invalid_spawn_inside(kind: u16) -> bool {
+    kind == END_PORTAL || kind == END_GATEWAY
+}
+
+/// THE CLOCKWISE QUARTER (javap Direction.getClockWise()Direction
+/// pcs 0-57 the tableswitch the ordinal order keeps — NORTH->EAST,
+/// EAST->SOUTH, SOUTH->WEST, WEST->NORTH the vanilla plane's own turn
+/// wears; our facing bytes the low pair carry, the +1 the same ring
+/// answers).
+#[inline]
+pub fn bed_clockwise(facing: u8) -> u8 {
+    (facing + 1) & 0b11
+}
+
+/// THE YAW QUADRANT'S OWN READ (javap Direction.isFacingAngle(F)Z pcs
+/// 0-51 — the `yaw * 0.017453292f` radians fold the cp#106 float
+/// constant keeps (the probe scripts/jar_work/bed_respawn_probe_313.txt
+/// the pool row pins), the `Mth.sin`/`Mth.cos` the TABLE lookups the
+/// f2d widening rides [the crate::mth clone the same 65536 rows
+/// wears], the `normal.x * -sin + normal.z * cos > 0.0f` dot the
+/// facing verdict serves — the direction the yaw's own side the
+/// strict `>` compare keeps).
+pub fn bed_is_facing_angle(facing: u8, yaw: f32) -> bool {
+    let g = yaw * (std::f32::consts::PI / 180.0);
+    let h = -crate::mth::sin(f64::from(g));
+    let i = crate::mth::cos(f64::from(g));
+    let (nx, nz) = bed_facing_offset(facing);
+    f32::from(nx as i16) * h + f32::from(nz as i16) * i > 0.0
+}
+
+/// THE SIDE PICK (javap BedBlock.findStandUpPosition pcs 0-26 — the
+/// clockwise neighbour the FIRST arm answers, the `isFacingAngle(yaw)`
+/// true arm the opposite wears: the scan the side the player's own
+/// yaw the table sine's quantized verdict picks [yaw 180.0 the
+/// SIN[32767] row the +9.6e-5 keeps — the WEST the false answer the
+/// opposite arm the EAST serves]).
+#[inline]
+pub fn bed_standup_side(facing: u8, yaw: f32) -> u8 {
+    let cw = bed_clockwise(facing);
+    if bed_is_facing_angle(cw, yaw) {
+        cw ^ 0b10
+    } else {
+        cw
+    }
+}
+
+/// THE SURROUND RING (javap BedBlock.bedSurroundStandUpOffsets(FF)[[I
+/// pcs 0-291 the ten rows the byte-coded [[I table keeps — the 26.2
+/// disasm's own order: the side, the side-facing, the side-2facing,
+/// the -2facing, the -(side+2facing), the -(side+facing), THE -SIDE
+/// ROW THE 26.2 REFRESH WEARS [the 1.20-era -facing row the jar's own
+/// aload_1 read retires], the facing-side, the facing, the
+/// facing+side — each row the (x, z) pair the bed cell's neighbours
+/// walk wears).
+pub fn bed_surround_stand_up_offsets(facing: u8, side: u8) -> [(i32, i32); 10] {
+    let (fx, fz) = bed_facing_offset(facing);
+    let (sx, sz) = bed_facing_offset(side);
+    [
+        (sx, sz),
+        (sx - fx, sz - fz),
+        (sx - 2 * fx, sz - 2 * fz),
+        (-2 * fx, -2 * fz),
+        (-sx - 2 * fx, -sz - 2 * fz),
+        (-sx - fx, -sz - fz),
+        (-sx, -sz),
+        (fx - sx, fz - sz),
+        (fx, fz),
+        (sx + fx, sz + fz),
+    ]
+}
+
+/// THE ABOVE PAIR (javap BedBlock.bedAboveStandUpOffsets(F)[[I pcs
+/// 0-47 — the bed cell's own column {0, 0} the first row keeps, the
+/// facing-opposite neighbour the second wears: the two rows the
+/// stand-ON-the-bed lane speaks [the bed's own 9-px collision the
+/// floor walk's first arm answers]).
+pub fn bed_above_stand_up_offsets(facing: u8) -> [(i32, i32); 2] {
+    let (fx, fz) = bed_facing_offset(facing);
+    [(0, 0), (-fx, -fz)]
+}
+
+/// THE STAND-UP'S OWN FLOOR WALK (javap BlockGetter.getBlockFloorHeight
+/// the two-arg overload pcs 0-44 the absolute targets pin —
+/// scripts/jar_work/bed_respawn_probe2_313.txt the walk banks: the
+/// shape non-empty the `shape.max(Y)` first arm answers [the
+/// [`shape_slabs`] decode the box top serves], the EMPTY arm the
+/// below walk the `d < 1.0 ? -Infinity : d - 1.0` fold wears [the
+/// ldc2_w cp#129 the NEGATIVE_INFINITY keeps — the probe
+/// bed_respawn_probe3_313.txt the pool row pins]). The RECURSION'S
+/// OWN FOLD the honest depth law serves: the direct-support cell
+/// (the solid ONE below) the fold once the 0.0 floor speaks, the
+/// deeper shaft the second fold the poison wears (the h - 1.0 <= 0.5
+/// < 1.0 the proof the fold's own compare keeps) — the no-floor
+/// answer the NEGATIVE_INFINITY constant wears). The walk the CELL-LOCAL
+/// units the vanilla shapes keep (the shape.max(Y) the [0, 1.5] band the
+/// fold consumes — the absolute tops the [`shape_slabs`] returns the
+/// local read unwinds).
+pub fn bed_standup_floor(world: &World, x: i32, y: i32, z: i32) -> f64 {
+    // THE FIRST ARM — the candidate's own collision top (the bed cell
+    // the 0.5625 answer, the slab the 0.5, the full cube the 1.0 the
+    // INVALID verdict wears; the [`shape_slabs`] tuple the (x0, x1,
+    // y0, y1, z0, z1) order the y pair the third wears)
+    if let Some((_, _, _, y1, _, _)) = shape_slabs(collision_shape_at(world, x, y, z), x, y, z) {
+        return y1 - f64::from(y);
+    }
+    // THE EMPTY ARM — the below cell the fold once answers (the solid
+    // directly below the 1.0 the 0.0 floor speaks — the flat-ground
+    // respawn the vanilla feel keeps)
+    let below = y - 1;
+    if let Some((_, _, _, y1, _, _)) =
+        shape_slabs(collision_shape_at(world, x, below, z), x, below, z)
+    {
+        let local = y1 - f64::from(below);
+        return if local < 1.0 {
+            f64::NEG_INFINITY
+        } else {
+            local - 1.0
+        };
+    }
+    // THE DEEPER SHAFT — the second fold the poison keeps (the fold's
+    // own < 1.0 arm the -Infinity constant wears, the no-floor answer)
+    f64::NEG_INFINITY
+}
+
+/// THE STAND-UP'S OWN BBOX COLLISION (the dismount's `getBlockCollisions`
+/// walk the [`shape_slabs`] decode wears — the player's own 0.6 x 1.8
+/// AABB the makeBoundingBox(vec) law builds [the Vec3 the FEET pos],
+/// the strict `<` intersect the vanilla AABB law keeps, the touching
+/// edges the honest pass wears).
+fn bed_bbox_collides(world: &World, bb: (f64, f64, f64, f64, f64, f64)) -> bool {
+    let (bx0, by0, bz0, bx1, by1, bz1) = bb;
+    for cx in (bx0.floor() as i32)..=(bx1.floor() as i32) {
+        for cy in (by0.floor() as i32)..=(by1.floor() as i32) {
+            for cz in (bz0.floor() as i32)..=(bz1.floor() as i32) {
+                // the [`shape_slabs`] tuple the (x0, x1, y0, y1, z0,
+                // z1) order the strict `<` intersect wears
+                if let Some((sx0, sx1, sy0, sy1, sz0, sz1)) =
+                    shape_slabs(collision_shape_at(world, cx, cy, cz), cx, cy, cz)
+                {
+                    if sx0 < bx1 && bx0 < sx1 && sy0 < by1 && by0 < sy1 && sz0 < bz1 && bz0 < sz1 {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// THE STAND-UP'S OWN BORDER (javap the `getWorldBorder().isWithinBounds`
+/// tail — the offline grid the SENT columns the honest equivalent
+/// wears: the AABB's four corner columns the [`World::column_sent`]
+/// read answers, the unsent edge the refuse keeps).
+fn bed_bbox_border_ok(world: &World, bb: (f64, f64, f64, f64, f64, f64)) -> bool {
+    let (bx0, _, bz0, bx1, _, bz1) = bb;
+    world.column_sent(bx0.floor() as i32, bz0.floor() as i32)
+        && world.column_sent(bx1.floor() as i32, bz0.floor() as i32)
+        && world.column_sent(bx0.floor() as i32, bz1.floor() as i32)
+        && world.column_sent(bx1.floor() as i32, bz1.floor() as i32)
+}
+
+/// THE DISMOUNT'S OWN PER-CELL VERDICT (javap DismountHelper
+/// .findSafeDismountLocation pcs 0-216 the absolute targets pin —
+/// scripts/jar_work/bed_respawn3_313.txt the walk banks: the STRICT
+/// flag the candidate's own dangerous read arms [pc 0-18], the floor
+/// walk the validity verdict answers [pc 20-48 — the infinite the
+/// >= 1.0 the refuse pair the isBlockFloorValid law speaks, the
+/// absolute-target probe the branch law pins], the STRICT arm the
+/// floor <= 0.0 the below-cell dangerous check adds [pc 50-79], the
+/// `Vec3.upFromBottomCenterOf(pos, floor)` the (x+0.5, y+floor,
+/// z+0.5) triple speaks [pc 80-86], the bbox collision the iterate
+/// refuse serves [pc 88-150], the PLAYER arm the INVALID_SPAWN_INSIDE
+/// pair the cell + the above reads wear [pc 154-197], the border the
+/// corner columns the offline law keeps [pc 198-213]).
+pub fn bed_standup_dismount(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+    strict: bool,
+) -> Option<(f64, f64, f64)> {
+    let kind = if y < 0 || y >= crate::world::CHUNK_Y as i32 {
+        AIR
+    } else {
+        world.get(x, y, z)
+    };
+    // THE STRICT ARM — the candidate's own dangerous read (pc 0-18)
+    if strict && bed_dismount_dangerous(kind) {
+        return None;
+    }
+    // THE FLOOR WALK + THE VALIDITY (pc 20-48 — isBlockFloorValid the
+    // finite && < 1.0 fold the absolute targets wear)
+    let floor = bed_standup_floor(world, x, y, z);
+    if f64::is_infinite(floor) || floor >= 1.0 {
+        return None;
+    }
+    // THE STRICT ARM'S BELOW CHECK (pc 50-79 — the floor <= 0.0 the
+    // below cell the dangerous refusal adds)
+    if strict && floor <= 0.0 {
+        let below = if y - 1 < 0 {
+            AIR
+        } else {
+            world.get(x, y - 1, z)
+        };
+        if bed_dismount_dangerous(below) {
+            return None;
+        }
+    }
+    // THE VEC (pc 80-86 — the upFromBottomCenterOf triple, the floor
+    // the candidate cell's own local band the lift rides)
+    let vec = (f64::from(x) + 0.5, f64::from(y) + floor, f64::from(z) + 0.5);
+    // THE BBOX OVERLAP (pc 88-150 — the player's own box the collision
+    // refuse serves)
+    let bb = (
+        vec.0 - 0.3,
+        vec.1,
+        vec.2 - 0.3,
+        vec.0 + 0.3,
+        vec.1 + 1.8,
+        vec.2 + 0.3,
+    );
+    if bed_bbox_collides(world, bb) {
+        return None;
+    }
+    // THE PLAYER'S OWN INVALID_SPAWN_INSIDE PAIR (pc 154-197 — the
+    // cell + the above the end-portal/end-gateway rows refuse)
+    let above = if y + 1 >= crate::world::CHUNK_Y as i32 {
+        AIR
+    } else {
+        world.get(x, y + 1, z)
+    };
+    if bed_invalid_spawn_inside(kind) || bed_invalid_spawn_inside(above) {
+        return None;
+    }
+    // THE BORDER (pc 198-213 — the corner columns the sent grid wears)
+    if !bed_bbox_border_ok(world, bb) {
+        return None;
+    }
+    Some(vec)
+}
+
+/// THE OFFSET SCAN (javap BedBlock.findStandUpPositionAtOffset pcs 0-93
+/// — the offsets the (pos.x + ox, pos.y, pos.z + oz) cells the mutable
+/// set answers [pc 34-58], the dismount verdict the per-cell walk
+/// serves [pc 62-68], the FIRST Some the return keeps [pc 73-83], the
+/// walk-out the empty answer wears [pc 90-93]).
+pub fn bed_standup_at_offsets(
+    world: &World,
+    base: (i32, i32, i32),
+    offsets: &[(i32, i32)],
+    strict: bool,
+) -> Option<(f64, f64, f64)> {
+    for &(ox, oz) in offsets {
+        if let Some(vec) = bed_standup_dismount(world, base.0 + ox, base.1, base.2 + oz, strict) {
+            return Some(vec);
+        }
+    }
+    None
+}
+
+/// THE BUNK BED'S OWN SIX-PASS FOLD (javap BedBlock.findBunkBedStandUpPosition
+/// pcs 0-141 — the bunk verdict the below cell the bed the isBunkBed
+/// read arms: the surround ring the STRICT pass at the pos the first
+/// lane keeps, the below cell's own ring the second, the above pair
+/// the third, then the same trio the LOOSE pass wears [pcs 8-141 the
+/// six invokestatic rows the iconst_1/iconst_0 pairs speak]).
+fn bed_bunk_standup_position(
+    world: &World,
+    pos: (i32, i32, i32),
+    facing: u8,
+    side: u8,
+) -> Option<(f64, f64, f64)> {
+    let surround = bed_surround_stand_up_offsets(facing, side);
+    let above = bed_above_stand_up_offsets(facing);
+    let below = (pos.0, pos.1 - 1, pos.2);
+    bed_standup_at_offsets(world, pos, &surround, true)
+        .or_else(|| bed_standup_at_offsets(world, below, &surround, true))
+        .or_else(|| bed_standup_at_offsets(world, pos, &above, true))
+        .or_else(|| bed_standup_at_offsets(world, pos, &surround, false))
+        .or_else(|| bed_standup_at_offsets(world, below, &surround, false))
+        .or_else(|| bed_standup_at_offsets(world, pos, &above, false))
+}
+
+/// THE STAND-UP SCAN'S OWN TOP WALK (javap BedBlock.findStandUpPosition
+/// pcs 0-85 — the clockwise side pick the yaw quadrant answers [pcs
+/// 0-26], the bunk verdict the below cell the bed the six-pass fold
+/// serves [pc 28-45], the surround ++ above table the 12 rows the
+/// ArrayUtils.addAll arm keeps [pcs 46-52], the STRICT pass the first
+/// answer [pcs 54-75], the LOOSE pass the tail [pcs 76-85]).
+pub fn bed_find_standup_position(
+    world: &World,
+    pos: (i32, i32, i32),
+    facing: u8,
+    yaw: f32,
+) -> Option<(f64, f64, f64)> {
+    let side = bed_standup_side(facing, yaw);
+    // THE BUNK LANE (isBunkBed — the below cell the bed the verdict)
+    if is_bed(world.get(pos.0, pos.1 - 1, pos.2)) {
+        return bed_bunk_standup_position(world, pos, facing, side);
+    }
+    // THE SURROUND ++ ABOVE TABLE (the 12 rows the concat wears)
+    let mut table = [(0i32, 0i32); 12];
+    table[..10].copy_from_slice(&bed_surround_stand_up_offsets(facing, side));
+    table[10..].copy_from_slice(&bed_above_stand_up_offsets(facing));
+    bed_standup_at_offsets(world, pos, &table, true)
+        .or_else(|| bed_standup_at_offsets(world, pos, &table, false))
+}
+
+/// THE RESPAWN RETURN'S OWN STATIC WALK (javap ServerPlayer
+/// .findRespawnAndUseSpawnBlock(LServerLevel;LRespawnConfig;Z)
+/// LOptional; pcs 0-331 — the RespawnData the pos/yaw/pitch trio the
+/// config's own record keeps [pcs 0-21], the forced flag [pc 23-27],
+/// THE ANCHOR ARM the palette's own absence keeps [pcs 44-161 — the
+/// RespawnAnchorBlock kinds never registered, the honest gap the
+/// worklog notes serve], THE BED ARM the BED_RULE.canSetSpawn gate the
+/// ALWAYS row the default rule keeps [pcs 162-224 — the BedRule
+/// clinit's (WHEN_DARK, ALWAYS, false, no_sleep) the
+/// CAN_SLEEP_WHEN_DARK record speaks; the custom-rule worlds the
+/// later round's law keeps], the !forced the empty verdict [pcs
+/// 225-233], THE GENERIC ARM the passable pair the
+/// above cell rides [pcs 234-327 — the `!isSolid() && !liquid()` fold
+/// the relative-operand targets pin, the Vec3 the x+0.5/y+0.1/z+0.5 triple
+/// the ldc2_w 0.5/0.1 rows speak], the walk-out the empty answer
+/// [pcs 328-331]). The RespawnPosAngle the (position, yaw, pitch)
+/// record the return shape wears [javap ServerPlayer$RespawnPosAngle
+/// the <init> triple speaks].
+pub fn bed_respawn_and_use_spawn_block(
+    world: &World,
+    pos: (i32, i32, i32),
+    yaw: f32,
+    pitch: f32,
+) -> Option<(f64, f64, f64, f32, f32)> {
+    let kind = world.get(pos.0, pos.1, pos.2);
+    // THE BED ARM — the scan the RespawnPosAngle the map verdict wears
+    if is_bed(kind) {
+        let facing = bed_variant_facing(world.variant(pos.0, pos.1, pos.2));
+        return bed_find_standup_position(world, pos, facing, yaw)
+            .map(|(x, y, z)| (x, y, z, yaw, pitch));
+    }
+    // THE GENERIC ARM — the passable pair the 0.1 lift rides
+    if bed_respawn_possible(kind) && bed_respawn_possible(world.get(pos.0, pos.1 + 1, pos.2)) {
+        return Some((
+            f64::from(pos.0) + 0.5,
+            f64::from(pos.1) + 0.1,
+            f64::from(pos.2) + 0.5,
+            yaw,
+            pitch,
+        ));
+    }
+    None
+}
 /// THE END GATEWAY'S OWN KIND SEAT (the KIND_NAMES tail's row the
 /// vanilla registration order keeps — the kind id 797 the client's
 /// own space wears). The 26.2 jar's EndGatewayBlock the INVISIBLE
@@ -13568,6 +13971,23 @@ pub fn door_strip_edge(facing_byte: u8, open: bool, hinge_right: bool) -> u8 {
 /// mesh read — the per-cell fold the lanes' own precedent wears).
 pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> CollisionShape {
     let id = if cy < 0 { AIR } else { world.get(cx, cy, cz) };
+    // THE BED'S OWN 9-PX ROW (the autopush-313 round — javap BedBlock
+    // lambda$static$1 the 26.2 jar the live disasm the walk banks
+    // [scripts/jar_work/bed_respawn6_313.txt the dump serves]: the
+    // SHAPES map the lambda's `Shapes.or(Block.column(16.0, 3.0, 9.0),
+    // leg, rotated-leg)` walk banks — the base slab the 3..9/16 band
+    // the corner legs the 0..3 pair fill, the union's max-Y the 9/16
+    // the full footprint's own top answers, the
+    // `Shapes.rotateHorizontal` the per-direction map the same
+    // vertical band every facing wears [no getCollisionShape override
+    // the class body the probe's method list banks — the collision
+    // the getShape's own rows speak]). The Column(9) row the body's
+    // walk-ON-the-bed feel serves (the 0.5625 top the auto-step lifts),
+    // the sleep anchor's 0.6875 the base+0.125 the same law cross-wears,
+    // the stand-up scan's above lane the floor walk's first arm answers.
+    if is_bed(id) {
+        return CollisionShape::Column(9);
+    }
     // THE TRAPDOOR'S OWN VARIANT-AWARE ROW (the autopush-668 round —
     // javap TrapDoorBlock.getShape pc 0-59 the 26.2 jar: the SHAPES
     // map the `OPEN ? FACING : (HALF == TOP ? DOWN : UP)` key fold
@@ -32256,6 +32676,224 @@ mod tests {
         assert_eq!(BED_SLEEP_WAKE_TICKS, 100, "the counter the bytecode pins");
     }
 
+    /// THE BED'S OWN RESPAWN RETURN (the autopush-313 round — javap
+    /// 26.2 the live disasm the walk banks — scripts/jar_work/
+    /// bed_respawn{,2,3,4}_313.txt + the probe absolute-targets the
+    /// branch laws pin: the offset tables' 26.2 rows, the yaw
+    /// quadrant's table-sine side pick, the floor walk's local-unit
+    /// fold, the dismount's refuse chain, the static walk's bed arm +
+    /// the generic arm's passable pair).
+    #[test]
+    fn the_bed_respawn_walk_the_scan_the_folds_wear() {
+        // ===== THE OFFSET TABLES (javap bedSurroundStandUpOffsets the
+        // ten rows + bedAboveStandUpOffsets the pair — the 26.2
+        // disasm's own order, the row6 -side refresh the jar keeps) =====
+        let ring = bed_surround_stand_up_offsets(BED_FACING_SOUTH, BED_FACING_EAST);
+        assert_eq!(
+            ring,
+            [
+                (1, 0),
+                (1, -1),
+                (1, -2),
+                (0, -2),
+                (-1, -2),
+                (-1, -1),
+                (-1, 0),
+                (-1, 1),
+                (0, 1),
+                (1, 1),
+            ],
+            "the 26.2 ring the facing-south/side-east rows wear"
+        );
+        assert_eq!(
+            bed_above_stand_up_offsets(BED_FACING_SOUTH),
+            [(0, 0), (0, -1)],
+            "the above pair the bed cell + the foot side keeps"
+        );
+        // ===== THE CLOCKWISE RING (javap getClockWise the tableswitch
+        // the ordinal order keeps) =====
+        assert_eq!(bed_clockwise(BED_FACING_NORTH), BED_FACING_EAST);
+        assert_eq!(bed_clockwise(BED_FACING_EAST), BED_FACING_SOUTH);
+        assert_eq!(bed_clockwise(BED_FACING_SOUTH), BED_FACING_WEST);
+        assert_eq!(bed_clockwise(BED_FACING_WEST), BED_FACING_NORTH);
+        // ===== THE YAW QUADRANT (javap isFacingAngle — the 0.017453292f
+        // fold the cp#106 constant keeps, the Mth table the sin/cos
+        // rows serve: the yaw 0 the south answers, the yaw 90 the
+        // west, the yaw 180 the north — the dot the strict > keeps) =====
+        assert!(
+            bed_is_facing_angle(BED_FACING_SOUTH, 0.0),
+            "the yaw 0 the south the cos row answers"
+        );
+        assert!(
+            !bed_is_facing_angle(BED_FACING_NORTH, 0.0),
+            "the yaw 0 the north the dot refuses"
+        );
+        assert!(
+            bed_is_facing_angle(BED_FACING_WEST, 90.0),
+            "the yaw 90 the west the -sin row answers"
+        );
+        assert!(
+            bed_is_facing_angle(BED_FACING_NORTH, 180.0),
+            "the yaw 180 the north the cos(π) row answers"
+        );
+        // ===== THE SIDE PICK (javap findStandUpPosition pcs 0-26 — the
+        // yaw-180 the WEST the table sine's +9.6e-5 row the dot
+        // refuses, the opposite arm the EAST serves; the yaw-0 the
+        // zero-row sin the dot the strict > keeps false, the cw the
+        // WEST stays) =====
+        assert_eq!(
+            bed_standup_side(BED_FACING_SOUTH, 180.0),
+            BED_FACING_EAST,
+            "the yaw 180 the opposite arm the east pick wears"
+        );
+        assert_eq!(
+            bed_standup_side(BED_FACING_SOUTH, 0.0),
+            BED_FACING_WEST,
+            "the yaw 0 the cw arm the west pick wears"
+        );
+        // ===== THE WORLD WALKS (the blank grid the pad the floor's
+        // fold the honest stages wear) =====
+        let mut w = World::blank(2, 7);
+        // the ground row: STONE at y 30 for x 6..=10, z 5..=11
+        for x in 6..=10 {
+            for z in 5..=11 {
+                w.set(x, 30, z, STONE);
+            }
+        }
+        // THE FLOOR WALK (javap getBlockFloorHeight the local-unit
+        // fold: the air above stone the 0.0 answer, the bed cell the
+        // 0.5625 first arm, the deep shaft the -Infinity poison, the
+        // full-solid cell the 1.0 invalid wears)
+        assert_eq!(
+            bed_standup_floor(&w, 9, 31, 8),
+            0.0,
+            "the air above stone the fold the 0.0 floor speaks"
+        );
+        assert_eq!(
+            bed_standup_floor(&w, 8, 30, 8),
+            1.0,
+            "the stone cell's own top the first arm answers"
+        );
+        assert_eq!(
+            bed_standup_floor(&w, 9, 30, 8),
+            1.0,
+            "the stone cell's own top the first arm answers (the 1.0 the invalid verdict wears)"
+        );
+        assert!(
+            bed_standup_floor(&w, 9, 33, 8).is_infinite(),
+            "the two-air shaft the second fold the poison keeps"
+        );
+        // THE BED CELL'S OWN FLOOR (the 9-px row the Column(9) decode
+        // wears — the 0.5625 top the first arm answers)
+        w.set(8, 31, 8, BED_RED);
+        w.set_variant(8, 31, 8, bed_variant(BED_FACING_SOUTH, BED_PART_HEAD));
+        assert_eq!(
+            bed_standup_floor(&w, 8, 31, 8),
+            0.5625,
+            "the bed cell the 9-px top the stand-on answer wears"
+        );
+        // THE DISMOUNT'S REFUSE CHAIN (javap findSafeDismountLocation:
+        // the dangerous rows the strict arm refuses, the bbox the
+        // overlap refuses, the loose pass the dangerous arms skips)
+        w.set(8, 31, 8, AIR); // the bed out — the plain pad stays
+        assert_eq!(
+            bed_standup_dismount(&w, 9, 31, 8, true),
+            Some((9.5, 31.0, 8.5)),
+            "the flat cell the strict verdict the ground-floor vec wears"
+        );
+        // THE FIRE'S OWN CELL (the fire ON the stone — the strict arm
+        // the candidate's own dangerous read the refusal speaks, the
+        // LOOSE pass the dangerous arms skip — the floor walk the
+        // stone below the 0.0 the vec answers [the vanilla jar law
+        // the loose lane wears])
+        w.set(9, 31, 8, FIRE);
+        assert!(
+            bed_standup_dismount(&w, 9, 31, 8, true).is_none(),
+            "the fire cell the strict verdict refuses"
+        );
+        assert_eq!(
+            bed_standup_dismount(&w, 9, 31, 8, false),
+            Some((9.5, 31.0, 8.5)),
+            "the loose pass the dangerous arms skip wears"
+        );
+        w.set(9, 31, 8, AIR);
+        // THE CEILING'S OWN BBOX (the stone cell above the bbox overlap
+        // the refuse speaks — the 1.8-tall box the ceiling's own cell
+        // intersects)
+        w.set(9, 32, 8, STONE);
+        assert!(
+            bed_standup_dismount(&w, 9, 31, 8, true).is_none(),
+            "the ceiling above the bbox overlap refuses"
+        );
+        w.set(9, 32, 8, AIR);
+        // THE PORTAL'S OWN PAIR (the INVALID_SPAWN_INSIDE rows the
+        // end-portal cell the refuse speaks — the tag's own two values)
+        w.set(9, 31, 8, END_PORTAL);
+        assert!(
+            bed_standup_dismount(&w, 9, 31, 8, false).is_none(),
+            "the end-portal cell the invalid-spawn pair refuses"
+        );
+        w.set(9, 31, 8, AIR);
+        // ===== THE STATIC WALK (javap findRespawnAndUseSpawnBlock —
+        // the bed arm the scan the RespawnPosAngle wears, the generic
+        // arm the passable pair the 0.1 lift rides, the built-over
+        // spot the empty verdict speaks) =====
+        // THE BED ARM (the head cell the scan the row0 east pick the
+        // RespawnPosAngle (pos, yaw, pitch) the map wears)
+        w.set(8, 31, 8, BED_RED);
+        w.set_variant(8, 31, 8, bed_variant(BED_FACING_SOUTH, BED_PART_HEAD));
+        w.set(8, 31, 7, BED_RED);
+        w.set_variant(8, 31, 7, bed_variant(BED_FACING_SOUTH, BED_PART_FOOT));
+        assert_eq!(
+            bed_respawn_and_use_spawn_block(&w, (8, 31, 8), 180.0, 90.0),
+            Some((9.5, 31.0, 8.5, 180.0, 90.0)),
+            "the bed arm the scan the row0 spot the RespawnPosAngle wears"
+        );
+        // THE BROKEN BED (the cells AIR — the generic arm the passable
+        // pair the 0.1 lift the same spot wears — the vanilla feel the
+        // broken bed the respawn keeps)
+        w.set(8, 31, 8, AIR);
+        w.set(8, 31, 7, AIR);
+        assert_eq!(
+            bed_respawn_and_use_spawn_block(&w, (8, 31, 8), 180.0, 90.0),
+            Some((8.5, 31.1, 8.5, 180.0, 90.0)),
+            "the broken bed the generic arm the 0.1-lift spot wears"
+        );
+        // THE BUILT-OVER SPOT (the head cell the stone occupies — the
+        // generic pair refuses, the empty verdict the fallback speaks)
+        w.set(8, 31, 8, STONE);
+        assert!(
+            bed_respawn_and_use_spawn_block(&w, (8, 31, 8), 180.0, 90.0).is_none(),
+            "the built-over spot the generic pair refuses"
+        );
+        // ===== THE BUNK LANE (javap findBunkBedStandUpPosition — the
+        // below-bed verdict the six-pass fold arms; the stacked bed
+        // the surround ring the below cell's own base the spot wears)
+        // =====
+        let mut w2 = World::blank(2, 7);
+        for x in 6..=10 {
+            for z in 5..=11 {
+                w2.set(x, 29, z, STONE);
+            }
+        }
+        // the bunk: the lower bed at y 30 (the head (8, 30, 8)), the
+        // upper at y 31 — the below-cell verdict the six-pass fold
+        // serves: the surround ring at the UPPER head the ground row
+        // the y-30 stone the 0.0 floor the first lane answers
+        w2.set(8, 30, 8, BED_RED);
+        w2.set_variant(8, 30, 8, bed_variant(BED_FACING_SOUTH, BED_PART_HEAD));
+        w2.set(8, 30, 7, BED_RED);
+        w2.set_variant(8, 30, 7, bed_variant(BED_FACING_SOUTH, BED_PART_FOOT));
+        w2.set(8, 31, 8, BED_RED);
+        w2.set_variant(8, 31, 8, bed_variant(BED_FACING_SOUTH, BED_PART_HEAD));
+        w2.set(8, 31, 7, BED_RED);
+        w2.set_variant(8, 31, 7, bed_variant(BED_FACING_SOUTH, BED_PART_FOOT));
+        assert_eq!(
+            bed_find_standup_position(&w2, (8, 31, 8), BED_FACING_SOUTH, 180.0),
+            Some((9.5, 30.0, 8.5)),
+            "the bunk lane the surround ring the below-ground's own floor wears"
+        );
+    }
     #[test]
     fn the_shulker_cell_the_lids_tick_the_same_ramp_wears() {
         // THE SHULKER'S OWN PROGRESS WALK (the autopush-298 round —
