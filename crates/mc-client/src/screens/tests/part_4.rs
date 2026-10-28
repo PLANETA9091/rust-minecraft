@@ -18721,10 +18721,10 @@ fn the_dump_dynamic_textures_key_the_sheets_the_word_the_flag_wear() {
     let dw = u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]);
     let dh = u32::from_be_bytes([bytes[20], bytes[21], bytes[22], bytes[23]]);
     assert_eq!(dw, 512, "the 32-col grid the sheet width wears");
-    // THE ROWS THE POOL TAIL'S OWN COUNT WEARS (the 1055 tiles the
-    // dev-194 bed pin banks — ceil(1055/32) = 33 rows the 16-px cell
-    // the sheet height speaks)
-    assert_eq!(dh, 528, "the 33-row grid the sheet height wears");
+    // THE ROWS THE POOL TAIL'S OWN COUNT WEARS (the 1063 tiles the
+    // autopush-314 anchor pin banks — ceil(1063/32) = 34 rows the
+    // 16-px cell the sheet height speaks)
+    assert_eq!(dh, 544, "the 34-row grid the sheet height wears");
     // THE SPRITE LIST (the dumpSpriteNames law — the key sort the
     // comparingByKey stream wears, the Locale.ROOT format the tab
     // rows keep, the position the tile's OWN index speaks)

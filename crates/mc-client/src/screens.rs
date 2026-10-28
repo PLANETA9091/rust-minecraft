@@ -9876,6 +9876,19 @@ pub struct App {
     /// PrimedTnt boom's own walks serve, the same lanes the creeper's
     /// blast fills.
     pub pending_cart_booms: Vec<(f64, f64, f64, f32)>,
+    /// THE ANCHOR'S OWN BOOM QUEUE (the autopush-314 round — javap
+    /// RespawnAnchorBlock.explode the 26.2 jar the walk banks: the
+    /// overworld press the canSetSpawn-false arm the pending queue
+    /// keeps, the removeBlock the AIR set the press serves, the
+    /// dampening the $1 calculator's would-flow scan the flag rides
+    /// [the dampened blast the shouldBlockExplode refusal keeps —
+    /// the cells the ray walk never clears, the sound and the doses
+    /// the boom still serves], the 5.0F power the cp#275 float the
+    /// fire-true the BLOCK interaction wears). The update's explosion
+    /// block consumes the queue the SAME tick — the cart boom's own
+    /// walks serve (the ray scan + the shuffle + the decay the
+    /// PrimedTnt blast's own lanes wear).
+    pub pending_anchor_booms: Vec<(f64, f64, f64, f32, bool)>,
     /// THE CART RIDE'S OWN ROTATION ANCHOR (the Minecart.interact's
     /// client arm pc 34-37 — the `playerRotationOffset = rotationOffset`
     /// snapshot the mount records, the first drag delta the sync
@@ -12343,6 +12356,7 @@ impl App {
             item_frames: Vec::new(),
             offline_carts: Vec::new(),
             pending_cart_booms: Vec::new(),
+            pending_anchor_booms: Vec::new(),
             offline_cart_drag: None,
             cart_model: None,
             take_xp_delay: 0,
@@ -19399,6 +19413,55 @@ impl App {
                             // the player's box answers — the same fold the
                             // primed lane's blast serves, the no-source
                             // word the cart's indirect-entity read keeps)
+                            if let Some(p) = player.filter(|p| !p.dead) {
+                                let bbox = (
+                                    p.x - p.width / 2.0,
+                                    p.y,
+                                    p.z - p.width / 2.0,
+                                    p.x + p.width / 2.0,
+                                    p.y + p.height,
+                                    p.z + p.width / 2.0,
+                                );
+                                if let Some(b) = crate::mob::explosion_blast(
+                                    world,
+                                    (bx, by, bz),
+                                    power,
+                                    (p.x, p.eye_y as f64, p.z),
+                                    bbox,
+                                ) {
+                                    blast_player = Some((b, None));
+                                }
+                            }
+                        }
+                        // THE ANCHOR'S OWN BOOMS (the autopush-314 round —
+                        // javap RespawnAnchorBlock.explode the 26.2 jar the
+                        // walk banks — scripts/jar_work/anchor_314.txt the
+                        // dumps serve): the overworld press's pending queue
+                        // the SAME ServerLevel.explode walk the cart's own
+                        // boom serves (the ray scan the 5.0F power the cp
+                        // #275 float drives, the drops the shuffle + decay
+                        // rolls serve, the TNT cells the chain queue keeps,
+                        // the player's dose the hurt lane answers) — the
+                        // DAMPENED blast the $1 calculator's
+                        // shouldBlockExplode refusal keeps (the would-flow
+                        // scan the flag rode, the cells the ray walk never
+                        // clears, the sound and the doses the boom still
+                        // serves); the no-living-source word the
+                        // badRespawnPointExplosion damage source keeps.
+                        for (bx, by, bz, power, dampened) in std::mem::take(&mut self.pending_anchor_booms) {
+                            booms.push((bx, by, bz, power));
+                            tnt_blasts.push((bx, by, bz, power));
+                            let to_blow = if dampened {
+                                Vec::new()
+                            } else {
+                                crate::mob::explosion_to_blow(world, bx, by, bz, power, &mut self.mob_rng)
+                            };
+                            let (drops, chains) =
+                                crate::mob::explosion_item_drops(&to_blow, power, world, &mut self.mob_rng);
+                            tracked_booms.push((bx, by, bz, power, to_blow.len() as i32));
+                            explosion_cells.extend(to_blow.iter().copied());
+                            explosion_drops.extend(drops.iter().copied());
+                            tnt_chain_spawns.extend(chains.iter().copied().map(|c| (c, None)));
                             if let Some(p) = player.filter(|p| !p.dead) {
                                 let bbox = (
                                     p.x - p.width / 2.0,
@@ -54003,12 +54066,153 @@ impl App {
     ///      setPosToBed the ZERO delta the stamps speak, the
     ///      sleepCounter the zero the bank keeps, the InBedChatScreen
     ///      the Gui.tick's isSleeping walk opens).
-    /// The OCCUPIED bit the block-state walk sets the client's own
-    /// byte vocabulary never carries (the two-bit pair the mesher's
-    /// head/foot seats keep — the vanilla bed model the bit never
-    /// renders, the honest single-sleeper gap the kickVillager arm
-    /// never enters).
+    /// THE ANCHOR'S OWN PRESS (javap 26.2 RespawnAnchorBlock the live
+    /// disasm the walk banks — scripts/jar_work/anchor{,3,4}_314.txt
+    /// the dumps serve): the useItemOn CHARGE ARM the held glowstone
+    /// the walk speaks (the isRespawnFuel verdict, the canBeCharged
+    /// gate the setValue(+1) setBlock(3) the charge voice banks, THE
+    /// CONSUME QUIRK the stack.consume(1) the gate's own verdict
+    /// NEVER gates [pcs 23-27 — the full anchor the fuel the press
+    /// still eats], the SUCCESS the press consumes), then the
+    /// useWithoutItem VERDICT WALK the non-fuel press serves (the
+    /// charge-0 PASS the item lanes follow, the canSetSpawn gate the
+    /// dimension attribute the works verdict reads, the
+    /// RespawnData.of(dimension, pos, 0.0f, 0.0f) the spawn bank the
+    /// set-spawn voice + the SPAWN_SET_MESSAGE chat wears, the
+    /// canSetSpawn-false arm the explode walk the removeBlock the
+    /// dampening scan the pending boom keeps). Returns whether the
+    /// press consumed (the PASS the item lanes follow).
+    fn anchor_press(&mut self, pos: (i32, i32, i32)) -> bool {
+        // THE CHARGE ARM (useItemOn pcs 0-33 — the fuel the walk speaks)
+        let held_word = self.held_id().and_then(mc_registry::item_name);
+        if crate::world::anchor_is_fuel(held_word.as_deref()) {
+            let charge = self
+                .offline_world
+                .as_ref()
+                .map(|w| crate::world::anchor_variant_charge(w.variant(pos.0, pos.1, pos.2)))
+                .unwrap_or(0);
+            if crate::world::anchor_can_be_charged(charge) {
+                if let Some(world) = self.offline_world.as_mut() {
+                    world.set_variant(
+                        pos.0,
+                        pos.1,
+                        pos.2,
+                        crate::world::anchor_charge_variant(charge + 1),
+                    );
+                    self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                }
+                // THE VOICE (charge pcs 82-90 — the RESPAWN_ANCHOR_CHARGE
+                // row the center walk speaks, the fconst pair the 1.0/1.0
+                // keeps)
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let (tx, ty, tz) = (
+                    f64::from(pos.0) + 0.5,
+                    f64::from(pos.1) + 0.5,
+                    f64::from(pos.2) + 0.5,
+                );
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "block.respawn_anchor.charge",
+                    1.0,
+                    1.0,
+                    ear_distance(ear, tx, ty, tz),
+                    ear_pan(ear, self.listener_yaw(), tx, ty, tz),
+                );
+            }
+            // THE CONSUME QUIRK (pcs 23-27 — the fuel the press the
+            // canBeCharged verdict never gates: the stack the consume
+            // serves either way)
+            self.consume_held_item();
+            return true;
+        }
+        // THE VERDICT WALK (useWithoutItem pcs 0-175 — the charge the
+        // variant byte wears, the works flag the dimension attribute's
+        // offline verdict serves)
+        let charge = self.offline_world.as_ref().map_or(0, |w| {
+            crate::world::anchor_variant_charge(w.variant(pos.0, pos.1, pos.2))
+        });
+        let works = matches!(self.world_dimension, Dimension::Nether);
+        match crate::world::anchor_use_verdict(charge, works) {
+            // THE PASS (pcs 0-19 — the empty anchor the press never
+            // consumes: the item lanes follow)
+            crate::world::AnchorUse::Pass => false,
+            // THE SPAWN SET (pcs 40-159 — the RespawnData.of(dimension,
+            // pos, 0.0f, 0.0f) the fconst pair the zero angles keep,
+            // the isSamePosition gate the changed-config chat speaks,
+            // the setRespawnPosition walk the bank serves, the
+            // SET_SPAWN voice the center walk banks)
+            crate::world::AnchorUse::SpawnSet => {
+                let changed = match self.respawn_point {
+                    Some((x, y, z, _, _)) => {
+                        (x, y, z) != (f64::from(pos.0), f64::from(pos.1), f64::from(pos.2))
+                    }
+                    None => true,
+                };
+                self.respawn_point = Some((
+                    f64::from(pos.0),
+                    f64::from(pos.1),
+                    f64::from(pos.2),
+                    0.0,
+                    0.0,
+                ));
+                if changed {
+                    self.push_chat_message(
+                        tr("block.minecraft.set_spawn")
+                            .unwrap_or("Respawn point set")
+                            .to_string(),
+                    );
+                }
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let (tx, ty, tz) = (
+                    f64::from(pos.0) + 0.5,
+                    f64::from(pos.1) + 0.5,
+                    f64::from(pos.2) + 0.5,
+                );
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "block.respawn_anchor.set_spawn",
+                    1.0,
+                    1.0,
+                    ear_distance(ear, tx, ty, tz),
+                    ear_pan(ear, self.listener_yaw(), tx, ty, tz),
+                );
+                true
+            }
+            // THE EXPLODE (pcs 164-175 — the removeBlock the AIR set
+            // the same-tick removal keeps, the dampening scan the $1
+            // calculator's would-flow verdict the flag rides, the
+            // pending boom the 5.0F power the fire-true the BLOCK
+            // interaction wears)
+            crate::world::AnchorUse::Explode => {
+                let dampened = {
+                    let Some(world) = self.offline_world.as_mut() else {
+                        return true;
+                    };
+                    world.set(pos.0, pos.1, pos.2, crate::world::AIR);
+                    world.fire_shape_updates(pos);
+                    world.relight();
+                    let dampened = crate::world::anchor_would_dampen(world, pos);
+                    self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                    dampened
+                };
+                self.pending_anchor_booms.push((
+                    f64::from(pos.0) + 0.5,
+                    f64::from(pos.1) + 0.5,
+                    f64::from(pos.2) + 0.5,
+                    5.0,
+                    dampened,
+                ));
+                true
+            }
+        }
+    }
+
     fn bed_sleep_press(&mut self, pos: (i32, i32, i32)) -> bool {
+        // THE OCCUPIED BIT the block-state walk sets the client's own
+        // byte vocabulary never carries (the two-bit pair the mesher's
+        // head/foot seats keep — the vanilla bed model the bit never
+        // renders, the honest single-sleeper gap the kickVillager arm
+        // never enters).
         let Some(world) = self.offline_world.as_ref() else {
             return false;
         };
@@ -54286,6 +54490,39 @@ impl App {
                 .is_some_and(|w| crate::world::is_bed(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
         {
             return self.bed_sleep_press(hit.pos);
+        }
+        // THE ANCHOR'S OWN DOOR (the autopush-314 round — javap 26.2
+        // RespawnAnchorBlock the live disasm the walk banks —
+        // scripts/jar_work/anchor{,3,4}_314.txt the dumps serve): the
+        // hit cell's anchor kind the OFFLINE world answers — the
+        // useItemOn CHARGE ARM the held glowstone the walk speaks (the
+        // isRespawnFuel stack.is(Items.GLOWSTONE) verdict the fuel
+        // lane keeps, the canBeCharged gate the charge<4 fold wears,
+        // the charge walk the setValue(+1) setBlock(3) the
+        // RESPAWN_ANCHOR_CHARGE voice banks, THE CONSUME QUIRK the
+        // stack.consume(1) the gate's own verdict NEVER gates [pcs
+        // 23-27 — the full anchor the fuel the press still eats],
+        // the SUCCESS the press consumes), then the useWithoutItem
+        // VERDICT WALK the empty-handed press serves (the charge-0
+        // PASS the item lanes follow, the canSetSpawn gate the
+        // dimension attribute the works verdict reads, the
+        // RespawnData.of(dimension, pos, 0.0f, 0.0f) the spawn bank
+        // the set-spawn voice wears, the canSetSpawn-false arm the
+        // explode walk the 5.0F power the pending boom queue keeps).
+        // The sneaking player the arm SKIPS (the useItemOn the use
+        // walk the shift gate the block family's own doors wear —
+        // the BlockItem.useOn's sneaking-place fallback the item
+        // lanes follow). The WIRE session the local lane never arms
+        // (the server's own useItemOn the verdict owns — the echo
+        // the press carries).
+        if !self.shift_down
+            && !self.world_is_network
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_respawn_anchor(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            })
+            && self.anchor_press(hit.pos)
+        {
+            return true;
         }
         // THE CHEST FAMILY'S OWN DOOR (the dev-64 round — javap 26.2
         // ChestBlock.useWithoutItem pc 0-55 the openMenu walk the
@@ -65012,23 +65249,71 @@ impl App {
                     crate::mth::floor(y),
                     crate::mth::floor(z),
                 );
-                match crate::world::bed_respawn_and_use_spawn_block(world, pos, yaw, pitch) {
-                    Some(spot) => Some(spot),
-                    None => {
-                        // THE MISSING RESPAWN BLOCK (the scan empty —
-                        // the bed broken, the obstructed scan, the
-                        // generic arm's refuse — the shared spawn the
-                        // fallback wears, the not_valid message the
-                        // chat speaks)
-                        self.push_chat_message(
-                            tr("block.minecraft.spawn.not_valid")
-                                .unwrap_or(
-                                    "You have no home bed or charged respawn anchor, or it was obstructed",
-                                )
-                                .to_string(),
-                        );
-                        self.spawn_pose
+                // THE ANCHOR ARM FIRST (the autopush-314 round — javap
+                // 26.2 ServerPlayer.findRespawnAndUseSpawnBlock pcs 44-161
+                // the instanceof order the walk wears — scripts/jar_work/
+                // anchor4_314.txt the dump serves): the anchor cell the
+                // static walk answers FIRST (the charged anchor the
+                // 25-row scan the DismountHelper verdict re-seats, the
+                // charge-1 setBlock the consume flag the caller serves,
+                // the scan-empty the EMPTY the hard answer keeps — no
+                // bed-arm fall-through), the FallThrough the bed arm
+                // follows (the vanilla instanceof order the same lane
+                // keeps)
+                let works = matches!(self.world_dimension, Dimension::Nether);
+                let mut anchor_consume: Option<(i32, i32, i32)> = None;
+                let seat = match crate::world::anchor_respawn_and_use_spawn_block(
+                    world, pos, yaw, pitch, works,
+                ) {
+                    crate::world::AnchorRespawn::Seat {
+                        x,
+                        y,
+                        z,
+                        yaw,
+                        pitch,
+                        consume,
+                    } => {
+                        if consume {
+                            anchor_consume = Some(pos);
+                        }
+                        Some((x, y, z, yaw, pitch))
                     }
+                    crate::world::AnchorRespawn::Empty => None,
+                    crate::world::AnchorRespawn::FallThrough => {
+                        match crate::world::bed_respawn_and_use_spawn_block(world, pos, yaw, pitch) {
+                            Some(spot) => Some(spot),
+                            None => None,
+                        }
+                    }
+                };
+                // THE CONSUME'S OWN WALK (the charge-1 setBlock the
+                // caller serves — the static's pc 111-148 pair the
+                // client sim the variant byte answers, the re-mesh the
+                // set walk wears)
+                if let Some((cx, cy, cz)) = anchor_consume {
+                    if let Some(w) = self.offline_world.as_mut() {
+                        let c = crate::world::anchor_variant_charge(w.variant(cx, cy, cz));
+                        w.set_variant(cx, cy, cz, crate::world::anchor_charge_variant(c - 1));
+                        self.world_quads = Some(crate::mesher::mesh_world(w, None));
+                    }
+                }
+                if seat.is_none() {
+                    // THE MISSING RESPAWN BLOCK (the scan empty —
+                    // the bed broken, the obstructed scan, the
+                    // generic arm's refuse, the anchor's own hard
+                    // EMPTY — the shared spawn the
+                    // fallback wears, the not_valid message the
+                    // chat speaks)
+                    self.push_chat_message(
+                        tr("block.minecraft.spawn.not_valid")
+                            .unwrap_or(
+                                "You have no home bed or charged respawn anchor, or it was obstructed",
+                            )
+                            .to_string(),
+                    );
+                    self.spawn_pose
+                } else {
+                    seat
                 }
             }
             // THE NETWORKED LANE (the offline world absent — the

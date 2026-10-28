@@ -1,0 +1,146 @@
+== ServerPlayer :: findRespawnAndUseSpawnBlock (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;Z)Ljava/util/Optional; ==
+    0 aload_1
+    1 getfield #1659  net/minecraft/server/level/ServerPlayer$RespawnConfig.respawnData Lnet/minecraft/world/level/storage/LevelData$RespawnData;
+    4 astore_3
+    5 aload_3
+    6 invokevirtual #1663  net/minecraft/world/level/storage/LevelData$RespawnData.pos ()Lnet/minecraft/core/BlockPos;
+    9 astore 4
+   11 aload_3
+   12 invokevirtual #1668  net/minecraft/world/level/storage/LevelData$RespawnData.yaw ()F
+   15 fstore 5
+   17 aload_3
+   18 invokevirtual #1669  net/minecraft/world/level/storage/LevelData$RespawnData.pitch ()F
+   21 fstore 6
+   23 aload_1
+   24 getfield #1670  net/minecraft/server/level/ServerPlayer$RespawnConfig.forced Z
+   27 istore 7
+   29 aload_0
+   30 aload 4
+   32 invokevirtual #1673  net/minecraft/server/level/ServerLevel.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   35 astore 8
+   37 aload 8
+   39 invokevirtual #1677  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+   42 astore 9
+   44 aload 9
+   46 instanceof #1683  net/minecraft/world/level/block/RespawnAnchorBlock
+   49 ifeq #113
+   52 iload 7
+   54 ifne #20
+   57 aload 8
+   59 getstatic #1685  net/minecraft/world/level/block/RespawnAnchorBlock.CHARGE Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+   62 invokevirtual #1689  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   65 checkcast #18  java/lang/Integer
+   68 invokevirtual #1692  java/lang/Integer.intValue ()I
+   71 ifle #91
+   74 aload_0
+   75 aload 4
+   77 invokestatic #1695  net/minecraft/world/level/block/RespawnAnchorBlock.canSetSpawn (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Z
+   80 ifeq #82
+   83 getstatic #1699  net/minecraft/world/entity/EntityTypes.PLAYER Lnet/minecraft/world/entity/EntityType;
+   86 aload_0
+   87 aload 4
+   89 invokestatic #1702  net/minecraft/world/level/block/RespawnAnchorBlock.findStandUpPosition (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/core/BlockPos;)Ljava/util/Optional;
+   92 astore 10
+   94 iload 7
+   96 ifne #53
+   99 iload_2
+  100 ifeq #49
+  103 aload 10
+  105 invokevirtual #1556  java/util/Optional.isPresent ()Z
+  108 ifeq #41
+  111 aload_0
+  112 aload 4
+  114 aload 8
+  116 getstatic #1685  net/minecraft/world/level/block/RespawnAnchorBlock.CHARGE Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+  119 aload 8
+  121 getstatic #1685  net/minecraft/world/level/block/RespawnAnchorBlock.CHARGE Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+  124 invokevirtual #1689  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  127 checkcast #18  java/lang/Integer
+  130 invokevirtual #1692  java/lang/Integer.intValue ()I
+  133 iconst_1
+  134 isub
+  135 invokestatic #1706  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+  138 invokevirtual #1710  net/minecraft/world/level/block/state/BlockState.setValue (Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+  141 checkcast #1678  net/minecraft/world/level/block/state/BlockState
+  144 iconst_3
+  145 invokevirtual #1716  net/minecraft/server/level/ServerLevel.setBlock (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+  148 pop
+  149 aload 10
+  151 aload 4
+  153 invokedynamic #1720
+  158 invokevirtual #1724  java/util/Optional.map (Ljava/util/function/Function;)Ljava/util/Optional;
+  161 areturn
+  162 aload 9
+  164 instanceof #1728  net/minecraft/world/level/block/BedBlock
+  167 ifeq #58
+  170 aload_0
+  171 invokevirtual #1730  net/minecraft/server/level/ServerLevel.environmentAttributes ()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+  174 getstatic #1734  net/minecraft/world/attribute/EnvironmentAttributes.BED_RULE Lnet/minecraft/world/attribute/EnvironmentAttribute;
+  177 aload 4
+  179 invokevirtual #1740  net/minecraft/world/attribute/EnvironmentAttributeSystem.getValue (Lnet/minecraft/world/attribute/EnvironmentAttribute;Lnet/minecraft/core/BlockPos;)Ljava/lang/Object;
+  182 checkcast #1745  net/minecraft/world/attribute/BedRule
+  185 aload_0
+  186 invokevirtual #1747  net/minecraft/world/attribute/BedRule.canSetSpawn (Lnet/minecraft/world/level/Level;)Z
+  189 ifeq #36
+  192 getstatic #1699  net/minecraft/world/entity/EntityTypes.PLAYER Lnet/minecraft/world/entity/EntityType;
+  195 aload_0
+  196 aload 4
+  198 aload 8
+  200 getstatic #1750  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+  203 invokevirtual #1689  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  206 checkcast #1754  net/minecraft/core/Direction
+  209 fload 5
+  211 invokestatic #1756  net/minecraft/world/level/block/BedBlock.findStandUpPosition (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;F)Ljava/util/Optional;
+  214 aload 4
+  216 invokedynamic #1759
+  221 invokevirtual #1724  java/util/Optional.map (Ljava/util/function/Function;)Ljava/util/Optional;
+  224 areturn
+  225 iload 7
+  227 ifne #7
+  230 invokestatic #1760  java/util/Optional.empty ()Ljava/util/Optional;
+  233 areturn
+  234 aload 9
+  236 aload 8
+  238 invokevirtual #1763  net/minecraft/world/level/block/Block.isPossibleToRespawnInThis (Lnet/minecraft/world/level/block/state/BlockState;)Z
+  241 istore 10
+  243 aload_0
+  244 aload 4
+  246 invokevirtual #1767  net/minecraft/core/BlockPos.above ()Lnet/minecraft/core/BlockPos;
+  249 invokevirtual #1673  net/minecraft/server/level/ServerLevel.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  252 astore 11
+  254 aload 11
+  256 invokevirtual #1677  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+  259 aload 11
+  261 invokevirtual #1763  net/minecraft/world/level/block/Block.isPossibleToRespawnInThis (Lnet/minecraft/world/level/block/state/BlockState;)Z
+  264 istore 12
+  266 iload 10
+  268 ifeq #60
+  271 iload 12
+  273 ifeq #55
+  276 new #1601  net/minecraft/server/level/ServerPlayer$RespawnPosAngle
+  279 dup
+  280 new #131  net/minecraft/world/phys/Vec3
+  283 dup
+  284 aload 4
+  286 invokevirtual #1770  net/minecraft/core/BlockPos.getX ()I
+  289 i2d
+  290 ldc2_w #1110 = 0.5
+  293 dadd
+  294 aload 4
+  296 invokevirtual #1772  net/minecraft/core/BlockPos.getY ()I
+  299 i2d
+  300 ldc2_w #1774 = 0.1
+  303 dadd
+  304 aload 4
+  306 invokevirtual #1776  net/minecraft/core/BlockPos.getZ ()I
+  309 i2d
+  310 ldc2_w #1110 = 0.5
+  313 dadd
+  314 invokespecial #1778  net/minecraft/world/phys/Vec3.<init> (DDD)V
+  317 fload 5
+  319 fload 6
+  321 invokespecial #1781  net/minecraft/server/level/ServerPlayer$RespawnPosAngle.<init> (Lnet/minecraft/world/phys/Vec3;FF)V
+  324 invokestatic #1452  java/util/Optional.of (Ljava/lang/Object;)Ljava/util/Optional;
+  327 areturn
+  328 invokestatic #1760  java/util/Optional.empty ()Ljava/util/Optional;
+  331 areturn

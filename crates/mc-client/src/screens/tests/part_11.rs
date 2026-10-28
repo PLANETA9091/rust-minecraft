@@ -2682,3 +2682,299 @@ fn the_offline_bed_the_built_over_the_fallback_the_message_wears() {
         "the built-over spot the not_valid the chat speaks"
     );
 }
+
+// THE ANCHOR'S OWN CHARGE-EXPLODE WALK (the autopush-314 round — javap
+// 26.2 RespawnAnchorBlock the live disasm the walk banks — scripts/
+// jar_work/anchor{,3}_314.txt the dumps serve): the REAL walk the
+// held anchor the placement lane the kind stamps, the glowstone the
+// charge arm the four presses the ladder climbs, THE CONSUME QUIRK
+// the full anchor the fuel the press still eats, the empty hand the
+// verdict walk the canSetSpawn-false arm the pending boom queues —
+// the update the same-tick blast the cells clear the voice + the
+// flash the boom serves.
+#[test]
+fn the_offline_anchor_the_charge_the_press_the_explode_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let anchor_item = mc_registry::item_id_by_name("respawn_anchor").unwrap();
+    let glow_item = mc_registry::item_id_by_name("glowstone").unwrap();
+    app.inventory.items[0] = (anchor_item, 2);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE PAD (the blast's own stage — the stone row the cells the
+    // ray walk clears, the air rows the ring the scan reads)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -8..=8 {
+            for dz in -8..=8 {
+                world.set(c + dx, surface, c + dz, crate::world::STONE);
+                world.set(c + dx, surface + 1, c + dz, crate::world::AIR);
+                world.set(c + dx, surface + 2, c + dz, crate::world::AIR);
+            }
+        }
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 4) as f32, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE PLACEMENT (the real right-press the held anchor the block
+    // lane lands — the kind the NAME_OF row the palette answers)
+    assert!(app.on_right_press(0, 0), "the anchor the placement lands");
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+        crate::world::RESPAWN_ANCHOR,
+        "the placed cell the anchor kind wears"
+    );
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .variant(c, surface + 1, c),
+        0,
+        "the fresh anchor the charge-0 state wears"
+    );
+    // THE EMPTY-HAND PRESS AT CHARGE 0 (useWithoutItem pcs 0-19 — the
+    // PASS the item lanes follow: the press not consumed, the cell
+    // the same charge wears)
+    app.selected_hotbar = 2; // the empty slot
+    app.inventory.items[2] = (0, 0);
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        !app.on_right_press(0, 0),
+        "the empty anchor the press the PASS keeps (the item lanes follow)"
+    );
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .variant(c, surface + 1, c),
+        0,
+        "the PASS the charge never moves"
+    );
+    // THE CHARGE ARM (useItemOn pcs 0-33 — the held glowstone the
+    // walk speaks: the setValue(+1) the ladder climbs, the voice the
+    // charge lane banks, THE CONSUME the stack the press eats)
+    app.selected_hotbar = 1;
+    app.inventory.items[1] = (glow_item, 6);
+    app.hotbar_slots = app.inventory.hotbar();
+    for expected in 1..=4 {
+        assert!(
+            app.on_right_press(0, 0),
+            "the charge press #{expected} the SUCCESS consumes"
+        );
+        assert_eq!(
+            app.offline_world
+                .as_ref()
+                .unwrap()
+                .variant(c, surface + 1, c),
+            expected,
+            "the charge ladder the {expected} stamp wears"
+        );
+        assert_eq!(
+            app.inventory.items[1].1,
+            6 - i32::from(expected),
+            "the fuel stack the consume the count keeps"
+        );
+    }
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.contains("block.respawn_anchor.charge")),
+        "the charge voice the ladder's presses bank"
+    );
+    // THE FULL ANCHOR'S OWN PRESS (the canBeCharged gate the charge<4
+    // verdict refuses — THE CONSUME QUIRK the stack the press STILL
+    // eats [pc 23-27 the un-gated consume], the SUCCESS the press
+    // consumes)
+    assert!(
+        app.on_right_press(0, 0),
+        "the full anchor the press the SUCCESS keeps"
+    );
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .variant(c, surface + 1, c),
+        4,
+        "the full anchor the charge the gate refuses"
+    );
+    assert_eq!(
+        app.inventory.items[1].1, 1,
+        "the quirk the fuel the press still eats"
+    );
+    // THE OVERWORLD PRESS (useWithoutItem the canSetSpawn-false arm —
+    // the explode walk the removeBlock the same-tick removal keeps,
+    // the dampening scan the dry pad the flag refuses, the pending
+    // boom the update the blast serves)
+    app.selected_hotbar = 2; // the empty hand
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        app.on_right_press(0, 0),
+        "the overworld press the explode arm consumes"
+    );
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+        crate::world::AIR,
+        "the removeBlock the cell the same-tick AIR wears"
+    );
+    assert_eq!(
+        app.pending_anchor_booms.len(),
+        1,
+        "the pending boom the queue keeps"
+    );
+    assert!(
+        !app.pending_anchor_booms[0].4,
+        "the dry pad the dampening flag refuses"
+    );
+    // THE BLAST'S OWN TICK (the queue the same-tick blast serves —
+    // the ray scan the cells clear, the voice the explode lane
+    // banks, the flash the particle seat wears)
+    app.update();
+    assert!(
+        app.pending_anchor_booms.is_empty(),
+        "the tick the queue consumes"
+    );
+    assert!(
+        app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::STONE,
+        "the blast the pad cell the ray walk clears"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.contains("entity.generic.explode")),
+        "the boom the explode voice banks"
+    );
+    assert!(
+        app.particles.iter().any(|p| matches!(
+            p.kind,
+            crate::particles::ParticleKind::ExplosionSeed
+                | crate::particles::ParticleKind::Explosion
+        )),
+        "the flash the particle seat wears"
+    );
+}
+
+// THE ANCHOR'S OWN NETHER WALK (the autopush-314 round — javap 26.2
+// useWithoutItem pcs 40-159 the spawn-set arm + ServerPlayer
+// .findRespawnAndUseSpawnBlock pcs 44-161 the static's anchor arm the
+// respawn re-seats — scripts/jar_work/anchor{,4}_314.txt the dumps
+// serve): the REAL walk the nether dimension the canSetSpawn gate the
+// works verdict reads, the charged anchor the press the RespawnData
+// (pos, 0.0f, 0.0f) the fconst pair banks [the SPAWN_SET_MESSAGE the
+// changed-config chat speaks], the far walk the /kill the respawn —
+// the 25-row scan the north neighbour the body re-seats, the charge-1
+// setBlock the consume the variant byte answers.
+#[test]
+fn the_offline_anchor_the_nether_the_spawn_set_the_respawn_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let anchor_item = mc_registry::item_id_by_name("respawn_anchor").unwrap();
+    let glow_item = mc_registry::item_id_by_name("glowstone").unwrap();
+    app.inventory.items[0] = (anchor_item, 1);
+    app.inventory.items[1] = (glow_item, 2);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(c + dx, surface, c + dz, crate::world::STONE);
+                world.set(c + dx, surface + 1, c + dz, crate::world::AIR);
+                world.set(c + dx, surface + 2, c + dz, crate::world::AIR);
+            }
+        }
+    }
+    // THE NETHER'S OWN GATE (the canSetSpawn gate the dimension
+    // attribute the works verdict reads — the nether the TRUE row the
+    // offline law keeps)
+    app.world_dimension = Dimension::Nether;
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 4) as f32, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE PLACEMENT (the real right-press the kind lands)
+    assert!(app.on_right_press(0, 0), "the anchor the placement lands");
+    // THE CHARGE (the real glowstone press the ladder's first rung
+    // wears)
+    app.selected_hotbar = 1;
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        app.on_right_press(0, 0),
+        "the charge press the SUCCESS consumes"
+    );
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .variant(c, surface + 1, c),
+        1,
+        "the charge the first rung wears"
+    );
+    // THE SPAWN SET (the empty hand the verdict walk the works arm
+    // serves — the RespawnData the fconst pair the zero angles banks,
+    // the changed-config chat the SPAWN_SET_MESSAGE speaks)
+    app.selected_hotbar = 2;
+    app.inventory.items[2] = (0, 0);
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(app.on_right_press(0, 0), "the spawn-set press consumes");
+    assert_eq!(
+        app.respawn_point,
+        Some((f64::from(c), f64::from(surface + 1), f64::from(c), 0.0, 0.0)),
+        "the RespawnData (pos, 0.0f, 0.0f) the fconst pair banks"
+    );
+    assert!(
+        app.chat_messages
+            .iter()
+            .any(|(m, _)| m.contains("Respawn point set")),
+        "the changed-config chat the SPAWN_SET_MESSAGE speaks"
+    );
+    assert!(
+        app.pending_anchor_booms.is_empty(),
+        "the works arm the explode never queues"
+    );
+    // THE WALK'S OWN DEPARTURE + THE DEATH (the far spot the body the
+    // honest move wears, the /kill the death arms)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 6.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        0.0,
+        0.0,
+    ));
+    app.chat_open = true;
+    app.chat_input = "/kill".into();
+    app.on_chat_submit();
+    assert!(app.dead, "the kill the death arms");
+    // THE RESPAWN (the static's anchor arm — the 25-row scan the
+    // north neighbour the body re-seats, the charge-1 setBlock the
+    // consume the variant byte answers)
+    app.respawn();
+    assert!(!app.dead, "the respawn the death clears");
+    let b = app.body.as_ref().unwrap();
+    assert_eq!(
+        (b.x, b.y, b.z),
+        (c as f64 + 0.5, (surface + 1) as f64, (c - 1) as f64 + 0.5),
+        "the scan's row0 spot the body re-seats (the north neighbour the ground floor wears)"
+    );
+    assert_eq!(
+        (b.yaw, b.pitch),
+        (0.0, 0.0),
+        "the RespawnPosAngle's own pair the banked zero angles wear"
+    );
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .variant(c, surface + 1, c),
+        0,
+        "the consume the charge-1 setBlock the variant byte answers"
+    );
+}

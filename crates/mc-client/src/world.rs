@@ -4587,6 +4587,246 @@ pub fn bed_respawn_and_use_spawn_block(
     }
     None
 }
+/// THE BED'S OWN KIND SEAT (the KIND_NAMES tail's row the vanilla
+/// registration order keeps — the kind id 798 the client's own space
+/// wears, the autopush-314 round: the 313 walk's honest gap the round
+/// retires — the ANCHOR ARM the static findRespawnAndUseSpawnBlock
+/// the palette's own absence kept). The 26.2 jar's
+/// RespawnAnchorBlock.<clinit> the RESPAWN_ANCHOR_CHARGES
+/// IntegerProperty the charge 0..4 ladder the blockstates'
+/// charges=0..4 variants speak (the cube_bottom_top family the
+/// side0..4 + top_off/top masters wear — the FACE_TILES row the
+/// charge-0 look banks), the NAME_OF row the dig/drop/sound/item
+/// lanes wire (the generated tables' own respawn_anchor rows the
+/// block_dig/block_drops/block_sounds/block_mineable/
+/// block_resistances the mint lights). The collision the full-cube
+/// default speaks (the generic-cube kind seat the brewing 309
+/// precedent wears — the charge-ladder mesh the NEXT round keeps).
+pub const RESPAWN_ANCHOR: u16 = 798;
+
+#[inline]
+pub fn is_respawn_anchor(id: u16) -> bool {
+    id == RESPAWN_ANCHOR
+}
+
+/// THE CHARGE'S OWN VARIANT SEAT (the CHARGE IntegerProperty the
+/// variant byte wears — 0..4 the RESPAWN_ANCHOR_CHARGES ladder the
+/// blockstates' charges=0..4 rows speak; the variant byte the raw
+/// charge the stamp answers, the out-of-range bytes the clamp the
+/// honest read keeps).
+#[inline]
+pub fn anchor_variant_charge(v: u8) -> u8 {
+    v.min(4)
+}
+
+#[inline]
+pub fn anchor_charge_variant(c: u8) -> u8 {
+    c.min(4)
+}
+
+/// THE CHARGE GATE'S OWN FOLD (javap RespawnAnchorBlock.canBeCharged
+/// pcs 0-22 — the `charge < 4` verdict the iconst_4 the icmpge pair
+/// speaks).
+#[inline]
+pub fn anchor_can_be_charged(charge: u8) -> bool {
+    charge < 4
+}
+
+/// THE FUEL'S OWN WORD (javap isRespawnFuel pcs 0-7 — the
+/// `stack.is(Items.GLOWSTONE)` the single verdict speaks: the
+/// glowstone BLOCK item the fuel alone serves, the dust the
+/// ingredient lane's own kind never charges).
+#[inline]
+pub fn anchor_is_fuel(item_word: Option<&str>) -> bool {
+    item_word == Some("glowstone")
+}
+
+/// THE USE VERDICT'S OWN THREE ARMS (javap useWithoutItem pcs 0-175
+/// — the charge-0 PASS the empty anchor the press never consumes
+/// [pcs 0-19], the canSetSpawn gate the dimension attribute the
+/// works flag serves [pcs 40-46 — the
+/// EnvironmentAttributes.RESPAWN_ANCHOR_WORKS the getValue read the
+/// Boolean verdict wears; the nether the TRUE row keeps, the
+/// overworld/end the FALSE rows the offline law carries], the
+/// canSetSpawn-false arm the explode walk serves [pcs 164-175]).
+pub enum AnchorUse {
+    /// the empty anchor (charge 0) — the PASS the item lanes follow
+    Pass,
+    /// the charged anchor in the anchor-works dimension — the spawn
+    /// set the RespawnData.of(dimension, pos, 0.0f, 0.0f) walk wears
+    SpawnSet,
+    /// the charged anchor where the anchor never works — the explode
+    /// walk the 5.0F power the fire-true the BLOCK interaction wears
+    Explode,
+}
+
+#[inline]
+pub fn anchor_use_verdict(charge: u8, works: bool) -> AnchorUse {
+    if charge == 0 {
+        AnchorUse::Pass
+    } else if works {
+        AnchorUse::SpawnSet
+    } else {
+        AnchorUse::Explode
+    }
+}
+
+/// THE RESPAWN OFFSETS' OWN TABLE (javap RespawnAnchorBlock.<clinit>
+/// pcs 17-180 — the RESPAWN_HORIZONTAL_OFFSETS eight Vec3i rows the
+/// byte-coded clinit speaks [(0,0,-1), (-1,0,0), (0,0,1), (1,0,0),
+/// (-1,0,-1), (1,0,-1), (-1,0,1), (1,0,1)], the RESPAWN_OFFSETS
+/// builder the ring@0 + the ring mapped below + the ring mapped
+/// above + the (0,1,0) above-tail the 25 rows the ImmutableList
+/// banks).
+pub const ANCHOR_RESPAWN_HORIZONTAL: [(i32, i32); 8] = [
+    (0, -1),
+    (-1, 0),
+    (0, 1),
+    (1, 0),
+    (-1, -1),
+    (1, -1),
+    (-1, 1),
+    (1, 1),
+];
+
+/// THE 25-ROW WALK (the ring@0 the first eight, the ring@-1 the
+/// below map the second, the ring@+1 the above map the third, the
+/// (0,1,0) the builder's own add tail wears).
+pub fn anchor_respawn_offsets() -> [(i32, i32, i32); 25] {
+    let mut rows = [(0i32, 0i32, 0i32); 25];
+    for (i, &(dx, dz)) in ANCHOR_RESPAWN_HORIZONTAL.iter().enumerate() {
+        rows[i] = (dx, 0, dz); // the ring@0
+        rows[8 + i] = (dx, -1, dz); // the below map
+        rows[16 + i] = (dx, 1, dz); // the above map
+    }
+    rows[24] = (0, 1, 0); // the builder's own above tail
+    rows
+}
+
+/// THE ANCHOR'S OWN STAND-UP SCAN (javap RespawnAnchorBlock
+/// .findStandUpPosition(EntityType, CollisionGetter, BlockPos, Z)
+/// pcs 0-78 — the RESPAWN_OFFSETS the 25 rows the mutable
+/// set+move walk answers [pcs 39-50], the
+/// DismountHelper.findSafeDismountLocation verdict the per-cell walk
+/// serves [pcs 51-59 — the SAME walk the bed's 313 law shares: the
+/// dangerous rows, the floor fold, the bbox + border pair],
+/// the FIRST Some the return keeps [pcs 61-71], the walk-out the
+/// empty answer wears) — the 3-arg overload the strict->loose
+/// two-pass fold the strict pass the first lane keeps [pcs 0-24].
+pub fn anchor_find_standup_position(
+    world: &World,
+    pos: (i32, i32, i32),
+) -> Option<(f64, f64, f64)> {
+    let rows = anchor_respawn_offsets();
+    for strict in [true, false] {
+        for &(ox, oy, oz) in rows.iter() {
+            if let Some(vec) =
+                bed_standup_dismount(world, pos.0 + ox, pos.1 + oy, pos.2 + oz, strict)
+            {
+                return Some(vec);
+            }
+        }
+    }
+    None
+}
+
+/// THE ANCHOR ARM'S OWN STATIC WALK (javap ServerPlayer
+/// .findRespawnAndUseSpawnBlock pcs 44-161 — the instanceof
+/// RespawnAnchorBlock verdict the arm's own head keeps [pcs 44-49],
+/// THE (forced || charge > 0) GATE the uncharged anchor the
+/// fall-through wears [pcs 52-71 — the uncharged+unforced cell the
+/// bed arm the instanceof order answers, the generic arm follows],
+/// the canSetSpawn gate the works flag serves [pcs 74-80 — the false
+/// verdict the same fall-through wears], the 25-row scan the strict
+/// ->loose two-pass answers [pcs 83-89], THE SEAT the RespawnPosAngle
+/// the (spot, banked yaw/pitch) record wears, THE CONSUME the
+/// charge-1 setBlock the (!forced && param3) pair gates [pcs 94-148
+/// — the forced respawn the charge the map walk keeps, the
+/// param3-false the same keep wears], the scan-empty the EMPTY
+/// verdict the hard answer keeps [pcs 103-108 — the gates passed +
+/// the scan failed the walk the empty returns, the bed arm the
+/// fall-through never enters]).
+pub enum AnchorRespawn {
+    /// not an anchor, or the gates refused — the vanilla flow falls
+    /// through to the bed arm / the generic arm
+    FallThrough,
+    /// the gates passed but the 25-row scan found nothing — the EMPTY
+    /// the walk returns (no bed-arm fall-through)
+    Empty,
+    /// the scan's seat — the (x, y, z, yaw, pitch, consume) record
+    /// (the consume flag the charge-1 setBlock the caller serves)
+    Seat {
+        x: f64,
+        y: f64,
+        z: f64,
+        yaw: f32,
+        pitch: f32,
+        consume: bool,
+    },
+}
+
+pub fn anchor_respawn_and_use_spawn_block(
+    world: &World,
+    pos: (i32, i32, i32),
+    yaw: f32,
+    pitch: f32,
+    works: bool,
+) -> AnchorRespawn {
+    if !is_respawn_anchor(world.get(pos.0, pos.1, pos.2)) {
+        return AnchorRespawn::FallThrough;
+    }
+    let charge = anchor_variant_charge(world.variant(pos.0, pos.1, pos.2));
+    if charge == 0 || !works {
+        return AnchorRespawn::FallThrough;
+    }
+    match anchor_find_standup_position(world, pos) {
+        Some((x, y, z)) => AnchorRespawn::Seat {
+            x,
+            y,
+            z,
+            yaw,
+            pitch,
+            consume: true,
+        },
+        None => AnchorRespawn::Empty,
+    }
+}
+
+/// THE COMPARATOR'S OWN FOLD (javap RespawnAnchorBlock
+/// .getScaledChargeLevel pcs 0-26 — the `(charge - MIN) / 4.0F *
+/// max` walk the Mth.floor tail serves [the ldc_w 4.0 the cp#369
+/// float the pool probe pins]).
+#[inline]
+pub fn anchor_scaled_charge(charge: u8, max: i32) -> i32 {
+    crate::mth::floor(f64::from(f32::from(charge) / 4.0 * max as f32))
+}
+
+/// THE DAMPENING'S OWN SCAN (javap RespawnAnchorBlock.explode pcs 7-69
+/// + isWaterThatWouldFlow pcs 0-67 + lambda$explode$0 — the
+/// horizontal ring the would-flow predicate anyMatch answers [the
+/// water cell the (source || amount >= 2) + the below-dry pair the
+/// flow verdict speaks — the offline stand-in the water kind the
+/// source row keeps], the above cell's fluid the WATER tag the flag
+/// the OR pair wears): the dampened blast the $1 calculator the
+/// shouldBlockExplode refusal keeps — the cells the ray walk never
+/// clears, the sound and the entity doses the boom still serves.
+pub fn anchor_would_dampen(world: &World, pos: (i32, i32, i32)) -> bool {
+    // THE ABOVE PAIR (explode pcs 47-69 — the above cell's fluid the
+    // WATER tag the direct OR arm serves)
+    if world.get(pos.0, pos.1 + 1, pos.2) == WATER {
+        return true;
+    }
+    // THE HORIZONTAL RING (pcs 7-35 — the HORIZONTAL stream the
+    // relative map the would-flow predicate anyMatch wears)
+    for &(dx, dz) in ANCHOR_RESPAWN_HORIZONTAL.iter() {
+        let (cx, cy, cz) = (pos.0 + dx, pos.1, pos.2 + dz);
+        if world.get(cx, cy, cz) == WATER && world.get(cx, cy - 1, cz) != WATER {
+            return true;
+        }
+    }
+    false
+}
+
 /// THE END GATEWAY'S OWN KIND SEAT (the KIND_NAMES tail's row the
 /// vanilla registration order keeps — the kind id 797 the client's
 /// own space wears). The 26.2 jar's EndGatewayBlock the INVISIBLE
@@ -9010,7 +9250,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 798] = [
+pub const NAME_OF: [&str; 799] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -9832,6 +10072,7 @@ pub const NAME_OF: [&str; 798] = [
     "brewing_stand",
     "black_bed", "blue_bed", "brown_bed", "cyan_bed", "gray_bed", "green_bed", "light_blue_bed", "light_gray_bed", "lime_bed", "magenta_bed", "orange_bed", "pink_bed", "purple_bed", "red_bed", "white_bed", "yellow_bed",
     "end_gateway",
+    "respawn_anchor",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -24582,7 +24823,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -24683,7 +24924,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -25132,7 +25373,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -25323,7 +25564,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -25415,7 +25656,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25469,7 +25710,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -25559,7 +25800,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25616,7 +25857,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -25714,7 +25955,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25783,7 +26024,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -25897,7 +26138,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25972,7 +26213,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26084,7 +26325,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26160,7 +26401,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26277,7 +26518,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26362,7 +26603,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26513,7 +26754,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26587,7 +26828,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26776,7 +27017,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26837,7 +27078,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -27199,7 +27440,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -27240,8 +27481,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -27654,8 +27895,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -27994,8 +28235,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -28696,8 +28937,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -28998,8 +29239,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -29319,8 +29560,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -29618,8 +29859,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -30098,8 +30339,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -30594,8 +30835,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -30897,7 +31138,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -32895,6 +33136,224 @@ mod tests {
         );
     }
     #[test]
+    fn the_anchor_the_charge_the_verdict_the_scan_the_static_wear() {
+        // THE CLINIT'S OWN TABLE (javap RespawnAnchorBlock.<clinit>
+        // pcs 17-180 — the eight horizontal rows the byte-coded pairs
+        // speak, the 25-row walk the ring@0/ring@-1/ring@+1/above the
+        // builder order wears)
+        assert_eq!(
+            ANCHOR_RESPAWN_HORIZONTAL,
+            [
+                (0, -1),
+                (-1, 0),
+                (0, 1),
+                (1, 0),
+                (-1, -1),
+                (1, -1),
+                (-1, 1),
+                (1, 1)
+            ],
+            "the byte-coded eight the clinit order wears"
+        );
+        let rows = anchor_respawn_offsets();
+        assert_eq!(rows.len(), 25, "the 25-row walk the builder banks");
+        assert_eq!(
+            rows[0],
+            (0, 0, -1),
+            "the ring@0's first row the order keeps"
+        );
+        assert_eq!(rows[7], (1, 0, 1), "the ring@0's last row the order keeps");
+        assert_eq!(rows[8], (0, -1, -1), "the below map's first row wears");
+        assert_eq!(rows[15], (1, -1, 1), "the below map's last row wears");
+        assert_eq!(rows[16], (0, 1, -1), "the above map's first row wears");
+        assert_eq!(rows[23], (1, 1, 1), "the above map's last row wears");
+        assert_eq!(rows[24], (0, 1, 0), "the builder's above tail wears");
+        // THE KIND'S OWN SEAT (the NAME_OF row the palette walks)
+        assert_eq!(NAME_OF[RESPAWN_ANCHOR as usize], "respawn_anchor");
+        assert!(is_respawn_anchor(RESPAWN_ANCHOR));
+        // THE CHARGE'S OWN FOLDS (the canBeCharged gate the charge<4
+        // verdict speaks, the fuel the glowstone BLOCK item alone
+        // serves, the variant the raw charge the stamp answers)
+        assert!(anchor_can_be_charged(0) && anchor_can_be_charged(3));
+        assert!(
+            !anchor_can_be_charged(4),
+            "the full anchor the gate refuses"
+        );
+        assert!(
+            anchor_is_fuel(Some("glowstone")),
+            "the glowstone the fuel wears"
+        );
+        assert!(
+            !anchor_is_fuel(Some("glowstone_dust")),
+            "the dust the ingredient lane's own kind never charges"
+        );
+        assert!(!anchor_is_fuel(None), "the empty hand the fuel never wears");
+        assert_eq!(
+            anchor_variant_charge(3),
+            3,
+            "the variant the raw charge reads"
+        );
+        assert_eq!(
+            anchor_variant_charge(9),
+            4,
+            "the out-of-range byte the clamp keeps"
+        );
+        assert_eq!(anchor_charge_variant(6), 4, "the stamp the clamp keeps");
+        // THE VERDICT'S OWN THREE ARMS (javap useWithoutItem pcs 0-175
+        // — the charge-0 PASS the item lanes follow, the works arm the
+        // SpawnSet the bank speaks, the !works arm the Explode wears)
+        assert!(
+            matches!(anchor_use_verdict(0, true), AnchorUse::Pass),
+            "the empty anchor the PASS wears"
+        );
+        assert!(
+            matches!(anchor_use_verdict(0, false), AnchorUse::Pass),
+            "the empty anchor the dimension never gates"
+        );
+        assert!(
+            matches!(anchor_use_verdict(2, true), AnchorUse::SpawnSet),
+            "the charged anchor in the works dimension the spawn set serves"
+        );
+        assert!(
+            matches!(anchor_use_verdict(2, false), AnchorUse::Explode),
+            "the charged anchor where it never works the explode wears"
+        );
+        // THE COMPARATOR'S OWN FOLD (getScaledChargeLevel the /4 * max
+        // floor walk speaks)
+        assert_eq!(
+            anchor_scaled_charge(2, 15),
+            7,
+            "the half charge the floor fold wears"
+        );
+        assert_eq!(
+            anchor_scaled_charge(4, 15),
+            15,
+            "the full charge the max wears"
+        );
+        assert_eq!(
+            anchor_scaled_charge(0, 15),
+            0,
+            "the empty charge the zero wears"
+        );
+        // ===== THE WORLD WALKS (the flat pad the scan's own stages
+        // wear) =====
+        let mut w = World::blank(2, 7);
+        for x in 6..=10 {
+            for z in 5..=11 {
+                w.set(x, 30, z, STONE);
+            }
+        }
+        // THE DAMPENING'S OWN SCAN (the ring water the would-flow
+        // verdict speaks, the above water the direct OR arm serves,
+        // the water-over-water the flow never wears)
+        w.set(8, 31, 7, WATER); // the ring cell (0,0,-1) — the stone below (dry)
+        assert!(
+            anchor_would_dampen(&w, (8, 31, 8)),
+            "the ring water over dry ground the would-flow verdict speaks"
+        );
+        w.set(8, 30, 7, WATER); // the below cell water too — no flow
+        assert!(
+            !anchor_would_dampen(&w, (8, 31, 8)),
+            "the water column the flow verdict refuses"
+        );
+        w.set(8, 30, 7, STONE);
+        w.set(8, 31, 7, AIR);
+        w.set(8, 32, 8, WATER); // the above cell
+        assert!(
+            anchor_would_dampen(&w, (8, 31, 8)),
+            "the above water the direct OR arm speaks"
+        );
+        w.set(8, 32, 8, AIR);
+        // THE ANCHOR'S OWN SCAN (javap findStandUpPosition — the 25
+        // rows the ring@0 the first lane answers: the north neighbour
+        // (0,0,-1) the flat ground the strict pass lands)
+        w.set(8, 31, 8, RESPAWN_ANCHOR);
+        w.set_variant(8, 31, 8, 0);
+        assert_eq!(
+            anchor_find_standup_position(&w, (8, 31, 8)),
+            Some((8.5, 31.0, 7.5)),
+            "the ring@0's north row the flat ground the strict pass lands"
+        );
+        // THE BUILT-OVER RING (the ring rows the stone occupies — the
+        // strict pass the refuse chain keeps, the loose pass the same
+        // solid cells refuse; the ABOVE ring the second stone row the
+        // same refuse keeps — the 25-row walk-out the empty answer
+        // wears)
+        for y in 31..=32 {
+            for x in 6..=10 {
+                for z in 5..=11 {
+                    if y == 31 && (x, z) == (8, 8) {
+                        continue; // the anchor cell the seat keeps
+                    }
+                    w.set(x, y, z, STONE);
+                }
+            }
+        }
+        assert!(
+            anchor_find_standup_position(&w, (8, 31, 8)).is_none(),
+            "the built-over ring the 25-row walk-out the empty answer wears"
+        );
+        for x in 6..=10 {
+            for z in 5..=11 {
+                w.set(x, 32, z, AIR);
+                if (x, z) != (8, 8) {
+                    w.set(x, 31, z, AIR);
+                }
+            }
+        }
+        // THE STATIC WALK (javap findRespawnAndUseSpawnBlock pcs 44-161
+        // — the gates the charge/works pair serves, the Seat the
+        // consume flag wears, the FallThrough the uncharged cell the
+        // bed arm follows, the Empty the hard answer keeps)
+        // THE UNCHARGED ANCHOR (charge 0 — the gate refuses, the
+        // FallThrough the generic arm's order follows [the anchor
+        // solid — the passable pair refuses, the honest gap speaks])
+        w.set_variant(8, 31, 8, 0);
+        assert!(
+            matches!(
+                anchor_respawn_and_use_spawn_block(&w, (8, 31, 8), 0.0, 0.0, true),
+                AnchorRespawn::FallThrough
+            ),
+            "the uncharged anchor the gate refuses"
+        );
+        // THE WORKS GATE (the overworld anchor — the canSetSpawn false
+        // the same fall-through wears)
+        w.set_variant(8, 31, 8, 2);
+        assert!(
+            matches!(
+                anchor_respawn_and_use_spawn_block(&w, (8, 31, 8), 0.0, 0.0, false),
+                AnchorRespawn::FallThrough
+            ),
+            "the overworld anchor the works gate refuses"
+        );
+        // THE CHARGED ANCHOR IN THE NETHER (the 25-row scan the Seat
+        // the banked angles + the consume flag wear)
+        assert!(
+            matches!(
+                anchor_respawn_and_use_spawn_block(&w, (8, 31, 8), 0.0, 0.0, true),
+                AnchorRespawn::Seat {
+                    x: 8.5,
+                    y: 31.0,
+                    z: 7.5,
+                    yaw: 0.0,
+                    pitch: 0.0,
+                    consume: true
+                }
+            ),
+            "the charged anchor the scan's row0 seat the consume flag wears"
+        );
+        // NOT AN ANCHOR (the bed arm's instanceof order the fall-through
+        // keeps — the generic arm's verdict the bed walk answers)
+        w.set(8, 31, 8, AIR);
+        assert!(
+            matches!(
+                anchor_respawn_and_use_spawn_block(&w, (8, 31, 8), 0.0, 0.0, true),
+                AnchorRespawn::FallThrough
+            ),
+            "the air cell the instanceof order the fall-through keeps"
+        );
+    }
+    #[test]
     fn the_shulker_cell_the_lids_tick_the_same_ramp_wears() {
         // THE SHULKER'S OWN PROGRESS WALK (the autopush-298 round —
         // javap ShulkerBoxBlockEntity.updateAnimation the 26.2 jar the
@@ -33182,7 +33641,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 798, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -33330,7 +33789,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 798, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -33471,7 +33930,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 798, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -33716,7 +34175,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 798,
+            atlas::N_KINDS, 799,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -33870,7 +34329,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-             798,
+             799,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -34088,7 +34547,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 798, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -34202,7 +34661,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 798, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 799, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -34573,7 +35032,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 798, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 799, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
