@@ -473,3 +473,124 @@ fn the_offline_shulker_the_door_the_window_the_27_slots_banks() {
     );
     assert_eq!(app.chest_slots[13], (dirt, 5), "the reopen the stack rides");
 }
+
+/// THE HOPPER'S OWN DOOR THE WINDOW THE FIVE SLOTS BANK (the
+/// autopush-305 round — the autopush-304 NEXT list's own first
+/// candidate the offline walk answers: javap 26.2 HopperBlock the
+/// menu walk the HopperBlockEntity.createMenu the HopperMenu the
+/// five-seat row opens, the container.hopper default name the
+/// DEFAULT_NAME row banks, the BE's own withSize(5) the store width
+/// the [`crate::world::container_kind_slot_count`] law wears): the
+/// placement the facing stamp lands, the right-press on the placed
+/// hopper the OFFLINE world answers — the window the hopper's own
+/// ScreenKind::Chest shape opens (the 176x133 canvas flag the draw
+/// reads), the cell's own five-slot store the SAME map the chest
+/// family's doors insert (the pre-banked stack the door's open
+/// loads), the carried the fresh open keeps, the vanilla OPEN-counter
+/// voice the hopper kind the silence arm keeps, the sneaking player
+/// the arm SKIPS, the reopen the store's own law keeps.
+#[test]
+fn the_offline_hopper_the_door_the_window_the_five_slots_banks() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    // THE EMPTY HAND (the drag test's own law — the sneaking press
+    // the item lanes' place fallback the fresh loadout never arms)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // THE SAME MAP THE DOORS BANK (the pre-inserted stack the door's
+    // open loads — the five-slot width the BE's own withSize(5) the
+    // fresh store keeps)
+    app.container_stores_load_once();
+    app.container_stores.insert(cell, {
+        let mut v = vec![(0i32, 0i32); 5];
+        v[2] = (dirt, 7);
+        v
+    });
+    // THE FLOOR LOOK (the placement test's own camera — the pitch
+    // -PI/2 the hopper cell the 2.0 read answers, the clip the placed
+    // kind the own cell hit speaks)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 4.0, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper door the press consumed"
+    );
+    assert_eq!(app.screen, ScreenKind::Chest, "the window the door opens");
+    assert!(!app.chest_is_live, "the offline stand-in the door keeps");
+    assert!(
+        app.chest_window_hopper,
+        "the hopper's own canvas flag the title lane banks"
+    );
+    assert!(
+        !app.chest_window_shulker,
+        "the shulker's row the door never wears"
+    );
+    assert_eq!(
+        app.container_open_cell,
+        Some(cell),
+        "the cell the flush keys"
+    );
+    assert_eq!(
+        app.container_open_cell_b, None,
+        "the DOUBLE the lone hopper never speaks"
+    );
+    assert_eq!(app.chest_slots.len(), 5, "the lone hopper the five banks");
+    assert_eq!(
+        app.chest_slots[2],
+        (dirt, 7),
+        "the store's stack the open loads"
+    );
+    assert_eq!(app.chest_carried, (0, 0), "the fresh open the cursor keeps");
+    // THE SHIFT GATE (the crafting-table's own law — the sneaking
+    // player the door never opens, the empty-hand press the PASS
+    // verdict keeps)
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the close the world keeps");
+    app.shift_down = true;
+    assert!(
+        !app.on_right_press(0, 0),
+        "the sneaking press the door refuses"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the shift gate the world keeps"
+    );
+    app.shift_down = false;
+    // THE REOPEN THE STORE'S OWN LAW KEEPS (the second door the
+    // stored stack loads — the chest family's own entry walk)
+    assert!(
+        app.on_right_press(0, 0),
+        "the second press the door answers"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the window the second door opens"
+    );
+    assert_eq!(app.chest_slots[2], (dirt, 7), "the reopen the stack rides");
+    // THE CLOSE'S OWN FLUSH (the edited store the map rides home — the
+    // vanilla stopOpen tail the container walk serves, the five-slot
+    // vec the whole bank keeps)
+    app.chest_slots[1] = (dirt, 2);
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the second close lands");
+    assert_eq!(
+        app.container_stores.get(&cell).map(|s| s.as_slice()),
+        Some(&[(0, 0), (dirt, 2), (dirt, 7), (0, 0), (0, 0)][..]),
+        "the flush the five-slot store banks"
+    );
+}

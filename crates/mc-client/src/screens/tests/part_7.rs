@@ -3822,7 +3822,7 @@ fn the_web_and_wool_the_palette_rows_wear() {
     // soul sand's tail row the autopush-598 wake banks)
     assert_eq!(
         atlas::N_KINDS,
-        779,
+        780,
         "the palette the weighted plates' own tail banks"
     );
     assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -3907,7 +3907,7 @@ fn the_soul_sand_the_palette_row_wears() {
     assert_eq!(sand, 77, "the tail slot the palette wake banks");
     assert_eq!(
         atlas::N_KINDS,
-        779,
+        780,
         "the palette the weighted plates' own tail banks"
     );
     assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -4219,7 +4219,7 @@ fn the_honey_the_palette_row_wears() {
     assert_eq!(honey, 78, "the tail slot the palette wake banks");
     assert_eq!(
         atlas::N_KINDS,
-        779,
+        780,
         "the palette the weighted plates' own tail banks"
     );
     assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");

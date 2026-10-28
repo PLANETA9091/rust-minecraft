@@ -9109,6 +9109,18 @@ pub struct App {
     /// offline canvas alone reads — the golden scenes the flag never
     /// sets, the pixels the shape never moves).
     pub chest_window_shulker: bool,
+    /// THE HOPPER WINDOW'S OWN KIND FLAG (the offline canvas's title
+    /// + canvas lanes read — the 176x133 hopper.png shape the chest
+    /// screen's own split wears, the container.hopper row the hopper's
+    /// own door banks). The chest's own openers reset it (the chest's
+    /// default canvas the family law keeps), the hopper's own door sets
+    /// it; the vanilla hopper the OPEN-counter voice never wears (the
+    /// HopperBlock the ContainerOpenersCounter walk the chest family
+    /// alone ticks — the silence the door keeps). The LIVE lane the
+    /// flag never reads (the wire's own OpenScreen word the HOPPER
+    /// menu type the server speaks — the offline canvas alone the
+    /// flag banks).
+    pub chest_window_hopper: bool,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -11931,6 +11943,7 @@ impl App {
             chest_mirror: Vec::new(),
             chest_is_live: false,
             chest_window_shulker: false,
+            chest_window_hopper: false,
             live_clicks: None,
             chest_live_window: None,
             chest_slot_rects: Vec::new(),
@@ -23238,8 +23251,11 @@ impl App {
         self.chest_is_live = false;
         self.chest_mirror.clear();
         // the shulker's kind row the chest's own scene never wears (the
-        // container.chest default the golden pins)
+        // container.chest default the golden pins); the hopper's own
+        // canvas the same reset keeps (the 176x166 shape the scene
+        // wears)
         self.chest_window_shulker = false;
+        self.chest_window_hopper = false;
         // the deterministic scene the fresh grid keeps — the flush key
         // the scene NEVER wears (the per-cell stores the right-click
         // lane's own cells serve)
@@ -26049,8 +26065,10 @@ impl App {
         self.chest_is_live = false;
         self.chest_mirror.clear();
         // the shulker's kind row the chest's own door never wears (the
-        // container.chest default the family law keeps)
+        // container.chest default the family law keeps); the hopper's
+        // own canvas the same reset keeps
         self.chest_window_shulker = false;
+        self.chest_window_hopper = false;
         // THE DOUBLE'S OWN COMBINE (the dev-71 round — javap 26.2 the
         // DoubleBlockCombiner walk the chest menu provider rides: the
         // opened chest's variant type the connected direction reads,
@@ -26376,6 +26394,70 @@ impl App {
         }
         // THE SHULKER'S OWN VOICE (the same counter law the box's own
         // event names — the open half the first opener speaks)
+        self.container_voice_emit(true);
+        self.open(ScreenKind::Chest);
+    }
+
+    /// THE HOPPER'S OWN DOOR (javap 26.2 HopperBlock the menu walk the
+    /// HopperBlockEntity.createMenu answer — the openMenu walk the
+    /// HopperMenu the five-seat row opens, the container.hopper
+    /// default name the DEFAULT_NAME row banks): the right-press on
+    /// the placed hopper the OFFLINE world answers — the window the
+    /// hopper's own 176x133 canvas opens (the real
+    /// `gui/container/hopper.png` blit the five-seat row + the player
+    /// rows the texture's own chrome bakes), the cell's own five-slot
+    /// store the SAME container_stores map the chest family's doors
+    /// insert (the [`crate::world::container_kind_slot_count`] the
+    /// BE's own withSize(5) the width answers). The vanilla hopper the
+    /// OPEN-counter voice never wears (the HopperBlock the
+    /// ContainerOpenersCounter walk the chest family alone ticks —
+    /// the emit call the kind's own silence arm returns, the door the
+    /// same call the family shape keeps). The sneaking player the arm
+    /// SKIPS (the crafting-table's own gate the vanilla use walk wears
+    /// — the BlockItem.useOn's sneaking-place fallback the item lanes
+    /// follow). The WIRE session the local screen never opens (the
+    /// server's own OpenScreen word owns the container — the HOPPER
+    /// menu type lane the projection's menu_type_id feeds verbatim).
+    pub fn open_hopper_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE DISK BANK'S OWN LAZY LOAD (the chest's own law — the
+        // first store access the once-flag's parse answers)
+        self.container_stores_load_once();
+        // THE STALE CELL'S OWN RELEASE FIRST (the chest open walk's
+        // own law the hopper lane wears — the hopper no lid byte
+        // banks, the take the None the no-op keeps)
+        self.barrel_lid_released();
+        // the OFFLINE stand-in: the live lane's flag stays down (the
+        // chest's own open walk the same law keeps)
+        self.chest_is_live = false;
+        self.chest_mirror.clear();
+        // THE CELL'S OWN STORE (the RandomizableContainer contents the
+        // map key keeps — the first open the fresh five-slot row
+        // inserts, the reopen the stored stacks load; the HopperMenu's
+        // own checkContainerSize(container, 5) the width the BE's
+        // withSize(5) answers)
+        let store = self
+            .container_stores
+            .entry(pos)
+            .or_insert_with(|| vec![(0i32, 0i32); 5]);
+        self.container_open_cell = Some(pos);
+        self.container_open_cell_b = None;
+        self.chest_slots = store.clone();
+        self.chest_carried = (0, 0);
+        // the player's own rows the REAL inventory projects (the menu's
+        // addStandardInventorySlots(8, 51) the mirror rows the same
+        // projection keeps)
+        self.chest_mirror_sync_from_inventory();
+        // THE HOPPER'S OWN KIND ROW (the title + canvas lanes' flag the
+        // draw reads — the container.hopper default the DEFAULT_NAME
+        // row banks, the 176x133 canvas the chest's own shape the
+        // split retires)
+        self.chest_window_shulker = false;
+        self.chest_window_hopper = true;
+        // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
+        // — the hopper kind the vanilla's own silence arm the emit
+        // call returns: the ContainerOpenersCounter the HopperBlock
+        // never ticks, the no-sound open the vanilla look banks)
         self.container_voice_emit(true);
         self.open(ScreenKind::Chest);
     }
@@ -28540,6 +28622,14 @@ impl App {
     /// press lane — the buttons' own render-then-hit pattern, zero
     /// pixel surface of its own.
     fn render_chest(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        // THE HOPPER'S OWN CANVAS (the kind flag the split reads — the
+        // 176x133 hopper.png blit the five-seat row the real texture
+        // bakes, the chest's own vector-bevel shape the family's other
+        // doors wear)
+        if self.chest_window_hopper {
+            self.render_hopper(g, a, w, h);
+            return;
+        }
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         // THE ROWS' OWN CANVAS (the dev-71 round — the grid the count
         // names: 27 slots the generic_9x3's 176x166 canvas wears, 54
@@ -28670,6 +28760,103 @@ impl App {
         // THE BUNDLE TOOLTIP (the renderTooltip pass — the hovered
         // bundle's contents grid the chest lane's rows speak, the
         // topmost layer the panel and the carried stack keep under)
+        self.render_bundle_tooltip(g, a);
+    }
+
+    /// THE HOPPER'S OWN RENDER (javap 26.2 HopperScreen the 176x133
+    /// ctor speaks + AbstractContainerScreen the default label walk
+    /// the class's own inventoryLabelY = imageHeight - 94 the ctor
+    /// pc 13-21 banks): the frozen world dimmed beneath, the REAL
+    /// `gui/container/hopper.png` blitted 176x133 at the centered
+    /// panel (the texture's own chrome the five-seat row + the player
+    /// rows bakes — NO container/slot sprites the blitted-canvas law
+    /// keeps, the dispenser lane's own verdict), the menu's own slots
+    /// the ctor's Slot(container, i, 44 + i*18, 20) loop places (the
+    /// five-seat row the HopperMenu's checkContainerSize(container, 5)
+    /// answers) + the standard rows addStandardInventorySlots(8, 51)
+    /// (the main 51/69/87, the hotbar 109), the title the DEFAULT
+    /// label walk speaks (titleLabelX 8 / titleLabelY 6 — the
+    /// HopperScreen the DispenserScreen's centered override never
+    /// wears, the left-aligned row the base class keeps), the
+    /// inventory label at 8, 39 (the ctor's own imageHeight - 94).
+    /// The icons/counts the chest's own draw keeps, the carried
+    /// follow. The render also lays out the slot HIT BOXES (the 16x16
+    /// inner cells with their menu slot numbers) for the press lane.
+    fn render_hopper(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = ((w - 176) / 2, (h - 133) / 2);
+        self.chest_panel = panel;
+        // THE HIT BOXES (the menu's own numbering — the five the Slot
+        // loop's 0..5 speaks, the mirror rows 5..41 the standard
+        // inventory keeps, the 16x16 inner cells the +1 inset wears)
+        let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(41);
+        for i in 0..5usize {
+            let (sx, sy) = hopper_container_slot(panel, i);
+            rects.push((sx + 1, sy + 1, i as i16));
+        }
+        for i in 0..36usize {
+            let (sx, sy) = hopper_mirror_slot(panel, i);
+            rects.push((sx + 1, sy + 1, (5 + i) as i16));
+        }
+        self.chest_slot_rects = rects;
+        g.sprite_file_region(
+            a,
+            "gui/container/hopper.png",
+            0,
+            0,
+            176,
+            133,
+            panel.0,
+            panel.1,
+        );
+        // THE DEFAULT LABEL WALK (the AbstractContainerScreen's own
+        // title row the HopperScreen never overrides — the 8/6 seat
+        // the base class keeps, the container.hopper row the
+        // DEFAULT_NAME banks)
+        let label = [0.251, 0.251, 0.251];
+        if let Some(t) = tr("container.hopper") {
+            g.text(a, panel.0 + 8, panel.1 + 6, t, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 39, t, label, false);
+        }
+        // THE SLOT ICONS (the chest's own draw — the believed rows the
+        // five-seat row + the mirror keep)
+        for &(sx, sy, slot) in &self.chest_slot_rects {
+            let slot = slot as usize;
+            let believed = if slot < 5 {
+                self.chest_slots.get(slot)
+            } else {
+                self.chest_mirror.get(slot - 5)
+            };
+            let Some(&(id, count)) = believed else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the offline sim's local cursor the chest's own gate
+        // keeps, the headless scenes track no mouse)
+        if !self.chest_is_live && self.chest_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
+                if self.chest_carried.1 > 1 {
+                    let s = self.chest_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        // THE BUNDLE TOOLTIP (the renderTooltip pass — the topmost
+        // layer the panel and the carried stack keep under)
         self.render_bundle_tooltip(g, a);
     }
 
@@ -53380,6 +53567,27 @@ impl App {
             self.open_shulker_for(hit.pos);
             return true;
         }
+        // THE HOPPER'S OWN DOOR (javap 26.2 HopperBlock the menu walk
+        // the HopperBlockEntity.createMenu answer — the openMenu walk
+        // the HopperMenu the five-seat row the container.hopper title
+        // opens): the right-press on the placed hopper the OFFLINE
+        // world answers — the window the hopper's own 176x133 canvas
+        // opens, the cell's own five-slot store the SAME map the
+        // chest family's doors insert. The sneaking player the arm
+        // SKIPS (the crafting-table's own gate the vanilla use walk
+        // wears — the BlockItem.useOn's sneaking-place fallback the
+        // item lanes follow). The WIRE session the local screen never
+        // opens (the server's own OpenScreen word owns the container
+        // — the HOPPER menu type lane the projection feeds).
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_hopper(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            self.open_hopper_for(hit.pos);
+            return true;
+        }
         // THE DISPENSER'S OWN DOOR (javap 26.2 DispenserBlock.
         // useWithoutItem — the openMenu walk the BlockEntity's own
         // MenuProvider answers, the awardStat(INSPECT_DISPENSER) the
@@ -55519,6 +55727,27 @@ impl App {
                     cell.1,
                     cell.2,
                     crate::world::shulker_variant(hit.face, false),
+                );
+            }
+            // THE HOPPER'S OWN FACING STAMP (the autopush-305 round —
+            // javap HopperBlock.getStateForPlacement pc 0-18 the 26.2
+            // jar the live disasm answers [the 19-pc body]: the
+            // `setValue(FACING, d)` walk the CLICKED FACE'S OPPOSITE
+            // the axis fold stamps — `d = context.getClickedFace()
+            // .getOpposite()`, `d.getAxis() == Y ? DOWN : d` — the
+            // floor click the DOWN funnel mouths, the ceiling click
+            // the SAME DOWN byte wears [the FACING_HOPPER vocabulary
+            // the up state never carries], the wall click the
+            // opposite's own compass byte the funnel-away law serves;
+            // the ENABLED bit the fresh placement never sets — the
+            // registerDefaultState's own enabled=true the default
+            // keeps).
+            if crate::world::is_hopper(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::hopper_placement_facing(hit.face),
                 );
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
@@ -63666,8 +63895,10 @@ impl App {
                 self.chest_is_live = true;
                 // the shulker's kind row the wire window never wears
                 // (the OpenScreen Component's own name the live lane
-                // banks — the flag the offline canvas alone reads)
+                // banks — the flag the offline canvas alone reads); the
+                // hopper's canvas the same wire law keeps
                 self.chest_window_shulker = false;
+                self.chest_window_hopper = false;
                 // THE WINDOW'S OWN NAME (the same decode ride — the
                 // OpenScreen Component the 3x3 canvas's round owns,
                 // the custom name the anvil rows speak; the None the
@@ -78022,6 +78253,27 @@ fn dispenser_grid_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
         panel.0 + 62 + (index % 3) as i32 * 18,
         panel.1 + 17 + (index / 3) as i32 * 18,
     )
+}
+
+/// THE HOPPER'S OWN FIVE-SEAT ROW (javap 26.2 HopperMenu.<init> the
+/// Slot(container, i, 44 + i*18, 20) loop the origin speaks — the
+/// five seats the single row the 18-pitch wears, the texture's own
+/// chrome the canvas bakes).
+fn hopper_container_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
+    (panel.0 + 44 + index as i32 * 18, panel.1 + 20)
+}
+
+/// THE HOPPER'S OWN MIRROR ROWS (javap 26.2 HopperMenu the
+/// addStandardInventorySlots(8, 51) walk the origin speaks — the main
+/// rows 51/69/87 the three-bank grid keeps, the hotbar row the +58
+/// the standard walk answers).
+fn hopper_mirror_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
+    let y = if index < 27 {
+        51 + (index / 9) as i32 * 18
+    } else {
+        109
+    };
+    (panel.0 + 8 + (index % 9) as i32 * 18, panel.1 + y)
 }
 
 /// One flat item icon, 16x16 GUI pixels, through the generated texture

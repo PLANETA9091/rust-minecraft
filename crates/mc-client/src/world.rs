@@ -3381,6 +3381,68 @@ pub fn is_shulker(id: u16) -> bool {
     id == SHULKER_BOX
 }
 
+/// THE HOPPER'S OWN KIND SEAT (the autopush-305 round — the
+/// autopush-304 NEXT list's own first candidate the container_stores
+/// bank the client never seats: the jar's blockstates/hopper.json the
+/// facing property the one visual field speaks [the blockstate's
+/// facing=down row the block/hopper model answers, the four
+/// horizontals the hopper_side y-rotation variants wear], the BE
+/// funnel the block/hopper.json elements the funnel round's derive
+/// lane keeps — the generic cube the mint's FACE_TILES row the two
+/// masters renders). THE JAR LAW the live disasm re-pins (the 26.2
+/// jar scripts/hopper_scout_305.py the walk answers):
+/// HopperBlockEntity.<init> the `NonNullList.withSize(5, EMPTY)` the
+/// FIVE slots speak [iconst_5 the withSize call the store width
+/// banks], HopperMenu the `checkContainerSize(container, 5)` gate +
+/// the Slot(container, i, 44 + i*18, 20) loop the five-seat row
+/// banks [the addStandardInventorySlots(8, 51) the mirror origin
+/// keeps], MenuType.HOPPER the window kind names,
+/// HopperBlockEntity.getDefaultName the container.hopper DEFAULT_NAME
+/// row banks, HopperBlockEntity.createMenu the HopperMenu the window
+/// opens. THE FACING LAW the placement walk stamps (javap
+/// HopperBlock.getStateForPlacement the 26.2 jar the 19-pc body the
+/// [`hopper_placement_facing`] fold answers — the CLICKED FACE the
+/// OPPOSITE the axis fold wears: `d = context.getClickedFace()
+/// .getOpposite()`, `FACING = d.getAxis() == Y ? DOWN : d` — the
+/// floor click the DOWN funnel mouths, the ceiling click the SAME
+/// DOWN byte wears [the UP the FACING_HOPPER property the state
+/// vocabulary never carries — BlockStateProperties.FACING_HOPPER the
+/// five-value enum the up seat refuses], the wall click the clicked
+/// face's opposite the funnel mouths away from the mounted surface).
+pub const HOPPER: u16 = 779;
+
+pub fn is_hopper(id: u16) -> bool {
+    id == HOPPER
+}
+
+/// THE HOPPER'S OWN PLACEMENT FACING (javap HopperBlock.
+/// getStateForPlacement pc 0-18 the 26.2 jar the live disasm the
+/// fold answers: the clicked face's OPPOSITE the candidate wears,
+/// the Y-axis candidate the DOWN byte the fold answers [the floor
+/// click the UP face the opposite-DOWN candidate the axis gate
+/// keeps, the ceiling click the DOWN face the opposite-UP the same
+/// gate banks — the FACING_HOPPER vocabulary the up state never
+/// wears]; the wall clicks the opposite's own compass byte the
+/// funnel-away law serves — the north face the SOUTH funnel mouths,
+/// the south face the NORTH wears, the west the EAST, the east the
+/// WEST). The [`crate::world::DIRECTION_NORMAL`] ordinals the
+/// [`crate::world::ClipHit::face`] entry bytes speak — down 0, up 1,
+/// north 2, south 3, west 4, east 5; the variant byte the same low
+/// three bits the family's own vocabulary keeps (the ENABLED bit the
+/// fresh placement never sets — the registerDefaultState's own
+/// enabled=true the default keeps, the comparator's powered walk the
+/// redstone round banks).
+#[inline]
+pub fn hopper_placement_facing(clicked_face: u8) -> u8 {
+    match clicked_face {
+        0 | 1 => 0, // the DOWN byte the axis-Y fold both wear
+        2 => 3,     // the north face's opposite the SOUTH mouth keeps
+        3 => 2,     // the south face's opposite the NORTH mouth keeps
+        4 => 5,     // the west face's opposite the EAST mouth keeps
+        _ => 4,     // the east face's opposite the WEST mouth keeps
+    }
+}
+
 /// THE SHULKER'S OWN OPEN BIT (the dev-193 round — the vanilla chest
 /// the OPEN blockstate the family never carries, the client's own byte
 /// the container walk stamps the BE-rendered lid the rise serves: the
@@ -3501,7 +3563,15 @@ pub fn is_dispenser_kind(id: u16) -> bool {
 /// truncates — the nine the dispenser family alone wears, the chest
 /// grid the rest keeps.
 pub fn container_kind_slot_count(kind: u16) -> usize {
-    if is_dispenser_kind(kind) {
+    if kind == HOPPER {
+        // THE HOPPER'S OWN FIVE (javap HopperBlockEntity.<init> pc 9-17
+        // the 26.2 jar the withSize(5) walk the store width speaks —
+        // the HopperMenu's checkContainerSize(container, 5) gate the
+        // same five the window's Slot loop answers: the fresh store
+        // the five cells the open walk inserts, the flush the whole
+        // vec banks)
+        5
+    } else if is_dispenser_kind(kind) {
         9
     } else {
         27
@@ -7557,7 +7627,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 779] = [
+pub const NAME_OF: [&str; 780] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -8375,6 +8445,7 @@ pub const NAME_OF: [&str; 779] = [
     "dispenser",
     "dropper",
     "shulker_box",
+    "hopper",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -23056,7 +23127,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -23157,7 +23228,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -23606,7 +23677,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -23797,7 +23868,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -23889,7 +23960,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23943,7 +24014,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -24033,7 +24104,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24090,7 +24161,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24188,7 +24259,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24257,7 +24328,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24371,7 +24442,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24446,7 +24517,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24558,7 +24629,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24634,7 +24705,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24751,7 +24822,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24836,7 +24907,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24987,7 +25058,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25061,7 +25132,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -25250,7 +25321,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25311,7 +25382,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -25673,7 +25744,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25714,8 +25785,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -26128,8 +26199,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -26468,8 +26539,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -27170,8 +27241,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -27472,8 +27543,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -27793,8 +27864,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -28092,8 +28163,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -28572,8 +28643,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -29068,8 +29139,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -29371,7 +29442,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -29803,6 +29874,92 @@ mod tests {
     }
 
     #[test]
+    fn the_hopper_facing_the_placement_bytes_wear() {
+        // THE HOPPER'S OWN PLACEMENT LAW (the autopush-305 round —
+        // javap HopperBlock.getStateForPlacement pc 0-18 the 26.2 jar
+        // the live disasm the `d = getClickedFace().getOpposite()` +
+        // `FACING = d.getAxis() == Y ? DOWN : d` walk answers): the
+        // clicked face's OPPOSITE the axis fold stamps — the floor
+        // click the UP face the opposite-DOWN candidate the axis gate
+        // keeps, the ceiling click the DOWN face the opposite-UP the
+        // same gate banks (the FACING_HOPPER vocabulary the up state
+        // never carries), the wall clicks the opposite's own compass
+        // byte the funnel-away law serves
+        use crate::world::{
+            hopper_placement_facing, DISPENSER_FACING_DOWN, DISPENSER_FACING_EAST,
+            DISPENSER_FACING_NORTH, DISPENSER_FACING_SOUTH, DISPENSER_FACING_WEST,
+        };
+        // THE VERTICAL CLICKS THE DOWN BYTE WEAR (the axis-Y fold the
+        // two vertical faces the same DOWN ordinal answers — the
+        // funnel the gravity the floor AND the ceiling mounts keep)
+        assert_eq!(
+            hopper_placement_facing(0),
+            DISPENSER_FACING_DOWN,
+            "the floor click the DOWN mouth banks"
+        );
+        assert_eq!(
+            hopper_placement_facing(1),
+            DISPENSER_FACING_DOWN,
+            "the ceiling click the same DOWN the up seat refuses"
+        );
+        // THE WALL CLICKS THE OPPOSITE'S OWN COMPASS BYTE WEAR (the
+        // funnel-away law the four horizontals serve — the north face
+        // the SOUTH mouth, the south the NORTH, the west the EAST,
+        // the east the WEST)
+        assert_eq!(
+            hopper_placement_facing(2),
+            DISPENSER_FACING_SOUTH,
+            "the north face's opposite the SOUTH mouth keeps"
+        );
+        assert_eq!(
+            hopper_placement_facing(3),
+            DISPENSER_FACING_NORTH,
+            "the south face's opposite the NORTH mouth keeps"
+        );
+        assert_eq!(
+            hopper_placement_facing(4),
+            DISPENSER_FACING_EAST,
+            "the west face's opposite the EAST mouth keeps"
+        );
+        assert_eq!(
+            hopper_placement_facing(5),
+            DISPENSER_FACING_WEST,
+            "the east face's opposite the WEST mouth keeps"
+        );
+        // THE KIND SEAT'S OWN PIN (the mint the tail seat the atlas
+        // row answers — the NAME_OF row the placement walk's reverse
+        // lookup speaks, the slot-count law the BE's own withSize(5)
+        // the width banks, the dispenser family's nine + the chest
+        // grid the sibling widths keep)
+        assert_eq!(HOPPER, 779, "the hopper its tail seat keeps");
+        assert_eq!(
+            crate::world::NAME_OF[HOPPER as usize],
+            "hopper",
+            "the NAME_OF row the placeable walk reads"
+        );
+        assert_eq!(
+            World::placeable_block("hopper"),
+            Some(HOPPER),
+            "the held hopper item the kind mints"
+        );
+        assert_eq!(
+            container_kind_slot_count(HOPPER),
+            5,
+            "the BE's own withSize(5) the width banks"
+        );
+        assert_eq!(
+            container_kind_slot_count(DISPENSER),
+            9,
+            "the dispenser family's nine the sibling keeps"
+        );
+        assert_eq!(
+            container_kind_slot_count(CHEST),
+            27,
+            "the chest grid the sibling keeps"
+        );
+    }
+
+    #[test]
     fn the_shulker_cell_the_lids_tick_the_same_ramp_wears() {
         // THE SHULKER'S OWN PROGRESS WALK (the autopush-298 round —
         // javap ShulkerBoxBlockEntity.updateAnimation the 26.2 jar the
@@ -30090,7 +30247,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 779, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -30238,7 +30395,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 779, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -30379,7 +30536,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 779, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -30624,7 +30781,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 779,
+            atlas::N_KINDS, 780,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -30778,7 +30935,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-             779,
+             780,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -30996,7 +31153,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 779, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -31110,7 +31267,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 779, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 780, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -31481,7 +31638,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 779, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 780, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

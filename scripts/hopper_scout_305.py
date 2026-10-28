@@ -17,7 +17,7 @@ JAR = '.mc2rs/classpath/client.jar'
 
 def dump(zf, path, wants):
     try:
-        data = zf.read(path)
+        data = zf.read(path + '.class')
     except KeyError:
         print(f"!! {path} MISSING")
         return
