@@ -10044,6 +10044,25 @@ fn the_shulker_own_lid_rise_walk_wears() {
             w::shulker_variant_open(world.variant(sx, sy, sz)),
             "the open walk the bit stamps"
         );
+        assert_eq!(
+            world.chest_lids.get(&(sx, sy, sz)),
+            Some(&(0.0, 0.0)),
+            "the open walk the fresh pair seeds"
+        );
+    }
+    // THE RAMP'S OWN WALK (the app's own game loop the REAL ticks
+    // serves — the ten ticks the +0.1 ramp the settle the full-open
+    // pair banks, the chest walk's own law the shulker's cell wears)
+    for _ in 0..11 {
+        app.update();
+    }
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.chest_lids[&(sx, sy, sz)],
+            (1.0, 1.0),
+            "the settled open the full-open pair banks"
+        );
     }
     // THE OPEN POSE'S OWN REACH (the mesher the raised lid bakes —
     // the cell band's own quads the y_max verdict reads [the terrain
@@ -10079,13 +10098,24 @@ fn the_shulker_own_lid_rise_walk_wears() {
         );
     }
     // THE CLOSE'S OWN RELEASE (the close walk the byte clears — the
-    // generic cube the static pose restores)
+    // ramp-down the ticks the removal answers, the generic cube the
+    // static pose restores)
     app.close_chest_container(ScreenKind::World);
     {
         let world = app.offline_world.as_ref().unwrap();
         assert!(
             !w::shulker_variant_open(world.variant(sx, sy, sz)),
             "the close walk the byte releases"
+        );
+    }
+    for _ in 0..11 {
+        app.update();
+    }
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !world.chest_lids.contains_key(&(sx, sy, sz)),
+            "the settled-closed pair the map removes"
         );
     }
     // THE CLOSED POSE'S OWN CUBE (the mesher the generic cube bakes —

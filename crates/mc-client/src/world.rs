@@ -6538,7 +6538,7 @@ pub fn chest_lids_tick(world: &mut World) {
     let keys: Vec<(i32, i32, i32)> = world.chest_lids.keys().copied().collect();
     for pos in keys {
         let kind = world.get(pos.0, pos.1, pos.2);
-        if !is_chest(kind) {
+        if !is_chest(kind) && !is_shulker(kind) {
             // THE MINED CELL'S OWN RETIREMENT (the block the lid
             // state outlives — the entry the same tick drops, the
             // gen the removal's own change bumps)
@@ -6546,7 +6546,18 @@ pub fn chest_lids_tick(world: &mut World) {
             changed = true;
             continue;
         }
-        let should = chest_open_bit_of(world.variant(pos.0, pos.1, pos.2));
+        // THE KIND'S OWN BIT READ (the autopush-298 round — the
+        // shulker the family's own byte the tick serves: the chest
+        // kinds the [`CHEST_OPEN_BIT`] byte reads, the shulker the
+        // [`SHULKER_OPEN_BIT`] byte the same verdict answers — the
+        // ShulkerBoxBlockEntity.updateAnimation the 26.2 jar the same
+        // progress walk the chest's tickLid wears, the +0.1/-0.1 ramp
+        // the both families the one law serves)
+        let should = if is_shulker(kind) {
+            shulker_variant_open(world.variant(pos.0, pos.1, pos.2))
+        } else {
+            chest_open_bit_of(world.variant(pos.0, pos.1, pos.2))
+        };
         let (o, open) = world.chest_lids[&pos];
         let o_new = open; // the tickLid's own `oOpenness = openness` first
         let mut open_new = open;
@@ -29701,6 +29712,93 @@ mod tests {
         assert!(
             !w.chest_lids.contains_key(&pos),
             "the mined cell the entry retires"
+        );
+    }
+
+    #[test]
+    fn the_shulker_cell_the_lids_tick_the_same_ramp_wears() {
+        // THE SHULKER'S OWN PROGRESS WALK (the autopush-298 round —
+        // javap ShulkerBoxBlockEntity.updateAnimation the 26.2 jar the
+        // same law the chest's tickLid wears: the progressOld =
+        // progress snapshot the lerp base keeps, the OPENING arm the
+        // `min(progress + 0.1, 1.0)` ramp serves, the CLOSING arm the
+        // `max(progress - 0.1, 0.0)` ramp answers, the OPENED hold the
+        // static pose the settle banks; the shouldBeOpen the cell's
+        // own [`SHULKER_OPEN_BIT`] byte reads — the container walk
+        // stamps, the close walk clears, the tick the live verdict
+        // reads). THE ONE MAP the both families the entries bank (the
+        // kind's own bit read the walk's own arm answers).
+        let mut w = World::new(2, 7);
+        let n = w.size_blocks();
+        let c = n / 2;
+        let top = 8;
+        let pos = (c, top, c);
+        w.set(pos.0, pos.1, pos.2, SHULKER_BOX);
+        // THE SEED'S OWN FRESH PAIR (the shulker's open walk the same
+        // chest_lid_seed walk banks — the seed the bit stamp the SAME
+        // walk wears, the tick the ramp the first step arms)
+        chest_lid_seed(&mut w, pos);
+        assert_eq!(
+            w.chest_lids[&pos],
+            (0.0, 0.0),
+            "the seed the fresh pair banks"
+        );
+        // THE OPEN'S OWN RAMP (the SHULKER_OPEN_BIT stamped the ten
+        // ticks the 0.1-step the full-open settle wears)
+        let v = w.variant(pos.0, pos.1, pos.2);
+        w.set_variant(pos.0, pos.1, pos.2, v | SHULKER_OPEN_BIT);
+        for i in 1..=9 {
+            chest_lids_tick(&mut w);
+            let (o, open) = w.chest_lids[&pos];
+            let want = (i as f32) * 0.1;
+            assert!(
+                (open - want).abs() < 1e-6,
+                "the ramp's own step the tick {i} wears, got {open}"
+            );
+            assert!(
+                (o - (want - 0.1)).abs() < 1e-6,
+                "the oOpenness snapshot the previous value wears, got {o}"
+            );
+        }
+        chest_lids_tick(&mut w);
+        let (o, open) = w.chest_lids[&pos];
+        assert!(
+            (open - 1.0).abs() < 1e-6 && (o - 0.9).abs() < 1e-6,
+            "the settle tick the full-open value wears, got ({o}, {open})"
+        );
+        // THE CLOSE'S OWN RAMP-DOWN (the bit cleared the ten ticks the
+        // floor wears — the settled-closed pair the map removes)
+        let v = w.variant(pos.0, pos.1, pos.2);
+        w.set_variant(pos.0, pos.1, pos.2, v & !SHULKER_OPEN_BIT);
+        for i in 1..=9 {
+            chest_lids_tick(&mut w);
+            let (_, open) = w.chest_lids[&pos];
+            let want = 1.0 - (i as f32) * 0.1;
+            assert!(
+                (open - want).abs() < 1e-6,
+                "the ramp-down's own step the tick {i} wears, got {open}"
+            );
+        }
+        chest_lids_tick(&mut w);
+        assert!(
+            !w.chest_lids.contains_key(&pos),
+            "the settled-closed pair the map removes"
+        );
+        // THE MINED SHULKER'S OWN RETIREMENT (the block the lid state
+        // outlives — the entry the same tick drops)
+        let v = w.variant(pos.0, pos.1, pos.2);
+        w.set_variant(pos.0, pos.1, pos.2, v | SHULKER_OPEN_BIT);
+        chest_lid_seed(&mut w, pos);
+        chest_lids_tick(&mut w);
+        assert!(
+            w.chest_lids.contains_key(&pos),
+            "the stamped shulker the entry keeps"
+        );
+        w.set(pos.0, pos.1, pos.2, AIR);
+        chest_lids_tick(&mut w);
+        assert!(
+            !w.chest_lids.contains_key(&pos),
+            "the mined shulker the entry retires"
         );
     }
 

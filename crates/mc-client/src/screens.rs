@@ -26366,6 +26366,13 @@ impl App {
         if let Some(w) = self.offline_world.as_mut() {
             let v = w.variant(pos.0, pos.1, pos.2);
             w.set_variant(pos.0, pos.1, pos.2, v | crate::world::SHULKER_OPEN_BIT);
+            // THE PROGRESS'S OWN SEED (the autopush-298 round — the
+            // ShulkerBoxBlockEntity.updateAnimation the 26.2 jar the
+            // progressOld=progress snapshot the fresh (0,0) pair the
+            // first tick's +0.1 arms — the chest walk's own seed law
+            // the shulker's cell banks, the lerp the mesher's lane the
+            // mid-rise frames the partial fraction serves)
+            crate::world::chest_lid_seed(w, pos);
         }
         // THE SHULKER'S OWN VOICE (the same counter law the box's own
         // event names — the open half the first opener speaks)

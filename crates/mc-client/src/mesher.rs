@@ -6173,16 +6173,37 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // carries, the BE-rendered shell the static-box law the
                 // open byte retires: the [`crate::world::
                 // SHULKER_OPEN_BIT`] byte the container walk stamps the
-                // open lane the base + the raised lid the jar law bakes
+                // open lane the base + the rising lid the jar law bakes
                 // — [`shulker_open_model_quads`], the ShulkerModel.
                 // createShellMesh the parts speak, the setupAnim the
-                // `24 - openness*0.5*16` walk the +8 px lift the
-                // full-open pose answers). THE CLOSED POSE THE BYTE THE
-                // GENERIC CUBE KEEPS (the fall-through the static box
-                // the goldens' byte-identical contract wears — the lane
-                // the open bit alone serves).
+                // `24 - openness*0.5*16` walk the lift the lerp'd
+                // fraction serves [the autopush-298 round the smooth
+                // rise wears]). THE CLOSED POSE THE BYTE THE GENERIC
+                // CUBE KEEPS (the fall-through the static box the
+                // goldens' byte-identical contract wears — the lane the
+                // open bit AND the render openness the >0.001 verdict
+                // serves: the fresh (0,0) seed the closed frames the
+                // cube answers, the mid-rise the shells the partial
+                // fraction bakes).
+                // THE RENDER OPENNESS'S OWN LERP (the autopush-298
+                // round — the chest lane's own fold the shulker's cell
+                // wears: the ticked pair the map banks the render
+                // openness the lerp answers [the
+                // ShulkerBoxBlockEntity.getProgress the
+                // lerp(progressOld, progress, partialTick) law the 26.2
+                // jar speaks], the mid-rise the partial fraction the
+                // lift serves; the NO-entry cell the bit fallback the
+                // static full-open pose the dev-193 law keeps [the
+                // staged bits the goldens' own law wears], the fresh
+                // (0,0) seed the closed frames the generic cube
+                // answers)
+                let shulker_lid_render = match world.chest_lids.get(&(wx, wy, wz)).copied() {
+                    Some((o, open)) => o + (open - o) * world.lid_partial.clamp(0.0, 1.0),
+                    None => 1.0,
+                };
                 if crate::world::is_shulker(id)
                     && crate::world::shulker_variant_open(world.variant(wx, wy, wz))
+                    && shulker_lid_render > 0.001
                 {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
@@ -6259,7 +6280,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         is_opaque(world.get(wx, wy, wz + 1)),
                         is_opaque(world.get(wx, wy, wz - 1)),
                     ];
-                    for (pts_local, uvs, face) in shulker_open_model_quads() {
+                    for (pts_local, uvs, face) in shulker_open_model_quads(shulker_lid_render) {
                         let face_shade = match face {
                             2 => 1.0f32,
                             3 => 0.5,
@@ -8906,10 +8927,15 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
 /// BASE the SECOND child `texOffs(0,28)` `addBox(-8,-8,-8,16,8,16)`
 /// the same pivot [the 8-px bottom dish the world y 0..8 band wears],
 /// `ShulkerBoxRenderer$ShulkerBoxModel.setupAnim` the
-/// `lid.setPos(0, 24 - openness*0.5*16, 0)` walk the FULL-open pose
-/// the +8 px lift answers [the open lid the world y 12..24 band the
-/// 0.5-block rise wears — the block's top face the lid pokes above]).
-/// THE WINDING the chest box walk's own convention keeps (the DOWN
+/// `lid.setPos(0, 24 - openness*0.5*16, 0)` walk the lift the
+/// openness*8 px answers [the full-open pose the world y 12..24 band
+/// the 0.5-block rise wears — the block's top face the lid pokes
+/// above]; the autopush-298 round the openness param the mid-rise
+/// frames the lerp'd fraction serves — the closed pose the 0.0 the
+/// helper never bakes [the lane's own >0.001 gate the generic cube
+/// the closed frames keeps], the full-open the 1.0 the static pose
+/// the dev-193 verdicts wear). THE WINDING the chest box walk's own
+/// convention keeps (the DOWN
 /// face 3, the UP face 2, the north 5 / south 4 / west 1 / east 0 —
 /// the same corner orders the shade table serves). THE UVs the
 /// full-tile fold the uniform shell wears (the shulker row the same
@@ -8921,14 +8947,19 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
 /// permutation the glued law never separates] — the static pose the
 /// rotation the geometry the quarter turn never disturbs, the faces
 /// the same spans keep).
-fn shulker_open_model_quads() -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
+fn shulker_open_model_quads(openness: f32) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
     let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
     // THE TWO SHELLS' OWN SPANS (the world px the jar's parts answer:
-    // the base the y 0..8 dish, the open lid the y 12..24 raised shell
-    // — the (x0, y0, x1, y1, z0, z1) order the walk destructures)
+    // the base the y 0..8 dish, the lid the closed y 4..16 band the
+    // setupAnim's `24 - openness*8` walk the openness*8 px lift wears
+    // — the full-open the y 12..24 band the 0.5-block reach answers,
+    // the (x0, y0, x1, y1, z0, z1) order the walk destructures)
+    let lift = openness.clamp(0.0, 1.0) * 8.0;
+    let lid_y0 = 4.0 + lift;
+    let lid_y1 = 16.0 + lift;
     let boxes: [(f32, f32, f32, f32, f32, f32); 2] = [
-        (0.0, 0.0, 16.0, 8.0, 0.0, 16.0),   // the base dish
-        (0.0, 12.0, 16.0, 24.0, 0.0, 16.0), // the raised lid
+        (0.0, 0.0, 16.0, 8.0, 0.0, 16.0),       // the base dish
+        (0.0, lid_y0, 16.0, lid_y1, 0.0, 16.0), // the rising lid
     ];
     let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(12);
     let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
@@ -15834,6 +15865,65 @@ mod tests {
         let floor = cell.iter().any(|quad| y_of(quad, 8.5));
         let underside = cell.iter().any(|quad| y_of(quad, 8.0 + 0.75));
         assert!(floor && underside, "the interior faces the wall never eats");
+        // THE FRESH SEED'S OWN QUIET (the (0,0) pair the render 0.0
+        // the lane's own >0.001 gate reads — the closed frames the
+        // generic cube the byte-identical contract keeps)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.chest_lids.insert((8, 8, 8), (0.0, 0.0));
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            6,
+            "the fresh seed the closed frames the cube keeps, got {}",
+            cell.len()
+        );
+        // THE MID-RISE'S OWN FRACTION (the pair (0.0, 0.5) the partial
+        // 1.0 the render 0.5 wears — the lift the 4 px the lid the
+        // y 8..20 band bakes, the underside the 8/16 plane the floor's
+        // own seat the co-planar pair answers)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.chest_lids.insert((8, 8, 8), (0.0, 0.5));
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            12,
+            "the mid-rise the base 6 + the lid 6 bakes, got {}",
+            cell.len()
+        );
+        let y_max = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (y_max - (8.0 + 1.25)).abs() < 1e-4,
+            "the mid-rise the 20/16 reach wears, got {y_max}"
+        );
+        // THE LERP'S OWN FRACTION (the pair (0.4, 0.5) the partial 0.5
+        // the render 0.45 wears — the lerp the mid-rise frame answers,
+        // the chest lane's own fold the same verdict keeps)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.chest_lids.insert((8, 8, 8), (0.4, 0.5));
+        w.lid_partial = 0.5;
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        let y_max = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        // the render 0.45 the lift 3.6 px the lid's top the 19.6/16
+        // plane wears
+        assert!(
+            (y_max - (8.0 + 19.6 / 16.0)).abs() < 1e-4,
+            "the lerp frame the 0.45 angle answers, got {y_max}"
+        );
     }
 
     #[test]
