@@ -1,0 +1,9 @@
+== hasAnalogOutputSignal (Lnet/minecraft/world/level/block/state/BlockState;)Z ==
+    0 iconst_1
+    1 ireturn
+== getAnalogOutputSignal (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)I ==
+    0 aload_2
+    1 aload_3
+    2 invokevirtual #72  net/minecraft/world/level/Level.getBlockEntity (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+    5 invokestatic #140  net/minecraft/world/inventory/AbstractContainerMenu.getRedstoneSignalFromBlockEntity (Lnet/minecraft/world/level/block/entity/BlockEntity;)I
+    8 ireturn

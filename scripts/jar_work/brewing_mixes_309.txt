@@ -1,0 +1,270 @@
+== addVanillaMixes (Lnet/minecraft/world/item/alchemy/PotionBrewing$Builder;)V ==
+    0 aload_0
+    1 getstatic #134  net/minecraft/world/item/Items.POTION Lnet/minecraft/world/item/Item;
+    4 invokevirtual #140  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addContainer (Lnet/minecraft/world/item/Item;)V
+    7 aload_0
+    8 getstatic #144  net/minecraft/world/item/Items.SPLASH_POTION Lnet/minecraft/world/item/Item;
+   11 invokevirtual #140  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addContainer (Lnet/minecraft/world/item/Item;)V
+   14 aload_0
+   15 getstatic #147  net/minecraft/world/item/Items.LINGERING_POTION Lnet/minecraft/world/item/Item;
+   18 invokevirtual #140  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addContainer (Lnet/minecraft/world/item/Item;)V
+   21 aload_0
+   22 getstatic #134  net/minecraft/world/item/Items.POTION Lnet/minecraft/world/item/Item;
+   25 getstatic #150  net/minecraft/world/item/Items.GUNPOWDER Lnet/minecraft/world/item/Item;
+   28 getstatic #144  net/minecraft/world/item/Items.SPLASH_POTION Lnet/minecraft/world/item/Item;
+   31 invokevirtual #153  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addContainerRecipe (Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;)V
+   34 aload_0
+   35 getstatic #144  net/minecraft/world/item/Items.SPLASH_POTION Lnet/minecraft/world/item/Item;
+   38 getstatic #157  net/minecraft/world/item/Items.DRAGON_BREATH Lnet/minecraft/world/item/Item;
+   41 getstatic #147  net/minecraft/world/item/Items.LINGERING_POTION Lnet/minecraft/world/item/Item;
+   44 invokevirtual #153  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addContainerRecipe (Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;)V
+   47 aload_0
+   48 getstatic #160  net/minecraft/world/item/alchemy/Potions.WATER Lnet/minecraft/core/Holder;
+   51 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+   54 getstatic #168  net/minecraft/world/item/alchemy/Potions.THICK Lnet/minecraft/core/Holder;
+   57 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+   60 aload_0
+   61 getstatic #160  net/minecraft/world/item/alchemy/Potions.WATER Lnet/minecraft/core/Holder;
+   64 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+   67 getstatic #178  net/minecraft/world/item/alchemy/Potions.MUNDANE Lnet/minecraft/core/Holder;
+   70 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+   73 aload_0
+   74 getstatic #160  net/minecraft/world/item/alchemy/Potions.WATER Lnet/minecraft/core/Holder;
+   77 getstatic #181  net/minecraft/world/item/Items.NETHER_WART Lnet/minecraft/world/item/Item;
+   80 getstatic #184  net/minecraft/world/item/alchemy/Potions.AWKWARD Lnet/minecraft/core/Holder;
+   83 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+   86 aload_0
+   87 getstatic #187  net/minecraft/world/item/Items.BREEZE_ROD Lnet/minecraft/world/item/Item;
+   90 getstatic #190  net/minecraft/world/item/alchemy/Potions.WIND_CHARGED Lnet/minecraft/core/Holder;
+   93 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+   96 aload_0
+   97 getstatic #197  net/minecraft/world/item/Items.SLIME_BLOCK Lnet/minecraft/world/item/Item;
+  100 getstatic #200  net/minecraft/world/item/alchemy/Potions.OOZING Lnet/minecraft/core/Holder;
+  103 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  106 aload_0
+  107 getstatic #203  net/minecraft/world/item/Items.STONE Lnet/minecraft/world/item/Item;
+  110 getstatic #206  net/minecraft/world/item/alchemy/Potions.INFESTED Lnet/minecraft/core/Holder;
+  113 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  116 aload_0
+  117 getstatic #209  net/minecraft/world/item/Items.COBWEB Lnet/minecraft/world/item/Item;
+  120 getstatic #212  net/minecraft/world/item/alchemy/Potions.WEAVING Lnet/minecraft/core/Holder;
+  123 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  126 aload_0
+  127 getstatic #184  net/minecraft/world/item/alchemy/Potions.AWKWARD Lnet/minecraft/core/Holder;
+  130 getstatic #215  net/minecraft/world/item/Items.GOLDEN_CARROT Lnet/minecraft/world/item/Item;
+  133 getstatic #218  net/minecraft/world/item/alchemy/Potions.NIGHT_VISION Lnet/minecraft/core/Holder;
+  136 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  139 aload_0
+  140 getstatic #218  net/minecraft/world/item/alchemy/Potions.NIGHT_VISION Lnet/minecraft/core/Holder;
+  143 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  146 getstatic #221  net/minecraft/world/item/alchemy/Potions.LONG_NIGHT_VISION Lnet/minecraft/core/Holder;
+  149 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  152 aload_0
+  153 getstatic #218  net/minecraft/world/item/alchemy/Potions.NIGHT_VISION Lnet/minecraft/core/Holder;
+  156 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  159 getstatic #227  net/minecraft/world/item/alchemy/Potions.INVISIBILITY Lnet/minecraft/core/Holder;
+  162 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  165 aload_0
+  166 getstatic #221  net/minecraft/world/item/alchemy/Potions.LONG_NIGHT_VISION Lnet/minecraft/core/Holder;
+  169 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  172 getstatic #230  net/minecraft/world/item/alchemy/Potions.LONG_INVISIBILITY Lnet/minecraft/core/Holder;
+  175 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  178 aload_0
+  179 getstatic #227  net/minecraft/world/item/alchemy/Potions.INVISIBILITY Lnet/minecraft/core/Holder;
+  182 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  185 getstatic #230  net/minecraft/world/item/alchemy/Potions.LONG_INVISIBILITY Lnet/minecraft/core/Holder;
+  188 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  191 aload_0
+  192 getstatic #233  net/minecraft/world/item/Items.MAGMA_CREAM Lnet/minecraft/world/item/Item;
+  195 getstatic #236  net/minecraft/world/item/alchemy/Potions.FIRE_RESISTANCE Lnet/minecraft/core/Holder;
+  198 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  201 aload_0
+  202 getstatic #236  net/minecraft/world/item/alchemy/Potions.FIRE_RESISTANCE Lnet/minecraft/core/Holder;
+  205 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  208 getstatic #239  net/minecraft/world/item/alchemy/Potions.LONG_FIRE_RESISTANCE Lnet/minecraft/core/Holder;
+  211 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  214 aload_0
+  215 getstatic #242  net/minecraft/world/item/Items.RABBIT_FOOT Lnet/minecraft/world/item/Item;
+  218 getstatic #245  net/minecraft/world/item/alchemy/Potions.LEAPING Lnet/minecraft/core/Holder;
+  221 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  224 aload_0
+  225 getstatic #245  net/minecraft/world/item/alchemy/Potions.LEAPING Lnet/minecraft/core/Holder;
+  228 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  231 getstatic #248  net/minecraft/world/item/alchemy/Potions.LONG_LEAPING Lnet/minecraft/core/Holder;
+  234 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  237 aload_0
+  238 getstatic #245  net/minecraft/world/item/alchemy/Potions.LEAPING Lnet/minecraft/core/Holder;
+  241 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  244 getstatic #251  net/minecraft/world/item/alchemy/Potions.STRONG_LEAPING Lnet/minecraft/core/Holder;
+  247 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  250 aload_0
+  251 getstatic #245  net/minecraft/world/item/alchemy/Potions.LEAPING Lnet/minecraft/core/Holder;
+  254 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  257 getstatic #254  net/minecraft/world/item/alchemy/Potions.SLOWNESS Lnet/minecraft/core/Holder;
+  260 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  263 aload_0
+  264 getstatic #248  net/minecraft/world/item/alchemy/Potions.LONG_LEAPING Lnet/minecraft/core/Holder;
+  267 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  270 getstatic #257  net/minecraft/world/item/alchemy/Potions.LONG_SLOWNESS Lnet/minecraft/core/Holder;
+  273 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  276 aload_0
+  277 getstatic #254  net/minecraft/world/item/alchemy/Potions.SLOWNESS Lnet/minecraft/core/Holder;
+  280 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  283 getstatic #257  net/minecraft/world/item/alchemy/Potions.LONG_SLOWNESS Lnet/minecraft/core/Holder;
+  286 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  289 aload_0
+  290 getstatic #254  net/minecraft/world/item/alchemy/Potions.SLOWNESS Lnet/minecraft/core/Holder;
+  293 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  296 getstatic #260  net/minecraft/world/item/alchemy/Potions.STRONG_SLOWNESS Lnet/minecraft/core/Holder;
+  299 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  302 aload_0
+  303 getstatic #184  net/minecraft/world/item/alchemy/Potions.AWKWARD Lnet/minecraft/core/Holder;
+  306 getstatic #263  net/minecraft/world/item/Items.TURTLE_HELMET Lnet/minecraft/world/item/Item;
+  309 getstatic #266  net/minecraft/world/item/alchemy/Potions.TURTLE_MASTER Lnet/minecraft/core/Holder;
+  312 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  315 aload_0
+  316 getstatic #266  net/minecraft/world/item/alchemy/Potions.TURTLE_MASTER Lnet/minecraft/core/Holder;
+  319 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  322 getstatic #269  net/minecraft/world/item/alchemy/Potions.LONG_TURTLE_MASTER Lnet/minecraft/core/Holder;
+  325 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  328 aload_0
+  329 getstatic #266  net/minecraft/world/item/alchemy/Potions.TURTLE_MASTER Lnet/minecraft/core/Holder;
+  332 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  335 getstatic #272  net/minecraft/world/item/alchemy/Potions.STRONG_TURTLE_MASTER Lnet/minecraft/core/Holder;
+  338 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  341 aload_0
+  342 getstatic #275  net/minecraft/world/item/alchemy/Potions.SWIFTNESS Lnet/minecraft/core/Holder;
+  345 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  348 getstatic #254  net/minecraft/world/item/alchemy/Potions.SLOWNESS Lnet/minecraft/core/Holder;
+  351 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  354 aload_0
+  355 getstatic #278  net/minecraft/world/item/alchemy/Potions.LONG_SWIFTNESS Lnet/minecraft/core/Holder;
+  358 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  361 getstatic #257  net/minecraft/world/item/alchemy/Potions.LONG_SLOWNESS Lnet/minecraft/core/Holder;
+  364 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  367 aload_0
+  368 getstatic #281  net/minecraft/world/item/Items.SUGAR Lnet/minecraft/world/item/Item;
+  371 getstatic #275  net/minecraft/world/item/alchemy/Potions.SWIFTNESS Lnet/minecraft/core/Holder;
+  374 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  377 aload_0
+  378 getstatic #275  net/minecraft/world/item/alchemy/Potions.SWIFTNESS Lnet/minecraft/core/Holder;
+  381 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  384 getstatic #278  net/minecraft/world/item/alchemy/Potions.LONG_SWIFTNESS Lnet/minecraft/core/Holder;
+  387 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  390 aload_0
+  391 getstatic #275  net/minecraft/world/item/alchemy/Potions.SWIFTNESS Lnet/minecraft/core/Holder;
+  394 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  397 getstatic #284  net/minecraft/world/item/alchemy/Potions.STRONG_SWIFTNESS Lnet/minecraft/core/Holder;
+  400 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  403 aload_0
+  404 getstatic #184  net/minecraft/world/item/alchemy/Potions.AWKWARD Lnet/minecraft/core/Holder;
+  407 getstatic #287  net/minecraft/world/item/Items.PUFFERFISH Lnet/minecraft/world/item/Item;
+  410 getstatic #290  net/minecraft/world/item/alchemy/Potions.WATER_BREATHING Lnet/minecraft/core/Holder;
+  413 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  416 aload_0
+  417 getstatic #290  net/minecraft/world/item/alchemy/Potions.WATER_BREATHING Lnet/minecraft/core/Holder;
+  420 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  423 getstatic #293  net/minecraft/world/item/alchemy/Potions.LONG_WATER_BREATHING Lnet/minecraft/core/Holder;
+  426 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  429 aload_0
+  430 getstatic #296  net/minecraft/world/item/Items.GLISTERING_MELON_SLICE Lnet/minecraft/world/item/Item;
+  433 getstatic #299  net/minecraft/world/item/alchemy/Potions.HEALING Lnet/minecraft/core/Holder;
+  436 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  439 aload_0
+  440 getstatic #299  net/minecraft/world/item/alchemy/Potions.HEALING Lnet/minecraft/core/Holder;
+  443 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  446 getstatic #302  net/minecraft/world/item/alchemy/Potions.STRONG_HEALING Lnet/minecraft/core/Holder;
+  449 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  452 aload_0
+  453 getstatic #299  net/minecraft/world/item/alchemy/Potions.HEALING Lnet/minecraft/core/Holder;
+  456 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  459 getstatic #305  net/minecraft/world/item/alchemy/Potions.HARMING Lnet/minecraft/core/Holder;
+  462 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  465 aload_0
+  466 getstatic #302  net/minecraft/world/item/alchemy/Potions.STRONG_HEALING Lnet/minecraft/core/Holder;
+  469 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  472 getstatic #308  net/minecraft/world/item/alchemy/Potions.STRONG_HARMING Lnet/minecraft/core/Holder;
+  475 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  478 aload_0
+  479 getstatic #305  net/minecraft/world/item/alchemy/Potions.HARMING Lnet/minecraft/core/Holder;
+  482 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  485 getstatic #308  net/minecraft/world/item/alchemy/Potions.STRONG_HARMING Lnet/minecraft/core/Holder;
+  488 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  491 aload_0
+  492 getstatic #311  net/minecraft/world/item/alchemy/Potions.POISON Lnet/minecraft/core/Holder;
+  495 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  498 getstatic #305  net/minecraft/world/item/alchemy/Potions.HARMING Lnet/minecraft/core/Holder;
+  501 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  504 aload_0
+  505 getstatic #314  net/minecraft/world/item/alchemy/Potions.LONG_POISON Lnet/minecraft/core/Holder;
+  508 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  511 getstatic #305  net/minecraft/world/item/alchemy/Potions.HARMING Lnet/minecraft/core/Holder;
+  514 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  517 aload_0
+  518 getstatic #317  net/minecraft/world/item/alchemy/Potions.STRONG_POISON Lnet/minecraft/core/Holder;
+  521 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  524 getstatic #308  net/minecraft/world/item/alchemy/Potions.STRONG_HARMING Lnet/minecraft/core/Holder;
+  527 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  530 aload_0
+  531 getstatic #320  net/minecraft/world/item/Items.SPIDER_EYE Lnet/minecraft/world/item/Item;
+  534 getstatic #311  net/minecraft/world/item/alchemy/Potions.POISON Lnet/minecraft/core/Holder;
+  537 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  540 aload_0
+  541 getstatic #311  net/minecraft/world/item/alchemy/Potions.POISON Lnet/minecraft/core/Holder;
+  544 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  547 getstatic #314  net/minecraft/world/item/alchemy/Potions.LONG_POISON Lnet/minecraft/core/Holder;
+  550 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  553 aload_0
+  554 getstatic #311  net/minecraft/world/item/alchemy/Potions.POISON Lnet/minecraft/core/Holder;
+  557 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  560 getstatic #317  net/minecraft/world/item/alchemy/Potions.STRONG_POISON Lnet/minecraft/core/Holder;
+  563 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  566 aload_0
+  567 getstatic #323  net/minecraft/world/item/Items.GHAST_TEAR Lnet/minecraft/world/item/Item;
+  570 getstatic #326  net/minecraft/world/item/alchemy/Potions.REGENERATION Lnet/minecraft/core/Holder;
+  573 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  576 aload_0
+  577 getstatic #326  net/minecraft/world/item/alchemy/Potions.REGENERATION Lnet/minecraft/core/Holder;
+  580 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  583 getstatic #329  net/minecraft/world/item/alchemy/Potions.LONG_REGENERATION Lnet/minecraft/core/Holder;
+  586 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  589 aload_0
+  590 getstatic #326  net/minecraft/world/item/alchemy/Potions.REGENERATION Lnet/minecraft/core/Holder;
+  593 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  596 getstatic #332  net/minecraft/world/item/alchemy/Potions.STRONG_REGENERATION Lnet/minecraft/core/Holder;
+  599 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  602 aload_0
+  603 getstatic #335  net/minecraft/world/item/Items.BLAZE_POWDER Lnet/minecraft/world/item/Item;
+  606 getstatic #338  net/minecraft/world/item/alchemy/Potions.STRENGTH Lnet/minecraft/core/Holder;
+  609 invokevirtual #193  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addStartMix (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  612 aload_0
+  613 getstatic #338  net/minecraft/world/item/alchemy/Potions.STRENGTH Lnet/minecraft/core/Holder;
+  616 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  619 getstatic #341  net/minecraft/world/item/alchemy/Potions.LONG_STRENGTH Lnet/minecraft/core/Holder;
+  622 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  625 aload_0
+  626 getstatic #338  net/minecraft/world/item/alchemy/Potions.STRENGTH Lnet/minecraft/core/Holder;
+  629 getstatic #165  net/minecraft/world/item/Items.GLOWSTONE_DUST Lnet/minecraft/world/item/Item;
+  632 getstatic #344  net/minecraft/world/item/alchemy/Potions.STRONG_STRENGTH Lnet/minecraft/core/Holder;
+  635 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  638 aload_0
+  639 getstatic #160  net/minecraft/world/item/alchemy/Potions.WATER Lnet/minecraft/core/Holder;
+  642 getstatic #224  net/minecraft/world/item/Items.FERMENTED_SPIDER_EYE Lnet/minecraft/world/item/Item;
+  645 getstatic #347  net/minecraft/world/item/alchemy/Potions.WEAKNESS Lnet/minecraft/core/Holder;
+  648 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  651 aload_0
+  652 getstatic #347  net/minecraft/world/item/alchemy/Potions.WEAKNESS Lnet/minecraft/core/Holder;
+  655 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  658 getstatic #350  net/minecraft/world/item/alchemy/Potions.LONG_WEAKNESS Lnet/minecraft/core/Holder;
+  661 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  664 aload_0
+  665 getstatic #184  net/minecraft/world/item/alchemy/Potions.AWKWARD Lnet/minecraft/core/Holder;
+  668 getstatic #353  net/minecraft/world/item/Items.PHANTOM_MEMBRANE Lnet/minecraft/world/item/Item;
+  671 getstatic #356  net/minecraft/world/item/alchemy/Potions.SLOW_FALLING Lnet/minecraft/core/Holder;
+  674 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  677 aload_0
+  678 getstatic #356  net/minecraft/world/item/alchemy/Potions.SLOW_FALLING Lnet/minecraft/core/Holder;
+  681 getstatic #175  net/minecraft/world/item/Items.REDSTONE Lnet/minecraft/world/item/Item;
+  684 getstatic #359  net/minecraft/world/item/alchemy/Potions.LONG_SLOW_FALLING Lnet/minecraft/core/Holder;
+  687 invokevirtual #171  net/minecraft/world/item/alchemy/PotionBrewing$Builder.addMix (Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+  690 return

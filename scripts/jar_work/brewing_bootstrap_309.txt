@@ -1,0 +1,11 @@
+== bootstrap (Lnet/minecraft/world/flag/FeatureFlagSet;)Lnet/minecraft/world/item/alchemy/PotionBrewing; ==
+    0 new #121  net/minecraft/world/item/alchemy/PotionBrewing$Builder
+    3 dup
+    4 aload_0
+    5 invokespecial #123  net/minecraft/world/item/alchemy/PotionBrewing$Builder.<init> (Lnet/minecraft/world/flag/FeatureFlagSet;)V
+    8 astore_1
+    9 aload_1
+   10 invokestatic #126  net/minecraft/world/item/alchemy/PotionBrewing.addVanillaMixes (Lnet/minecraft/world/item/alchemy/PotionBrewing$Builder;)V
+   13 aload_1
+   14 invokevirtual #130  net/minecraft/world/item/alchemy/PotionBrewing$Builder.build ()Lnet/minecraft/world/item/alchemy/PotionBrewing;
+   17 areturn

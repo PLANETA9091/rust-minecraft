@@ -1129,3 +1129,255 @@ fn the_offline_hopper_the_furnace_pipeline_the_ore_the_smelt_the_ingot_wears() {
         "the taken ingot the result slot the empty keeps"
     );
 }
+
+/// THE HOPPER'S OWN BREWING SIDE THE FUEL LANE THE COOLDOWN WEARS
+/// (the autopush-309 round — the stand's own SIDES lane the real
+/// walk serves): the REAL sneak-place walk the hopper the stand's
+/// south face the ray enters — the NORTH facing the SIDES lane
+/// [0, 1, 2, 4] stamps, the blaze powder the fuel slot the beats
+/// seat, the cooldown the eight-tick cadence banks, the dirt the
+/// bottle trio the fuel lane the refuse keeps [the restore the
+/// hopper row wears] — the vanilla automation chain the real beats
+/// plays.
+#[test]
+fn the_offline_hopper_the_brewing_side_the_fuel_lane_the_cooldown_wears() {
+    let blaze_powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").expect("the wire table");
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE BREWING STAND'S OWN SEAT (the push test's own furnace cell
+    // the stand wears — the south face the ray the side lane enters)
+    let stand_cell = (c + 2, surface + 1, c);
+    app.offline_world.as_mut().unwrap().set(
+        stand_cell.0,
+        stand_cell.1,
+        stand_cell.2,
+        crate::world::BREWING_STAND,
+    );
+    app.container_stores_load_once();
+    // THE REAL PLACEMENT WALK (the hopper item the hotbar's first slot
+    // wears, the ANGLED look the stand's south face the ray enters,
+    // the sneak press the place arm serves, the NORTH facing the
+    // clicked face's opposite stamps, the tick seed the queue arms)
+    app.inventory.items[0] = (hopper_id, 8);
+    app.hotbar_slots = app.inventory.hotbar();
+    app.shift_down = true;
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 2.5, surface as f32 + 3.5, c as f32 + 2.5),
+        yaw: 0.0,
+        pitch: -55.0f32.to_radians(),
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    app.shift_down = false;
+    let hopper_cell = (c + 2, surface + 1, c + 1);
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::HOPPER,
+            "the hopper the stand's south cell the placement lands"
+        );
+        assert_eq!(
+            w.variant(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::DISPENSER_FACING_NORTH,
+            "the clicked face's opposite the NORTH mouth stamps"
+        );
+        assert!(
+            !w.hopper_ticks.is_empty(),
+            "the placement seed the queue arms"
+        );
+    }
+    // THE STOCKED ROW (the two blaze powder the slot 0 keeps, the two
+    // dirt the slot 1 rides — the fuel lane's refuse verdict the later
+    // beat wears)
+    app.container_stores.insert(
+        hopper_cell,
+        vec![(blaze_powder, 2), (dirt, 2), (0, 0), (0, 0), (0, 0)],
+    );
+    // THE FIRST BEAT (the update the queue drains — the push the one
+    // blaze powder the stand's FUEL slot seats, the SIDES order the
+    // bottle trio the refuse speaks, the cooldown the success banks)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((blaze_powder, 1)),
+        "the hopper row the blaze decrement wears"
+    );
+    assert_eq!(
+        app.brewing_stores
+            .get(&stand_cell)
+            .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
+        Some((blaze_powder, 1)),
+        "the stand's fuel slot the first blaze seats"
+    );
+    // THE COOLDOWN'S OWN GATE (the setCooldown(8) law the
+    // intermediate beats refuse)
+    app.update();
+    app.update();
+    assert_eq!(
+        app.brewing_stores
+            .get(&stand_cell)
+            .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
+        Some((blaze_powder, 1)),
+        "the cooldown the second push refuses"
+    );
+    // THE EIGHTH TICK'S OWN SERVE (the six more updates the +8 cadence
+    // completes — the second blaze the same beat lands)
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.brewing_stores
+            .get(&stand_cell)
+            .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
+        Some((blaze_powder, 2)),
+        "the cooldown spent the second blaze serves"
+    );
+    // THE FUEL GATE'S OWN REFUSE (the blaze row spent the dirt probe
+    // the bottle trio the fuel lane refuses — the canPlaceItem the
+    // BREWING_FUEL tag the lone member the verdict wears, the hopper
+    // row the honest dirt keeps)
+    for _ in 0..9 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[1]),
+        Some((dirt, 2)),
+        "the dirt the SIDES lane refuses"
+    );
+    assert_eq!(
+        app.brewing_stores
+            .get(&stand_cell)
+            .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
+        Some((blaze_powder, 2)),
+        "the fuel slot the two blaze keeps"
+    );
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((0, 0)),
+        "the spent blaze slot the honest (0, 0) row banks"
+    );
+}
+
+/// THE HOPPER'S OWN BREWING BELOW THE POTION LANE THE DOWN ORDER
+/// WEARS (the autopush-309 round — the stand's own DOWN face the real
+/// walk serves): the REAL floor-look placement the under hopper lands
+/// [the DOWN mouth the ground stamps], the brewing stand the above
+/// seat the set walk banks, the potion the bottle slot the beats
+/// take [the SLOTS_FOR_DOWN the [0, 1, 2, 3] order speaks], the
+/// spent ingredient the canTakeItemThroughFace the GLASS_BOTTLE the
+/// only take the refuse keeps — the vanilla automation chain the
+/// real beats plays.
+#[test]
+fn the_offline_hopper_the_brewing_below_the_potion_lane_the_down_order_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let nether_wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").expect("the wire table");
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE REAL PLACEMENT WALK (the open ground cell the floor look the
+    // ray enters — the under hopper the DOWN mouth stamps, the tick
+    // seed the queue arms)
+    app.inventory.items[0] = (hopper_id, 8);
+    app.hotbar_slots = app.inventory.hotbar();
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 4.0, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    let under_cell = (c, surface + 1, c);
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(under_cell.0, under_cell.1, under_cell.2),
+            crate::world::HOPPER,
+            "the under hopper the ground cell the placement lands"
+        );
+        assert_eq!(
+            w.variant(under_cell.0, under_cell.1, under_cell.2),
+            crate::world::DISPENSER_FACING_DOWN,
+            "the vertical look the DOWN mouth stamps"
+        );
+    }
+    // THE BREWING STAND'S OWN SEAT ABOVE (the pre-banked kind the set
+    // walk lands — the under hopper's suck source the same walk the
+    // furnace test keeps)
+    let stand_cell = (c, surface + 2, c);
+    app.offline_world.as_mut().unwrap().set(
+        stand_cell.0,
+        stand_cell.1,
+        stand_cell.2,
+        crate::world::BREWING_STAND,
+    );
+    app.container_stores_load_once();
+    // THE STOCKED FIVE (the potion the bottle slot keeps, the wart
+    // the ingredient seat rides — the DOWN order the bottle the first
+    // probe speaks, the spent wart the take gate the later beat
+    // refuses)
+    app.brewing_stores.insert(
+        stand_cell,
+        vec![(potion, 1), (0, 0), (0, 0), (nether_wart, 2), (0, 0)],
+    );
+    // THE FIRST BEAT (the update the queue drains — the suck the one
+    // potion the bottle lane takes, the cooldown the success banks)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&under_cell).map(|s| s[0]),
+        Some((potion, 1)),
+        "the under hopper the potion the bottle lane takes"
+    );
+    assert_eq!(
+        app.brewing_stores
+            .get(&stand_cell)
+            .map(|s| s[crate::world::BREWING_SLOT_BOTTLE_0]),
+        Some((0, 0)),
+        "the bottle slot the empty keeps"
+    );
+    // THE COOLDOWN'S OWN GATE (the intermediate beats the suck refuse)
+    app.update();
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&under_cell).map(|s| s[0]),
+        Some((potion, 1)),
+        "the cooldown the second suck refuses"
+    );
+    // THE SPENT INGREDIENT'S OWN REFUSE (the eight-tick cadence spent
+    // the suck the DOWN order the walk exhausts — the bottle trio the
+    // empty the probe walks, the ingredient slot the wart the
+    // canTakeItemThroughFace the GLASS_BOTTLE the only take refuses,
+    // the hopper row the honest keep wears)
+    for _ in 0..7 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores.get(&under_cell).map(|s| s[0]),
+        Some((potion, 1)),
+        "the spent wart the ingredient take refuses"
+    );
+    assert_eq!(
+        app.brewing_stores
+            .get(&stand_cell)
+            .map(|s| s[crate::world::BREWING_SLOT_INGREDIENT]),
+        Some((nether_wart, 2)),
+        "the refused take the ingredient row keeps"
+    );
+    assert_eq!(
+        app.container_stores.get(&under_cell).map(|s| s[1]),
+        Some((0, 0)),
+        "the hopper's second slot the honest empty keeps"
+    );
+}

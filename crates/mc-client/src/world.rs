@@ -3884,6 +3884,230 @@ pub fn hopper_suck_one_furnace(hopper: &mut [(i32, i32)], source: &mut [(i32, i3
     false
 }
 
+/// Kind 780 (the seven-hundred-eighty-first entry, the autopush-309
+/// round): THE BREWING STAND — the potion family's own brewing kind
+/// (javap Blocks clinit the 26.2 jar the BREWING_STAND registration
+/// the blocks.rs row 124 speaks, the blockstates brewing_stand.json
+/// the has_bottle_0/1/2 trio the compound rows wear — the base state
+/// the three-false row the fresh placement stamps). The collision the
+/// full-cube default speaks (the generic-cube kind seat the hopper
+/// 305 precedent wears — the funnel-mesh derive the NEXT round
+/// keeps), the NAME_OF row the dig/drop/sound/item lanes wire (the
+/// generated tables' own brewing_stand rows the block_dig/block_drops/
+/// block_sounds/block_mineable/block_resistances the mint lights).
+/// The BE's own five slots the NonNullList.withSize(5, EMPTY) the
+/// transfer feed banks (javap BrewingStandBlockEntity.<init> pc 9-17
+/// the 26.2 jar the withSize(5) walk the store width speaks).
+pub const BREWING_STAND: u16 = 780;
+
+#[inline]
+pub fn is_brewing_stand(id: u16) -> bool {
+    id == BREWING_STAND
+}
+
+/// THE BREWING SLOT'S OWN SEATS (javap BrewingStandBlockEntity.<init>
+/// pc 9-17 the 26.2 jar the withSize(5) walk the NonNullList order
+/// keeps — the three bottle seats the front row, the ingredient the
+/// top cell, the fuel the blaze row the BREWING_FUEL tag banks; the
+/// face tables the same indices speak).
+pub const BREWING_SLOT_BOTTLE_0: usize = 0;
+pub const BREWING_SLOT_BOTTLE_1: usize = 1;
+pub const BREWING_SLOT_BOTTLE_2: usize = 2;
+pub const BREWING_SLOT_INGREDIENT: usize = 3;
+pub const BREWING_SLOT_FUEL: usize = 4;
+
+/// THE BREWING'S OWN FACE TABLE (javap BrewingStandBlockEntity
+/// `<clinit>` pc 0-51 the 26.2 jar the live disasm answers — the
+/// SLOTS_FOR_UP the [3] lone ingredient row, the SLOTS_FOR_DOWN the
+/// [0, 1, 2, 3] quartet the bottle trio + the ingredient keeps [the
+/// fuel slot the DOWN row never carries], the SLOTS_FOR_SIDES the
+/// [0, 1, 2, 4] quartet the bottle trio + the fuel keeps [the
+/// ingredient the sides row never carries]; the getSlotsForFace walk
+/// the UP/DOWN reads the rest the sides arm answers).
+pub fn brewing_face_order(face: u8) -> &'static [usize] {
+    match face {
+        DISPENSER_FACING_UP => &[BREWING_SLOT_INGREDIENT],
+        DISPENSER_FACING_DOWN => &[
+            BREWING_SLOT_BOTTLE_0,
+            BREWING_SLOT_BOTTLE_1,
+            BREWING_SLOT_BOTTLE_2,
+            BREWING_SLOT_INGREDIENT,
+        ],
+        _ => &[
+            BREWING_SLOT_BOTTLE_0,
+            BREWING_SLOT_BOTTLE_1,
+            BREWING_SLOT_BOTTLE_2,
+            BREWING_SLOT_FUEL,
+        ],
+    }
+}
+
+/// THE BREWING'S OWN WIRE SEATS (the item ids the generated items.rs
+/// registry order banks — the gates the ids alone speak, the
+/// ingredient set the addVanillaMixes walk re-pins).
+pub const ITEM_BLAZE_POWDER: i32 = 1153;
+pub const ITEM_GLASS_BOTTLE: i32 = 1149;
+pub const ITEM_LINGERING_POTION: i32 = 1324;
+pub const ITEM_POTION: i32 = 1150;
+pub const ITEM_SPLASH_POTION: i32 = 1321;
+
+/// THE BREWING'S OWN INGREDIENT SET (javap PotionBrewing.addVanillaMixes
+/// pc 0-690 the 26.2 jar the live disasm answers — the Builder walk
+/// the isIngredient verdict's own rows speak: the addContainerRecipe
+/// pair the GUNPOWDER + DRAGON_BREATH the containerMixes lane wears,
+/// the addMix/addStartMix item args the potionMixes lane keeps — the
+/// NETHER_WART the AWKWARD mix the base row banks, the BLAZE_POWDER
+/// the STRENGTH row the fuel-and-ingredient dual seat speaks, the
+/// BREWING_FUEL tag the blaze powder the lone member the tag JSON
+/// re-pins [data/minecraft/tags/item/brewing_fuel.json]). The EMPTY
+/// clinit the client jar the List.of() triple wears — the server's
+/// own bootstrap the real rows serve, the set the static verdict
+/// banks.
+const BREWING_INGREDIENTS: [i32; 21] = [
+    1,    // stone (the INFESTED start mix)
+    228,  // cobweb (the WEAVING start mix)
+    745,  // redstone (the LONG tiers)
+    752,  // slime_block (the OOZING start mix)
+    889,  // phantom_membrane (the AWKWARD->SLOW_FALLING mix)
+    915,  // turtle_helmet (the AWKWARD->TURTLE_MASTER mix)
+    978,  // gunpowder (the potion->splash container recipe)
+    1085, // glowstone_dust (the WATER->THICK + the strong tiers)
+    1089, // pufferfish (the AWKWARD->WATER_BREATHING mix)
+    1113, // sugar (the SWIFTNESS start mix)
+    1146, // ghast_tear (the REGENERATION start mix)
+    1148, // nether_wart (the WATER->AWKWARD base mix)
+    1151, // spider_eye (the POISON start mix)
+    1152, // fermented_spider_eye (the weakness/inversion mixes)
+    1153, // blaze_powder (the STRENGTH start mix + the BREWING_FUEL tag)
+    1154, // magma_cream (the FIRE_RESISTANCE start mix)
+    1158, // glistering_melon_slice (the HEALING start mix)
+    1252, // breeze_rod (the WIND_CHARGED start mix)
+    1262, // golden_carrot (the AWKWARD->NIGHT_VISION mix)
+    1282, // rabbit_foot (the LEAPING start mix)
+    1320, // dragon_breath (the splash->lingering container recipe)
+];
+
+pub fn brewing_is_ingredient(id: i32) -> bool {
+    BREWING_INGREDIENTS.contains(&id)
+}
+
+/// THE BREWING'S OWN POTION FAMILY (javap canPlaceItem pc 45-82 the
+/// 26.2 jar the live disasm answers — the POTION/SPLASH/LINGERING
+/// trio the is() chain the bottle seats accept, the GLASS_BOTTLE the
+/// empty-slot arm the fourth verdict wears [canPlaceItem pc 85-100
+/// the getItem(slot).isEmpty() gate the refill speaks]).
+pub fn brewing_is_potion_kind(id: i32) -> bool {
+    id == ITEM_POTION || id == ITEM_SPLASH_POTION || id == ITEM_LINGERING_POTION
+}
+
+/// THE BREWING'S OWN PLACE GATE (javap canPlaceItem pc 0-101 the 26.2
+/// jar the live disasm answers — the slot-3 ingredient the
+/// `potionBrewing().isIngredient(incoming)` verdict wears, the slot-4
+/// fuel the BREWING_FUEL tag the blaze powder the lone member banks,
+/// the bottle trio the potion family the accept speaks, the
+/// GLASS_BOTTLE the occupied slot the refuse keeps — the existing
+/// empty row the `(0, 0)` verdict reads).
+pub fn brewing_can_place(slot: usize, existing: (i32, i32), incoming: i32) -> bool {
+    if slot == BREWING_SLOT_INGREDIENT {
+        return brewing_is_ingredient(incoming);
+    }
+    if slot == BREWING_SLOT_FUEL {
+        return incoming == ITEM_BLAZE_POWDER;
+    }
+    brewing_is_potion_kind(incoming) || (incoming == ITEM_GLASS_BOTTLE && existing.0 == 0)
+}
+
+/// THE BREWING'S OWN TAKE GATE (javap canTakeItemThroughFace pc 0-13
+/// the 26.2 jar the live disasm answers — the slot-3 ingredient the
+/// GLASS_BOTTLE take the only verdict keeps [the brewed ingredient
+/// the spent dust the hopper's suck never takes — the glass bottle
+/// the refill walk wears], EVERY other slot the true speaks — the
+/// bottle trio the filled potions the DOWN face serves, the fuel
+/// slot the blaze powder the sides push the same law keeps).
+pub fn brewing_can_take(slot: usize, id: i32) -> bool {
+    if slot == BREWING_SLOT_INGREDIENT {
+        return id == ITEM_GLASS_BOTTLE;
+    }
+    true
+}
+
+/// THE BREWING'S OWN FACE MOVE-ONE (the furnace_move_one's face-order
+/// sibling — the order's slots the can_place gate the walk wears, the
+/// first empty-or-mergeable the one item seats, the cap the item's
+/// own max stack the grow serves [the potion the max-1 the merge
+/// never speaks, the glass bottle the 16 cap keeps]).
+pub fn brewing_move_one(to: &mut [(i32, i32)], id: i32, order: &[usize]) -> bool {
+    if id == 0 {
+        return false;
+    }
+    let cap = mc_registry::item_max_stack(id).min(64);
+    for &s in order {
+        if !brewing_can_place(s, to[s], id) {
+            continue;
+        }
+        let slot = &mut to[s];
+        if slot.0 == 0 || slot.1 <= 0 {
+            *slot = (id, 1);
+            return true;
+        }
+        if slot.0 == id && (slot.1 as i64) < cap as i64 {
+            slot.1 += 1;
+            return true;
+        }
+    }
+    false
+}
+
+/// THE HOPPER'S OWN BREWING PUSH (the hopper_push_one_furnace's
+/// face-order sibling — the one-item probe the stand's own face order
+/// serves: the hopper row the flat order keeps, the non-empty slot
+/// the probe takes, the face move the order's gate answers, the
+/// REFUSED walk the restore `setCount` fold keeps — the true the one
+/// item moved speaks).
+pub fn hopper_push_one_brewing(
+    from: &mut [(i32, i32)],
+    to: &mut [(i32, i32)],
+    order: &[usize],
+) -> bool {
+    for i in 0..from.len() {
+        let (id, count) = from[i];
+        if id == 0 || count <= 0 {
+            continue;
+        }
+        if brewing_move_one(to, id, order) {
+            let rest = count - 1;
+            from[i] = if rest > 0 { (id, rest) } else { (0, 0) };
+            return true;
+        }
+    }
+    false
+}
+
+/// THE HOPPER'S OWN BREWING SUCK (javap suckInItems pc 44-98 the 26.2
+/// jar the live disasm answers — the `getSlots(source, DOWN)` walk
+/// the SLOTS_FOR_DOWN [0, 1, 2, 3] order serves, the can_take gate
+/// the ingredient slot the GLASS_BOTTLE the first probe speaks [the
+/// spent ingredient the hopper's own law never takes], the bottle
+/// trio the filled potions the DOWN face serves — the one item per
+/// beat the cooldown banks).
+pub fn hopper_suck_one_brewing(hopper: &mut [(i32, i32)], source: &mut [(i32, i32)]) -> bool {
+    for &s in brewing_face_order(DISPENSER_FACING_DOWN) {
+        let (id, count) = source[s];
+        if id == 0 || count <= 0 {
+            continue;
+        }
+        if !brewing_can_take(s, id) {
+            continue;
+        }
+        if hopper_move_one(hopper, id) {
+            let rest = count - 1;
+            source[s] = if rest > 0 { (id, rest) } else { (0, 0) };
+            return true;
+        }
+    }
+    false
+}
+
 /// THE FAMILY'S OWN VARIANT ENCODE (the two fields the one byte
 /// wears — the facing the low 3 bits keep, the triggered bit the
 /// rising-edge walk's own setValue arms).
@@ -7933,7 +8157,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 780] = [
+pub const NAME_OF: [&str; 781] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -8752,6 +8976,7 @@ pub const NAME_OF: [&str; 780] = [
     "dropper",
     "shulker_box",
     "hopper",
+    "brewing_stand",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -23478,7 +23703,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -23579,7 +23804,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -24028,7 +24253,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -24219,7 +24444,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -24311,7 +24536,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24365,7 +24590,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -24455,7 +24680,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24512,7 +24737,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24610,7 +24835,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24679,7 +24904,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24793,7 +25018,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24868,7 +25093,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24980,7 +25205,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25056,7 +25281,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -25173,7 +25398,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25258,7 +25483,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -25409,7 +25634,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25483,7 +25708,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -25672,7 +25897,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25733,7 +25958,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -26095,7 +26320,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26136,8 +26361,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -26550,8 +26775,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -26890,8 +27115,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -27592,8 +27817,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -27894,8 +28119,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -28215,8 +28440,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -28514,8 +28739,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -28994,8 +29219,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -29490,8 +29715,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -29793,7 +30018,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -30748,6 +30973,410 @@ mod tests {
     }
 
     #[test]
+    fn the_brewing_stand_the_kind_seat_and_the_face_tables_wear() {
+        // THE KIND SEAT'S OWN PIN (the mint the tail seat the atlas
+        // row answers — the NAME_OF row the placement walk's reverse
+        // lookup speaks, the FACE_TILES row the generic cube the
+        // stand's own pair wears)
+        assert_eq!(BREWING_STAND, 780, "the brewing stand its tail seat keeps");
+        assert_eq!(
+            NAME_OF[BREWING_STAND as usize], "brewing_stand",
+            "the NAME_OF row the placeable walk reads"
+        );
+        assert_eq!(
+            World::placeable_block("brewing_stand"),
+            Some(BREWING_STAND),
+            "the held brewing stand item the kind mints"
+        );
+        assert!(is_brewing_stand(BREWING_STAND), "the kind gate wears");
+        assert!(
+            !is_brewing_stand(HOPPER) && !is_brewing_stand(FURNACE),
+            "the sibling kinds the gate refuses"
+        );
+        // THE FACE TABLES' OWN ROWS (javap BrewingStandBlockEntity
+        // `<clinit>` pc 0-51 the 26.2 jar the live disasm answers —
+        // the UP the [3] lone ingredient, the DOWN the [0, 1, 2, 3]
+        // the bottle trio the ingredient, the sides the [0, 1, 2, 4]
+        // the bottle trio the fuel)
+        assert_eq!(
+            brewing_face_order(DISPENSER_FACING_UP),
+            &[BREWING_SLOT_INGREDIENT],
+            "the UP face the ingredient lane wears"
+        );
+        assert_eq!(
+            brewing_face_order(DISPENSER_FACING_DOWN),
+            &[
+                BREWING_SLOT_BOTTLE_0,
+                BREWING_SLOT_BOTTLE_1,
+                BREWING_SLOT_BOTTLE_2,
+                BREWING_SLOT_INGREDIENT
+            ],
+            "the DOWN face the bottle trio the ingredient wears"
+        );
+        for f in [
+            DISPENSER_FACING_NORTH,
+            DISPENSER_FACING_SOUTH,
+            DISPENSER_FACING_WEST,
+            DISPENSER_FACING_EAST,
+        ] {
+            assert_eq!(
+                brewing_face_order(f),
+                &[
+                    BREWING_SLOT_BOTTLE_0,
+                    BREWING_SLOT_BOTTLE_1,
+                    BREWING_SLOT_BOTTLE_2,
+                    BREWING_SLOT_FUEL
+                ],
+                "the side face the bottle trio the fuel lane wears"
+            );
+        }
+        // THE EJECT DIRECTION'S OWN PAIR (javap ejectItems pc 13-20 —
+        // the hopper's DOWN mouth the stand's UP face the ingredient
+        // lane answers, the four walls the opposite's compass the
+        // sides lane keeps)
+        assert_eq!(
+            brewing_face_order(facing6_opposite(DISPENSER_FACING_DOWN)),
+            &[BREWING_SLOT_INGREDIENT],
+            "the DOWN mouth the UP face the ingredient order wears"
+        );
+        assert_eq!(
+            brewing_face_order(facing6_opposite(DISPENSER_FACING_NORTH)),
+            brewing_face_order(DISPENSER_FACING_SOUTH),
+            "the north push the south face the sides order answers"
+        );
+    }
+
+    #[test]
+    fn the_brewing_stand_the_place_and_take_gates_wear() {
+        // THE PLACE GATE'S OWN VERDICTS (javap canPlaceItem pc 0-101
+        // the 26.2 jar the live disasm answers — the slot-3 ingredient
+        // the isIngredient verdict, the slot-4 fuel the BREWING_FUEL
+        // tag the blaze powder the lone member, the bottle trio the
+        // potion family + the empty-slot glass bottle)
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let nether_wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+        let blaze_powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+        let glass_bottle = mc_registry::item_id_by_name("glass_bottle").unwrap();
+        let potion = mc_registry::item_id_by_name("potion").unwrap();
+        let splash = mc_registry::item_id_by_name("splash_potion").unwrap();
+        let lingering = mc_registry::item_id_by_name("lingering_potion").unwrap();
+        // THE WIRE SEATS' OWN PINS (the ids the registry order banks —
+        // the gates the same ids speak)
+        assert_eq!(nether_wart, 1148, "the wire pin the wart wears");
+        assert_eq!(
+            blaze_powder, ITEM_BLAZE_POWDER,
+            "the blaze powder the seat wears"
+        );
+        assert_eq!(
+            glass_bottle, ITEM_GLASS_BOTTLE,
+            "the glass bottle the seat wears"
+        );
+        assert_eq!(potion, ITEM_POTION, "the potion the seat wears");
+        assert_eq!(splash, ITEM_SPLASH_POTION, "the splash the seat wears");
+        assert_eq!(
+            lingering, ITEM_LINGERING_POTION,
+            "the lingering the seat wears"
+        );
+        // THE INGREDIENT SET'S OWN VERDICTS (javap addVanillaMixes —
+        // the 21 rows the set speaks: the wart accepts, the dirt
+        // refuses, the blaze powder the dual seat the set banks, the
+        // stone the INFESTED start mix the row keeps)
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        assert!(
+            brewing_is_ingredient(nether_wart),
+            "the nether wart the base mix accepts"
+        );
+        assert!(
+            brewing_is_ingredient(blaze_powder),
+            "the blaze powder the STRENGTH mix accepts"
+        );
+        assert!(
+            brewing_is_ingredient(stone),
+            "the stone the INFESTED start mix accepts"
+        );
+        assert!(
+            !brewing_is_ingredient(dirt),
+            "the dirt the ingredient set refuses"
+        );
+        // THE SLOT-3's OWN GATE (the ingredient lane the isIngredient
+        // verdict serves — the dirt the refuse wears)
+        assert!(
+            !brewing_can_place(BREWING_SLOT_INGREDIENT, (0, 0), dirt),
+            "the dirt the ingredient slot refuses"
+        );
+        assert!(
+            brewing_can_place(BREWING_SLOT_INGREDIENT, (0, 0), nether_wart),
+            "the wart the ingredient slot accepts"
+        );
+        // THE SLOT-4's OWN GATE (the BREWING_FUEL tag the blaze powder
+        // the lone member — the coal the furnace fuel the brewing
+        // lane refuses, the dirt the refuse keeps)
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        assert!(
+            brewing_can_place(BREWING_SLOT_FUEL, (0, 0), blaze_powder),
+            "the blaze powder the fuel slot accepts"
+        );
+        assert!(
+            !brewing_can_place(BREWING_SLOT_FUEL, (0, 0), coal),
+            "the coal the brewing fuel lane refuses"
+        );
+        assert!(
+            !brewing_can_place(BREWING_SLOT_FUEL, (0, 0), dirt),
+            "the dirt the fuel slot refuses"
+        );
+        // THE BOTTLE TRIO'S OWN GATES (the potion family the accept
+        // speaks, the glass bottle the empty slot the refill wears,
+        // the occupied slot the refuse keeps, the dirt the refuse
+        // banks)
+        for slot in [
+            BREWING_SLOT_BOTTLE_0,
+            BREWING_SLOT_BOTTLE_1,
+            BREWING_SLOT_BOTTLE_2,
+        ] {
+            assert!(
+                brewing_can_place(slot, (0, 0), potion),
+                "the potion the bottle slot accepts"
+            );
+            assert!(
+                brewing_can_place(slot, (0, 0), splash),
+                "the splash the bottle slot accepts"
+            );
+            assert!(
+                brewing_can_place(slot, (0, 0), lingering),
+                "the lingering the bottle slot accepts"
+            );
+            assert!(
+                brewing_can_place(slot, (0, 0), glass_bottle),
+                "the fresh glass bottle the empty slot accepts"
+            );
+            assert!(
+                !brewing_can_place(slot, (potion, 1), glass_bottle),
+                "the glass bottle the occupied slot refuses"
+            );
+            assert!(
+                !brewing_can_place(slot, (0, 0), dirt),
+                "the dirt the bottle slot refuses"
+            );
+            assert!(
+                !brewing_can_place(slot, (0, 0), blaze_powder),
+                "the blaze powder the bottle slot refuses"
+            );
+        }
+        // THE TAKE GATE'S OWN VERDICTS (javap canTakeItemThroughFace
+        // pc 0-13 — the slot-3 the GLASS_BOTTLE take the only verdict
+        // keeps, the spent ingredient the refuse speaks, the bottle
+        // trio the filled potions the take serves, the fuel the take
+        // keeps)
+        assert!(
+            !brewing_can_take(BREWING_SLOT_INGREDIENT, nether_wart),
+            "the spent wart the ingredient take refuses"
+        );
+        assert!(
+            brewing_can_take(BREWING_SLOT_INGREDIENT, ITEM_GLASS_BOTTLE),
+            "the glass bottle the ingredient take serves"
+        );
+        assert!(
+            brewing_can_take(BREWING_SLOT_BOTTLE_0, potion),
+            "the filled potion the bottle take serves"
+        );
+        assert!(
+            brewing_can_take(BREWING_SLOT_FUEL, blaze_powder),
+            "the blaze powder the fuel take serves"
+        );
+    }
+
+    #[test]
+    fn the_brewing_stand_the_push_and_suck_wear() {
+        // THE SIDE PUSH'S OWN FUEL LANE (javap canPlaceItem the SIDES
+        // order the blaze powder the fuel slot seats — the bottle
+        // trio the blaze the refuse speaks)
+        let blaze_powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut hopper = vec![(blaze_powder, 3), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut stand = vec![(0i32, 0i32); 5];
+        assert!(
+            hopper_push_one_brewing(
+                &mut hopper,
+                &mut stand,
+                brewing_face_order(DISPENSER_FACING_NORTH)
+            ),
+            "the blaze powder the sides lane seats"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_FUEL],
+            (blaze_powder, 1),
+            "the fuel slot the blaze seats"
+        );
+        assert_eq!(
+            hopper[0],
+            (blaze_powder, 2),
+            "the count the decrement wears"
+        );
+        // THE SIDE PUSH'S OWN BOTTLE LANE (the fresh glass bottle the
+        // empty bottle slot the refill wears — the second bottle the
+        // NEXT empty slot the seats serve [the occupied slot the
+        // canPlaceItem's empty-arm the refuse keeps — the merge the
+        // vanilla law never speaks, the bottle trio the three seats
+        // the side lane fills])
+        let glass_bottle = mc_registry::item_id_by_name("glass_bottle").unwrap();
+        let mut hopper = vec![(glass_bottle, 18), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut stand = vec![(0i32, 0i32); 5];
+        assert!(
+            hopper_push_one_brewing(
+                &mut hopper,
+                &mut stand,
+                brewing_face_order(DISPENSER_FACING_NORTH)
+            ),
+            "the glass bottle the bottle lane seats"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_BOTTLE_0],
+            (glass_bottle, 1),
+            "the bottle slot the glass seats"
+        );
+        assert!(
+            hopper_push_one_brewing(
+                &mut hopper,
+                &mut stand,
+                brewing_face_order(DISPENSER_FACING_NORTH)
+            ),
+            "the second bottle the next empty slot serves"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_BOTTLE_0],
+            (glass_bottle, 1),
+            "the occupied slot the merge refuses"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_BOTTLE_1],
+            (glass_bottle, 1),
+            "the next bottle slot the glass seats"
+        );
+        // THE SIDE PUSH'S OWN DIRT REFUSE (the non-potion the bottle
+        // lane refuses, the non-blaze the fuel refuses — the restore
+        // the hopper row keeps)
+        let mut hopper = vec![(dirt, 3), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut stand = vec![(0i32, 0i32); 5];
+        assert!(
+            !hopper_push_one_brewing(
+                &mut hopper,
+                &mut stand,
+                brewing_face_order(DISPENSER_FACING_NORTH)
+            ),
+            "the dirt the sides lane refuses"
+        );
+        assert_eq!(hopper[0], (dirt, 3), "the refused probe the row keeps");
+        assert_eq!(stand, vec![(0, 0); 5], "the stand the empty keeps");
+        // THE TOP PUSH'S OWN INGREDIENT LANE (the UP-face order the
+        // wart the ingredient slot seats — the dirt the refuse keeps)
+        let nether_wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+        let mut hopper = vec![(nether_wart, 2), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut stand = vec![(0i32, 0i32); 5];
+        assert!(
+            hopper_push_one_brewing(
+                &mut hopper,
+                &mut stand,
+                brewing_face_order(DISPENSER_FACING_UP)
+            ),
+            "the wart the ingredient lane seats"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_INGREDIENT],
+            (nether_wart, 1),
+            "the ingredient slot the wart seats"
+        );
+        let mut hopper = vec![(dirt, 2), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut stand = vec![(0i32, 0i32); 5];
+        assert!(
+            !hopper_push_one_brewing(
+                &mut hopper,
+                &mut stand,
+                brewing_face_order(DISPENSER_FACING_UP)
+            ),
+            "the dirt the ingredient lane refuses"
+        );
+        // THE FACE FULL VERDICT (the UP order the ingredient slot's
+        // own max the verdict wears — the potion the max-1 stack the
+        // single the verdict serves)
+        let potion = mc_registry::item_id_by_name("potion").unwrap();
+        let mut stand = vec![(0i32, 0i32); 5];
+        stand[BREWING_SLOT_INGREDIENT] = (nether_wart, 64);
+        assert!(
+            furnace_inventory_full_face(&stand, brewing_face_order(DISPENSER_FACING_UP)),
+            "the ingredient slot the max the verdict wears"
+        );
+        assert!(
+            !furnace_inventory_full_face(&stand, brewing_face_order(DISPENSER_FACING_DOWN)),
+            "the DOWN order the empty bottles the verdict refuses"
+        );
+        // THE SUCK'S OWN LANES (javap suckInItems the SLOTS_FOR_DOWN
+        // [0, 1, 2, 3] order the can_take gate serves — the bottle
+        // trio the filled potions the first probe, the ingredient
+        // slot the glass bottle the only take, the spent wart the
+        // refuse keeps)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut stand = vec![(0i32, 0i32); 5];
+        stand[BREWING_SLOT_BOTTLE_0] = (potion, 1);
+        stand[BREWING_SLOT_INGREDIENT] = (nether_wart, 4);
+        assert!(
+            hopper_suck_one_brewing(&mut hopper, &mut stand),
+            "the potion the bottle lane takes"
+        );
+        assert_eq!(hopper[0], (potion, 1), "the hopper the potion seats");
+        assert_eq!(
+            stand[BREWING_SLOT_BOTTLE_0],
+            (0, 0),
+            "the bottle slot the empty keeps"
+        );
+        // THE SPENT WART'S OWN REFUSE (the ingredient slot the
+        // non-bottle the take gate refuses — the bottle slots the
+        // empty the walk exhausts)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        assert!(
+            !hopper_suck_one_brewing(&mut hopper, &mut stand),
+            "the spent wart the ingredient take refuses"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_INGREDIENT],
+            (nether_wart, 4),
+            "the refused take the row keeps"
+        );
+        // THE GLASS BOTTLE'S OWN TAKE (the ingredient slot the bottle
+        // the refill walk serves — the hopper the seats)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        stand[BREWING_SLOT_INGREDIENT] = (glass_bottle, 2);
+        assert!(
+            hopper_suck_one_brewing(&mut hopper, &mut stand),
+            "the glass bottle the ingredient take serves"
+        );
+        assert_eq!(
+            hopper[0],
+            (glass_bottle, 1),
+            "the glass bottle the hopper seats"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_INGREDIENT],
+            (glass_bottle, 1),
+            "the ingredient slot the decrement wears"
+        );
+        // THE BLAZE'S OWN TAKE (the fuel slot the blaze powder the
+        // DOWN row never carries — the [0, 1, 2, 3] order the slot-4
+        // the probe never reaches)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut stand = vec![(0i32, 0i32); 5];
+        stand[BREWING_SLOT_FUEL] = (blaze_powder, 5);
+        assert!(
+            !hopper_suck_one_brewing(&mut hopper, &mut stand),
+            "the fuel slot the DOWN row the probe never reaches"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_FUEL],
+            (blaze_powder, 5),
+            "the fuel slot the blaze keeps"
+        );
+    }
+
+    #[test]
     fn the_shulker_cell_the_lids_tick_the_same_ramp_wears() {
         // THE SHULKER'S OWN PROGRESS WALK (the autopush-298 round —
         // javap ShulkerBoxBlockEntity.updateAnimation the 26.2 jar the
@@ -31035,7 +31664,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 780, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 781, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -31183,7 +31812,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 780, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -31324,7 +31953,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 780, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -31569,7 +32198,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 780,
+            atlas::N_KINDS, 781,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -31723,7 +32352,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-             780,
+             781,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -31941,7 +32570,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 780, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -32055,7 +32684,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 780, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 781, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -32426,7 +33055,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 780, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 781, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

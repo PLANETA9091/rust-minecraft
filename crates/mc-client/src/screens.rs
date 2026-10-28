@@ -9269,6 +9269,16 @@ pub struct App {
     /// the item entities the break releases, the dropContents arm's
     /// own law the chest's spill speaks).
     pub furnace_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    /// THE BREWING STANDS' OWN BANK (the autopush-309 round — the
+    /// same per-cell law the furnace trio speaks: javap
+    /// BrewingStandBlockEntity.<init> pc 9-17 the 26.2 jar the
+    /// withSize(5) walk the FIVE slots wear [the bottle trio the
+    /// front row, the ingredient the top cell, the fuel the blaze
+    /// tail], the cell the map's own key wears, the five the value
+    /// the hopper's push/suck arms ride home to — the GUI door the
+    /// NEXT round's own lane keeps, the transfer feed the bank
+    /// alone serves).
+    pub brewing_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
     /// THE OPEN FURNACE'S OWN CELL (the open the key banks, the
     /// flush the key takes home — the None the live-lane opens and
     /// the closed screens keep, the networked trio the server's own
@@ -11514,6 +11524,19 @@ pub fn furnace_stores_from_nbt(
     parse_stores_list(entries, 3)
 }
 
+/// THE BREWING BANK'S OWN PARSE (the autopush-309 round — the
+/// "brewing_stands" list the five-cap wears: the same tolerant walk
+/// the furnace parse serves, the missing/corrupt list the honest
+/// empties keep).
+pub fn brewing_stores_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>> {
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("brewing_stands") else {
+        return std::collections::HashMap::new();
+    };
+    parse_stores_list(entries, 5)
+}
+
 /// THE FURNACE WORDS' OWN BANK (the dev-70 round — the burn/cook
 /// progress words the trio's own lane rides: the same file the
 /// third list wears, each entry the x/y/z triple + the "Words" list
@@ -11961,6 +11984,7 @@ impl App {
             ender_chest_store: vec![(0i32, 0i32); 27],
             container_open_ender: false,
             furnace_stores: std::collections::HashMap::new(),
+            brewing_stores: std::collections::HashMap::new(),
             furnace_open_cell: None,
             furnace_word_stores: std::collections::HashMap::new(),
             furnace_slots: vec![(0, 0); 39],
@@ -16831,6 +16855,11 @@ impl App {
                         // removal law releases, the entry the walk
                         // dies with)
                         self.furnace_store_spilled(pos);
+                        // THE BREWING STAND'S OWN SPILL (the autopush-
+                        // 309 round — the broken stand's stocked five
+                        // the same removal law releases, the entry the
+                        // walk dies with)
+                        self.brewing_store_spilled(pos);
                     }
                 }
                 if beat {
@@ -20012,6 +20041,7 @@ impl App {
                     for (bx, by, bz) in explosion_cells.iter().copied() {
                         self.container_store_spilled((bx, by, bz));
                         self.furnace_store_spilled((bx, by, bz));
+                        self.brewing_store_spilled((bx, by, bz));
                     }
                     // THE BLAST'S OWN PAIR UPDATE (the probe's own
                     // verdict — pc 187 `iconst_3` the setBlock tail
@@ -26809,6 +26839,20 @@ impl App {
             w.container_fill.insert(pos, fill);
             return None;
         }
+        if crate::world::is_brewing_stand(kind) {
+            // THE BREWING STAND'S OWN FIVE (the autopush-309 round —
+            // javap BrewingStandBlock `hasAnalogOutputSignal` the
+            // iconst_1 the 26.2 jar speaks, `getAnalogOutputSignal` the
+            // same getRedstoneSignalFromBlockEntity walk answers, the
+            // generic fill formula over the FIVE slots the
+            // BrewingStandMenu ctor wears — the store map the bank
+            // keeps, the container_fill entry the comparator's back
+            // read consumes)
+            let five = self.brewing_stores.get(&pos).cloned().unwrap_or_default();
+            let fill = crate::world::container_analog_signal(&five);
+            w.container_fill.insert(pos, fill);
+            return None;
+        }
         if crate::world::is_dispenser_kind(kind) {
             // THE DISPENSER/DROPPER'S OWN NINE (the autopush-139 round
             // — javap DispenserBlock.hasAnalogOutputSignal the
@@ -26947,6 +26991,7 @@ impl App {
         }
         let mut keys: Vec<(i32, i32, i32)> = self.container_stores.keys().copied().collect();
         keys.extend(self.furnace_stores.keys().copied());
+        keys.extend(self.brewing_stores.keys().copied());
         keys.sort();
         keys.dedup();
         for k in keys {
@@ -27205,6 +27250,50 @@ impl App {
         }
         if self.furnace_open_cell == Some(pos) {
             self.furnace_open_cell = None;
+        }
+        self.container_stores_file_save();
+    }
+
+    /// THE BREWING STAND'S OWN SPILL (the autopush-309 round — the
+    /// same removal law the furnace spill speaks: javap 26.2
+    /// BlockEntity.preRemoveSideEffects the dropContents arm the
+    /// block's death rides, the five's non-empty slots the
+    /// [`crate::drops::ItemDrop::spawn_container_spill`] walk
+    /// releases — the stocked stand's break the floor the items
+    /// wear). THE DISK BANK'S OWN LAZY LOAD + THE NETWORKED WORLD'S
+    /// OWN SPLIT the furnace spill's own laws the five-slot bank
+    /// keeps — the misses the map's own absence the no-op keeps, the
+    /// entry dies with the cell either way, the file the death ride
+    /// banks. THE GUI DOOR the NEXT round's own lane keeps — the open
+    /// cell the walk never wears.
+    pub fn brewing_store_spilled(&mut self, pos: (i32, i32, i32)) {
+        self.container_stores_load_once();
+        let store = self.brewing_stores.remove(&pos);
+        // THE FILL'S OWN DEATH RIDE (the comparator's container lane
+        // the dig serves — the broken stand the entry the air drops,
+        // the stale fill the dead cell never speaks)
+        if let Some(w) = self.offline_world.as_mut() {
+            w.container_fill.remove(&pos);
+        }
+        if !self.world_is_network {
+            if let Some(store) = store {
+                for (item, count) in store {
+                    if count <= 0 {
+                        continue; // the dropContents walk's isEmpty guard
+                    }
+                    let chunks = crate::drops::ItemDrop::spawn_container_spill(
+                        self.next_drop_id,
+                        item,
+                        count,
+                        pos.0,
+                        pos.1,
+                        pos.2,
+                        &mut self.drop_rng,
+                    );
+                    self.next_drop_id += chunks.len() as i32;
+                    self.drops.extend(chunks);
+                }
+            }
         }
         self.container_stores_file_save();
     }
@@ -39700,6 +39789,19 @@ impl App {
                 for k in self.furnace_stores.keys().copied().collect::<Vec<_>>() {
                     self.container_fill_sync(k, None);
                 }
+                // THE BREWING BANK'S OWN PARSE (the autopush-309 round
+                // — the same read the five-slot bank answers: the
+                // missing list the honest empties keep, the extend law
+                // the in-memory entry never clobbers)
+                self.brewing_stores.extend(brewing_stores_from_nbt(&root));
+                // THE BREWING FILL'S OWN PARSE RIDE (the comparator's
+                // container lane the boot banks — the parsed fives the
+                // analog the same rows wear, the restart the stocked
+                // stand's fill the comparator's next consult the map
+                // serves)
+                for k in self.brewing_stores.keys().copied().collect::<Vec<_>>() {
+                    self.container_fill_sync(k, None);
+                }
                 // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
@@ -39765,6 +39867,14 @@ impl App {
             (
                 "furnaces".to_string(),
                 container_bank_to_nbt(&self.furnace_stores, 3),
+            ),
+            // THE BREWING BANK'S OWN ROW (the autopush-309 round — the
+            // stands the same file the list wears, the BTree cell order
+            // the deterministic bytes keep, the five the BE's own
+            // withSize(5) width speaks)
+            (
+                "brewing_stands".to_string(),
+                container_bank_to_nbt(&self.brewing_stores, 5),
             ),
             (
                 "furnace_words".to_string(),
@@ -62203,6 +62313,46 @@ impl App {
                     moved = true;
                 }
             }
+        } else if crate::world::is_brewing_stand(kind_at(attached)) {
+            // THE BREWING STAND'S OWN PUSH ARM (the furnace arm's own
+            // sibling the autopush-309 round — javap ejectItems pc 13-20
+            // the `facing.getOpposite()` walk the face-table probe
+            // serves: the hopper's DOWN mouth the stand's UP face the
+            // INGREDIENT lane answers [SLOTS_FOR_UP the [3] lone row],
+            // the four walls the SIDES lane the bottle trio + the fuel
+            // keeps, the canPlaceItem gate the ingredient verdicts the
+            // BREWING_FUEL tag the blaze powder the lone member banks,
+            // the isFullContainer the face order's own slots the gate
+            // banks)
+            let order: &'static [usize] =
+                crate::world::brewing_face_order(crate::world::facing6_opposite(facing));
+            self.brewing_stores
+                .entry(attached)
+                .or_insert_with(|| vec![(0i32, 0i32); 5]);
+            let target_full = self
+                .brewing_stores
+                .get(&attached)
+                .is_some_and(|s| crate::world::furnace_inventory_full_face(s, order));
+            if !target_full {
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let did = {
+                    let target = self
+                        .brewing_stores
+                        .get_mut(&attached)
+                        .expect("the brewing sink the entry arm banks");
+                    crate::world::hopper_push_one_brewing(&mut hopper_row, target, order)
+                };
+                if did {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    changed.push((x, y, z));
+                    changed.push(attached);
+                    moved = true;
+                }
+            }
         }
         // THE SUCK LAW (javap tryMoveItems pc 50-67 the EAGER `ior`
         // walk the push-success the suck still serves, the
@@ -62262,6 +62412,36 @@ impl App {
                         .get_mut(&above)
                         .expect("the furnace source the entry arm banks");
                     crate::world::hopper_suck_one_furnace(&mut hopper_row, src)
+                };
+                if did {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    changed.push((x, y, z));
+                    changed.push(above);
+                    moved = true;
+                }
+            } else if crate::world::is_brewing_stand(kind_at(above)) {
+                // THE BREWING STAND'S OWN SUCK ARM (the furnace arm's
+                // own sibling the autopush-309 round — javap suckInItems
+                // pc 44-98 the `getSlots(source, DOWN)` walk the
+                // SLOTS_FOR_DOWN [0, 1, 2, 3] order serves, the
+                // canTakeItemThroughFace gate the ingredient slot the
+                // GLASS_BOTTLE the only refuse keeps [the spent
+                // ingredient the suck never takes], the bottle trio the
+                // filled potions the DOWN face serves)
+                self.brewing_stores
+                    .entry(above)
+                    .or_insert_with(|| vec![(0i32, 0i32); 5]);
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let did = {
+                    let src = self
+                        .brewing_stores
+                        .get_mut(&above)
+                        .expect("the brewing source the entry arm banks");
+                    crate::world::hopper_suck_one_brewing(&mut hopper_row, src)
                 };
                 if did {
                     self.container_stores.insert((x, y, z), hopper_row);

@@ -1,0 +1,77 @@
+=== PotionBrewing: the clinit the ingredient rows speak ===
+== PotionBrewing :: <clinit> ()V ==
+    0 new #8  net/minecraft/world/item/alchemy/PotionBrewing
+    3 dup
+    4 invokestatic #362  java/util/List.of ()Ljava/util/List;
+    7 invokestatic #362  java/util/List.of ()Ljava/util/List;
+   10 invokestatic #362  java/util/List.of ()Ljava/util/List;
+   13 invokespecial #366  net/minecraft/world/item/alchemy/PotionBrewing.<init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+   16 putstatic #369  net/minecraft/world/item/alchemy/PotionBrewing.EMPTY Lnet/minecraft/world/item/alchemy/PotionBrewing;
+   19 return
+
+=== PotionBrewing: the verdict pairs ===
+== PotionBrewing :: isContainer (Lnet/minecraft/world/item/ItemStack;)Z ==
+    0 aload_0
+    1 getfield #7  net/minecraft/world/item/alchemy/PotionBrewing.containers Ljava/util/List;
+    4 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+    9 astore_2
+   10 aload_2
+   11 invokeinterface java/util/Iterator.hasNext ()Z
+   16 ifeq #26
+   19 aload_2
+   20 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   25 checkcast #42  net/minecraft/world/item/crafting/Ingredient
+   28 astore_3
+   29 aload_3
+   30 aload_1
+   31 invokevirtual #44  net/minecraft/world/item/crafting/Ingredient.test (Lnet/minecraft/world/item/ItemStack;)Z
+   34 ifeq #5
+   37 iconst_1
+   38 ireturn
+   39 goto #65507
+   42 iconst_0
+   43 ireturn
+== PotionBrewing :: isContainerIngredient (Lnet/minecraft/world/item/ItemStack;)Z ==
+    0 aload_0
+    1 getfield #16  net/minecraft/world/item/alchemy/PotionBrewing.containerMixes Ljava/util/List;
+    4 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+    9 astore_2
+   10 aload_2
+   11 invokeinterface java/util/Iterator.hasNext ()Z
+   16 ifeq #29
+   19 aload_2
+   20 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   25 checkcast #47  net/minecraft/world/item/alchemy/PotionBrewing$Mix
+   28 astore_3
+   29 aload_3
+   30 getfield #49  net/minecraft/world/item/alchemy/PotionBrewing$Mix.ingredient Lnet/minecraft/world/item/crafting/Ingredient;
+   33 aload_1
+   34 invokevirtual #44  net/minecraft/world/item/crafting/Ingredient.test (Lnet/minecraft/world/item/ItemStack;)Z
+   37 ifeq #5
+   40 iconst_1
+   41 ireturn
+   42 goto #65504
+   45 iconst_0
+   46 ireturn
+== PotionBrewing :: isPotionIngredient (Lnet/minecraft/world/item/ItemStack;)Z ==
+    0 aload_0
+    1 getfield #13  net/minecraft/world/item/alchemy/PotionBrewing.potionMixes Ljava/util/List;
+    4 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+    9 astore_2
+   10 aload_2
+   11 invokeinterface java/util/Iterator.hasNext ()Z
+   16 ifeq #29
+   19 aload_2
+   20 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   25 checkcast #47  net/minecraft/world/item/alchemy/PotionBrewing$Mix
+   28 astore_3
+   29 aload_3
+   30 getfield #49  net/minecraft/world/item/alchemy/PotionBrewing$Mix.ingredient Lnet/minecraft/world/item/crafting/Ingredient;
+   33 aload_1
+   34 invokevirtual #44  net/minecraft/world/item/crafting/Ingredient.test (Lnet/minecraft/world/item/ItemStack;)Z
+   37 ifeq #5
+   40 iconst_1
+   41 ireturn
+   42 goto #65504
+   45 iconst_0
+   46 ireturn
