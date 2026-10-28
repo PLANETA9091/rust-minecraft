@@ -6370,6 +6370,198 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE HOPPER'S OWN FUNNEL LANE (the autopush-306 round
+                // — the 305 NEXT list's own first candidate: the
+                // generic cube the block/hopper.json seven elements
+                // the funnel shape retires — javap HopperBlock the
+                // BlockShapeProvider the MODEL answer the jar's own
+                // blockstates/hopper.json serves: facing=down the
+                // block/hopper model answers, the four horizontals the
+                // block/hopper_side y-rotation variants wear [north 0
+                // / east 90 / south 180 / west 270 the CW cycle
+                // speaks] — the ELEMENTS table's typed rows the
+                // vanilla FaceBakery law derives, the
+                // [`hopper_funnel_quads`] cache the two bakes keeps).
+                // THE SHAPE'S OWN LAW: the rim plate (0,10,0)->(16,
+                // 11,16) the top band wears, the four walls the y
+                // 11..16 rim speak, the funnel body (4,4,4)->(12,10,
+                // 12) the middle taper answers, the down nozzle (6,0,
+                // 6)->(10,4,10) the bottom mouth serves [the side
+                // model's spout (6,4,0)->(10,8,4) the horizontal
+                // mouth wears]. THE CULLFACE THE ROTATION'S OWN TURN
+                // WEARS (the model-space cullface the blockstate y
+                // rotation rotates — the vanilla pose law the face
+                // never escapes: the side model's spout-north face
+                // cullface North the east-facing hopper the EAST
+                // neighbor verdict reads). THE INSIDE MASTER THE
+                // #inside REF BANKS (the 306 pin's third tile — the
+                // funnel's interior skin the dark rows speak).
+                if crate::world::is_hopper(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE VARIANT'S OWN FACING (the placement walk
+                    // stamps the low three bits the DISPENSER_FACING
+                    // vocabulary wears — down 0, up 1, north 2, south
+                    // 3, west 4, east 5; the up byte the FACING_HOPPER
+                    // vocabulary never carries, the down model the
+                    // never-stamped seat keeps).
+                    let facing = world.variant(wx, wy, wz) & 7;
+                    // THE BLOCKSTATE'S OWN Y-ROTATION (the
+                    // blockstates/hopper.json the five rows speak):
+                    // (model id, the CW quarter-turns the pose wears).
+                    let (model_id, y_steps) = match facing {
+                        2 => ("block/hopper_side", 0usize), // north
+                        5 => ("block/hopper_side", 1),      // east
+                        3 => ("block/hopper_side", 2),      // south
+                        4 => ("block/hopper_side", 3),      // west
+                        _ => ("block/hopper", 0),           // down (+ the never-stamped up)
+                    };
+                    // THE CW QUARTER'S OWN VERTEX MAP (the blockstate
+                    // y rotation the model geometry turns — north->-
+                    // east->south->west the cycle the stairs lane's
+                    // own table wears: 1 step (x,z)->(1-z, x), 2 steps
+                    // the half-turn, 3 the mirror ride)
+                    let turn = |v: [f32; 3]| -> [f32; 3] {
+                        let (x, z) = (v[0], v[2]);
+                        let (rx, rz) = match y_steps % 4 {
+                            1 => (1.0 - z, x),
+                            2 => (1.0 - x, 1.0 - z),
+                            3 => (z, 1.0 - x),
+                            _ => (x, z),
+                        };
+                        [rx, v[1], rz]
+                    };
+                    for q in hopper_funnel_quads(model_id) {
+                        // THE CULLFACE'S OWN ROTATED READ (the
+                        // model-space cullface the y-steps the world
+                        // direction turns — the neighbor's solid-render
+                        // verdict the face culls, the no-cullface arm
+                        // the interior faces always draw)
+                        if let Some(dir) = q.cullface {
+                            let dir = rotate_direction_cw(dir, y_steps);
+                            let (dx, dy, dz) = match dir {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE REF'S OWN TILE (the model's #side/#top/
+                        // #inside refs the inherited derive RESOLVES
+                        // in place — the block/hopper_* stems the
+                        // resolved ride wears, the raw "#var" refs
+                        // the unresolved fallback keeps — the three
+                        // hopper masters answer: the 305 pair + the
+                        // 306 inside the pool carries)
+                        let tile = match q.texture.trim_start_matches('#') {
+                            "block/hopper_top" | "top" => atlas::TILE_HOPPER_TOP,
+                            "block/hopper_inside" | "inside" => atlas::TILE_HOPPER_INSIDE,
+                            _ => atlas::TILE_HOPPER_OUTSIDE,
+                        };
+                        if tile == atlas::TILE_NONE {
+                            continue;
+                        }
+                        let rotated_dir = rotate_direction_cw(q.direction, y_steps);
+                        let face_shade = if q.shade {
+                            match rotated_dir {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let lm = lightmap_combine(
+                            cell_sky,
+                            cell_block,
+                            sky_factor,
+                            sky_tint,
+                            ambient,
+                            block_tint,
+                            night_vision,
+                            world.night_vision_factor,
+                            world.darkness_scale,
+                        );
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for i in 0..4 {
+                            let v = turn(q.vertices[i]);
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
+                            // the uv rides its own vertex (the pose
+                            // rotation the baked pair never separates —
+                            // the vanilla quad law keeps)
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE MOB HEADS' OWN MINI-CUBE LANE (the dev-82 round —
                 // javap SkullModel.createHeadModel +
                 // SkullBlockRenderer.createGroundTransformation +
@@ -8389,6 +8581,28 @@ fn cake_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Qua
                     mc_registry::element_quads::derive_model_inherited(m).unwrap_or_default(),
                 )
             })
+            .collect()
+    });
+    map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE HOPPER'S OWN FUNNEL BAKES — the block/hopper and
+/// block/hopper_side models the registry's derive walk resolves (the
+/// cake lane's own cache pattern the two models walk): the jar's
+/// seven-element funnel (the rim plate + the four walls + the funnel
+/// body + the down nozzle the block/hopper speaks, the side model's
+/// nozzle the north spout (6,4,0)->(10,8,4) the four horizontals
+/// wear) the typed ELEMENTS rows carry, the quads the vanilla
+/// FaceBakery law derives. The failed derive the honest empty slice
+/// keeps (the hopper the nothing renders).
+fn hopper_funnel_quads(model_id: &str) -> &'static [DerivedQuad] {
+    static QUADS: std::sync::OnceLock<std::collections::HashMap<&'static str, Vec<DerivedQuad>>> =
+        std::sync::OnceLock::new();
+    let models = ["block/hopper", "block/hopper_side"];
+    let map = QUADS.get_or_init(|| {
+        models
+            .into_iter()
+            .map(|m| (m, derive_model_inherited(m).unwrap_or_default()))
             .collect()
     });
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
@@ -17420,6 +17634,218 @@ mod tests {
         assert!(
             (y_max - (8.0 + 19.6 / 16.0)).abs() < 1e-4,
             "the lerp frame the 0.45 angle answers, got {y_max}"
+        );
+    }
+
+    #[test]
+    fn the_hopper_funnel_the_seven_elements_wear() {
+        // THE FUNNEL'S OWN SEVEN (the autopush-306 round — the 305
+        // NEXT list's own first candidate: the generic cube the
+        // block/hopper.json seven elements the funnel shape retires —
+        // javap HopperBlock the BlockShapeProvider the MODEL answer
+        // the jar's own blockstates/hopper.json serves: the rim plate
+        // + the four walls + the funnel body + the down nozzle the
+        // block/hopper model speaks, the side model's north spout the
+        // four horizontals wear — the ELEMENTS rows the vanilla
+        // FaceBakery law derives, the blockstate y-rotation the CW
+        // cycle the stairs lane's own table wears, the #inside ref
+        // the 306 pin's third master banks)
+        use mc_registry::generated::atlas as gen_atlas;
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-6
+                    && p[0] <= 9.0 + 1e-6
+                    && p[1] >= 8.0 - 1e-6
+                    && p[1] <= 9.0 + 1e-6
+                    && p[2] >= 8.0 - 1e-6
+                    && p[2] <= 9.0 + 1e-6
+            })
+        };
+        // THE DOWN MODEL'S OWN 32 (6+5+5+3+3+5+5 — the air neighbors
+        // the cullface faces the draw verdict keeps, the fresh
+        // variant the DOWN byte the default keeps)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::HOPPER);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            32,
+            "the down funnel's own 32 quads the seven elements bake"
+        );
+        // the inside master the four faces wear (the rim's down + up
+        // pair + the body's down + the nozzle's down the #inside refs
+        // answer), the top master the four walls' ups
+        assert_eq!(
+            cell.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_HOPPER_INSIDE)
+                .count(),
+            4,
+            "the #inside refs the four funnel-interior faces wear"
+        );
+        assert_eq!(
+            cell.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_HOPPER_TOP)
+                .count(),
+            4,
+            "the #top refs the four walls' up faces wear"
+        );
+        // the nozzle the y 0 floor reaches, the walls the y 1.0 rim
+        let y_lo = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min))
+            .fold(f32::MAX, f32::min);
+        let y_hi = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (y_lo - 8.0).abs() < 1e-6,
+            "the nozzle the floor reaches, got {y_lo}"
+        );
+        assert!(
+            (y_hi - 9.0).abs() < 1e-6,
+            "the walls the full-block rim keeps, got {y_hi}"
+        );
+        // THE DOWN MODEL'S OWN FOOTPRINT (the below-RIM-PLATE band
+        // the body x/z 0.25..0.75 + the nozzle 0.375..0.625 boxes
+        // wear — no vertex pokes past the funnel's own span; the rim
+        // plate's own y 10..11 band the full-width pair keeps, the
+        // filter the 10/16 plane the plate's bottom face excludes)
+        for quad in &cell {
+            for p in quad.pts {
+                if p[1] < 8.0 + 10.0 / 16.0 - 1e-6 {
+                    assert!(
+                        p[0] >= 8.0 + 0.25 - 1e-6 && p[0] <= 8.0 + 0.75 + 1e-6,
+                        "the down funnel the body/nozzle x-span keeps, got {}",
+                        p[0]
+                    );
+                    assert!(
+                        p[2] >= 8.0 + 0.25 - 1e-6 && p[2] <= 8.0 + 0.75 + 1e-6,
+                        "the down funnel the body/nozzle z-span keeps, got {}",
+                        p[2]
+                    );
+                }
+            }
+        }
+        // THE EAST SPOUT'S OWN QUARTER (the y=90 the CW turn speaks —
+        // the side model's north spout (6,4,0)->(10,8,4) the rotated
+        // (12,4,6)->(16,8,10) tip wears: the x 1.0 plane the east
+        // mouth reaches, the z band the 0.375..0.625 keeps)
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::HOPPER);
+        we.set_variant(8, 8, 8, 5); // the east byte the placement's west-face opposite wears
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            celle.len(),
+            32,
+            "the east funnel's own 32 quads the spout the nozzle replaces"
+        );
+        // THE SIDE MODEL'S OWN FLOOR (the nozzle the spout replaces —
+        // the y 4/16 the spout's bottom band wears, the 0 floor the
+        // down model's nozzle alone reaches)
+        let y_lo_e = celle
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (y_lo_e - (8.0 + 0.25)).abs() < 1e-6,
+            "the east funnel the spout's 4/16 floor wears, got {y_lo_e}"
+        );
+        let tip = celle.iter().any(|quad| {
+            quad.pts
+                .iter()
+                .any(|p| (p[0] - 9.0).abs() < 1e-6 && p[1] < 8.5)
+        });
+        assert!(tip, "the east spout's x=1.0 tip the quarter turn wears");
+        for quad in &celle {
+            for p in quad.pts {
+                if p[1] < 8.0 + 10.0 / 16.0 - 1e-6 {
+                    // the body's own z 0.25..0.75 band the spout's
+                    // 0.375..0.625 slice rides inside (the turned
+                    // mouth the x span alone widens)
+                    assert!(
+                        p[2] >= 8.0 + 0.25 - 1e-6 && p[2] <= 8.0 + 0.75 + 1e-6,
+                        "the east funnel the body's z-band keeps, got {}",
+                        p[2]
+                    );
+                    assert!(
+                        p[0] >= 8.0 + 0.25 - 1e-6 && p[0] <= 9.0 + 1e-6,
+                        "the east funnel the spout's x reach keeps, got {}",
+                        p[0]
+                    );
+                }
+            }
+        }
+        // THE NORTH SPOUT'S OWN IDENTITY (the y=0 row the side model
+        // the raw footprint wears — the z 0 plane the north tip
+        // reaches)
+        let mut wn = empty_world();
+        put(&mut wn, 8, 8, 8, crate::world::HOPPER);
+        wn.set_variant(8, 8, 8, 2); // the north byte
+        let qn = mesh_chunk(&wn, 0, 0, None);
+        let celln: Vec<_> = qn.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            celln.len(),
+            32,
+            "the north funnel the side model's own count keeps"
+        );
+        let y_lo_n = celln
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (y_lo_n - (8.0 + 0.25)).abs() < 1e-6,
+            "the north funnel the spout's 4/16 floor wears, got {y_lo_n}"
+        );
+        let north_tip = celln.iter().any(|quad| {
+            quad.pts
+                .iter()
+                .any(|p| (p[2] - 8.0).abs() < 1e-6 && p[1] < 8.5)
+        });
+        assert!(
+            north_tip,
+            "the north spout's z=0 tip the raw footprint wears"
+        );
+        // THE CULL'S OWN VERDICT (the opaque above the rim's four
+        // top faces + the rim plate's #inside up the cull wears —
+        // the 937 the zero retires, the 938 the three keeps; the
+        // stone below the nozzle's down face the same law culls —
+        // the 938 the three retires)
+        let mut wu = empty_world();
+        put(&mut wu, 8, 8, 8, crate::world::HOPPER);
+        put(&mut wu, 8, 9, 8, crate::world::STONE);
+        let qu = mesh_chunk(&wu, 0, 0, None);
+        let cellu: Vec<_> = qu.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cellu
+                .iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_HOPPER_TOP)
+                .count(),
+            0,
+            "the stone above the four rim tops the cull wears"
+        );
+        assert_eq!(
+            cellu
+                .iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_HOPPER_INSIDE)
+                .count(),
+            3,
+            "the stone above the rim's #inside up the cull keeps the three"
+        );
+        let mut wd = empty_world();
+        put(&mut wd, 8, 8, 8, crate::world::HOPPER);
+        put(&mut wd, 8, 7, 8, crate::world::STONE);
+        let qd = mesh_chunk(&wd, 0, 0, None);
+        let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            celld
+                .iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_HOPPER_INSIDE)
+                .count(),
+            3,
+            "the stone below the nozzle's down face the cull keeps the three"
         );
     }
 
