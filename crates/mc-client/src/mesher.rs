@@ -154,7 +154,12 @@ const HEAD_MODEL_FACES: [([[f32; 3]; 4], [[f32; 2]; 4], usize); 6] = [
     ),
 ];
 
-fn is_transparent(kind: u16) -> bool {
+/// THE OCCLUSION VOCABULARY (the mesh walk's own non-occluding
+/// verdict — `pub(crate)` the gateway law's world-reading decode
+/// serves [the 317 round — the static Block.shouldRenderFace law the
+/// full-occluder branch the !is_transparent proxy keeps], the world
+/// module the same vocabulary the animate-tick count reads).
+pub(crate) fn is_transparent(kind: u16) -> bool {
     // the leaves FAMILY: oak (foliage-tinted) and pale oak (the audited
     // no-tint verdict — still cutout leaves, non-occluding, no AO);
     // leaf_litter is the flat ground cover (the 13th audit — non-cube,
@@ -6582,27 +6587,35 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // the beam the BE renderer's own lane the vanilla's
                 // own render split speaks, the star field the
                 // documented absence the block lane never wears).
-                // THE CUBE'S OWN Y-FACES (the autopush-316 round — javap
-                // AbstractEndPortalRenderer.extractRenderState the
-                // facesToShow walk the 26.2 jar answers: the six
-                // directions the shouldRenderFace verdict filters, the
-                // TheEndPortalBlockEntity's own `axis == Y` law the UP
-                // + DOWN pair alone the gateway's starry surface wears
-                // [NO neighbor gate the extract walk keeps — the faces
-                // the set unconditionally banks], the submitCube walk
-                // the RenderTypes.endGateway() render type serves, the
-                // 16-layer swirl the PORTAL_LAYERS=16 pipeline define
-                // answers — the sentinel tile the render pass
-                // partitions on, the four horizontals the INVISIBLE
-                // render the sides never bake).
+                // THE CUBE'S OWN STATIC-LAW FACES (the autopush-317
+                // audit — javap TheEndGatewayBlockEntity.shouldRenderFace
+                // pc 0-23 the 26.2 jar re-pins: the gateway's own
+                // verdict the STATIC Block.shouldRenderFace(own,
+                // neighbor, dir) occlusion law invokes, NO axis-Y
+                // restriction the walk wears — the 316 round the
+                // PORTAL's own law the gateway's seat wore, the sibling
+                // the audit re-owns. The open-air seat the SIX faces
+                // the law renders [the four horizontals the air
+                // neighbors the sliver render wears], the full
+                // occluder the shared face culls, the slab family the
+                // directional cross-section law answers, the
+                // submitCube walk the RenderTypes.endGateway() render
+                // type serves, the 16-layer swirl the PORTAL_LAYERS=16
+                // pipeline define answers — the sentinel tile the
+                // render pass partitions on).
                 if crate::world::is_end_gateway(id) {
                     const GATEWAY_EPS: f32 = 0.001;
                     for face in 0..6usize {
-                        // THE AXIS GATE (the shouldRenderFace law — the
-                        // UP + DOWN rows the NEIGHBOR table's own Y
-                        // members keep, the four horizontals the
-                        // invisible sides retire)
-                        if NEIGHBOR[face].1 == 0 {
+                        // THE STATIC LAW'S OWN PER-FACE VERDICT (the
+                        // world-reading decode the neighbor's kind +
+                        // variant the slab type decode serves — the
+                        // full occluder the cull keeps, the slab
+                        // cross-section the directional law answers,
+                        // the transparent partials the render wears)
+                        let (dx, dy, dz) = NEIGHBOR[face];
+                        if !crate::world::gateway_should_render_face_at(
+                            world, wx, wy, wz, dx, dy, dz,
+                        ) {
                             continue;
                         }
                         let mut pts = [[0f32; 3]; 4];
@@ -7327,29 +7340,46 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // THE END PORTAL'S OWN ARM (the dev-29 round — the
                 // starry volume the special pass draws: the
                 // EndPortalRenderer's own cube the shader law serves,
-                // the faces the transparent-neighbor gate the terrain
-                // walk speaks, the EPS inset the coplanar fight the
-                // BE's own polygon offset answers — the sentinel tile
-                // the render pass partitions on, the fullbright the
-                // render type's packedLight ignore keeps)
+                // the EPS inset the coplanar fight the BE's own polygon
+                // offset answers — the sentinel tile the render pass
+                // partitions on, the fullbright the render type's
+                // packedLight ignore keeps). THE AXIS-Y PAIR THE
+                // PORTAL'S OWN LAW KEEPS (the 317 audit re-pins — javap
+                // TheEndPortalBlockEntity.shouldRenderFace pc 0-15 the
+                // `getAxis() == Y` verdict the UP + DOWN faces alone
+                // the portal wears, NO neighbor gate the unconditional
+                // set banks — the dev-29 transparent-neighbor gate the
+                // terrain walk's own idiom the portal's BE verdict
+                // never wears, the four horizontals the INVISIBLE
+                // render the sides never bake)
                 if id == crate::world::END_PORTAL {
                     const PORTAL_EPS: f32 = 0.001;
                     for face in 0..6usize {
-                        let (dx, dy, dz) = NEIGHBOR[face];
-                        let n = world.get(wx + dx, wy + dy, wz + dz);
-                        if !is_transparent(n) {
-                            continue; // the terrain gate the same law keeps
+                        if NEIGHBOR[face].1 == 0 {
+                            continue; // the axis-Y pair the portal's own law keeps
                         }
                         let mut pts = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, c) in FACE_CORNERS[face].iter().enumerate() {
                             pts[i] = [
                                 wx as f32
-                                    + (if c[0] < 0.5 { PORTAL_EPS } else { 1.0 - PORTAL_EPS }),
+                                    + (if c[0] < 0.5 {
+                                        PORTAL_EPS
+                                    } else {
+                                        1.0 - PORTAL_EPS
+                                    }),
                                 wy as f32
-                                    + (if c[1] < 0.5 { PORTAL_EPS } else { 1.0 - PORTAL_EPS }),
+                                    + (if c[1] < 0.5 {
+                                        PORTAL_EPS
+                                    } else {
+                                        1.0 - PORTAL_EPS
+                                    }),
                                 wz as f32
-                                    + (if c[2] < 0.5 { PORTAL_EPS } else { 1.0 - PORTAL_EPS }),
+                                    + (if c[2] < 0.5 {
+                                        PORTAL_EPS
+                                    } else {
+                                        1.0 - PORTAL_EPS
+                                    }),
                             ];
                             uvs[i] = face_uv(face, *c);
                         }

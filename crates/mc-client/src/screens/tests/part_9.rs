@@ -1359,14 +1359,18 @@ fn the_end_portal_the_touch_the_swap_wears() {
 }
 
 /// THE END PORTAL'S OWN MESH (the dev-29 round — the sentinel tile
-/// the starry quads carry: the open-air cell ALL SIX faces wear,
-/// the EPS inset the boundary contact the coplanar fight refuses,
-/// the fullbright the vertex colors keep)
+/// the starry quads carry: the axis-Y pair the portal's own BE
+/// verdict wears [the 317 audit re-pins — javap
+/// TheEndPortalBlockEntity.shouldRenderFace the `getAxis() == Y`
+/// law the UP + DOWN faces alone the starry surface keeps, the four
+/// horizontals the INVISIBLE render the sides never bake], the EPS
+/// inset the boundary contact the coplanar fight refuses, the
+/// fullbright the vertex colors keep)
 #[test]
 fn the_end_portal_cell_the_sentinel_quads_mesh() {
     let mut w = crate::world::World::new(1, 42);
     // the open-air cell (the terrain's own height the cell outrides
-    // — the neighbors ALL air the six faces the volume wears)
+    // — the neighbors ALL air the Y pair the volume wears)
     w.set(8, 30, 8, crate::world::END_PORTAL);
     let quads = crate::mesher::mesh_world(&w, None);
     let portal: Vec<&crate::mesher::Quad> = quads
@@ -1375,9 +1379,18 @@ fn the_end_portal_cell_the_sentinel_quads_mesh() {
         .collect();
     assert_eq!(
         portal.len(),
-        6,
-        "the open-air cell all six faces the volume wears"
+        2,
+        "the axis-Y pair the portal's own law bakes"
     );
+    for q in &portal {
+        // THE FACES' OWN SEATS (the UP the y=31 plane, the DOWN the
+        // y=30 plane — the horizontal sides the INVISIBLE render
+        // retires)
+        let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+        let up = ys.iter().all(|&y| (y - 31.0).abs() < 0.01);
+        let down = ys.iter().all(|&y| (y - 30.0).abs() < 0.01);
+        assert!(up || down, "the face the Y pair alone bakes ({ys:?})");
+    }
     for q in &portal {
         for p in &q.pts {
             assert!(

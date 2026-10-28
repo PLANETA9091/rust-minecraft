@@ -1757,9 +1757,12 @@ fn the_offline_gateway_the_beam_the_starfield_the_clocks_wear() {
         pitch: -std::f32::consts::FRAC_PI_2,
     });
     // THE CUBE'S OWN BAKE (javap the facesToShow walk the mesher's
-    // Y-face arm mirrors — the UP + DOWN sentinel quads the starry
-    // surface wears, the four horizontals the INVISIBLE render
-    // retires, the sentinel tile the render pass partitions on)
+    // static-law arm mirrors — the 317 audit the gateway's own
+    // verdict re-pins: the open-air seat the SIX faces the static
+    // law renders [the four horizontals the air neighbors the
+    // sliver render wears — the 316 axis gate the PORTAL's own law
+    // the swap retires], the sentinel tile the render pass
+    // partitions on)
     {
         let world = app.offline_world.as_ref().unwrap();
         let mesh = crate::mesher::mesh_world(world, None);
@@ -1769,19 +1772,97 @@ fn the_offline_gateway_the_beam_the_starfield_the_clocks_wear() {
             .collect();
         assert_eq!(
             gateway_quads.len(),
-            2,
-            "the UP + DOWN pair the starry surface bakes"
+            6,
+            "the open-air seat the six faces the static law renders"
         );
         for q in &gateway_quads {
             // THE FACES' OWN SEATS (the UP the wy+1 plane, the DOWN the
-            // wy plane — the EPS inset the coplanar fight answers)
+            // wy plane, the four sides the x/z cell planes — the EPS
+            // inset the coplanar fight answers)
             let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
             let up = ys
                 .iter()
                 .all(|&y| (y - (gate_cell.1 + 1) as f32).abs() < 0.01);
             let down = ys.iter().all(|&y| (y - gate_cell.1 as f32).abs() < 0.01);
-            assert!(up || down, "the face the Y pair alone bakes ({ys:?})");
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let west = xs.iter().all(|&x| (x - gate_cell.0 as f32).abs() < 0.01);
+            let east = xs
+                .iter()
+                .all(|&x| (x - (gate_cell.0 + 1) as f32).abs() < 0.01);
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            let north = zs.iter().all(|&z| (z - gate_cell.2 as f32).abs() < 0.01);
+            let south = zs
+                .iter()
+                .all(|&z| (z - (gate_cell.2 + 1) as f32).abs() < 0.01);
+            assert!(
+                up || down || west || east || north || south,
+                "the face the six cell planes one bakes ({ys:?})"
+            );
         }
+        // THE REAL CULL WALK (the stone cap the setBlock stamps — the
+        // full occluder above the shared face the static law culls,
+        // the re-mesh the five faces the live world answers, the
+        // slab's directional cross-section the variant byte splits:
+        // the top slab the empty DOWN band the UP face restores, the
+        // bottom slab the full band the cull re-arms)
+        let mut world = app.offline_world.as_mut().unwrap();
+        world.set(
+            gate_cell.0,
+            gate_cell.1 + 1,
+            gate_cell.2,
+            crate::world::STONE,
+        );
+        let mesh = crate::mesher::mesh_world(world, None);
+        let capped: Vec<_> = mesh
+            .iter()
+            .filter(|q| q.tile == crate::mesher::TILE_END_GATEWAY)
+            .collect();
+        assert_eq!(
+            capped.len(),
+            5,
+            "the stone cap the shared face the static law culls"
+        );
+        assert!(
+            capped.iter().all(|q| !q
+                .pts
+                .iter()
+                .all(|p| (p[1] - (gate_cell.1 + 1) as f32).abs() < 0.01)),
+            "the capped UP plane the quad list retires"
+        );
+        world.set(
+            gate_cell.0,
+            gate_cell.1 + 1,
+            gate_cell.2,
+            crate::world::RESIN_BRICK_SLAB,
+        );
+        world.set_variant(
+            gate_cell.0,
+            gate_cell.1 + 1,
+            gate_cell.2,
+            crate::world::SLAB_TYPE_TOP,
+        );
+        let mesh = crate::mesher::mesh_world(world, None);
+        assert_eq!(
+            mesh.iter()
+                .filter(|q| q.tile == crate::mesher::TILE_END_GATEWAY)
+                .count(),
+            6,
+            "the top slab the empty DOWN band the UP face restores"
+        );
+        world.set_variant(
+            gate_cell.0,
+            gate_cell.1 + 1,
+            gate_cell.2,
+            crate::world::SLAB_TYPE_BOTTOM,
+        );
+        let mesh = crate::mesher::mesh_world(world, None);
+        assert_eq!(
+            mesh.iter()
+                .filter(|q| q.tile == crate::mesher::TILE_END_GATEWAY)
+                .count(),
+            5,
+            "the bottom slab the full DOWN band the cull re-arms"
+        );
     }
     // THE AGE CLOCK'S OWN FIRST TICK (javap portalTick the age++ the
     // every-tick wear — the real update the store's clock banks)

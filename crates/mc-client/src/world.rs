@@ -5032,27 +5032,108 @@ pub const GATEWAY_BEAM_HALO_RADIUS: f32 = 0.175;
 pub const GATEWAY_BEAM_MAGENTA: u32 = 0xC7_4E_BD;
 pub const GATEWAY_BEAM_PURPLE: u32 = 0x89_32_B8;
 
-/// THE GATEWAY CUBE'S OWN FACE GATE (javap
-/// TheEndPortalBlockEntity.shouldRenderFace the 26.2 jar the live
-/// disasm answers — the `direction.getAxis() == Axis.Y` verdict the
-/// UP + DOWN faces alone the gateway's starry surface wears, the four
-/// horizontal faces the INVISIBLE render the sides never bake).
-pub fn gateway_should_render_face(axis_is_y: bool) -> bool {
+/// THE END PORTAL CUBE'S OWN FACE GATE (javap
+/// TheEndPortalBlockEntity.shouldRenderFace pc 0-15 the 26.2 jar the
+/// 317 audit re-pins — the `direction.getAxis() == Axis.Y` verdict
+/// the UP + DOWN faces alone the portal's starry surface wears, NO
+/// neighbor gate the unconditional set banks, the four horizontal
+/// faces the INVISIBLE render the sides never bake. THE 317 SWAP the
+/// attribution retires: the axis-Y law the PORTAL's own verdict
+/// speaks, the gateway's own verdict the static occlusion walk
+/// answers — the 316 round the portal's law the gateway's seat
+/// wore, the sibling the audit re-owns).
+pub fn portal_should_render_face(axis_is_y: bool) -> bool {
     axis_is_y
 }
 
+/// THE GATEWAY CUBE'S OWN FACE GATE (javap
+/// TheEndGatewayBlockEntity.shouldRenderFace pc 0-23 + the static
+/// Block.shouldRenderFace(ownState, neighborState, dir) pc 0-147 the
+/// 26.2 jar the 317 audit banks — the gateway's own verdict the
+/// STATIC occlusion law invokes, the axis-Y restriction the walk
+/// never wears): the neighbor's face occlusion shape the
+/// `Shapes.block()` full band the CULL verdict answers [pc 9-17 the
+/// if_acmpne the full band the early false keeps], the skipRendering
+/// the gateway's no-override the base false keeps [pc 18-28 the
+/// same-glass law the gateway's own verdict never trips], the empty
+/// shape the RENDER answer serves [pc 29-37], the own face the full
+/// cube the empty branch never wears [pc 38-54], the sliver law
+/// joinIsNotEmpty(own full face, neighbor partial, ONLY_FIRST) the
+/// partial shapes the render verdict wears [pc 105-111 + the
+/// OCCLUSION_CACHE the ThreadLocal walk serves]. THE COLLAPSE (the
+/// gateway's own full cube the law's own shape keeps): the full
+/// occluder the CULL verdict alone keeps, the slab family the
+/// directional cross-section law serves [the bottom slab the
+/// DOWN-facing full band the face it sits on culls, the top slab the
+/// UP-facing band the face it hangs from answers, the DOUBLE the
+/// full cube the both planes the cull wears], the partial shapes the
+/// sliver remainder the render keeps.
+pub fn gateway_should_render_face(
+    neighbor_occludes_full: bool,
+    neighbor_slab_type: Option<u8>,
+    face_is_up: bool,
+) -> bool {
+    if neighbor_occludes_full {
+        return false; // the Shapes.block() branch the shared face culls
+    }
+    if let Some(slab_type) = neighbor_slab_type {
+        return match slab_type {
+            SLAB_TYPE_BOTTOM => !face_is_up,
+            SLAB_TYPE_TOP => face_is_up,
+            _ => false, // the DOUBLE the full cube the both planes cull
+        };
+    }
+    true
+}
+
+/// THE GATEWAY'S OWN FACE VERDICT AT A CELL (the world-reading decode
+/// the pure law's own inputs serve — the neighbor kind the
+/// is_transparent occlusion vocabulary answers, the variant byte the
+/// slab family's own type read keeps, the dy the vertical pair the
+/// face_is_up arm wears; the mesher's cube pass the per-face reads
+/// the same decode shares, the animate-tick count the same walk
+/// banks).
+pub fn gateway_should_render_face_at(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+    dx: i32,
+    dy: i32,
+    dz: i32,
+) -> bool {
+    let n = world.get(x + dx, y + dy, z + dz);
+    let nv = world.variant(x + dx, y + dy, z + dz);
+    let occludes_full = !crate::mesher::is_transparent(n);
+    let slab = if is_slab(n) {
+        Some(slab_variant_type(nv))
+    } else {
+        None
+    };
+    gateway_should_render_face(occludes_full, slab, dy > 0)
+}
+
 /// THE GATEWAY'S OWN PARTICLE AMOUNT (javap
-/// TheEndGatewayBlockEntity.getParticleAmount the 26.2 jar the walk
-/// banks — the Direction.values() walk the shouldRenderFace verdict
-/// counts, the axis-Y pair the count-2 the animateTick's own loop
-/// bound answers).
-pub fn gateway_particle_amount() -> u32 {
-    // THE SIX-DIRECTION WALK (the vanilla Direction.values() order the
-    // count's own shape keeps — DOWN the Y axis the first row wears,
-    // UP the second, the four horizontals the false verdicts keep)
+/// TheEndGatewayBlockEntity.getParticleAmount pc 0-48 the 26.2 jar
+/// the 317 audit banks — the Direction.values() walk the
+/// shouldRenderFace verdict counts, the verdict the static occlusion
+/// law answers [the DOWN, UP, north, south, west, east order the
+/// values() array keeps], the open-air gateway the count-6 answers,
+/// the buried cell the occluder walls the count drains — the
+/// animateTick's own loop bound the live verdict serves).
+pub fn gateway_particle_amount(world: &World, x: i32, y: i32, z: i32) -> u32 {
     let mut count = 0u32;
-    for axis_is_y in [true, true, false, false, false, false] {
-        if gateway_should_render_face(axis_is_y) {
+    // THE SIX-DIRECTION WALK (the values() order the count's own
+    // shape keeps — DOWN, UP, north, south, west, east)
+    for (dx, dy, dz) in [
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        if gateway_should_render_face_at(world, x, y, z, dx, dy, dz) {
             count += 1;
         }
     }
@@ -33064,21 +33145,115 @@ mod tests {
 
     #[test]
     fn the_gateway_the_beam_the_starfield_the_laws_wear() {
-        // THE FACE GATE + THE PARTICLE AMOUNT (javap shouldRenderFace
-        // the axis-Y verdict, getParticleAmount the 6-direction count
-        // the UP + DOWN pair answers)
+        // THE TWO FACE GATES' OWN SPLIT (javap the two BE verdicts the
+        // 317 audit re-pins — the portal's own axis-Y law the pair
+        // keeps [NO neighbor gate], the gateway's own static occlusion
+        // law the neighbor reads serve)
         assert!(
-            gateway_should_render_face(true),
-            "the Y axis the face keeps"
+            portal_should_render_face(true),
+            "the Y axis the portal's own face keeps"
         );
         assert!(
-            !gateway_should_render_face(false),
-            "the horizontal axes the faces refuse"
+            !portal_should_render_face(false),
+            "the horizontal axes the portal's faces refuse"
         );
+        // THE GATEWAY'S OWN STATIC LAW (the collapsed occlusion walk —
+        // the full occluder the cull keeps, the slab family the
+        // directional cross-section law answers, the transparent
+        // partials the sliver render wears)
+        assert!(
+            !gateway_should_render_face(true, None, true),
+            "the full occluder the shared face culls"
+        );
+        assert!(
+            gateway_should_render_face(false, None, true),
+            "the air neighbor the face keeps"
+        );
+        assert!(
+            !gateway_should_render_face(false, Some(SLAB_TYPE_BOTTOM), true),
+            "the bottom slab's DOWN-facing full band the face it sits on culls"
+        );
+        assert!(
+            gateway_should_render_face(false, Some(SLAB_TYPE_BOTTOM), false),
+            "the bottom slab's UP-facing empty band the face below renders"
+        );
+        assert!(
+            gateway_should_render_face(false, Some(SLAB_TYPE_TOP), true),
+            "the top slab's DOWN-facing empty band the face above renders"
+        );
+        assert!(
+            !gateway_should_render_face(false, Some(SLAB_TYPE_TOP), false),
+            "the top slab's UP-facing full band the face it hangs from culls"
+        );
+        assert!(
+            !gateway_should_render_face(false, Some(SLAB_TYPE_DOUBLE), true)
+                && !gateway_should_render_face(false, Some(SLAB_TYPE_DOUBLE), false),
+            "the DOUBLE the full cube the both planes cull"
+        );
+        // THE WORLD-READING DECODE (the staged cells the live verdicts
+        // serve — the open-air gateway the count-6 answers, the stone
+        // cap the UP cull drains, the slab caps the directional law
+        // splits, the buried cell the six occluder walls the count
+        // empties)
+        let mut w = World::blank(2, 7);
+        let (gx, gy, gz) = (10, 12, 10);
+        w.set(gx, gy, gz, END_GATEWAY);
         assert_eq!(
-            gateway_particle_amount(),
-            2,
-            "the six-direction walk the pair counts"
+            gateway_particle_amount(&w, gx, gy, gz),
+            6,
+            "the open-air seat the six faces count"
+        );
+        assert!(
+            gateway_should_render_face_at(&w, gx, gy, gz, 0, -1, 0)
+                && gateway_should_render_face_at(&w, gx, gy, gz, 1, 0, 0),
+            "the DOWN + east faces the air neighbors keep"
+        );
+        w.set(gx, gy + 1, gz, STONE);
+        assert_eq!(
+            gateway_particle_amount(&w, gx, gy, gz),
+            5,
+            "the stone cap the UP cull drains"
+        );
+        assert!(
+            !gateway_should_render_face_at(&w, gx, gy, gz, 0, 1, 0),
+            "the capped UP face the full occluder culls"
+        );
+        w.set(gx, gy + 1, gz, RESIN_BRICK_SLAB);
+        assert!(
+            !gateway_should_render_face_at(&w, gx, gy, gz, 0, 1, 0),
+            "the bottom slab the no-opinion variant byte the DOWN band culls"
+        );
+        w.set_variant(gx, gy + 1, gz, SLAB_TYPE_TOP);
+        assert!(
+            gateway_should_render_face_at(&w, gx, gy, gz, 0, 1, 0),
+            "the top slab the variant byte the empty DOWN band renders"
+        );
+        w.set_variant(gx, gy + 1, gz, SLAB_TYPE_DOUBLE);
+        assert!(
+            !gateway_should_render_face_at(&w, gx, gy, gz, 0, 1, 0),
+            "the DOUBLE slab the full cube the UP face culls"
+        );
+        w.set(gx, gy + 1, gz, AIR);
+        w.set(gx, gy - 1, gz, RESIN_BRICK_SLAB);
+        assert!(
+            gateway_should_render_face_at(&w, gx, gy, gz, 0, -1, 0),
+            "the bottom slab below the empty UP band the DOWN face renders"
+        );
+        w.set_variant(gx, gy - 1, gz, SLAB_TYPE_TOP);
+        assert!(
+            !gateway_should_render_face_at(&w, gx, gy, gz, 0, -1, 0),
+            "the top slab below the full UP band the DOWN face culls"
+        );
+        w.set(gx, gy - 1, gz, STONE);
+        w.set(gx, gy + 1, gz, STONE);
+        w.set(gx + 1, gy, gz, STONE);
+        w.set(gx - 1, gy, gz, STONE);
+        w.set(gx, gy, gz + 1, STONE);
+        w.set(gx, gy, gz - 1, STONE);
+        assert_eq!(
+            gateway_particle_amount(&w, gx, gy, gz),
+            0,
+            "the buried cell the six occluder walls the count empties"
         );
         // THE ANIMATE PUFF'S OWN DRAW ORDER (javap animateTick the
         // 9-draw walk the per-puff stream keeps: the six nextDouble,

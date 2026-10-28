@@ -13154,8 +13154,11 @@ impl App {
                             // round — javap EndGatewayBlock.animateTick
                             // the 26.2 jar the walk banks: the BE
                             // instanceof gate the getParticleAmount read
-                            // answers [the shouldRenderFace axis-Y pair
-                            // the count-2 keeps], the per-puff 9-draw
+                            // answers [the 317 audit the static
+                            // occlusion law re-pins — the count the
+                            // six-direction shouldRenderFace verdicts
+                            // the world's own neighbors serve], the
+                            // per-puff 9-draw
                             // walk the pos + the velocity trio + the
                             // side/axis arms wear, the
                             // addParticle(PORTAL, ...) the ring puff the
@@ -13163,7 +13166,7 @@ impl App {
                             // `animate` stream the verdict draws + the
                             // ctor's own picks the same level stream
                             // wears, the furnace lanes' own idiom)
-                            for _ in 0..crate::world::gateway_particle_amount() {
+                            for _ in 0..crate::world::gateway_particle_amount(world, sx, sy, sz) {
                                 let puff = crate::world::gateway_animate_puff(sx, sy, sz, animate);
                                 gateway_puffs.push(puff);
                             }
