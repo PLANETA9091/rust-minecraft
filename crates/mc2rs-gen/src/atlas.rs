@@ -2501,18 +2501,33 @@ fn crop_sheet(rgba: &[u8], w: u32, x0: u32, y0: u32, x1: u32, y1: u32) -> Vec<u8
     out
 }
 
-/// THE CHEST TILES' OWN COMPOSITION (the four 16x16 RGBA8 tiles the
-/// chest lane's faces sample — front/side/top/bottom). The side/front
-/// tiles the 14-row band wear (the lid strip the rows 0..5 keep, the
-/// body's exposed 9 rows the rows 5..14 bank, the 15th row the body
-/// base trim the doubles' 15-tall faces sample), the top/bottom tiles
-/// the centered 1..15 band keep, the lock the front tile's rows 2..5
-/// carry (the latch the seam's own band the vanilla look speaks).
+/// THE CHEST TILES' OWN COMPOSITION (the five 16x16 RGBA8 tiles the
+/// chest lane's faces sample — front/side/top/bottom + the latch's
+/// own dedicated lock tile the autopush-300 round banks). The
+/// side/front tiles the 14-row band wear (the lid strip the rows
+/// 0..5 keep, the body's exposed 9 rows the rows 5..14 bank, the
+/// 15th row the body base trim the doubles' 15-tall faces sample),
+/// the top/bottom tiles the centered 1..15 band keep. THE LOCK'S
+/// OWN DEDICATED REGION: the sheet's box-UV corner (0,0)-(6,6) the
+/// verbatim mirror the fifth tile banks — the 26.2 jar the live
+/// disasm re-pins the lock child texOffs(0,0).addBox(7,-2,14,2,4,1)
+/// PartPose.offset(0,9,1) the SAME pivot the lid wears (the box's
+/// own UV layout: up (1,0)-(3,1), down (3,0)-(5,1), west (0,1)-(1,5),
+/// north (1,1)-(3,5) [the 2x4 front art the fourth row the light
+/// flange speaks — the sheet's painted band the pixel probe banks],
+/// east (3,1)-(4,5), south (4,1)-(6,5)); the front tile's 3-row
+/// painted band the 3-row bend RETIRES — the open lid/body faces'
+/// flat ghost the pure lid+body art retires (the latch's own faces
+/// the dedicated tile the open ride never leaves behind).
 /// The sheet regions the ASCII probe banks: lid up (14,0)-(28,14),
 /// lid front (14,14)-(28,19), lid side (28,14)-(42,19), body down
 /// (28,19)-(42,33), body front (14,33)-(28,43), body side
-/// (28,33)-(42,43), lock (1,1)-(3,4).
-fn compose_chest_tiles(rgba: &[u8], w: u32, _h: u32) -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) {
+/// (28,33)-(42,43), lock (0,0)-(6,6) the box layout's own corner.
+fn compose_chest_tiles(
+    rgba: &[u8],
+    w: u32,
+    _h: u32,
+) -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) {
     let blank = [0u8; 16 * 16 * 4];
     let compose_face = |lid_y: u32, body_x: u32| -> Vec<u8> {
         // the vertical composition: the lid strip (rows 0..5) + the
@@ -2544,14 +2559,21 @@ fn compose_chest_tiles(rgba: &[u8], w: u32, _h: u32) -> (Vec<u8>, Vec<u8>, Vec<u
         }
         tile
     };
-    // FRONT: the lid's front strip (14,14) + the body's front + the lock
-    let mut front = compose_face(14, 14);
-    // the lock's 2x3 latch: face (7..9, 2..5) <- sheet (1..3, 1..4)
-    for ly in 0..3u32 {
-        for lx in 0..2u32 {
-            let i = (((2 + ly) * 16 + (7 + lx)) * 4) as usize;
-            let j = (((1 + ly) * w + (1 + lx)) * 4) as usize;
-            front[i..i + 4].copy_from_slice(&rgba[j..j + 4]);
+    // FRONT: the lid's front strip (14,14) + the body's front — the
+    // painted latch the dedicated lock tile retires (the autopush-300
+    // round: the flat band the open lid/body faces' ghost wore)
+    let front = compose_face(14, 14);
+    // THE LOCK'S OWN TILE (the sheet's box-UV corner (0,0)-(6,6) the
+    // verbatim mirror — the mesher's five faces the vanilla seats
+    // sample: the front the north band (1,1)-(3,5) the 4 rows wear,
+    // the caps the row 0 up/down pair, the sides the west/east
+    // columns keep)
+    let mut lock = blank.to_vec();
+    for ly in 0..6u32 {
+        for lx in 0..6u32 {
+            let i = ((ly * 16 + lx) * 4) as usize;
+            let j = ((ly * w + lx) * 4) as usize;
+            lock[i..i + 4].copy_from_slice(&rgba[j..j + 4]);
         }
     }
     // SIDE: the lid's side strip (28,14) + the body's side (28,33)
@@ -2575,7 +2597,7 @@ fn compose_chest_tiles(rgba: &[u8], w: u32, _h: u32) -> (Vec<u8>, Vec<u8>, Vec<u
         }
     }
     let _ = crop_sheet; // the crop helper the composition arms share
-    (front, side, top, bottom)
+    (front, side, top, bottom, lock)
 }
 
 fn tint_for_texture(stem: &str) -> u32 {
@@ -4798,6 +4820,10 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     let mut tile_bytes: Vec<Vec<u8>> = Vec::new();
     let mut face_tiles: Vec<[u16; 6]> = Vec::with_capacity(faces.len());
     let mut face_tints: Vec<[u32; 6]> = Vec::with_capacity(faces.len());
+    // THE LATCH'S OWN KIND SEATS (the autopush-300 round — the chest
+    // family's lock tile per kind the dedicated region banks, TILE_NONE
+    // the non-chest kinds the lane never reads)
+    let mut lock_tiles: Vec<u16> = vec![u16::MAX; RUNTIME_PALETTE.len()];
     for (ki, block_faces) in faces.iter().enumerate() {
         let mut ft = [0u16; 6];
         let mut tt = [0u32; 6];
@@ -4870,14 +4896,15 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         )
         .with_context(|| format!("chest sheet {sheet}.png"))?;
         let (w, h, rgba) = decode_rgba(&raw)?;
-        let (front, side, top, bottom) = compose_chest_tiles(&rgba, w, h);
+        let (front, side, top, bottom, lock) = compose_chest_tiles(&rgba, w, h);
         let stems = [
             (format!("{prefix}_front"), front),
             (format!("{prefix}_side"), side),
             (format!("{prefix}_top"), top),
             (format!("{prefix}_bottom"), bottom),
+            (format!("{prefix}_lock"), lock),
         ];
-        let mut idx = [0u16; 4];
+        let mut idx = [0u16; 5];
         for (i, (stem, bytes)) in stems.iter().enumerate() {
             idx[i] = match tile_names.iter().position(|n| n == stem) {
                 Some(p) => p as u16,
@@ -4890,6 +4917,9 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         }
         // face order: [east, west, up, down, south, north]
         face_tiles[ki] = [idx[1], idx[1], idx[2], idx[3], idx[1], idx[0]];
+        // THE LATCH'S OWN SEAT (the dedicated lock tile the kind's own
+        // row banks — the mesher's face-6 lane the table reads)
+        lock_tiles[ki] = idx[4];
     }
 
     // THE MOB HEADS' OWN ENTITY FACES (the dev-82 round — the BE
@@ -5845,7 +5875,18 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     for ft in &face_tiles {
         src.push_str(&format!("    [{}, {}, {}, {}, {}, {}],\n", ft[0], ft[1], ft[2], ft[3], ft[4], ft[5]));
     }
-    src.push_str("];\n\npub const TINTS: [[u32; 6]; N_KINDS] = [\n");
+    src.push_str("];\n\n");
+    // THE LATCH'S OWN KIND SEATS (the autopush-300 round — the chest
+    // family's dedicated lock tile per kind, TILE_NONE the rest the
+    // mesher's face-6 lane never reads).
+    src.push_str("\n/// The chest family's per-kind lock tiles (the autopush-300 round — \
+     \x20/// the dedicated region the seven kinds wear, TILE_NONE the rest).\n\n");
+    src.push_str("pub const CHEST_LOCK_TILES: [u16; N_KINDS] = [\n");
+    for lt in &lock_tiles {
+        src.push_str(&format!("    {},\n", lt));
+    }
+    src.push_str("];\n\n");
+    src.push_str("pub const TINTS: [[u32; 6]; N_KINDS] = [\n");
     for tt in &face_tints {
         src.push_str(&format!("    [{:#x}, {:#x}, {:#x}, {:#x}, {:#x}, {:#x}],\n", tt[0], tt[1], tt[2], tt[3], tt[4], tt[5]));
     }
