@@ -6167,6 +6167,172 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE SHULKER'S OWN LID-RISE LANE (the dev-193 round —
+                // the vanilla shulker the blockstate model the
+                // BaseEntityBlock's own INVISIBLE render shape never
+                // carries, the BE-rendered shell the static-box law the
+                // open byte retires: the [`crate::world::
+                // SHULKER_OPEN_BIT`] byte the container walk stamps the
+                // open lane the base + the raised lid the jar law bakes
+                // — [`shulker_open_model_quads`], the ShulkerModel.
+                // createShellMesh the parts speak, the setupAnim the
+                // `24 - openness*0.5*16` walk the +8 px lift the
+                // full-open pose answers). THE CLOSED POSE THE BYTE THE
+                // GENERIC CUBE KEEPS (the fall-through the static box
+                // the goldens' byte-identical contract wears — the lane
+                // the open bit alone serves).
+                if crate::world::is_shulker(id)
+                    && crate::world::shulker_variant_open(world.variant(wx, wy, wz))
+                {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the FACE_TILES row the composite arm banks (the
+                    // shulker row the pool-tail tile the every face
+                    // wears — the uniform shell the front rotation the
+                    // vanilla never speaks)
+                    let tiles = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize]
+                    } else {
+                        [atlas::TILE_NONE; 6]
+                    };
+                    // THE CULL'S OWN FACE LAW (the cube path's own
+                    // verdict the open boxes wear — the co-planar band
+                    // the neighbor's culled face never fights: the
+                    // opaque neighbor the boundary face the shulker's
+                    // own side draws, the air the same side draws, the
+                    // INTERIOR faces the base's floor + the lid's
+                    // underside the cull never answers, the lid's top
+                    // the above cell the cube's own law reads)
+                    let below_opaque = is_opaque(world.get(wx, wy - 1, wz));
+                    let above_opaque = is_opaque(world.get(wx, wy + 1, wz));
+                    let side_opaque = [
+                        is_opaque(world.get(wx + 1, wy, wz)),
+                        is_opaque(world.get(wx - 1, wy, wz)),
+                        is_opaque(world.get(wx, wy, wz + 1)),
+                        is_opaque(world.get(wx, wy, wz - 1)),
+                    ];
+                    for (pts_local, uvs, face) in shulker_open_model_quads() {
+                        let face_shade = match face {
+                            2 => 1.0f32,
+                            3 => 0.5,
+                            4 | 5 => 0.8,
+                            _ => 0.6,
+                        };
+                        let culled = match face {
+                            // the base's underside (the y 0/16 band the
+                            // below cell the cube's own law reads) — the
+                            // lid's underside (the y 12/16 = 0.75 band
+                            // the interior face the gap reveals) the
+                            // cull never answers [the helper's own
+                            // /16 units the thresholds speak]
+                            3 => pts_local.iter().all(|p| p[1] < 0.01) && below_opaque,
+                            // the lid's top (the y 24/16 = 1.5 band the
+                            // above cell the volume pokes into) the same
+                            // law wears — the base's floor (the y 8/16 =
+                            // 0.5 band the interior face) the cull never
+                            // answers — the open lane's up face the face
+                            // slot 2 both boxes carry
+                            2 => pts_local.iter().all(|p| p[1] > 0.75) && above_opaque,
+                            _ => {
+                                // the side faces the same-level
+                                // neighbor's verdict the co-planar band
+                                // reads (face 0 east +x, 1 west -x,
+                                // 4 south +z, 5 north -z)
+                                match face {
+                                    0 => side_opaque[0],
+                                    1 => side_opaque[1],
+                                    4 => side_opaque[2],
+                                    _ => side_opaque[3],
+                                }
+                            }
+                        };
+                        if culled {
+                            continue;
+                        }
+                        let tile = tiles[face];
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        for (i, pv) in pts_local.iter().enumerate() {
+                            pts[i] = [wx as f32 + pv[0], wy as f32 + pv[1], wz as f32 + pv[2]];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
+                        }
+                        let uvs = [
+                            [uvs[0][0] / 16.0, uvs[0][1] / 16.0],
+                            [uvs[1][0] / 16.0, uvs[1][1] / 16.0],
+                            [uvs[2][0] / 16.0, uvs[2][1] / 16.0],
+                            [uvs[3][0] / 16.0, uvs[3][1] / 16.0],
+                        ];
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE MOB HEADS' OWN MINI-CUBE LANE (the dev-82 round —
                 // javap SkullModel.createHeadModel +
                 // SkullBlockRenderer.createGroundTransformation +
@@ -8729,6 +8895,127 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
 /// closed lane's own folds keep (the same per-face tiles the shade
 /// table serves — the call site the face assignment never re-answers,
 /// the UVs the closed folds the rotation never re-maps).
+/// THE SHULKER'S OWN OPEN SHELL (the dev-193 round — the
+/// [`crate::world::SHULKER_OPEN_BIT`] byte the container walk stamps
+/// the BE-rendered shell the static-box law the open pose retires: the
+/// 26.2 jar the evidence chain banks — `ShulkerModel.createShellMesh`
+/// (the [`ModelLayers.SHULKER_BOX`] wiring the LayerDefinitions clinit
+/// answers) the parts speak: the LID the FIRST child `texOffs(0,0)`
+/// `addBox(-8,-16,-8,16,12,16)` @ `PartPose.offset(0,24,0)` [the
+/// 12-px top shell the world y 4..16 band the closed pose wears], the
+/// BASE the SECOND child `texOffs(0,28)` `addBox(-8,-8,-8,16,8,16)`
+/// the same pivot [the 8-px bottom dish the world y 0..8 band wears],
+/// `ShulkerBoxRenderer$ShulkerBoxModel.setupAnim` the
+/// `lid.setPos(0, 24 - openness*0.5*16, 0)` walk the FULL-open pose
+/// the +8 px lift answers [the open lid the world y 12..24 band the
+/// 0.5-block rise wears — the block's top face the lid pokes above]).
+/// THE WINDING the chest box walk's own convention keeps (the DOWN
+/// face 3, the UP face 2, the north 5 / south 4 / west 1 / east 0 —
+/// the same corner orders the shade table serves). THE UVs the
+/// full-tile fold the uniform shell wears (the shulker row the same
+/// tile the every face banks — the entity texture's 64x64 layout the
+/// block-lane atlas never maps, the one 16-px tile the glued law
+/// serves). THE yROT the 270-degree walk the square shell the
+/// silhouette never paints differently [the 16x16 cross-section the
+/// quarter turn the same outline answers, the uniform tile the face
+/// permutation the glued law never separates] — the static pose the
+/// rotation the geometry the quarter turn never disturbs, the faces
+/// the same spans keep).
+fn shulker_open_model_quads() -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
+    let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
+    // THE TWO SHELLS' OWN SPANS (the world px the jar's parts answer:
+    // the base the y 0..8 dish, the open lid the y 12..24 raised shell
+    // — the (x0, y0, x1, y1, z0, z1) order the walk destructures)
+    let boxes: [(f32, f32, f32, f32, f32, f32); 2] = [
+        (0.0, 0.0, 16.0, 8.0, 0.0, 16.0),   // the base dish
+        (0.0, 12.0, 16.0, 24.0, 0.0, 16.0), // the raised lid
+    ];
+    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(12);
+    let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
+        out.push((pts, uvs, face));
+    };
+    for (x0, y0, x1, y1, z0, z1) in boxes {
+        // the side faces' own v law (the chest vert_uv fold the same
+        // top-edge-0 convention keeps: the top edge the row 0 the face
+        // samples, the bottom edge the box-height row the dish keeps)
+        let h = y1 - y0;
+        // DOWN (face 3): corners (x0,y0,z1) (x0,y0,z0) (x1,y0,z0) (x1,y0,z1)
+        push(
+            [
+                px(x0, y0, z1),
+                px(x0, y0, z0),
+                px(x1, y0, z0),
+                px(x1, y0, z1),
+            ],
+            [[0.0, 16.0], [0.0, 0.0], [16.0, 0.0], [16.0, 16.0]],
+            3,
+        );
+        // UP (face 2): corners (x0,y1,z0) (x0,y1,z1) (x1,y1,z1) (x1,y1,z0)
+        push(
+            [
+                px(x0, y1, z0),
+                px(x0, y1, z1),
+                px(x1, y1, z1),
+                px(x1, y1, z0),
+            ],
+            [[0.0, 0.0], [0.0, 16.0], [16.0, 16.0], [16.0, 0.0]],
+            2,
+        );
+        // NORTH (face 5): corners (x1,y1,z0) (x1,y0,z0) (x0,y0,z0) (x0,y1,z0)
+        push(
+            [
+                px(x1, y1, z0),
+                px(x1, y0, z0),
+                px(x0, y0, z0),
+                px(x0, y1, z0),
+            ],
+            [[x1, 0.0], [x1, h], [x0, h], [x0, 0.0]],
+            5,
+        );
+        // SOUTH (face 4): corners (x0,y1,z1) (x0,y0,z1) (x1,y0,z1) (x1,y1,z1)
+        push(
+            [
+                px(x0, y1, z1),
+                px(x0, y0, z1),
+                px(x1, y0, z1),
+                px(x1, y1, z1),
+            ],
+            [[x0, 0.0], [x0, h], [x1, h], [x1, 0.0]],
+            4,
+        );
+        // WEST (face 1): corners (x0,y1,z0) (x0,y0,z0) (x0,y0,z1) (x0,y1,z1)
+        push(
+            [
+                px(x0, y1, z0),
+                px(x0, y0, z0),
+                px(x0, y0, z1),
+                px(x0, y1, z1),
+            ],
+            [[z0, 0.0], [z0, h], [z1, h], [z1, 0.0]],
+            1,
+        );
+        // EAST (face 0): corners (x1,y1,z1) (x1,y0,z1) (x1,y0,z0) (x1,y1,z0)
+        // — the u the east fold's own mirror keeps (the chest's east
+        // arm the same 16-z fold wears)
+        push(
+            [
+                px(x1, y1, z1),
+                px(x1, y0, z1),
+                px(x1, y0, z0),
+                px(x1, y1, z0),
+            ],
+            [
+                [16.0 - z1, 0.0],
+                [16.0 - z1, h],
+                [16.0 - z0, h],
+                [16.0 - z0, 0.0],
+            ],
+            0,
+        );
+    }
+    out
+}
+
 fn chest_open_model_quads(
     facing: u8,
     chest_type: u8,
@@ -15424,6 +15711,129 @@ mod tests {
             "the fresh pair the closed builder the 6 quads keeps, got {}",
             cellz.len()
         );
+    }
+
+    #[test]
+    fn the_shulker_open_bit_the_lid_rise_wears() {
+        // THE SHULKER'S OWN OPEN POSE (the dev-193 round — the jar law
+        // the builder banks): the CLOSED shulker the generic cube the
+        // byte-identical contract keeps, the OPEN bit the base + the
+        // raised lid the jar law bakes — the base the y 0..8 dish the
+        // createShellMesh's SECOND child answers, the lid the y
+        // 12..24 raised shell the setupAnim's `24 - openness*8` walk
+        // the +8 px lift wears [the block's top face the lid pokes
+        // above — the 24/16 the 1.5-block reach speaks], the interior
+        // faces the base's floor + the lid's underside the cull never
+        // answers, the boundary faces the cube's own law the opaque
+        // neighbor's verdict reads
+        use mc_registry::generated::atlas as gen_atlas;
+        let tiles = gen_atlas::FACE_TILES[crate::world::SHULKER_BOX as usize];
+        let shulker_tile = tiles[2];
+        // the open-pose band filter (the lid pokes 8 px past the cell
+        // top — the y 9.5 reach the raised shell speaks; the band the
+        // neighbor faces the stone cells bake excludes — the shell
+        // quads the count verdicts read)
+        let open_band = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.5 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let y_of = |quad: &crate::mesher::Quad, want: f32| {
+            quad.pts.iter().all(|p| (p[1] - want).abs() < 1e-4)
+        };
+        // THE CLOSED POSE'S OWN CUBE (the variant 0 the generic path
+        // the byte-identical law keeps — the 6 faces the air neighbors
+        // the full cube bakes)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            6,
+            "the closed shulker the generic cube the 6 quads keeps, got {}",
+            cell.len()
+        );
+        // THE OPEN POSE'S OWN TWO SHELLS (the bit the lane answers —
+        // the base 6 + the lid 6 the all-air cell bakes)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            12,
+            "the open shulker the base 6 + the lid 6 bakes, got {}",
+            cell.len()
+        );
+        // THE RAISED LID'S OWN REACH (the top face the y 24/16 plane
+        // wears — the 8.0 + 1.5 the 0.5-block lift the cell top the
+        // poke answers)
+        let y_max = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (y_max - (8.0 + 1.5)).abs() < 1e-4,
+            "the raised lid the 24/16 reach wears, got {y_max}"
+        );
+        // THE BASE'S OWN FLOOR (the interior up face the y 8/16 plane
+        // the gap reveals — the cull the interior face never answers)
+        let floor = cell.iter().any(|quad| y_of(quad, 8.5));
+        assert!(floor, "the base's floor the 8/16 plane bakes");
+        // THE LID'S OWN UNDERSIDE (the interior down face the y 12/16
+        // plane the gap reveals — the below cell the opaque neighbor
+        // the cull never answers)
+        let underside = cell.iter().any(|quad| y_of(quad, 8.0 + 0.75));
+        assert!(underside, "the lid's underside the 12/16 plane bakes");
+        // THE TILE'S OWN ROW (the pool-tail shulker tile the every
+        // open quad wears)
+        for quad in &cell {
+            assert_eq!(quad.tile, shulker_tile, "the shulker row the tile wears");
+        }
+        // THE OPAQUE ABOVE CELL'S OWN CULL (the lid's top face the
+        // above cell the cube's own law reads — the y 24 plane the
+        // solid roof the volume pokes into the face retires, the
+        // floor + the underside the interior faces keep)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        put(&mut w, 8, 9, 8, crate::world::STONE);
+        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            11,
+            "the roofed open the lid's top retires the 11 keeps, got {}",
+            cell.len()
+        );
+        // THE OPAQUE SIDE NEIGHBOR'S OWN CULL (the boundary side faces
+        // the co-planar band the neighbor's culled face never fights —
+        // the east stone the base's east side + the lid's east side
+        // the two retire, the 10 keeps)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
+        put(&mut w, 9, 8, 8, crate::world::STONE);
+        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            10,
+            "the walled open the east sides retire the 10 keeps, got {}",
+            cell.len()
+        );
+        // THE INTERIOR FACES THE WALL NEVER EATS (the floor + the
+        // underside the opaque neighbor the verdict never answers)
+        let floor = cell.iter().any(|quad| y_of(quad, 8.5));
+        let underside = cell.iter().any(|quad| y_of(quad, 8.0 + 0.75));
+        assert!(floor && underside, "the interior faces the wall never eats");
     }
 
     #[test]

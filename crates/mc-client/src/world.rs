@@ -3381,6 +3381,38 @@ pub fn is_shulker(id: u16) -> bool {
     id == SHULKER_BOX
 }
 
+/// THE SHULKER'S OWN OPEN BIT (the dev-193 round — the vanilla chest
+/// the OPEN blockstate the family never carries, the client's own byte
+/// the container walk stamps the BE-rendered lid the rise serves: the
+/// 26.2 jar the evidence chain banks — `ShulkerModel.createShellMesh`
+/// the [`ModelLayers.SHULKER_BOX`](the LayerDefinitions clinit the
+/// `createBoxLayer` wiring speaks) the parts name: the LID the FIRST
+/// child `texOffs(0,0)` `addBox(-8,-16,-8,16,12,16)` @
+/// `PartPose.offset(0,24,0)` [the 12-px top shell the world y 4..16
+/// band wears], the BASE the SECOND child `texOffs(0,28)`
+/// `addBox(-8,-8,-8,16,8,16)` the same pivot [the 8-px bottom dish the
+/// world y 0..8 band wears], `ShulkerBoxRenderer$ShulkerBoxModel.
+/// setupAnim` the `lid.setPos(0, 24 - openness*0.5*16, 0)` walk the
+/// FULL-open pose the +8 px the 0.5-block lift answers [the closed
+/// lid the y 4..16 band keeps, the open the y 12..24 band wears — the
+/// 8 px the block's top face the lid pokes above]; the yRot the
+/// 270-degree·openness walk the square shell the silhouette never
+/// paints differently [the 16x16 cross-section the quarter turn the
+/// same outline answers, the uniform tile the face permutation the
+/// glued law never separates]). THE VARIANT'S OWN EMPTY SEATS (the
+/// shulker cells' variant byte the facing three bits the future
+/// rounds keep — the open bit the high seat 0b1000 wears, the barrel
+/// bit's own seat the same law keeps).
+pub const SHULKER_OPEN_BIT: u8 = 0b1000;
+
+/// THE SHULKER VARIANT'S OWN OPEN READ (the bit the lid law reads —
+/// the [`SHULKER_OPEN_BIT`] seat the container walk stamps, the close
+/// walk the same byte releases).
+#[inline]
+pub fn shulker_variant_open(v: u8) -> bool {
+    v & SHULKER_OPEN_BIT != 0
+}
+
 /// THE DISPENSER'S OWN COOLDOWN (javap DispenserBlock.neighborChanged
 /// pc 55 the 26.2 jar — the `level.scheduleTick(pos, this, 4)` walk
 /// the rising edge serves, the four-tick beat the dispense the drain

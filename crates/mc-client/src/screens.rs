@@ -26248,6 +26248,19 @@ impl App {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::CHEST_OPEN_BIT);
                 true
+            } else if crate::world::is_shulker(kind) {
+                // THE SHULKER'S OWN RELEASE (the dev-193 round — the
+                // [`crate::world::SHULKER_OPEN_BIT`] byte the open
+                // walk stamps the close walk the same byte releases:
+                // the AnimationStatus.CLOSING the progress the ramp
+                // 26.2 jar the updateAnimation walk serves, the static
+                // full-open pose the mesher's lane the cleared byte
+                // the generic cube restores — the PAIR THE SHULKER
+                // NEVER SPEAKS the partner walk the chest kinds alone
+                // answer, the lone box the None keeps)
+                let v = w.variant(pos.0, pos.1, pos.2);
+                w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::SHULKER_OPEN_BIT);
+                true
             } else {
                 false
             };
@@ -26299,16 +26312,23 @@ impl App {
     /// the flag the title lane's kind row banks. THE PAIR THE SHULKER
     /// NEVER SPEAKS (the chest's DoubleBlockCombiner walk the chest
     /// kinds alone answers — the single 27 the lone box banks), THE
-    /// LID THE VARIANT NEVER WEARS (the blockstate's facing property
-    /// the only field speaks — the open animation the block entity's
-    /// own walk drives, the mesher's generic cube the variant never
-    /// renders). The use-lane arm (the block-use walk's own order the
+    /// LID THE OPEN BYTE THE VARIANT WEARS (the dev-193 round — the
+    /// [`crate::world::SHULKER_OPEN_BIT`] byte the open walk stamps
+    /// the BE-rendered lid the rise serves, the close walk the same
+    /// byte releases — the lid lane the chest_open_cell field the
+    /// barrel's own bit wears the same release walk reads). The
+    /// use-lane arm (the block-use walk's own order the
     /// crafting-table arm keeps) this fn the offline lane serves.
     pub fn open_shulker_for(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
         // THE DISK BANK'S OWN LAZY LOAD (the chest's own law — the
         // first store access the once-flag's parse answers)
         self.container_stores_load_once();
+        // THE STALE CELL'S OWN RELEASE FIRST (the chest open walk's
+        // own law the shulker lane wears — the previous open the bit
+        // the leak never keeps: the second container the direct walk
+        // opens the first's raised lid the release retires)
+        self.barrel_lid_released();
         // the OFFLINE stand-in: the live lane's flag stays down (the
         // chest's own open walk the same law keeps)
         self.chest_is_live = false;
@@ -26327,11 +26347,26 @@ impl App {
         // the player's own rows the REAL inventory projects (the chest's
         // own sync law the menu's 27..63 rows the mirror keeps)
         self.chest_mirror_sync_from_inventory();
-        self.chest_open_cell = None;
         // THE SHULKER'S OWN KIND ROW (the title lane's flag the draw
         // reads — the container.shulkerBox default the vanilla menu
         // banks)
         self.chest_window_shulker = true;
+        // THE SHULKER'S OWN OPEN BYTE (the dev-193 round — the vanilla
+        // chest the OPEN blockstate the family never carries, the
+        // client's own [`crate::world::SHULKER_OPEN_BIT`] byte the
+        // container walk stamps the BE-rendered lid the rise serves:
+        // the ShulkerBoxModel.setupAnim the 26.2 jar the +8 px lift
+        // the full-open pose answers, the mesher's open lane the byte
+        // the static pose renders [the lid the y 12..24 band the
+        // 0.5-block lift wears], the close walk's release the same
+        // byte the remesh answers — the LID LANE the chest_open_cell
+        // field the release walk reads the barrel's own stamp the
+        // same field wears)
+        self.chest_open_cell = Some(pos);
+        if let Some(w) = self.offline_world.as_mut() {
+            let v = w.variant(pos.0, pos.1, pos.2);
+            w.set_variant(pos.0, pos.1, pos.2, v | crate::world::SHULKER_OPEN_BIT);
+        }
         // THE SHULKER'S OWN VOICE (the same counter law the box's own
         // event names — the open half the first opener speaks)
         self.container_voice_emit(true);

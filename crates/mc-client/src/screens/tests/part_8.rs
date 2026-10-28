@@ -9988,3 +9988,149 @@ fn the_chest_own_lid_swing_walk_wears() {
         );
     }
 }
+
+/// THE SHULKER'S OWN LID-RISE WALK (the dev-193 round — the 26.2 jar
+/// the evidence chain the parts bank: `ShulkerModel.createShellMesh`
+/// the SHULKER_BOX layer the createBoxLayer wiring answers [the LID
+/// the FIRST child the 12-px top shell, the BASE the SECOND child the
+/// 8-px bottom dish], `ShulkerBoxBlockEntity.updateAnimation` the
+/// progress walk the counter's open/close arms speak,
+/// `ShulkerBoxRenderer$ShulkerBoxModel.setupAnim` the
+/// `lid.setPos(0, 24 - openness*0.5*16, 0)` the full-open pose the +8
+/// px lift wears): the [`crate::world::SHULKER_OPEN_BIT`] byte the
+/// container walk stamps the open lane the static full-open pose the
+/// mesher's shell lane renders, the close walk the byte releases the
+/// generic cube restores.
+#[test]
+fn the_shulker_own_lid_rise_walk_wears() {
+    use crate::world as w;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE CHUNK-ZERO SEAT (the mesh walk the chunk (0,0) the cell
+    // inside reads — the 8/8 x/z the chunk's own span answers)
+    let (sx, sy, sz) = (8, top - 1, 8);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(sx, sy, sz, w::SHULKER_BOX);
+    }
+    // THE CLOSED POSE'S OWN BYTE (the fresh cell the variant 0 the
+    // generic cube the open-band read keeps)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.variant(sx, sy, sz),
+            0,
+            "the fresh cell the empty variant keeps"
+        );
+        assert!(
+            !w::shulker_variant_open(world.variant(sx, sy, sz)),
+            "the closed pose the bit keeps clear"
+        );
+    }
+    // THE OPEN'S OWN STAMP (the container walk the byte banks — the
+    // shulker's own door the GUI the flag the title lane reads)
+    app.open_shulker_for((sx, sy, sz));
+    assert_eq!(app.screen, ScreenKind::Chest);
+    assert!(
+        app.chest_window_shulker,
+        "the shulker's own kind row the flag banks"
+    );
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::shulker_variant_open(world.variant(sx, sy, sz)),
+            "the open walk the bit stamps"
+        );
+    }
+    // THE OPEN POSE'S OWN REACH (the mesher the raised lid bakes —
+    // the cell band's own quads the y_max verdict reads [the terrain
+    // the spawn cell's neighbors the exact count the mesher test's
+    // controlled world owns]: the lid's top the 24/16 plane the
+    // 0.5-block lift the cell top the poke answers)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        let quads = crate::mesher::mesh_chunk(world, 0, 0, None);
+        let in_band = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= sy as f32 - 1e-4
+                    && p[1] <= sy as f32 + 1.5 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let cell: Vec<_> = quads.iter().filter(|q| in_band(q)).collect();
+        assert!(
+            cell.len() >= 10,
+            "the open pose the two shells bake, got {}",
+            cell.len()
+        );
+        let y_max = cell
+            .iter()
+            .map(|q| q.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (y_max - (sy as f32 + 1.5)).abs() < 1e-4,
+            "the raised lid the 24/16 reach wears, got {y_max}"
+        );
+    }
+    // THE CLOSE'S OWN RELEASE (the close walk the byte clears — the
+    // generic cube the static pose restores)
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !w::shulker_variant_open(world.variant(sx, sy, sz)),
+            "the close walk the byte releases"
+        );
+    }
+    // THE CLOSED POSE'S OWN CUBE (the mesher the generic cube bakes —
+    // the cell top the plain cube's own reach keeps, the raised lid's
+    // poke the release retires)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        let quads = crate::mesher::mesh_chunk(world, 0, 0, None);
+        let in_band = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= sy as f32 - 1e-4
+                    && p[1] <= sy as f32 + 1.5 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let cell: Vec<_> = quads.iter().filter(|q| in_band(q)).collect();
+        assert!(!cell.is_empty(), "the closed pose the cube bakes");
+        let y_max = cell
+            .iter()
+            .map(|q| q.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (y_max - (sy as f32 + 1.0)).abs() < 1e-4,
+            "the closed pose the cube's own reach keeps, got {y_max}"
+        );
+    }
+    // THE RE-OPEN'S OWN STAMP (the idempotent walk the byte re-banks —
+    // the second open the shells the same pose wears)
+    app.open_shulker_for((sx, sy, sz));
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            w::shulker_variant_open(world.variant(sx, sy, sz)),
+            "the re-open the bit re-stamps"
+        );
+    }
+    app.close_chest_container(ScreenKind::World);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            !w::shulker_variant_open(world.variant(sx, sy, sz)),
+            "the second close the byte releases"
+        );
+    }
+}
