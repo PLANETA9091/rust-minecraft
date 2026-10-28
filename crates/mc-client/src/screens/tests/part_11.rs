@@ -835,3 +835,297 @@ fn the_offline_hopper_the_suck_the_chest_and_the_entity_wears() {
         "the empty leftover the entity discards"
     );
 }
+
+/// THE HOPPER'S OWN FURNACE FEED THE SIDE LANE THE COOLDOWN WEARS
+/// (the autopush-308 round — javap ejectItems pc 13-20 the 26.2 jar
+/// the live disasm answers): the REAL sneak-place walk the furnace's
+/// south face the ray enters, the NORTH facing the clicked face's
+/// opposite stamps [the eject the facing.getOpposite() the furnace's
+/// SIDES face the FUEL lane answers], the coal the fuel slot the
+/// beats seat, the dirt the fuel gate refuses [the isFuel verdict the
+/// probe restores], the no-input furnace the unlit kind the honest
+/// keep.
+#[test]
+fn the_offline_hopper_the_furnace_side_the_fuel_lane_the_cooldown_wears() {
+    let coal = mc_registry::item_id_by_name("coal").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").expect("the wire table");
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE FURNACE'S OWN SEAT (the push test's own chest cell the
+    // furnace wears — the south face the ray the side lane enters)
+    let furnace_cell = (c + 2, surface + 1, c);
+    app.offline_world.as_mut().unwrap().set(
+        furnace_cell.0,
+        furnace_cell.1,
+        furnace_cell.2,
+        crate::world::FURNACE,
+    );
+    app.container_stores_load_once();
+    // THE REAL PLACEMENT WALK (the hopper item the hotbar's first slot
+    // wears, the ANGLED look the furnace's south face the ray enters,
+    // the sneak press the place arm serves, the NORTH facing the
+    // clicked face's opposite stamps, the tick seed the queue arms)
+    app.inventory.items[0] = (hopper_id, 8);
+    app.hotbar_slots = app.inventory.hotbar();
+    app.shift_down = true;
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 2.5, surface as f32 + 3.5, c as f32 + 2.5),
+        yaw: 0.0,
+        pitch: -55.0f32.to_radians(),
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    app.shift_down = false;
+    let hopper_cell = (c + 2, surface + 1, c + 1);
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::HOPPER,
+            "the hopper the furnace's south cell the placement lands"
+        );
+        assert_eq!(
+            w.variant(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::DISPENSER_FACING_NORTH,
+            "the clicked face's opposite the NORTH mouth stamps"
+        );
+        assert!(
+            !w.hopper_ticks.is_empty(),
+            "the placement seed the queue arms"
+        );
+    }
+    // THE STOCKED ROW (the two coal the slot 0 keeps, the two dirt the
+    // slot 1 rides — the fuel lane's refuse verdict the later beat
+    // wears)
+    app.container_stores.insert(
+        hopper_cell,
+        vec![(coal, 2), (dirt, 2), (0, 0), (0, 0), (0, 0)],
+    );
+    // THE FIRST BEAT (the update the queue drains — the push the one
+    // coal the furnace's FUEL slot seats, the cooldown the success
+    // banks)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((coal, 1)),
+        "the hopper row the coal decrement wears"
+    );
+    assert_eq!(
+        app.furnace_stores
+            .get(&furnace_cell)
+            .map(|s| s[crate::world::FURNACE_SLOT_FUEL]),
+        Some((coal, 1)),
+        "the furnace's fuel slot the first coal seats"
+    );
+    // THE COOLDOWN'S OWN GATE (the setCooldown(8) law the
+    // intermediate beats refuse)
+    app.update();
+    app.update();
+    assert_eq!(
+        app.furnace_stores
+            .get(&furnace_cell)
+            .map(|s| s[crate::world::FURNACE_SLOT_FUEL]),
+        Some((coal, 1)),
+        "the cooldown the second push refuses"
+    );
+    // THE EIGHTH TICK'S OWN SERVE (the six more updates the +8 cadence
+    // completes — the second coal the same beat lands)
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.furnace_stores
+            .get(&furnace_cell)
+            .map(|s| s[crate::world::FURNACE_SLOT_FUEL]),
+        Some((coal, 2)),
+        "the cooldown spent the second coal serves"
+    );
+    // THE FUEL GATE'S OWN REFUSE (the coal row spent the dirt probe
+    // the fuel lane refuses — the canPlaceItem the isFuel verdict the
+    // restore keeps, the hopper row the honest dirt keeps)
+    for _ in 0..9 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[1]),
+        Some((dirt, 2)),
+        "the dirt the fuel lane refuses"
+    );
+    assert_eq!(
+        app.furnace_stores
+            .get(&furnace_cell)
+            .map(|s| s[crate::world::FURNACE_SLOT_FUEL]),
+        Some((coal, 2)),
+        "the fuel slot the two coal keeps"
+    );
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((0, 0)),
+        "the spent coal slot the honest (0, 0) row banks"
+    );
+    // THE UNLIT'S OWN KEEP (the no-input furnace the no-recipe walk
+    // the ignite never wears — the world kind the unlit pair the
+    // honest keep)
+    let w = app.offline_world.as_ref().unwrap();
+    assert_eq!(
+        w.get(furnace_cell.0, furnace_cell.1, furnace_cell.2),
+        crate::world::FURNACE,
+        "the no-input furnace the unlit kind keeps"
+    );
+}
+
+/// THE HOPPER'S OWN FURNACE PIPELINE THE ORE THE SMELT THE INGOT
+/// WEARS (the autopush-308 round — the full ore-to-ingot lane the
+/// three pieces the walk serves): the REAL floor-look placement the
+/// under hopper lands [the DOWN mouth the ground stamps], the
+/// furnace the above seat the set walk banks, the feeder hopper the
+/// top seat the DOWN mouth the furnace's UP face the INPUT lane
+/// arms, the ore the input slot the beats seat, the furnace world
+/// walk the coal the burn the smelt the 200-tick total speaks [the
+/// lit pair the world kind flips], the ingot the result slot the
+/// under hopper's [2, 1] order the DOWN face takes — the vanilla
+/// automation chain the client the real beats plays.
+#[test]
+fn the_offline_hopper_the_furnace_pipeline_the_ore_the_smelt_the_ingot_wears() {
+    let coal = mc_registry::item_id_by_name("coal").unwrap();
+    let iron_ore = mc_registry::item_id_by_name("iron_ore").unwrap();
+    let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").expect("the wire table");
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE REAL PLACEMENT WALK (the open ground cell the floor look the
+    // ray enters — the under hopper the DOWN mouth stamps, the tick
+    // seed the queue arms)
+    app.inventory.items[0] = (hopper_id, 8);
+    app.hotbar_slots = app.inventory.hotbar();
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 4.0, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    let under_cell = (c, surface + 1, c);
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(under_cell.0, under_cell.1, under_cell.2),
+            crate::world::HOPPER,
+            "the under hopper the ground cell the placement lands"
+        );
+        assert_eq!(
+            w.variant(under_cell.0, under_cell.1, under_cell.2),
+            crate::world::DISPENSER_FACING_DOWN,
+            "the vertical look the DOWN mouth stamps"
+        );
+    }
+    // THE FURNACE'S OWN SEAT ABOVE (the pre-banked kind the set walk
+    // lands — the under hopper's suck source the same walk the chest
+    // test keeps)
+    let furnace_cell = (c, surface + 2, c);
+    app.offline_world.as_mut().unwrap().set(
+        furnace_cell.0,
+        furnace_cell.1,
+        furnace_cell.2,
+        crate::world::FURNACE,
+    );
+    // THE FEEDER'S OWN SEAT (the hopper the furnace's top cell the
+    // DOWN mouth the furnace's UP face the INPUT lane arms — the
+    // placement seed the queue wears)
+    let feeder_cell = (c, surface + 3, c);
+    app.offline_world.as_mut().unwrap().set(
+        feeder_cell.0,
+        feeder_cell.1,
+        feeder_cell.2,
+        crate::world::HOPPER,
+    );
+    app.offline_world.as_mut().unwrap().set_variant(
+        feeder_cell.0,
+        feeder_cell.1,
+        feeder_cell.2,
+        crate::world::DISPENSER_FACING_DOWN,
+    );
+    app.offline_world.as_mut().unwrap().schedule_hopper_tick(
+        app.frame + 1,
+        feeder_cell.0,
+        feeder_cell.1,
+        feeder_cell.2,
+    );
+    app.container_stores_load_once();
+    // THE STOCKED ROWS (the feeder the one ore rides, the furnace the
+    // eight coal the fuel slot keeps — the under hopper the empty
+    // five wears)
+    app.container_stores.insert(
+        feeder_cell,
+        vec![(iron_ore, 1), (0, 0), (0, 0), (0, 0), (0, 0)],
+    );
+    app.furnace_stores
+        .insert(furnace_cell, vec![(0, 0), (coal, 8), (0, 0)]);
+    // THE FIRST BEAT (the feeder the ore the INPUT slot seats — the
+    // facing.getOpposite() the UP face the [0] order answers)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&feeder_cell).map(|s| s[0]),
+        Some((0, 0)),
+        "the feeder row the ore departs"
+    );
+    assert_eq!(
+        app.furnace_stores
+            .get(&furnace_cell)
+            .map(|s| s[crate::world::FURNACE_SLOT_INPUT]),
+        Some((iron_ore, 1)),
+        "the furnace's input slot the ore seats"
+    );
+    // THE SMELT'S OWN WALK (the furnace world tick the coal the burn
+    // the lit pair flips — the 200-tick total the vanilla codec
+    // default speaks, the cooking progress the beats count, the
+    // result slot the ingot seats)
+    for _ in 0..260 {
+        app.update();
+    }
+    let w = app.offline_world.as_ref().unwrap();
+    assert_eq!(
+        w.get(furnace_cell.0, furnace_cell.1, furnace_cell.2),
+        crate::world::FURNACE_LIT,
+        "the burning furnace the lit pair the world kind flips"
+    );
+    let trio = app
+        .furnace_stores
+        .get(&furnace_cell)
+        .cloned()
+        .expect("the furnace trio the walk banks");
+    assert_eq!(
+        trio[crate::world::FURNACE_SLOT_INPUT],
+        (0, 0),
+        "the smelted ore the input slot departs"
+    );
+    assert_eq!(
+        trio[crate::world::FURNACE_SLOT_FUEL],
+        (coal, 7),
+        "the burnt coal the fuel slot the consume keeps"
+    );
+    // THE UNDER HOPPER'S OWN TAKE (the [2, 1] order the DOWN face the
+    // can_take gate serves — the result slot the ingot the hopper
+    // seats, the spent result the empty keeps)
+    assert_eq!(
+        app.container_stores.get(&under_cell).map(|s| s[0]),
+        Some((iron_ingot, 1)),
+        "the under hopper the ingot the result lane takes"
+    );
+    assert_eq!(
+        trio[crate::world::FURNACE_SLOT_RESULT],
+        (0, 0),
+        "the taken ingot the result slot the empty keeps"
+    );
+}

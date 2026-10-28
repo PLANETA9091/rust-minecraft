@@ -1,0 +1,39 @@
+== HopperBlockEntity :: canTakeItemFromContainer (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/core/Direction;)Z ==
+    0 aload_1
+    1 aload_0
+    2 iload_3
+    3 aload_2
+    4 invokeinterface net/minecraft/world/Container.canTakeItem (Lnet/minecraft/world/Container;ILnet/minecraft/world/item/ItemStack;)Z
+    9 ifne #5
+   12 iconst_0
+   13 ireturn
+   14 aload_1
+   15 instanceof #241  net/minecraft/world/WorldlyContainer
+   18 ifeq #23
+   21 aload_1
+   22 checkcast #241  net/minecraft/world/WorldlyContainer
+   25 astore 5
+   27 aload 5
+   29 iload_3
+   30 aload_2
+   31 aload 4
+   33 invokeinterface net/minecraft/world/WorldlyContainer.canTakeItemThroughFace (ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Z
+   38 ifeq #7
+   41 iconst_1
+   42 goto #4
+   45 iconst_0
+   46 ireturn
+== HopperBlockEntity :: getSourceContainer (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/Container; ==
+    0 aload_0
+    1 aload_2
+    2 aload_3
+    3 aload_1
+    4 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelX ()D
+    9 aload_1
+   10 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelY ()D
+   15 dconst_1
+   16 dadd
+   17 aload_1
+   18 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelZ ()D
+   23 invokestatic #392  net/minecraft/world/level/block/entity/HopperBlockEntity.getContainerAt (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;DDD)Lnet/minecraft/world/Container;
+   26 areturn

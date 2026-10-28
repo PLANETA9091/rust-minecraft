@@ -62165,6 +62165,44 @@ impl App {
                     moved = true;
                 }
             }
+        } else if crate::world::is_orientable_furnace(kind_at(attached)) {
+            // THE FURNACE'S OWN PUSH ARM (javap ejectItems pc 13-20 the
+            // 26.2 jar the live disasm answers — the `facing
+            // .getOpposite()` walk the face-table probe serves: the
+            // hopper's DOWN mouth the furnace's UP face the INPUT lane
+            // answers, the four walls the SIDES lane the fuel row keeps,
+            // the canPlace gate the result slot the fuel verdicts wear,
+            // the isFullContainer the face order's own slots the gate
+            // banks)
+            let order: &'static [usize] =
+                crate::world::furnace_face_order(crate::world::facing6_opposite(facing));
+            self.furnace_stores
+                .entry(attached)
+                .or_insert_with(|| vec![(0i32, 0i32); 3]);
+            let target_full = self
+                .furnace_stores
+                .get(&attached)
+                .is_some_and(|s| crate::world::furnace_inventory_full_face(s, order));
+            if !target_full {
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let did = {
+                    let target = self
+                        .furnace_stores
+                        .get_mut(&attached)
+                        .expect("the furnace sink the entry arm banks");
+                    crate::world::hopper_push_one_furnace(&mut hopper_row, target, order)
+                };
+                if did {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    changed.push((x, y, z));
+                    changed.push(attached);
+                    moved = true;
+                }
+            }
         }
         // THE SUCK LAW (javap tryMoveItems pc 50-67 the EAGER `ior`
         // walk the push-success the suck still serves, the
@@ -62195,6 +62233,35 @@ impl App {
                         .get_mut(&above)
                         .expect("the sink the entry arm banks");
                     crate::world::hopper_suck_one(&mut hopper_row, src)
+                };
+                if did {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    changed.push((x, y, z));
+                    changed.push(above);
+                    moved = true;
+                }
+            } else if crate::world::is_orientable_furnace(kind_at(above)) {
+                // THE FURNACE'S OWN SUCK ARM (javap suckInItems pc 44-98
+                // the 26.2 jar the live disasm answers — the
+                // `getSlots(source, DOWN)` walk the [2, 1] order serves,
+                // the can_take gate the result slot the first probe
+                // speaks, the fuel slot the bucket pair the only take
+                // keeps — the vanilla ContainerOpenersCounter the
+                // furnace's silence the open counter never wears)
+                self.furnace_stores
+                    .entry(above)
+                    .or_insert_with(|| vec![(0i32, 0i32); 3]);
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let did = {
+                    let src = self
+                        .furnace_stores
+                        .get_mut(&above)
+                        .expect("the furnace source the entry arm banks");
+                    crate::world::hopper_suck_one_furnace(&mut hopper_row, src)
                 };
                 if did {
                     self.container_stores.insert((x, y, z), hopper_row);

@@ -1,0 +1,110 @@
+=== AbstractFurnaceBlockEntity: the face tables + the gates ===
+== AbstractFurnaceBlockEntity :: getSlotsForFace (Lnet/minecraft/core/Direction;)[I ==
+    0 aload_1
+    1 getstatic #331  net/minecraft/core/Direction.DOWN Lnet/minecraft/core/Direction;
+    4 if_acmpne #7
+    7 getstatic #337  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.SLOTS_FOR_DOWN [I
+   10 areturn
+   11 aload_1
+   12 getstatic #341  net/minecraft/core/Direction.UP Lnet/minecraft/core/Direction;
+   15 if_acmpne #7
+   18 getstatic #344  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.SLOTS_FOR_UP [I
+   21 areturn
+   22 getstatic #347  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.SLOTS_FOR_SIDES [I
+   25 areturn
+== AbstractFurnaceBlockEntity :: canPlaceItemThroughFace (ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Z ==
+    0 aload_0
+    1 iload_1
+    2 aload_2
+    3 invokevirtual #350  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.canPlaceItem (ILnet/minecraft/world/item/ItemStack;)Z
+    6 ireturn
+== AbstractFurnaceBlockEntity :: canTakeItemThroughFace (ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Z ==
+    0 aload_3
+    1 getstatic #331  net/minecraft/core/Direction.DOWN Lnet/minecraft/core/Direction;
+    4 if_acmpne #34
+    7 iload_1
+    8 iconst_1
+    9 if_icmpne #29
+   12 aload_2
+   13 getstatic #300  net/minecraft/world/item/Items.WATER_BUCKET Lnet/minecraft/world/item/Item;
+   16 invokevirtual #293  net/minecraft/world/item/ItemStack.is (Ljava/lang/Object;)Z
+   19 ifne #13
+   22 aload_2
+   23 getstatic #297  net/minecraft/world/item/Items.BUCKET Lnet/minecraft/world/item/Item;
+   26 invokevirtual #293  net/minecraft/world/item/ItemStack.is (Ljava/lang/Object;)Z
+   29 ifeq #7
+   32 iconst_1
+   33 goto #4
+   36 iconst_0
+   37 ireturn
+   38 iconst_1
+   39 ireturn
+== AbstractFurnaceBlockEntity :: canPlaceItem (ILnet/minecraft/world/item/ItemStack;)Z ==
+    0 iload_1
+    1 iconst_2
+    2 if_icmpne #5
+    5 iconst_0
+    6 ireturn
+    7 iload_1
+    8 iconst_1
+    9 if_icmpne #55
+   12 aload_0
+   13 getfield #21  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.items Lnet/minecraft/core/NonNullList;
+   16 iconst_1
+   17 invokevirtual #143  net/minecraft/core/NonNullList.get (I)Ljava/lang/Object;
+   20 checkcast #10  net/minecraft/world/item/ItemStack
+   23 astore_3
+   24 aload_0
+   25 getfield #362  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.level Lnet/minecraft/world/level/Level;
+   28 invokevirtual #372  net/minecraft/world/level/Level.fuelValues ()Lnet/minecraft/world/level/block/entity/FuelValues;
+   31 aload_2
+   32 invokevirtual #375  net/minecraft/world/level/block/entity/FuelValues.isFuel (Lnet/minecraft/world/item/ItemStack;)Z
+   35 ifne #23
+   38 aload_2
+   39 getstatic #297  net/minecraft/world/item/Items.BUCKET Lnet/minecraft/world/item/Item;
+   42 invokevirtual #293  net/minecraft/world/item/ItemStack.is (Ljava/lang/Object;)Z
+   45 ifeq #17
+   48 aload_3
+   49 getstatic #297  net/minecraft/world/item/Items.BUCKET Lnet/minecraft/world/item/Item;
+   52 invokevirtual #293  net/minecraft/world/item/ItemStack.is (Ljava/lang/Object;)Z
+   55 ifne #7
+   58 iconst_1
+   59 goto #4
+   62 iconst_0
+   63 ireturn
+   64 iconst_1
+   65 ireturn
+== AbstractFurnaceBlockEntity :: <clinit> ()V ==
+    0 iconst_1
+    1 newarray 10
+    3 dup
+    4 iconst_0
+    5 iconst_0
+    6 iastore
+    7 putstatic #344  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.SLOTS_FOR_UP [I
+   10 iconst_2
+   11 newarray 10
+   13 dup
+   14 iconst_0
+   15 iconst_2
+   16 iastore
+   17 dup
+   18 iconst_1
+   19 iconst_1
+   20 iastore
+   21 putstatic #337  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.SLOTS_FOR_DOWN [I
+   24 iconst_1
+   25 newarray 10
+   27 dup
+   28 iconst_0
+   29 iconst_1
+   30 iastore
+   31 putstatic #347  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.SLOTS_FOR_SIDES [I
+   34 getstatic #514  net/minecraft/world/item/crafting/Recipe.KEY_CODEC Lcom/mojang/serialization/Codec;
+   37 getstatic #519  com/mojang/serialization/Codec.INT Lcom/mojang/serialization/codecs/PrimitiveCodec;
+   40 invokestatic #525  com/mojang/serialization/Codec.unboundedMap (Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;)Lcom/mojang/serialization/codecs/UnboundedMapCodec;
+   43 putstatic #101  net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.RECIPES_USED_CODEC Lcom/mojang/serialization/Codec;
+   46 return
+
+=== FuelValues: the fuel verdict ===
+!! net/minecraft/world/item/crafting/FuelValues MISSING

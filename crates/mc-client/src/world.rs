@@ -3721,6 +3721,169 @@ pub fn hopper_suck_box_hits(bx: i32, by: i32, bz: i32, x: f64, y: f64, z: f64) -
         && z + HALF > bz
 }
 
+/// THE FURNACE SLOT'S OWN SEATS (javap 26.2 FurnaceMenu the ctor the
+/// INPUT 0 FUEL 1 RESULT 2 trio the FurnaceBlockEntity's own
+/// NonNullList order keeps — the face tables the same indices speak).
+pub const FURNACE_SLOT_INPUT: usize = 0;
+pub const FURNACE_SLOT_FUEL: usize = 1;
+pub const FURNACE_SLOT_RESULT: usize = 2;
+
+/// THE FURNACE'S OWN FACE TABLE (javap AbstractFurnaceBlockEntity
+/// `<clinit>` pc 0-31 the 26.2 jar the live disasm answers — the
+/// SLOTS_FOR_UP the [0] lone input row, the SLOTS_FOR_DOWN the [2, 1]
+/// pair the result the fuel keeps, the SLOTS_FOR_SIDES the [1] lone
+/// fuel row; the getSlotsForFace walk the DOWN/UP reads the rest the
+/// sides arm answers).
+pub fn furnace_face_order(face: u8) -> &'static [usize] {
+    match face {
+        DISPENSER_FACING_DOWN => &[FURNACE_SLOT_RESULT, FURNACE_SLOT_FUEL],
+        DISPENSER_FACING_UP => &[FURNACE_SLOT_INPUT],
+        _ => &[FURNACE_SLOT_FUEL],
+    }
+}
+
+/// THE EJECT DIRECTION'S OWN OPPOSITE (javap ejectItems pc 13-20 the
+/// 26.2 jar the live disasm answers — the `hopper.facing
+/// .getOpposite()` walk the face-table probe serves: the hopper's own
+/// DOWN mouth the furnace's UP face the INPUT lane answers [the hopper
+/// above the furnace the ore the slot 0 seats], the four walls the
+/// opposite's compass the SIDES lane the fuel row keeps, the hopper's
+/// own placement law the UP facing never carries [the
+/// getStateForPlacement's Y-axis fold the DOWN byte wears]).
+pub fn facing6_opposite(f: u8) -> u8 {
+    match f {
+        DISPENSER_FACING_DOWN => DISPENSER_FACING_UP,
+        DISPENSER_FACING_UP => DISPENSER_FACING_DOWN,
+        DISPENSER_FACING_NORTH => DISPENSER_FACING_SOUTH,
+        DISPENSER_FACING_SOUTH => DISPENSER_FACING_NORTH,
+        DISPENSER_FACING_WEST => DISPENSER_FACING_EAST,
+        _ => DISPENSER_FACING_WEST,
+    }
+}
+
+/// THE FURNACE'S OWN PLACE GATE (javap canPlaceItem pc 0-65 the 26.2
+/// jar the live disasm answers — the slot-2 result the refuse wears,
+/// the slot-0 input the accept speaks, the slot-1 fuel the
+/// `isFuel(incoming)` the bucket-pair fold banks: the incoming bucket
+/// the existing bucket the same family the seat keeps — the empty
+/// bucket the burnt-out lava bucket the refill walk wears).
+pub fn furnace_can_place(slot: usize, existing: (i32, i32), incoming: i32) -> bool {
+    const ITEM_BUCKET: i32 = 1040; // Items.BUCKET the wire-order row
+    if slot == FURNACE_SLOT_RESULT {
+        return false;
+    }
+    if slot != FURNACE_SLOT_FUEL {
+        return true;
+    }
+    mc_registry::generated::furnace_data::fuel_ticks(incoming) > 0
+        || (incoming == ITEM_BUCKET && existing.0 == ITEM_BUCKET)
+}
+
+/// THE FURNACE'S OWN TAKE GATE (javap canTakeItemThroughFace pc 0-39
+/// the 26.2 jar the live disasm answers — the DOWN face the slot-1
+/// fuel the BUCKET pair the only refuse keeps [the WATER_BUCKET the
+/// empty bucket the burnt-out lava speaks], EVERY other face-or-slot
+/// the true wears — the slot-2 result the DOWN face the hopper's suck
+/// serves, the slot-1 fuel the sideways push the canPlace gate wears).
+pub fn furnace_can_take(slot: usize, id: i32) -> bool {
+    const ITEM_BUCKET: i32 = 1040; // Items.BUCKET the wire-order row
+    const ITEM_WATER_BUCKET: i32 = 1041; // Items.WATER_BUCKET the row
+    if slot == FURNACE_SLOT_FUEL {
+        return id == ITEM_BUCKET || id == ITEM_WATER_BUCKET;
+    }
+    true
+}
+
+/// THE FURNACE'S OWN FACE MOVE-ONE (the hopper_move_one's face-order
+/// sibling — the order's slots the can_place gate the walk wears, the
+/// first empty-or-mergeable the one item seats, the cap the item's own
+/// max stack the grow serves).
+pub fn furnace_move_one(to: &mut [(i32, i32)], id: i32, order: &[usize]) -> bool {
+    if id == 0 {
+        return false;
+    }
+    let cap = mc_registry::item_max_stack(id).min(64);
+    for &s in order {
+        if !furnace_can_place(s, to[s], id) {
+            continue;
+        }
+        let slot = &mut to[s];
+        if slot.0 == 0 || slot.1 <= 0 {
+            *slot = (id, 1);
+            return true;
+        }
+        if slot.0 == id && (slot.1 as i64) < cap as i64 {
+            slot.1 += 1;
+            return true;
+        }
+    }
+    false
+}
+
+/// THE FURNACE'S OWN FACE FULL VERDICT (javap isFullContainer the 26.2
+/// jar the live disasm answers — the face order's own slots the
+/// all-max row the verdict wears: the empty-or-roomy slot the false
+/// speaks, the eject's own gate the same face the probe reads).
+pub fn furnace_inventory_full_face(store: &[(i32, i32)], order: &[usize]) -> bool {
+    order.iter().all(|&s| {
+        let (id, count) = store[s];
+        if id == 0 || count <= 0 {
+            return false;
+        }
+        let cap = mc_registry::item_max_stack(id).min(64);
+        count >= cap
+    })
+}
+
+/// THE HOPPER'S OWN FURNACE PUSH (javap ejectItems pc 33-131 the 26.2
+/// jar the live disasm answers — the one-item probe the furnace's own
+/// face order serves: the hopper row the flat order keeps, the
+/// non-empty slot the probe takes, the face move the order's gate
+/// answers, the REFUSED walk the restore `setCount` fold keeps — the
+/// true the one item moved speaks).
+pub fn hopper_push_one_furnace(
+    from: &mut [(i32, i32)],
+    to: &mut [(i32, i32)],
+    order: &[usize],
+) -> bool {
+    for i in 0..from.len() {
+        let (id, count) = from[i];
+        if id == 0 || count <= 0 {
+            continue;
+        }
+        if furnace_move_one(to, id, order) {
+            let rest = count - 1;
+            from[i] = if rest > 0 { (id, rest) } else { (0, 0) };
+            return true;
+        }
+    }
+    false
+}
+
+/// THE HOPPER'S OWN FURNACE SUCK (javap suckInItems pc 44-98 the 26.2
+/// jar the live disasm answers — the `getSlots(source, DOWN)` walk the
+/// [2, 1] order serves, the can_take gate the result slot the first
+/// probe speaks [the smelted output the DOWN face the hopper's own
+/// law answers], the fuel slot the bucket pair the only take keeps —
+/// the one item per beat the cooldown banks).
+pub fn hopper_suck_one_furnace(hopper: &mut [(i32, i32)], source: &mut [(i32, i32)]) -> bool {
+    for &s in &[FURNACE_SLOT_RESULT, FURNACE_SLOT_FUEL] {
+        let (id, count) = source[s];
+        if id == 0 || count <= 0 {
+            continue;
+        }
+        if !furnace_can_take(s, id) {
+            continue;
+        }
+        if hopper_move_one(hopper, id) {
+            let rest = count - 1;
+            source[s] = if rest > 0 { (id, rest) } else { (0, 0) };
+            return true;
+        }
+    }
+    false
+}
+
 /// THE FAMILY'S OWN VARIANT ENCODE (the two fields the one byte
 /// wears — the facing the low 3 bits keep, the triggered bit the
 /// rising-edge walk's own setValue arms).
@@ -30346,6 +30509,241 @@ mod tests {
             w.drain_due_hopper_ticks(20),
             vec![(1, 2, 3)],
             "the due tick the drain answers"
+        );
+    }
+
+    #[test]
+    fn the_hopper_furnace_feed_the_face_tables_wear() {
+        // THE FACE TABLES' OWN ROWS (javap AbstractFurnaceBlockEntity
+        // `<clinit>` pc 0-31 the 26.2 jar the live disasm answers — the
+        // UP the [0] input, the DOWN the [2, 1] the result the fuel,
+        // the sides the [1] fuel)
+        assert_eq!(
+            furnace_face_order(DISPENSER_FACING_UP),
+            &[FURNACE_SLOT_INPUT],
+            "the UP face the input lane wears"
+        );
+        assert_eq!(
+            furnace_face_order(DISPENSER_FACING_DOWN),
+            &[FURNACE_SLOT_RESULT, FURNACE_SLOT_FUEL],
+            "the DOWN face the result the fuel pair wears"
+        );
+        for f in [
+            DISPENSER_FACING_NORTH,
+            DISPENSER_FACING_SOUTH,
+            DISPENSER_FACING_WEST,
+            DISPENSER_FACING_EAST,
+        ] {
+            assert_eq!(
+                furnace_face_order(f),
+                &[FURNACE_SLOT_FUEL],
+                "the side face the fuel lane wears"
+            );
+        }
+        // THE EJECT DIRECTION'S OWN OPPOSITE (javap ejectItems pc 13-20
+        // — the facing the getOpposite the face-table probe serves)
+        assert_eq!(
+            facing6_opposite(DISPENSER_FACING_DOWN),
+            DISPENSER_FACING_UP,
+            "the DOWN mouth the UP face answers"
+        );
+        assert_eq!(
+            facing6_opposite(DISPENSER_FACING_NORTH),
+            DISPENSER_FACING_SOUTH,
+            "the north push the south face answers"
+        );
+        assert_eq!(
+            facing6_opposite(DISPENSER_FACING_EAST),
+            DISPENSER_FACING_WEST,
+            "the east push the west face answers"
+        );
+    }
+
+    #[test]
+    fn the_hopper_furnace_feed_the_place_and_take_gates_wear() {
+        // THE PLACE GATE'S OWN VERDICTS (javap canPlaceItem pc 0-65 —
+        // the slot-2 result the refuse wears, the slot-0 input the
+        // accept speaks, the slot-1 fuel the isFuel the bucket-pair
+        // fold banks)
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let iron_ore = mc_registry::item_id_by_name("iron_ore").unwrap();
+        assert_eq!(
+            mc_registry::item_id_by_name("bucket"),
+            Some(1040),
+            "the BUCKET wire id the row banks"
+        );
+        assert_eq!(
+            mc_registry::item_id_by_name("water_bucket"),
+            Some(1041),
+            "the WATER_BUCKET wire id the row banks"
+        );
+        assert!(
+            !furnace_can_place(FURNACE_SLOT_RESULT, (0, 0), iron_ore),
+            "the result slot the refuse wears"
+        );
+        assert!(
+            furnace_can_place(FURNACE_SLOT_INPUT, (0, 0), dirt),
+            "the input slot the anything accepts"
+        );
+        assert!(
+            furnace_can_place(FURNACE_SLOT_FUEL, (0, 0), coal),
+            "the fuel slot the fuel accepts"
+        );
+        assert!(
+            !furnace_can_place(FURNACE_SLOT_FUEL, (0, 0), dirt),
+            "the fuel slot the non-fuel refuses"
+        );
+        // THE BUCKET PAIR'S OWN FOLD (the incoming bucket the existing
+        // bucket the same family the seat keeps — the fresh bucket the
+        // empty slot refuses, the pair the seat serves)
+        assert!(
+            !furnace_can_place(FURNACE_SLOT_FUEL, (0, 0), 1040),
+            "the fresh bucket the empty fuel slot refuses"
+        );
+        assert!(
+            furnace_can_place(FURNACE_SLOT_FUEL, (1040, 1), 1040),
+            "the bucket pair the seat keeps"
+        );
+        // THE TAKE GATE'S OWN VERDICTS (javap canTakeItemThroughFace —
+        // the slot-2 result the DOWN face the true wears, the slot-1
+        // fuel the bucket pair the only take keeps, the coal the
+        // refuse speaks)
+        assert!(
+            furnace_can_take(FURNACE_SLOT_RESULT, 4310),
+            "the result slot the any take wears"
+        );
+        assert!(
+            furnace_can_take(FURNACE_SLOT_FUEL, 1041),
+            "the water bucket the take wears"
+        );
+        assert!(
+            furnace_can_take(FURNACE_SLOT_FUEL, 1040),
+            "the empty bucket the take wears"
+        );
+        assert!(
+            !furnace_can_take(FURNACE_SLOT_FUEL, coal),
+            "the fuel slot the coal the refuse keeps"
+        );
+    }
+
+    #[test]
+    fn the_hopper_furnace_feed_the_push_and_suck_wear() {
+        // THE PUSH'S OWN LANES (javap ejectItems the one-item probe the
+        // face order serves — the UP-face order the input slot the ore
+        // seats, the SIDES order the fuel slot the coal seats, the
+        // dirt probe the fuel lane refuses)
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let iron_ore = mc_registry::item_id_by_name("iron_ore").unwrap();
+        let mut hopper = vec![(iron_ore, 2), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        assert!(
+            hopper_push_one_furnace(
+                &mut hopper,
+                &mut furnace,
+                furnace_face_order(DISPENSER_FACING_UP)
+            ),
+            "the ore the input lane seats"
+        );
+        assert_eq!(hopper[0], (iron_ore, 1), "the count the decrement wears");
+        assert_eq!(
+            furnace[FURNACE_SLOT_INPUT],
+            (iron_ore, 1),
+            "the input slot the ore seats"
+        );
+        // THE SIDE PUSH'S OWN FUEL LANE (the coal the SIDES order the
+        // fuel slot seats)
+        let mut hopper = vec![(coal, 3), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        assert!(
+            hopper_push_one_furnace(
+                &mut hopper,
+                &mut furnace,
+                furnace_face_order(DISPENSER_FACING_NORTH)
+            ),
+            "the coal the fuel lane seats"
+        );
+        assert_eq!(
+            furnace[FURNACE_SLOT_FUEL],
+            (coal, 1),
+            "the fuel slot the coal seats"
+        );
+        // THE SIDE PUSH'S OWN DIRT REFUSE (the non-fuel the fuel lane
+        // the probe restores)
+        let mut hopper = vec![(dirt, 3), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        assert!(
+            !hopper_push_one_furnace(
+                &mut hopper,
+                &mut furnace,
+                furnace_face_order(DISPENSER_FACING_NORTH)
+            ),
+            "the dirt the fuel lane refuses"
+        );
+        assert_eq!(hopper[0], (dirt, 3), "the refused probe the row keeps");
+        assert_eq!(
+            furnace[FURNACE_SLOT_FUEL],
+            (0, 0),
+            "the fuel slot the empty keeps"
+        );
+        // THE FACE FULL VERDICT (javap isFullContainer — the UP order
+        // the input slot's own max the verdict wears)
+        let mut furnace = vec![(iron_ore, 64), (0, 0), (0, 0)];
+        assert!(
+            furnace_inventory_full_face(&furnace, furnace_face_order(DISPENSER_FACING_UP)),
+            "the input slot the max the verdict wears"
+        );
+        assert!(
+            !furnace_inventory_full_face(&furnace, furnace_face_order(DISPENSER_FACING_DOWN)),
+            "the DOWN order the empty fuel the verdict refuses"
+        );
+        // THE SUCK'S OWN LANES (javap suckInItems the [2, 1] order the
+        // can_take gate serves — the result slot the first probe, the
+        // fuel slot the bucket the only take, the coal the refuse)
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        furnace[FURNACE_SLOT_RESULT] = (iron_ingot, 2);
+        furnace[FURNACE_SLOT_FUEL] = (coal, 5);
+        assert!(
+            hopper_suck_one_furnace(&mut hopper, &mut furnace),
+            "the ingot the result lane takes"
+        );
+        assert_eq!(hopper[0], (iron_ingot, 1), "the hopper the item seats");
+        assert_eq!(
+            furnace[FURNACE_SLOT_RESULT],
+            (iron_ingot, 1),
+            "the result slot the decrement wears"
+        );
+        // THE BUCKET'S OWN TAKE (the fuel slot the water bucket the
+        // hopper the seats — the burnt-out empty bucket the row serves)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        furnace[FURNACE_SLOT_FUEL] = (1041, 1);
+        assert!(
+            hopper_suck_one_furnace(&mut hopper, &mut furnace),
+            "the water bucket the fuel lane takes"
+        );
+        assert_eq!(hopper[0], (1041, 1), "the bucket the hopper seats");
+        assert_eq!(
+            furnace[FURNACE_SLOT_FUEL],
+            (0, 0),
+            "the fuel slot the empty keeps"
+        );
+        // THE COAL'S OWN REFUSE (the fuel slot the non-bucket the gate
+        // refuses — the hopper row the honest keep)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        furnace[FURNACE_SLOT_FUEL] = (coal, 5);
+        assert!(
+            !hopper_suck_one_furnace(&mut hopper, &mut furnace),
+            "the coal the fuel lane refuses"
+        );
+        assert_eq!(
+            furnace[FURNACE_SLOT_FUEL],
+            (coal, 5),
+            "the refused take the row keeps"
         );
     }
 
