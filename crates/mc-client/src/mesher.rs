@@ -6562,6 +6562,184 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE BED'S OWN TWO-CELL LANE (the dev-194 round — the
+                // blockstates/<color>_bed.json the eight variants the
+                // model split wears: block/<color>_bed_head the head
+                // cell, block/<color>_bed_foot the foot cell; the
+                // template_bed_* elements the derive walk bakes — the
+                // plate (0,3,0)->(16,9,16) the six-face bake + the two
+                // legs (0,0,0)->(3,3,3) and (13,0,0)->(16,3,3), 15
+                // quads a part the probe banks). THE Y-ROTATION THE
+                // BLOCKSTATE'S OWN QUARTER TURNS (north 0 / east 90 /
+                // south 180 / west 270 — the hopper lane's own CW
+                // cycle). THE CULLFACE THE ROTATED READ (the
+                // template's cullface rows the neighbor verdict — the
+                // plate's side faces the co-planar band never
+                // escapes). THE TEXTURES THE PER-COLOR SEVEN + THE TWO
+                // SHARED (the derive the #ref merge resolves — the
+                // pool tail's 114 the name index answers).
+                if crate::world::is_bed(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE VARIANT'S OWN READ (the facing the low pair,
+                    // the part the third bit — the two-cell block's
+                    // own split the placement walk stamps).
+                    let bv = world.variant(wx, wy, wz);
+                    let facing = crate::world::bed_variant_facing(bv);
+                    let part = crate::world::bed_variant_part(bv);
+                    let color = crate::world::bed_color_name(id).unwrap_or("red");
+                    // THE BLOCKSTATE'S OWN Y-ROTATION (the
+                    // blockstates/<color>_bed.json the eight rows
+                    // speak: north 0 / east 90 / south 180 / west 270
+                    // — both parts the same quarter-turns wear).
+                    let y_steps = match facing {
+                        crate::world::BED_FACING_EAST => 1usize,
+                        crate::world::BED_FACING_SOUTH => 2,
+                        crate::world::BED_FACING_WEST => 3,
+                        _ => 0, // north
+                    };
+                    // THE CW QUARTER'S OWN VERTEX MAP (the blockstate
+                    // y rotation the model geometry turns — the
+                    // hopper lane's own cycle).
+                    let turn = |v: [f32; 3]| -> [f32; 3] {
+                        let (x, z) = (v[0], v[2]);
+                        let (rx, rz) = match y_steps % 4 {
+                            1 => (1.0 - z, x),
+                            2 => (1.0 - x, 1.0 - z),
+                            3 => (z, 1.0 - x),
+                            _ => (x, z),
+                        };
+                        [rx, v[1], rz]
+                    };
+                    for q in bed_model_quads(color, part) {
+                        // THE CULLFACE'S OWN ROTATED READ (the
+                        // model-space cullface the y-steps the world
+                        // direction turns — the neighbor's solid-render
+                        // verdict the face culls, the no-cullface arm
+                        // the plate's up/down + the legs' inner faces
+                        // always draw).
+                        if let Some(dir) = q.cullface {
+                            let dir = rotate_direction_cw(dir, y_steps);
+                            let (dx, dy, dz) = match dir {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE REF'S OWN TILE (the derive the #ref
+                        // merge resolves — the per-color master's
+                        // "minecraft:block/<color>_bed_<face>" the
+                        // strip the name index answers, the shared
+                        // bed_down/bed_head_north the same walk
+                        // serves; the unresolved #var the TILE_NONE
+                        // the skip keeps).
+                        let stem = q.texture.trim_start_matches("minecraft:block/");
+                        let tile = bed_tile(stem);
+                        if tile == atlas::TILE_NONE {
+                            continue;
+                        }
+                        let rotated_dir = rotate_direction_cw(q.direction, y_steps);
+                        let face_shade = if q.shade {
+                            match rotated_dir {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let lm = lightmap_combine(
+                            cell_sky,
+                            cell_block,
+                            sky_factor,
+                            sky_tint,
+                            ambient,
+                            block_tint,
+                            night_vision,
+                            world.night_vision_factor,
+                            world.darkness_scale,
+                        );
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for i in 0..4 {
+                            let v = turn(q.vertices[i]);
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
+                            // the uv rides its own vertex (the pose
+                            // rotation the baked pair never separates —
+                            // the vanilla quad law keeps)
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE MOB HEADS' OWN MINI-CUBE LANE (the dev-82 round —
                 // javap SkullModel.createHeadModel +
                 // SkullBlockRenderer.createGroundTransformation +
@@ -8606,6 +8784,54 @@ fn hopper_funnel_quads(model_id: &str) -> &'static [DerivedQuad] {
             .collect()
     });
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE BED MODELS' OWN CACHED BAKES (the dev-194 round — the sixteen
+/// colors' head/foot pair the derive walk bakes ONCE, the cross-level
+/// #ref merge the template textures resolves in place: the per-color
+/// master's #east/#up/#west the head's trio answers, the
+/// #east/#south/#up/#west the foot's quartet keeps, the shared
+/// bed_down + bed_head_north the template rows inline). 15 quads a
+/// part the probe banks (the plate's five faces + the two legs'
+/// five each — the cullface'd rows the bake carries, the mesher's
+/// neighbor verdict the escape wears).
+fn bed_model_quads(color: &'static str, part: u8) -> &'static [DerivedQuad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<(&'static str, u8), Vec<DerivedQuad>>,
+    > = std::sync::OnceLock::new();
+    let map = QUADS.get_or_init(|| {
+        let mut m: std::collections::HashMap<(&'static str, u8), Vec<DerivedQuad>> =
+            std::collections::HashMap::new();
+        for &c in crate::world::BED_COLOR_NAMES.iter() {
+            for (p, tail) in [
+                (crate::world::BED_PART_FOOT, "foot"),
+                (crate::world::BED_PART_HEAD, "head"),
+            ] {
+                let model = format!("block/{c}_bed_{tail}");
+                let quads = derive_model_inherited(&model).unwrap_or_default();
+                m.insert((c, p), quads);
+            }
+        }
+        m
+    });
+    map.get(&(color, part)).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE BED'S OWN TILE INDEX (the derive's resolved texture ids the
+/// strip the name index answers — "red_bed_head_up" the pool tail's
+/// 114, the shared "bed_down"/"bed_head_north" the same walk serves;
+/// the unknown stem the None the TILE_NONE fallback keeps).
+fn bed_tile(stem: &str) -> u16 {
+    static TILES: std::sync::OnceLock<std::collections::HashMap<&'static str, u16>> =
+        std::sync::OnceLock::new();
+    let m = TILES.get_or_init(|| {
+        atlas::TILE_NAMES
+            .iter()
+            .enumerate()
+            .map(|(i, name)| (*name, i as u16))
+            .collect()
+    });
+    m.get(stem).copied().unwrap_or(atlas::TILE_NONE)
 }
 
 /// THE FIRE MULTIPART'S OWN CACHED PARTS — the parsed blockstate
@@ -17847,6 +18073,162 @@ mod tests {
                 .count(),
             3,
             "the stone below the nozzle's down face the cull keeps the three"
+        );
+    }
+
+    #[test]
+    fn the_bed_lane_the_two_cell_template_wears() {
+        // THE BED'S OWN TWO CELL (the dev-194 round — the blockstates
+        // /<color>_bed.json the eight variants the model split wears:
+        // block/<color>_bed_head the head cell, block/<color>_bed_foot
+        // the foot cell; the template_bed_* elements the derive walk
+        // bakes — the plate (0,3,0)->(16,9,16) + the two legs, 15
+        // quads a part the fresh cell the air neighbors the cullface
+        // faces the draw verdict keeps; the y-rotation the blockstate
+        // quarter turns [north 0 / east 90 / south 180 / west 270],
+        // the per-color textures the pool tail's 114 the name index
+        // answers)
+        use mc_registry::generated::atlas as gen_atlas;
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-6
+                    && p[0] <= 9.0 + 1e-6
+                    && p[1] >= 8.0 - 1e-6
+                    && p[1] <= 9.0 + 1e-6
+                    && p[2] >= 8.0 - 1e-6
+                    && p[2] <= 9.0 + 1e-6
+            })
+        };
+        // THE FOOT CELL'S OWN 15 (the plate's five — down/up/south/
+        // west/east, the north row the head side never carries — the
+        // two legs' five each)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::BED_RED);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::bed_variant(crate::world::BED_FACING_NORTH, crate::world::BED_PART_FOOT),
+        );
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            15,
+            "the red foot's own 15 quads the template elements bake"
+        );
+        // THE PLATE'S OWN BAND (the y 3..9 px the template speaks —
+        // the plate's top the 9/16 plane reaches, the legs the 0
+        // floor keeps)
+        let y_hi = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (y_hi - (8.0 + 9.0 / 16.0)).abs() < 1e-6,
+            "the plate's top the 9/16 plane wears, got {y_hi}"
+        );
+        let y_lo = cell
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (y_lo - 8.0).abs() < 1e-6,
+            "the legs' own 0 floor the world cell keeps, got {y_lo}"
+        );
+        // THE UP FACE'S OWN TILE (the plate's top the red foot's up
+        // master wears — the named const the pool tail's seat keeps)
+        assert!(
+            cell.iter()
+                .any(|quad| quad.tile == gen_atlas::TILE_RED_BED_FOOT_UP),
+            "the plate's up face the red foot's own master wears"
+        );
+        // THE HEAD CELL'S OWN 15 + THE NORTH STRIP (the pillow-side
+        // face the shared bed_head_north master wears)
+        let mut wh = empty_world();
+        put(&mut wh, 8, 8, 8, crate::world::BED_RED);
+        wh.set_variant(
+            8,
+            8,
+            8,
+            crate::world::bed_variant(crate::world::BED_FACING_NORTH, crate::world::BED_PART_HEAD),
+        );
+        let qh = mesh_chunk(&wh, 0, 0, None);
+        let cellh: Vec<_> = qh.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cellh.len(),
+            15,
+            "the red head's own 15 quads the same template family bakes"
+        );
+        assert!(
+            cellh
+                .iter()
+                .any(|quad| quad.tile == gen_atlas::TILE_BED_HEAD_NORTH),
+            "the head's north face the shared bed_head_north master wears"
+        );
+        // THE SHARED UNDER-SIDE (the plate's down face the bed_down
+        // master both parts wear)
+        assert!(
+            cell.iter()
+                .any(|quad| quad.tile == gen_atlas::TILE_BED_DOWN)
+                && cellh
+                    .iter()
+                    .any(|quad| quad.tile == gen_atlas::TILE_BED_DOWN),
+            "the plate's down face the shared bed_down master both parts wear"
+        );
+        // THE EAST QUARTER'S OWN TURN (the blockstate y=90 the face
+        // rotation wears — the foot's south-facing leg row the
+        // world's EAST side reaches: the x max the 16/16 wall the
+        // turned geometry keeps)
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::BED_RED);
+        we.set_variant(
+            8,
+            8,
+            8,
+            crate::world::bed_variant(crate::world::BED_FACING_EAST, crate::world::BED_PART_FOOT),
+        );
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(celle.len(), 15, "the east turn the same 15 quads keeps");
+        let x_max = celle
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (x_max - 9.0).abs() < 1e-6,
+            "the east-facing foot's geometry the x 1.0 wall the turn reaches, got {x_max}"
+        );
+        // the turned legs the z 0..3 band the raw model's z 13..16 the
+        // quarter-turn moves (the foot legs the world's west side sit)
+        let z_min = celle
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[2]).fold(f32::MAX, f32::min))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (z_min - 8.0).abs() < 1e-6,
+            "the turned foot's legs the z 0 floor the quarter keeps, got {z_min}"
+        );
+        // THE CULL'S OWN VERDICT (the solid south neighbor the
+        // plate's + the legs' cullface'd south faces retire — the
+        // stone cell the three south-cullface'd quads the draw
+        // verdict refuses: the template's cullface south rows the
+        // plate + the two legs carry)
+        let mut ws = empty_world();
+        put(&mut ws, 8, 8, 8, crate::world::BED_RED);
+        ws.set_variant(
+            8,
+            8,
+            8,
+            crate::world::bed_variant(crate::world::BED_FACING_NORTH, crate::world::BED_PART_FOOT),
+        );
+        put(&mut ws, 8, 8, 9, crate::world::STONE);
+        let qs = mesh_chunk(&ws, 0, 0, None);
+        let cells: Vec<_> = qs.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cells.len(),
+            12,
+            "the stone south neighbor the three south-cullface'd quads retire"
         );
     }
 
