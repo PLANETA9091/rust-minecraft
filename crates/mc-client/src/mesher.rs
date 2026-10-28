@@ -6293,7 +6293,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         is_opaque(world.get(wx, wy, wz + 1)),
                         is_opaque(world.get(wx, wy, wz - 1)),
                     ];
-                    for (pts_local, uvs, face) in shulker_open_model_quads(shulker_lid_render) {
+                    for (pts_local, uvs, face) in shulker_open_model_quads(
+                        crate::world::shulker_variant_facing(world.variant(wx, wy, wz)),
+                        shulker_lid_render,
+                    ) {
                         let face_shade = match face {
                             2 => 1.0f32,
                             3 => 0.5,
@@ -9357,8 +9360,26 @@ fn chest_lock_quads(
 /// quarter turn the same outline answers, the uniform tile the face
 /// permutation the glued law never separates] — the static pose the
 /// rotation the geometry the quarter turn never disturbs, the faces
-/// the same spans keep).
-fn shulker_open_model_quads(openness: f32) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
+/// the same spans keep). THE FACING'S OWN ROTATION (the autopush-304
+/// round — javap ShulkerBoxRenderer.createModelTransform the 26.2 jar
+/// the live disasm answers: `new Matrix4f().translation(0.5, 0.5,
+/// 0.5).scale(0.5).rotate(direction.getRotation()).scale(1, -1, -1)
+/// .translate(0, -1, 0)` the block-center rotation the facing wears —
+/// the up-authored shell the up pose the identity keeps [the UP
+/// facing the vanilla quaternion the identity rotation speaks], the
+/// other five facings the +Y-to-normal rotation the center pivot
+/// wears: DOWN the 180-degree X turn [the lid the floor-ward poke],
+/// SOUTH the +90-degree X turn [+Y to +Z], NORTH the -90 [+Y to -Z],
+/// WEST the +90 Z turn, EAST the -90 — the proper rotations the
+/// winding the face order preserves, the FACE INDEX the world-facing
+/// remap the shade/cull arms the same table reads). THE UVs the
+/// uniform tile the rotation never re-seats (the one 16-px tile the
+/// every face banks — the face permutation the glued law never
+/// separates, the dev-193 yRot walk the same verdict wears).
+fn shulker_open_model_quads(
+    facing: u8,
+    openness: f32,
+) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
     let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
     // THE TWO SHELLS' OWN SPANS (the world px the jar's parts answer:
     // the base the y 0..8 dish, the lid the closed y 4..16 band the
@@ -9457,7 +9478,65 @@ fn shulker_open_model_quads(openness: f32) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4],
             0,
         );
     }
-    out
+    // THE FACING'S OWN WEAR (the block-center rotation the up-authored
+    // shell the facing direction serves — the identity the UP byte
+    // keeps, the proper rotation the winding preserves, the face
+    // remap the world-facing indices the consumer's shade/cull arms
+    // read)
+    if facing == crate::world::SHULKER_FACING_UP {
+        return out;
+    }
+    out.into_iter()
+        .map(|(pts, uvs, face)| {
+            let pts = pts.map(|p| match facing {
+                crate::world::SHULKER_FACING_DOWN => [p[0], 1.0 - p[1], 1.0 - p[2]],
+                crate::world::SHULKER_FACING_NORTH => [p[0], p[2], 1.0 - p[1]],
+                crate::world::SHULKER_FACING_SOUTH => [p[0], 1.0 - p[2], p[1]],
+                crate::world::SHULKER_FACING_WEST => [1.0 - p[1], p[0], p[2]],
+                crate::world::SHULKER_FACING_EAST => [p[1], 1.0 - p[0], p[2]],
+                _ => p,
+            });
+            let face = match facing {
+                crate::world::SHULKER_FACING_DOWN => match face {
+                    2 => 3,
+                    3 => 2,
+                    4 => 5,
+                    5 => 4,
+                    other => other,
+                },
+                crate::world::SHULKER_FACING_NORTH => match face {
+                    2 => 5,
+                    3 => 4,
+                    4 => 2,
+                    5 => 3,
+                    other => other,
+                },
+                crate::world::SHULKER_FACING_SOUTH => match face {
+                    2 => 4,
+                    3 => 5,
+                    4 => 3,
+                    5 => 2,
+                    other => other,
+                },
+                crate::world::SHULKER_FACING_WEST => match face {
+                    0 => 2,
+                    1 => 3,
+                    2 => 1,
+                    3 => 0,
+                    other => other,
+                },
+                crate::world::SHULKER_FACING_EAST => match face {
+                    0 => 3,
+                    1 => 2,
+                    2 => 0,
+                    3 => 1,
+                    other => other,
+                },
+                _ => face,
+            };
+            (pts, uvs, face)
+        })
+        .collect()
 }
 
 fn chest_open_model_quads(
@@ -17182,7 +17261,12 @@ mod tests {
         // the base 6 + the lid 6 the all-air cell bakes)
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
-        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::shulker_variant(crate::world::SHULKER_FACING_UP, true),
+        );
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
         assert_eq!(
@@ -17223,7 +17307,12 @@ mod tests {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
         put(&mut w, 8, 9, 8, crate::world::STONE);
-        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::shulker_variant(crate::world::SHULKER_FACING_UP, true),
+        );
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
         assert_eq!(
@@ -17239,7 +17328,12 @@ mod tests {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
         put(&mut w, 9, 8, 8, crate::world::STONE);
-        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::shulker_variant(crate::world::SHULKER_FACING_UP, true),
+        );
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
         assert_eq!(
@@ -17258,7 +17352,12 @@ mod tests {
         // generic cube the byte-identical contract keeps)
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
-        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::shulker_variant(crate::world::SHULKER_FACING_UP, true),
+        );
         w.chest_lids.insert((8, 8, 8), (0.0, 0.0));
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
@@ -17274,7 +17373,12 @@ mod tests {
         // own seat the co-planar pair answers)
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
-        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::shulker_variant(crate::world::SHULKER_FACING_UP, true),
+        );
         w.chest_lids.insert((8, 8, 8), (0.0, 0.5));
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| open_band(quad)).collect();
@@ -17297,7 +17401,12 @@ mod tests {
         // the chest lane's own fold the same verdict keeps)
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::SHULKER_BOX);
-        w.set_variant(8, 8, 8, crate::world::SHULKER_OPEN_BIT);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::shulker_variant(crate::world::SHULKER_FACING_UP, true),
+        );
         w.chest_lids.insert((8, 8, 8), (0.4, 0.5));
         w.lid_partial = 0.5;
         let q = mesh_chunk(&w, 0, 0, None);
@@ -17312,6 +17421,132 @@ mod tests {
             (y_max - (8.0 + 19.6 / 16.0)).abs() < 1e-4,
             "the lerp frame the 0.45 angle answers, got {y_max}"
         );
+    }
+
+    #[test]
+    fn the_shulker_facing_the_center_rotation_wears() {
+        // THE FACING'S OWN ROTATION (the autopush-304 round — javap
+        // ShulkerBoxRenderer.createModelTransform the 26.2 jar the
+        // live disasm answers: the block-center rotation the facing
+        // direction wears, the UP byte the identity keeps, the other
+        // five the +Y-to-normal turn serves; the face remap the
+        // world-facing indices the shade/cull arms read, the winding
+        // the proper rotation preserves)
+        // THE UP'S OWN IDENTITY (the byte the un-rotated shell keeps
+        // — the base's underside the y 0 plane, the full-open lid's
+        // top the y 1.5 plane the +Y poke wears)
+        let up = shulker_open_model_quads(crate::world::SHULKER_FACING_UP, 1.0);
+        assert_eq!(up.len(), 12, "the twelve faces the two shells wear");
+        let base_floor = &up[0]; // the base's DOWN quad the push order's first seat keeps
+        assert!(
+            base_floor.0.iter().all(|p| p[1].abs() < 1e-6) && base_floor.2 == 3,
+            "the up shell the base's underside the y 0 down face keeps"
+        );
+        // THE DOWN'S OWN FLIP (the 180-degree X turn the base the
+        // ceiling-hugging top half wears, the lid the floor-ward poke
+        // serves — the lid's outer face the world-down index the
+        // remap banks)
+        let down = shulker_open_model_quads(crate::world::SHULKER_FACING_DOWN, 1.0);
+        let base: Vec<_> = down[..6].to_vec();
+        assert!(
+            base.iter()
+                .all(|(pts, _, _)| pts.iter().all(|p| p[1] >= 0.5 - 1e-6)),
+            "the down shell the base the top half wears"
+        );
+        let tip = down[6..]
+            .iter()
+            .find(|(_, _, f)| *f == 3)
+            .expect("the lid's outer face the down index wears");
+        assert!(
+            tip.0.iter().all(|p| (p[1] + 0.5).abs() < 1e-6),
+            "the down lid the y -0.5 poke the floor-ward reach wears"
+        );
+        // THE SOUTH'S OWN TURN (the +90-degree X walk +Y to +Z — the
+        // base the north half the wall-hug keeps, the lid the south
+        // poke the away-from-wall direction wears)
+        let south = shulker_open_model_quads(crate::world::SHULKER_FACING_SOUTH, 1.0);
+        let base: Vec<_> = south[..6].to_vec();
+        assert!(
+            base.iter()
+                .all(|(pts, _, _)| pts.iter().all(|p| p[2] <= 0.5 + 1e-6)),
+            "the south shell the base the north half wears"
+        );
+        let tip = south[6..]
+            .iter()
+            .find(|(_, _, f)| *f == 4)
+            .expect("the lid's outer face the south index wears");
+        assert!(
+            tip.0.iter().all(|p| (p[2] - 1.5).abs() < 1e-6),
+            "the south lid the z 1.5 poke the away direction wears"
+        );
+        // THE NORTH'S OWN TURN (the -90-degree X walk +Y to -Z — the
+        // base the south half, the lid the north poke the world-north
+        // index wears)
+        let north = shulker_open_model_quads(crate::world::SHULKER_FACING_NORTH, 1.0);
+        let base: Vec<_> = north[..6].to_vec();
+        assert!(
+            base.iter()
+                .all(|(pts, _, _)| pts.iter().all(|p| p[2] >= 0.5 - 1e-6)),
+            "the north shell the base the south half wears"
+        );
+        let tip = north[6..]
+            .iter()
+            .find(|(_, _, f)| *f == 5)
+            .expect("the lid's outer face the north index wears");
+        assert!(
+            tip.0.iter().all(|p| (p[2] + 0.5).abs() < 1e-6),
+            "the north lid the z -0.5 poke the away direction wears"
+        );
+        // THE EAST'S OWN TURN (the -90-degree Z walk +Y to +X — the
+        // base the west half, the lid the east poke)
+        let east = shulker_open_model_quads(crate::world::SHULKER_FACING_EAST, 1.0);
+        let base: Vec<_> = east[..6].to_vec();
+        assert!(
+            base.iter()
+                .all(|(pts, _, _)| pts.iter().all(|p| p[0] <= 0.5 + 1e-6)),
+            "the east shell the base the west half wears"
+        );
+        let tip = east[6..]
+            .iter()
+            .find(|(_, _, f)| *f == 0)
+            .expect("the lid's outer face the east index wears");
+        assert!(
+            tip.0.iter().all(|p| (p[0] - 1.5).abs() < 1e-6),
+            "the east lid the x 1.5 poke the away direction wears"
+        );
+        // THE WEST'S OWN TURN (the +90-degree Z walk +Y to -X — the
+        // base the east half, the lid the west poke)
+        let west = shulker_open_model_quads(crate::world::SHULKER_FACING_WEST, 1.0);
+        let base: Vec<_> = west[..6].to_vec();
+        assert!(
+            base.iter()
+                .all(|(pts, _, _)| pts.iter().all(|p| p[0] >= 0.5 - 1e-6)),
+            "the west shell the base the east half wears"
+        );
+        let tip = west[6..]
+            .iter()
+            .find(|(_, _, f)| *f == 1)
+            .expect("the lid's outer face the west index wears");
+        assert!(
+            tip.0.iter().all(|p| (p[0] + 0.5).abs() < 1e-6),
+            "the west lid the x -0.5 poke the away direction wears"
+        );
+        // THE REMAP'S OWN INDEX WALK (the up-authored up face the
+        // world-facing index the per-facing table wears — the shade
+        // table the same index the world-correct shading serves)
+        for (facing, want_face) in [
+            (crate::world::SHULKER_FACING_DOWN, 3usize),
+            (crate::world::SHULKER_FACING_NORTH, 5usize),
+            (crate::world::SHULKER_FACING_SOUTH, 4usize),
+            (crate::world::SHULKER_FACING_EAST, 0usize),
+            (crate::world::SHULKER_FACING_WEST, 1usize),
+        ] {
+            let shell = shulker_open_model_quads(facing, 1.0);
+            assert!(
+                shell[7].2 == want_face || shell[6..].iter().any(|(_, _, f)| *f == want_face),
+                "the lid's up-authored up face the world index {want_face} wears"
+            );
+        }
     }
 
     #[test]

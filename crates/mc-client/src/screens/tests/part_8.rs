@@ -10015,15 +10015,23 @@ fn the_shulker_own_lid_rise_walk_wears() {
     {
         let world = app.offline_world.as_mut().unwrap();
         world.set(sx, sy, sz, w::SHULKER_BOX);
+        // THE SEED'S OWN UP STAMP (the autopush-304 round — the
+        // placement arm's clicked-face law the floor-placed box the
+        // UP byte wears, the vanilla defaultBlockState's own FACING
+        // the seed mirrors; the variant-0 byte the DOWN ordinal the
+        // raw vocabulary keeps — the facing read the mesher's open
+        // lane the shell rotation consults)
+        world.set_variant(sx, sy, sz, w::shulker_variant(w::SHULKER_FACING_UP, false));
     }
-    // THE CLOSED POSE'S OWN BYTE (the fresh cell the variant 0 the
-    // generic cube the open-band read keeps)
+    // THE CLOSED POSE'S OWN BYTE (the seed's own UP facing the low
+    // bits wear — the closed pose the open bit keeps clear, the
+    // generic cube the facing the look never separates)
     {
         let world = app.offline_world.as_ref().unwrap();
         assert_eq!(
             world.variant(sx, sy, sz),
-            0,
-            "the fresh cell the empty variant keeps"
+            w::SHULKER_FACING_UP,
+            "the seed's own UP facing the low bits wear"
         );
         assert!(
             !w::shulker_variant_open(world.variant(sx, sy, sz)),

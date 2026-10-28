@@ -3413,6 +3413,50 @@ pub fn shulker_variant_open(v: u8) -> bool {
     v & SHULKER_OPEN_BIT != 0
 }
 
+/// THE SHULKER'S OWN FACING LANE (the autopush-304 round — javap
+/// ShulkerBoxBlock.getStateForPlacement the 26.2 jar the live disasm
+/// answers [18 pcs, no branches]: `defaultBlockState().setValue(FACING,
+/// context.getClickedFace())` the CLICKED FACE the FACING stamps —
+/// the floor click the UP lid banks, the ceiling click the DOWN lid
+/// wears, the wall click the clicked face's own direction the lid
+/// opens away from the mounted surface [the dispenser family's
+/// look-opposite law the 148 round wore the CLICKED-FACE walk
+/// retires — the two six-direction laws the sibling families the
+/// separate walks speak]). THE VOCABULARY the DIRECTION_NORMAL
+/// ordinals the low three bits keep (down 0, up 1, north 2, south 3,
+/// west 4, east 5 — the [`ClipHit::face`] entry ordinal the same
+/// bytes speak, the placement stamp the hit's own face the direct
+/// copy wears), the renderer's own
+/// `BlockState.getValueOrElse(FACING, Direction.UP)` the fallback the
+/// unstamped cells never consult [the fresh placement the arm stamps,
+/// the variant-0 seeds the explicit byte the round's walk wears].
+pub const SHULKER_FACING_MASK: u8 = 0b0111;
+pub const SHULKER_FACING_DOWN: u8 = 0;
+pub const SHULKER_FACING_UP: u8 = 1;
+pub const SHULKER_FACING_NORTH: u8 = 2;
+pub const SHULKER_FACING_SOUTH: u8 = 3;
+pub const SHULKER_FACING_WEST: u8 = 4;
+pub const SHULKER_FACING_EAST: u8 = 5;
+
+/// THE SHULKER VARIANT'S OWN COMPOSE (the facing three bits the low
+/// seats wear, the [`SHULKER_OPEN_BIT`] the high seat keeps — the
+/// placement stamp the fresh cell the closed default composes, the
+/// open walk the same composer the bit rides).
+#[inline]
+pub fn shulker_variant(facing: u8, open: bool) -> u8 {
+    (facing & SHULKER_FACING_MASK) | if open { SHULKER_OPEN_BIT } else { 0 }
+}
+
+/// THE SHULKER VARIANT'S OWN FACING READ (the low three bits the
+/// DIRECTION_NORMAL ordinal the raw read keeps — the mesher's
+/// open-lane the shell rotation the byte consults, the closed cube
+/// the byte never reads [the symmetric shell the facing the look
+/// never separates]).
+#[inline]
+pub fn shulker_variant_facing(v: u8) -> u8 {
+    v & SHULKER_FACING_MASK
+}
+
 /// THE DISPENSER'S OWN COOLDOWN (javap DispenserBlock.neighborChanged
 /// pc 55 the 26.2 jar — the `level.scheduleTick(pos, this, 4)` walk
 /// the rising edge serves, the four-tick beat the dispense the drain
@@ -29713,6 +29757,49 @@ mod tests {
             !w.chest_lids.contains_key(&pos),
             "the mined cell the entry retires"
         );
+    }
+
+    #[test]
+    fn the_shulker_facing_the_variant_bytes_wear() {
+        // THE SHULKER'S OWN FACING VOCABULARY (the autopush-304 round —
+        // javap ShulkerBoxBlock.getStateForPlacement the 26.2 jar the
+        // live disasm the `setValue(FACING, getClickedFace())` walk
+        // answers): the low three bits the DIRECTION_NORMAL ordinal
+        // the [`ClipHit::face`] entry bytes keep, the
+        // [`SHULKER_OPEN_BIT`] the high seat the open walk stamps,
+        // the compose/read the round trip the placement arm's own
+        // bytes serve
+        use crate::world::{
+            shulker_variant, shulker_variant_facing, shulker_variant_open, SHULKER_FACING_DOWN,
+            SHULKER_FACING_EAST, SHULKER_FACING_NORTH, SHULKER_FACING_SOUTH,
+            SHULKER_FACING_UP, SHULKER_FACING_WEST, SHULKER_OPEN_BIT,
+        };
+        // THE COMPOSE'S OWN BYTES (the closed default the fresh
+        // placement wears, the open bit the container walk rides)
+        assert_eq!(shulker_variant(SHULKER_FACING_UP, false), 0b0001);
+        assert_eq!(shulker_variant(SHULKER_FACING_UP, true), 0b1001);
+        assert_eq!(shulker_variant(SHULKER_FACING_SOUTH, true), 0b1011);
+        // THE READ'S OWN ROUND TRIP (the six ordinals the facing read
+        // answers, the open read the same byte the bit walk wears)
+        for (facing, ordinal) in [
+            (SHULKER_FACING_DOWN, 0u8),
+            (SHULKER_FACING_UP, 1),
+            (SHULKER_FACING_NORTH, 2),
+            (SHULKER_FACING_SOUTH, 3),
+            (SHULKER_FACING_WEST, 4),
+            (SHULKER_FACING_EAST, 5),
+        ] {
+            let v = shulker_variant(facing, true);
+            assert_eq!(shulker_variant_facing(v), facing, "the facing read the ordinal {ordinal} wears");
+            assert!(shulker_variant_open(v), "the open read the bit keeps");
+        }
+        // THE STAMP'S OWN ORTHOGONALITY (the close walk the bit clear
+        // the facing bytes keep — the two lanes the one byte the
+        // disjoint seats wear)
+        let v = shulker_variant(SHULKER_FACING_NORTH, true);
+        let closed = v & !SHULKER_OPEN_BIT;
+        assert_eq!(shulker_variant_facing(closed), SHULKER_FACING_NORTH);
+        assert!(!shulker_variant_open(closed));
     }
 
     #[test]

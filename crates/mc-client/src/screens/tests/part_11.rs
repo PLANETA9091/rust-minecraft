@@ -266,16 +266,16 @@ fn the_offline_chest_drag_the_gates_and_the_deferred_place_wear() {
     );
 }
 
-/// THE SHULKER'S OWN PLACEMENT CHAIN (the autopush-148 round —
-/// the kind mint v0.3.876 banked the walk the generic
-/// placeable_block lane already answers): the held shulker_box
-/// item the offline press places, the SHULKER_BOX kind the
-/// NAME_OF row 778 speaks, the FLOOR LOOK the UP byte the
-/// dispenser family's own getStateForPlacement law stamps
-/// (ShulkerBoxBlock the same setValue(FACING,
-/// nearestLooking.getOpposite()) walk the six-direction byte
-/// wears), the consume(1) the stack rides, the dropper's front
-/// read the placed box the next beat answers.
+/// THE SHULKER'S OWN PLACEMENT CHAIN (the autopush-148 round minted
+/// the walk, the autopush-304 round the 26.2 jar's own law re-pins —
+/// javap ShulkerBoxBlock.getStateForPlacement the live disasm the
+/// `setValue(FACING, context.getClickedFace())` walk answers): the
+/// held shulker_box item the offline press places, the SHULKER_BOX
+/// kind the NAME_OF row 778 speaks, the FLOOR LOOK the clicked face's
+/// own UP byte stamps [the floor block's top face the hit's own
+/// ordinal wears — the dispenser family's look-opposite walk the
+/// CLICKED-FACE law retires], the consume(1) the stack rides, the
+/// dropper's front read the placed box the next beat answers.
 #[test]
 fn the_offline_shulker_the_placement_the_floor_look_wears() {
     let mut app = App::new(3);
@@ -306,8 +306,8 @@ fn the_offline_shulker_the_placement_the_floor_look_wears() {
         );
         assert_eq!(
             w.variant(c, top, c),
-            crate::world::DISPENSER_FACING_UP,
-            "the floor look the UP byte the shulker stamp wears"
+            crate::world::SHULKER_FACING_UP,
+            "the floor look the clicked face's own UP byte the stamp wears"
         );
     }
     assert_eq!(
@@ -315,6 +315,63 @@ fn the_offline_shulker_the_placement_the_floor_look_wears() {
         (shulker_id, 3),
         "the consume(1) the stack rides"
     );
+}
+
+/// THE SHULKER'S OWN WALL CLICK (the autopush-304 round — the
+/// CLICKED-FACE law the distinguishing case wears): the steep
+/// down-north look the wall block's SOUTH face the ray enters [the
+/// floor's top face the ray never reaches — the wall the volume
+/// occludes], the hit's own SOUTH ordinal the FACING stamps — the
+/// dispenser family's pitch-quarter law the UP byte would wear [the
+/// two six-direction walks the two bytes speak], the placement cell
+/// the wall's south side the empty cell answers, the lid the wall
+/// the away direction opens.
+#[test]
+fn the_offline_shulker_the_wall_click_the_clicked_face_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let shulker_id = mc_registry::item_id_by_name("shulker_box").expect("the wire table");
+    app.inventory.items[0] = (shulker_id, 4);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE WALL'S OWN SEAT (the cell two north of the player the
+    // eye-level row wears — the placement cell the wall's south side
+    // the empty cell keeps, the player's own cell the arm never
+    // targets)
+    let (wx, wy, wz) = (c, top + 1, c - 2);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(wx, wy, wz, crate::world::STONE);
+    }
+    // THE STEEP DOWN-NORTH LOOK (the vanilla yaw 180 the north look
+    // answers, the pitch -55 degrees the south-face entry the ray
+    // serves [the drop 1.5*tan55 the y band the wall's own span
+    // wears] — the floor's top face the hit the wall's volume
+    // preempts)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.5, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -55.0f32.to_radians(),
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the shulker placement consumed the press"
+    );
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top + 1, c - 1),
+            crate::world::SHULKER_BOX,
+            "the shulker the wall's south cell the placement lands"
+        );
+        assert_eq!(
+            w.variant(c, top + 1, c - 1),
+            crate::world::SHULKER_FACING_SOUTH,
+            "the clicked face's own SOUTH byte the stamp wears"
+        );
+    }
 }
 
 /// THE SHULKER'S OWN DOOR THE WINDOW BANKS (dev-150's own lane —
