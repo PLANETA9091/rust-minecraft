@@ -7405,6 +7405,37 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 row[0]
                             }
+                        } else if crate::world::is_respawn_anchor(id) {
+                            // THE ANCHOR'S OWN CHARGE-LADDER MESH (the
+                            // autopush-315 round — the blockstate
+                            // charges=0..4 the five cube_bottom_top
+                            // models the jar's own JSON speaks [scripts/
+                            // anchor_light_scout_315.py the live dump
+                            // banks]: the SIDES the charges row's own
+                            // side{charge} master wears — side0 the
+                            // uncharged look, side1..4 the charged
+                            // ladder the glowstone presses climb — the
+                            // UP seat the charged glow the charges=1..4
+                            // rows wear, the charge-0 row the dark
+                            // top_off keeps, the DOWN the obsidian base
+                            // the every model names [the FACE_TILES
+                            // row's down entry the pool-tail tile
+                            // wears] — [`world::anchor_side_tile`]/
+                            // [`world::anchor_top_tile`] the fold
+                            // serves, the variant byte the charge the
+                            // clamp keeps, the charge arm's own
+                            // set_variant the re-mesh the ladder's
+                            // walk answers)
+                            let charge =
+                                crate::world::anchor_variant_charge(world.variant(wx, wy, wz));
+                            let row = atlas::FACE_TILES[id as usize];
+                            if face == 2 {
+                                crate::world::anchor_top_tile(charge)
+                            } else if face == 3 {
+                                row[3]
+                            } else {
+                                crate::world::anchor_side_tile(charge)
+                            }
                         } else if crate::world::is_dispenser_kind(id) {
                             // THE DISPENSER/DROPPER'S OWN FRONT WALK (the
                             // autopush-139 round — the orientable parent's

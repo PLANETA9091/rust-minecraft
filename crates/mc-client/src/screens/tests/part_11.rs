@@ -2978,3 +2978,213 @@ fn the_offline_anchor_the_nether_the_spawn_set_the_respawn_wears() {
         "the consume the charge-1 setBlock the variant byte answers"
     );
 }
+
+// THE ANCHOR'S OWN MESH-LADDER WALK (the autopush-315 round — the
+// blockstate charges=0..4 the five cube_bottom_top models the jar's
+// own JSON speaks, scripts/jar_work/anchor_light_315.txt the dumps
+// serve): the REAL walk the held anchor the placement lane the kind
+// stamps, the mesher the charge-0 look the side0 + top_off masters
+// bake, the glowstone the charge arm the four presses the ladder
+// climbs — the side1..4 masters the re-mesh bakes, the glow top the
+// charged rows wear, the relight the glow ladder the cell's own
+// flood paints (0/3/7/11/15 the lambda$static$332 law the scaled
+// charge answers).
+#[test]
+fn the_offline_anchor_the_mesh_the_charge_ladder_the_glow_wears() {
+    use mc_registry::generated::atlas;
+    let mut app = App::new(3);
+    app.enter_world();
+    let anchor_item = mc_registry::item_id_by_name("respawn_anchor").unwrap();
+    let glow_item = mc_registry::item_id_by_name("glowstone").unwrap();
+    app.inventory.items[0] = (anchor_item, 2);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE FLAT PAD (the look's own stage — the stone row the cell the
+    // camera seats, the air rows the scan reads)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -3..=3 {
+            for dz in -3..=3 {
+                world.set(c + dx, surface, c + dz, crate::world::STONE);
+                for dy in 1..=3 {
+                    world.set(c + dx, surface + dy, c + dz, crate::world::AIR);
+                }
+            }
+        }
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 4) as f32, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE PLACEMENT (the real right-press the held anchor the block
+    // lane lands — the kind the NAME_OF row the palette answers)
+    assert!(app.on_right_press(0, 0), "the anchor the placement lands");
+    let ay = surface + 1;
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, ay, c),
+        crate::world::RESPAWN_ANCHOR,
+        "the placed cell the anchor kind wears"
+    );
+    // THE BAND'S OWN QUADS (the cell the mesher bakes — the tile the
+    // quad's own seat answers: the mesh_chunk walk the part_8 walk's
+    // own controlled world wears)
+    let band_tiles = |app: &App, ay: i32| -> Vec<u16> {
+        let world = app.offline_world.as_ref().unwrap();
+        let quads = crate::mesher::mesh_chunk(
+            world,
+            (c / crate::world::CHUNK_X as i32) as usize,
+            (c / crate::world::CHUNK_Z as i32) as usize,
+            None,
+        );
+        quads
+            .iter()
+            .filter(|q| {
+                q.pts.iter().all(|p| {
+                    p[0] >= c as f32 - 1e-4
+                        && p[0] <= c as f32 + 1.0 + 1e-4
+                        && p[1] >= ay as f32 - 1e-4
+                        && p[1] <= ay as f32 + 1.0 + 1e-4
+                        && p[2] >= c as f32 - 1e-4
+                        && p[2] <= c as f32 + 1.0 + 1e-4
+                })
+            })
+            .map(|q| q.tile)
+            .collect()
+    };
+    // THE TOP SEAT'S OWN TILE (the UP face the y = ay+1 plane's four
+    // corners wear — the charged glow / the dark off the row picks)
+    let top_tile = |app: &App, ay: i32| -> u16 {
+        let world = app.offline_world.as_ref().unwrap();
+        let quads = crate::mesher::mesh_chunk(
+            world,
+            (c / crate::world::CHUNK_X as i32) as usize,
+            (c / crate::world::CHUNK_Z as i32) as usize,
+            None,
+        );
+        quads
+            .iter()
+            .find(|q| {
+                q.pts.iter().all(|p| {
+                    (p[1] - (ay as f32 + 1.0)).abs() < 1e-4
+                        && p[0] >= c as f32 - 1e-4
+                        && p[0] <= c as f32 + 1.0 + 1e-4
+                        && p[2] >= c as f32 - 1e-4
+                        && p[2] <= c as f32 + 1.0 + 1e-4
+                })
+            })
+            .map(|q| q.tile)
+            .unwrap_or(0)
+    };
+    // THE CELL'S OWN BLOCK LIGHT (the grid the relight paints — the
+    // emission the cell's own seat wears)
+    let block_light = |app: &App, ay: i32| -> Option<u8> {
+        let world = app.offline_world.as_ref().unwrap();
+        world
+            .light
+            .as_ref()
+            .and_then(|g| g.cell(world.chunks_per_side, c, ay, c).1)
+    };
+    // THE CHARGE-0 LOOK (the charges=0 model the mesher bakes — the
+    // four sides the side0 master, the top the dark top_off wears,
+    // the charged masters the ladder never bakes)
+    {
+        let tiles = band_tiles(&app, ay);
+        assert_eq!(
+            tiles
+                .iter()
+                .filter(|t| **t == atlas::TILE_RESPAWN_ANCHOR_SIDE0)
+                .count(),
+            4,
+            "the charge-0 sides the side0 master wears"
+        );
+        assert_eq!(
+            top_tile(&app, ay),
+            atlas::TILE_RESPAWN_ANCHOR_TOP_OFF,
+            "the dark top the uncharged row wears"
+        );
+        for t in [
+            atlas::TILE_RESPAWN_ANCHOR_SIDE1,
+            atlas::TILE_RESPAWN_ANCHOR_SIDE2,
+            atlas::TILE_RESPAWN_ANCHOR_SIDE3,
+            atlas::TILE_RESPAWN_ANCHOR_SIDE4,
+            atlas::TILE_RESPAWN_ANCHOR_TOP,
+        ] {
+            assert!(
+                !tiles.contains(&t),
+                "the uncharged look the charged masters never bake (tile {t})"
+            );
+        }
+        assert_eq!(
+            block_light(&app, ay),
+            Some(0),
+            "the dark base the uncharged cell wears"
+        );
+    }
+    // THE CHARGE ARM (useItemOn pcs 0-33 — the held glowstone the
+    // walk speaks: the setValue(+1) the ladder climbs, the re-mesh
+    // the side{charge} masters bake, the glow top the charged rows
+    // wear, the relight the scaled charge the flood paints)
+    app.selected_hotbar = 1;
+    app.inventory.items[1] = (glow_item, 6);
+    app.hotbar_slots = app.inventory.hotbar();
+    for expected in 1..=4u8 {
+        assert!(
+            app.on_right_press(0, 0),
+            "the charge press #{expected} the SUCCESS consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().variant(c, ay, c),
+            expected,
+            "the charge ladder the {expected} stamp wears"
+        );
+        // THE MESH LADDER (the re-mesh the press's own walk answers —
+        // the side{expected} master the four sides wear, the PRIOR
+        // rung the climb retires, the glow top the charged rows wear)
+        let tiles = band_tiles(&app, ay);
+        let rung = |n: u8| -> u16 {
+            match n {
+                1 => atlas::TILE_RESPAWN_ANCHOR_SIDE1,
+                2 => atlas::TILE_RESPAWN_ANCHOR_SIDE2,
+                3 => atlas::TILE_RESPAWN_ANCHOR_SIDE3,
+                4 => atlas::TILE_RESPAWN_ANCHOR_SIDE4,
+                _ => atlas::TILE_RESPAWN_ANCHOR_SIDE0,
+            }
+        };
+        assert_eq!(
+            tiles.iter().filter(|t| **t == rung(expected)).count(),
+            4,
+            "the charge-{expected} sides the side{expected} master wears"
+        );
+        for n in 0..=4u8 {
+            if n != expected {
+                assert!(
+                    !tiles.contains(&rung(n)),
+                    "the charge-{expected} look the rung-{n} master never bakes"
+                );
+            }
+        }
+        assert_eq!(
+            top_tile(&app, ay),
+            atlas::TILE_RESPAWN_ANCHOR_TOP,
+            "the glow top the charged {expected} wears"
+        );
+        // THE GLOW LADDER (lambda$static$332 the getScaledChargeLevel
+        // (state, 15) call banks — the cell's own block light the
+        // scaled charge answers: 3/7/11/15 the presses climb)
+        assert_eq!(
+            block_light(&app, ay),
+            Some(u8::try_from(crate::world::anchor_scaled_charge(expected, 15)).unwrap()),
+            "the charge-{expected} glow the scaled charge wears"
+        );
+    }
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.contains("block.respawn_anchor.charge")),
+        "the charge voice the ladder's presses bank"
+    );
+}

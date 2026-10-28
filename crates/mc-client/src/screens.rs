@@ -54099,6 +54099,15 @@ impl App {
                         pos.2,
                         crate::world::anchor_charge_variant(charge + 1),
                     );
+                    // THE GLOW'S OWN RELIGHT (the autopush-315 round —
+                    // the vanilla charge walk's setBlock(3) the flag
+                    // update 3 the light lane wears: the emission the
+                    // charge ladder speaks, the glow the anchor's cell
+                    // the flood paints — [`crate::light::emission`]'s
+                    // own anchor row the scaled charge answers, the
+                    // bamboo lane's own relight rhythm the batched
+                    // walk shares)
+                    world.relight();
                     self.world_quads = Some(crate::mesher::mesh_world(world, None));
                 }
                 // THE VOICE (charge pcs 82-90 — the RESPAWN_ANCHOR_CHARGE
@@ -65289,11 +65298,14 @@ impl App {
                 // THE CONSUME'S OWN WALK (the charge-1 setBlock the
                 // caller serves — the static's pc 111-148 pair the
                 // client sim the variant byte answers, the re-mesh the
-                // set walk wears)
+                // set walk wears, the relight the glow ladder's own
+                // lane the setBlock(3) the 315 round wears — the
+                // consumed charge the dimmer row the flood repaints)
                 if let Some((cx, cy, cz)) = anchor_consume {
                     if let Some(w) = self.offline_world.as_mut() {
                         let c = crate::world::anchor_variant_charge(w.variant(cx, cy, cz));
                         w.set_variant(cx, cy, cz, crate::world::anchor_charge_variant(c - 1));
+                        w.relight();
                         self.world_quads = Some(crate::mesher::mesh_world(w, None));
                     }
                 }

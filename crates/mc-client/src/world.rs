@@ -4624,6 +4624,38 @@ pub fn anchor_charge_variant(c: u8) -> u8 {
     c.min(4)
 }
 
+/// THE ANCHOR'S OWN CHARGE-LADDER MESH FOLD (the autopush-315 round —
+/// the jar's own JSON the live scout re-pins, scripts/
+/// anchor_light_scout_315.py the dump banks): the blockstate
+/// charges=0..4 the five `minecraft:block/respawn_anchor_{0..4}`
+/// models speak, every parent block/cube_bottom_top the #side
+/// master the charges row picks — side0 the uncharged look, side1..4
+/// the charged masters the glowstone presses climb — the #top the
+/// charged glow the charges=1..4 rows wear (the animated
+/// respawn_anchor_top.png master the atlas bake banks), the #top the
+/// dark respawn_anchor_top_off the charge-0 row keeps, the #bottom
+/// the obsidian base the every model names. The out-of-range charge
+/// the variant clamp the honest read keeps.
+#[inline]
+pub fn anchor_side_tile(charge: u8) -> u16 {
+    match anchor_variant_charge(charge) {
+        1 => atlas::TILE_RESPAWN_ANCHOR_SIDE1,
+        2 => atlas::TILE_RESPAWN_ANCHOR_SIDE2,
+        3 => atlas::TILE_RESPAWN_ANCHOR_SIDE3,
+        4 => atlas::TILE_RESPAWN_ANCHOR_SIDE4,
+        _ => atlas::TILE_RESPAWN_ANCHOR_SIDE0,
+    }
+}
+
+#[inline]
+pub fn anchor_top_tile(charge: u8) -> u16 {
+    if anchor_variant_charge(charge) > 0 {
+        atlas::TILE_RESPAWN_ANCHOR_TOP
+    } else {
+        atlas::TILE_RESPAWN_ANCHOR_TOP_OFF
+    }
+}
+
 /// THE CHARGE GATE'S OWN FOLD (javap RespawnAnchorBlock.canBeCharged
 /// pcs 0-22 — the `charge < 4` verdict the iconst_4 the icmpge pair
 /// speaks).
@@ -33352,6 +33384,114 @@ mod tests {
             ),
             "the air cell the instanceof order the fall-through keeps"
         );
+    }
+    #[test]
+    fn the_anchor_the_mesh_ladder_the_tiles_wear() {
+        // THE MESH LADDER'S OWN FOLD (the autopush-315 round — the
+        // blockstate charges=0..4 the five cube_bottom_top models the
+        // jar's own JSON speaks, scripts/anchor_light_scout_315.py
+        // the live dump banks: the SIDES the charges row's own
+        // side{charge} master wears, the TOP the charged glow the
+        // charges=1..4 rows wear, the charge-0 row the dark top_off
+        // keeps, the BOTTOM the obsidian base the every model names)
+        // THE GENERATED ROW (the pool-tail seats the FACE_TILES row
+        // banks — the mesher's default the charge-0 look wears)
+        let row = atlas::FACE_TILES[RESPAWN_ANCHOR as usize];
+        assert_eq!(
+            row[2],
+            atlas::TILE_RESPAWN_ANCHOR_TOP_OFF,
+            "the charge-0 row the dark top wears"
+        );
+        assert_eq!(
+            row[3],
+            atlas::TILE_RESPAWN_ANCHOR_BOTTOM,
+            "the obsidian base the down seat wears"
+        );
+        for &side in &[0usize, 1, 4, 5] {
+            assert_eq!(
+                row[side],
+                atlas::TILE_RESPAWN_ANCHOR_SIDE0,
+                "the charge-0 sides the side0 master wears"
+            );
+        }
+        // THE SIDE LADDER (charges=0..4 the side0..side4 the
+        // blockstate rows speak, the out-of-range the clamp keeps)
+        assert_eq!(
+            anchor_side_tile(0),
+            atlas::TILE_RESPAWN_ANCHOR_SIDE0,
+            "the uncharged look the side0 wears"
+        );
+        assert_eq!(
+            anchor_side_tile(1),
+            atlas::TILE_RESPAWN_ANCHOR_SIDE1,
+            "the first charge the side1 wears"
+        );
+        assert_eq!(
+            anchor_side_tile(2),
+            atlas::TILE_RESPAWN_ANCHOR_SIDE2,
+            "the second charge the side2 wears"
+        );
+        assert_eq!(
+            anchor_side_tile(3),
+            atlas::TILE_RESPAWN_ANCHOR_SIDE3,
+            "the third charge the side3 wears"
+        );
+        assert_eq!(
+            anchor_side_tile(4),
+            atlas::TILE_RESPAWN_ANCHOR_SIDE4,
+            "the full charge the side4 wears"
+        );
+        assert_eq!(
+            anchor_side_tile(9),
+            atlas::TILE_RESPAWN_ANCHOR_SIDE4,
+            "the out-of-range byte the clamp keeps"
+        );
+        // THE TOP'S OWN GLOW (the charges=1..4 rows the top master
+        // wear, the charge-0 the top_off keeps, the clamp the same
+        // glow answers)
+        assert_eq!(
+            anchor_top_tile(0),
+            atlas::TILE_RESPAWN_ANCHOR_TOP_OFF,
+            "the dark top the uncharged row wears"
+        );
+        for c in 1..=4u8 {
+            assert_eq!(
+                anchor_top_tile(c),
+                atlas::TILE_RESPAWN_ANCHOR_TOP,
+                "the charged {c} the glow top wears"
+            );
+        }
+        assert_eq!(
+            anchor_top_tile(7),
+            atlas::TILE_RESPAWN_ANCHOR_TOP,
+            "the out-of-range byte the clamp keeps"
+        );
+        // THE TILE NAMES (the generated pool the masters' rows speak —
+        // the position walk the lever test's own idiom wears: the
+        // anchor names the pool's tail rows bank, the pixel statics
+        // the named consts' own ids seat)
+        let name_row = |want: &str| -> bool { atlas::TILE_NAMES.iter().any(|n| *n == want) };
+        assert!(
+            name_row("respawn_anchor_side2"),
+            "the side master's own name the pool banks"
+        );
+        assert!(
+            name_row("respawn_anchor_top"),
+            "the glow top's own name the pool banks"
+        );
+        assert!(
+            name_row("respawn_anchor_top_off"),
+            "the dark top's own name the pool banks"
+        );
+        // THE GLOW LADDER (lambda$static$332 the getScaledChargeLevel
+        // (state, 15) call the bipush 15 banks, the /4 * max floor
+        // fold the ladder answers — 0/3/7/11/15 the presses climb)
+        let glow = |c: u8| -> i32 { anchor_scaled_charge(anchor_variant_charge(c), 15) };
+        assert_eq!(glow(0), 0, "the dark base the uncharged row wears");
+        assert_eq!(glow(1), 3, "the first glow the first press speaks");
+        assert_eq!(glow(2), 7, "the second glow the second press speaks");
+        assert_eq!(glow(3), 11, "the third glow the third press speaks");
+        assert_eq!(glow(4), 15, "the full glow the fourth press speaks");
     }
     #[test]
     fn the_shulker_cell_the_lids_tick_the_same_ramp_wears() {

@@ -225,7 +225,7 @@ pub fn redstone_conductor_at(world: &crate::world::World, x: i32, y: i32, z: i32
 /// bipush 10 the soul fire's row keeps — the constants the two
 /// registrations wear, the palette's default-state fold the client's
 /// kind-only world speaks), the rest dark.
-fn emission(id: u16) -> u8 {
+fn emission(id: u16, variant: u8) -> u8 {
     use crate::world::*;
     if is_torch(id) {
         14
@@ -351,6 +351,21 @@ fn emission(id: u16) -> u8 {
         // full brightness the light grid paints, the unbreakable gate
         // the same every-state read keeps)
         15
+    } else if id == crate::world::RESPAWN_ANCHOR {
+        // THE ANCHOR'S OWN GLOW LADDER (the autopush-315 round — the
+        // Blocks clinit's RESPAWN_ANCHOR registration the lightLevel
+        // indy #5680 the bootstrap 516 resolves [pc 27089-27094 the
+        // invocation wears, scripts/anchor_light_scout_315.py the
+        // live walk banks], lambda$static$332 the
+        // getScaledChargeLevel(state, 15) call the bipush 15 the
+        // second operand banks, the (charge)/4.0F * max floor fold
+        // the 314 round's [`world::anchor_scaled_charge`] law keeps —
+        // the ladder the charge presses climb: 0 the dark base, 3
+        // the first glow, 7 the second, 11 the third, 15 the full
+        // row the charge-4 seat wears. The variant byte the charge
+        // the emission's own read serves — the every-state read the
+        // kind-only palette's one variant-aware row answers)
+        crate::world::anchor_scaled_charge(crate::world::anchor_variant_charge(variant), 15) as u8
     } else {
         0
     }
@@ -458,7 +473,7 @@ pub fn compute(world: &World) -> LightGrid {
     for y in 0..h {
         for z in 0..n {
             for x in 0..n {
-                let e = emission(world.get(x, y, z));
+                let e = emission(world.get(x, y, z), world.variant(x, y, z));
                 if e > 0 {
                     block[idx(x, y, z)] = e;
                     flood.push(x, y, z);
@@ -727,7 +742,7 @@ pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) 
     // neighbors the transparency's change rides (the cave wall's new
     // air the torch's own flood lights — the opaque cell's edit the
     // removal alone answers).
-    let e = emission(world.get(x, y, z));
+    let e = emission(world.get(x, y, z), world.variant(x, y, z));
     layer_set(&mut grid.block, side, x, y, z, e);
     if e > 0 {
         bright.push((x, y, z));

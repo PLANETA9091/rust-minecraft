@@ -1,0 +1,151 @@
+=== the blockstate + the model ladder (the jar's own JSON) ===
+--- assets/minecraft/blockstates/respawn_anchor.json
+{
+  "variants": {
+    "charges=0": {
+      "model": "minecraft:block/respawn_anchor_0"
+    },
+    "charges=1": {
+      "model": "minecraft:block/respawn_anchor_1"
+    },
+    "charges=2": {
+      "model": "minecraft:block/respawn_anchor_2"
+    },
+    "charges=3": {
+      "model": "minecraft:block/respawn_anchor_3"
+    },
+    "charges=4": {
+      "model": "minecraft:block/respawn_anchor_4"
+    }
+  }
+}
+--- assets/minecraft/models/block/respawn_anchor_0.json
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/respawn_anchor_bottom",
+    "side": "minecraft:block/respawn_anchor_side0",
+    "top": "minecraft:block/respawn_anchor_top_off"
+  }
+}
+--- assets/minecraft/models/block/respawn_anchor_1.json
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/respawn_anchor_bottom",
+    "side": "minecraft:block/respawn_anchor_side1",
+    "top": "minecraft:block/respawn_anchor_top"
+  }
+}
+--- assets/minecraft/models/block/respawn_anchor_2.json
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/respawn_anchor_bottom",
+    "side": "minecraft:block/respawn_anchor_side2",
+    "top": "minecraft:block/respawn_anchor_top"
+  }
+}
+--- assets/minecraft/models/block/respawn_anchor_3.json
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/respawn_anchor_bottom",
+    "side": "minecraft:block/respawn_anchor_side3",
+    "top": "minecraft:block/respawn_anchor_top"
+  }
+}
+--- assets/minecraft/models/block/respawn_anchor_4.json
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/respawn_anchor_bottom",
+    "side": "minecraft:block/respawn_anchor_side4",
+    "top": "minecraft:block/respawn_anchor_top"
+  }
+}
+--- assets/minecraft/textures/block/respawn_anchor_top.png.mcmeta
+{
+  "animation": {}
+}
+!! assets/minecraft/textures/block/respawn_anchor_top_off.png.mcmeta MISSING
+=== the Blocks clinit's RESPAWN_ANCHOR registration walk ===
+26954 invokevirtual #341  net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength (FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26957 getstatic #5657  net/minecraft/world/level/block/SoundType.NETHERITE_BLOCK Lnet/minecraft/world/level/block/SoundType;
+26960 invokevirtual #57  net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound (Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26963 invokestatic #1442  net/minecraft/world/level/block/Blocks.register (Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+26966 putstatic #5659  net/minecraft/world/level/block/Blocks.NETHERITE_BLOCK Lnet/minecraft/world/level/block/Block;
+26969 getstatic #5661  net/minecraft/references/BlockItemIds.ANCIENT_DEBRIS Lnet/minecraft/references/BlockItemId;
+26972 invokestatic #30  net/minecraft/world/level/block/state/BlockBehaviour$Properties.of ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26975 getstatic #2392  net/minecraft/world/level/material/MapColor.COLOR_BLACK Lnet/minecraft/world/level/material/MapColor;
+26978 invokevirtual #83  net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor (Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26981 invokevirtual #336  net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26984 ldc_w #5664 = ?
+26987 ldc_w #2396 = ?
+26990 invokevirtual #341  net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength (FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26993 getstatic #5665  net/minecraft/world/level/block/SoundType.ANCIENT_DEBRIS Lnet/minecraft/world/level/block/SoundType;
+26996 invokevirtual #57  net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound (Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26999 invokestatic #1442  net/minecraft/world/level/block/Blocks.register (Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+27002 putstatic #5667  net/minecraft/world/level/block/Blocks.ANCIENT_DEBRIS Lnet/minecraft/world/level/block/Block;
+27005 getstatic #5669  net/minecraft/references/BlockItemIds.CRYING_OBSIDIAN Lnet/minecraft/references/BlockItemId;
+27008 invokedynamic #5672
+27013 invokestatic #30  net/minecraft/world/level/block/state/BlockBehaviour$Properties.of ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27016 getstatic #2392  net/minecraft/world/level/material/MapColor.COLOR_BLACK Lnet/minecraft/world/level/material/MapColor;
+27019 invokevirtual #83  net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor (Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27022 getstatic #779  net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+27025 invokevirtual #49  net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument (Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27028 invokevirtual #336  net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27031 ldc_w #2395 = ?
+27034 ldc_w #2396 = ?
+27037 invokevirtual #341  net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength (FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27040 invokedynamic #5673
+27045 invokevirtual #163  net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel (Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27048 invokestatic #188  net/minecraft/world/level/block/Blocks.register (Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+27051 putstatic #5674  net/minecraft/world/level/block/Blocks.CRYING_OBSIDIAN Lnet/minecraft/world/level/block/Block;
+27054 getstatic #5676  net/minecraft/references/BlockItemIds.RESPAWN_ANCHOR Lnet/minecraft/references/BlockItemId;
+27057 invokedynamic #5679
+27062 invokestatic #30  net/minecraft/world/level/block/state/BlockBehaviour$Properties.of ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27065 getstatic #2392  net/minecraft/world/level/material/MapColor.COLOR_BLACK Lnet/minecraft/world/level/material/MapColor;
+27068 invokevirtual #83  net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor (Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27071 getstatic #779  net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+27074 invokevirtual #49  net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument (Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27077 invokevirtual #336  net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27080 ldc_w #2395 = ?
+27083 ldc_w #2396 = ?
+27086 invokevirtual #341  net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength (FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27089 invokedynamic #5680
+27094 invokevirtual #163  net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel (Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+27097 invokestatic #188  net/minecraft/world/level/block/Blocks.register (Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+27100 putstatic #5681  net/minecraft/world/level/block/Blocks.RESPAWN_ANCHOR Lnet/minecraft/world/level/block/Block;
+27103 getstatic #5683  net/minecraft/references/BlockIds.POTTED_CRIMSON_FUNGUS Lnet/minecraft/resources/ResourceKey;
+27106 invokedynamic #5686
+27111 invokestatic #3604  net/minecraft/world/level/block/Blocks.flowerPotProperties ()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+=== the window's indys the bootstrap lambdas resolve ===
+indy #5672: bootstrap 513 name=#(13, 193) -> lambda <init>
+--- <init> ()V
+    0 aload_0
+    1 invokespecial #1  java/lang/Object.<init> ()V
+    4 return
+indy #5673: bootstrap 514 name=#(9, 673) -> lambda lambda$static$331
+--- lambda$static$331 (Lnet/minecraft/world/level/block/state/BlockState;)I
+    0 bipush 10
+    2 ireturn
+indy #5679: bootstrap 515 name=#(13, 193) -> lambda <init>
+--- <init> ()V
+    0 aload_0
+    1 invokespecial #1  java/lang/Object.<init> ()V
+    4 return
+indy #5680: bootstrap 516 name=#(9, 673) -> lambda lambda$static$332
+--- lambda$static$332 (Lnet/minecraft/world/level/block/state/BlockState;)I
+    0 aload_0
+    1 bipush 15
+    3 invokestatic #591  net/minecraft/world/level/block/RespawnAnchorBlock.getScaledChargeLevel (Lnet/minecraft/world/level/block/state/BlockState;I)I
+    6 ireturn
+indy #5686: bootstrap 517 name=#(13, 193) -> lambda lambda$static$333
+--- lambda$static$333 (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0 new #236  net/minecraft/world/level/block/FlowerPotBlock
+    3 dup
+    4 getstatic #586  net/minecraft/world/level/block/Blocks.CRIMSON_FUNGUS Lnet/minecraft/world/level/block/Block;
+    7 aload_0
+    8 invokespecial #242  net/minecraft/world/level/block/FlowerPotBlock.<init> (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+   11 areturn
