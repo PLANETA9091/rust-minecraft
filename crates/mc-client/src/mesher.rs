@@ -8886,6 +8886,281 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
         ],
         0,
     );
+    // THE LATCH'S OWN RELIEF (the autopush-299 round — the lock box
+    // the closed front's plain plane the 1-px bump retires —
+    // [`chest_lock_quads`])
+    out.extend(chest_lock_quads(facing, x0, x1, z0, z1, y_hi));
+    out
+}
+
+/// THE CHEST'S OWN LATCH BOX (the autopush-299 round — the 26.2 jar the
+/// live disasm re-pins: `ChestModel.createSingleBodyLayer` the `lock`
+/// child `texOffs(0,0).addBox(7,-2,14,2,4,1)` `PartPose.offset(0,9,1)`
+/// the SAME pivot the lid wears, `ChestModel.setupAnim` pc 20-31 the
+/// `lock.xRot = lid.xRot` the ride the quarter turn serves). THE TILE'S
+/// OWN ART SEAT the bump extrudes: the front tile's painted latch (the
+/// compose_chest_tiles round's 2x3 band at (7..9, 2..5) — the sheet's
+/// lock region (1,1)-(3,4) the tile carries) the relief's own pixels
+/// wear — the bump the art's exact screen seat covers (the tangent span
+/// the front face's u law's preimage answers: the north face's
+/// `u = x + 15 - x1` the x1-8..x1-6 span names, the south's
+/// `u = x - x0 + 1` the x0+6..x0+8, the east's `u = 17 - z - z0` the
+/// 8-z0..10-z0, the west's `u = z - z0 + 1` the z0+6..z0+8; the height
+/// the y_hi-5..y_hi-2 rows the art band speaks), 1-px proud of the
+/// front plane the vanilla relief wears. THE FIVE FACES the front
+/// face's own identity wear (the face index the front tile + the front
+/// shade the call site's table keeps — the 1-px sliver the shade nuance
+/// the front's own verdict carries), the back face the coplanar skip
+/// the raster law keeps, the winding the box templates' own orders
+/// keep (the backface cull the signed-area verdict speaks).
+fn chest_lock_quads(
+    facing: u8,
+    x0: f32,
+    x1: f32,
+    z0: f32,
+    z1: f32,
+    y_hi: f32,
+) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
+    // THE ART SEAT'S OWN BAND (the painted latch the tile rows 2..5
+    // carry — the bump's height the same rows the y pair answers, the
+    // pivot-relative dy 0..3 the doubles' 10-pivot the same band wears)
+    let pivot = y_hi - 5.0;
+    let ly0 = pivot;
+    let ly1 = pivot + 3.0;
+    let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
+    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(5);
+    let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
+        out.push((pts, uvs, face));
+    };
+    match facing {
+        crate::world::CHEST_FACING_SOUTH => {
+            // THE SOUTH FRONT (face 4 — the +Z plane the z1 edge wears,
+            // the proud band z1..z1+1 the +Z relief keeps)
+            let (ta, tb) = (x0 + 6.0, x0 + 8.0);
+            let (d_near, d_far) = (z1, z1 + 1.0);
+            push(
+                [
+                    px(ta, ly1, d_far),
+                    px(ta, ly0, d_far),
+                    px(tb, ly0, d_far),
+                    px(tb, ly1, d_far),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [9.0, 5.0], [9.0, 2.0]],
+                4,
+            );
+            push(
+                [
+                    px(ta, ly1, d_near),
+                    px(ta, ly1, d_far),
+                    px(tb, ly1, d_far),
+                    px(tb, ly1, d_near),
+                ],
+                [[7.0, 3.0], [7.0, 2.0], [9.0, 2.0], [9.0, 3.0]],
+                4,
+            );
+            push(
+                [
+                    px(ta, ly0, d_far),
+                    px(ta, ly0, d_near),
+                    px(tb, ly0, d_near),
+                    px(tb, ly0, d_far),
+                ],
+                [[7.0, 5.0], [7.0, 4.0], [9.0, 4.0], [9.0, 5.0]],
+                4,
+            );
+            push(
+                [
+                    px(tb, ly1, d_far),
+                    px(tb, ly0, d_far),
+                    px(tb, ly0, d_near),
+                    px(tb, ly1, d_near),
+                ],
+                [[9.0, 2.0], [9.0, 5.0], [8.0, 5.0], [8.0, 2.0]],
+                4,
+            );
+            push(
+                [
+                    px(ta, ly1, d_near),
+                    px(ta, ly0, d_near),
+                    px(ta, ly0, d_far),
+                    px(ta, ly1, d_far),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [8.0, 5.0], [8.0, 2.0]],
+                4,
+            );
+        }
+        crate::world::CHEST_FACING_EAST => {
+            // THE EAST FRONT (face 0 — the +X plane the x1 edge wears,
+            // the proud band x1..x1+1 the +X relief keeps; the tangent
+            // the z axis rides, the u law reversed the ta end the u9
+            // column answers)
+            let (ta, tb) = (8.0 - z0, 10.0 - z0);
+            let (d_near, d_far) = (x1, x1 + 1.0);
+            push(
+                [
+                    px(d_far, ly1, tb),
+                    px(d_far, ly0, tb),
+                    px(d_far, ly0, ta),
+                    px(d_far, ly1, ta),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [9.0, 5.0], [9.0, 2.0]],
+                0,
+            );
+            push(
+                [
+                    px(d_near, ly1, ta),
+                    px(d_near, ly1, tb),
+                    px(d_far, ly1, tb),
+                    px(d_far, ly1, ta),
+                ],
+                [[9.0, 3.0], [7.0, 3.0], [7.0, 2.0], [9.0, 2.0]],
+                0,
+            );
+            push(
+                [
+                    px(d_near, ly0, tb),
+                    px(d_near, ly0, ta),
+                    px(d_far, ly0, ta),
+                    px(d_far, ly0, tb),
+                ],
+                [[7.0, 4.0], [9.0, 4.0], [9.0, 5.0], [7.0, 5.0]],
+                0,
+            );
+            push(
+                [
+                    px(d_near, ly1, tb),
+                    px(d_near, ly0, tb),
+                    px(d_far, ly0, tb),
+                    px(d_far, ly1, tb),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [8.0, 5.0], [8.0, 2.0]],
+                0,
+            );
+            push(
+                [
+                    px(d_far, ly1, ta),
+                    px(d_far, ly0, ta),
+                    px(d_near, ly0, ta),
+                    px(d_near, ly1, ta),
+                ],
+                [[9.0, 2.0], [9.0, 5.0], [8.0, 5.0], [8.0, 2.0]],
+                0,
+            );
+        }
+        crate::world::CHEST_FACING_WEST => {
+            // THE WEST FRONT (face 1 — the -X plane the x0 edge wears,
+            // the proud band x0-1..x0 the -X relief keeps)
+            let (ta, tb) = (z0 + 6.0, z0 + 8.0);
+            let (d_far, d_near) = (x0 - 1.0, x0);
+            push(
+                [
+                    px(d_far, ly1, ta),
+                    px(d_far, ly0, ta),
+                    px(d_far, ly0, tb),
+                    px(d_far, ly1, tb),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [9.0, 5.0], [9.0, 2.0]],
+                1,
+            );
+            push(
+                [
+                    px(d_far, ly1, ta),
+                    px(d_far, ly1, tb),
+                    px(d_near, ly1, tb),
+                    px(d_near, ly1, ta),
+                ],
+                [[7.0, 2.0], [9.0, 2.0], [9.0, 3.0], [7.0, 3.0]],
+                1,
+            );
+            push(
+                [
+                    px(d_far, ly0, tb),
+                    px(d_far, ly0, ta),
+                    px(d_near, ly0, ta),
+                    px(d_near, ly0, tb),
+                ],
+                [[9.0, 5.0], [7.0, 5.0], [7.0, 4.0], [9.0, 4.0]],
+                1,
+            );
+            push(
+                [
+                    px(d_far, ly1, tb),
+                    px(d_far, ly0, tb),
+                    px(d_near, ly0, tb),
+                    px(d_near, ly1, tb),
+                ],
+                [[8.0, 2.0], [8.0, 5.0], [9.0, 5.0], [9.0, 2.0]],
+                1,
+            );
+            push(
+                [
+                    px(d_near, ly1, ta),
+                    px(d_near, ly0, ta),
+                    px(d_far, ly0, ta),
+                    px(d_far, ly1, ta),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [8.0, 5.0], [8.0, 2.0]],
+                1,
+            );
+        }
+        // the north default (the registerDefaultState pin keeps)
+        _ => {
+            // THE NORTH FRONT (face 5 — the -Z plane the z0 edge wears,
+            // the proud band z0-1..z0 the -Z relief keeps)
+            let (ta, tb) = (x1 - 8.0, x1 - 6.0);
+            let (d_far, d_near) = (z0 - 1.0, z0);
+            push(
+                [
+                    px(tb, ly1, d_far),
+                    px(tb, ly0, d_far),
+                    px(ta, ly0, d_far),
+                    px(ta, ly1, d_far),
+                ],
+                [[9.0, 2.0], [9.0, 5.0], [7.0, 5.0], [7.0, 2.0]],
+                5,
+            );
+            push(
+                [
+                    px(ta, ly1, d_far),
+                    px(ta, ly1, d_near),
+                    px(tb, ly1, d_near),
+                    px(tb, ly1, d_far),
+                ],
+                [[7.0, 2.0], [7.0, 3.0], [9.0, 3.0], [9.0, 2.0]],
+                5,
+            );
+            push(
+                [
+                    px(ta, ly0, d_near),
+                    px(ta, ly0, d_far),
+                    px(tb, ly0, d_far),
+                    px(tb, ly0, d_near),
+                ],
+                [[7.0, 4.0], [7.0, 5.0], [9.0, 5.0], [9.0, 4.0]],
+                5,
+            );
+            push(
+                [
+                    px(tb, ly1, d_near),
+                    px(tb, ly0, d_near),
+                    px(tb, ly0, d_far),
+                    px(tb, ly1, d_far),
+                ],
+                [[8.0, 2.0], [8.0, 5.0], [9.0, 5.0], [9.0, 2.0]],
+                5,
+            );
+            push(
+                [
+                    px(ta, ly1, d_far),
+                    px(ta, ly0, d_far),
+                    px(ta, ly0, d_near),
+                    px(ta, ly1, d_near),
+                ],
+                [[7.0, 2.0], [7.0, 5.0], [8.0, 5.0], [8.0, 2.0]],
+                5,
+            );
+        }
+    }
     out
 }
 
@@ -9088,7 +9363,7 @@ fn chest_open_model_quads(
         };
         [u, 14.0 - y]
     };
-    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(11);
+    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(16);
     let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
         out.push((pts, uvs, face));
     };
@@ -9356,6 +9631,12 @@ fn chest_open_model_quads(
             0,
         );
     }
+    // THE LATCH'S OWN RIDE (the autopush-299 round — the setupAnim
+    // `lock.xRot = lid.xRot` law the lock the lid's own rotation
+    // wears: the quads the ride loop's tail the quarter turn carries,
+    // the full-open the 24/16 tip the +1 past-the-edge the lock's own
+    // depth speaks — [`chest_lock_quads`])
+    out.extend(chest_lock_quads(facing, x0, x1, z0, z1, y_hi));
     // THE QUARTER TURN'S OWN APPLY (the lid's faces the rotation the
     // rigid walk serves — the winding the proper rotation preserves,
     // the UVs the surface the glued law keeps)
@@ -15307,15 +15588,16 @@ mod tests {
             quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max)
         };
         // THE SINGLE CHEST (the unstamped default the registerDefault
-        // pin wears — the SIX quads the box bakes)
+        // pin wears — the ELEVEN quads the box + the latch bake [the
+        // autopush-299 round the lock box the closed front wears])
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::CHEST);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(
             cell.len(),
-            6,
-            "the single chest the 6 quads bakes, got {}",
+            11,
+            "the single chest the box 6 + the latch 5 bakes, got {}",
             cell.len()
         );
         // THE 14/16 BAND (the y span the 0..14 px box keeps — the
@@ -15391,7 +15673,7 @@ mod tests {
         );
         let qe = mesh_chunk(&we, 0, 0, None);
         let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celle.len(), 6, "the east chest the same 6 quads bakes");
+        assert_eq!(celle.len(), 11, "the east chest the box 6 + the latch 5 bakes");
         let east_face = |quad: &crate::mesher::Quad| {
             quad.pts.iter().all(|p| (p[0] - (8.0 + 15.0 / 16.0)).abs() < 1e-5)
         };
@@ -15420,7 +15702,7 @@ mod tests {
         );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celld.len(), 6, "the double the same 6 quads bakes");
+        assert_eq!(celld.len(), 11, "the double the box 6 + the latch 5 bakes");
         for quad in &celld {
             let y_max = y_max_of(quad);
             assert!(
@@ -15442,7 +15724,7 @@ mod tests {
         put(&mut ww, 8, 8, 8, crate::world::WAXED_COPPER_CHEST);
         let qw = mesh_chunk(&ww, 0, 0, None);
         let cellw: Vec<_> = qw.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cellw.len(), 6, "the waxed twin the same box bakes");
+        assert_eq!(cellw.len(), 11, "the waxed twin the box + the latch bakes");
         let waxed_tiles = gen_atlas::FACE_TILES[crate::world::WAXED_COPPER_CHEST as usize];
         assert!(
             cellw.iter().all(|quad| waxed_tiles.contains(&quad.tile)),
@@ -15494,20 +15776,21 @@ mod tests {
             |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[2]).fold(f32::MIN, f32::max);
         let x_min_of =
             |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
-        // THE CLOSED CHEST'S OWN STATIC BOX (the pre-round law the
-        // round never touches — the 6 quads the 14/16 band keeps)
+        // THE CLOSED CHEST'S OWN STATIC BOX (the box + the latch — the
+        // 11 quads the 14/16 band + the relief keep)
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::CHEST);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(
             cell.len(),
-            6,
-            "the closed chest the 6 quads the static box keeps, got {}",
+            11,
+            "the closed chest the box 6 + the latch 5 keeps, got {}",
             cell.len()
         );
         // THE OPEN CHEST'S OWN LID WALK (the bit stamps the builder
-        // swaps — the 11 quads the body 6 + the lid 5 bakes)
+        // swaps — the 16 quads the body 6 + the lid 5 + the latch 5
+        // bakes [the autopush-299 round the latch the ride joins])
         let mut wo = empty_world();
         put(&mut wo, 8, 8, 8, crate::world::CHEST);
         wo.set_variant(8, 8, 8, crate::world::CHEST_OPEN_BIT);
@@ -15515,12 +15798,14 @@ mod tests {
         let opened: Vec<_> = qo.iter().filter(|quad| near_cell(quad)).collect();
         assert_eq!(
             opened.len(),
-            11,
-            "the open chest the body 6 + the lid 5 bakes, got {}",
+            16,
+            "the open chest the body 6 + the lid 5 + the latch 5 bakes, got {}",
             opened.len()
         );
         // THE BODY'S OWN BAND (the y 0..10 the body quads keep — the
-        // six the inside floor the top plane 8 + 10/16 wears)
+        // six the inside floor the top plane 8 + 10/16 wears [the
+        // latch's own faces the ride the y band lifts — the rotated
+        // lock the body filter never seats])
         let body: Vec<_> = opened
             .iter()
             .filter(|quad| quad.pts.iter().all(|p| p[1] <= 8.0 + 10.0 / 16.0 + 1e-5))
@@ -15544,14 +15829,16 @@ mod tests {
             "the inside floor the up-face tile the closed fold wears"
         );
         // THE LID'S OWN REACH (the free edge the pivot + 14 the up tip
-        // wears — the 23/16 the single's 9-pivot keeps)
+        // wears — the LATCH's ride the 24/16 tip the +1 past-the-edge
+        // the lock's own depth speaks [the autopush-299 round the
+        // lock's dz 15 the quarter turn the y 9+15 answers])
         let lid_top = opened
             .iter()
             .map(|quad| y_max_of(quad))
             .fold(f32::MIN, f32::max);
         assert!(
-            (lid_top - (8.0 + 23.0 / 16.0)).abs() < 1e-5,
-            "the lid's free edge the 23/16 reach wears, got {lid_top}"
+            (lid_top - (8.0 + 24.0 / 16.0)).abs() < 1e-5,
+            "the latch's ride the 24/16 tip wears, got {lid_top}"
         );
         // THE BACK TIP (the north default the hinge z1 the south edge
         // — the lid's z the 5-px past-the-back 20/16 wears)
@@ -15564,15 +15851,17 @@ mod tests {
             "the lid's back tip the 20/16 wears, got {back_tip}"
         );
         // THE LID'S OWN TILES (the rotated faces the closed folds keep
-        // — the side/top tiles the surface the glued law wears)
+        // — the side/top tiles the surface the glued law wears; the
+        // latch's five faces the ride the y band the same filter
+        // wears — the rotated lock every face the lift answers)
         let lid: Vec<_> = opened
             .iter()
             .filter(|quad| quad.pts.iter().any(|p| p[1] > 8.0 + 10.0 / 16.0 + 1e-5))
             .collect();
         assert_eq!(
             lid.len(),
-            5,
-            "the lid the five faces the hinge skip keeps, got {}",
+            10,
+            "the lid five + the latch's five ride keeps, got {}",
             lid.len()
         );
         assert!(
@@ -15598,7 +15887,7 @@ mod tests {
         );
         let qe = mesh_chunk(&we, 0, 0, None);
         let openede: Vec<_> = qe.iter().filter(|quad| near_cell(quad)).collect();
-        assert_eq!(openede.len(), 11, "the east open the same 11 bakes");
+        assert_eq!(openede.len(), 16, "the east open the same 16 bakes");
         let west_tip = openede
             .iter()
             .map(|quad| x_min_of(quad))
@@ -15614,10 +15903,10 @@ mod tests {
         wn.set_variant(8, 8, 8, crate::world::CHEST_OPEN_BIT);
         let qn = mesh_chunk(&wn, 0, 0, None);
         let openedn: Vec<_> = qn.iter().filter(|quad| near_cell(quad)).collect();
-        assert_eq!(openedn.len(), 11, "the ender open the same 11 bakes");
+        assert_eq!(openedn.len(), 16, "the ender open the same 16 bakes");
         // THE DOUBLE'S OWN HALVES (the LEFT type the open pose the
-        // same 11 quads per half bakes — the 15/16 band the lid the
-        // 10-pivot keeps, the free edge the 24/16 reach wears)
+        // same 16 quads per half bakes — the 15/16 band the lid the
+        // 10-pivot keeps, the latch's ride the 25/16 tip wears)
         let mut wd = empty_world();
         put(&mut wd, 8, 8, 8, crate::world::CHEST);
         wd.set_variant(
@@ -15631,14 +15920,14 @@ mod tests {
         );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let openedd: Vec<_> = qd.iter().filter(|quad| near_cell(quad)).collect();
-        assert_eq!(openedd.len(), 11, "the double open the same 11 bakes");
+        assert_eq!(openedd.len(), 16, "the double open the same 16 bakes");
         let lid_topd = openedd
             .iter()
             .map(|quad| y_max_of(quad))
             .fold(f32::MIN, f32::max);
         assert!(
-            (lid_topd - (8.0 + 24.0 / 16.0)).abs() < 1e-4,
-            "the double's lid the 24/16 reach the 10-pivot wears, got {lid_topd}"
+            (lid_topd - (8.0 + 25.0 / 16.0)).abs() < 1e-4,
+            "the double's latch the 25/16 tip the 10-pivot wears, got {lid_topd}"
         );
     }
 
@@ -15672,7 +15961,9 @@ mod tests {
             |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
         // THE HALF-OPEN PAIR'S OWN POSE (the entry (0.0, 0.5) the
         // partial=1.0 the render 0.5 wears — the 45-degree angle the
-        // 19·√2/2 reach the free edge speaks)
+        // 19·√2/2 reach the free edge speaks; the latch's ride the
+        // 18·√2/2 the lid's own tip the half-swing never passes [the
+        // five latch quads the count rides])
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::CHEST);
         w.chest_lids.insert((8, 8, 8), (0.0, 0.5));
@@ -15680,8 +15971,8 @@ mod tests {
         let cell: Vec<_> = q.iter().filter(|quad| near_cell(quad)).collect();
         assert_eq!(
             cell.len(),
-            12,
-            "the half-open the body 6 + the lid 6 (the hinge the tilt reveals) bakes, got {}",
+            17,
+            "the half-open the body 6 + the lid 6 + the latch 5 bakes, got {}",
             cell.len()
         );
         let want_top = {
@@ -15705,7 +15996,7 @@ mod tests {
         wl.lid_partial = 0.5;
         let ql = mesh_chunk(&wl, 0, 0, None);
         let celll: Vec<_> = ql.iter().filter(|quad| near_cell(quad)).collect();
-        assert_eq!(celll.len(), 12, "the lerp frame the same 12 bakes");
+        assert_eq!(celll.len(), 17, "the lerp frame the same 17 bakes");
         let want_topl = {
             let a = 0.45f32 * std::f32::consts::FRAC_PI_2;
             8.0 + (9.0 + 5.0 * a.cos() + 14.0 * a.sin()) / 16.0
@@ -15738,10 +16029,258 @@ mod tests {
         let cellz: Vec<_> = qz.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(
             cellz.len(),
-            6,
-            "the fresh pair the closed builder the 6 quads keeps, got {}",
+            11,
+            "the fresh pair the closed builder the box + the latch keeps, got {}",
             cellz.len()
         );
+    }
+
+    #[test]
+    fn the_chest_latch_the_art_seat_relief_wears() {
+        // THE LATCH'S OWN SEATS (the autopush-299 round — the lock box
+        // the tile's own painted band the relief extrudes): the closed
+        // front the 1-px proud bump wears (the outer face the art band
+        // (7..9, 2..5) the compose_chest_tiles seat samples, the four
+        // relief faces the front tile the call site's assignment
+        // keeps), the facing the proud band's own direction names (the
+        // north the z0-1..z0, the south the z1..z1+1, the east the
+        // x1..x1+1, the west the x0-1..x0), the double's shifted box
+        // the tangent the u law's preimage shifts (the conn-east x1=16
+        // the x 8..10 span answers), the ride the quarter turn the tip
+        // wears (the walk test's 24/16 verdict owns the full-open
+        // pose)
+        use mc_registry::generated::atlas as gen_atlas;
+        let tiles = gen_atlas::FACE_TILES[crate::world::CHEST as usize];
+        let front_tile = tiles[5];
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        // THE CLOSED SINGLE'S OWN LATCH (the north default the -Z proud
+        // band wears — the outer face the z 8.0 plane, the tangent the
+        // x 8+7/16..8+9/16 span, the height the y 8+9/16..8+12/16 band)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(cell.len(), 11, "the closed chest the box + the latch keeps");
+        // the lock quads the tangent-band + depth-band pair the box
+        // faces' own full spans refuse (the box's north face the full
+        // x 1..15 span the corner verdict excludes)
+        let lock: Vec<_> = cell
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| {
+                    p[2] <= 8.0 + 1.0 / 16.0 + 1e-5
+                        && p[0] >= 8.0 + 7.0 / 16.0 - 1e-5
+                        && p[0] <= 8.0 + 9.0 / 16.0 + 1e-5
+                })
+            })
+            .collect();
+        assert_eq!(
+            lock.len(),
+            5,
+            "the latch the five faces the -Z band bakes, got {}",
+            lock.len()
+        );
+        assert!(
+            lock.iter().all(|quad| quad.tile == front_tile),
+            "the latch faces the front tile the art band wears"
+        );
+        let outer = lock
+            .iter()
+            .find(|quad| quad.pts.iter().all(|p| (p[2] - 8.0).abs() < 1e-5))
+            .expect("the outer face the proud plane bakes");
+        for p in outer.pts.iter() {
+            assert!(
+                p[0] >= 8.0 + 7.0 / 16.0 - 1e-5
+                    && p[0] <= 8.0 + 9.0 / 16.0 + 1e-5
+                    && p[1] >= 8.0 + 9.0 / 16.0 - 1e-5
+                    && p[1] <= 8.0 + 12.0 / 16.0 + 1e-5,
+                "the outer face the art seat's tangent + height wears, got {p:?}"
+            );
+        }
+        for uv in outer.uvs.iter() {
+            assert!(
+                uv[0] >= 7.0 / 16.0 - 1e-6
+                    && uv[0] <= 9.0 / 16.0 + 1e-6
+                    && uv[1] >= 2.0 / 16.0 - 1e-6
+                    && uv[1] <= 5.0 / 16.0 + 1e-6,
+                "the outer face the art band (7..9, 2..5) samples, got {uv:?}"
+            );
+        }
+        // THE FACING'S OWN PROUD BANDS (the south the z1..z1+1, the
+        // east the x1..x1+1 the tangent the z 7..9 keeps, the west the
+        // x0-1..x0 — the five faces every band bakes)
+        let mut ws = empty_world();
+        put(&mut ws, 8, 8, 8, crate::world::CHEST);
+        ws.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_SOUTH,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qs = mesh_chunk(&ws, 0, 0, None);
+        let cells: Vec<_> = qs.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(cells.len(), 11, "the south closed the box + the latch keeps");
+        let locks = cells
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| {
+                    p[2] >= 8.0 + 15.0 / 16.0 - 1e-5
+                        && p[0] >= 8.0 + 7.0 / 16.0 - 1e-5
+                        && p[0] <= 8.0 + 9.0 / 16.0 + 1e-5
+                })
+            })
+            .count();
+        assert_eq!(locks, 5, "the south latch the +Z band bakes, got {locks}");
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::CHEST);
+        we.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_EAST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(celle.len(), 11, "the east closed the box + the latch keeps");
+        let locke: Vec<_> = celle
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| {
+                    p[0] >= 8.0 + 15.0 / 16.0 - 1e-5
+                        && p[2] >= 8.0 + 7.0 / 16.0 - 1e-5
+                        && p[2] <= 8.0 + 9.0 / 16.0 + 1e-5
+                })
+            })
+            .collect();
+        assert_eq!(locke.len(), 5, "the east latch the +X band bakes, got {}", locke.len());
+        let outerz = locke
+            .iter()
+            .find(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-5))
+            .expect("the east outer face the proud plane bakes");
+        for p in outerz.pts.iter() {
+            assert!(
+                p[2] >= 8.0 + 7.0 / 16.0 - 1e-5 && p[2] <= 8.0 + 9.0 / 16.0 + 1e-5,
+                "the east outer face the z 7..9 tangent wears, got {p:?}"
+            );
+        }
+        let mut ww = empty_world();
+        put(&mut ww, 8, 8, 8, crate::world::CHEST);
+        ww.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_WEST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qw = mesh_chunk(&ww, 0, 0, None);
+        let cellw: Vec<_> = qw.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(cellw.len(), 11, "the west closed the box + the latch keeps");
+        let lockw = cellw
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| {
+                    p[0] <= 8.0 + 1.0 / 16.0 + 1e-5
+                        && p[2] >= 8.0 + 7.0 / 16.0 - 1e-5
+                        && p[2] <= 8.0 + 9.0 / 16.0 + 1e-5
+                })
+            })
+            .count();
+        assert_eq!(lockw, 5, "the west latch the -X band bakes, got {lockw}");
+        // THE DOUBLE'S OWN SHIFTED TANGENT (the conn-east box x1=16 the
+        // front face's u = x - 1 law the art's preimage the x 8..10
+        // span answers — the latch the shifted seat the painted band's
+        // own world pixels wear; the height the 15-y_hi the 10..13 band
+        // keeps)
+        let mut wd = empty_world();
+        put(&mut wd, 8, 8, 8, crate::world::CHEST);
+        wd.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_NORTH,
+                crate::world::CHEST_TYPE_LEFT,
+            ),
+        );
+        let qd = mesh_chunk(&wd, 0, 0, None);
+        let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(celld.len(), 11, "the double closed the box + the latch keeps");
+        let lockd: Vec<_> = celld
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| {
+                    p[2] <= 8.0 + 1.0 / 16.0 + 1e-5
+                        && p[0] >= 8.0 + 8.0 / 16.0 - 1e-5
+                        && p[0] <= 8.0 + 10.0 / 16.0 + 1e-5
+                })
+            })
+            .collect();
+        assert_eq!(lockd.len(), 5, "the double latch the five faces bakes");
+        let outerd = lockd
+            .iter()
+            .find(|quad| quad.pts.iter().all(|p| (p[2] - 8.0).abs() < 1e-5))
+            .expect("the double's outer face the proud plane bakes");
+        for p in outerd.pts.iter() {
+            assert!(
+                p[0] >= 8.0 + 8.0 / 16.0 - 1e-5
+                    && p[0] <= 8.0 + 10.0 / 16.0 + 1e-5
+                    && p[1] >= 8.0 + 10.0 / 16.0 - 1e-5
+                    && p[1] <= 8.0 + 13.0 / 16.0 + 1e-5,
+                "the double's outer face the shifted seat wears, got {p:?}"
+            );
+        }
+        // THE RIDE'S OWN TIP (the full-open the lock the quarter turn
+        // carries — the outer face the y 24/16 plane the z 15..18 band
+        // the x 7..9 keeps [the walk test's verdict the tip owns])
+        let mut wo = empty_world();
+        put(&mut wo, 8, 8, 8, crate::world::CHEST);
+        wo.set_variant(8, 8, 8, crate::world::CHEST_OPEN_BIT);
+        let qo = mesh_chunk(&wo, 0, 0, None);
+        let near_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 0.5 - 1e-4
+                    && p[0] <= 9.0 + 0.5 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1.5 + 1e-4
+                    && p[2] >= 8.0 - 0.5 - 1e-4
+                    && p[2] <= 9.0 + 1.5 + 1e-4
+            })
+        };
+        let opened: Vec<_> = qo.iter().filter(|quad| near_cell(quad)).collect();
+        let tip = opened
+            .iter()
+            .find(|quad| {
+                quad.pts
+                    .iter()
+                    .all(|p| (p[1] - (8.0 + 24.0 / 16.0)).abs() < 1e-5)
+            })
+            .expect("the latch's outer face the 24/16 tip plane bakes");
+        for p in tip.pts.iter() {
+            assert!(
+                p[0] >= 8.0 + 7.0 / 16.0 - 1e-5
+                    && p[0] <= 8.0 + 9.0 / 16.0 + 1e-5
+                    && p[2] >= 8.0 + 15.0 / 16.0 - 1e-5
+                    && p[2] <= 8.0 + 18.0 / 16.0 + 1e-5,
+                "the tip face the z 15..18 band the ride serves, got {p:?}"
+            );
+        }
     }
 
     #[test]
