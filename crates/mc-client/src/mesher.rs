@@ -8764,10 +8764,17 @@ fn empty_pane_models() -> &'static std::collections::HashMap<&'static str, Vec<D
 /// answers). The faces the FACE_TILES order returns (the face index
 /// the lane's tile + shade tables read), the vertex order the
 /// vanilla faceinfo corner picks keep (the winding the raster law
-/// banks), the UVs the content alignment law speaks (the vertical
-/// faces the v = y_hi - y fold — the top edge the tile's row 0 the
-/// lid strip samples, the bottom edge the base trim rows 14/15; the
-/// u the box's own span the 1..15 content band maps; the up/down the
+/// banks), the UVs the TWO-BAND V-FOLD LAW the autopush-303 round
+/// banks (the jar's own Polygon remap the 302 round pinned the
+/// whole-chest extension wears: each vertical face the SEAM
+/// y_hi - 5 the body + the lid quads splits, the body's v = y + 5
+/// the tile's rows 5..14 the band's direct stack maps [the face's
+/// bottom edge the band's first row samples, the seam edge the row
+/// 14 the band's last row answers], the lid's v = y - seam the rows
+/// 0..4 the strip's direct stack maps [the seam edge the strip's
+/// first row, the top edge the fifth] — the single's 9-row body
+/// window + the double's 10 the same tile rows serve, the u the
+/// box's own span the 1..15 content band keeps; the up/down the
 /// centered 1..15 both axes keep). The returned pts the 0..1 block
 /// units (the px /16 fold the derived quads wear), the uvs the
 /// 0..16 px space (the /16 normalize the consumption keeps).
@@ -8785,21 +8792,37 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
         }
     };
     let y0 = 0.0f32;
+    // THE SEAM THE LID'S OWN BAND RIDES (the lid five rows the top
+    // band keeps — the jar's lid box the offset y 9 the 5-tall ride
+    // wears, the doubles' 15-tall face the 10 the same five keeps)
+    let seam = y_hi - 5.0f32;
     let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
-    // the vertical faces' own uv law (the u the face's own span the
-    // 1..15 content band maps — the north/east the mirrored fold, the
-    // south/west the direct fold; the v the top edge the row 0 the
-    // lid strip samples, the bottom edge the y_hi row the base keeps)
-    let vert_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
-        let u = match face {
+    // the u the face's own span the 1..15 content band maps (the
+    // north/east the mirrored fold, the south/west the direct fold —
+    // the 301 u-law walk the round never touches)
+    let u_of = |x: f32, z: f32, face: usize| -> f32 {
+        match face {
             5 => x + 15.0 - x1,        // north: u = x + (15 - x1)
             0 => 16.0 - z + 1.0 - z0,  // east: u = (16 - z) + (1 - z0)
             4 => x - x0 + 1.0,         // south: u = x - x0 + 1
             _ => z - z0 + 1.0,         // west: u = z - z0 + 1
-        };
-        [u, y_hi - y]
+        }
     };
-    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(6);
+    // the TWO-BAND V-FOLD LAW (the autopush-303 round — the jar's
+    // Polygon remap the band's v0 the two MIN-Y vertices assigns, the
+    // whole-chest extension the 303 probe pins: the bottom box's band
+    // rows 33..42 the face's BOTTOM edge the first row samples, the
+    // lid box's band rows 14..18 the seam edge the first row wears):
+    // the body's v = y + 5 the tile's rows 5..14 the direct stack
+    // maps, the lid's v = y - seam the rows 0..4 the strip keeps —
+    // the v = y_hi - y top-edge-0 fold the round retires
+    let body_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
+        [u_of(x, z, face), y + 5.0]
+    };
+    let lid_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
+        [u_of(x, z, face), y - seam]
+    };
+    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(10);
     let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
         out.push((pts, uvs, face));
     };
@@ -8835,67 +8858,130 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
         ],
         2,
     );
-    // NORTH (face 5): corners (x1,y1,z0) (x1,y0,z0) (x0,y0,z0) (x0,y1,z0)
+    // NORTH (face 5): the BODY quad y 0..seam + the LID quad
+    // seam..y_hi (the two-band split the v-law wears — the corners
+    // the face's own order keeps, the y pair the band's own split
+    // serves)
     push(
         [
-            px(x1, y_hi, z0),
+            px(x1, seam, z0),
             px(x1, y0, z0),
             px(x0, y0, z0),
-            px(x0, y_hi, z0),
+            px(x0, seam, z0),
         ],
         [
-            vert_uv(x1, y_hi, z0, 5),
-            vert_uv(x1, y0, z0, 5),
-            vert_uv(x0, y0, z0, 5),
-            vert_uv(x0, y_hi, z0, 5),
+            body_uv(x1, seam, z0, 5),
+            body_uv(x1, y0, z0, 5),
+            body_uv(x0, y0, z0, 5),
+            body_uv(x0, seam, z0, 5),
         ],
         5,
     );
-    // SOUTH (face 4): corners (x0,y1,z1) (x0,y0,z1) (x1,y0,z1) (x1,y1,z1)
     push(
         [
-            px(x0, y_hi, z1),
-            px(x0, y0, z1),
-            px(x1, y0, z1),
-            px(x1, y_hi, z1),
+            px(x1, y_hi, z0),
+            px(x1, seam, z0),
+            px(x0, seam, z0),
+            px(x0, y_hi, z0),
         ],
         [
-            vert_uv(x0, y_hi, z1, 4),
-            vert_uv(x0, y0, z1, 4),
-            vert_uv(x1, y0, z1, 4),
-            vert_uv(x1, y_hi, z1, 4),
+            lid_uv(x1, y_hi, z0, 5),
+            lid_uv(x1, seam, z0, 5),
+            lid_uv(x0, seam, z0, 5),
+            lid_uv(x0, y_hi, z0, 5),
+        ],
+        5,
+    );
+    // SOUTH (face 4): the body + the lid pair
+    push(
+        [
+            px(x0, seam, z1),
+            px(x0, y0, z1),
+            px(x1, y0, z1),
+            px(x1, seam, z1),
+        ],
+        [
+            body_uv(x0, seam, z1, 4),
+            body_uv(x0, y0, z1, 4),
+            body_uv(x1, y0, z1, 4),
+            body_uv(x1, seam, z1, 4),
         ],
         4,
     );
-    // WEST (face 1): corners (x0,y1,z0) (x0,y0,z0) (x0,y0,z1) (x0,y1,z1)
     push(
         [
-            px(x0, y_hi, z0),
-            px(x0, y0, z0),
-            px(x0, y0, z1),
             px(x0, y_hi, z1),
+            px(x0, seam, z1),
+            px(x1, seam, z1),
+            px(x1, y_hi, z1),
         ],
         [
-            vert_uv(x0, y_hi, z0, 1),
-            vert_uv(x0, y0, z0, 1),
-            vert_uv(x0, y0, z1, 1),
-            vert_uv(x0, y_hi, z1, 1),
+            lid_uv(x0, y_hi, z1, 4),
+            lid_uv(x0, seam, z1, 4),
+            lid_uv(x1, seam, z1, 4),
+            lid_uv(x1, y_hi, z1, 4),
+        ],
+        4,
+    );
+    // WEST (face 1): the body + the lid pair
+    push(
+        [
+            px(x0, seam, z0),
+            px(x0, y0, z0),
+            px(x0, y0, z1),
+            px(x0, seam, z1),
+        ],
+        [
+            body_uv(x0, seam, z0, 1),
+            body_uv(x0, y0, z0, 1),
+            body_uv(x0, y0, z1, 1),
+            body_uv(x0, seam, z1, 1),
         ],
         1,
     );
-    // EAST (face 0): corners (x1,y1,z1) (x1,y0,z1) (x1,y0,z0) (x1,y1,z0)
+    push(
+        [
+            px(x0, y_hi, z0),
+            px(x0, seam, z0),
+            px(x0, seam, z1),
+            px(x0, y_hi, z1),
+        ],
+        [
+            lid_uv(x0, y_hi, z0, 1),
+            lid_uv(x0, seam, z0, 1),
+            lid_uv(x0, seam, z1, 1),
+            lid_uv(x0, y_hi, z1, 1),
+        ],
+        1,
+    );
+    // EAST (face 0): the body + the lid pair
+    push(
+        [
+            px(x1, seam, z1),
+            px(x1, y0, z1),
+            px(x1, y0, z0),
+            px(x1, seam, z0),
+        ],
+        [
+            body_uv(x1, seam, z1, 0),
+            body_uv(x1, y0, z1, 0),
+            body_uv(x1, y0, z0, 0),
+            body_uv(x1, seam, z0, 0),
+        ],
+        0,
+    );
     push(
         [
             px(x1, y_hi, z1),
-            px(x1, y0, z1),
-            px(x1, y0, z0),
+            px(x1, seam, z1),
+            px(x1, seam, z0),
             px(x1, y_hi, z0),
         ],
         [
-            vert_uv(x1, y_hi, z1, 0),
-            vert_uv(x1, y0, z1, 0),
-            vert_uv(x1, y0, z0, 0),
-            vert_uv(x1, y_hi, z0, 0),
+            lid_uv(x1, y_hi, z1, 0),
+            lid_uv(x1, seam, z1, 0),
+            lid_uv(x1, seam, z0, 0),
+            lid_uv(x1, y_hi, z0, 0),
         ],
         0,
     );
@@ -9232,10 +9318,10 @@ fn chest_lock_quads(
 /// clamp keeps, `getOpenness` the lerp the BE lane reads — the client's
 /// own [`crate::world::CHEST_OPEN_BIT`] byte the openness-1 pose the
 /// static law wears, the per-tick lerp the BE-tick round keeps).
-/// THE BODY the y 0..10 band keeps (the side folds the closed
-/// `v = 14 - y` law the rows 4..14 sample — the seam the closed pixels
-/// the same rows continue, the up/down faces the centered band the
-/// closed folds wear). THE LID the y 9..14 band the quarter turn
+/// THE BODY the y 0..10 band keeps (the side folds the 303 two-band
+/// law the rows 5..14 sample — the body's v = y + 5 the band's direct
+/// stack wears, the up/down faces the centered band the closed folds
+/// wear). THE LID the y 9..14 band the quarter turn
 /// around the BACK-edge hinge walks (the facing the world quarter
 /// names — the north-facing chest the hinge z1 the south edge keeps,
 /// the free edge the 14-px up the 5-px past-the-back tip the jar's
@@ -9295,9 +9381,11 @@ fn shulker_open_model_quads(openness: f32) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4],
         out.push((pts, uvs, face));
     };
     for (x0, y0, x1, y1, z0, z1) in boxes {
-        // the side faces' own v law (the chest vert_uv fold the same
-        // top-edge-0 convention keeps: the top edge the row 0 the face
-        // samples, the bottom edge the box-height row the dish keeps)
+        // the side faces' own v law (the full-tile fold the uniform
+        // shell wears: the top edge the row 0 the face samples, the
+        // bottom edge the box-height row the dish keeps — the shulker
+        // tile the one art band the glued law serves, the chest's
+        // two-band fold the 303 round banks the lane never rides)
         let h = y1 - y0;
         // DOWN (face 3): corners (x0,y0,z1) (x0,y0,z0) (x1,y0,z0) (x1,y0,z1)
         push(
@@ -9405,17 +9493,31 @@ fn chest_open_model_quads(
     let lid_hi = y_hi;
     let pivot = lid_lo;
     let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
-    // THE CLOSED LAW'S OWN FOLD (the v = 14 - y the rows continue —
-    // the body band the same rows the closed box samples for the same
-    // world y, the lid band the rows 0..5 the strip keeps)
-    let vert_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
+    // THE TWO-BAND V-FOLD LAW (the autopush-303 round — the closed
+    // builder's own law the open pose the same seats wears: the body's
+    // v = y + 5 the tile's rows 5..14 the band's direct stack maps
+    // [the face's bottom edge the band's first row samples], the
+    // lid's v = y - lid_lo the rows 0..4 the strip's direct stack
+    // keeps [the seam edge the strip's first row, the top edge the
+    // fifth] — the v = 14 - y fold the round retires, the doubles'
+    // lid the negative-v wrap the law never wears again)
+    let body_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
         let u = match face {
             5 => x + 15.0 - x1,
             0 => 16.0 - z + 1.0 - z0,
             4 => x - x0 + 1.0,
             _ => z - z0 + 1.0,
         };
-        [u, 14.0 - y]
+        [u, y + 5.0]
+    };
+    let lid_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
+        let u = match face {
+            5 => x + 15.0 - x1,
+            0 => 16.0 - z + 1.0 - z0,
+            4 => x - x0 + 1.0,
+            _ => z - z0 + 1.0,
+        };
+        [u, y - lid_lo]
     };
     let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(16);
     let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
@@ -9465,10 +9567,10 @@ fn chest_open_model_quads(
             px(x0, body_hi, z0),
         ],
         [
-            vert_uv(x1, body_hi, z0, 5),
-            vert_uv(x1, y0, z0, 5),
-            vert_uv(x0, y0, z0, 5),
-            vert_uv(x0, body_hi, z0, 5),
+            body_uv(x1, body_hi, z0, 5),
+            body_uv(x1, y0, z0, 5),
+            body_uv(x0, y0, z0, 5),
+            body_uv(x0, body_hi, z0, 5),
         ],
         5,
     );
@@ -9481,10 +9583,10 @@ fn chest_open_model_quads(
             px(x1, body_hi, z1),
         ],
         [
-            vert_uv(x0, body_hi, z1, 4),
-            vert_uv(x0, y0, z1, 4),
-            vert_uv(x1, y0, z1, 4),
-            vert_uv(x1, body_hi, z1, 4),
+            body_uv(x0, body_hi, z1, 4),
+            body_uv(x0, y0, z1, 4),
+            body_uv(x1, y0, z1, 4),
+            body_uv(x1, body_hi, z1, 4),
         ],
         4,
     );
@@ -9497,10 +9599,10 @@ fn chest_open_model_quads(
             px(x0, body_hi, z1),
         ],
         [
-            vert_uv(x0, body_hi, z0, 1),
-            vert_uv(x0, y0, z0, 1),
-            vert_uv(x0, y0, z1, 1),
-            vert_uv(x0, body_hi, z1, 1),
+            body_uv(x0, body_hi, z0, 1),
+            body_uv(x0, y0, z0, 1),
+            body_uv(x0, y0, z1, 1),
+            body_uv(x0, body_hi, z1, 1),
         ],
         1,
     );
@@ -9513,10 +9615,10 @@ fn chest_open_model_quads(
             px(x1, body_hi, z0),
         ],
         [
-            vert_uv(x1, body_hi, z1, 0),
-            vert_uv(x1, y0, z1, 0),
-            vert_uv(x1, y0, z0, 0),
-            vert_uv(x1, body_hi, z0, 0),
+            body_uv(x1, body_hi, z1, 0),
+            body_uv(x1, y0, z1, 0),
+            body_uv(x1, y0, z0, 0),
+            body_uv(x1, body_hi, z0, 0),
         ],
         0,
     );
@@ -9623,10 +9725,10 @@ fn chest_open_model_quads(
                 px(x0, lid_hi, z0),
             ],
             [
-                vert_uv(x1, lid_hi, z0, 5),
-                vert_uv(x1, lid_lo, z0, 5),
-                vert_uv(x0, lid_lo, z0, 5),
-                vert_uv(x0, lid_hi, z0, 5),
+                lid_uv(x1, lid_hi,z0, 5),
+                lid_uv(x1, lid_lo,z0, 5),
+                lid_uv(x0, lid_lo,z0, 5),
+                lid_uv(x0, lid_hi,z0, 5),
             ],
             5,
         );
@@ -9641,10 +9743,10 @@ fn chest_open_model_quads(
                 px(x1, lid_hi, z1),
             ],
             [
-                vert_uv(x0, lid_hi, z1, 4),
-                vert_uv(x0, lid_lo, z1, 4),
-                vert_uv(x1, lid_lo, z1, 4),
-                vert_uv(x1, lid_hi, z1, 4),
+                lid_uv(x0, lid_hi,z1, 4),
+                lid_uv(x0, lid_lo,z1, 4),
+                lid_uv(x1, lid_lo,z1, 4),
+                lid_uv(x1, lid_hi,z1, 4),
             ],
             4,
         );
@@ -9659,10 +9761,10 @@ fn chest_open_model_quads(
                 px(x0, lid_hi, z1),
             ],
             [
-                vert_uv(x0, lid_hi, z0, 1),
-                vert_uv(x0, lid_lo, z0, 1),
-                vert_uv(x0, lid_lo, z1, 1),
-                vert_uv(x0, lid_hi, z1, 1),
+                lid_uv(x0, lid_hi,z0, 1),
+                lid_uv(x0, lid_lo,z0, 1),
+                lid_uv(x0, lid_lo,z1, 1),
+                lid_uv(x0, lid_hi,z1, 1),
             ],
             1,
         );
@@ -9677,10 +9779,10 @@ fn chest_open_model_quads(
                 px(x1, lid_hi, z0),
             ],
             [
-                vert_uv(x1, lid_hi, z1, 0),
-                vert_uv(x1, lid_lo, z1, 0),
-                vert_uv(x1, lid_lo, z0, 0),
-                vert_uv(x1, lid_hi, z0, 0),
+                lid_uv(x1, lid_hi,z1, 0),
+                lid_uv(x1, lid_lo,z1, 0),
+                lid_uv(x1, lid_lo,z0, 0),
+                lid_uv(x1, lid_hi,z0, 0),
             ],
             0,
         );
@@ -15642,16 +15744,17 @@ mod tests {
             quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max)
         };
         // THE SINGLE CHEST (the unstamped default the registerDefault
-        // pin wears — the ELEVEN quads the box + the latch bake [the
-        // autopush-299 round the lock box the closed front wears])
+        // pin wears — the FIFTEEN quads the box + the latch bake [the
+        // autopush-299 round the lock box the closed front wears, the
+        // 303 round the two-band split the box's verticals wears])
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::CHEST);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(
             cell.len(),
-            11,
-            "the single chest the box 6 + the latch 5 bakes, got {}",
+            15,
+            "the single chest the box 10 + the latch 5 bakes, got {}",
             cell.len()
         );
         // THE 14/16 BAND (the y span the 0..14 px box keeps — the
@@ -15682,8 +15785,8 @@ mod tests {
         );
         assert_eq!(
             cell.iter().filter(|quad| north_face(quad)).count(),
-            1,
-            "the one north face the box bakes"
+            2,
+            "the north plane the body + the lid pair bakes [the 303 two-band split]"
         );
         assert!(
             cell.iter()
@@ -15700,9 +15803,10 @@ mod tests {
             cell.iter().any(|quad| quad.tile == bottom_tile),
             "the bottom face the base tile wears"
         );
-        // THE UV LAW (the v = y_hi - y fold — the top edge the row 0
-        // the lid strip samples: the top-face quad's v the 0 the row
-        // banks, the bottom edge the 14/16 the base keeps)
+        // THE UV LAW (the 303 two-band fold — the verticals the body
+        // + the lid quads split: the body's v = y + 5 the rows 5..14
+        // maps, the lid's v = y - seam the rows 0..4; the top-face
+        // quad the centered band the caps keep)
         let top_face_quad = cell
             .iter()
             .find(|quad| quad.tile == top_tile)
@@ -15727,7 +15831,7 @@ mod tests {
         );
         let qe = mesh_chunk(&we, 0, 0, None);
         let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celle.len(), 11, "the east chest the box 6 + the latch 5 bakes");
+        assert_eq!(celle.len(), 15, "the east chest the box 10 + the latch 5 bakes");
         let east_face = |quad: &crate::mesher::Quad| {
             quad.pts.iter().all(|p| (p[0] - (8.0 + 15.0 / 16.0)).abs() < 1e-5)
         };
@@ -15740,12 +15844,12 @@ mod tests {
         );
         assert_eq!(
             celle.iter().filter(|quad| east_face(quad)).count(),
-            1,
-            "the one east face the rotated box bakes"
+            2,
+            "the east plane the body + the lid pair bakes [the 303 two-band split]"
         );
         // THE DOUBLE (the LEFT type the connected EAST side the flush
-        // edge wears — the x 2..16 arm the 15/16 band keeps, the 6
-        // quads the same box count bakes)
+        // edge wears — the x 2..16 arm the 15/16 band keeps, the 10
+        // quads the two-band box bakes)
         let mut wd = empty_world();
         put(&mut wd, 8, 8, 8, crate::world::CHEST);
         wd.set_variant(
@@ -15756,7 +15860,7 @@ mod tests {
         );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celld.len(), 11, "the double the box 6 + the latch 5 bakes");
+        assert_eq!(celld.len(), 15, "the double the box 10 + the latch 5 bakes");
         for quad in &celld {
             let y_max = y_max_of(quad);
             assert!(
@@ -15781,7 +15885,7 @@ mod tests {
         put(&mut ww, 8, 8, 8, crate::world::WAXED_COPPER_CHEST);
         let qw = mesh_chunk(&ww, 0, 0, None);
         let cellw: Vec<_> = qw.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cellw.len(), 11, "the waxed twin the box + the latch bakes");
+        assert_eq!(cellw.len(), 15, "the waxed twin the box + the latch bakes");
         let waxed_tiles = gen_atlas::FACE_TILES[crate::world::WAXED_COPPER_CHEST as usize];
         let waxed_lock = gen_atlas::CHEST_LOCK_TILES[crate::world::WAXED_COPPER_CHEST as usize];
         assert_eq!(
@@ -15842,15 +15946,15 @@ mod tests {
         let x_min_of =
             |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
         // THE CLOSED CHEST'S OWN STATIC BOX (the box + the latch — the
-        // 11 quads the 14/16 band + the relief keep)
+        // 15 quads the two-band box + the relief keep)
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::CHEST);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(
             cell.len(),
-            11,
-            "the closed chest the box 6 + the latch 5 keeps, got {}",
+            15,
+            "the closed chest the box 10 + the latch 5 keeps, got {}",
             cell.len()
         );
         // THE OPEN CHEST'S OWN LID WALK (the bit stamps the builder
@@ -16100,8 +16204,8 @@ mod tests {
         let cellz: Vec<_> = qz.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(
             cellz.len(),
-            11,
-            "the fresh pair the closed builder the box + the latch keeps, got {}",
+            15,
+            "the fresh pair the closed builder the two-band box + the latch keeps, got {}",
             cellz.len()
         );
     }
@@ -16151,7 +16255,7 @@ mod tests {
         put(&mut w, 8, 8, 8, crate::world::CHEST);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cell.len(), 11, "the closed chest the box + the latch keeps");
+        assert_eq!(cell.len(), 15, "the closed chest the box + the latch keeps");
         // the lock quads the tangent-band + depth-band pair the box
         // faces' own full spans refuse (the box's north face the full
         // x 1..15 span the corner verdict excludes)
@@ -16213,7 +16317,7 @@ mod tests {
         );
         let qs = mesh_chunk(&ws, 0, 0, None);
         let cells: Vec<_> = qs.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cells.len(), 11, "the south closed the box + the latch keeps");
+        assert_eq!(cells.len(), 15, "the south closed the box + the latch keeps");
         let locks = cells
             .iter()
             .filter(|quad| {
@@ -16238,7 +16342,7 @@ mod tests {
         );
         let qe = mesh_chunk(&we, 0, 0, None);
         let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celle.len(), 11, "the east closed the box + the latch keeps");
+        assert_eq!(celle.len(), 15, "the east closed the box + the latch keeps");
         let locke: Vec<_> = celle
             .iter()
             .filter(|quad| {
@@ -16273,7 +16377,7 @@ mod tests {
         );
         let qw = mesh_chunk(&ww, 0, 0, None);
         let cellw: Vec<_> = qw.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cellw.len(), 11, "the west closed the box + the latch keeps");
+        assert_eq!(cellw.len(), 15, "the west closed the box + the latch keeps");
         let lockw = cellw
             .iter()
             .filter(|quad| {
@@ -16303,7 +16407,7 @@ mod tests {
         );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celld.len(), 11, "the double closed the box + the latch keeps");
+        assert_eq!(celld.len(), 15, "the double closed the box + the latch keeps");
         let lockd: Vec<_> = celld
             .iter()
             .filter(|quad| {
@@ -16822,6 +16926,214 @@ mod tests {
             (uv_at(&sliver[0], min_y)[1] - 1.0 / 16.0).abs() < 1e-6,
             "the +X sliver's min-y end the tile v1 the swap wears"
         );
+    }
+
+    #[test]
+    fn the_whole_chest_v_fold_the_two_band_seats_wear() {
+        // THE V-FOLD WALK (the autopush-303 round — the 302 verdict the
+        // whole-chest extension wears): the jar's own box constants the
+        // live disasm re-pins (the bottom texOffs(0,19).addBox(1,0,1,
+        // 14,10,14) ZERO the band rows 33..42 the B0=19+dz speaks, the
+        // lid texOffs(0,0).addBox(1,0,0,14,5,14) offset(0,9,1) the band
+        // rows 14..18 the L0=0+dz answers — the vfold_probe_303 the
+        // same walks re-pin), the Polygon remap the band's v0 the two
+        // MIN-Y vertices assigns — the vertical faces the SEAM the
+        // body + the lid quads split, the body's v = y + 5 the tile's
+        // rows 5..14 the direct stack maps [the face's bottom edge the
+        // band's first row samples], the lid's v = y - seam the rows
+        // 0..4 the strip keeps [the seam edge the strip's first row,
+        // the top edge the fifth] — the v = y_hi - y top-edge-0 fold
+        // the round retires
+        use mc_registry::generated::atlas as gen_atlas;
+        let front_tile = gen_atlas::FACE_TILES[crate::world::CHEST as usize][5];
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let uv_at = |quad: &crate::mesher::Quad, pick: fn(&[f32; 3], &[[f32; 3]; 4]) -> bool| {
+            quad.uvs
+                .iter()
+                .zip(quad.pts.iter())
+                .find(|(_, p)| pick(p, &quad.pts))
+                .map(|(uv, _)| *uv)
+                .unwrap_or_else(|| panic!("the picked corner speaks"))
+        };
+        let min_y = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[1] <= all.iter().map(|q| q[1]).fold(f32::MAX, f32::min) + 1e-6
+        };
+        let max_y = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[1] >= all.iter().map(|q| q[1]).fold(f32::MIN, f32::max) - 1e-6
+        };
+        // THE SINGLE'S OWN TWO BANDS (the south front the +Z plane: the
+        // body quad the y 0..9 band the tile rows 5..14 samples, the
+        // lid the y 9..14 the rows 0..4 — the seam edge the body's
+        // v14 + the lid's v0 the band boundary speaks)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_SOUTH,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let q = mesh_chunk(&w, 0, 0, None);
+        let mut front: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                in_cell(quad)
+                    && quad.tile == front_tile
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[2] - (8.0 + 15.0 / 16.0)).abs() < 1e-5)
+            })
+            .cloned()
+            .collect();
+        assert_eq!(front.len(), 2, "the south front the body + the lid pair bakes");
+        front.sort_by(|a, b| {
+            let ya = a.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            let yb = b.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            ya.partial_cmp(&yb).unwrap()
+        });
+        let body = &front[0]; // the lower band: the y 0..9 quad
+        let lid = &front[1]; // the upper band: the y 9..14 quad
+        assert!(
+            (uv_at(body, min_y)[1] - 5.0 / 16.0).abs() < 1e-6,
+            "the body's min-y end the tile v5 the band's first row the BOTTOM edge wears, got {}",
+            uv_at(body, min_y)[1]
+        );
+        assert!(
+            (uv_at(body, max_y)[1] - 14.0 / 16.0).abs() < 1e-6,
+            "the body's seam end the tile v14 the band's last row wears"
+        );
+        assert!(
+            (uv_at(lid, min_y)[1] - 0.0).abs() < 1e-6,
+            "the lid's seam end the tile v0 the strip's first row wears"
+        );
+        assert!(
+            (uv_at(lid, max_y)[1] - 5.0 / 16.0).abs() < 1e-6,
+            "the lid's top end the tile v5 the strip's fifth row wears"
+        );
+        for quad in front.iter() {
+            for uv in quad.uvs.iter() {
+                assert!(
+                    uv[0] >= 1.0 / 16.0 - 1e-6 && uv[0] <= 15.0 / 16.0 + 1e-6,
+                    "the front's u the 1..15 content band keeps, got {uv:?}"
+                );
+            }
+        }
+        // THE DOUBLE'S OWN SEAT SHIFT (the seam 10 the 15-tall face
+        // wears: the body's v15 the band's tenth row the seam edge
+        // banks, the lid's v0 the strip's first row the same seat
+        // keeps — the same tile rows the taller face re-seats)
+        let mut wd = empty_world();
+        put(&mut wd, 8, 8, 8, crate::world::CHEST);
+        wd.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_SOUTH,
+                crate::world::CHEST_TYPE_LEFT,
+            ),
+        );
+        let qd = mesh_chunk(&wd, 0, 0, None);
+        // the front plane the conn's own shift answers (the LEFT's
+        // partner the ccw/cw walk names — the lone LEFT the west conn
+        // the z1 15 span wears): the front-tile quads the +Z-most
+        // plane the max-z walk picks
+        let front_pool: Vec<_> = qd
+            .iter()
+            .filter(|quad| in_cell(quad) && quad.tile == front_tile)
+            .cloned()
+            .collect();
+        let z_plane = front_pool
+            .iter()
+            .map(|quad| quad.pts.iter().map(|p| p[2]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        let mut frontd: Vec<_> = front_pool
+            .into_iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[2] - z_plane).abs() < 1e-5))
+            .collect();
+        assert_eq!(frontd.len(), 2, "the double front the pair bakes");
+        frontd.sort_by(|a, b| {
+            let ya = a.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            let yb = b.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            ya.partial_cmp(&yb).unwrap()
+        });
+        assert!(
+            (uv_at(&frontd[0], max_y)[1] - 15.0 / 16.0).abs() < 1e-6,
+            "the double body's seam end the tile v15 the band's tenth row wears"
+        );
+        assert!(
+            (uv_at(&frontd[1], min_y)[1] - 0.0).abs() < 1e-6,
+            "the double lid's seam end the tile v0 wears"
+        );
+        // THE OPEN POSE'S OWN RIDE (the open builder the same seats
+        // wears: the body's v = y + 5 the y 0..10 band maps, the lid's
+        // v = y - lid_lo the 9..14 band keeps — the negative-v wrap
+        // the double's old fold wore the law never bakes again; the
+        // full-open quarter turn the lid's front quad the top plane
+        // carries, the UVs the surface the glued law keeps)
+        let mut wo = empty_world();
+        put(&mut wo, 8, 8, 8, crate::world::CHEST);
+        wo.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_SOUTH,
+                crate::world::CHEST_TYPE_SINGLE,
+            )
+            | crate::world::CHEST_OPEN_BIT,
+        );
+        let qo = mesh_chunk(&wo, 0, 0, None);
+        // the chunk the lone chest meshes — the front-tile quads the
+        // cell filter never bounds (the rotated lid's tip plane the
+        // y 9.44 reach the quarter turn carries, the in-cell band the
+        // pair's upper arm refuses)
+        let open_front: Vec<_> = qo
+            .iter()
+            .filter(|quad| quad.tile == front_tile)
+            .cloned()
+            .collect();
+        assert_eq!(
+            open_front.len(),
+            2,
+            "the open front-tile pair the body's front + the lid's rotated front bakes"
+        );
+        for quad in &open_front {
+            let y_lo = quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+            let y_hi = quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            let v_lo = quad.uvs.iter().map(|uv| uv[1]).fold(f32::MAX, f32::min);
+            let v_hi = quad.uvs.iter().map(|uv| uv[1]).fold(f32::MIN, f32::max);
+            if y_hi <= 8.0 + 10.0 / 16.0 + 1e-5 {
+                // the body's front quad (the unrotated y 0..10 band):
+                // the v the y + 5 law rides both ends (the world y the
+                // px fold (y-8)*16 the law's seat speaks)
+                assert!(
+                    (v_lo - ((y_lo - 8.0) * 16.0 + 5.0) / 16.0).abs() < 1e-6
+                        && (v_hi - ((y_hi - 8.0) * 16.0 + 5.0) / 16.0).abs() < 1e-6,
+                    "the open body's v the y + 5 law rides, got {v_lo}/{v_hi}"
+                );
+            } else {
+                // the lid's rotated front (the top plane): the glued
+                // UVs the unrotated band's 0..5 span keep
+                assert!(
+                    (v_lo - 0.0).abs() < 1e-6 && (v_hi - 5.0 / 16.0).abs() < 1e-6,
+                    "the open lid's glued v the 0..5 band keeps, got {v_lo}/{v_hi}"
+                );
+            }
+        }
     }
 
     #[test]

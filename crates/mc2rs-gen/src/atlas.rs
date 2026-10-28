@@ -2545,17 +2545,20 @@ fn compose_chest_tiles(
                 put(&mut tile, 1 + fx, fy, lid_x + fx, lid_y + fy);
             }
         }
-        // the body's exposed 9 rows: face rows 5..14 <- sheet rows
-        // body_y+1..body_y+10 (the top row the lid covers)
+        // the body's own 10 rows (the v-fold law's direct stack — the
+        // autopush-303 round: the band's rows the face's BOTTOM edge the
+        // first row samples [the jar's v0->minY remap the 302 round
+        // banked, the whole-chest extension the 303 walk pins]: the
+        // face's y row the band row 33+y wears, the tile rows 5..14 the
+        // body quad's v = y + 5 law maps — the dark row 33 the face's
+        // bottom edge the vanilla look wears, the base trim row 41 the
+        // seam's lower edge answers, the old top-edge-0 fold's
+        // body_y+1..+10 window + the 15th-row dup the round retires)
         let body_y = 33u32;
-        for fy in 5..14u32 {
+        for fy in 5..15u32 {
             for fx in 0..14u32 {
-                put(&mut tile, 1 + fx, fy, body_x + fx, body_y + 1 + (fy - 5));
+                put(&mut tile, 1 + fx, fy, body_x + fx, body_y + (fy - 5));
             }
-        }
-        // the base trim extension (the doubles' 15th row)
-        for fx in 0..14u32 {
-            put(&mut tile, 1 + fx, 14, body_x + fx, body_y + 9);
         }
         tile
     };
