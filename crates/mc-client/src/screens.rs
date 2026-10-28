@@ -53112,6 +53112,69 @@ impl App {
                 let _ = world.fire_shape_updates((mx, my, mz));
             }
         }
+        // THE BED'S OWN MATE LAW (javap BedBlock.updateShape +
+        // getNeighbourDirection + getConnectedDirection the 26.2 jar —
+        // the connected side the PART/FACING pair reads [the FOOT the
+        // facing side, the HEAD the opposite the
+        // getConnectedDirection's own fold answers]): the broken half
+        // the OTHER half's removal wears — the updateShape the AIR
+        // return the silent keep [no loot — the broken cell alone
+        // rolls the bed item, the mate the updateShape's own return
+        // the dropResources walk never rolls]. The broken cell's own
+        // variant the AIR set already took — the scan the four
+        // horizontal neighbors the same-kind mate the connected
+        // verdict finds [the mate's own connected direction the
+        // broken cell points back at — the vanilla's own pair law the
+        // reverse walk serves]; the mate's own variant the broken
+        // side's part the OPPOSITE answers [the spawn_drops_for's
+        // head-only arm the verdict reads]. The OFFLINE lane's own
+        // authority (the same split the door law keeps).
+        let (bed_mate_cell, bed_broken_part): (Option<(i32, i32, i32)>, Option<u8>) =
+            if self.world_is_network {
+                (None, None)
+            } else if crate::world::is_bed(kind) {
+                let mut found: Option<((i32, i32, i32), u8)> = None;
+                if let Some(world) = self.offline_world.as_ref() {
+                    for (dx, dz) in [(0i32, -1i32), (1, 0), (0, 1), (-1, 0)] {
+                        let (mx, my, mz) = (pos.0 + dx, pos.1, pos.2 + dz);
+                        if world.get(mx, my, mz) != kind {
+                            continue;
+                        }
+                        let v = world.variant(mx, my, mz);
+                        let facing = crate::world::bed_variant_facing(v);
+                        let (cx, cz) = crate::world::bed_facing_offset(
+                            if crate::world::bed_variant_part(v) == crate::world::BED_PART_HEAD {
+                                (facing + 2) & 3
+                            } else {
+                                facing
+                            },
+                        );
+                        if (mx + cx, mz + cz) == (pos.0, pos.2) {
+                            // the mate's own part the OPPOSITE the broken
+                            // side answers (the head-only drop arm the
+                            // verdict reads)
+                            let broken_part =
+                                if crate::world::bed_variant_part(v) == crate::world::BED_PART_HEAD {
+                                    crate::world::BED_PART_FOOT
+                                } else {
+                                    crate::world::BED_PART_HEAD
+                                };
+                            found = Some(((mx, my, mz), broken_part));
+                            break;
+                        }
+                    }
+                }
+                match found {
+                    Some(((mx, my, mz), part)) => (Some((mx, my, mz)), Some(part)),
+                    None => (None, None),
+                }
+            } else {
+                (None, None)
+            };
+        if let (Some(world), Some((mx, my, mz))) = (self.offline_world.as_mut(), bed_mate_cell) {
+            world.set(mx, my, mz, crate::world::AIR);
+            let _ = world.fire_shape_updates((mx, my, mz));
+        }
         // THE BLOCK_DESTROY EVENT'S OWN POST (javap the 26.2 jar — the
         // every-dig walk the bytecodes keep: `ServerPlayerGameMode
         // .destroyBlock` pc 104-116 calls `Block.playerWillDestroy`,
@@ -53290,7 +53353,7 @@ impl App {
         // THE REWARD HALF (the vanilla destroyBlock's own
         // dropResources): the loot roll, the item entities
         // spawning by the popResource law
-        self.spawn_drops_for(kind, pos);
+        self.spawn_drops_for(kind, pos, bed_broken_part);
     }
 
     /// THE ATTACH POP'S OWN WALK — javap `Level.destroyBlock` pc 17-45
@@ -53361,7 +53424,7 @@ impl App {
     /// lift, the 10-tick pickup delay, the render seed). The OFFLINE
     /// lane's own authority: the networked world's entities are the
     /// server's own stream.
-    fn spawn_drops_for(&mut self, kind: u16, pos: (i32, i32, i32)) {
+    fn spawn_drops_for(&mut self, kind: u16, pos: (i32, i32, i32), bed_broken_part: Option<u8>) {
         if self.world_is_network {
             return;
         }
@@ -53398,6 +53461,35 @@ impl App {
             // the shared NAME_OF base row the per-wood item id keys:
             // the {wood}_door item the conditional pool every wooden
             // door rolls)
+            if let Some(item) = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize]) {
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn(
+                    id,
+                    item,
+                    1,
+                    pos.0,
+                    pos.1,
+                    pos.2,
+                    &mut self.drop_rng,
+                ));
+            }
+        }
+        // THE BED'S OWN HEAD-ONLY DROP (javap the jar's loot —
+        // data/minecraft/loot_table/blocks/<color>_bed.json the ONE
+        // pool banks: the `block_state_property` condition the
+        // `part=head` row speaks — the HEAD's break alone rolls the
+        // bed item, the FOOT's own break the condition the verdict
+        // refuses [the vanilla's own either-half asymmetry the silent
+        // mate removal the walk above serves]). The generated drops
+        // table the conditional pool never banks (the same honest arm
+        // the door's own conditional pool speaks), the hand row the
+        // vanilla's own law wears: one <color>_bed item the HEAD's
+        // break spawns. The broken part the mate scan's own capture
+        // the variant byte reads (the AIR set the cell's variant
+        // already took — the mate's own part the OPPOSITE the verdict
+        // answers).
+        if crate::world::is_bed(kind) && bed_broken_part == Some(crate::world::BED_PART_HEAD) {
             if let Some(item) = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize]) {
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
@@ -55351,6 +55443,32 @@ impl App {
         // Y arms' FACING verdict reads)
         let cam_yaw = self.world_camera().yaw;
         let cam_pitch = self.world_camera().pitch;
+        // THE BED'S OWN TWO-CELL GATE (javap BedBlock.getStateForPlacement
+        // the 26.2 jar — the `pos.relative(getHorizontalDirection())`
+        // head cell the canBeReplaced + isWithinBounds pair reads [the
+        // `aconst_null` refusal the else arm keeps — the occupied head
+        // cell the placement never arms], the FACING the RAW look
+        // pc 57 the no-opposite quadrant the head's own side answers):
+        // the head cell the give-way verdict the look's own quadrant
+        // wears, the bounds the offline grid's own column the gate
+        // keeps. The refusal the PASS carries — the item lane follows,
+        // nothing consumed.
+        if crate::world::is_bed(block) {
+            let facing = crate::world::bed_facing_byte(cam_yaw);
+            let (ox, oz) = crate::world::bed_facing_offset(facing);
+            let head_ok = self
+                .active_world()
+                .is_some_and(|w| w.column_sent(cell.0 + ox, cell.2 + oz))
+                && self.active_world().is_some_and(|w| {
+                    let head = w.get(cell.0 + ox, cell.1, cell.2 + oz);
+                    head == crate::world::AIR
+                        || head == crate::world::WATER
+                        || crate::world::is_replaceable(head)
+                });
+            if !head_ok {
+                return false;
+            }
+        }
         // THE WALL TORCH'S OWN PLACEMENT CANDIDATE (the autopush-667
         // round — javap StandingAndWallBlockItem.getPlacementState the
         // 26.2 jar: the item's own scan the WALL state the horizontal
@@ -56122,6 +56240,36 @@ impl App {
                 world.set(cell.0, cell.1 + 1, cell.2, upper);
                 world.set_variant(cell.0, cell.1, cell.2, facing);
                 world.set_variant(cell.0, cell.1 + 1, cell.2, facing);
+            }
+            // THE BED'S OWN TWO HALVES (javap BedBlock.setPlacedBy the
+            // 26.2 jar — the `pos.relative(FACING)` cell the
+            // `setValue(PART, BedPart.HEAD)` setBlockAndUpdate speaks:
+            // the foot the item's own place wore, the HEAD the SAME
+            // kind the same facing the variant byte's third bit stamps
+            // [the blockstate's own part property the two-cell block
+            // wears — the mesher's head/foot pair the same bytes
+            // read]). THE FACING THE RAW LOOK (javap
+            // getStateForPlacement pc 57 — the `setValue(FACING,
+            // getHorizontalDirection())` the no-opposite look the head
+            // the look's own far side lands — the bed's facing byte the
+            // door walk's own quadrant decode answers, the placement
+            // gate the head cell's give-way verdict already banked)
+            if crate::world::is_bed(placed) {
+                let facing = crate::world::bed_facing_byte(cam_yaw);
+                let (ox, oz) = crate::world::bed_facing_offset(facing);
+                world.set(cell.0 + ox, cell.1, cell.2 + oz, placed);
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::bed_variant(facing, crate::world::BED_PART_FOOT),
+                );
+                world.set_variant(
+                    cell.0 + ox,
+                    cell.1,
+                    cell.2 + oz,
+                    crate::world::bed_variant(facing, crate::world::BED_PART_HEAD),
+                );
             }
             // THE DOOR'S OWN WIRE PRESET (the dev-45 round — javap
             // DoorBlock.getStateForPlacement pcs 38-115 the 26.2 jar:

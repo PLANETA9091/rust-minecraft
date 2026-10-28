@@ -1708,3 +1708,257 @@ fn the_offline_gateway_the_hopper_chain_the_exit_lands_the_suck_wears() {
         "the taken item the discard keeps"
     );
 }
+
+/// THE BED'S OWN PLACE WALK (the autopush-311 round — javap
+/// BedBlock.getStateForPlacement the 26.2 jar the RAW look the
+/// FACING answers, the setPlacedBy the pos.relative(FACING) head
+/// cell the PART=HEAD stamp wears — the REAL placement walk the
+/// held bed item the right-press the both cells the variant bytes
+/// stamps).
+#[test]
+fn the_offline_bed_the_place_walk_the_two_halves_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 2);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE PAD (the two cells the ground the walk flattens — the foot
+    // the clicked cell the head the south neighbour keeps)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, surface + 1, c, crate::world::AIR);
+        world.set(c, surface + 1, c + 1, crate::world::AIR);
+        world.set(c, surface, c, crate::world::STONE);
+        world.set(c, surface, c + 1, crate::world::STONE);
+    }
+    // THE CAMERA (the floor look the ray enters, the yaw the SOUTH
+    // facing the head's own side answers — the cam_yaw PI the
+    // vanilla 0 the raw look speaks)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE PRESS (the head cell's give-way verdict the placement arms)
+    assert!(
+        app.on_right_press(0, 0),
+        "the bed placement consumed the press"
+    );
+    let foot_cell = (c, surface + 1, c);
+    let head_cell = (c, surface + 1, c + 1);
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(foot_cell.0, foot_cell.1, foot_cell.2),
+            crate::world::BED_RED,
+            "the foot the clicked cell the placement lands"
+        );
+        assert_eq!(
+            world.get(head_cell.0, head_cell.1, head_cell.2),
+            crate::world::BED_RED,
+            "the head the look's own far side the setPlacedBy lands"
+        );
+        let fv = world.variant(foot_cell.0, foot_cell.1, foot_cell.2);
+        assert_eq!(
+            crate::world::bed_variant_part(fv),
+            crate::world::BED_PART_FOOT,
+            "the foot the part bit keeps"
+        );
+        assert_eq!(
+            crate::world::bed_variant_facing(fv),
+            crate::world::BED_FACING_SOUTH,
+            "the raw look the south byte stamps"
+        );
+        let hv = world.variant(head_cell.0, head_cell.1, head_cell.2);
+        assert_eq!(
+            crate::world::bed_variant_part(hv),
+            crate::world::BED_PART_HEAD,
+            "the head the third bit stamps"
+        );
+        assert_eq!(
+            crate::world::bed_variant_facing(hv),
+            crate::world::BED_FACING_SOUTH,
+            "the same facing the both cells wear"
+        );
+    }
+    assert_eq!(
+        app.inventory.items[0],
+        (red_bed, 1),
+        "the survival consume the stack shrinks"
+    );
+}
+
+/// THE BED'S OWN OCCUPIED-HEAD REFUSAL (javap BedBlock
+/// .getStateForPlacement the 26.2 jar the canBeReplaced fold the
+/// `aconst_null` refusal keeps — the occupied head cell the
+/// placement never arms, the press the PASS the item lane never
+/// consumes).
+#[test]
+fn the_offline_bed_the_occupied_head_the_refusal_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 2);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE PAD (the head cell the STONE the verdict refuses)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, surface + 1, c, crate::world::AIR);
+        world.set(c, surface + 1, c + 1, crate::world::STONE);
+        world.set(c, surface, c, crate::world::STONE);
+        world.set(c, surface, c + 1, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        !app.on_right_press(0, 0),
+        "the occupied head the placement refuses"
+    );
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(c, surface + 1, c),
+            crate::world::AIR,
+            "the foot cell the refusal never stamps"
+        );
+        assert_eq!(
+            world.get(c, surface + 1, c + 1),
+            crate::world::STONE,
+            "the occupied head the refusal keeps"
+        );
+    }
+    assert_eq!(
+        app.inventory.items[0],
+        (red_bed, 2),
+        "the refusal the stack keeps"
+    );
+}
+
+/// THE BED'S OWN HEAD-ONLY DROP (javap the jar's loot —
+/// data/minecraft/loot_table/blocks/red_bed.json the
+/// `block_state_property` condition the `part=head` row speaks —
+/// the HEAD's break alone rolls the bed item, the FOOT's own break
+/// the condition refuses; the updateShape the AIR return the mate
+/// the silent keep — the REAL dig walk the both halves the vanilla's
+/// own asymmetry plays).
+#[test]
+fn the_offline_bed_the_break_the_head_only_drop_wears() {
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    // PHASE ONE: the FOOT's break — the mate vanishes, no item speaks
+    {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.inventory.items[0] = (red_bed, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c, surface + 1, c, crate::world::AIR);
+            world.set(c, surface + 1, c + 1, crate::world::AIR);
+            world.set(c, surface, c, crate::world::STONE);
+            world.set(c, surface, c + 1, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the bed the placement lands");
+        // THE FOOT'S OWN DIG (the SAME camera the foot cell the ray
+        // enters — the placement's own click the dig's own target
+        // wears, the press arms the destroy, the ticks the cell
+        // breaks)
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface + 1, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the foot's dig completed in time");
+        }
+        // THE MATE'S OWN VANISH (javap updateShape the AIR return —
+        // the head the silent keep wears)
+        assert_eq!(
+            app.offline_world
+                .as_ref()
+                .unwrap()
+                .get(c, surface + 1, c + 1),
+            crate::world::AIR,
+            "the head the mate the updateShape the silent keep wears"
+        );
+        // THE CONDITION'S OWN REFUSE (the part=head row the foot's
+        // break never rolls — the drops list the honest empty keeps)
+        assert!(
+            !app.drops.iter().any(|d| d.item == red_bed),
+            "the foot's break the condition refuses (no item)"
+        );
+    }
+    // PHASE TWO: the HEAD's break — the item the condition rolls
+    {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.inventory.items[0] = (red_bed, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c, surface + 1, c, crate::world::AIR);
+            world.set(c, surface + 1, c + 1, crate::world::AIR);
+            world.set(c, surface, c, crate::world::STONE);
+            world.set(c, surface, c + 1, crate::world::STONE);
+        }
+        // THE PLACEMENT'S OWN CAMERA (the foot cell the ray enters —
+        // the foot the clicked cell the head the south neighbour the
+        // setPlacedBy lands)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the bed the placement lands");
+        // THE HEAD'S OWN DIG (the camera the head cell the ray
+        // enters — the moved pose the head's own cell the dig's own
+        // target wears)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 1.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .get(c, surface + 1, c + 1)
+            != crate::world::AIR
+        {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the head's dig completed in time");
+        }
+        // THE MATE'S OWN VANISH (the foot the updateShape the AIR
+        // return the silent keep wears)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::AIR,
+            "the foot the mate the updateShape the silent keep wears"
+        );
+        // THE CONDITION'S OWN ROLL (the part=head row the head's break
+        // rolls — the ONE bed item the popResource law spawns)
+        let bed_drops = app.drops.iter().filter(|d| d.item == red_bed).count();
+        assert_eq!(bed_drops, 1, "the head's break the condition rolls");
+    }
+}

@@ -1,0 +1,136 @@
+=== BedItem: the placement walk ===
+== BedItem :: <init> (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item$Properties;)V ==
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 invokespecial #1  net/minecraft/world/item/BlockItem.<init> (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item$Properties;)V
+    6 return
+== BedItem :: placeBlock (Lnet/minecraft/world/item/context/BlockPlaceContext;Lnet/minecraft/world/level/block/state/BlockState;)Z ==
+    0 aload_1
+    1 invokevirtual #7  net/minecraft/world/item/context/BlockPlaceContext.getLevel ()Lnet/minecraft/world/level/Level;
+    4 aload_1
+    5 invokevirtual #13  net/minecraft/world/item/context/BlockPlaceContext.getClickedPos ()Lnet/minecraft/core/BlockPos;
+    8 aload_2
+    9 bipush 26
+   11 invokevirtual #19  net/minecraft/world/level/Level.setBlock (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+   14 ireturn
+
+=== BedBlock: the state walk ===
+== BedBlock :: updateShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState; ==
+    0 aload 5
+    2 aload_1
+    3 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    6 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    9 checkcast #34  net/minecraft/world/level/block/state/properties/BedPart
+   12 aload_1
+   13 getstatic #67  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   16 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   19 checkcast #74  net/minecraft/core/Direction
+   22 invokestatic #246  net/minecraft/world/level/block/BedBlock.getNeighbourDirection (Lnet/minecraft/world/level/block/state/properties/BedPart;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+   25 if_acmpne #59
+   28 aload 7
+   30 aload_0
+   31 invokevirtual #98  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   34 ifeq #43
+   37 aload 7
+   39 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   42 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   45 aload_1
+   46 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   49 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   52 if_acmpeq #25
+   55 aload_1
+   56 getstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   59 aload 7
+   61 getstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   64 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   67 checkcast #48  java/lang/Boolean
+   70 invokevirtual #39  net/minecraft/world/level/block/state/BlockState.setValue (Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+   73 checkcast #27  net/minecraft/world/level/block/state/BlockState
+   76 areturn
+   77 getstatic #250  net/minecraft/world/level/block/Blocks.AIR Lnet/minecraft/world/level/block/Block;
+   80 invokevirtual #256  net/minecraft/world/level/block/Block.defaultBlockState ()Lnet/minecraft/world/level/block/state/BlockState;
+   83 areturn
+   84 aload_0
+   85 aload_1
+   86 aload_2
+   87 aload_3
+   88 aload 4
+   90 aload 5
+   92 aload 6
+   94 aload 7
+   96 aload 8
+   98 invokespecial #262  net/minecraft/world/level/block/HorizontalDirectionalBlock.updateShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+  101 areturn
+== BedBlock :: getNeighbourDirection (Lnet/minecraft/world/level/block/state/properties/BedPart;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction; ==
+    0 aload_0
+    1 getstatic #33  net/minecraft/world/level/block/state/properties/BedPart.FOOT Lnet/minecraft/world/level/block/state/properties/BedPart;
+    4 if_acmpne #7
+    7 aload_1
+    8 goto #7
+   11 aload_1
+   12 invokevirtual #149  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   15 areturn
+== BedBlock :: getStateForPlacement (Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState; ==
+    0 aload_1
+    1 invokevirtual #287  net/minecraft/world/item/context/BlockPlaceContext.getHorizontalDirection ()Lnet/minecraft/core/Direction;
+    4 astore_2
+    5 aload_1
+    6 invokevirtual #292  net/minecraft/world/item/context/BlockPlaceContext.getClickedPos ()Lnet/minecraft/core/BlockPos;
+    9 astore_3
+   10 aload_3
+   11 aload_2
+   12 invokevirtual #91  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+   15 astore 4
+   17 aload_1
+   18 invokevirtual #296  net/minecraft/world/item/context/BlockPlaceContext.getLevel ()Lnet/minecraft/world/level/Level;
+   21 astore 5
+   23 aload 5
+   25 aload 4
+   27 invokevirtual #97  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   30 aload_1
+   31 invokevirtual #300  net/minecraft/world/level/block/state/BlockState.canBeReplaced (Lnet/minecraft/world/item/context/BlockPlaceContext;)Z
+   34 ifeq #31
+   37 aload 5
+   39 invokevirtual #304  net/minecraft/world/level/Level.getWorldBorder ()Lnet/minecraft/world/level/border/WorldBorder;
+   42 aload 4
+   44 invokevirtual #308  net/minecraft/world/level/border/WorldBorder.isWithinBounds (Lnet/minecraft/core/BlockPos;)Z
+   47 ifeq #18
+   50 aload_0
+   51 invokevirtual #314  net/minecraft/world/level/block/BedBlock.defaultBlockState ()Lnet/minecraft/world/level/block/state/BlockState;
+   54 getstatic #67  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   57 aload_2
+   58 invokevirtual #39  net/minecraft/world/level/block/state/BlockState.setValue (Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+   61 checkcast #27  net/minecraft/world/level/block/state/BlockState
+   64 areturn
+   65 aconst_null
+   66 areturn
+== BedBlock :: getConnectedDirection (Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction; ==
+    0 aload_0
+    1 getstatic #67  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    4 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    7 checkcast #74  net/minecraft/core/Direction
+   10 astore_1
+   11 aload_0
+   12 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   15 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   18 getstatic #88  net/minecraft/world/level/block/state/properties/BedPart.HEAD Lnet/minecraft/world/level/block/state/properties/BedPart;
+   21 if_acmpne #10
+   24 aload_1
+   25 invokevirtual #149  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   28 goto #4
+   31 aload_1
+   32 areturn
+== BedBlock :: <clinit> ()V ==
+    0 invokedynamic #526
+    5 invokestatic #527  com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec (Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8 putstatic #1  net/minecraft/world/level/block/BedBlock.CODEC Lcom/mojang/serialization/MapCodec;
+   11 getstatic #533  net/minecraft/world/level/block/state/properties/BlockStateProperties.BED_PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   14 putstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   17 getstatic #538  net/minecraft/world/level/block/state/properties/BlockStateProperties.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   20 putstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   23 invokedynamic #539
+   28 invokestatic #542  net/minecraft/util/Util.make (Ljava/util/function/Supplier;)Ljava/lang/Object;
+   31 checkcast #324  java/util/Map
+   34 putstatic #315  net/minecraft/world/level/block/BedBlock.SHAPES Ljava/util/Map;
+   37 return

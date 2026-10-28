@@ -4008,6 +4008,43 @@ pub fn bed_variant_part(v: u8) -> u8 {
     }
 }
 
+/// THE BED FACING'S OWN LOOK DECODE (javap BedBlock.getStateForPlacement
+/// pc 0-4 the 26.2 jar the `getHorizontalDirection()` the RAW look
+/// answers — the UseOnContext.getHorizontalDirection the player's
+/// own getDirection the fromYRot decode wears, the no-opposite look
+/// the head the look's own far side lands [the door walk's own
+/// no-opposite law the same quadrant decode answers]). The look
+/// index the [`direction_index_from_y_rot`] walk the from2DDataValue
+/// order keeps (south 0, west 1, north 2, east 3), the bed's own
+/// byte vocabulary the [`BED_FACING_*`] seats answer.
+const BED_FACING_BY_2D: [u8; 4] = [
+    BED_FACING_SOUTH,
+    BED_FACING_WEST,
+    BED_FACING_NORTH,
+    BED_FACING_EAST,
+];
+
+#[inline]
+pub fn bed_facing_byte(cam_yaw_radians: f32) -> u8 {
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+    BED_FACING_BY_2D[look]
+}
+
+/// THE BED HEAD'S OWN OFFSET (javap setPlacedBy pc 22 the
+/// `pos.relative(FACING)` the head cell the horizontal quadrant
+/// answers — the vanilla Direction offsets the bed's own byte
+/// vocabulary wears: north -Z, east +X, south +Z, west -X; the
+/// `_` arm the WEST the ladder's own tail keeps).
+pub fn bed_facing_offset(facing: u8) -> (i32, i32) {
+    match facing & 0b11 {
+        BED_FACING_NORTH => (0, -1),
+        BED_FACING_EAST => (1, 0),
+        BED_FACING_SOUTH => (0, 1),
+        _ => (-1, 0),
+    }
+}
+
 /// THE END GATEWAY'S OWN KIND SEAT (the KIND_NAMES tail's row the
 /// vanilla registration order keeps — the kind id 797 the client's
 /// own space wears). The 26.2 jar's EndGatewayBlock the INVISIBLE
@@ -31879,6 +31916,82 @@ mod tests {
             chorus_teleport_find(&w, 100.0, 11.0, 16.0, 1.8),
             None,
             "the unsent column the gate keeps"
+        );
+    }
+
+    #[test]
+    fn the_bed_place_walk_the_look_decode_the_offsets_wear() {
+        // THE LOOK DECODE'S OWN QUADRANTS (javap getHorizontalDirection
+        // the RAW look the head's own side answers — the vanilla yaw
+        // the fromYRot walk the quadrants keep: 0 south, 90 west,
+        // 180 north, -90 east [the client's cam_yaw the wire_angles
+        // raw form wears — the -PI the vanilla 0 the south speaks,
+        // the +PI/2 the vanilla -90 the east speaks])
+        assert_eq!(
+            bed_facing_byte(std::f32::consts::PI),
+            BED_FACING_SOUTH,
+            "the vanilla yaw 0 the south quadrant wears"
+        );
+        assert_eq!(
+            bed_facing_byte(std::f32::consts::FRAC_PI_2),
+            BED_FACING_EAST,
+            "the vanilla yaw -90 the east quadrant wears"
+        );
+        assert_eq!(
+            bed_facing_byte(2.0 * std::f32::consts::PI),
+            BED_FACING_NORTH,
+            "the vanilla yaw 180 the north quadrant wears"
+        );
+        assert_eq!(
+            bed_facing_byte(3.0 * std::f32::consts::FRAC_PI_2),
+            BED_FACING_WEST,
+            "the vanilla yaw 90 the west quadrant wears"
+        );
+        // THE HEAD OFFSETS' OWN QUADRANTS (javap setPlacedBy pc 22 the
+        // pos.relative(FACING) the head cell the Direction offsets
+        // wear — north -Z, east +X, south +Z, west -X)
+        assert_eq!(
+            bed_facing_offset(BED_FACING_NORTH),
+            (0, -1),
+            "the north the -Z cell wears"
+        );
+        assert_eq!(
+            bed_facing_offset(BED_FACING_EAST),
+            (1, 0),
+            "the east the +X cell wears"
+        );
+        assert_eq!(
+            bed_facing_offset(BED_FACING_SOUTH),
+            (0, 1),
+            "the south the +Z cell wears"
+        );
+        assert_eq!(
+            bed_facing_offset(BED_FACING_WEST),
+            (-1, 0),
+            "the west the -X cell wears"
+        );
+        // THE VARIANT BYTES' OWN PLACEMENT SEATS (the foot the facing
+        // alone, the head the third bit the pair stamps — the mesher's
+        // head/foot pair the same bytes read)
+        assert_eq!(
+            bed_variant(BED_FACING_SOUTH, BED_PART_FOOT),
+            2,
+            "the foot the facing alone keeps"
+        );
+        assert_eq!(
+            bed_variant(BED_FACING_SOUTH, BED_PART_HEAD),
+            2 | BED_PART_BIT,
+            "the head the third bit stamps"
+        );
+        assert_eq!(
+            bed_variant_facing(bed_variant(BED_FACING_WEST, BED_PART_HEAD)),
+            BED_FACING_WEST,
+            "the round-trip the facing reads"
+        );
+        assert_eq!(
+            bed_variant_part(bed_variant(BED_FACING_WEST, BED_PART_HEAD)),
+            BED_PART_HEAD,
+            "the round-trip the part reads"
         );
     }
 
