@@ -105,6 +105,16 @@ class R:
 
 def cp_all(data):
     r = R(data)
+    # THE HEADER SKIP the autopush-302 round banks: the cp count the
+    # 8-byte classfile header FOLLOWS (magic 0xCAFEBABE + minor + major)
+    # — the offset-0 read the magic's 0xCAFE the count wore, the walk
+    # the opcode bytes the bogus tags hit (the tag-186 = 0xBA the
+    # invokedynamic OPCODE the misaligned reader answers)
+    magic = r.u4()
+    if magic != 0xCAFEBABE:
+        raise ValueError(f'not a classfile: magic 0x{magic:08x}')
+    r.u2()  # minor
+    r.u2()  # major
     n = r.u2()
     cp = [None] * n
     i = 1
@@ -126,7 +136,7 @@ def cp_all(data):
         elif tag == 18: cp[i] = ('InvokeDynamic', r.u2(), r.u2())
         elif tag == 19: cp[i] = ('Module', r.u2())
         elif tag == 20: cp[i] = ('Package', r.u2())
-        else: raise ValueError(f'tag {tag}')
+        else: raise ValueError(f'tag {tag} at offset {r.p}')
         i += 1
     return cp
 
@@ -232,16 +242,6 @@ def disasm(code, cp):
             continue
         out.append(f"{pc:5d} {m}")
     return out
-
-
-def find_method(data, name):
-    # minimal classfile walk: skip to methods
-    r = R(data)
-    r.u4(); r.u2()  # magic, minor
-    r.u2()  # major
-    cp = cp_all(data[r.p - 2 - (len(data) - len(data)):] if False else data)
-    # simpler: reuse reader positions — cp_all consumed from offset 10 (after magic/minor/major at 8)
-    return cp
 
 
 def parse_class(data, want):

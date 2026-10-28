@@ -8948,7 +8948,23 @@ fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2
 /// 8-z0..10-z0, the west's `u = z - z0 + 1` the z0+6..z0+8), the
 /// back face the coplanar skip the raster law keeps, the winding the
 /// box templates' own orders keep (the backface cull the signed-area
-/// verdict speaks).
+/// verdict speaks). THE V-LAW WALK the autopush-302 round banks: the
+/// jar's Polygon ctor assigns the band's v0 (the texV+dz top row) to
+/// the polygon's two MIN-Y vertices (the north pair v20/v19 the
+/// register walk answers, the remap `v[0]->(u1,v0) v[1]->(u0,v0)`
+/// the both-minY seats wear) and v1 (texV+dz+dy) to the two MAX-Y
+/// vertices — the BE pose chain the y-mirror hunt the round's disasm
+/// walk CLOSES (LevelRenderer.submitBlockEntities the translate only,
+/// the dispatcher the passthrough, ChestRenderer.submit the
+/// mulPose(Y-rotation) the scale never calls, Cube.compile the
+/// worldY()=y/16 raw pass, the Polygon remap the only v seat) — the
+/// NO-MIRROR verdict the raw remap the vanilla render truth pins: the
+/// band's PNG-top row the face's BOTTOM edge samples, the vertical
+/// faces' v pair the swap wears (the top vertex v5, the bottom v1 —
+/// the four facings the outer + the two slivers the same law keep,
+/// the caps the row-0 pair the 301 seats the label nuance keeps: the
+/// UP band's v-inverted ctor params the tip edge the sheet-row-0 the
+/// both laws agree).
 fn chest_lock_quads(
     facing: u8,
     x0: f32,
@@ -8983,7 +8999,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_far),
                     px(tb, ly1, d_far),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
+                [[3.0, 5.0], [3.0, 1.0], [1.0, 1.0], [1.0, 5.0]],
                 6,
             );
             push(
@@ -9013,7 +9029,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_near),
                     px(tb, ly1, d_near),
                 ],
-                [[4.0, 1.0], [4.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[4.0, 5.0], [4.0, 1.0], [3.0, 1.0], [3.0, 5.0]],
                 6,
             );
             push(
@@ -9023,7 +9039,7 @@ fn chest_lock_quads(
                     px(ta, ly0, d_far),
                     px(ta, ly1, d_far),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [0.0, 5.0], [0.0, 1.0]],
+                [[1.0, 5.0], [1.0, 1.0], [0.0, 1.0], [0.0, 5.0]],
                 6,
             );
         }
@@ -9041,7 +9057,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, ta),
                     px(d_far, ly1, ta),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
+                [[3.0, 5.0], [3.0, 1.0], [1.0, 1.0], [1.0, 5.0]],
                 6,
             );
             push(
@@ -9071,7 +9087,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, tb),
                     px(d_far, ly1, tb),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [0.0, 5.0], [0.0, 1.0]],
+                [[1.0, 5.0], [1.0, 1.0], [0.0, 1.0], [0.0, 5.0]],
                 6,
             );
             push(
@@ -9081,7 +9097,7 @@ fn chest_lock_quads(
                     px(d_near, ly0, ta),
                     px(d_near, ly1, ta),
                 ],
-                [[4.0, 1.0], [4.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[4.0, 5.0], [4.0, 1.0], [3.0, 1.0], [3.0, 5.0]],
                 6,
             );
         }
@@ -9097,7 +9113,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, tb),
                     px(d_far, ly1, tb),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
+                [[3.0, 5.0], [3.0, 1.0], [1.0, 1.0], [1.0, 5.0]],
                 6,
             );
             push(
@@ -9127,7 +9143,7 @@ fn chest_lock_quads(
                     px(d_near, ly0, tb),
                     px(d_near, ly1, tb),
                 ],
-                [[4.0, 1.0], [4.0, 5.0], [3.0, 5.0], [3.0, 1.0]],
+                [[4.0, 5.0], [4.0, 1.0], [3.0, 1.0], [3.0, 5.0]],
                 6,
             );
             push(
@@ -9137,7 +9153,7 @@ fn chest_lock_quads(
                     px(d_far, ly0, ta),
                     px(d_far, ly1, ta),
                 ],
-                [[1.0, 1.0], [1.0, 5.0], [0.0, 5.0], [0.0, 1.0]],
+                [[1.0, 5.0], [1.0, 1.0], [0.0, 1.0], [0.0, 5.0]],
                 6,
             );
         }
@@ -9154,7 +9170,7 @@ fn chest_lock_quads(
                     px(ta, ly0, d_far),
                     px(ta, ly1, d_far),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
+                [[3.0, 5.0], [3.0, 1.0], [1.0, 1.0], [1.0, 5.0]],
                 6,
             );
             push(
@@ -9184,7 +9200,7 @@ fn chest_lock_quads(
                     px(tb, ly0, d_far),
                     px(tb, ly1, d_far),
                 ],
-                [[3.0, 1.0], [3.0, 5.0], [4.0, 5.0], [4.0, 1.0]],
+                [[3.0, 5.0], [3.0, 1.0], [4.0, 1.0], [4.0, 5.0]],
                 6,
             );
             push(
@@ -9194,7 +9210,7 @@ fn chest_lock_quads(
                     px(ta, ly0, d_near),
                     px(ta, ly1, d_near),
                 ],
-                [[0.0, 1.0], [0.0, 5.0], [1.0, 5.0], [1.0, 1.0]],
+                [[0.0, 5.0], [0.0, 1.0], [1.0, 1.0], [1.0, 5.0]],
                 6,
             );
         }
@@ -16634,6 +16650,177 @@ mod tests {
         assert!(
             (uv_at(&west[0], max_z)[0] - 1.0 / 16.0).abs() < 1e-6,
             "the west front's max-z end the u 1 the x1 end wears"
+        );
+    }
+
+    #[test]
+    fn the_latch_v_law_the_bottom_row_verdict_wears() {
+        // THE V-LAW WALK (the autopush-302 round — the y-mirror hunt the
+        // disasm walk closes): the jar's Polygon ctor the band's v0 the
+        // two MIN-Y vertices assigns (the north pair v20=(x1,y0,z0)/
+        // v19=(x0,y0,z0) the remap `(u1,v0)/(u0,v0)` the both-minY
+        // seats wear, v1 the two MAX-Y the v22/v21 pair answers), the
+        // BE pose chain the mirror the bytecode refuses
+        // (submitBlockEntities the translate-only pose, the dispatcher
+        // the passthrough, ChestRenderer.submit the Y-rotation
+        // mulPose the scale never calls, Cube.compile the worldY=y/16
+        // raw pass) — the NO-MIRROR verdict the raw remap the vanilla
+        // render truth pins: the band's PNG-top row the face's BOTTOM
+        // edge samples (the max-Y vertex the tile v5 wears, the min-Y
+        // the tile v1), the four facings the outer + the slivers the
+        // same law keep, the caps the row-0 pair the 301 seats the
+        // label nuance keeps
+        use mc_registry::generated::atlas as gen_atlas;
+        let lock_tile = gen_atlas::CHEST_LOCK_TILES[crate::world::CHEST as usize];
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let outer_of =
+            |quads: &[crate::mesher::Quad], far: fn(&[f32; 3]) -> bool| -> crate::mesher::Quad {
+                quads
+                    .iter()
+                    .filter(|quad| {
+                        in_cell(quad)
+                            && quad.tile == lock_tile
+                            && quad.pts.iter().all(far)
+                            && quad.pts.iter().all(|p| {
+                                p[1] >= 8.0 + 6.0 / 16.0 - 1e-5 && p[1] <= 8.0 + 12.0 / 16.0 + 1e-5
+                            })
+                    })
+                    .cloned()
+                    .next()
+                    .expect("the outer face the far plane bakes")
+            };
+        let uv_at = |quad: &crate::mesher::Quad, pick: fn(&[f32; 3], &[[f32; 3]; 4]) -> bool| {
+            quad.uvs
+                .iter()
+                .zip(quad.pts.iter())
+                .find(|(_, p)| pick(p, &quad.pts))
+                .map(|(uv, _)| *uv)
+                .unwrap_or_else(|| panic!("the picked corner speaks"))
+        };
+        let min_y = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[1] <= all.iter().map(|q| q[1]).fold(f32::MAX, f32::min) + 1e-6
+        };
+        let max_y = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[1] >= all.iter().map(|q| q[1]).fold(f32::MIN, f32::max) - 1e-6
+        };
+        // THE SOUTH'S OWN V VERDICT (the outer face the +Z far plane:
+        // the min-Y corner the tile v5 the band's PNG-bottom row
+        // samples, the max-Y the v1 the PNG-top row the face's bottom
+        // edge wears)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_SOUTH,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let q = mesh_chunk(&w, 0, 0, None);
+        let south = outer_of(&q, |p| (p[2] - 9.0).abs() < 1e-5);
+        let v_top = uv_at(&south, max_y)[1];
+        let v_bot = uv_at(&south, min_y)[1];
+        assert!(
+            (v_top - 5.0 / 16.0).abs() < 1e-6,
+            "the south front's max-y end the tile v5 the band's far row wears, got {v_top}"
+        );
+        assert!(
+                (v_bot - 1.0 / 16.0).abs() < 1e-6,
+                "the south front's min-y end the tile v1 the PNG-top row the BOTTOM edge wears, got {v_bot}"
+            );
+        // THE NORTH'S OWN V VERDICT (the default facing the -Z far
+        // plane the same law wears)
+        let mut wn = empty_world();
+        put(&mut wn, 8, 8, 8, crate::world::CHEST);
+        let qn = mesh_chunk(&wn, 0, 0, None);
+        let north = outer_of(&qn, |p| (p[2] - 8.0).abs() < 1e-5);
+        assert!(
+            (uv_at(&north, max_y)[1] - 5.0 / 16.0).abs() < 1e-6,
+            "the north front's max-y end the tile v5 wears"
+        );
+        assert!(
+            (uv_at(&north, min_y)[1] - 1.0 / 16.0).abs() < 1e-6,
+            "the north front's min-y end the tile v1 the bottom edge wears"
+        );
+        // THE EAST'S OWN V VERDICT (the +X far plane the tangent the z
+        // axis rides — the v the y axis the same law keeps)
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::CHEST);
+        we.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_EAST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let east = outer_of(&qe, |p| (p[0] - 9.0).abs() < 1e-5);
+        assert!(
+            (uv_at(&east, max_y)[1] - 5.0 / 16.0).abs() < 1e-6,
+            "the east front's max-y end the tile v5 wears"
+        );
+        assert!(
+            (uv_at(&east, min_y)[1] - 1.0 / 16.0).abs() < 1e-6,
+            "the east front's min-y end the tile v1 the bottom edge wears"
+        );
+        // THE WEST'S OWN V VERDICT (the -X far plane the same law wears)
+        let mut ww = empty_world();
+        put(&mut ww, 8, 8, 8, crate::world::CHEST);
+        ww.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_WEST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        let qw = mesh_chunk(&ww, 0, 0, None);
+        let west = outer_of(&qw, |p| (p[0] - 8.0).abs() < 1e-5);
+        assert!(
+            (uv_at(&west, max_y)[1] - 5.0 / 16.0).abs() < 1e-6,
+            "the west front's max-y end the tile v5 wears"
+        );
+        assert!(
+            (uv_at(&west, min_y)[1] - 1.0 / 16.0).abs() < 1e-6,
+            "the west front's min-y end the tile v1 the bottom edge wears"
+        );
+        // THE SLIVER'S OWN V RIDE (the +X sliver the +Z plane the
+        // south-facing chest bakes — the same swap the relief slivers
+        // wear: the max-Y the v1, the min-Y the v5)
+        let sliver: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                in_cell(quad)
+                    && quad.tile == lock_tile
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[0] - (8.0 + 9.0 / 16.0)).abs() < 1e-5)
+            })
+            .cloned()
+            .collect();
+        assert_eq!(sliver.len(), 1, "the +X sliver the tb plane bakes");
+        assert!(
+            (uv_at(&sliver[0], max_y)[1] - 5.0 / 16.0).abs() < 1e-6,
+            "the +X sliver's max-y end the tile v5 the swap wears"
+        );
+        assert!(
+            (uv_at(&sliver[0], min_y)[1] - 1.0 / 16.0).abs() < 1e-6,
+            "the +X sliver's min-y end the tile v1 the swap wears"
         );
     }
 

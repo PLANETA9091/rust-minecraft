@@ -12,6 +12,10 @@ arg = sys.argv[1] if len(sys.argv) > 1 else "rest"
 only = None if arg == "rest" else int(arg)
 try:
     m.write_mod(only)
+    # THE CALL REPAIR the autopush-302 round banks: the committed form
+    # the `.CARGO` bare token + the open bracket missing wore (the
+    # v0.3.990 clobber — the later rounds the direct part_gate lane
+    # answered), the module attr + the list literal the call law wears
     r = subprocess.run(
         [m.CARGO, "test", "-p", "mc-client", "--", "--format=terse"],
         capture_output=True, text=True, timeout=590,
