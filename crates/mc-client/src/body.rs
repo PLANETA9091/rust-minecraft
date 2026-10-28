@@ -180,6 +180,13 @@ pub const STANDING_HEIGHT: f64 = 1.8;
 pub const CROUCH_HEIGHT: f64 = 1.5;
 pub const STANDING_EYE: f64 = 1.62;
 pub const CROUCH_EYE: f64 = 1.27;
+/// THE SLEEPING POSE'S OWN SIZE (javap the 26.2 jar the Pose.SLEEPING
+/// dimensions the pose table keeps — the 0.2-high AABB the sleeping
+/// body wears, the standing eye the 0.2 the Player.
+/// getStandingEyeHeight(SLEEPING) row answers: the camera the bed's
+/// own low seat rides, the mob views the flat body the reads serve).
+pub const SLEEPING_HEIGHT: f64 = 0.2;
+pub const SLEEPING_EYE: f64 = 0.2;
 /// The eye walk's own per-tick blend (javap the pose section's
 /// `eyeHeight += (f - eyeHeight) * 0.5` — the crouch eases over a few
 /// ticks, never snaps).
@@ -1208,6 +1215,11 @@ pub struct PlayerBody {
     /// The RESOLVED pose (the key state folded with the can-stand law
     /// — the ceiling never embeds the grown body).
     pub crouching: bool,
+    /// THE SLEEPING POSE'S OWN FLAG (the autopush-312 round — the
+    /// LivingEntity.setPose(SLEEPING) walk the sleep lane banks: the
+    /// 0.2-high flat body the height/eye reads serve, the physics the
+    /// freeze arm never moves).
+    pub sleeping: bool,
     /// The crouch KEY state (the resolved pose may stay crouched after
     /// the key releases when the standing box does not fit).
     pub want_crouch: bool,
@@ -1780,6 +1792,7 @@ impl PlayerBody {
             on_ground: false,
             horizontal_collision: false,
             crouching: false,
+            sleeping: false,
             want_crouch: false,
             sprinting: false,
             flying: false,
@@ -2278,7 +2291,9 @@ impl PlayerBody {
 
     /// The pose's height (the POSES table's own numbers).
     pub fn height(&self) -> f64 {
-        if self.crouching {
+        if self.sleeping {
+            SLEEPING_HEIGHT
+        } else if self.crouching {
             CROUCH_HEIGHT
         } else {
             STANDING_HEIGHT
@@ -2290,7 +2305,9 @@ impl PlayerBody {
     /// targets, the reach). The CAMERA rides `lerped_eye_height` —
     /// the smoothed walk the crouch eases along.
     pub fn eye_height(&self) -> f64 {
-        if self.crouching {
+        if self.sleeping {
+            SLEEPING_EYE
+        } else if self.crouching {
             CROUCH_EYE
         } else {
             STANDING_EYE

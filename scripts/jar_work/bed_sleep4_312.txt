@@ -1,0 +1,38 @@
+=== the 24000 fold (the classes the skip banks) ===
+=== Level.isDarkOutside / isDay ===
+== Level :: isDarkOutside ()Z ==
+    0 aload_0
+    1 invokevirtual #374  net/minecraft/world/level/Level.dimensionType ()Lnet/minecraft/world/level/dimension/DimensionType;
+    4 invokevirtual #378  net/minecraft/world/level/dimension/DimensionType.hasFixedTime ()Z
+    7 ifne #14
+   10 aload_0
+   11 invokevirtual #386  net/minecraft/world/level/Level.isBrightOutside ()Z
+   14 ifne #7
+   17 iconst_1
+   18 goto #4
+   21 iconst_0
+   22 ireturn
+=== SleepStatus: areEnoughSleeping / sleepersNeeded ===
+== SleepStatus :: areEnoughSleeping (I)Z ==
+    0 aload_0
+    1 getfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+    4 aload_0
+    5 iload_1
+    6 invokevirtual #13  net/minecraft/server/players/SleepStatus.sleepersNeeded (I)I
+    9 if_icmplt #7
+   12 iconst_1
+   13 goto #4
+   16 iconst_0
+   17 ireturn
+== SleepStatus :: sleepersNeeded (I)I ==
+    0 iconst_1
+    1 aload_0
+    2 getfield #37  net/minecraft/server/players/SleepStatus.activePlayers I
+    5 iload_1
+    6 imul
+    7 i2f
+    8 ldc #40 = ?
+   10 fdiv
+   11 invokestatic #41  net/minecraft/util/Mth.ceil (F)I
+   14 invokestatic #47  java/lang/Math.max (II)I
+   17 ireturn

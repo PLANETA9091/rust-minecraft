@@ -1962,3 +1962,392 @@ fn the_offline_bed_the_break_the_head_only_drop_wears() {
         assert_eq!(bed_drops, 1, "the head's break the condition rolls");
     }
 }
+
+/// THE BED'S OWN DAY PRESS (the autopush-312 round — javap 26.2
+/// ServerPlayer.startSleepInBed the live disasm the walk banks —
+/// scripts/jar_work/bed_sleep_312.txt the dumps serve: the
+/// setRespawnPosition arm the canSetSpawn rule the BEFORE canSleep
+/// order wears — the day press the bank still serves, the
+/// SPAWN_SET_MESSAGE the chat speaks, the !canSleep the asProblem
+/// left the useWithoutItem's ifLeft the displayClientMessage overlay
+/// serves — the BedRule WHEN_DARK the no_sleep row the verdict
+/// speaks; the REAL right-press walk the placed bed the day clock
+/// the press arms).
+#[test]
+fn the_offline_bed_the_day_press_the_spawn_bank_the_refusal_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE PAD (the 311 placement walk's own shape — the head's above
+    // cells the obstruction verdict never refuses)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, surface + 1, c, crate::world::AIR);
+        world.set(c, surface + 1, c + 1, crate::world::AIR);
+        world.set(c, surface + 2, c, crate::world::AIR);
+        world.set(c, surface + 2, c + 1, crate::world::AIR);
+        world.set(c, surface, c, crate::world::STONE);
+        world.set(c, surface, c + 1, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    let head_cell = (c, surface + 1, c + 1);
+    // THE PLAYER'S OWN SEAT (the test lane's body the headless walk
+    // never creates — the reach verdict the vanilla startSleepInBed
+    // the player's own pos reads, the CAMERA the body the highest
+    // authority wears: the spawn cell the body banks, the -90 pitch
+    // the bed's own top the ray enters)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    // THE DAY CLOCK (the day marker's own 1000 the bright outside
+    // keeps — the WHEN_DARK verdict the refusal arms)
+    app.clock_total = 1_000;
+    // THE PRESS (the bed arm the sleep door the verdict chain serves)
+    assert!(
+        app.on_right_press(0, 0),
+        "the day press the SUCCESS the use consumes"
+    );
+    // THE SPAWN POINT'S OWN SET (pcs 127-161 — the bank the BEFORE
+    // canSleep order wears, the anchor the setPosToBed triple banks)
+    let (ax, ay, az) = crate::world::bed_sleep_anchor(head_cell.0, head_cell.1, head_cell.2);
+    assert_eq!(
+        app.respawn_point.map(|(x, y, z, _, _)| (x, y, z)),
+        Some((ax, ay, az)),
+        "the day press the spawn bank the head anchor wears"
+    );
+    // THE MESSAGE'S OWN CHAT (javap setRespawnPosition pc 19-23 — the
+    // SPAWN_SET_MESSAGE the sendSystemMessage walk speaks)
+    assert!(
+        app.chat_messages
+            .iter()
+            .any(|(m, _)| m == "Respawn point set"),
+        "the spawn set the chat speaks"
+    );
+    // THE REFUSAL'S OWN OVERLAY (pc 164 the !canSleep the asProblem
+    // left the ifLeft the displayClientMessage overlay serves — the
+    // no_sleep row the BedRule WHEN_DARK keeps)
+    assert_eq!(
+        app.overlay_message.as_deref(),
+        Some("You can sleep only at night or during thunderstorms"),
+        "the day press the no_sleep the overlay wears"
+    );
+    // THE SLEEP'S OWN REFUSE (the awake body the sleep never stamps)
+    assert!(
+        app.sleeping_bed.is_none(),
+        "the day press the sleep refuses"
+    );
+    assert_eq!(app.sleep_counter, 0, "the refusal the counter keeps");
+    assert!(
+        !app.sleep_screen_open,
+        "the refusal the sleep screen never opens"
+    );
+    let b = app.body.as_ref().unwrap();
+    assert!(!b.sleeping, "the refusal the pose the standing keeps");
+}
+
+/// THE BED'S OWN NIGHT SLEEP (the autopush-312 round — javap 26.2
+/// ServerLevel.tick pcs 85-204 the live disasm the walk banks —
+/// scripts/jar_work/bed_sleep_312.txt the dumps serve: the deep-sleep
+/// counter the 100 ticks the areEnoughDeepSleeping verdict arms, the
+/// morning's own jump the moveToTimeMarker(WAKE_UP_FROM_SLEEP) the
+/// 26.2 timeline's own `wake_up_from_sleep: 0` row serves, the
+/// weather's own clear the resetWeatherCycle the isRaining gate
+/// arms, the wakeUpAllPlayers the stopSleepInBed(true,false) the
+/// tail serves — the REAL sleep walk the placed bed the night clock
+/// the press the 100 updates the skip plays).
+#[test]
+fn the_offline_bed_the_night_press_the_sleep_the_skip_the_morning_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, surface + 1, c, crate::world::AIR);
+        world.set(c, surface + 1, c + 1, crate::world::AIR);
+        world.set(c, surface + 2, c, crate::world::AIR);
+        world.set(c, surface + 2, c + 1, crate::world::AIR);
+        world.set(c, surface, c, crate::world::STONE);
+        world.set(c, surface, c + 1, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    let head_cell = (c, surface + 1, c + 1);
+    // THE PLAYER'S OWN SEAT (the test lane's body the headless walk
+    // never creates — the reach verdict the vanilla startSleepInBed
+    // the player's own pos reads, the CAMERA the body the highest
+    // authority wears: the spawn cell the body banks, the -90 pitch
+    // the bed's own top the ray enters)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    // THE NIGHT CLOCK (the midnight's own 18000 the dark outside the
+    // verdict keeps) + THE RAIN (the resetWeatherCycle the isRaining
+    // gate the skip's clear arm proves)
+    app.clock_total = 18_000;
+    app.set_offline_weather(1.0, 0.0);
+    // THE PRESS (the sleep door the dark verdict the sleep stamps)
+    assert!(
+        app.on_right_press(0, 0),
+        "the night press the SUCCESS the use consumes"
+    );
+    assert_eq!(
+        app.sleeping_bed,
+        Some(head_cell),
+        "the sleep the head cell the bank keeps"
+    );
+    assert!(app.sleep_screen_open, "the sleep screen the walk opens");
+    let (ax, ay, az) = crate::world::bed_sleep_anchor(head_cell.0, head_cell.1, head_cell.2);
+    {
+        let b = app.body.as_ref().unwrap();
+        assert!(b.sleeping, "the pose the sleeping flag wears");
+        assert_eq!(
+            (b.x, b.y, b.z),
+            (ax, ay, az),
+            "the anchor the setPosToBed lands"
+        );
+        assert_eq!(
+            (b.vx, b.vy, b.vz),
+            (0.0, 0.0, 0.0),
+            "the delta the ZERO stamps"
+        );
+    }
+    assert!(
+        app.chat_messages
+            .iter()
+            .any(|(m, _)| m == "Respawn point set"),
+        "the spawn set the night press the chat speaks"
+    );
+    // THE DEEP-SLEEP'S OWN WALK (the counter the per-tick increment —
+    // the 100 the verdict arms, the mid-sleep ticks the frozen body
+    // the anchor keeps)
+    for i in 0..99u32 {
+        app.update();
+        assert_eq!(
+            app.sleeping_bed,
+            Some(head_cell),
+            "the tick {i} the sleep the walk keeps"
+        );
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(
+            (b.x, b.y, b.z),
+            (ax, ay, az),
+            "the tick {i} the freeze the anchor keeps"
+        );
+    }
+    assert_eq!(
+        app.sleep_counter, 99,
+        "the 99th tick the counter the mid-ease wears"
+    );
+    // THE 100TH TICK'S OWN SKIP (the deep-sleep verdict the
+    // areEnoughDeepSleeping arms — the update the counter the 100 the
+    // walk spends, the morning's own jump the same tick wears)
+    app.update();
+    // THE MORNING'S OWN JUMP (pcs 149-170 — the clock the NEXT tick-0
+    // the WAKE_UP_FROM_SLEEP marker wears: the press tick the clock
+    // the 18000 + the 100 deep-sleep ticks the 18100 walked, the jump
+    // the 24000 the dawn answers)
+    assert_eq!(
+        app.day_time_now(),
+        24_000,
+        "the skip the dawn the clock wears"
+    );
+    // THE WEATHER'S OWN CLEAR (pcs 194-204 — the isRaining gate the
+    // resetWeatherCycle the rain the zero set wears)
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().rain_level,
+        0.0,
+        "the skip the rain the clear serves"
+    );
+    // THE WAKE'S OWN TAIL (pcs 171-174 — the wakeUpAllPlayers the
+    // stopSleepInBed(true,false) the counter the zero banks)
+    assert!(app.sleeping_bed.is_none(), "the skip the wake serves");
+    assert_eq!(app.sleep_counter, 0, "the wake the counter resets");
+    assert!(!app.sleep_screen_open, "the wake the sleep screen closes");
+    let b = app.body.as_ref().unwrap();
+    assert!(!b.sleeping, "the wake the pose the standing keeps");
+}
+
+/// THE BED'S OWN TOO-FAR REFUSAL (javap 26.2 ServerPlayer
+/// .startSleepInBed pc 95 the bedInRange the TOO_FAR_AWAY the 3/2/3
+/// band the band's outside wears — the reach verdict the BEFORE
+/// spawn-set order the disasm speaks: the far press the bank never
+/// serves, the REAL right-press walk the body the 5-block south the
+/// verdict plays).
+#[test]
+fn the_offline_bed_the_too_far_the_refusal_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, surface + 1, c, crate::world::AIR);
+        world.set(c, surface + 1, c + 1, crate::world::AIR);
+        world.set(c, surface + 2, c, crate::world::AIR);
+        world.set(c, surface + 2, c + 1, crate::world::AIR);
+        world.set(c, surface, c, crate::world::STONE);
+        world.set(c, surface, c + 1, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    // THE PLAYER'S OWN SEAT (the test lane's body the headless walk
+    // never creates — the reach verdict the vanilla startSleepInBed
+    // the player's own pos reads, the CAMERA the body the highest
+    // authority wears: the spawn cell the body banks, the -90 pitch
+    // the bed's own top the ray enters)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    // THE FAR BODY (the 3-block lift the dy band's outside wears —
+    // the 3.0 the |dy| <= 2.0 band refuses, the eye the 4.62 the bed
+    // top the 4.06 the clip range keeps: the vanilla's own 3..4.5
+    // window the reach-vs-range pair speaks)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.y += 3.0;
+    }
+    app.clock_total = 18_000;
+    assert!(
+        app.on_right_press(0, 0),
+        "the far press the SUCCESS the use consumes"
+    );
+    // THE REFUSAL'S OWN OVERLAY (pc 104-110 — the TOO_FAR_AWAY the
+    // asProblem the ifLeft the displayClientMessage overlay serves)
+    assert_eq!(
+        app.overlay_message.as_deref(),
+        Some("You may not rest now; the bed is too far away"),
+        "the far press the too_far the overlay wears"
+    );
+    // THE BANK'S OWN REFUSE (the reach verdict the BEFORE spawn-set
+    // order the disasm speaks — the far press the bank never serves)
+    assert!(
+        app.respawn_point.is_none(),
+        "the far press the bank refuses"
+    );
+    assert!(
+        app.sleeping_bed.is_none(),
+        "the far press the sleep refuses"
+    );
+}
+
+/// THE BED'S OWN ESC WAKE (the autopush-312 round — javap 26.2
+/// InBedChatScreen the shouldCloseOnEsc default the onClose walk the
+/// sendWakeUp ride serves — the ServerboundPlayerCommandPacket
+/// (STOP_SLEEPING) the wire speaks, the offline walk the
+/// wake_from_bed lane answers: the STANDING pose the pos keeps [the
+/// bed anchor the vanilla stopSleeping's own setPos(current) walk],
+/// the sleep screen the close wears, the REAL sleep walk the ESC the
+/// wake plays).
+#[test]
+fn the_offline_bed_the_esc_the_leave_the_wake_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let red_bed = mc_registry::item_id_by_name("red_bed").unwrap();
+    app.inventory.items[0] = (red_bed, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, surface + 1, c, crate::world::AIR);
+        world.set(c, surface + 1, c + 1, crate::world::AIR);
+        world.set(c, surface + 2, c, crate::world::AIR);
+        world.set(c, surface + 2, c + 1, crate::world::AIR);
+        world.set(c, surface, c, crate::world::STONE);
+        world.set(c, surface, c + 1, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (surface + 5) as f32, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the bed the placement lands");
+    app.clock_total = 18_000;
+    // THE PLAYER'S OWN SEAT (the test lane's body the headless walk
+    // never creates — the reach verdict the vanilla startSleepInBed
+    // the player's own pos reads, the CAMERA the body the highest
+    // authority wears: the spawn cell the body banks, the +90 pitch
+    // the bed's own top the ray enters)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        app.spawn_y as f64,
+        c as f64 + 0.5,
+        180.0,
+        90.0,
+    ));
+    app.clock_total = 18_000;
+    assert!(app.on_right_press(0, 0), "the night press the sleep stamps");
+    let (ax, ay, az) = crate::world::bed_sleep_anchor(c, surface + 1, c + 1);
+    // THE DEEP-SLEEP'S OWN PART WALK (the 40 ticks the counter the
+    // mid-ease wears — the ESC the wake the mid-sleep serves)
+    for _ in 0..40 {
+        app.update();
+    }
+    assert_eq!(app.sleep_counter, 40, "the mid-sleep the counter walks");
+    // THE ESC'S OWN WAKE (the InBedChatScreen's onClose the
+    // sendWakeUp walk the offline lane answers)
+    app.on_escape();
+    assert!(app.sleeping_bed.is_none(), "the ESC the wake serves");
+    assert_eq!(app.sleep_counter, 0, "the wake the counter the zero banks");
+    assert!(!app.sleep_screen_open, "the wake the sleep screen closes");
+    // THE PAUSE'S OWN REFUSE (the ESC the sleep screen consumed — the
+    // wake the pause never arms)
+    assert!(!app.paused, "the ESC the sleep screen the pause refuses");
+    let b = app.body.as_ref().unwrap();
+    assert!(!b.sleeping, "the wake the pose the standing keeps");
+    // THE POS'S OWN STAY (javap Avatar.stopSleeping — the setPos
+    // (current position) walk the bed anchor the body keeps)
+    assert_eq!(
+        (b.x, b.y, b.z),
+        (ax, ay, az),
+        "the wake the pos the anchor keeps"
+    );
+    // THE CLOCK'S OWN WALK (the ESC wake the clock the local advance
+    // keeps — the skip never armed, the night the 18000 + the ticks
+    // the walk speaks)
+    assert_eq!(
+        app.day_time_now(),
+        18_040,
+        "the ESC wake the clock the night keeps"
+    );
+}

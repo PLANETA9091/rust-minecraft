@@ -294,7 +294,7 @@ def parse_class(data, want):
             if a_name == 'Code':
                 clen = struct.unpack_from('>I', adata, 4)[0]
                 code = adata[8:8+clen]
-        if name in want:
+        if want is None or name in want:
             yield name, desc, code, cp
 
 

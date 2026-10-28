@@ -1,0 +1,220 @@
+=== SleepStatus (server/players) ===
+== SleepStatus :: removeAllSleepers ()V ==
+    0 aload_0
+    1 iconst_0
+    2 putfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+    5 return
+== SleepStatus :: amountSleeping ()I ==
+    0 aload_0
+    1 getfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+    4 ireturn
+== SleepStatus :: update (Ljava/util/List;)Z ==
+    0 aload_0
+    1 getfield #37  net/minecraft/server/players/SleepStatus.activePlayers I
+    4 istore_2
+    5 aload_0
+    6 getfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+    9 istore_3
+   10 aload_0
+   11 iconst_0
+   12 putfield #37  net/minecraft/server/players/SleepStatus.activePlayers I
+   15 aload_0
+   16 iconst_0
+   17 putfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+   20 aload_1
+   21 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+   26 astore 4
+   28 aload 4
+   30 invokeinterface java/util/Iterator.hasNext ()Z
+   35 ifeq #54
+   38 aload 4
+   40 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   45 checkcast #67  net/minecraft/server/level/ServerPlayer
+   48 astore 5
+   50 aload 5
+   52 invokevirtual #69  net/minecraft/server/level/ServerPlayer.isSpectator ()Z
+   55 ifne #31
+   58 aload_0
+   59 dup
+   60 getfield #37  net/minecraft/server/players/SleepStatus.activePlayers I
+   63 iconst_1
+   64 iadd
+   65 putfield #37  net/minecraft/server/players/SleepStatus.activePlayers I
+   68 aload 5
+   70 invokevirtual #72  net/minecraft/server/level/ServerPlayer.isSleeping ()Z
+   73 ifeq #13
+   76 aload_0
+   77 dup
+   78 getfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+   81 iconst_1
+   82 iadd
+   83 putfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+   86 goto #65478
+   89 iload_3
+   90 ifgt #10
+   93 aload_0
+   94 getfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+   97 ifle #23
+  100 iload_2
+  101 aload_0
+  102 getfield #37  net/minecraft/server/players/SleepStatus.activePlayers I
+  105 if_icmpne #11
+  108 iload_3
+  109 aload_0
+  110 getfield #7  net/minecraft/server/players/SleepStatus.sleepingPlayers I
+  113 if_icmpeq #7
+  116 iconst_1
+  117 goto #4
+  120 iconst_0
+  121 ireturn
+=== ServerLevel: updateSleepingPlayerList + the fold ===
+== ServerLevel :: updateSleepingPlayerList ()V ==
+    0 aload_0
+    1 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+    4 invokeinterface java/util/List.isEmpty ()Z
+    9 ifne #21
+   12 aload_0
+   13 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   16 aload_0
+   17 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+   20 invokevirtual #1141  net/minecraft/server/players/SleepStatus.update (Ljava/util/List;)Z
+   23 ifeq #7
+   26 aload_0
+   27 invokevirtual #1145  net/minecraft/server/level/ServerLevel.announceSleepStatus ()V
+   30 return
+== ServerLevel :: resetWeatherCycle ()V ==
+    0 aload_0
+    1 invokevirtual #1213  net/minecraft/server/level/ServerLevel.getWeatherData ()Lnet/minecraft/world/level/saveddata/WeatherData;
+    4 astore_1
+    5 aload_1
+    6 iconst_0
+    7 invokevirtual #1245  net/minecraft/world/level/saveddata/WeatherData.setRainTime (I)V
+   10 aload_1
+   11 iconst_0
+   12 invokevirtual #1254  net/minecraft/world/level/saveddata/WeatherData.setRaining (Z)V
+   15 aload_1
+   16 iconst_0
+   17 invokevirtual #1242  net/minecraft/world/level/saveddata/WeatherData.setThunderTime (I)V
+   20 aload_1
+   21 iconst_0
+   22 invokevirtual #1251  net/minecraft/world/level/saveddata/WeatherData.setThundering (Z)V
+   25 return
+=== BedRule ===
+== BedRule :: <init> (Lnet/minecraft/world/attribute/BedRule$Rule;Lnet/minecraft/world/attribute/BedRule$Rule;ZLjava/util/Optional;)V ==
+    0 aload_0
+    1 invokespecial #1  java/lang/Record.<init> ()V
+    4 aload_0
+    5 aload_1
+    6 putfield #7  net/minecraft/world/attribute/BedRule.canSleep Lnet/minecraft/world/attribute/BedRule$Rule;
+    9 aload_0
+   10 aload_2
+   11 putfield #13  net/minecraft/world/attribute/BedRule.canSetSpawn Lnet/minecraft/world/attribute/BedRule$Rule;
+   14 aload_0
+   15 iload_3
+   16 putfield #16  net/minecraft/world/attribute/BedRule.explodes Z
+   19 aload_0
+   20 aload 4
+   22 putfield #20  net/minecraft/world/attribute/BedRule.errorMessage Ljava/util/Optional;
+   25 return
+== BedRule :: canSleep (Lnet/minecraft/world/level/Level;)Z ==
+    0 aload_0
+    1 getfield #7  net/minecraft/world/attribute/BedRule.canSleep Lnet/minecraft/world/attribute/BedRule$Rule;
+    4 aload_1
+    5 invokevirtual #24  net/minecraft/world/attribute/BedRule$Rule.test (Lnet/minecraft/world/level/Level;)Z
+    8 ireturn
+== BedRule :: canSetSpawn (Lnet/minecraft/world/level/Level;)Z ==
+    0 aload_0
+    1 getfield #13  net/minecraft/world/attribute/BedRule.canSetSpawn Lnet/minecraft/world/attribute/BedRule$Rule;
+    4 aload_1
+    5 invokevirtual #24  net/minecraft/world/attribute/BedRule$Rule.test (Lnet/minecraft/world/level/Level;)Z
+    8 ireturn
+== BedRule :: asProblem ()Lnet/minecraft/world/entity/player/Player$BedSleepingProblem; ==
+    0 new #30  net/minecraft/world/entity/player/Player$BedSleepingProblem
+    3 dup
+    4 aload_0
+    5 getfield #20  net/minecraft/world/attribute/BedRule.errorMessage Ljava/util/Optional;
+    8 aconst_null
+    9 invokevirtual #32  java/util/Optional.orElse (Ljava/lang/Object;)Ljava/lang/Object;
+   12 checkcast #38  net/minecraft/network/chat/Component
+   15 invokespecial #40  net/minecraft/world/entity/player/Player$BedSleepingProblem.<init> (Lnet/minecraft/network/chat/Component;)V
+   18 areturn
+== BedRule :: canSleep ()Lnet/minecraft/world/attribute/BedRule$Rule; ==
+    0 aload_0
+    1 getfield #7  net/minecraft/world/attribute/BedRule.canSleep Lnet/minecraft/world/attribute/BedRule$Rule;
+    4 areturn
+== BedRule :: canSetSpawn ()Lnet/minecraft/world/attribute/BedRule$Rule; ==
+    0 aload_0
+    1 getfield #13  net/minecraft/world/attribute/BedRule.canSetSpawn Lnet/minecraft/world/attribute/BedRule$Rule;
+    4 areturn
+== BedRule :: explodes ()Z ==
+    0 aload_0
+    1 getfield #16  net/minecraft/world/attribute/BedRule.explodes Z
+    4 ireturn
+== BedRule :: errorMessage ()Ljava/util/Optional; ==
+    0 aload_0
+    1 getfield #20  net/minecraft/world/attribute/BedRule.errorMessage Ljava/util/Optional;
+    4 areturn
+== BedRule :: <clinit> ()V ==
+    0 new #8  net/minecraft/world/attribute/BedRule
+    3 dup
+    4 getstatic #120  net/minecraft/world/attribute/BedRule$Rule.WHEN_DARK Lnet/minecraft/world/attribute/BedRule$Rule;
+    7 getstatic #123  net/minecraft/world/attribute/BedRule$Rule.ALWAYS Lnet/minecraft/world/attribute/BedRule$Rule;
+   10 iconst_0
+   11 ldc #126 = block.minecraft.bed.no_sleep
+   13 invokestatic #128  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   16 invokestatic #132  java/util/Optional.of (Ljava/lang/Object;)Ljava/util/Optional;
+   19 invokespecial #136  net/minecraft/world/attribute/BedRule.<init> (Lnet/minecraft/world/attribute/BedRule$Rule;Lnet/minecraft/world/attribute/BedRule$Rule;ZLjava/util/Optional;)V
+   22 putstatic #139  net/minecraft/world/attribute/BedRule.CAN_SLEEP_WHEN_DARK Lnet/minecraft/world/attribute/BedRule;
+   25 new #8  net/minecraft/world/attribute/BedRule
+   28 dup
+   29 getstatic #143  net/minecraft/world/attribute/BedRule$Rule.NEVER Lnet/minecraft/world/attribute/BedRule$Rule;
+   32 getstatic #143  net/minecraft/world/attribute/BedRule$Rule.NEVER Lnet/minecraft/world/attribute/BedRule$Rule;
+   35 iconst_1
+   36 invokestatic #146  java/util/Optional.empty ()Ljava/util/Optional;
+   39 invokespecial #136  net/minecraft/world/attribute/BedRule.<init> (Lnet/minecraft/world/attribute/BedRule$Rule;Lnet/minecraft/world/attribute/BedRule$Rule;ZLjava/util/Optional;)V
+   42 putstatic #150  net/minecraft/world/attribute/BedRule.EXPLODES Lnet/minecraft/world/attribute/BedRule;
+   45 invokedynamic #153
+   50 invokestatic #154  com/mojang/serialization/codecs/RecordCodecBuilder.create (Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+   53 putstatic #160  net/minecraft/world/attribute/BedRule.CODEC Lcom/mojang/serialization/Codec;
+   56 return
+=== Avatar: the sleep pose walk ===
+=== ServerPlayer: bedInRange / bedBlocked ===
+== ServerPlayer :: bedInRange (Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z ==
+    0 aload_0
+    1 aload_1
+    2 invokevirtual #2070  net/minecraft/server/level/ServerPlayer.isReachableBedBlock (Lnet/minecraft/core/BlockPos;)Z
+    5 ifne #18
+    8 aload_0
+    9 aload_1
+   10 aload_2
+   11 invokevirtual #2074  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   14 invokevirtual #2078  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+   17 invokevirtual #2070  net/minecraft/server/level/ServerPlayer.isReachableBedBlock (Lnet/minecraft/core/BlockPos;)Z
+   20 ifeq #7
+   23 iconst_1
+   24 goto #4
+   27 iconst_0
+   28 ireturn
+== ServerPlayer :: bedBlocked (Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z ==
+    0 aload_1
+    1 invokevirtual #1767  net/minecraft/core/BlockPos.above ()Lnet/minecraft/core/BlockPos;
+    4 astore_3
+    5 aload_0
+    6 aload_3
+    7 invokevirtual #2092  net/minecraft/server/level/ServerPlayer.freeAt (Lnet/minecraft/core/BlockPos;)Z
+   10 ifeq #18
+   13 aload_0
+   14 aload_3
+   15 aload_2
+   16 invokevirtual #2074  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   19 invokevirtual #2078  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+   22 invokevirtual #2092  net/minecraft/server/level/ServerPlayer.freeAt (Lnet/minecraft/core/BlockPos;)Z
+   25 ifne #7
+   28 iconst_1
+   29 goto #4
+   32 iconst_0
+   33 ireturn
+=== the language rows ===
+block.minecraft.bed.no_sleep = You can sleep only at night or during thunderstorms
+block.minecraft.bed.obstructed = This bed is obstructed
+sleep.not_possible = No amount of rest can pass this night

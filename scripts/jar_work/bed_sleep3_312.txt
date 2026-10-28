@@ -1,0 +1,239 @@
+=== BedRule$Rule ===
+== BedRule$Rule :: <init> (Ljava/lang/String;ILjava/lang/String;)V ==
+    0 aload_0
+    1 aload_1
+    2 iload_2
+    3 invokespecial #28  java/lang/Enum.<init> (Ljava/lang/String;I)V
+    6 aload_0
+    7 aload_3
+    8 putfield #32  net/minecraft/world/attribute/BedRule$Rule.name Ljava/lang/String;
+   11 return
+== BedRule$Rule :: test (Lnet/minecraft/world/level/Level;)Z ==
+    0 aload_0
+    1 invokevirtual #36  net/minecraft/world/attribute/BedRule$Rule.ordinal ()I
+    4 tableswitch lo=0 hi=2 default->32 0->42 1->46 2->53
+   32 new #40  java/lang/MatchException
+   35 dup
+   36 aconst_null
+   37 aconst_null
+   38 invokespecial #42  java/lang/MatchException.<init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+   41 athrow
+   42 iconst_1
+   43 goto #11
+   46 aload_1
+   47 invokevirtual #45  net/minecraft/world/level/Level.isDarkOutside ()Z
+   50 goto #4
+   53 iconst_0
+   54 ireturn
+== BedRule$Rule :: <clinit> ()V ==
+    0 new #1  net/minecraft/world/attribute/BedRule$Rule
+    3 dup
+    4 ldc #51 = ALWAYS
+    6 iconst_0
+    7 ldc #52 = always
+    9 invokespecial #54  net/minecraft/world/attribute/BedRule$Rule.<init> (Ljava/lang/String;ILjava/lang/String;)V
+   12 putstatic #3  net/minecraft/world/attribute/BedRule$Rule.ALWAYS Lnet/minecraft/world/attribute/BedRule$Rule;
+   15 new #1  net/minecraft/world/attribute/BedRule$Rule
+   18 dup
+   19 ldc #57 = WHEN_DARK
+   21 iconst_1
+   22 ldc #58 = when_dark
+   24 invokespecial #54  net/minecraft/world/attribute/BedRule$Rule.<init> (Ljava/lang/String;ILjava/lang/String;)V
+   27 putstatic #7  net/minecraft/world/attribute/BedRule$Rule.WHEN_DARK Lnet/minecraft/world/attribute/BedRule$Rule;
+   30 new #1  net/minecraft/world/attribute/BedRule$Rule
+   33 dup
+   34 ldc #60 = NEVER
+   36 iconst_2
+   37 ldc #61 = never
+   39 invokespecial #54  net/minecraft/world/attribute/BedRule$Rule.<init> (Ljava/lang/String;ILjava/lang/String;)V
+   42 putstatic #10  net/minecraft/world/attribute/BedRule$Rule.NEVER Lnet/minecraft/world/attribute/BedRule$Rule;
+   45 invokestatic #63  net/minecraft/world/attribute/BedRule$Rule.$values ()[Lnet/minecraft/world/attribute/BedRule$Rule;
+   48 putstatic #13  net/minecraft/world/attribute/BedRule$Rule.$VALUES [Lnet/minecraft/world/attribute/BedRule$Rule;
+   51 invokedynamic #67
+   56 invokestatic #71  net/minecraft/util/StringRepresentable.fromEnum (Ljava/util/function/Supplier;)Lnet/minecraft/util/StringRepresentable$EnumCodec;
+   59 putstatic #77  net/minecraft/world/attribute/BedRule$Rule.CODEC Lcom/mojang/serialization/Codec;
+   62 return
+=== Avatar: ALL methods (the names the pose banks) ===
+=== LivingEntity: startSleeping / stopSleeping ===
+== LivingEntity :: startSleeping (Lnet/minecraft/core/BlockPos;)V ==
+    0 aload_0
+    1 invokevirtual #657  net/minecraft/world/entity/LivingEntity.isPassenger ()Z
+    4 ifeq #7
+    7 aload_0
+    8 invokevirtual #667  net/minecraft/world/entity/LivingEntity.stopRiding ()V
+   11 aload_0
+   12 invokevirtual #370  net/minecraft/world/entity/LivingEntity.level ()Lnet/minecraft/world/level/Level;
+   15 aload_1
+   16 invokevirtual #2100  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   19 astore_2
+   20 aload_2
+   21 invokevirtual #2373  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+   24 instanceof #3858  net/minecraft/world/level/block/BedBlock
+   27 ifeq #27
+   30 aload_0
+   31 invokevirtual #370  net/minecraft/world/entity/LivingEntity.level ()Lnet/minecraft/world/level/Level;
+   34 aload_1
+   35 aload_2
+   36 getstatic #3860  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   39 iconst_1
+   40 invokestatic #247  java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+   43 invokevirtual #3863  net/minecraft/world/level/block/state/BlockState.setValue (Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+   46 checkcast #399  net/minecraft/world/level/block/state/BlockState
+   49 iconst_3
+   50 invokevirtual #2105  net/minecraft/world/level/Level.setBlock (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+   53 pop
+   54 aload_0
+   55 getstatic #3793  net/minecraft/world/entity/Pose.SLEEPING Lnet/minecraft/world/entity/Pose;
+   58 invokevirtual #2083  net/minecraft/world/entity/LivingEntity.setPose (Lnet/minecraft/world/entity/Pose;)V
+   61 aload_0
+   62 aload_1
+   63 invokevirtual #3867  net/minecraft/world/entity/LivingEntity.setPosToBed (Lnet/minecraft/core/BlockPos;)V
+   66 aload_0
+   67 aload_1
+   68 invokevirtual #3871  net/minecraft/world/entity/LivingEntity.setSleepingPos (Lnet/minecraft/core/BlockPos;)V
+   71 aload_0
+   72 getstatic #3123  net/minecraft/world/phys/Vec3.ZERO Lnet/minecraft/world/phys/Vec3;
+   75 invokevirtual #2894  net/minecraft/world/entity/LivingEntity.setDeltaMovement (Lnet/minecraft/world/phys/Vec3;)V
+   78 aload_0
+   79 iconst_1
+   80 putfield #2285  net/minecraft/world/entity/LivingEntity.needsSync Z
+   83 return
+== LivingEntity :: stopSleeping ()V ==
+    0 aload_0
+    1 invokevirtual #507  net/minecraft/world/entity/LivingEntity.getSleepingPos ()Ljava/util/Optional;
+    4 aload_0
+    5 invokevirtual #370  net/minecraft/world/entity/LivingEntity.level ()Lnet/minecraft/world/level/Level;
+    8 dup
+    9 invokestatic #1159  java/util/Objects.requireNonNull (Ljava/lang/Object;)Ljava/lang/Object;
+   12 pop
+   13 invokedynamic #3880
+   18 invokevirtual #3883  java/util/Optional.filter (Ljava/util/function/Predicate;)Ljava/util/Optional;
+   21 aload_0
+   22 invokedynamic #3886
+   27 invokevirtual #514  java/util/Optional.ifPresent (Ljava/util/function/Consumer;)V
+   30 aload_0
+   31 invokevirtual #1827  net/minecraft/world/entity/LivingEntity.position ()Lnet/minecraft/world/phys/Vec3;
+   34 astore_1
+   35 aload_0
+   36 getstatic #3824  net/minecraft/world/entity/Pose.STANDING Lnet/minecraft/world/entity/Pose;
+   39 invokevirtual #2083  net/minecraft/world/entity/LivingEntity.setPose (Lnet/minecraft/world/entity/Pose;)V
+   42 aload_0
+   43 aload_1
+   44 getfield #1834  net/minecraft/world/phys/Vec3.x D
+   47 aload_1
+   48 getfield #1889  net/minecraft/world/phys/Vec3.y D
+   51 aload_1
+   52 getfield #1836  net/minecraft/world/phys/Vec3.z D
+   55 invokevirtual #3876  net/minecraft/world/entity/LivingEntity.setPos (DDD)V
+   58 aload_0
+   59 invokevirtual #3887  net/minecraft/world/entity/LivingEntity.clearSleepingPos ()V
+   62 return
+=== ServerPlayer: isReachableBedBlock / freeAt ===
+== ServerPlayer :: isReachableBedBlock (Lnet/minecraft/core/BlockPos;)Z ==
+    0 aload_1
+    1 invokestatic #2016  net/minecraft/world/phys/Vec3.atBottomCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+    4 astore_2
+    5 aload_0
+    6 invokevirtual #1159  net/minecraft/server/level/ServerPlayer.getX ()D
+    9 aload_2
+   10 invokevirtual #2022  net/minecraft/world/phys/Vec3.x ()D
+   13 dsub
+   14 invokestatic #2082  java/lang/Math.abs (D)D
+   17 ldc2_w #2088 = 3.0
+   20 dcmpg
+   21 ifgt #45
+   24 aload_0
+   25 invokevirtual #1160  net/minecraft/server/level/ServerPlayer.getY ()D
+   28 aload_2
+   29 invokevirtual #2025  net/minecraft/world/phys/Vec3.y ()D
+   32 dsub
+   33 invokestatic #2082  java/lang/Math.abs (D)D
+   36 ldc2_w #2090 = 2.0
+   39 dcmpg
+   40 ifgt #26
+   43 aload_0
+   44 invokevirtual #1161  net/minecraft/server/level/ServerPlayer.getZ ()D
+   47 aload_2
+   48 invokevirtual #2027  net/minecraft/world/phys/Vec3.z ()D
+   51 dsub
+   52 invokestatic #2082  java/lang/Math.abs (D)D
+   55 ldc2_w #2088 = 3.0
+   58 dcmpg
+   59 ifgt #7
+   62 iconst_1
+   63 goto #4
+   66 iconst_0
+   67 ireturn
+=== ServerLevel: the 24000 fold (every method, grep) ===
+=== ServerLevel: announceSleepStatus ===
+== ServerLevel :: announceSleepStatus ()V ==
+    0 aload_0
+    1 invokevirtual #1104  net/minecraft/server/level/ServerLevel.canSleepThroughNights ()Z
+    4 ifne #4
+    7 return
+    8 aload_0
+    9 invokevirtual #1107  net/minecraft/server/level/ServerLevel.getServer ()Lnet/minecraft/server/MinecraftServer;
+   12 invokevirtual #275  net/minecraft/server/MinecraftServer.isSingleplayer ()Z
+   15 ifeq #14
+   18 aload_0
+   19 invokevirtual #1107  net/minecraft/server/level/ServerLevel.getServer ()Lnet/minecraft/server/MinecraftServer;
+   22 invokevirtual #1111  net/minecraft/server/MinecraftServer.isPublished ()Z
+   25 ifne #4
+   28 return
+   29 aload_0
+   30 invokevirtual #495  net/minecraft/server/level/ServerLevel.getGameRules ()Lnet/minecraft/world/level/gamerules/GameRules;
+   33 getstatic #499  net/minecraft/world/level/gamerules/GameRules.PLAYERS_SLEEPING_PERCENTAGE Lnet/minecraft/world/level/gamerules/GameRule;
+   36 invokevirtual #505  net/minecraft/world/level/gamerules/GameRules.get (Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+   39 checkcast #508  java/lang/Integer
+   42 invokevirtual #510  java/lang/Integer.intValue ()I
+   45 istore_1
+   46 aload_0
+   47 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   50 iload_1
+   51 invokevirtual #513  net/minecraft/server/players/SleepStatus.areEnoughSleeping (I)Z
+   54 ifeq #13
+   57 ldc_w #1114 = sleep.skipping_night
+   60 invokestatic #1116  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   63 astore_2
+   64 goto #41
+   67 ldc_w #1122 = sleep.players_sleeping
+   70 iconst_2
+   71 anewarray #1124  java/lang/Object
+   74 dup
+   75 iconst_0
+   76 aload_0
+   77 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   80 invokevirtual #1126  net/minecraft/server/players/SleepStatus.amountSleeping ()I
+   83 invokestatic #993  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+   86 aastore
+   87 dup
+   88 iconst_1
+   89 aload_0
+   90 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   93 iload_1
+   94 invokevirtual #1129  net/minecraft/server/players/SleepStatus.sleepersNeeded (I)I
+   97 invokestatic #993  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+  100 aastore
+  101 invokestatic #1132  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  104 astore_2
+  105 aload_0
+  106 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+  109 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+  114 astore_3
+  115 aload_3
+  116 invokeinterface java/util/Iterator.hasNext ()Z
+  121 ifeq #23
+  124 aload_3
+  125 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  130 checkcast #1135  net/minecraft/server/level/ServerPlayer
+  133 astore 4
+  135 aload 4
+  137 aload_2
+  138 invokevirtual #1137  net/minecraft/server/level/ServerPlayer.sendOverlayMessage (Lnet/minecraft/network/chat/Component;)V
+  141 goto #65510
+  144 return
+=== Level: isDay / getSkyDarken ===
+== Level :: getSkyDarken ()I ==
+    0 aload_0
+    1 getfield #383  net/minecraft/world/level/Level.skyDarken I
+    4 ireturn

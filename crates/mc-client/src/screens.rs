@@ -10684,6 +10684,29 @@ pub struct App {
     /// own re-anchor (the vanilla respawn teleports the player to the
     /// spawn point and the body re-baselines there).
     pub spawn_pose: Option<(f64, f64, f64, f32, f32)>,
+    /// THE BED'S OWN SLEEP BANK (the autopush-312 round — javap 26.2
+    /// ServerPlayer.startSleepInBed the super walk the LivingEntity.
+    /// startSleeping the head cell the sleep state stamps): the head
+    /// cell the sleeping pose the anchor reads, the `None` the awake
+    /// body keeps.
+    pub sleeping_bed: Option<(i32, i32, i32)>,
+    /// THE DEEP-SLEEP'S OWN COUNTER (javap Player.stopSleepInBed pc 39
+    /// the zero bank, javap Player.isSleepingLongEnough pc 11 the
+    /// `>= 100` compare serves): the per-tick increment the sleep walk
+    /// spends, the 100 the night-skip the verdict arms, the wake the
+    /// reset wears.
+    pub sleep_counter: u32,
+    /// THE SLEEP SCREEN'S OWN SEAT (javap InBedChatScreen the 26.2 jar
+    /// — the ChatScreen subclass the Gui.tick's isSleeping walk opens:
+    /// the Leave Bed button the ESC the wake lanes wear, the modal the
+    /// world's own presses never reach).
+    pub sleep_screen_open: bool,
+    /// THE BED'S OWN RESPAWN BANK (javap 26.2 ServerPlayer.startSleepInBed
+    /// pcs 127-161 — the setRespawnPosition arm the spawn point banks:
+    /// the canSetSpawn the ALWAYS rule the day press still serves [the
+    /// set BEFORE the canSleep verdict the disasm order speaks], the
+    /// RespawnData the bed's anchor + the player's own angles wears).
+    pub respawn_point: Option<(f64, f64, f64, f32, f32)>,
 }
 
 /// The hand the use rides — the vanilla InteractionHand's own pair
@@ -11621,6 +11644,65 @@ pub fn gateway_stores_from_nbt(
     stores
 }
 
+/// THE BED SPAWN'S OWN BANK (the autopush-312 round — the banked
+/// respawn point the containers file's own lane wears: the anchor
+/// triple + the angle pair the RespawnData fields the vanilla
+/// playerdata law keeps, the None the absent row the empty compound
+/// speaks).
+pub fn respawn_point_to_nbt(point: &Option<(f64, f64, f64, f32, f32)>) -> mc_protocol::nbt::Nbt {
+    let Some((x, y, z, yaw, pitch)) = point else {
+        return mc_protocol::nbt::Nbt::Compound(Vec::new());
+    };
+    mc_protocol::nbt::Nbt::Compound(vec![
+        ("x".to_string(), mc_protocol::nbt::Nbt::Double(*x)),
+        ("y".to_string(), mc_protocol::nbt::Nbt::Double(*y)),
+        ("z".to_string(), mc_protocol::nbt::Nbt::Double(*z)),
+        ("Yaw".to_string(), mc_protocol::nbt::Nbt::Float(*yaw)),
+        ("Pitch".to_string(), mc_protocol::nbt::Nbt::Float(*pitch)),
+    ])
+}
+
+/// THE BED SPAWN'S OWN PARSE (the tolerant walk the gateway parse
+/// wears: the missing row the honest None keeps, the missing field
+/// the entry skip serves — the restart the same spot the reopen
+/// banks).
+pub fn respawn_point_from_nbt(value: &mc_protocol::nbt::Nbt) -> Option<(f64, f64, f64, f32, f32)> {
+    let mc_protocol::nbt::Nbt::Compound(entries) = value else {
+        return None;
+    };
+    if entries.is_empty() {
+        return None;
+    }
+    let read_double = |name: &str| -> Option<f64> {
+        entries
+            .iter()
+            .find(|(k, _)| k == name)
+            .and_then(|(_, v)| match v {
+                mc_protocol::nbt::Nbt::Double(d) => Some(*d),
+                _ => None,
+            })
+    };
+    let read_float = |name: &str| -> Option<f32> {
+        entries
+            .iter()
+            .find(|(k, _)| k == name)
+            .and_then(|(_, v)| match v {
+                mc_protocol::nbt::Nbt::Float(f) => Some(*f),
+                _ => None,
+            })
+    };
+    let (Some(x), Some(y), Some(z), Some(yaw), Some(pitch)) = (
+        read_double("x"),
+        read_double("y"),
+        read_double("z"),
+        read_float("Yaw"),
+        read_float("Pitch"),
+    ) else {
+        return None;
+    };
+    Some((x, y, z, yaw, pitch))
+}
+
 /// THE BREWING BANK'S OWN PARSE (the autopush-309 round — the
 /// "brewing_stands" list the five-cap wears: the same tolerant walk
 /// the furnace parse serves, the missing/corrupt list the honest
@@ -12365,6 +12447,10 @@ impl App {
             frame_sample_start: 0,
             frame_sample_size: 0,
             spawn_pose: None,
+            sleeping_bed: None,
+            sleep_counter: 0,
+            sleep_screen_open: false,
+            respawn_point: None,
         }
     }
 
@@ -13659,6 +13745,11 @@ impl App {
                 // side speaks, the halt/boost the powered rails arm,
                 // the off-rail the gravity fall wears)
                 self.tick_offline_carts();
+                // THE BED'S OWN SLEEP TICK (the autopush-312 round —
+                // the deep-sleep counter the per-tick walk spends, the
+                // 100-tick bed the morning's own jump the clock wears,
+                // the wake the skip's tail serves)
+                self.tick_sleep_lanes();
             }
             let using = self.using_item.is_some();
             // THE REINS' OWN WORD (the controlling pass the held stack
@@ -13751,7 +13842,40 @@ impl App {
                 // exactly as the standing walk's does (the vanilla
                 // isControlledCamera gate keeps sending while riding —
                 // the carried position the packet speaks).
-                if self.net_ride.is_some() {
+                // THE SLEEP'S OWN FREEZE (the autopush-312 round — javap
+                // LivingEntity.startSleeping the 26.2 jar the sleeping
+                // body the physics never moves: the ZERO delta the bank
+                // keeps, the input the sleep screen never feeds, the
+                // anchor the re-stamp the drift never wears [the ride
+                // arm's own carry law the same shape wears — the
+                // sleeping pose the ride the vanilla never pairs])
+                if self.sleeping_bed.is_some() {
+                    let (hx, hy, hz) = self.sleeping_bed.expect("sleep checked above");
+                    let (ax, ay, az) = crate::world::bed_sleep_anchor(hx, hy, hz);
+                    b.prev_x = b.x;
+                    b.prev_y = b.y;
+                    b.prev_z = b.z;
+                    b.x = ax;
+                    b.y = ay;
+                    b.z = az;
+                    b.vx = 0.0;
+                    b.vy = 0.0;
+                    b.vz = 0.0;
+                    b.horizontal_collision = false;
+                    b.forward = 0.0;
+                    b.left = 0.0;
+                    b.jumping = false;
+                    b.sprinting = false;
+                    b.want_crouch = false;
+                    // THE EYE'S OWN EASE (javap LivingEntity.tick's own
+                    // `oEyeHeight = eyeHeight` head the physics skip
+                    // never reaches — the 0.5 fold the same walk the
+                    // crouch eases along, the camera the bed's own low
+                    // seat the lerp rides)
+                    b.prev_eye_height = b.eye_height;
+                    b.eye_height +=
+                        (crate::body::SLEEPING_EYE - b.eye_height) * crate::body::EYE_HEIGHT_BLEND;
+                } else if self.net_ride.is_some() {
                     let r = self.net_ride.as_ref().expect("ride checked above");
                     // THE POSITIONRIDER'S OWN WALK (the vehicle's
                     // positionRider the vanilla rideTick calls): the
@@ -20475,6 +20599,12 @@ impl App {
         // THE DEATH GATE: a dead player's hands sleep (the DeathScreen
         // owns the input — the same law the update loop's gate speaks)
         if self.dead {
+            return;
+        }
+        // THE SLEEP SCREEN'S OWN GATE (the autopush-312 round — the
+        // InBedChatScreen the modal seat the world's own swing never
+        // reaches: the sleeping body's hands the sleep keeps)
+        if self.sleeping_bed.is_some() {
             return;
         }
         if self.miss_time > 0 {
@@ -31298,6 +31428,16 @@ impl App {
             if self.dead {
                 return;
             }
+            // THE SLEEP SCREEN'S OWN ESC (the autopush-312 round — javap
+            // InBedChatScreen the 26.2 jar: the shouldCloseOnEsc default
+            // the onClose walk the sendWakeUp ride serves — the
+            // ServerboundPlayerCommandPacket(STOP_SLEEPING) the wire
+            // speaks, the offline walk the wake_from_bed lane answers:
+            // the pause the sleep screen never arms)
+            if self.sleeping_bed.is_some() {
+                self.wake_from_bed();
+                return;
+            }
             // THE PAUSE ARM'S OWN RELEASE (the vanilla PauseScreen the
             // setScreen(non-null) walk wears — the pause side the
             // releaseAll speaks, the unpause the world's return the
@@ -34265,6 +34405,14 @@ impl App {
     /// attack swing (the world's left press — the guard inside keeps
     /// the menus silent).
     pub fn on_press(&mut self, mx: i32, my: i32) {
+        // THE SLEEP SCREEN'S OWN MODAL GATE (the autopush-312 round —
+        // javap InBedChatScreen the 26.2 jar: the ChatScreen subclass
+        // the sleep walk wears — the world's own press the modal seat
+        // never reaches, the Leave Bed button the on_click walk the
+        // wake serves)
+        if self.screen == ScreenKind::World && self.sleeping_bed.is_some() {
+            return;
+        }
         // THE SENSITIVITY SLIDER'S OWN ARM (the AbstractSliderButton's
         // mouseDown walk — the press INSIDE the track the value's own
         // seat answers, the armed flag the held drag rides, the
@@ -34793,6 +34941,12 @@ impl App {
     /// trident), the hold renders the using branch. Returns whether a
     /// use started (the tests' honest probe).
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
+        // THE SLEEP SCREEN'S OWN MODAL GATE (the autopush-312 round —
+        // the InBedChatScreen the sleep walk wears: the world's own
+        // right press the modal seat never reaches)
+        if self.screen == ScreenKind::World && self.sleeping_bed.is_some() {
+            return false;
+        }
         // THE SELECTED-KEY GATE'S OWN RIGHT SEAT (the KeyBindsScreen
         // .mouseClicked walk pc 0-37 — the armed rebind the ANY click
         // the MOUSE bind answers FIRST, the consumed press the screen
@@ -39970,6 +40124,14 @@ impl App {
                 if let Some(slots) = ender_slots_from_nbt(&root) {
                     self.ender_chest_store = slots;
                 }
+                // THE BED SPAWN'S OWN PARSE (the autopush-312 round —
+                // the "respawn_point" row the boot banks: the missing
+                // row the honest None keeps, the present row the same
+                // spot the respawn wears — the vanilla playerdata law
+                // the disk lane honors)
+                if let Some(point) = respawn_point_from_nbt(&root) {
+                    self.respawn_point = Some(point);
+                }
                 // THE FRAME BANK'S OWN PARSE (the autopush-136 round —
                 // the fourth list the wall frames' boot bank answers:
                 // the offline world alone the restore serves [the wire
@@ -40060,6 +40222,14 @@ impl App {
             (
                 "item_frames".to_string(),
                 item_frames_bank_to_nbt(&self.item_frames),
+            ),
+            // THE BED SPAWN'S OWN ROW (the autopush-312 round — the
+            // banked respawn point the same file the list wears: the
+            // anchor + the angles the RespawnData fields the vanilla
+            // playerdata law keeps, the None the absent row speaks)
+            (
+                "respawn_point".to_string(),
+                respawn_point_to_nbt(&self.respawn_point),
             ),
         ]);
         let mut bytes = Vec::new();
@@ -43062,6 +43232,13 @@ impl App {
                     self.toggle_keys_restore_after_screen();
                     self.buttons.clear();
                 }
+                // THE SLEEP SCREEN'S OWN LEAVE (the autopush-312 round —
+                // javap InBedChatScreen the Leave Bed button the
+                // lambda the sendWakeUp walk serves: the
+                // ServerboundPlayerCommandPacket(STOP_SLEEPING) the
+                // wire speaks, the offline walk the wake_from_bed lane
+                // answers)
+                "leavebed" => self.wake_from_bed(),
                 // the DeathScreen's own pair: Respawn resets the vitals,
                 // re-anchors the body to the spawn and echoes the Client
                 // Command's PERFORM_RESPAWN; the Title Screen button is
@@ -53798,6 +53975,214 @@ impl App {
         }
     }
 
+    /// THE BED'S OWN SLEEP PRESS (the autopush-312 round — javap 26.2
+    /// BedBlock.useWithoutItem the live disasm the walk banks —
+    /// scripts/jar_work/bed_sleep_312.txt the dumps serve): the verdict
+    /// chain the bytecode's own order wears —
+    ///   1. the PART re-seat (pcs 11-56): the FOOT the relative(FACING)
+    ///      head cell answers, the non-bed re-seat the CONSUME refusal
+    ///      keeps;
+    ///   2. the reach verdict (ServerPlayer.startSleepInBed pc 95 —
+    ///      bedInRange the TOO_FAR_AWAY the 3/2/3 band answers);
+    ///   3. the obstruction verdict (pc 111 — bedBlocked the
+    ///      above-cell pair the freeAt law keeps);
+    ///   4. THE SPAWN POINT'S OWN SET (pcs 127-161 — the
+    ///      setRespawnPosition arm the canSetSpawn rule the BEFORE
+    ///      canSleep order wears: the day press the bank still serves,
+    ///      the RespawnData the anchor + the player's own angles banks,
+    ///      the SPAWN_SET_MESSAGE the changed config the chat speaks
+    ///      [javap setRespawnPosition pc 0-23 — the isSamePosition gate
+    ///      the GlobalPos equals read serves: the same bed the silent
+    ///      re-set keeps]);
+    ///   5. the dark verdict (pc 164 — the !canSleep the asProblem left
+    ///      the useWithoutItem's ifLeft the displayClientMessage
+    ///      overlay serves, the BedRule WHEN_DARK the no_sleep row
+    ///      speaks);
+    ///   6. the sleep stamps (pcs 296-301 the super walk — javap
+    ///      LivingEntity.startSleeping the setPose(SLEEPING) the
+    ///      setPosToBed the ZERO delta the stamps speak, the
+    ///      sleepCounter the zero the bank keeps, the InBedChatScreen
+    ///      the Gui.tick's isSleeping walk opens).
+    /// The OCCUPIED bit the block-state walk sets the client's own
+    /// byte vocabulary never carries (the two-bit pair the mesher's
+    /// head/foot seats keep — the vanilla bed model the bit never
+    /// renders, the honest single-sleeper gap the kickVillager arm
+    /// never enters).
+    fn bed_sleep_press(&mut self, pos: (i32, i32, i32)) -> bool {
+        let Some(world) = self.offline_world.as_ref() else {
+            return false;
+        };
+        let kind = world.get(pos.0, pos.1, pos.2);
+        let variant = world.variant(pos.0, pos.1, pos.2);
+        // 1. THE PART RE-SEAT (useWithoutItem pcs 11-56 — the FOOT the
+        //    head cell the walk re-seats, the non-bed the CONSUME the
+        //    verdict keeps)
+        let Some((hx, hy, hz)) =
+            crate::world::bed_use_head_cell(kind, variant, pos.0, pos.1, pos.2)
+        else {
+            return true;
+        };
+        if !crate::world::is_bed(world.get(hx, hy, hz)) {
+            return true;
+        }
+        let facing = crate::world::bed_variant_facing(world.variant(hx, hy, hz));
+        let (bx, by, bz) = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y, b.z))
+            .unwrap_or((0.0, 0.0, 0.0));
+        // 2. THE REACH VERDICT (startSleepInBed pc 95 — the bedInRange
+        //    the TOO_FAR_AWAY the band's outside wears)
+        if !crate::world::bed_in_range(bx, by, bz, (hx, hy, hz), facing) {
+            self.set_overlay_message(
+                tr("block.minecraft.bed.too_far_away")
+                    .unwrap_or("You may not rest now; the bed is too far away"),
+            );
+            return true;
+        }
+        // 3. THE OBSTRUCTION VERDICT (pc 111 — the bedBlocked the
+        //    above-cell pair the either-solid refusal wears)
+        let above_head = world.get(hx, hy + 1, hz);
+        let (fx, fz) = crate::world::bed_facing_offset(facing);
+        let above_foot = world.get(hx - fx, hy + 1, hz - fz);
+        if crate::world::bed_obstructed(above_head, above_foot) {
+            self.set_overlay_message(
+                tr("block.minecraft.bed.obstructed").unwrap_or("This bed is obstructed"),
+            );
+            return true;
+        }
+        // 4. THE SPAWN POINT'S OWN SET (pcs 127-161 — the bank the
+        //    BEFORE canSleep order wears, the changed-config message
+        //    the GlobalPos gate keeps)
+        let (yaw, pitch) = self
+            .body
+            .as_ref()
+            .map(|b| (b.yaw, b.pitch))
+            .unwrap_or((0.0, 0.0));
+        let (ax, ay, az) = crate::world::bed_sleep_anchor(hx, hy, hz);
+        let changed = match self.respawn_point {
+            Some((x, y, z, _, _)) => (x, y, z) != (ax, ay, az),
+            None => true,
+        };
+        self.respawn_point = Some((ax, ay, az, yaw, pitch));
+        if changed {
+            self.push_chat_message(
+                tr("block.minecraft.set_spawn")
+                    .unwrap_or("Respawn point set")
+                    .to_string(),
+            );
+        }
+        // 5. THE DARK VERDICT (pc 164 — the !canSleep the asProblem
+        //    left the overlay the no_sleep row serves)
+        let day_time = self.day_time_now();
+        if !crate::world::bed_can_sleep(day_time) {
+            self.set_overlay_message(
+                tr("block.minecraft.bed.no_sleep")
+                    .unwrap_or("You can sleep only at night or during thunderstorms"),
+            );
+            return true;
+        }
+        // 6. THE SLEEP'S OWN STAMPS (pcs 296-301 the super walk — the
+        //    anchor the setPosToBed triple banks, the counter the zero
+        //    the fresh sleep wears, the screen the Gui.tick's own open
+        //    the modal seat keeps)
+        self.sleeping_bed = Some((hx, hy, hz));
+        self.sleep_counter = 0;
+        self.sleep_screen_open = true;
+        if let Some(b) = self.body.as_mut() {
+            b.sleeping = true;
+            b.prev_x = b.x;
+            b.prev_y = b.y;
+            b.prev_z = b.z;
+            b.x = ax;
+            b.y = ay;
+            b.z = az;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.fall_distance = 0.0;
+            b.fall_event = None;
+        }
+        // THE SLEEP SCREEN'S OWN KEYS (the setScreen(non-null) walk the
+        // chat screen's own law shares — the held movement keys the
+        // release the walk speaks, the world's own presses the modal
+        // seat never reaches)
+        self.toggle_keys_release_for_screen();
+        self.key_mappings_release_all();
+        true
+    }
+
+    /// THE BED'S OWN WAKE (javap Player.stopSleepInBed(ZZ) pcs 0-39 the
+    /// 26.2 jar — the Avatar.stopSleeping the STANDING pose the pos
+    /// keeps [the bed anchor the body's own seat the vanilla never
+    /// teleports away], the sleepCounter the zero the true arm banks,
+    /// the screen the onClose the wake serves): the ESC/the Leave Bed
+    /// button/the night-skip's wakeUpAllPlayers the three lanes the
+    /// one walk serves.
+    fn wake_from_bed(&mut self) {
+        if self.sleeping_bed.is_none() {
+            return;
+        }
+        self.sleeping_bed = None;
+        self.sleep_counter = 0;
+        self.sleep_screen_open = false;
+        self.buttons.clear();
+        if let Some(b) = self.body.as_mut() {
+            b.sleeping = false;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+        }
+    }
+
+    /// THE BED'S OWN SLEEP TICK (javap 26.2 ServerLevel.tick pcs 85-204
+    /// the live disasm the walk banks — scripts/jar_work/
+    /// bed_sleep_312.txt the dumps serve): the per-tick counter the
+    /// sleep walk spends, the areEnoughDeepSleeping verdict the 100
+    /// ticks the bed arms [the single-sleeper world the ONE player the
+    /// enough answer — the SleepStatus the areEnoughSleeping the
+    /// percentage fold the same verdict the 1/1 speaks], the morning's
+    /// own jump the moveToTimeMarker(WAKE_UP_FROM_SLEEP) walk serves
+    /// (the 26.2 timeline's own `wake_up_from_sleep: 0` row the
+    /// data/minecraft/timeline/day.json keeps), the weather's own clear
+    /// the resetWeatherCycle the isRaining gate arms (the rain/thunder
+    /// pair the zero set wears), the wakeUpAllPlayers the
+    /// stopSleepInBed(true,false) the every sleeper serves.
+    fn tick_sleep_lanes(&mut self) {
+        if self.world_is_network {
+            return;
+        }
+        if self.sleeping_bed.is_none() {
+            return;
+        }
+        // THE DEEP-SLEEP'S OWN VERDICT (the counter the per-tick walk
+        // spends, the 100 the areEnoughDeepSleeping the verdict arms —
+        // the body's own freeze the tick walk's branch the lane below
+        // serves)
+        self.sleep_counter = self.sleep_counter.saturating_add(1);
+        if self.sleep_counter < crate::world::BED_SLEEP_WAKE_TICKS {
+            return;
+        }
+        // THE MORNING'S OWN JUMP (pcs 149-170 — the ADVANCE_TIME rule
+        // the default true keeps, the WAKE_UP_FROM_SLEEP marker the
+        // clock's own 0 the timeline serves)
+        let day = self.day_time_now();
+        self.clock_total = crate::world::bed_wake_jump(day) as u64;
+        // THE WEATHER'S OWN CLEAR (pcs 194-204 — the ADVANCE_WEATHER
+        // rule the isRaining gate the resetWeatherCycle walk serves:
+        // the rain/thunder pair the zero set wears)
+        if self
+            .offline_world
+            .as_ref()
+            .is_some_and(|w| w.rain_level > 0.0)
+        {
+            self.set_offline_weather(0.0, 0.0);
+        }
+        // THE WAKE'S OWN WALK (pcs 171-174 — the wakeUpAllPlayers the
+        // every sleeper the stopSleepInBed(true,false) serves)
+        self.wake_from_bed();
+    }
+
     /// THE BLOCK-USE LANE — the vanilla startUseItem's block branch:
     /// the crosshair clip (the eye along the view direction, the
     /// BLOCK_INTERACTION_RANGE's 4.5), the useItemOn echo riding EVERY
@@ -53879,6 +54264,28 @@ impl App {
         {
             self.open_furnace(hit.pos);
             return true;
+        }
+        // THE BED'S OWN SLEEP DOOR (the autopush-312 round — javap 26.2
+        // BedBlock.useWithoutItem the live disasm the walk banks —
+        // scripts/jar_work/bed_sleep_312.txt the dumps serve): the hit
+        // cell's bed kind the OFFLINE world answers — the sleep walk
+        // [`Self::bed_sleep_press`] the verdict chain serves (the part
+        // re-seat, the reach band, the obstruction pair, the spawn
+        // bank, the dark verdict, the sleep stamps). The sneaking
+        // player the arm SKIPS (the useWithoutItem the use walk the
+        // shift gate the block family's own doors wear — the
+        // BlockItem.useOn's sneaking-place fallback the item lanes
+        // follow). The WIRE session the local lane never arms (the
+        // server's own startSleepInBed the verdict owns — the echo the
+        // press carries, the server's own sleep the word serves).
+        if !self.shift_down
+            && !self.world_is_network
+            && self.sleeping_bed.is_none()
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_bed(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            return self.bed_sleep_press(hit.pos);
         }
         // THE CHEST FAMILY'S OWN DOOR (the dev-64 round — javap 26.2
         // ChestBlock.useWithoutItem pc 0-55 the openMenu walk the
@@ -64581,7 +64988,19 @@ impl App {
         // LivingEntity — the fresh CombatTracker's empty entries the
         // new body carries, the shover memory the None answers)
         self.last_hurt_by_mob = None;
-        if let (Some(b), Some((x, y, z, yaw, pitch))) = (self.body.as_mut(), self.spawn_pose) {
+        // THE BED'S OWN RESPAWN RETURN (the autopush-312 round — javap
+        // 26.2 ServerPlayer.findRespawnPositionAndUseSpawnBlock pcs 23-82
+        // the respawnConfig the spawn point prefers: the banked bed
+        // spot the re-anchor serves, the world-spawn the no-bank walk
+        // keeps [the RespawnPosAngle's own around-bed scan the later
+        // round's law keeps — the honest anchor the bed's own center
+        // column the bank wears])
+        let anchor = if self.respawn_point.is_some() {
+            self.respawn_point
+        } else {
+            self.spawn_pose
+        };
+        if let (Some(b), Some((x, y, z, yaw, pitch))) = (self.body.as_mut(), anchor) {
             b.x = x;
             b.y = y;
             b.z = z;
@@ -65059,6 +65478,17 @@ impl App {
                     self.render_death(&mut g, a, gw, gh);
                 } else {
                     self.render_hud(&mut g, a);
+                    // THE SLEEP SCREEN'S OWN LAYER (the autopush-312 round
+                    // — javap 26.2 InBedChatScreen the Hud's
+                    // extractSleepOverlay the fade walk the layer stack
+                    // wears: the 0x101010 ease the counter's own 100-tick
+                    // walk speaks, the Leave Bed button the vanilla
+                    // bounds the init row keeps — the chat/pause the
+                    // modal seat never pairs)
+                    if self.sleeping_bed.is_some() {
+                        let (gw, gh) = (g.w(), g.h());
+                        self.render_sleep_screen(&mut g, a, gw, gh);
+                    }
                     // THE CHAT SCREEN'S OWN LAYER (the vanilla Screen the
                     // HUD's own stack draws after — the ChatScreen the
                     // isHidden flag never gates, the F1-hidden world the
@@ -72670,6 +73100,44 @@ impl App {
                 .to_string(),
             w / 2,
             h / 4 + 96,
+            200,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE SLEEP SCREEN'S OWN RENDER (the autopush-312 round — javap
+    /// 26.2 the Hud's extractSleepOverlay the fade walk the live
+    /// disasm banks — scripts/jar_work/bed_sleep_312.txt the dumps
+    /// serve: the `sleepTimer / 100.0` ease the #445 divisor speaks,
+    /// the `220.0 * f` alpha the #447 fold wears, the 0x101010 the
+    /// #448 int row keeps [the near-black the vanilla fill carries] —
+    /// plus javap InBedChatScreen.init the Leave Bed button the
+    /// `width / 2 - 100, height - 40, 200, 20` bounds row speaks, the
+    /// `multiplayer.stopSleeping` label the builder wears). The deep
+    /// sleep the 220-floor hold the counter's own 100 the verdict
+    /// never passes (the wake the skip arms the same tick).
+    fn render_sleep_screen(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let counter = self.sleep_counter;
+        let alpha = crate::world::bed_fade_alpha(counter) / 255.0;
+        let rgb = crate::world::BED_FADE_RGB;
+        let (r, gr, b) = (
+            ((rgb >> 16) & 0xFF) as f32 / 255.0,
+            ((rgb >> 8) & 0xFF) as f32 / 255.0,
+            (rgb & 0xFF) as f32 / 255.0,
+        );
+        g.fill(0, 0, w, h, [r, gr, b, alpha]);
+        // THE LEAVE BED BUTTON'S OWN SEAT (javap InBedChatScreen.init
+        // pcs 19-46 — the bounds the width/2-100, height-40, 200x20
+        // rows keep, the label the multiplayer.stopSleeping key wears)
+        self.buttons.push(Button::new(
+            "leavebed",
+            tr("multiplayer.stopSleeping")
+                .unwrap_or("Leave Bed")
+                .to_string(),
+            w / 2 - 100,
+            h - 40,
             200,
         ));
         for b in &self.buttons.clone() {

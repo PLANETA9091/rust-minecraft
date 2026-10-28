@@ -1,0 +1,532 @@
+== LocalPlayer :: aiStep ()V ==
+    0 aload_0
+    1 getfield #1107  net/minecraft/client/player/LocalPlayer.sprintTriggerTime I
+    4 ifle #13
+    7 aload_0
+    8 dup
+    9 getfield #1107  net/minecraft/client/player/LocalPlayer.sprintTriggerTime I
+   12 iconst_1
+   13 isub
+   14 putfield #1107  net/minecraft/client/player/LocalPlayer.sprintTriggerTime I
+   17 aload_0
+   18 getfield #73  net/minecraft/client/player/LocalPlayer.minecraft Lnet/minecraft/client/Minecraft;
+   21 getfield #459  net/minecraft/client/Minecraft.gui Lnet/minecraft/client/gui/Gui;
+   24 invokevirtual #567  net/minecraft/client/gui/Gui.screen ()Lnet/minecraft/client/gui/screens/Screen;
+   27 instanceof #1110  net/minecraft/client/gui/screens/LevelLoadingScreen
+   30 ifne #26
+   33 aload_0
+   34 aload_0
+   35 invokevirtual #1112  net/minecraft/client/player/LocalPlayer.getActivePortalLocalTransition ()Lnet/minecraft/world/level/block/Portal$Transition;
+   38 getstatic #1116  net/minecraft/world/level/block/Portal$Transition.CONFUSION Lnet/minecraft/world/level/block/Portal$Transition;
+   41 if_acmpne #7
+   44 iconst_1
+   45 goto #4
+   48 iconst_0
+   49 invokevirtual #1122  net/minecraft/client/player/LocalPlayer.handlePortalTransitionEffect (Z)V
+   52 aload_0
+   53 invokevirtual #1125  net/minecraft/client/player/LocalPlayer.processPortalCooldown ()V
+   56 aload_0
+   57 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+   60 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+   63 invokevirtual #997  net/minecraft/world/entity/player/Input.jump ()Z
+   66 istore_1
+   67 aload_0
+   68 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+   71 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+   74 invokevirtual #965  net/minecraft/world/entity/player/Input.shift ()Z
+   77 istore_2
+   78 aload_0
+   79 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+   82 invokevirtual #1128  net/minecraft/client/player/ClientInput.hasForwardImpulse ()Z
+   85 istore_3
+   86 aload_0
+   87 invokevirtual #495  net/minecraft/client/player/LocalPlayer.getAbilities ()Lnet/minecraft/world/entity/player/Abilities;
+   90 astore 4
+   92 aload_0
+   93 aload 4
+   95 getfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+   98 ifne #55
+  101 aload_0
+  102 invokevirtual #1131  net/minecraft/client/player/LocalPlayer.isSwimming ()Z
+  105 ifne #48
+  108 aload_0
+  109 invokevirtual #183  net/minecraft/client/player/LocalPlayer.isPassenger ()Z
+  112 ifne #41
+  115 aload_0
+  116 getstatic #1134  net/minecraft/world/entity/Pose.CROUCHING Lnet/minecraft/world/entity/Pose;
+  119 invokevirtual #1137  net/minecraft/client/player/LocalPlayer.canPlayerFitWithinBlocksAndEntitiesWhen (Lnet/minecraft/world/entity/Pose;)Z
+  122 ifeq #31
+  125 aload_0
+  126 invokevirtual #1141  net/minecraft/client/player/LocalPlayer.isShiftKeyDown ()Z
+  129 ifne #20
+  132 aload_0
+  133 invokevirtual #1144  net/minecraft/client/player/LocalPlayer.isSleeping ()Z
+  136 ifne #17
+  139 aload_0
+  140 getstatic #1069  net/minecraft/world/entity/Pose.STANDING Lnet/minecraft/world/entity/Pose;
+  143 invokevirtual #1137  net/minecraft/client/player/LocalPlayer.canPlayerFitWithinBlocksAndEntitiesWhen (Lnet/minecraft/world/entity/Pose;)Z
+  146 ifne #7
+  149 iconst_1
+  150 goto #4
+  153 iconst_0
+  154 putfield #968  net/minecraft/client/player/LocalPlayer.crouching Z
+  157 aload_0
+  158 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  161 invokevirtual #1147  net/minecraft/client/player/ClientInput.tick ()V
+  164 aload_0
+  165 getfield #73  net/minecraft/client/player/LocalPlayer.minecraft Lnet/minecraft/client/Minecraft;
+  168 invokevirtual #1148  net/minecraft/client/Minecraft.getTutorial ()Lnet/minecraft/client/tutorial/Tutorial;
+  171 aload_0
+  172 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  175 invokevirtual #1152  net/minecraft/client/tutorial/Tutorial.onInput (Lnet/minecraft/client/player/ClientInput;)V
+  178 iconst_0
+  179 istore 5
+  181 aload_0
+  182 getfield #1158  net/minecraft/client/player/LocalPlayer.autoJumpTime I
+  185 ifle #23
+  188 aload_0
+  189 dup
+  190 getfield #1158  net/minecraft/client/player/LocalPlayer.autoJumpTime I
+  193 iconst_1
+  194 isub
+  195 putfield #1158  net/minecraft/client/player/LocalPlayer.autoJumpTime I
+  198 iconst_1
+  199 istore 5
+  201 aload_0
+  202 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  205 invokevirtual #1161  net/minecraft/client/player/ClientInput.makeJump ()V
+  208 aload_0
+  209 getfield #1164  net/minecraft/client/player/LocalPlayer.noPhysics Z
+  212 ifne #131
+  215 aload_0
+  216 aload_0
+  217 invokevirtual #272  net/minecraft/client/player/LocalPlayer.getX ()D
+  220 aload_0
+  221 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  224 f2d
+  225 ldc2_w #1170 = 0.35
+  228 dmul
+  229 dsub
+  230 aload_0
+  231 invokevirtual #286  net/minecraft/client/player/LocalPlayer.getZ ()D
+  234 aload_0
+  235 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  238 f2d
+  239 ldc2_w #1170 = 0.35
+  242 dmul
+  243 dadd
+  244 invokevirtual #1172  net/minecraft/client/player/LocalPlayer.moveTowardsClosestSpace (DD)V
+  247 aload_0
+  248 aload_0
+  249 invokevirtual #272  net/minecraft/client/player/LocalPlayer.getX ()D
+  252 aload_0
+  253 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  256 f2d
+  257 ldc2_w #1170 = 0.35
+  260 dmul
+  261 dsub
+  262 aload_0
+  263 invokevirtual #286  net/minecraft/client/player/LocalPlayer.getZ ()D
+  266 aload_0
+  267 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  270 f2d
+  271 ldc2_w #1170 = 0.35
+  274 dmul
+  275 dsub
+  276 invokevirtual #1172  net/minecraft/client/player/LocalPlayer.moveTowardsClosestSpace (DD)V
+  279 aload_0
+  280 aload_0
+  281 invokevirtual #272  net/minecraft/client/player/LocalPlayer.getX ()D
+  284 aload_0
+  285 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  288 f2d
+  289 ldc2_w #1170 = 0.35
+  292 dmul
+  293 dadd
+  294 aload_0
+  295 invokevirtual #286  net/minecraft/client/player/LocalPlayer.getZ ()D
+  298 aload_0
+  299 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  302 f2d
+  303 ldc2_w #1170 = 0.35
+  306 dmul
+  307 dsub
+  308 invokevirtual #1172  net/minecraft/client/player/LocalPlayer.moveTowardsClosestSpace (DD)V
+  311 aload_0
+  312 aload_0
+  313 invokevirtual #272  net/minecraft/client/player/LocalPlayer.getX ()D
+  316 aload_0
+  317 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  320 f2d
+  321 ldc2_w #1170 = 0.35
+  324 dmul
+  325 dadd
+  326 aload_0
+  327 invokevirtual #286  net/minecraft/client/player/LocalPlayer.getZ ()D
+  330 aload_0
+  331 invokevirtual #1167  net/minecraft/client/player/LocalPlayer.getBbWidth ()F
+  334 f2d
+  335 ldc2_w #1170 = 0.35
+  338 dmul
+  339 dadd
+  340 invokevirtual #1172  net/minecraft/client/player/LocalPlayer.moveTowardsClosestSpace (DD)V
+  343 iload_2
+  344 ifne #30
+  347 aload_0
+  348 invokevirtual #1176  net/minecraft/client/player/LocalPlayer.isSlowDueToUsingItem ()Z
+  351 ifeq #10
+  354 aload_0
+  355 invokevirtual #183  net/minecraft/client/player/LocalPlayer.isPassenger ()Z
+  358 ifeq #16
+  361 aload_0
+  362 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  365 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  368 invokevirtual #1179  net/minecraft/world/entity/player/Input.backward ()Z
+  371 ifeq #8
+  374 aload_0
+  375 iconst_0
+  376 putfield #1107  net/minecraft/client/player/LocalPlayer.sprintTriggerTime I
+  379 aload_0
+  380 invokevirtual #1182  net/minecraft/client/player/LocalPlayer.canStartSprinting ()Z
+  383 ifeq #63
+  386 iload_3
+  387 ifne #41
+  390 aload_0
+  391 getfield #1107  net/minecraft/client/player/LocalPlayer.sprintTriggerTime I
+  394 ifle #11
+  397 aload_0
+  398 iconst_1
+  399 invokevirtual #1185  net/minecraft/client/player/LocalPlayer.setSprinting (Z)V
+  402 goto #26
+  405 aload_0
+  406 aload_0
+  407 getfield #73  net/minecraft/client/player/LocalPlayer.minecraft Lnet/minecraft/client/Minecraft;
+  410 getfield #337  net/minecraft/client/Minecraft.options Lnet/minecraft/client/Options;
+  413 invokevirtual #1188  net/minecraft/client/Options.sprintWindow ()Lnet/minecraft/client/OptionInstance;
+  416 invokevirtual #347  net/minecraft/client/OptionInstance.get ()Ljava/lang/Object;
+  419 checkcast #5  java/lang/Integer
+  422 invokevirtual #1191  java/lang/Integer.intValue ()I
+  425 putfield #1107  net/minecraft/client/player/LocalPlayer.sprintTriggerTime I
+  428 aload_0
+  429 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  432 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  435 invokevirtual #1194  net/minecraft/world/entity/player/Input.sprint ()Z
+  438 ifeq #8
+  441 aload_0
+  442 iconst_1
+  443 invokevirtual #1185  net/minecraft/client/player/LocalPlayer.setSprinting (Z)V
+  446 aload_0
+  447 invokevirtual #357  net/minecraft/client/player/LocalPlayer.isSprinting ()Z
+  450 ifeq #37
+  453 aload_0
+  454 invokevirtual #1131  net/minecraft/client/player/LocalPlayer.isSwimming ()Z
+  457 ifeq #18
+  460 aload_0
+  461 invokevirtual #1197  net/minecraft/client/player/LocalPlayer.shouldStopSwimSprinting ()Z
+  464 ifeq #23
+  467 aload_0
+  468 iconst_0
+  469 invokevirtual #1185  net/minecraft/client/player/LocalPlayer.setSprinting (Z)V
+  472 goto #15
+  475 aload_0
+  476 invokevirtual #1200  net/minecraft/client/player/LocalPlayer.shouldStopRunSprinting ()Z
+  479 ifeq #8
+  482 aload_0
+  483 iconst_0
+  484 invokevirtual #1185  net/minecraft/client/player/LocalPlayer.setSprinting (Z)V
+  487 iconst_0
+  488 istore 6
+  490 aload 4
+  492 getfield #1203  net/minecraft/world/entity/player/Abilities.mayfly Z
+  495 ifeq #148
+  498 aload_0
+  499 getfield #73  net/minecraft/client/player/LocalPlayer.minecraft Lnet/minecraft/client/Minecraft;
+  502 getfield #1206  net/minecraft/client/Minecraft.gameMode Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+  505 invokevirtual #1210  net/minecraft/client/multiplayer/MultiPlayerGameMode.isSpectator ()Z
+  508 ifeq #27
+  511 aload 4
+  513 getfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+  516 ifne #127
+  519 aload 4
+  521 iconst_1
+  522 putfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+  525 iconst_1
+  526 istore 6
+  528 aload_0
+  529 invokevirtual #1215  net/minecraft/client/player/LocalPlayer.onUpdateAbilities ()V
+  532 goto #111
+  535 iload_1
+  536 ifne #107
+  539 aload_0
+  540 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  543 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  546 invokevirtual #997  net/minecraft/world/entity/player/Input.jump ()Z
+  549 ifeq #94
+  552 iload 5
+  554 ifne #89
+  557 aload_0
+  558 getfield #1218  net/minecraft/client/player/LocalPlayer.jumpTriggerTime I
+  561 ifne #12
+  564 aload_0
+  565 bipush 7
+  567 putfield #1218  net/minecraft/client/player/LocalPlayer.jumpTriggerTime I
+  570 goto #73
+  573 aload_0
+  574 invokevirtual #1131  net/minecraft/client/player/LocalPlayer.isSwimming ()Z
+  577 ifne #66
+  580 aload_0
+  581 invokevirtual #1221  net/minecraft/client/player/LocalPlayer.getVehicle ()Lnet/minecraft/world/entity/Entity;
+  584 ifnull #10
+  587 aload_0
+  588 invokevirtual #1224  net/minecraft/client/player/LocalPlayer.jumpableVehicle ()Lnet/minecraft/world/entity/PlayerRideableJumping;
+  591 ifnull #52
+  594 aload 4
+  596 aload 4
+  598 getfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+  601 ifne #7
+  604 iconst_1
+  605 goto #4
+  608 iconst_0
+  609 putfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+  612 aload 4
+  614 getfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+  617 ifeq #14
+  620 aload_0
+  621 invokevirtual #220  net/minecraft/client/player/LocalPlayer.onGround ()Z
+  624 ifeq #7
+  627 aload_0
+  628 invokevirtual #1228  net/minecraft/client/player/LocalPlayer.jumpFromGround ()V
+  631 iconst_1
+  632 istore 6
+  634 aload_0
+  635 invokevirtual #1215  net/minecraft/client/player/LocalPlayer.onUpdateAbilities ()V
+  638 aload_0
+  639 iconst_0
+  640 putfield #1218  net/minecraft/client/player/LocalPlayer.jumpTriggerTime I
+  643 aload_0
+  644 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  647 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  650 invokevirtual #997  net/minecraft/world/entity/player/Input.jump ()Z
+  653 ifeq #44
+  656 iload 6
+  658 ifne #39
+  661 iload_1
+  662 ifne #35
+  665 aload_0
+  666 invokevirtual #1231  net/minecraft/client/player/LocalPlayer.onClimbable ()Z
+  669 ifne #28
+  672 aload_0
+  673 invokevirtual #1234  net/minecraft/client/player/LocalPlayer.tryToStartFallFlying ()Z
+  676 ifeq #21
+  679 aload_0
+  680 getfield #77  net/minecraft/client/player/LocalPlayer.connection Lnet/minecraft/client/multiplayer/ClientPacketListener;
+  683 new #369  net/minecraft/network/protocol/game/ServerboundPlayerCommandPacket
+  686 dup
+  687 aload_0
+  688 getstatic #1237  net/minecraft/network/protocol/game/ServerboundPlayerCommandPacket$Action.START_FALL_FLYING Lnet/minecraft/network/protocol/game/ServerboundPlayerCommandPacket$Action;
+  691 invokespecial #371  net/minecraft/network/protocol/game/ServerboundPlayerCommandPacket.<init> (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/protocol/game/ServerboundPlayerCommandPacket$Action;)V
+  694 invokevirtual #214  net/minecraft/client/multiplayer/ClientPacketListener.send (Lnet/minecraft/network/protocol/Packet;)V
+  697 aload_0
+  698 aload_0
+  699 invokevirtual #866  net/minecraft/client/player/LocalPlayer.isFallFlying ()Z
+  702 putfield #869  net/minecraft/client/player/LocalPlayer.wasFallFlying Z
+  705 aload_0
+  706 invokevirtual #1240  net/minecraft/client/player/LocalPlayer.isInWater ()Z
+  709 ifeq #27
+  712 aload_0
+  713 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  716 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  719 invokevirtual #965  net/minecraft/world/entity/player/Input.shift ()Z
+  722 ifeq #14
+  725 aload_0
+  726 invokevirtual #1243  net/minecraft/client/player/LocalPlayer.isAffectedByFluids ()Z
+  729 ifeq #7
+  732 aload_0
+  733 invokevirtual #1246  net/minecraft/client/player/LocalPlayer.goDownInWater ()V
+  736 aload_0
+  737 getstatic #1249  net/minecraft/tags/FluidTags.WATER Lnet/minecraft/tags/TagKey;
+  740 invokevirtual #1255  net/minecraft/client/player/LocalPlayer.isEyeInFluid (Lnet/minecraft/tags/TagKey;)Z
+  743 ifeq #39
+  746 aload_0
+  747 invokevirtual #1259  net/minecraft/client/player/LocalPlayer.isSpectator ()Z
+  750 ifeq #8
+  753 bipush 10
+  755 goto #4
+  758 iconst_1
+  759 istore 7
+  761 aload_0
+  762 aload_0
+  763 getfield #1260  net/minecraft/client/player/LocalPlayer.waterVisionTime I
+  766 iload 7
+  768 iadd
+  769 iconst_0
+  770 sipush 600
+  773 invokestatic #1263  net/minecraft/util/Mth.clamp (III)I
+  776 putfield #1260  net/minecraft/client/player/LocalPlayer.waterVisionTime I
+  779 goto #36
+  782 aload_0
+  783 getfield #1260  net/minecraft/client/player/LocalPlayer.waterVisionTime I
+  786 ifle #29
+  789 aload_0
+  790 getstatic #1249  net/minecraft/tags/FluidTags.WATER Lnet/minecraft/tags/TagKey;
+  793 invokevirtual #1255  net/minecraft/client/player/LocalPlayer.isEyeInFluid (Lnet/minecraft/tags/TagKey;)Z
+  796 pop
+  797 aload_0
+  798 aload_0
+  799 getfield #1260  net/minecraft/client/player/LocalPlayer.waterVisionTime I
+  802 bipush 10
+  804 isub
+  805 iconst_0
+  806 sipush 600
+  809 invokestatic #1263  net/minecraft/util/Mth.clamp (III)I
+  812 putfield #1260  net/minecraft/client/player/LocalPlayer.waterVisionTime I
+  815 aload 4
+  817 getfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+  820 ifeq #77
+  823 aload_0
+  824 invokevirtual #269  net/minecraft/client/player/LocalPlayer.isControlledCamera ()Z
+  827 ifeq #70
+  830 iconst_0
+  831 istore 7
+  833 aload_0
+  834 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  837 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  840 invokevirtual #965  net/minecraft/world/entity/player/Input.shift ()Z
+  843 ifeq #6
+  846 iinc 7 -1
+  849 aload_0
+  850 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  853 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  856 invokevirtual #997  net/minecraft/world/entity/player/Input.jump ()Z
+  859 ifeq #6
+  862 iinc 7 1
+  865 iload 7
+  867 ifeq #30
+  870 aload_0
+  871 aload_0
+  872 invokevirtual #668  net/minecraft/client/player/LocalPlayer.getDeltaMovement ()Lnet/minecraft/world/phys/Vec3;
+  875 dconst_0
+  876 iload 7
+  878 i2f
+  879 aload 4
+  881 invokevirtual #1267  net/minecraft/world/entity/player/Abilities.getFlyingSpeed ()F
+  884 fmul
+  885 ldc_w #1270 = ?
+  888 fmul
+  889 f2d
+  890 dconst_0
+  891 invokevirtual #1271  net/minecraft/world/phys/Vec3.add (DDD)Lnet/minecraft/world/phys/Vec3;
+  894 invokevirtual #1095  net/minecraft/client/player/LocalPlayer.setDeltaMovement (Lnet/minecraft/world/phys/Vec3;)V
+  897 aload_0
+  898 invokevirtual #1224  net/minecraft/client/player/LocalPlayer.jumpableVehicle ()Lnet/minecraft/world/entity/PlayerRideableJumping;
+  901 astore 7
+  903 aload 7
+  905 ifnull #184
+  908 aload 7
+  910 invokeinterface net/minecraft/world/entity/PlayerRideableJumping.getJumpCooldown ()I
+  915 ifne #174
+  918 aload_0
+  919 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+  922 ifge #25
+  925 aload_0
+  926 dup
+  927 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+  930 iconst_1
+  931 iadd
+  932 putfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+  935 aload_0
+  936 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+  939 ifne #8
+  942 aload_0
+  943 fconst_0
+  944 putfield #883  net/minecraft/client/player/LocalPlayer.jumpRidingScale F
+  947 iload_1
+  948 ifeq #47
+  951 aload_0
+  952 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+  955 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+  958 invokevirtual #997  net/minecraft/world/entity/player/Input.jump ()Z
+  961 ifne #34
+  964 aload_0
+  965 bipush -10
+  967 putfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+  970 aload 7
+  972 aload_0
+  973 invokevirtual #529  net/minecraft/client/player/LocalPlayer.getJumpRidingScale ()F
+  976 ldc_w #532 = ?
+  979 fmul
+  980 invokestatic #533  net/minecraft/util/Mth.floor (F)I
+  983 invokeinterface net/minecraft/world/entity/PlayerRideableJumping.onPlayerJump (I)V
+  988 aload_0
+  989 invokevirtual #1283  net/minecraft/client/player/LocalPlayer.sendRidingJump ()V
+  992 goto #102
+  995 iload_1
+  996 ifne #29
+  999 aload_0
+ 1000 getfield #54  net/minecraft/client/player/LocalPlayer.input Lnet/minecraft/client/player/ClientInput;
+ 1003 getfield #201  net/minecraft/client/player/ClientInput.keyPresses Lnet/minecraft/world/entity/player/Input;
+ 1006 invokevirtual #997  net/minecraft/world/entity/player/Input.jump ()Z
+ 1009 ifeq #16
+ 1012 aload_0
+ 1013 iconst_0
+ 1014 putfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+ 1017 aload_0
+ 1018 fconst_0
+ 1019 putfield #883  net/minecraft/client/player/LocalPlayer.jumpRidingScale F
+ 1022 goto #72
+ 1025 iload_1
+ 1026 ifeq #68
+ 1029 aload_0
+ 1030 dup
+ 1031 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+ 1034 iconst_1
+ 1035 iadd
+ 1036 putfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+ 1039 aload_0
+ 1040 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+ 1043 bipush 10
+ 1045 if_icmpge #19
+ 1048 aload_0
+ 1049 aload_0
+ 1050 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+ 1053 i2f
+ 1054 ldc_w #1286 = ?
+ 1057 fmul
+ 1058 putfield #883  net/minecraft/client/player/LocalPlayer.jumpRidingScale F
+ 1061 goto #33
+ 1064 aload_0
+ 1065 ldc_w #1287 = ?
+ 1068 fconst_2
+ 1069 aload_0
+ 1070 getfield #1277  net/minecraft/client/player/LocalPlayer.jumpRidingTicks I
+ 1073 bipush 9
+ 1075 isub
+ 1076 i2f
+ 1077 fdiv
+ 1078 ldc_w #1286 = ?
+ 1081 fmul
+ 1082 fadd
+ 1083 putfield #883  net/minecraft/client/player/LocalPlayer.jumpRidingScale F
+ 1086 goto #8
+ 1089 aload_0
+ 1090 fconst_0
+ 1091 putfield #883  net/minecraft/client/player/LocalPlayer.jumpRidingScale F
+ 1094 aload_0
+ 1095 invokespecial #1288  net/minecraft/client/player/AbstractClientPlayer.aiStep ()V
+ 1098 aload_0
+ 1099 invokevirtual #220  net/minecraft/client/player/LocalPlayer.onGround ()Z
+ 1102 ifeq #34
+ 1105 aload 4
+ 1107 getfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+ 1110 ifeq #26
+ 1113 aload_0
+ 1114 getfield #73  net/minecraft/client/player/LocalPlayer.minecraft Lnet/minecraft/client/Minecraft;
+ 1117 getfield #1206  net/minecraft/client/Minecraft.gameMode Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+ 1120 invokevirtual #1210  net/minecraft/client/multiplayer/MultiPlayerGameMode.isSpectator ()Z
+ 1123 ifne #13
+ 1126 aload 4
+ 1128 iconst_0
+ 1129 putfield #515  net/minecraft/world/entity/player/Abilities.flying Z
+ 1132 aload_0
+ 1133 invokevirtual #1215  net/minecraft/client/player/LocalPlayer.onUpdateAbilities ()V
+ 1136 return

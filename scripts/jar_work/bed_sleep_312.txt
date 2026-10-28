@@ -1,0 +1,523 @@
+=== BedBlock: the use walk ===
+== BedBlock :: useWithoutItem (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult; ==
+    0 aload_2
+    1 invokevirtual #76  net/minecraft/world/level/Level.isClientSide ()Z
+    4 ifeq #7
+    7 getstatic #82  net/minecraft/world/InteractionResult.SUCCESS_SERVER Lnet/minecraft/world/InteractionResult$Success;
+   10 areturn
+   11 aload_1
+   12 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   15 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   18 getstatic #88  net/minecraft/world/level/block/state/properties/BedPart.HEAD Lnet/minecraft/world/level/block/state/properties/BedPart;
+   21 if_acmpeq #36
+   24 aload_3
+   25 aload_1
+   26 getstatic #67  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   29 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   32 checkcast #74  net/minecraft/core/Direction
+   35 invokevirtual #91  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+   38 astore_3
+   39 aload_2
+   40 aload_3
+   41 invokevirtual #97  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   44 astore_1
+   45 aload_1
+   46 aload_0
+   47 invokevirtual #98  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   50 ifne #7
+   53 getstatic #102  net/minecraft/world/InteractionResult.CONSUME Lnet/minecraft/world/InteractionResult$Success;
+   56 areturn
+   57 aload_2
+   58 invokevirtual #105  net/minecraft/world/level/Level.environmentAttributes ()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+   61 getstatic #109  net/minecraft/world/attribute/EnvironmentAttributes.BED_RULE Lnet/minecraft/world/attribute/EnvironmentAttribute;
+   64 aload_3
+   65 invokevirtual #115  net/minecraft/world/attribute/EnvironmentAttributeSystem.getValue (Lnet/minecraft/world/attribute/EnvironmentAttribute;Lnet/minecraft/core/BlockPos;)Ljava/lang/Object;
+   68 checkcast #120  net/minecraft/world/attribute/BedRule
+   71 astore 6
+   73 aload 6
+   75 invokevirtual #122  net/minecraft/world/attribute/BedRule.explodes ()Z
+   78 ifeq #103
+   81 aload 6
+   83 invokevirtual #125  net/minecraft/world/attribute/BedRule.errorMessage ()Ljava/util/Optional;
+   86 aload 4
+   88 dup
+   89 invokestatic #129  java/util/Objects.requireNonNull (Ljava/lang/Object;)Ljava/lang/Object;
+   92 pop
+   93 invokedynamic #135
+   98 invokevirtual #139  java/util/Optional.ifPresent (Ljava/util/function/Consumer;)V
+  101 aload_2
+  102 aload_3
+  103 iconst_0
+  104 invokevirtual #145  net/minecraft/world/level/Level.removeBlock (Lnet/minecraft/core/BlockPos;Z)Z
+  107 pop
+  108 aload_3
+  109 aload_1
+  110 getstatic #67  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+  113 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  116 checkcast #74  net/minecraft/core/Direction
+  119 invokevirtual #149  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+  122 invokevirtual #91  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+  125 astore 7
+  127 aload_2
+  128 aload 7
+  130 invokevirtual #97  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  133 aload_0
+  134 invokevirtual #98  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+  137 ifeq #11
+  140 aload_2
+  141 aload 7
+  143 iconst_0
+  144 invokevirtual #145  net/minecraft/world/level/Level.removeBlock (Lnet/minecraft/core/BlockPos;Z)Z
+  147 pop
+  148 aload_3
+  149 invokestatic #153  net/minecraft/world/phys/Vec3.atCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+  152 astore 8
+  154 aload_2
+  155 aconst_null
+  156 aload_2
+  157 invokevirtual #159  net/minecraft/world/level/Level.damageSources ()Lnet/minecraft/world/damagesource/DamageSources;
+  160 aload 8
+  162 invokevirtual #163  net/minecraft/world/damagesource/DamageSources.badRespawnPointExplosion (Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/damagesource/DamageSource;
+  165 aconst_null
+  166 aload 8
+  168 ldc #169 = ?
+  170 iconst_1
+  171 getstatic #170  net/minecraft/world/level/Level$ExplosionInteraction.BLOCK Lnet/minecraft/world/level/Level$ExplosionInteraction;
+  174 invokevirtual #176  net/minecraft/world/level/Level.explode (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;Lnet/minecraft/world/phys/Vec3;FZLnet/minecraft/world/level/Level$ExplosionInteraction;)V
+  177 getstatic #82  net/minecraft/world/InteractionResult.SUCCESS_SERVER Lnet/minecraft/world/InteractionResult$Success;
+  180 areturn
+  181 aload_1
+  182 getstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+  185 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  188 checkcast #48  java/lang/Boolean
+  191 invokevirtual #180  java/lang/Boolean.booleanValue ()Z
+  194 ifeq #26
+  197 aload_0
+  198 aload_2
+  199 aload_3
+  200 invokevirtual #183  net/minecraft/world/level/block/BedBlock.kickVillagerOutOfBed (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+  203 ifne #13
+  206 aload 4
+  208 ldc #187 = block.minecraft.bed.occupied
+  210 invokestatic #189  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+  213 invokevirtual #195  net/minecraft/world/entity/player/Player.sendOverlayMessage (Lnet/minecraft/network/chat/Component;)V
+  216 getstatic #82  net/minecraft/world/InteractionResult.SUCCESS_SERVER Lnet/minecraft/world/InteractionResult$Success;
+  219 areturn
+  220 aload 4
+  222 aload_3
+  223 invokevirtual #201  net/minecraft/world/entity/player/Player.startSleepInBed (Lnet/minecraft/core/BlockPos;)Lcom/mojang/datafixers/util/Either;
+  226 aload 4
+  228 invokedynamic #205
+  233 invokevirtual #206  com/mojang/datafixers/util/Either.ifLeft (Ljava/util/function/Consumer;)Lcom/mojang/datafixers/util/Either;
+  236 pop
+  237 getstatic #82  net/minecraft/world/InteractionResult.SUCCESS_SERVER Lnet/minecraft/world/InteractionResult$Success;
+  240 areturn
+== BedBlock :: updateShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState; ==
+    0 aload 5
+    2 aload_1
+    3 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    6 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    9 checkcast #34  net/minecraft/world/level/block/state/properties/BedPart
+   12 aload_1
+   13 getstatic #67  net/minecraft/world/level/block/BedBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   16 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   19 checkcast #74  net/minecraft/core/Direction
+   22 invokestatic #246  net/minecraft/world/level/block/BedBlock.getNeighbourDirection (Lnet/minecraft/world/level/block/state/properties/BedPart;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+   25 if_acmpne #59
+   28 aload 7
+   30 aload_0
+   31 invokevirtual #98  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+   34 ifeq #43
+   37 aload 7
+   39 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   42 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   45 aload_1
+   46 getstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   49 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   52 if_acmpeq #25
+   55 aload_1
+   56 getstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   59 aload 7
+   61 getstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   64 invokevirtual #70  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   67 checkcast #48  java/lang/Boolean
+   70 invokevirtual #39  net/minecraft/world/level/block/state/BlockState.setValue (Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+   73 checkcast #27  net/minecraft/world/level/block/state/BlockState
+   76 areturn
+   77 getstatic #250  net/minecraft/world/level/block/Blocks.AIR Lnet/minecraft/world/level/block/Block;
+   80 invokevirtual #256  net/minecraft/world/level/block/Block.defaultBlockState ()Lnet/minecraft/world/level/block/state/BlockState;
+   83 areturn
+   84 aload_0
+   85 aload_1
+   86 aload_2
+   87 aload_3
+   88 aload 4
+   90 aload 5
+   92 aload 6
+   94 aload 7
+   96 aload 8
+   98 invokespecial #262  net/minecraft/world/level/block/HorizontalDirectionalBlock.updateShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+  101 areturn
+== BedBlock :: <clinit> ()V ==
+    0 invokedynamic #526
+    5 invokestatic #527  com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec (Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8 putstatic #1  net/minecraft/world/level/block/BedBlock.CODEC Lcom/mojang/serialization/MapCodec;
+   11 getstatic #533  net/minecraft/world/level/block/state/properties/BlockStateProperties.BED_PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   14 putstatic #29  net/minecraft/world/level/block/BedBlock.PART Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   17 getstatic #538  net/minecraft/world/level/block/state/properties/BlockStateProperties.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   20 putstatic #43  net/minecraft/world/level/block/BedBlock.OCCUPIED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   23 invokedynamic #539
+   28 invokestatic #542  net/minecraft/util/Util.make (Ljava/util/function/Supplier;)Ljava/lang/Object;
+   31 checkcast #324  java/util/Map
+   34 putstatic #315  net/minecraft/world/level/block/BedBlock.SHAPES Ljava/util/Map;
+   37 return
+=== Player: the sleep walk ===
+== Player :: startSleepInBed (Lnet/minecraft/core/BlockPos;)Lcom/mojang/datafixers/util/Either; ==
+    0 aload_0
+    1 aload_1
+    2 invokevirtual #1749  net/minecraft/world/entity/player/Player.startSleeping (Lnet/minecraft/core/BlockPos;)V
+    5 aload_0
+    6 iconst_0
+    7 putfield #31  net/minecraft/world/entity/player/Player.sleepCounter I
+   10 getstatic #1753  net/minecraft/util/Unit.INSTANCE Lnet/minecraft/util/Unit;
+   13 invokestatic #1759  com/mojang/datafixers/util/Either.right (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+   16 areturn
+== Player :: stopSleepInBed (ZZ)V ==
+    0 aload_0
+    1 invokespecial #1765  net/minecraft/world/entity/Avatar.stopSleeping ()V
+    4 aload_0
+    5 invokevirtual #282  net/minecraft/world/entity/player/Player.level ()Lnet/minecraft/world/level/Level;
+    8 instanceof #738  net/minecraft/server/level/ServerLevel
+   11 ifeq #17
+   14 iload_2
+   15 ifeq #13
+   18 aload_0
+   19 invokevirtual #282  net/minecraft/world/entity/player/Player.level ()Lnet/minecraft/world/level/Level;
+   22 checkcast #738  net/minecraft/server/level/ServerLevel
+   25 invokevirtual #1768  net/minecraft/server/level/ServerLevel.updateSleepingPlayerList ()V
+   28 aload_0
+   29 iload_1
+   30 ifeq #7
+   33 iconst_0
+   34 goto #5
+   37 bipush 100
+   39 putfield #31  net/minecraft/world/entity/player/Player.sleepCounter I
+   42 return
+== Player :: isSleepingLongEnough ()Z ==
+    0 aload_0
+    1 invokevirtual #279  net/minecraft/world/entity/player/Player.isSleeping ()Z
+    4 ifeq #16
+    7 aload_0
+    8 getfield #31  net/minecraft/world/entity/player/Player.sleepCounter I
+   11 bipush 100
+   13 if_icmplt #7
+   16 iconst_1
+   17 goto #4
+   20 iconst_0
+   21 ireturn
+== Player :: <clinit> ()V ==
+    0 ldc #19 = net/minecraft/world/entity/player/Player
+    2 getstatic #2431  net/minecraft/network/syncher/EntityDataSerializers.FLOAT Lnet/minecraft/network/syncher/EntityDataSerializer;
+    5 invokestatic #2437  net/minecraft/network/syncher/SynchedEntityData.defineId (Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    8 putstatic #227  net/minecraft/world/entity/player/Player.DATA_PLAYER_ABSORPTION_ID Lnet/minecraft/network/syncher/EntityDataAccessor;
+   11 ldc #19 = net/minecraft/world/entity/player/Player
+   13 getstatic #2441  net/minecraft/network/syncher/EntityDataSerializers.INT Lnet/minecraft/network/syncher/EntityDataSerializer;
+   16 invokestatic #2437  net/minecraft/network/syncher/SynchedEntityData.defineId (Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+   19 putstatic #243  net/minecraft/world/entity/player/Player.DATA_SCORE_ID Lnet/minecraft/network/syncher/EntityDataAccessor;
+   22 ldc #19 = net/minecraft/world/entity/player/Player
+   24 getstatic #2444  net/minecraft/network/syncher/EntityDataSerializers.OPTIONAL_UNSIGNED_INT Lnet/minecraft/network/syncher/EntityDataSerializer;
+   27 invokestatic #2437  net/minecraft/network/syncher/SynchedEntityData.defineId (Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+   30 putstatic #251  net/minecraft/world/entity/player/Player.DATA_SHOULDER_PARROT_LEFT Lnet/minecraft/network/syncher/EntityDataAccessor;
+   33 ldc #19 = net/minecraft/world/entity/player/Player
+   35 getstatic #2444  net/minecraft/network/syncher/EntityDataSerializers.OPTIONAL_UNSIGNED_INT Lnet/minecraft/network/syncher/EntityDataSerializer;
+   38 invokestatic #2437  net/minecraft/network/syncher/SynchedEntityData.defineId (Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+   41 putstatic #259  net/minecraft/world/entity/player/Player.DATA_SHOULDER_PARROT_RIGHT Lnet/minecraft/network/syncher/EntityDataAccessor;
+   44 return
+=== Player.BedSleepingProblem: the message table ===
+== Player$BedSleepingProblem :: <clinit> ()V ==
+    0 new #8  net/minecraft/world/entity/player/Player$BedSleepingProblem
+    3 dup
+    4 ldc #25 = block.minecraft.bed.too_far_away
+    6 invokestatic #27  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+    9 invokespecial #33  net/minecraft/world/entity/player/Player$BedSleepingProblem.<init> (Lnet/minecraft/network/chat/Component;)V
+   12 putstatic #36  net/minecraft/world/entity/player/Player$BedSleepingProblem.TOO_FAR_AWAY Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+   15 new #8  net/minecraft/world/entity/player/Player$BedSleepingProblem
+   18 dup
+   19 ldc #40 = block.minecraft.bed.obstructed
+   21 invokestatic #27  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   24 invokespecial #33  net/minecraft/world/entity/player/Player$BedSleepingProblem.<init> (Lnet/minecraft/network/chat/Component;)V
+   27 putstatic #42  net/minecraft/world/entity/player/Player$BedSleepingProblem.OBSTRUCTED Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+   30 new #8  net/minecraft/world/entity/player/Player$BedSleepingProblem
+   33 dup
+   34 aconst_null
+   35 invokespecial #33  net/minecraft/world/entity/player/Player$BedSleepingProblem.<init> (Lnet/minecraft/network/chat/Component;)V
+   38 putstatic #45  net/minecraft/world/entity/player/Player$BedSleepingProblem.OTHER_PROBLEM Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+   41 new #8  net/minecraft/world/entity/player/Player$BedSleepingProblem
+   44 dup
+   45 ldc #48 = block.minecraft.bed.not_safe
+   47 invokestatic #27  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   50 invokespecial #33  net/minecraft/world/entity/player/Player$BedSleepingProblem.<init> (Lnet/minecraft/network/chat/Component;)V
+   53 putstatic #50  net/minecraft/world/entity/player/Player$BedSleepingProblem.NOT_SAFE Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+   56 return
+=== ServerPlayer: the respawn arm ===
+== ServerPlayer :: startSleepInBed (Lnet/minecraft/core/BlockPos;)Lcom/mojang/datafixers/util/Either; ==
+    0 aload_0
+    1 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+    4 aload_1
+    5 invokevirtual #1673  net/minecraft/server/level/ServerLevel.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    8 getstatic #1965  net/minecraft/world/level/block/HorizontalDirectionalBlock.FACING Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+   11 invokevirtual #1689  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   14 checkcast #1754  net/minecraft/core/Direction
+   17 astore_2
+   18 aload_0
+   19 invokevirtual #361  net/minecraft/server/level/ServerPlayer.isSleeping ()Z
+   22 ifne #10
+   25 aload_0
+   26 invokevirtual #912  net/minecraft/server/level/ServerPlayer.isAlive ()Z
+   29 ifne #10
+   32 getstatic #1968  net/minecraft/world/entity/player/Player$BedSleepingProblem.OTHER_PROBLEM Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+   35 invokestatic #1974  com/mojang/datafixers/util/Either.left (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+   38 areturn
+   39 aload_0
+   40 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+   43 invokevirtual #1730  net/minecraft/server/level/ServerLevel.environmentAttributes ()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+   46 getstatic #1734  net/minecraft/world/attribute/EnvironmentAttributes.BED_RULE Lnet/minecraft/world/attribute/EnvironmentAttribute;
+   49 aload_1
+   50 invokevirtual #1740  net/minecraft/world/attribute/EnvironmentAttributeSystem.getValue (Lnet/minecraft/world/attribute/EnvironmentAttribute;Lnet/minecraft/core/BlockPos;)Ljava/lang/Object;
+   53 checkcast #1745  net/minecraft/world/attribute/BedRule
+   56 astore_3
+   57 aload_3
+   58 aload_0
+   59 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+   62 invokevirtual #1980  net/minecraft/world/attribute/BedRule.canSleep (Lnet/minecraft/world/level/Level;)Z
+   65 istore 4
+   67 aload_3
+   68 aload_0
+   69 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+   72 invokevirtual #1747  net/minecraft/world/attribute/BedRule.canSetSpawn (Lnet/minecraft/world/level/Level;)Z
+   75 istore 5
+   77 iload 5
+   79 ifne #16
+   82 iload 4
+   84 ifne #11
+   87 aload_3
+   88 invokevirtual #1983  net/minecraft/world/attribute/BedRule.asProblem ()Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+   91 invokestatic #1974  com/mojang/datafixers/util/Either.left (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+   94 areturn
+   95 aload_0
+   96 aload_1
+   97 aload_2
+   98 invokevirtual #1987  net/minecraft/server/level/ServerPlayer.bedInRange (Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+  101 ifne #10
+  104 getstatic #1991  net/minecraft/world/entity/player/Player$BedSleepingProblem.TOO_FAR_AWAY Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+  107 invokestatic #1974  com/mojang/datafixers/util/Either.left (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+  110 areturn
+  111 aload_0
+  112 aload_1
+  113 aload_2
+  114 invokevirtual #1994  net/minecraft/server/level/ServerPlayer.bedBlocked (Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+  117 ifeq #10
+  120 getstatic #1997  net/minecraft/world/entity/player/Player$BedSleepingProblem.OBSTRUCTED Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+  123 invokestatic #1974  com/mojang/datafixers/util/Either.left (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+  126 areturn
+  127 iload 5
+  129 ifeq #35
+  132 aload_0
+  133 new #371  net/minecraft/server/level/ServerPlayer$RespawnConfig
+  136 dup
+  137 aload_0
+  138 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+  141 invokevirtual #440  net/minecraft/server/level/ServerLevel.dimension ()Lnet/minecraft/resources/ResourceKey;
+  144 aload_1
+  145 aload_0
+  146 invokevirtual #2000  net/minecraft/server/level/ServerPlayer.getYRot ()F
+  149 aload_0
+  150 invokevirtual #2001  net/minecraft/server/level/ServerPlayer.getXRot ()F
+  153 invokestatic #2002  net/minecraft/world/level/storage/LevelData$RespawnData.of (Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;FF)Lnet/minecraft/world/level/storage/LevelData$RespawnData;
+  156 iconst_0
+  157 invokespecial #2005  net/minecraft/server/level/ServerPlayer$RespawnConfig.<init> (Lnet/minecraft/world/level/storage/LevelData$RespawnData;Z)V
+  160 iconst_1
+  161 invokevirtual #2008  net/minecraft/server/level/ServerPlayer.setRespawnPosition (Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;Z)V
+  164 iload 4
+  166 ifne #11
+  169 aload_3
+  170 invokevirtual #1983  net/minecraft/world/attribute/BedRule.asProblem ()Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+  173 invokestatic #1974  com/mojang/datafixers/util/Either.left (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+  176 areturn
+  177 aload_0
+  178 invokevirtual #853  net/minecraft/server/level/ServerPlayer.isCreative ()Z
+  181 ifne #115
+  184 ldc2_w #2012 = 8.0
+  187 dstore 6
+  189 ldc2_w #2014 = 5.0
+  192 dstore 8
+  194 aload_1
+  195 invokestatic #2016  net/minecraft/world/phys/Vec3.atBottomCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+  198 astore 10
+  200 aload_0
+  201 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+  204 ldc_w #2020 = net/minecraft/world/entity/monster/Monster
+  207 new #1462  net/minecraft/world/phys/AABB
+  210 dup
+  211 aload 10
+  213 invokevirtual #2022  net/minecraft/world/phys/Vec3.x ()D
+  216 ldc2_w #2012 = 8.0
+  219 dsub
+  220 aload 10
+  222 invokevirtual #2025  net/minecraft/world/phys/Vec3.y ()D
+  225 ldc2_w #2014 = 5.0
+  228 dsub
+  229 aload 10
+  231 invokevirtual #2027  net/minecraft/world/phys/Vec3.z ()D
+  234 ldc2_w #2012 = 8.0
+  237 dsub
+  238 aload 10
+  240 invokevirtual #2022  net/minecraft/world/phys/Vec3.x ()D
+  243 ldc2_w #2012 = 8.0
+  246 dadd
+  247 aload 10
+  249 invokevirtual #2025  net/minecraft/world/phys/Vec3.y ()D
+  252 ldc2_w #2014 = 5.0
+  255 dadd
+  256 aload 10
+  258 invokevirtual #2027  net/minecraft/world/phys/Vec3.z ()D
+  261 ldc2_w #2012 = 8.0
+  264 dadd
+  265 invokespecial #2030  net/minecraft/world/phys/AABB.<init> (DDDDDD)V
+  268 aload_0
+  269 invokedynamic #2033
+  274 invokevirtual #1483  net/minecraft/server/level/ServerLevel.getEntitiesOfClass (Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;
+  277 astore 11
+  279 aload 11
+  281 invokeinterface java/util/List.isEmpty ()Z
+  286 ifne #10
+  289 getstatic #2037  net/minecraft/world/entity/player/Player$BedSleepingProblem.NOT_SAFE Lnet/minecraft/world/entity/player/Player$BedSleepingProblem;
+  292 invokestatic #1974  com/mojang/datafixers/util/Either.left (Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+  295 areturn
+  296 aload_0
+  297 aload_1
+  298 invokespecial #2040  net/minecraft/world/entity/player/Player.startSleepInBed (Lnet/minecraft/core/BlockPos;)Lcom/mojang/datafixers/util/Either;
+  301 aload_0
+  302 invokedynamic #2044
+  307 invokevirtual #2045  com/mojang/datafixers/util/Either.ifRight (Ljava/util/function/Consumer;)Lcom/mojang/datafixers/util/Either;
+  310 astore 6
+  312 aload_0
+  313 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+  316 invokevirtual #2049  net/minecraft/server/level/ServerLevel.canSleepThroughNights ()Z
+  319 ifne #13
+  322 aload_0
+  323 ldc_w #2052 = sleep.not_possible
+  326 invokestatic #2054  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+  329 invokevirtual #2060  net/minecraft/server/level/ServerPlayer.sendOverlayMessage (Lnet/minecraft/network/chat/Component;)V
+  332 aload_0
+  333 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+  336 invokevirtual #2064  net/minecraft/server/level/ServerLevel.updateSleepingPlayerList ()V
+  339 aload 6
+  341 areturn
+== ServerPlayer :: stopSleepInBed (ZZ)V ==
+    0 aload_0
+    1 invokevirtual #361  net/minecraft/server/level/ServerPlayer.isSleeping ()Z
+    4 ifeq #23
+    7 aload_0
+    8 invokevirtual #436  net/minecraft/server/level/ServerPlayer.level ()Lnet/minecraft/server/level/ServerLevel;
+   11 invokevirtual #786  net/minecraft/server/level/ServerLevel.getChunkSource ()Lnet/minecraft/server/level/ServerChunkCache;
+   14 aload_0
+   15 new #2095  net/minecraft/network/protocol/game/ClientboundAnimatePacket
+   18 dup
+   19 aload_0
+   20 iconst_2
+   21 invokespecial #2097  net/minecraft/network/protocol/game/ClientboundAnimatePacket.<init> (Lnet/minecraft/world/entity/Entity;I)V
+   24 invokevirtual #2099  net/minecraft/server/level/ServerChunkCache.sendToTrackingPlayersAndSelf (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/protocol/Packet;)V
+   27 aload_0
+   28 iload_1
+   29 iload_2
+   30 invokespecial #2103  net/minecraft/world/entity/player/Player.stopSleepInBed (ZZ)V
+   33 aload_0
+   34 getfield #692  net/minecraft/server/level/ServerPlayer.connection Lnet/minecraft/server/network/ServerGamePacketListenerImpl;
+   37 ifnull #30
+   40 aload_0
+   41 getfield #692  net/minecraft/server/level/ServerPlayer.connection Lnet/minecraft/server/network/ServerGamePacketListenerImpl;
+   44 aload_0
+   45 invokevirtual #1159  net/minecraft/server/level/ServerPlayer.getX ()D
+   48 aload_0
+   49 invokevirtual #1160  net/minecraft/server/level/ServerPlayer.getY ()D
+   52 aload_0
+   53 invokevirtual #1161  net/minecraft/server/level/ServerPlayer.getZ ()D
+   56 aload_0
+   57 invokevirtual #2000  net/minecraft/server/level/ServerPlayer.getYRot ()F
+   60 aload_0
+   61 invokevirtual #2001  net/minecraft/server/level/ServerPlayer.getXRot ()F
+   64 invokevirtual #2107  net/minecraft/server/network/ServerGamePacketListenerImpl.teleport (DDDFF)V
+   67 return
+== ServerPlayer :: setRespawnPosition (Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;Z)V ==
+    0 iload_2
+    1 ifeq #25
+    4 aload_1
+    5 ifnull #21
+    8 aload_1
+    9 aload_0
+   10 getfield #373  net/minecraft/server/level/ServerPlayer.respawnConfig Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;
+   13 invokevirtual #2945  net/minecraft/server/level/ServerPlayer$RespawnConfig.isSamePosition (Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;)Z
+   16 ifne #10
+   19 aload_0
+   20 getstatic #2949  net/minecraft/server/level/ServerPlayer.SPAWN_SET_MESSAGE Lnet/minecraft/network/chat/Component;
+   23 invokevirtual #2952  net/minecraft/server/level/ServerPlayer.sendSystemMessage (Lnet/minecraft/network/chat/Component;)V
+   26 aload_0
+   27 aload_1
+   28 putfield #373  net/minecraft/server/level/ServerPlayer.respawnConfig Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;
+   31 return
+=== ServerLevel: the night-skip walk ===
+== ServerLevel :: tickTime ()V ==
+    0 aload_0
+    1 getfield #109  net/minecraft/server/level/ServerLevel.tickTime Z
+    4 ifne #4
+    7 return
+    8 aload_0
+    9 getfield #672  net/minecraft/server/level/ServerLevel.levelData Lnet/minecraft/world/level/storage/WritableLevelData;
+   12 invokeinterface net/minecraft/world/level/storage/WritableLevelData.getGameTime ()J
+   17 lconst_1
+   18 ladd
+   19 lstore_1
+   20 aload_0
+   21 getfield #120  net/minecraft/server/level/ServerLevel.serverLevelData Lnet/minecraft/world/level/storage/ServerLevelData;
+   24 lload_1
+   25 invokeinterface net/minecraft/world/level/storage/ServerLevelData.setGameTime (J)V
+   30 invokestatic #445  net/minecraft/util/profiling/Profiler.get ()Lnet/minecraft/util/profiling/ProfilerFiller;
+   33 ldc_w #683 = scheduledFunctions
+   36 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+   41 aload_0
+   42 getfield #113  net/minecraft/server/level/ServerLevel.server Lnet/minecraft/server/MinecraftServer;
+   45 invokevirtual #685  net/minecraft/server/MinecraftServer.getScheduledEvents ()Lnet/minecraft/world/level/timers/TimerQueue;
+   48 aload_0
+   49 getfield #113  net/minecraft/server/level/ServerLevel.server Lnet/minecraft/server/MinecraftServer;
+   52 lload_1
+   53 invokevirtual #689  net/minecraft/world/level/timers/TimerQueue.tick (Ljava/lang/Object;J)V
+   56 invokestatic #445  net/minecraft/util/profiling/Profiler.get ()Lnet/minecraft/util/profiling/ProfilerFiller;
+   59 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+   64 return
+== ServerLevel :: wakeUpAllPlayers ()V ==
+    0 aload_0
+    1 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+    4 invokevirtual #713  net/minecraft/server/players/SleepStatus.removeAllSleepers ()V
+    7 aload_0
+    8 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+   11 invokeinterface java/util/List.stream ()Ljava/util/stream/Stream;
+   16 invokedynamic #720
+   21 invokeinterface java/util/stream/Stream.filter (Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+   26 invokestatic #729  java/util/stream/Collectors.toList ()Ljava/util/stream/Collector;
+   29 invokeinterface java/util/stream/Stream.collect (Ljava/util/stream/Collector;)Ljava/lang/Object;
+   34 checkcast #695  java/util/List
+   37 invokedynamic #739
+   42 invokeinterface java/util/List.forEach (Ljava/util/function/Consumer;)V
+   47 return
+=== SleepStatus: the all-asleep verdict ===
+!! net/minecraft/server/level/SleepStatus MISSING
+=== ClientLevel / Level: isDay the verdict ===
+=== the language rows ===
+advancements.adventure.sleep_in_bed.description = Sleep in a Bed to change your respawn point
+advancements.adventure.sleep_in_bed.title = Sweet Dreams
+block.minecraft.bed.no_sleep = You can sleep only at night or during thunderstorms
+block.minecraft.bed.not_safe = You may not rest now; there are monsters nearby
+block.minecraft.bed.occupied = This bed is occupied
+block.minecraft.bed.too_far_away = You may not rest now; the bed is too far away
+stat.minecraft.sleep_in_bed = Times Slept in a Bed

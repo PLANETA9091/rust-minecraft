@@ -4045,6 +4045,145 @@ pub fn bed_facing_offset(facing: u8) -> (i32, i32) {
     }
 }
 
+/// THE BED'S OWN USE HEAD CELL (javap BedBlock.useWithoutItem pcs 11-56
+/// the 26.2 jar the live disasm answers — scripts/jar_work/
+/// bed_sleep_312.txt the walk banks): the hit cell's PART the HEAD the
+/// cell itself answers, the FOOT the `pos.relative(FACING)` re-seat the
+/// head cell speaks (pc 24-38 the relative walk the FACING read rides).
+/// The RE-SEAT VERIFICATION the caller serves (pc 44-50 the
+/// `state.is(BedBlock)` read — the non-bed head cell the CONSUME refusal
+/// wears, the use the press consumes): the pure walk the re-seat cell
+/// alone answers.
+#[inline]
+pub fn bed_use_head_cell(id: u16, variant: u8, x: i32, y: i32, z: i32) -> Option<(i32, i32, i32)> {
+    if !is_bed(id) {
+        return None;
+    }
+    if bed_variant_part(variant) == BED_PART_HEAD {
+        return Some((x, y, z));
+    }
+    let (dx, dz) = bed_facing_offset(bed_variant_facing(variant));
+    Some((x + dx, y, z + dz))
+}
+
+/// THE BED'S OWN REACH BAND (javap ServerPlayer.isReachableBedBlock pcs
+/// 0-67 the 26.2 jar — the bottom-center pair the `Math.abs(dx) <= 3.0`
+/// the `abs(dy) <= 2.0` the `abs(dz) <= 3.0` triple the bytecode keeps:
+/// `Vec3.atBottomCenterOf(pos)` the (x+0.5, y, z+0.5) seat answers, the
+/// TOO_FAR_AWAY the band's outside the verdict speaks).
+pub const BED_REACH_XZ: f64 = 3.0;
+pub const BED_REACH_Y: f64 = 2.0;
+
+#[inline]
+pub fn bed_reachable(px: f64, py: f64, pz: f64, x: i32, y: i32, z: i32) -> bool {
+    (px - (f64::from(x) + 0.5)).abs() <= BED_REACH_XZ
+        && (py - f64::from(y)).abs() <= BED_REACH_Y
+        && (pz - (f64::from(z) + 0.5)).abs() <= BED_REACH_XZ
+}
+
+/// THE BED'S OWN RANGE VERDICT (javap ServerPlayer.bedInRange pcs 0-28 —
+/// the head cell the FIRST arm answers, the `pos.relative(direction.
+/// getOpposite())` foot cell the OR arm serves: the EITHER seat the
+/// reachable verdict keeps — the startSleepInBed pc 95 walk the
+/// TOO_FAR_AWAY the band's outside wears).
+pub fn bed_in_range(px: f64, py: f64, pz: f64, head: (i32, i32, i32), facing: u8) -> bool {
+    let (dx, dz) = bed_facing_offset(facing);
+    bed_reachable(px, py, pz, head.0, head.1, head.2)
+        || bed_reachable(px, py, pz, head.0 - dx, head.1, head.2 - dz)
+}
+
+/// THE BED'S OWN FREE-CELL READ (javap ServerPlayer.freeAt — the above
+/// cell the `noCollision` verdict the player's own AABB serves: the
+/// collision-empty cell the free answer keeps, the solid lid the
+/// OBSTRUCTED the pair walk speaks).
+#[inline]
+pub fn bed_free_at(kind: u16) -> bool {
+    matches!(collision_shape(kind), CollisionShape::Empty)
+}
+
+/// THE BED'S OWN OBSTRUCTION VERDICT (javap ServerPlayer.bedBlocked pcs
+/// 0-33 — the `pos.above()` head-side cell the FIRST freeAt read answers,
+/// the `pos.above().relative(direction.getOpposite())` foot-side cell the
+/// OR arm serves: the EITHER solid lid the OBSTRUCTED verdict wears —
+/// the startSleepInBed pc 111 walk the sleep the verdict refuses).
+#[inline]
+pub fn bed_obstructed(above_head: u16, above_foot: u16) -> bool {
+    !bed_free_at(above_head) || !bed_free_at(above_foot)
+}
+
+/// THE BED'S OWN SLEEP ANCHOR (javap LivingEntity.setPosToBed pcs 0-31
+/// the 26.2 jar — the `setPos(getX() + 0.5, getY() + 0.6875, getZ() +
+/// 0.5)` triple the bytecode keeps: the bed cell's center column the
+/// 11/16 lift the sleeping body's own seat speaks).
+pub fn bed_sleep_anchor(x: i32, y: i32, z: i32) -> (f64, f64, f64) {
+    (
+        f64::from(x) + 0.5,
+        f64::from(y) + 0.6875,
+        f64::from(z) + 0.5,
+    )
+}
+
+/// THE BED'S OWN WAKE JUMP (the 26.2 clock's WAKE_UP_FROM_SLEEP marker —
+/// data/minecraft/timeline/day.json the `minecraft:wake_up_from_sleep: 0`
+/// row the marker's own tick speaks, the ServerLevel.tick pc 149-170 the
+/// `moveToTimeMarker(clock, WAKE_UP_FROM_SLEEP)` walk the skip serves):
+/// the clock the NEXT tick-0 the forward walk answers — the current
+/// tick-0 the marker's own seat (rem == 0) the next period's dawn the
+/// move wears (the vanilla moveToTimeMarker the next occurrence the
+/// strictly-after walk serves).
+pub fn bed_wake_jump(day_time: i64) -> i64 {
+    let period = crate::timeline::DAY_PERIOD_TICKS;
+    let rem = day_time.rem_euclid(period);
+    day_time - rem + period
+}
+
+/// THE BED'S OWN DARK VERDICT (javap BedRule$Rule.test pc 46 — the
+/// WHEN_DARK row the `level.isDarkOutside()` read serves [javap
+/// Level.isDarkOutside — the `!hasFixedTime() && !isBrightOutside()`
+/// fold the overworld's own verdict keeps], the BedRule.CAN_SLEEP_
+/// WHEN_DARK the (WHEN_DARK, ALWAYS) pair the 26.2 clinit banks: the
+/// canSleep the dark arm answers, the canSetSpawn the ALWAYS the spawn
+/// set the day press still wears). The client's own timeline vocabulary
+/// the [`crate::mob::is_bright_outside`] walk the BRIGHT_OUTSIDE_
+/// DARKEN_GATE the 4 band keeps — the day-storm's darken the time-only
+/// vocabulary never carries [the honest weather gap the worklog notes
+/// keep].
+#[inline]
+pub fn bed_can_sleep(day_time: i64) -> bool {
+    !crate::mob::is_bright_outside(day_time)
+}
+
+/// THE DEEP-SLEEP'S OWN COUNTER (javap Player.stopSleepInBed pcs 28-39 —
+/// the wake arm the 0 banks, the false arm the `bipush 100` wears; javap
+/// Player.isSleepingLongEnough pcs 7-13 the `sleepCounter >= 100` compare
+/// the deep-sleep verdict serves: the areEnoughDeepSleeping the 100-tick
+/// bed the night-skip arms).
+pub const BED_SLEEP_WAKE_TICKS: u32 = 100;
+
+/// THE SLEEP FADE'S OWN NUMBERS (javap Hud.extractSleepOverlay the 26.2
+/// jar the live disasm answers — scripts/jar_work/bed_sleep_312.txt the
+/// walk banks): the `sleepTimer / 100.0` ease the #445 divisor speaks,
+/// the >1.0 arm the `1.0 - (f - 100.0) / 10.0` retract the #446 speaks,
+/// the alpha the `220.0 * f` fold the #447 speaks, the color the
+/// 0x101010 the #448 int row keeps.
+pub const BED_FADE_DIVISOR: f32 = 100.0;
+pub const BED_FADE_RETRACT: f32 = 10.0;
+pub const BED_FADE_ALPHA_MAX: f32 = 220.0;
+pub const BED_FADE_RGB: u32 = 0x101010;
+
+/// THE SLEEP FADE'S OWN ALPHA (the extractSleepOverlay fold the
+/// constants above wear — the 0..100-tick ease the deep-sleep hold the
+/// 220 floor speaks).
+#[inline]
+pub fn bed_fade_alpha(sleep_counter: u32) -> f32 {
+    let f = sleep_counter as f32;
+    let mut a = f / BED_FADE_DIVISOR;
+    if a > 1.0 {
+        a = 1.0 - (f - BED_FADE_DIVISOR) / BED_FADE_RETRACT;
+    }
+    BED_FADE_ALPHA_MAX * a
+}
+
 /// THE END GATEWAY'S OWN KIND SEAT (the KIND_NAMES tail's row the
 /// vanilla registration order keeps — the kind id 797 the client's
 /// own space wears). The 26.2 jar's EndGatewayBlock the INVISIBLE
@@ -31993,6 +32132,128 @@ mod tests {
             BED_PART_HEAD,
             "the round-trip the part reads"
         );
+    }
+
+    #[test]
+    fn the_bed_sleep_walk_the_verdicts_the_folds_wear() {
+        // THE BED'S OWN SLEEP WALK (the autopush-312 round — the JAR
+        // laws the live disasm banks: the use re-seat, the reach band,
+        // the obstruction pair, the anchor, the wake jump, the dark
+        // verdict, the fade fold).
+        let red = crate::world::BED_RED;
+        // THE USE HEAD CELL (javap BedBlock.useWithoutItem pcs 11-56 —
+        // the HEAD the cell itself answers, the FOOT the relative(FACING)
+        // re-seat wears, the non-bed the None keeps)
+        let foot_v = bed_variant(BED_FACING_SOUTH, BED_PART_FOOT);
+        let head_v = bed_variant(BED_FACING_SOUTH, BED_PART_HEAD);
+        assert_eq!(
+            bed_use_head_cell(red, head_v, 4, 64, 8),
+            Some((4, 64, 8)),
+            "the head the cell itself keeps"
+        );
+        assert_eq!(
+            bed_use_head_cell(red, foot_v, 4, 64, 8),
+            Some((4, 64, 9)),
+            "the foot the facing's far side re-seats"
+        );
+        assert_eq!(
+            bed_use_head_cell(crate::world::STONE, 0, 4, 64, 8),
+            None,
+            "the non-bed the None keeps"
+        );
+        // THE REACH BAND (javap ServerPlayer.isReachableBedBlock — the
+        // 3/2/3 triple the bottom-center seat keeps)
+        assert!(
+            bed_reachable(5.0, 64.0, 9.0, 4, 64, 8),
+            "the inside the band the reachable keeps"
+        );
+        assert!(
+            !bed_reachable(5.0, 67.5, 9.0, 4, 64, 8),
+            "the dy the 3.5 the band's outside refuses"
+        );
+        assert!(
+            !bed_reachable(5.0, 64.0, 13.0, 4, 64, 8),
+            "the dz the 4.0 the band's outside refuses"
+        );
+        // THE RANGE VERDICT (javap ServerPlayer.bedInRange — the head
+        // the first arm, the foot the OR arm serves)
+        assert!(
+            bed_in_range(5.0, 64.0, 9.0, (4, 64, 8), BED_FACING_SOUTH),
+            "the head-side reach the verdict keeps"
+        );
+        assert!(
+            bed_in_range(5.0, 64.0, 7.5, (4, 64, 8), BED_FACING_SOUTH),
+            "the foot-side reach the OR arm keeps"
+        );
+        // THE OBSTRUCTION VERDICT (javap ServerPlayer.bedBlocked — the
+        // above pair the EITHER-solid refusal wears)
+        let air = crate::world::AIR;
+        let stone = crate::world::STONE;
+        assert!(
+            !bed_obstructed(air, air),
+            "the free pair the obstruction never wears"
+        );
+        assert!(
+            bed_obstructed(stone, air),
+            "the solid head lid the verdict refuses"
+        );
+        assert!(
+            bed_obstructed(air, stone),
+            "the solid foot lid the verdict refuses"
+        );
+        // THE SLEEP ANCHOR (javap LivingEntity.setPosToBed — the
+        // 0.5/0.6875/0.5 triple the bytecode keeps)
+        let (ax, ay, az) = bed_sleep_anchor(4, 64, 8);
+        assert_eq!(ax, 4.5, "the x the half-step keeps");
+        assert_eq!(ay, 64.6875, "the y the 11/16 lift keeps");
+        assert_eq!(az, 8.5, "the z the half-step keeps");
+        // THE WAKE JUMP (the 26.2 timeline's wake_up_from_sleep marker
+        // the 0 row keeps — the next tick-0 the forward walk answers)
+        assert_eq!(bed_wake_jump(13_000), 24_000, "the night the dawn jumps");
+        assert_eq!(bed_wake_jump(23_999), 24_000, "the eve the next dawn keeps");
+        assert_eq!(
+            bed_wake_jump(24_000),
+            48_000,
+            "the exact marker the next period's dawn wears"
+        );
+        assert_eq!(
+            bed_wake_jump(61_234),
+            72_000,
+            "the multi-day wrap the fold answers"
+        );
+        // THE DARK VERDICT (javap BedRule$Rule.test pc 46 — the
+        // WHEN_DARK the isDarkOutside serves, the 26.2 timeline's own
+        // light track the band wears: the noon bright, the midnight
+        // dark)
+        assert!(
+            !bed_can_sleep(6_000),
+            "the noon the bright outside the verdict refuses"
+        );
+        assert!(
+            bed_can_sleep(18_000),
+            "the midnight the dark outside the verdict keeps"
+        );
+        assert!(
+            !bed_can_sleep(1_000),
+            "the day marker the bright outside refuses"
+        );
+        assert!(
+            bed_can_sleep(23_000),
+            "the late night the dark the verdict keeps"
+        );
+        // THE FADE FOLD (javap Hud.extractSleepOverlay — the 100 ease,
+        // the 220 alpha, the >1.0 retract the constants wear)
+        assert_eq!(bed_fade_alpha(0), 0.0, "the first tick the clear keeps");
+        assert_eq!(bed_fade_alpha(50), 110.0, "the half ease the half alpha");
+        assert_eq!(
+            bed_fade_alpha(100),
+            220.0,
+            "the deep-sleep hold the full alpha"
+        );
+        assert_eq!(bed_fade_alpha(105), 110.0, "the retract the 10-per-tick");
+        // THE WAKE COUNTER (javap Player.isSleepingLongEnough — the
+        // bipush 100 the deep-sleep bed keeps)
+        assert_eq!(BED_SLEEP_WAKE_TICKS, 100, "the counter the bytecode pins");
     }
 
     #[test]

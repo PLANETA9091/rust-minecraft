@@ -1,0 +1,631 @@
+=== ServerLevel: the sleep/clock callers ===
+== ServerLevel :: <init> (Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lnet/minecraft/world/level/storage/ServerLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/dimension/LevelStem;ZJLjava/util/List;Z)V ==
+    0 aload_0
+    1 aload 4
+    3 aload 5
+    5 aload_1
+    6 invokevirtual #5  net/minecraft/server/MinecraftServer.registryAccess ()Lnet/minecraft/core/RegistryAccess$Frozen;
+    9 aload 6
+   11 invokevirtual #11  net/minecraft/world/level/dimension/LevelStem.type ()Lnet/minecraft/core/Holder;
+   14 iconst_0
+   15 iload 7
+   17 lload 8
+   19 aload_1
+   20 invokevirtual #17  net/minecraft/server/MinecraftServer.getMaxChainedNeighborUpdates ()I
+   23 invokespecial #21  net/minecraft/world/level/Level.<init> (Lnet/minecraft/world/level/storage/WritableLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/core/Holder;ZZJI)V
+   26 aload_0
+   27 invokestatic #27  com/google/common/collect/Lists.newArrayList ()Ljava/util/ArrayList;
+   30 putfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+   33 aload_0
+   34 new #39  net/minecraft/world/level/entity/EntityTickList
+   37 dup
+   38 invokespecial #41  net/minecraft/world/level/entity/EntityTickList.<init> ()V
+   41 putfield #44  net/minecraft/server/level/ServerLevel.entityTickList Lnet/minecraft/world/level/entity/EntityTickList;
+   44 aload_0
+   45 new #48  net/minecraft/world/ticks/LevelTicks
+   48 dup
+   49 aload_0
+   50 invokedynamic #50
+   55 invokespecial #54  net/minecraft/world/ticks/LevelTicks.<init> (Ljava/util/function/LongPredicate;)V
+   58 putfield #57  net/minecraft/server/level/ServerLevel.blockTicks Lnet/minecraft/world/ticks/LevelTicks;
+   61 aload_0
+   62 new #48  net/minecraft/world/ticks/LevelTicks
+   65 dup
+   66 aload_0
+   67 invokedynamic #50
+   72 invokespecial #54  net/minecraft/world/ticks/LevelTicks.<init> (Ljava/util/function/LongPredicate;)V
+   75 putfield #61  net/minecraft/server/level/ServerLevel.fluidTicks Lnet/minecraft/world/ticks/LevelTicks;
+   78 aload_0
+   79 new #64  net/minecraft/world/level/pathfinder/PathTypeCache
+   82 dup
+   83 invokespecial #66  net/minecraft/world/level/pathfinder/PathTypeCache.<init> ()V
+   86 putfield #67  net/minecraft/server/level/ServerLevel.pathTypesByPosCache Lnet/minecraft/world/level/pathfinder/PathTypeCache;
+   89 aload_0
+   90 new #71  it/unimi/dsi/fastutil/objects/ObjectOpenHashSet
+   93 dup
+   94 invokespecial #73  it/unimi/dsi/fastutil/objects/ObjectOpenHashSet.<init> ()V
+   97 putfield #74  net/minecraft/server/level/ServerLevel.navigatingMobs Ljava/util/Set;
+  100 aload_0
+  101 new #78  it/unimi/dsi/fastutil/objects/ObjectLinkedOpenHashSet
+  104 dup
+  105 invokespecial #80  it/unimi/dsi/fastutil/objects/ObjectLinkedOpenHashSet.<init> ()V
+  108 putfield #81  net/minecraft/server/level/ServerLevel.blockEvents Lit/unimi/dsi/fastutil/objects/ObjectLinkedOpenHashSet;
+  111 aload_0
+  112 new #85  java/util/ArrayList
+  115 dup
+  116 bipush 64
+  118 invokespecial #87  java/util/ArrayList.<init> (I)V
+  121 putfield #90  net/minecraft/server/level/ServerLevel.blockEventsToReschedule Ljava/util/List;
+  124 aload_0
+  125 new #93  it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap
+  128 dup
+  129 invokespecial #95  it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap.<init> ()V
+  132 putfield #96  net/minecraft/server/level/ServerLevel.dragonParts Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+  135 aload_0
+  136 new #100  net/minecraft/util/debug/LevelDebugSynchronizers
+  139 dup
+  140 aload_0
+  141 invokespecial #102  net/minecraft/util/debug/LevelDebugSynchronizers.<init> (Lnet/minecraft/server/level/ServerLevel;)V
+  144 putfield #105  net/minecraft/server/level/ServerLevel.debugSynchronizers Lnet/minecraft/util/debug/LevelDebugSynchronizers;
+  147 aload_0
+  148 iload 11
+  150 putfield #109  net/minecraft/server/level/ServerLevel.tickTime Z
+  153 aload_0
+  154 aload_1
+  155 putfield #113  net/minecraft/server/level/ServerLevel.server Lnet/minecraft/server/MinecraftServer;
+  158 aload_0
+  159 aload 10
+  161 putfield #117  net/minecraft/server/level/ServerLevel.customSpawners Ljava/util/List;
+  164 aload_0
+  165 aload 4
+  167 putfield #120  net/minecraft/server/level/ServerLevel.serverLevelData Lnet/minecraft/world/level/storage/ServerLevelData;
+  170 aload 6
+  172 invokevirtual #124  net/minecraft/world/level/dimension/LevelStem.generator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
+  175 astore 12
+  177 aload_1
+  178 invokevirtual #128  net/minecraft/server/MinecraftServer.forceSynchronousWrites ()Z
+  181 istore 13
+  183 aload_1
+  184 invokevirtual #132  net/minecraft/server/MinecraftServer.getFixerUpper ()Lcom/mojang/datafixers/DataFixer;
+  187 astore 14
+  189 new #136  net/minecraft/world/level/chunk/storage/EntityStorage
+  192 dup
+  193 new #138  net/minecraft/world/level/chunk/storage/SimpleRegionStorage
+  196 dup
+  197 new #140  net/minecraft/world/level/chunk/storage/RegionStorageInfo
+  200 dup
+  201 aload_3
+  202 invokevirtual #142  net/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess.getLevelId ()Ljava/lang/String;
+  205 aload 5
+  207 ldc #148 = entities
+  209 invokespecial #150  net/minecraft/world/level/chunk/storage/RegionStorageInfo.<init> (Ljava/lang/String;Lnet/minecraft/resources/ResourceKey;Ljava/lang/String;)V
+  212 aload_3
+  213 aload 5
+  215 invokevirtual #153  net/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess.getDimensionPath (Lnet/minecraft/resources/ResourceKey;)Ljava/nio/file/Path;
+  218 ldc #148 = entities
+  220 invokeinterface java/nio/file/Path.resolve (Ljava/lang/String;)Ljava/nio/file/Path;
+  225 aload 14
+  227 iload 13
+  229 getstatic #163  net/minecraft/util/datafix/DataFixTypes.ENTITY_CHUNK Lnet/minecraft/util/datafix/DataFixTypes;
+  232 invokespecial #169  net/minecraft/world/level/chunk/storage/SimpleRegionStorage.<init> (Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;ZLnet/minecraft/util/datafix/DataFixTypes;)V
+  235 aload_0
+  236 aload_1
+  237 invokespecial #172  net/minecraft/world/level/chunk/storage/EntityStorage.<init> (Lnet/minecraft/world/level/chunk/storage/SimpleRegionStorage;Lnet/minecraft/server/level/ServerLevel;Ljava/util/concurrent/Executor;)V
+  240 astore 15
+  242 aload_0
+  243 new #175  net/minecraft/world/level/entity/PersistentEntitySectionManager
+  246 dup
+  247 ldc #177 = net/minecraft/world/entity/Entity
+  249 new #179  net/minecraft/server/level/ServerLevel$EntityCallbacks
+  252 dup
+  253 aload_0
+  254 invokespecial #181  net/minecraft/server/level/ServerLevel$EntityCallbacks.<init> (Lnet/minecraft/server/level/ServerLevel;)V
+  257 aload 15
+  259 invokespecial #182  net/minecraft/world/level/entity/PersistentEntitySectionManager.<init> (Ljava/lang/Class;Lnet/minecraft/world/level/entity/LevelCallback;Lnet/minecraft/world/level/entity/EntityPersistentStorage;)V
+  262 putfield #185  net/minecraft/server/level/ServerLevel.entityManager Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;
+  265 aload_0
+  266 new #189  net/minecraft/server/level/ServerChunkCache
+  269 dup
+  270 aload_0
+  271 aload_3
+  272 aload 14
+  274 aload_1
+  275 invokevirtual #191  net/minecraft/server/MinecraftServer.getStructureManager ()Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;
+  278 aload_2
+  279 aload 12
+  281 aload_1
+  282 invokevirtual #195  net/minecraft/server/MinecraftServer.getPlayerList ()Lnet/minecraft/server/players/PlayerList;
+  285 invokevirtual #199  net/minecraft/server/players/PlayerList.getViewDistance ()I
+  288 aload_1
+  289 invokevirtual #195  net/minecraft/server/MinecraftServer.getPlayerList ()Lnet/minecraft/server/players/PlayerList;
+  292 invokevirtual #204  net/minecraft/server/players/PlayerList.getSimulationDistance ()I
+  295 iload 13
+  297 aload_0
+  298 getfield #185  net/minecraft/server/level/ServerLevel.entityManager Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;
+  301 dup
+  302 invokestatic #207  java/util/Objects.requireNonNull (Ljava/lang/Object;)Ljava/lang/Object;
+  305 pop
+  306 invokedynamic #213
+  311 aload_1
+  312 invokedynamic #217
+  317 invokespecial #221  net/minecraft/server/level/ServerChunkCache.<init> (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/chunk/ChunkGenerator;IIZLnet/minecraft/world/level/entity/ChunkStatusUpdateListener;Ljava/util/function/Supplier;)V
+  320 putfield #224  net/minecraft/server/level/ServerLevel.chunkSource Lnet/minecraft/server/level/ServerChunkCache;
+  323 aload_0
+  324 getfield #224  net/minecraft/server/level/ServerLevel.chunkSource Lnet/minecraft/server/level/ServerChunkCache;
+  327 invokevirtual #228  net/minecraft/server/level/ServerChunkCache.getGeneratorState ()Lnet/minecraft/world/level/chunk/ChunkGeneratorStructureState;
+  330 invokevirtual #232  net/minecraft/world/level/chunk/ChunkGeneratorStructureState.ensureStructuresGenerated ()V
+  333 aload_0
+  334 new #237  net/minecraft/world/level/portal/PortalForcer
+  337 dup
+  338 aload_0
+  339 invokespecial #239  net/minecraft/world/level/portal/PortalForcer.<init> (Lnet/minecraft/server/level/ServerLevel;)V
+  342 putfield #240  net/minecraft/server/level/ServerLevel.portalForcer Lnet/minecraft/world/level/portal/PortalForcer;
+  345 aload_0
+  346 invokevirtual #244  net/minecraft/server/level/ServerLevel.canHaveWeather ()Z
+  349 ifeq #11
+  352 aload_0
+  353 aload_1
+  354 invokevirtual #247  net/minecraft/server/MinecraftServer.getWeatherData ()Lnet/minecraft/world/level/saveddata/WeatherData;
+  357 invokevirtual #251  net/minecraft/server/level/ServerLevel.prepareWeather (Lnet/minecraft/world/level/saveddata/WeatherData;)V
+  360 aload_0
+  361 aload_0
+  362 invokevirtual #255  net/minecraft/server/level/ServerLevel.getDataStorage ()Lnet/minecraft/world/level/storage/SavedDataStorage;
+  365 getstatic #259  net/minecraft/world/entity/raid/Raids.TYPE Lnet/minecraft/world/level/saveddata/SavedDataType;
+  368 invokevirtual #265  net/minecraft/world/level/storage/SavedDataStorage.computeIfAbsent (Lnet/minecraft/world/level/saveddata/SavedDataType;)Lnet/minecraft/world/level/saveddata/SavedData;
+  371 checkcast #260  net/minecraft/world/entity/raid/Raids
+  374 putfield #271  net/minecraft/server/level/ServerLevel.raids Lnet/minecraft/world/entity/raid/Raids;
+  377 aload_1
+  378 invokevirtual #275  net/minecraft/server/MinecraftServer.isSingleplayer ()Z
+  381 ifne #14
+  384 aload 4
+  386 aload_1
+  387 invokevirtual #278  net/minecraft/server/MinecraftServer.getDefaultGameType ()Lnet/minecraft/world/level/GameType;
+  390 invokeinterface net/minecraft/world/level/storage/ServerLevelData.setGameType (Lnet/minecraft/world/level/GameType;)V
+  395 aload_1
+  396 invokevirtual #288  net/minecraft/server/MinecraftServer.getWorldGenSettings ()Lnet/minecraft/world/level/levelgen/WorldGenSettings;
+  399 astore 16
+  401 aload 16
+  403 invokevirtual #292  net/minecraft/world/level/levelgen/WorldGenSettings.options ()Lnet/minecraft/world/level/levelgen/WorldOptions;
+  406 astore 17
+  408 aload 17
+  410 invokevirtual #298  net/minecraft/world/level/levelgen/WorldOptions.seed ()J
+  413 lstore 18
+  415 aload_0
+  416 new #304  net/minecraft/world/level/levelgen/structure/StructureCheck
+  419 dup
+  420 aload_0
+  421 getfield #224  net/minecraft/server/level/ServerLevel.chunkSource Lnet/minecraft/server/level/ServerChunkCache;
+  424 invokevirtual #306  net/minecraft/server/level/ServerChunkCache.chunkScanner ()Lnet/minecraft/world/level/chunk/storage/ChunkScanAccess;
+  427 aload_0
+  428 invokevirtual #310  net/minecraft/server/level/ServerLevel.registryAccess ()Lnet/minecraft/core/RegistryAccess;
+  431 aload_1
+  432 invokevirtual #191  net/minecraft/server/MinecraftServer.getStructureManager ()Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;
+  435 aload 5
+  437 aload 12
+  439 aload_0
+  440 getfield #224  net/minecraft/server/level/ServerLevel.chunkSource Lnet/minecraft/server/level/ServerChunkCache;
+  443 invokevirtual #313  net/minecraft/server/level/ServerChunkCache.randomState ()Lnet/minecraft/world/level/levelgen/RandomState;
+  446 aload_0
+  447 aload 12
+  449 invokevirtual #317  net/minecraft/world/level/chunk/ChunkGenerator.getBiomeSource ()Lnet/minecraft/world/level/biome/BiomeSource;
+  452 lload 18
+  454 aload 14
+  456 invokespecial #323  net/minecraft/world/level/levelgen/structure/StructureCheck.<init> (Lnet/minecraft/world/level/chunk/storage/ChunkScanAccess;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/LevelHeightAccessor;Lnet/minecraft/world/level/biome/BiomeSource;JLcom/mojang/datafixers/DataFixer;)V
+  459 putfield #326  net/minecraft/server/level/ServerLevel.structureCheck Lnet/minecraft/world/level/levelgen/structure/StructureCheck;
+  462 aload_0
+  463 new #330  net/minecraft/world/level/StructureManager
+  466 dup
+  467 aload_0
+  468 aload 17
+  470 aload_0
+  471 getfield #326  net/minecraft/server/level/ServerLevel.structureCheck Lnet/minecraft/world/level/levelgen/structure/StructureCheck;
+  474 invokespecial #332  net/minecraft/world/level/StructureManager.<init> (Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/levelgen/WorldOptions;Lnet/minecraft/world/level/levelgen/structure/StructureCheck;)V
+  477 putfield #335  net/minecraft/server/level/ServerLevel.structureManager Lnet/minecraft/world/level/StructureManager;
+  480 aload_0
+  481 invokevirtual #339  net/minecraft/server/level/ServerLevel.dimensionType ()Lnet/minecraft/world/level/dimension/DimensionType;
+  484 invokevirtual #343  net/minecraft/world/level/dimension/DimensionType.hasEnderDragonFight ()Z
+  487 ifeq #33
+  490 aload_0
+  491 aload_0
+  492 invokevirtual #255  net/minecraft/server/level/ServerLevel.getDataStorage ()Lnet/minecraft/world/level/storage/SavedDataStorage;
+  495 getstatic #348  net/minecraft/world/level/dimension/end/EnderDragonFight.TYPE Lnet/minecraft/world/level/saveddata/SavedDataType;
+  498 invokevirtual #265  net/minecraft/world/level/storage/SavedDataStorage.computeIfAbsent (Lnet/minecraft/world/level/saveddata/SavedDataType;)Lnet/minecraft/world/level/saveddata/SavedData;
+  501 checkcast #349  net/minecraft/world/level/dimension/end/EnderDragonFight
+  504 putfield #351  net/minecraft/server/level/ServerLevel.dragonFight Lnet/minecraft/world/level/dimension/end/EnderDragonFight;
+  507 aload_0
+  508 getfield #351  net/minecraft/server/level/ServerLevel.dragonFight Lnet/minecraft/world/level/dimension/end/EnderDragonFight;
+  511 aload_0
+  512 lload 18
+  514 getstatic #355  net/minecraft/core/BlockPos.ZERO Lnet/minecraft/core/BlockPos;
+  517 invokevirtual #361  net/minecraft/world/level/dimension/end/EnderDragonFight.init (Lnet/minecraft/server/level/ServerLevel;JLnet/minecraft/core/BlockPos;)V
+  520 aload_0
+  521 new #365  net/minecraft/server/players/SleepStatus
+  524 dup
+  525 invokespecial #367  net/minecraft/server/players/SleepStatus.<init> ()V
+  528 putfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+  531 aload_0
+  532 new #372  net/minecraft/world/level/gameevent/GameEventDispatcher
+  535 dup
+  536 aload_0
+  537 invokespecial #374  net/minecraft/world/level/gameevent/GameEventDispatcher.<init> (Lnet/minecraft/server/level/ServerLevel;)V
+  540 putfield #375  net/minecraft/server/level/ServerLevel.gameEventDispatcher Lnet/minecraft/world/level/gameevent/GameEventDispatcher;
+  543 aload_0
+  544 new #379  net/minecraft/server/waypoints/ServerWaypointManager
+  547 dup
+  548 invokespecial #381  net/minecraft/server/waypoints/ServerWaypointManager.<init> ()V
+  551 putfield #382  net/minecraft/server/level/ServerLevel.waypointManager Lnet/minecraft/server/waypoints/ServerWaypointManager;
+  554 aload_0
+  555 invokestatic #386  net/minecraft/world/attribute/EnvironmentAttributeSystem.builder ()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem$Builder;
+  558 aload_0
+  559 invokevirtual #392  net/minecraft/world/attribute/EnvironmentAttributeSystem$Builder.addDefaultLayers (Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/attribute/EnvironmentAttributeSystem$Builder;
+  562 invokevirtual #398  net/minecraft/world/attribute/EnvironmentAttributeSystem$Builder.build ()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+  565 putfield #402  net/minecraft/server/level/ServerLevel.environmentAttributes Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+  568 aload_0
+  569 invokevirtual #406  net/minecraft/server/level/ServerLevel.updateSkyBrightness ()V
+  572 return
+== ServerLevel :: clockManager ()Lnet/minecraft/world/clock/ServerClockManager; ==
+    0 aload_0
+    1 getfield #113  net/minecraft/server/level/ServerLevel.server Lnet/minecraft/server/MinecraftServer;
+    4 invokevirtual #441  net/minecraft/server/MinecraftServer.clockManager ()Lnet/minecraft/world/clock/ServerClockManager;
+    7 areturn
+== ServerLevel :: tick (Ljava/util/function/BooleanSupplier;)V ==
+    0 invokestatic #445  net/minecraft/util/profiling/Profiler.get ()Lnet/minecraft/util/profiling/ProfilerFiller;
+    3 astore_2
+    4 aload_0
+    5 iconst_1
+    6 putfield #450  net/minecraft/server/level/ServerLevel.handlingTick Z
+    9 aload_0
+   10 invokevirtual #453  net/minecraft/server/level/ServerLevel.environmentAttributes ()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+   13 invokevirtual #455  net/minecraft/world/attribute/EnvironmentAttributeSystem.invalidateTickCache ()V
+   16 aload_0
+   17 invokevirtual #458  net/minecraft/server/level/ServerLevel.tickRateManager ()Lnet/minecraft/world/TickRateManager;
+   20 astore_3
+   21 aload_3
+   22 invokevirtual #462  net/minecraft/world/TickRateManager.runsNormally ()Z
+   25 istore 4
+   27 iload 4
+   29 ifeq #38
+   32 aload_2
+   33 ldc_w #467 = world border
+   36 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+   41 aload_0
+   42 invokevirtual #475  net/minecraft/server/level/ServerLevel.getWorldBorder ()Lnet/minecraft/world/level/border/WorldBorder;
+   45 invokevirtual #479  net/minecraft/world/level/border/WorldBorder.tick ()V
+   48 aload_2
+   49 ldc_w #484 = weather
+   52 invokeinterface net/minecraft/util/profiling/ProfilerFiller.popPush (Ljava/lang/String;)V
+   57 aload_0
+   58 invokevirtual #489  net/minecraft/server/level/ServerLevel.advanceWeatherCycle ()V
+   61 aload_2
+   62 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+   67 aload_0
+   68 invokevirtual #495  net/minecraft/server/level/ServerLevel.getGameRules ()Lnet/minecraft/world/level/gamerules/GameRules;
+   71 getstatic #499  net/minecraft/world/level/gamerules/GameRules.PLAYERS_SLEEPING_PERCENTAGE Lnet/minecraft/world/level/gamerules/GameRule;
+   74 invokevirtual #505  net/minecraft/world/level/gamerules/GameRules.get (Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+   77 checkcast #508  java/lang/Integer
+   80 invokevirtual #510  java/lang/Integer.intValue ()I
+   83 istore 5
+   85 aload_0
+   86 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   89 iload 5
+   91 invokevirtual #513  net/minecraft/server/players/SleepStatus.areEnoughSleeping (I)Z
+   94 ifeq #111
+   97 aload_0
+   98 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+  101 iload 5
+  103 aload_0
+  104 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+  107 invokevirtual #516  net/minecraft/server/players/SleepStatus.areEnoughDeepSleeping (ILjava/util/List;)Z
+  110 ifeq #95
+  113 aload_0
+  114 invokevirtual #339  net/minecraft/server/level/ServerLevel.dimensionType ()Lnet/minecraft/world/level/dimension/DimensionType;
+  117 invokevirtual #520  net/minecraft/world/level/dimension/DimensionType.defaultClock ()Ljava/util/Optional;
+  120 astore 6
+  122 aload_0
+  123 invokevirtual #495  net/minecraft/server/level/ServerLevel.getGameRules ()Lnet/minecraft/world/level/gamerules/GameRules;
+  126 getstatic #524  net/minecraft/world/level/gamerules/GameRules.ADVANCE_TIME Lnet/minecraft/world/level/gamerules/GameRule;
+  129 invokevirtual #505  net/minecraft/world/level/gamerules/GameRules.get (Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+  132 checkcast #527  java/lang/Boolean
+  135 invokevirtual #529  java/lang/Boolean.booleanValue ()Z
+  138 ifeq #33
+  141 aload 6
+  143 invokevirtual #532  java/util/Optional.isPresent ()Z
+  146 ifeq #25
+  149 aload_0
+  150 getfield #113  net/minecraft/server/level/ServerLevel.server Lnet/minecraft/server/MinecraftServer;
+  153 invokevirtual #441  net/minecraft/server/MinecraftServer.clockManager ()Lnet/minecraft/world/clock/ServerClockManager;
+  156 aload 6
+  158 invokevirtual #537  java/util/Optional.get ()Ljava/lang/Object;
+  161 checkcast #540  net/minecraft/core/Holder
+  164 getstatic #542  net/minecraft/world/clock/ClockTimeMarkers.WAKE_UP_FROM_SLEEP Lnet/minecraft/resources/ResourceKey;
+  167 invokevirtual #548  net/minecraft/world/clock/ServerClockManager.moveToTimeMarker (Lnet/minecraft/core/Holder;Lnet/minecraft/resources/ResourceKey;)Z
+  170 pop
+  171 aload_0
+  172 invokevirtual #554  net/minecraft/server/level/ServerLevel.wakeUpAllPlayers ()V
+  175 aload_0
+  176 invokevirtual #495  net/minecraft/server/level/ServerLevel.getGameRules ()Lnet/minecraft/world/level/gamerules/GameRules;
+  179 getstatic #557  net/minecraft/world/level/gamerules/GameRules.ADVANCE_WEATHER Lnet/minecraft/world/level/gamerules/GameRule;
+  182 invokevirtual #505  net/minecraft/world/level/gamerules/GameRules.get (Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+  185 checkcast #527  java/lang/Boolean
+  188 invokevirtual #529  java/lang/Boolean.booleanValue ()Z
+  191 ifeq #14
+  194 aload_0
+  195 invokevirtual #560  net/minecraft/server/level/ServerLevel.isRaining ()Z
+  198 ifeq #7
+  201 aload_0
+  202 invokevirtual #563  net/minecraft/server/level/ServerLevel.resetWeatherCycle ()V
+  205 aload_0
+  206 invokevirtual #406  net/minecraft/server/level/ServerLevel.updateSkyBrightness ()V
+  209 iload 4
+  211 ifeq #7
+  214 aload_0
+  215 invokevirtual #566  net/minecraft/server/level/ServerLevel.tickTime ()V
+  218 aload_2
+  219 ldc_w #568 = tickPending
+  222 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+  227 aload_0
+  228 invokevirtual #570  net/minecraft/server/level/ServerLevel.isDebug ()Z
+  231 ifne #74
+  234 iload 4
+  236 ifeq #69
+  239 aload_0
+  240 invokevirtual #573  net/minecraft/server/level/ServerLevel.getGameTime ()J
+  243 lstore 6
+  245 aload_2
+  246 ldc_w #576 = blockTicks
+  249 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+  254 aload_0
+  255 getfield #57  net/minecraft/server/level/ServerLevel.blockTicks Lnet/minecraft/world/ticks/LevelTicks;
+  258 lload 6
+  260 ldc_w #577 = ?
+  263 aload_0
+  264 invokedynamic #578
+  269 invokevirtual #582  net/minecraft/world/ticks/LevelTicks.tick (JILjava/util/function/BiConsumer;)V
+  272 aload_2
+  273 ldc_w #585 = fluidTicks
+  276 invokeinterface net/minecraft/util/profiling/ProfilerFiller.popPush (Ljava/lang/String;)V
+  281 aload_0
+  282 getfield #61  net/minecraft/server/level/ServerLevel.fluidTicks Lnet/minecraft/world/ticks/LevelTicks;
+  285 lload 6
+  287 ldc_w #577 = ?
+  290 aload_0
+  291 invokedynamic #586
+  296 invokevirtual #582  net/minecraft/world/ticks/LevelTicks.tick (JILjava/util/function/BiConsumer;)V
+  299 aload_2
+  300 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+  305 aload_2
+  306 ldc_w #587 = raid
+  309 invokeinterface net/minecraft/util/profiling/ProfilerFiller.popPush (Ljava/lang/String;)V
+  314 iload 4
+  316 ifeq #11
+  319 aload_0
+  320 getfield #271  net/minecraft/server/level/ServerLevel.raids Lnet/minecraft/world/entity/raid/Raids;
+  323 aload_0
+  324 invokevirtual #589  net/minecraft/world/entity/raid/Raids.tick (Lnet/minecraft/server/level/ServerLevel;)V
+  327 aload_2
+  328 ldc_w #591 = chunkSource
+  331 invokeinterface net/minecraft/util/profiling/ProfilerFiller.popPush (Ljava/lang/String;)V
+  336 aload_0
+  337 invokevirtual #422  net/minecraft/server/level/ServerLevel.getChunkSource ()Lnet/minecraft/server/level/ServerChunkCache;
+  340 aload_1
+  341 iconst_1
+  342 invokevirtual #592  net/minecraft/server/level/ServerChunkCache.tick (Ljava/util/function/BooleanSupplier;Z)V
+  345 aload_2
+  346 ldc_w #595 = blockEvents
+  349 invokeinterface net/minecraft/util/profiling/ProfilerFiller.popPush (Ljava/lang/String;)V
+  354 iload 4
+  356 ifeq #7
+  359 aload_0
+  360 invokevirtual #596  net/minecraft/server/level/ServerLevel.runBlockEvents ()V
+  363 aload_0
+  364 iconst_0
+  365 putfield #450  net/minecraft/server/level/ServerLevel.handlingTick Z
+  368 aload_2
+  369 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+  374 aload_0
+  375 getfield #224  net/minecraft/server/level/ServerLevel.chunkSource Lnet/minecraft/server/level/ServerChunkCache;
+  378 invokevirtual #599  net/minecraft/server/level/ServerChunkCache.hasActiveTickets ()Z
+  381 istore 6
+  383 iload 6
+  385 ifeq #7
+  388 aload_0
+  389 invokevirtual #602  net/minecraft/server/level/ServerLevel.resetEmptyTime ()V
+  392 iload 4
+  394 ifeq #13
+  397 aload_0
+  398 dup
+  399 getfield #605  net/minecraft/server/level/ServerLevel.emptyTime I
+  402 iconst_1
+  403 iadd
+  404 putfield #605  net/minecraft/server/level/ServerLevel.emptyTime I
+  407 aload_0
+  408 getfield #605  net/minecraft/server/level/ServerLevel.emptyTime I
+  411 sipush 300
+  414 if_icmpge #79
+  417 aload_2
+  418 ldc #148 = entities
+  420 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+  425 aload_0
+  426 getfield #351  net/minecraft/server/level/ServerLevel.dragonFight Lnet/minecraft/world/level/dimension/end/EnderDragonFight;
+  429 ifnull #30
+  432 iload 4
+  434 ifeq #25
+  437 aload_2
+  438 ldc_w #609 = dragonFight
+  441 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+  446 aload_0
+  447 getfield #351  net/minecraft/server/level/ServerLevel.dragonFight Lnet/minecraft/world/level/dimension/end/EnderDragonFight;
+  450 invokevirtual #610  net/minecraft/world/level/dimension/end/EnderDragonFight.tick ()V
+  453 aload_2
+  454 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+  459 aload_0
+  460 getfield #44  net/minecraft/server/level/ServerLevel.entityTickList Lnet/minecraft/world/level/entity/EntityTickList;
+  463 aload_0
+  464 aload_3
+  465 aload_2
+  466 invokedynamic #611
+  471 invokevirtual #614  net/minecraft/world/level/entity/EntityTickList.forEach (Ljava/util/function/Consumer;)V
+  474 aload_2
+  475 ldc_w #618 = blockEntities
+  478 invokeinterface net/minecraft/util/profiling/ProfilerFiller.popPush (Ljava/lang/String;)V
+  483 aload_0
+  484 invokevirtual #620  net/minecraft/server/level/ServerLevel.tickBlockEntities ()V
+  487 aload_2
+  488 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+  493 aload_2
+  494 ldc_w #623 = entityManagement
+  497 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+  502 aload_0
+  503 getfield #185  net/minecraft/server/level/ServerLevel.entityManager Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;
+  506 invokevirtual #625  net/minecraft/world/level/entity/PersistentEntitySectionManager.tick ()V
+  509 aload_2
+  510 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+  515 aload_2
+  516 ldc_w #626 = debugSynchronizers
+  519 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push (Ljava/lang/String;)V
+  524 aload_0
+  525 getfield #105  net/minecraft/server/level/ServerLevel.debugSynchronizers Lnet/minecraft/util/debug/LevelDebugSynchronizers;
+  528 getstatic #627  net/minecraft/util/debug/DebugSubscriptions.NEIGHBOR_UPDATES Lnet/minecraft/util/debug/DebugSubscription;
+  531 invokevirtual #633  net/minecraft/util/debug/LevelDebugSynchronizers.hasAnySubscriberFor (Lnet/minecraft/util/debug/DebugSubscription;)Z
+  534 ifeq #19
+  537 aload_0
+  538 getfield #637  net/minecraft/server/level/ServerLevel.neighborUpdater Lnet/minecraft/world/level/redstone/CollectingNeighborUpdater;
+  541 aload_0
+  542 invokedynamic #641
+  547 invokevirtual #644  net/minecraft/world/level/redstone/CollectingNeighborUpdater.setDebugListener (Ljava/util/function/Consumer;)V
+  550 goto #11
+  553 aload_0
+  554 getfield #637  net/minecraft/server/level/ServerLevel.neighborUpdater Lnet/minecraft/world/level/redstone/CollectingNeighborUpdater;
+  557 aconst_null
+  558 invokevirtual #644  net/minecraft/world/level/redstone/CollectingNeighborUpdater.setDebugListener (Ljava/util/function/Consumer;)V
+  561 aload_0
+  562 getfield #105  net/minecraft/server/level/ServerLevel.debugSynchronizers Lnet/minecraft/util/debug/LevelDebugSynchronizers;
+  565 aload_0
+  566 getfield #113  net/minecraft/server/level/ServerLevel.server Lnet/minecraft/server/MinecraftServer;
+  569 invokevirtual #649  net/minecraft/server/MinecraftServer.debugSubscribers ()Lnet/minecraft/util/debug/ServerDebugSubscribers;
+  572 invokevirtual #653  net/minecraft/util/debug/LevelDebugSynchronizers.tick (Lnet/minecraft/util/debug/ServerDebugSubscribers;)V
+  575 aload_2
+  576 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop ()V
+  581 return
+== ServerLevel :: wakeUpAllPlayers ()V ==
+    0 aload_0
+    1 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+    4 invokevirtual #713  net/minecraft/server/players/SleepStatus.removeAllSleepers ()V
+    7 aload_0
+    8 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+   11 invokeinterface java/util/List.stream ()Ljava/util/stream/Stream;
+   16 invokedynamic #720
+   21 invokeinterface java/util/stream/Stream.filter (Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+   26 invokestatic #729  java/util/stream/Collectors.toList ()Ljava/util/stream/Collector;
+   29 invokeinterface java/util/stream/Stream.collect (Ljava/util/stream/Collector;)Ljava/lang/Object;
+   34 checkcast #695  java/util/List
+   37 invokedynamic #739
+   42 invokeinterface java/util/List.forEach (Ljava/util/function/Consumer;)V
+   47 return
+== ServerLevel :: announceSleepStatus ()V ==
+    0 aload_0
+    1 invokevirtual #1104  net/minecraft/server/level/ServerLevel.canSleepThroughNights ()Z
+    4 ifne #4
+    7 return
+    8 aload_0
+    9 invokevirtual #1107  net/minecraft/server/level/ServerLevel.getServer ()Lnet/minecraft/server/MinecraftServer;
+   12 invokevirtual #275  net/minecraft/server/MinecraftServer.isSingleplayer ()Z
+   15 ifeq #14
+   18 aload_0
+   19 invokevirtual #1107  net/minecraft/server/level/ServerLevel.getServer ()Lnet/minecraft/server/MinecraftServer;
+   22 invokevirtual #1111  net/minecraft/server/MinecraftServer.isPublished ()Z
+   25 ifne #4
+   28 return
+   29 aload_0
+   30 invokevirtual #495  net/minecraft/server/level/ServerLevel.getGameRules ()Lnet/minecraft/world/level/gamerules/GameRules;
+   33 getstatic #499  net/minecraft/world/level/gamerules/GameRules.PLAYERS_SLEEPING_PERCENTAGE Lnet/minecraft/world/level/gamerules/GameRule;
+   36 invokevirtual #505  net/minecraft/world/level/gamerules/GameRules.get (Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+   39 checkcast #508  java/lang/Integer
+   42 invokevirtual #510  java/lang/Integer.intValue ()I
+   45 istore_1
+   46 aload_0
+   47 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   50 iload_1
+   51 invokevirtual #513  net/minecraft/server/players/SleepStatus.areEnoughSleeping (I)Z
+   54 ifeq #13
+   57 ldc_w #1114 = sleep.skipping_night
+   60 invokestatic #1116  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   63 astore_2
+   64 goto #41
+   67 ldc_w #1122 = sleep.players_sleeping
+   70 iconst_2
+   71 anewarray #1124  java/lang/Object
+   74 dup
+   75 iconst_0
+   76 aload_0
+   77 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   80 invokevirtual #1126  net/minecraft/server/players/SleepStatus.amountSleeping ()I
+   83 invokestatic #993  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+   86 aastore
+   87 dup
+   88 iconst_1
+   89 aload_0
+   90 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   93 iload_1
+   94 invokevirtual #1129  net/minecraft/server/players/SleepStatus.sleepersNeeded (I)I
+   97 invokestatic #993  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+  100 aastore
+  101 invokestatic #1132  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  104 astore_2
+  105 aload_0
+  106 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+  109 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+  114 astore_3
+  115 aload_3
+  116 invokeinterface java/util/Iterator.hasNext ()Z
+  121 ifeq #23
+  124 aload_3
+  125 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  130 checkcast #1135  net/minecraft/server/level/ServerPlayer
+  133 astore 4
+  135 aload 4
+  137 aload_2
+  138 invokevirtual #1137  net/minecraft/server/level/ServerPlayer.sendOverlayMessage (Lnet/minecraft/network/chat/Component;)V
+  141 goto #65510
+  144 return
+== ServerLevel :: updateSleepingPlayerList ()V ==
+    0 aload_0
+    1 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+    4 invokeinterface java/util/List.isEmpty ()Z
+    9 ifne #21
+   12 aload_0
+   13 getfield #368  net/minecraft/server/level/ServerLevel.sleepStatus Lnet/minecraft/server/players/SleepStatus;
+   16 aload_0
+   17 getfield #33  net/minecraft/server/level/ServerLevel.players Ljava/util/List;
+   20 invokevirtual #1141  net/minecraft/server/players/SleepStatus.update (Ljava/util/List;)Z
+   23 ifeq #7
+   26 aload_0
+   27 invokevirtual #1145  net/minecraft/server/level/ServerLevel.announceSleepStatus ()V
+   30 return
+== ServerLevel :: clockManager ()Lnet/minecraft/world/clock/ClockManager; ==
+    0 aload_0
+    1 invokevirtual #2452  net/minecraft/server/level/ServerLevel.clockManager ()Lnet/minecraft/world/clock/ServerClockManager;
+    4 areturn
+=== ServerClockManager: the skip write ===
+=== WorldClocks: the overworld clock's table ===
+== WorldClocks :: <clinit> ()V ==
+    0 ldc #39 = overworld
+    2 invokestatic #41  net/minecraft/world/clock/WorldClocks.key (Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+    5 putstatic #1  net/minecraft/world/clock/WorldClocks.OVERWORLD Lnet/minecraft/resources/ResourceKey;
+    8 ldc #45 = the_end
+   10 invokestatic #41  net/minecraft/world/clock/WorldClocks.key (Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+   13 putstatic #19  net/minecraft/world/clock/WorldClocks.THE_END Lnet/minecraft/resources/ResourceKey;
+   16 return
+=== Level.isBrightOutside ===
+== Level :: isDarkOutside ()Z ==
+    0 aload_0
+    1 invokevirtual #374  net/minecraft/world/level/Level.dimensionType ()Lnet/minecraft/world/level/dimension/DimensionType;
+    4 invokevirtual #378  net/minecraft/world/level/dimension/DimensionType.hasFixedTime ()Z
+    7 ifne #14
+   10 aload_0
+   11 invokevirtual #386  net/minecraft/world/level/Level.isBrightOutside ()Z
+   14 ifne #7
+   17 iconst_1
+   18 goto #4
+   21 iconst_0
+   22 ireturn
