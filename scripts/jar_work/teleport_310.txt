@@ -1,0 +1,334 @@
+=== TeleportRandomlyConsumeEffect: the apply walk ===
+== TeleportRandomlyConsumeEffect :: <init> ()V ==
+    0 aload_0
+    1 ldc #13 = ?
+    3 invokespecial #14  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.<init> (F)V
+    6 return
+== TeleportRandomlyConsumeEffect :: <init> (F)V ==
+    0 aload_0
+    1 invokespecial #1  java/lang/Record.<init> ()V
+    4 aload_0
+    5 fload_1
+    6 putfield #7  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.diameter F
+    9 return
+== TeleportRandomlyConsumeEffect :: apply (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)Z ==
+    0 iconst_0
+    1 istore 4
+    3 iconst_0
+    4 istore 5
+    6 iload 5
+    8 bipush 16
+   10 if_icmpge #215
+   13 aload_3
+   14 invokevirtual #23  net/minecraft/world/entity/LivingEntity.getX ()D
+   17 aload_3
+   18 invokevirtual #29  net/minecraft/world/entity/LivingEntity.getRandom ()Lnet/minecraft/util/RandomSource;
+   21 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   26 ldc2_w #38 = 0.5
+   29 dsub
+   30 aload_0
+   31 getfield #7  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.diameter F
+   34 f2d
+   35 dmul
+   36 dadd
+   37 dstore 6
+   39 aload_3
+   40 invokevirtual #40  net/minecraft/world/entity/LivingEntity.getY ()D
+   43 aload_3
+   44 invokevirtual #29  net/minecraft/world/entity/LivingEntity.getRandom ()Lnet/minecraft/util/RandomSource;
+   47 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   52 ldc2_w #38 = 0.5
+   55 dsub
+   56 aload_0
+   57 getfield #7  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.diameter F
+   60 f2d
+   61 dmul
+   62 dadd
+   63 aload_1
+   64 invokevirtual #43  net/minecraft/world/level/Level.getMinY ()I
+   67 i2d
+   68 aload_1
+   69 invokevirtual #43  net/minecraft/world/level/Level.getMinY ()I
+   72 aload_1
+   73 checkcast #49  net/minecraft/server/level/ServerLevel
+   76 invokevirtual #51  net/minecraft/server/level/ServerLevel.getLogicalHeight ()I
+   79 iadd
+   80 iconst_1
+   81 isub
+   82 i2d
+   83 invokestatic #54  net/minecraft/util/Mth.clamp (DDD)D
+   86 dstore 8
+   88 aload_3
+   89 invokevirtual #60  net/minecraft/world/entity/LivingEntity.getZ ()D
+   92 aload_3
+   93 invokevirtual #29  net/minecraft/world/entity/LivingEntity.getRandom ()Lnet/minecraft/util/RandomSource;
+   96 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+  101 ldc2_w #38 = 0.5
+  104 dsub
+  105 aload_0
+  106 getfield #7  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.diameter F
+  109 f2d
+  110 dmul
+  111 dadd
+  112 dstore 10
+  114 aload_3
+  115 invokevirtual #63  net/minecraft/world/entity/LivingEntity.isPassenger ()Z
+  118 ifeq #7
+  121 aload_3
+  122 invokevirtual #67  net/minecraft/world/entity/LivingEntity.stopRiding ()V
+  125 aload_3
+  126 invokevirtual #70  net/minecraft/world/entity/LivingEntity.position ()Lnet/minecraft/world/phys/Vec3;
+  129 astore 12
+  131 aload_3
+  132 dload 6
+  134 dload 8
+  136 dload 10
+  138 iconst_1
+  139 invokevirtual #74  net/minecraft/world/entity/LivingEntity.randomTeleport (DDDZ)Z
+  142 ifeq #77
+  145 aload_1
+  146 getstatic #78  net/minecraft/world/level/gameevent/GameEvent.TELEPORT Lnet/minecraft/core/Holder$Reference;
+  149 aload 12
+  151 aload_3
+  152 invokestatic #84  net/minecraft/world/level/gameevent/GameEvent$Context.of (Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/level/gameevent/GameEvent$Context;
+  155 invokevirtual #90  net/minecraft/world/level/Level.gameEvent (Lnet/minecraft/core/Holder;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/gameevent/GameEvent$Context;)V
+  158 aload_3
+  159 instanceof #94  net/minecraft/world/entity/animal/fox/Fox
+  162 ifeq #16
+  165 getstatic #96  net/minecraft/sounds/SoundEvents.FOX_TELEPORT Lnet/minecraft/sounds/SoundEvent;
+  168 astore 14
+  170 getstatic #102  net/minecraft/sounds/SoundSource.NEUTRAL Lnet/minecraft/sounds/SoundSource;
+  173 astore 13
+  175 goto #13
+  178 getstatic #108  net/minecraft/sounds/SoundEvents.CHORUS_FRUIT_TELEPORT Lnet/minecraft/sounds/SoundEvent;
+  181 astore 14
+  183 getstatic #111  net/minecraft/sounds/SoundSource.PLAYERS Lnet/minecraft/sounds/SoundSource;
+  186 astore 13
+  188 aload_1
+  189 aconst_null
+  190 aload_3
+  191 invokevirtual #23  net/minecraft/world/entity/LivingEntity.getX ()D
+  194 aload_3
+  195 invokevirtual #40  net/minecraft/world/entity/LivingEntity.getY ()D
+  198 aload_3
+  199 invokevirtual #60  net/minecraft/world/entity/LivingEntity.getZ ()D
+  202 aload 14
+  204 aload 13
+  206 invokevirtual #114  net/minecraft/world/level/Level.playSound (Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;)V
+  209 aload_3
+  210 invokevirtual #118  net/minecraft/world/entity/LivingEntity.resetFallDistance ()V
+  213 iconst_1
+  214 istore 4
+  216 goto #9
+  219 iinc 5 1
+  222 goto #65320
+  225 iload 4
+  227 ifeq #7
+  230 aload_3
+  231 invokevirtual #121  net/minecraft/world/entity/LivingEntity.resetCurrentImpulseContext ()V
+  234 iload 4
+  236 ireturn
+== TeleportRandomlyConsumeEffect :: diameter ()F ==
+    0 aload_0
+    1 getfield #7  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.diameter F
+    4 freturn
+== TeleportRandomlyConsumeEffect :: <clinit> ()V ==
+    0 invokedynamic #177
+    5 invokestatic #178  com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec (Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8 putstatic #184  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.CODEC Lcom/mojang/serialization/MapCodec;
+   11 getstatic #188  net/minecraft/network/codec/ByteBufCodecs.FLOAT Lnet/minecraft/network/codec/StreamCodec;
+   14 invokedynamic #155
+   19 invokedynamic #171
+   24 invokestatic #194  net/minecraft/network/codec/StreamCodec.composite (Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+   27 putstatic #200  net/minecraft/world/item/consume_effects/TeleportRandomlyConsumeEffect.STREAM_CODEC Lnet/minecraft/network/codec/StreamCodec;
+   30 return
+
+=== ChorusFruitItem: the finish walk (the legacy lane) ===
+!! net/minecraft/world/item/ChorusFruitItem MISSING
+
+=== LivingEntity.randomTeleport: the safe-position law ===
+== LivingEntity :: randomTeleport (DDDZ)Z ==
+    0 aload_0
+    1 invokevirtual #403  net/minecraft/world/entity/LivingEntity.getX ()D
+    4 dstore 8
+    6 aload_0
+    7 invokevirtual #407  net/minecraft/world/entity/LivingEntity.getY ()D
+   10 dstore 10
+   12 aload_0
+   13 invokevirtual #410  net/minecraft/world/entity/LivingEntity.getZ ()D
+   16 dstore 12
+   18 dload_3
+   19 dstore 14
+   21 iconst_0
+   22 istore 16
+   24 dload_1
+   25 dload 14
+   27 dload 5
+   29 invokestatic #590  net/minecraft/core/BlockPos.containing (DDD)Lnet/minecraft/core/BlockPos;
+   32 astore 17
+   34 aload_0
+   35 invokevirtual #370  net/minecraft/world/entity/LivingEntity.level ()Lnet/minecraft/world/level/Level;
+   38 astore 18
+   40 aload 18
+   42 aload 17
+   44 invokevirtual #2974  net/minecraft/world/level/Level.hasChunkAt (Lnet/minecraft/core/BlockPos;)Z
+   47 ifeq #105
+   50 iconst_0
+   51 istore 19
+   53 iload 19
+   55 ifne #59
+   58 aload 17
+   60 invokevirtual #3770  net/minecraft/core/BlockPos.getY ()I
+   63 aload 18
+   65 invokevirtual #2981  net/minecraft/world/level/Level.getMinY ()I
+   68 if_icmple #46
+   71 aload 17
+   73 invokevirtual #2390  net/minecraft/core/BlockPos.below ()Lnet/minecraft/core/BlockPos;
+   76 astore 20
+   78 aload 18
+   80 aload 20
+   82 invokevirtual #2100  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   85 astore 21
+   87 aload 21
+   89 invokevirtual #3772  net/minecraft/world/level/block/state/BlockState.blocksMotion ()Z
+   92 ifeq #9
+   95 iconst_1
+   96 istore 19
+   98 goto #13
+  101 dload 14
+  103 dconst_1
+  104 dsub
+  105 dstore 14
+  107 aload 20
+  109 astore 17
+  111 goto #65478
+  114 iload 19
+  116 ifeq #36
+  119 aload_0
+  120 dload_1
+  121 dload 14
+  123 dload 5
+  125 invokevirtual #3775  net/minecraft/world/entity/LivingEntity.teleportTo (DDD)V
+  128 aload 18
+  130 aload_0
+  131 invokevirtual #3778  net/minecraft/world/level/Level.noCollision (Lnet/minecraft/world/entity/Entity;)Z
+  134 ifeq #18
+  137 aload 18
+  139 aload_0
+  140 invokevirtual #556  net/minecraft/world/entity/LivingEntity.getBoundingBox ()Lnet/minecraft/world/phys/AABB;
+  143 invokevirtual #3781  net/minecraft/world/level/Level.containsAnyLiquid (Lnet/minecraft/world/phys/AABB;)Z
+  146 ifne #6
+  149 iconst_1
+  150 istore 16
+  152 iload 16
+  154 ifne #15
+  157 aload_0
+  158 dload 8
+  160 dload 10
+  162 dload 12
+  164 invokevirtual #3775  net/minecraft/world/entity/LivingEntity.teleportTo (DDD)V
+  167 iconst_0
+  168 ireturn
+  169 iload 7
+  171 ifeq #11
+  174 aload 18
+  176 aload_0
+  177 bipush 46
+  179 invokevirtual #828  net/minecraft/world/level/Level.broadcastEntityEvent (Lnet/minecraft/world/entity/Entity;B)V
+  182 aload_0
+  183 astore 20
+  185 aload 20
+  187 instanceof #3784  net/minecraft/world/entity/PathfinderMob
+  190 ifeq #18
+  193 aload 20
+  195 checkcast #3784  net/minecraft/world/entity/PathfinderMob
+  198 astore 19
+  200 aload 19
+  202 invokevirtual #3786  net/minecraft/world/entity/PathfinderMob.getNavigation ()Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+  205 invokevirtual #3790  net/minecraft/world/entity/ai/navigation/PathNavigation.stop ()V
+  208 iconst_1
+  209 ireturn
+
+=== TheEndGatewayBlockEntity: the teleport walk ===
+== TheEndGatewayBlockEntity :: <init> (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V ==
+    0 aload_0
+    1 getstatic #3  net/minecraft/world/level/block/entity/BlockEntityTypes.END_GATEWAY Lnet/minecraft/world/level/block/entity/BlockEntityType;
+    4 aload_1
+    5 aload_2
+    6 invokespecial #9  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity.<init> (Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    9 aload_0
+   10 lconst_0
+   11 putfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   14 aload_0
+   15 iconst_0
+   16 putfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+   19 return
+== TheEndGatewayBlockEntity :: isCoolingDown ()Z ==
+    0 aload_0
+    1 getfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+    4 ifle #7
+    7 iconst_1
+    8 goto #4
+   11 iconst_0
+   12 ireturn
+== TheEndGatewayBlockEntity :: findExitPosition (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos; ==
+    0 aload_0
+    1 aload_1
+    2 iconst_0
+    3 iconst_2
+    4 iconst_0
+    5 invokevirtual #205  net/minecraft/core/BlockPos.offset (III)Lnet/minecraft/core/BlockPos;
+    8 iconst_5
+    9 iconst_0
+   10 invokestatic #209  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findTallestBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;IZ)Lnet/minecraft/core/BlockPos;
+   13 astore_2
+   14 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+   17 ldc #213 = Best exit position for portal at {} is {}
+   19 aload_1
+   20 aload_2
+   21 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+   26 aload_2
+   27 invokevirtual #218  net/minecraft/core/BlockPos.above ()Lnet/minecraft/core/BlockPos;
+   30 areturn
+== TheEndGatewayBlockEntity :: <clinit> ()V ==
+    0 invokestatic #507  com/mojang/logging/LogUtils.getLogger ()Lorg/slf4j/Logger;
+    3 putstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+    6 return
+
+=== EndGatewayBlock: the shape + the inside gate ===
+== EndGatewayBlock :: entityInside (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/InsideBlockEffectApplier;Z)V ==
+    0 aload 4
+    2 iconst_0
+    3 invokevirtual #95  net/minecraft/world/entity/Entity.canUsePortal (Z)Z
+    6 ifeq #55
+    9 aload_2
+   10 aload_3
+   11 invokevirtual #39  net/minecraft/world/level/Level.getBlockEntity (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+   14 astore 7
+   16 aload_2
+   17 invokevirtual #24  net/minecraft/world/level/Level.isClientSide ()Z
+   20 ifne #41
+   23 aload 7
+   25 instanceof #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   28 ifeq #33
+   31 aload 7
+   33 checkcast #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   36 astore 8
+   38 aload 8
+   40 invokevirtual #101  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isCoolingDown ()Z
+   43 ifne #18
+   46 aload 4
+   48 aload_0
+   49 aload_3
+   50 invokevirtual #104  net/minecraft/world/entity/Entity.setAsInsidePortal (Lnet/minecraft/world/level/block/Portal;Lnet/minecraft/core/BlockPos;)V
+   53 aload_2
+   54 aload_3
+   55 aload_1
+   56 aload 8
+   58 invokestatic #108  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.triggerCooldown (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;)V
+   61 return
+== EndGatewayBlock :: <clinit> ()V ==
+    0 invokedynamic #161
+    5 invokestatic #165  net/minecraft/world/level/block/EndGatewayBlock.simpleCodec (Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8 putstatic #1  net/minecraft/world/level/block/EndGatewayBlock.CODEC Lcom/mojang/serialization/MapCodec;
+   11 return

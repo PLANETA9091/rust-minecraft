@@ -6562,6 +6562,17 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE END GATEWAY'S OWN INVISIBLE LANE (the autopush-310
+                // round — javap EndGatewayBlock.getRenderShape the
+                // `RenderShape.INVISIBLE` verdict the 26.2 jar banks:
+                // the gateway the generic cube the block never wears,
+                // the zero quads the mesher's own early retire keeps —
+                // the beam the BE renderer's own lane the vanilla's
+                // own render split speaks, the star field the
+                // documented absence the block lane never wears).
+                if crate::world::is_end_gateway(id) {
+                    continue;
+                }
                 // THE BED'S OWN TWO-CELL LANE (the dev-194 round — the
                 // blockstates/<color>_bed.json the eight variants the
                 // model split wears: block/<color>_bed_head the head

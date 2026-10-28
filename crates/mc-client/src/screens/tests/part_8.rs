@@ -1305,7 +1305,7 @@ fn the_oak_button_kind_laws_the_family_and_the_windows_wear() {
     // #texture ref banks)
     assert_eq!(
         atlas::N_KINDS,
-        797,
+        798,
         "the palette the weighted plates' own rows bank"
     );
     assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -1534,7 +1534,7 @@ fn the_button_ladder_the_full_family_and_the_voice_sets_wear() {
     );
     assert_eq!(
         atlas::N_KINDS,
-        797,
+        798,
         "the palette the weighted plates' own rows bank"
     );
     // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -1809,7 +1809,7 @@ fn the_plate_ladder_the_full_family_and_the_voice_sets_wear() {
     );
     assert_eq!(
         atlas::N_KINDS,
-        797,
+        798,
         "the palette the weighted plates' own rows bank"
     );
     // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -1929,7 +1929,7 @@ fn the_weighted_plates_the_count_law_and_the_metal_voices_wear() {
     assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
     assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
     assert_eq!(w::END_PORTAL, 510);
-    assert_eq!(atlas::N_KINDS, 797, "the palette the weighted rows bank");
+    assert_eq!(atlas::N_KINDS, 798, "the palette the weighted rows bank");
     for (off, on, name) in [
         (
             w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -3520,7 +3520,7 @@ fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
     assert_eq!(w::END_PORTAL, 510);
     assert_eq!(
         atlas::N_KINDS,
-        797,
+        798,
         "the palette the weighted plates' own rows bank"
     );
     for (off, on, name, wooden) in [

@@ -9279,6 +9279,16 @@ pub struct App {
     /// NEXT round's own lane keeps, the transfer feed the bank
     /// alone serves).
     pub brewing_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    /// THE END GATEWAYS' OWN BANK (the autopush-310 round — the same
+    /// per-cell law the brewing five speaks: javap
+    /// TheEndGatewayBlockEntity the 26.2 jar the fields the BE wears
+    /// [the exitPortal the BlockPos, the exactTeleport the flag, the
+    /// teleportCooldown the triggerCooldown's own `bipush 40` the
+    /// enter tick writes], the cell the map's own key wears, the
+    /// trio the value the item lane's arrival + the cooldown decay
+    /// ride home to — the exit the getPortalPosition's own read the
+    /// atBottomCenterOf vector serves).
+    pub gateway_stores: std::collections::HashMap<(i32, i32, i32), GatewayStore>,
     /// THE OPEN FURNACE'S OWN CELL (the open the key banks, the
     /// flush the key takes home — the None the live-lane opens and
     /// the closed screens keep, the networked trio the server's own
@@ -11524,6 +11534,93 @@ pub fn furnace_stores_from_nbt(
     parse_stores_list(entries, 3)
 }
 
+/// THE END GATEWAY'S OWN STORE WORDS (the autopush-310 round —
+/// javap TheEndGatewayBlockEntity the 26.2 jar the fields the BE
+/// wears: the exitPortal the arrival cell the getPortalPosition
+/// read answers, the exactTeleport the flag the re-scan arm the
+/// findExitPosition walk serves, the teleportCooldown the
+/// triggerCooldown's own `bipush 40` the enter tick writes and the
+/// portalTick the -1-per-tick decay wears).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct GatewayStore {
+    pub exit: (i32, i32, i32),
+    pub exact: bool,
+    pub cooldown: i32,
+}
+
+/// THE GATEWAY BANK'S OWN WALK (the autopush-310 round — the
+/// "end_gateways" list the containers file's own lane wears: each
+/// entry the x/y/z triple + the exit pair + the exact flag + the
+/// cooldown word the BE's own fields the disk banks, the BTree cell
+/// order the deterministic bytes keep).
+pub fn gateway_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), GatewayStore>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for ((x, y, z), st) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            ("Ex".to_string(), mc_protocol::nbt::Nbt::Int(st.exit.0)),
+            ("Ey".to_string(), mc_protocol::nbt::Nbt::Int(st.exit.1)),
+            ("Ez".to_string(), mc_protocol::nbt::Nbt::Int(st.exit.2)),
+            (
+                "Exact".to_string(),
+                mc_protocol::nbt::Nbt::Byte(if st.exact { 1 } else { 0 }),
+            ),
+            (
+                "Cooldown".to_string(),
+                mc_protocol::nbt::Nbt::Int(st.cooldown),
+            ),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE GATEWAY BANK'S OWN PARSE (the tolerant walk the furnace-words
+/// parse wears: the missing coordinate the entry skip keeps, the
+/// missing exit the (0,0,0) pad the honest default keeps, the
+/// missing list the honest empties keep).
+pub fn gateway_stores_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), GatewayStore> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("end_gateways") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        let exit = (
+            read_int("Ex").unwrap_or(0),
+            read_int("Ey").unwrap_or(0),
+            read_int("Ez").unwrap_or(0),
+        );
+        let exact = read_int("Exact").unwrap_or(0) != 0;
+        let cooldown = read_int("Cooldown").unwrap_or(0);
+        stores.insert(
+            (x, y, z),
+            GatewayStore {
+                exit,
+                exact,
+                cooldown,
+            },
+        );
+    }
+    stores
+}
+
 /// THE BREWING BANK'S OWN PARSE (the autopush-309 round — the
 /// "brewing_stands" list the five-cap wears: the same tolerant walk
 /// the furnace parse serves, the missing/corrupt list the honest
@@ -11985,6 +12082,7 @@ impl App {
             container_open_ender: false,
             furnace_stores: std::collections::HashMap::new(),
             brewing_stores: std::collections::HashMap::new(),
+            gateway_stores: std::collections::HashMap::new(),
             furnace_open_cell: None,
             furnace_word_stores: std::collections::HashMap::new(),
             furnace_slots: vec![(0, 0); 39],
@@ -16906,11 +17004,64 @@ impl App {
             // discard. The NETWORKED world's entities stay the server's
             // (the voxel prediction's own split).
             if !self.world_is_network && !self.drops.is_empty() {
+                // THE GATEWAY CLOCK'S OWN DECAY (javap
+                // TheEndGatewayBlockEntity.portalTick pc 22-37 the 26.2
+                // jar the isCoolingDown branch the -1 wear — the
+                // cooldown the enter tick's own 40 the walk drains,
+                // the 2400-tick age fold the beam refresh the client's
+                // no-beam lane the documented absence keeps)
+                for st in self.gateway_stores.values_mut() {
+                    if st.cooldown > 0 {
+                        st.cooldown -= 1;
+                    }
+                }
                 {
                     let world = self.offline_world.as_mut();
                     if let Some(world) = world {
                         for d in self.drops.iter_mut() {
                             d.tick(world);
+                            // THE END GATEWAY'S OWN ITEM LANE (javap
+                            // EndGatewayBlock.entityInside pcs 0-58 the
+                            // 26.2 jar the walk banks — the cell the
+                            // item's own read answers, the canUsePortal
+                            // the items' own verdict the TRUE keeps,
+                            // the !isCoolingDown fold the store's
+                            // cooldown word wears, the
+                            // setAsInsidePortal the triggerCooldown
+                            // pair the enter tick writes, the arrival
+                            // the getPortalDestination's transition the
+                            // atBottomCenterOf exit the Vec3.ZERO
+                            // velocity banks [javap getPortalPosition
+                            // pcs 90-94: the atBottomCenterOf the
+                            // bottom-center vector speaks — the item
+                            // the wait-0 the same tick the portal
+                            // serves, the vanilla's own item lane the
+                            // player's 70-tick wait never wears])
+                            let cell = (d.x.floor() as i32, d.y.floor() as i32, d.z.floor() as i32);
+                            if world.get(cell.0, cell.1, cell.2) == crate::world::END_GATEWAY {
+                                if let Some(st) = self.gateway_stores.get_mut(&cell) {
+                                    if st.cooldown <= 0 {
+                                        let exit = crate::world::gateway_exit(world, st.exit, st.exact);
+                                        d.x = exit.0 as f64 + 0.5;
+                                        d.y = exit.1 as f64;
+                                        d.z = exit.2 as f64 + 0.5;
+                                        // the transition's own ZERO (javap
+                                        // getPortalDestination pcs 79-83: the
+                                        // Vec3.ZERO the velocity the arrival
+                                        // banks — the item the exit the
+                                        // drop-straight look wears)
+                                        d.vx = 0.0;
+                                        d.vy = 0.0;
+                                        d.vz = 0.0;
+                                        // the snap (the teleport's own
+                                        // xo=xoyo fold — the render's streak
+                                        // never wears)
+                                        d.prev = Some((d.x, d.y, d.z));
+                                        d.on_ground = false;
+                                        st.cooldown = crate::world::GATEWAY_COOLDOWN_TICKS;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -39802,6 +39953,11 @@ impl App {
                 for k in self.brewing_stores.keys().copied().collect::<Vec<_>>() {
                     self.container_fill_sync(k, None);
                 }
+                // THE GATEWAY BANK'S OWN PARSE (the autopush-310 round
+                // — the same read the exit/exact/cooldown trio bank
+                // answers: the missing list the honest empties keep,
+                // the extend law the in-memory entry never clobbers)
+                self.gateway_stores.extend(gateway_stores_from_nbt(&root));
                 // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
@@ -39875,6 +40031,14 @@ impl App {
             (
                 "brewing_stands".to_string(),
                 container_bank_to_nbt(&self.brewing_stores, 5),
+            ),
+            // THE GATEWAY BANK'S OWN ROW (the autopush-310 round — the
+            // gateways the same file the list wears, the BTree cell
+            // order the deterministic bytes keep, the trio the BE's
+            // own fields the disk banks)
+            (
+                "end_gateways".to_string(),
+                gateway_bank_to_nbt(&self.gateway_stores),
             ),
             (
                 "furnace_words".to_string(),
@@ -63531,11 +63695,109 @@ impl App {
                         mc_registry::generated::foods::EffectKind::ClearAllStatusEffects => {
                             self.effects.remove_all();
                         }
+                        // THE CHORUS TELEPORT'S OWN WALK (the
+                        // autopush-310 round — javap
+                        // TeleportRandomlyConsumeEffect.apply pcs 0-236
+                        // the 26.2 jar the walk banks: the 16 attempts
+                        // the loop wears, the three nextDouble draws
+                        // the x/y/z rows each attempt spends, the
+                        // `(d - 0.5) * diameter` fold the per-axis
+                        // offset answers, the y clamp the world's own
+                        // [0, height-1] band keeps, the randomTeleport
+                        // the walk-down the safe verdict the arrival
+                        // banks, the CHORUS_FRUIT_TELEPORT voice the
+                        // resetFallDistance tail the success speaks —
+                        // the 128-particle portal burst the event-46
+                        // handler serves [javap LivingEntity
+                        // .handleEntityEvent case 46: the i/127 lerp the
+                        // old pose's own anchor the client's event
+                        // order keeps, the (r - 0.5) * 0.2 velocity
+                        // trio, the width-spread the height walk the
+                        // position folds spend], the item's 20-tick
+                        // cooldown the tracker's own absence the
+                        // documented gap keeps — the cooldown UI lane
+                        // the later round serves).
+                        mc_registry::generated::foods::EffectKind::TeleportRandomly => {
+                            let Some(world) = self.offline_world.as_ref() else {
+                                continue;
+                            };
+                            let Some(body) = self.body.as_mut() else {
+                                continue;
+                            };
+                            let diameter = crate::world::CHORUS_TELEPORT_DIAMETER;
+                            let height = body.height();
+                            let old = (body.x, body.y, body.z);
+                            let mut landed: Option<(f64, f64, f64)> = None;
+                            for _ in 0..16 {
+                                let tx = old.0 + (self.drop_rng.next_f64() - 0.5) * diameter;
+                                let ty = (old.1 + (self.drop_rng.next_f64() - 0.5) * diameter)
+                                    .clamp(0.0, (crate::world::CHUNK_Y - 1) as f64);
+                                let tz = old.2 + (self.drop_rng.next_f64() - 0.5) * diameter;
+                                if let Some(pos) = crate::world::chorus_teleport_find(world, tx, ty, tz, height) {
+                                    landed = Some(pos);
+                                    break;
+                                }
+                            }
+                            if let Some(pos) = landed {
+                                // THE PORTAL BURST'S OWN WALK (javap
+                                // LivingEntity.handleEntityEvent case 46
+                                // the 26.2 jar the walk banks — the 128
+                                // the sipush loop bound wears, the
+                                // i/127 the lerp progress the old
+                                // pose's own anchor keeps [the event
+                                // packet the position sync never
+                                // outruns — the client's own order the
+                                // departure cloud speaks], the (r -
+                                // 0.5) * 0.2 the velocity trio, the
+                                // (r - 0.5) * bbWidth * 2.0 the
+                                // x/z-spread the height walk the
+                                // position folds spend, the ctor's own
+                                // draws the ring-puff chain the level
+                                // stream's stand-in shares)
+                                for _i in 0..128i32 {
+                                    let fx = (self.drop_rng.next_f32() - 0.5) * 0.2;
+                                    let fy = (self.drop_rng.next_f32() - 0.5) * 0.2;
+                                    let fz = (self.drop_rng.next_f32() - 0.5) * 0.2;
+                                    let px = old.0 + (self.drop_rng.next_f64() - 0.5) * 0.6 * 2.0;
+                                    let py = old.1 + self.drop_rng.next_f64() * height;
+                                    let pz = old.2 + (self.drop_rng.next_f64() - 0.5) * 0.6 * 2.0;
+                                    self.particles.push(crate::particles::portal_ring_puff(
+                                        px,
+                                        py,
+                                        pz,
+                                        f64::from(fx),
+                                        f64::from(fy),
+                                        f64::from(fz),
+                                        &mut self.drop_rng,
+                                    ));
+                                }
+                                // THE ARRIVAL (javap teleportTo the
+                                // absSnapTo the xo=xoyo fold — the prev
+                                // the same pose the render's streak
+                                // never wears, the resetFallDistance
+                                // the success tail speaks, the
+                                // velocity the walk never touches)
+                                body.x = pos.0;
+                                body.y = pos.1;
+                                body.z = pos.2;
+                                body.prev_x = pos.0;
+                                body.prev_y = pos.1;
+                                body.prev_z = pos.2;
+                                body.fall_distance = 0.0;
+                                // THE TELEPORT VOICE (javap
+                                // CHORUS_FRUIT_TELEPORT the PLAYERS
+                                // source the playSound(null, ...) the
+                                // 1.0/1.0 overload wears — the fox
+                                // branch the mob lane the player never
+                                // wears)
+                                self.sounds
+                                    .play_voice(self.frame, "item.chorus_fruit.teleport", 1.0, 1.0);
+                            }
+                        }
                         // the other kinds' client surfaces — the
-                        // chorus fruit's teleport (the world's own
-                        // lane), the play-sound's one-shot — stay
-                        // their documented absences (no wire, no
-                        // world surface in the offline arc yet)
+                        // play-sound's one-shot — stay their
+                        // documented absences (no wire surface in the
+                        // offline arc yet)
                         _ => {}
                     }
                 }

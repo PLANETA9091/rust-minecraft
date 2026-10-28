@@ -1381,3 +1381,330 @@ fn the_offline_hopper_the_brewing_below_the_potion_lane_the_down_order_wears() {
         "the hopper's second slot the honest empty keeps"
     );
 }
+
+/// THE CHORUS EAT'S OWN TELEPORT WALK (the autopush-310 round —
+/// javap TeleportRandomlyConsumeEffect.apply the 26.2 jar the 16
+/// attempts the three-draw rows wear, the randomTeleport the
+/// walk-down the safe verdict the arrival banks, the completion the
+/// FoodData fold the teleport voice the 128-puff departure cloud the
+/// body snap serves — the REAL eat arc the press the hold the
+/// completion the vanilla's own beats play).
+#[test]
+fn the_offline_eat_the_chorus_the_teleport_lane_the_sound_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let chorus = mc_registry::item_id_by_name("chorus_fruit").unwrap();
+    app.inventory.items[app.selected_hotbar] = (chorus, 4);
+    app.hotbar_slots = app.inventory.hotbar();
+    // THE FULL BAR (javap FoodProperties.canAlwaysEat the chorus's
+    // own true the consume gate arms — the vanilla law the plain
+    // food's full-bar refusal the chorus never wears)
+    app.food_data.set_food_level(20);
+    app.food_data.set_saturation(5.0);
+    // THE LANDING ZONE (the flat plate the walk-down's own seat —
+    // the ±4 targets the plate the walk-down lands, the column the
+    // four cells the clear keeps)
+    let body0 = {
+        let b = app.body.as_ref().unwrap();
+        (b.x, b.y, b.z)
+    };
+    let (px, pz) = (body0.0.floor() as i32, body0.2.floor() as i32);
+    let gy = body0.1.floor() as i32 - 1;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -6..=6 {
+            for dz in -6..=6 {
+                world.set(px + dx, gy, pz + dz, crate::world::STONE);
+                for dy in 1..=5 {
+                    world.set(px + dx, gy + dy, pz + dz, crate::world::AIR);
+                }
+            }
+        }
+    }
+    // THE PRESS (the full bar the always-eat the hold arms)
+    assert!(
+        app.on_right_press(0, 0),
+        "the chorus the always-eat the hold arms"
+    );
+    assert!(app.eating.is_some(), "the eat opened");
+    // THE FULL ARC (the 32 ticks the completion folds)
+    for _ in 0..32 {
+        app.update();
+    }
+    assert!(app.eating.is_none(), "the hold completed");
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (chorus, 3),
+        "the survival consume the stack shrinks"
+    );
+    // THE TELEPORT (javap apply the success the body the arrival
+    // wears — the ±4 band the diameter folds, the moved verdict the
+    // walk-down's own seat answers)
+    let body = app.body.as_ref().unwrap();
+    let dx = body.x - body0.0;
+    let dz = body.z - body0.2;
+    assert!(
+        dx.abs() <= 4.5 && dz.abs() <= 4.5,
+        "the ±4 band the diameter wears (dx={dx}, dz={dz})"
+    );
+    assert!(
+        dx.abs() > 0.001 || dz.abs() > 0.001,
+        "the teleport the body moved (dx={dx}, dz={dz})"
+    );
+    // THE WALK-DOWN'S OWN SEAT (the body the plate the settle wears —
+    // the below the feet the solid the landed verdict keeps)
+    for _ in 0..4 {
+        app.update();
+    }
+    let body = app.body.as_ref().unwrap();
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert!(
+            crate::body::solid(
+                world,
+                body.x.floor() as i32,
+                body.y.floor() as i32 - 1,
+                body.z.floor() as i32
+            ),
+            "the walk-down the below the feet the solid keeps (y={})",
+            body.y
+        );
+    }
+    // THE TELEPORT VOICE (javap CHORUS_FRUIT_TELEPORT the PLAYERS
+    // source the completion's own event the log carries)
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.chorus_fruit.teleport ")),
+        "the teleport voice the log carries"
+    );
+    // THE DEPARTURE CLOUD (javap LivingEntity.handleEntityEvent case
+    // 46 the sipush 128 loop — the Portal puffs the old pose's own
+    // anchor the event order keeps)
+    let puffs = app
+        .particles
+        .iter()
+        .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Portal { .. }))
+        .count();
+    assert_eq!(puffs, 128, "the 128-puff the event-46 loop banks");
+    // THE FOOD FOLD (the chorus's own nutrition the absolute fold —
+    // the bar the cap the chorus never breaks)
+    assert_eq!(app.food_data.food_level(), 20, "the bar the cap keeps");
+}
+
+/// THE END GATEWAY'S OWN ITEM LANE (the autopush-310 round — javap
+/// EndGatewayBlock.entityInside the cooldown gate the trigger pair
+/// the 26.2 jar banks, the arrival the getPortalDestination's
+/// atBottomCenterOf exit the Vec3.ZERO velocity the transition
+/// serves, the second item the cooldown the wait keeps, the drain
+/// the lane re-arms — the REAL item entities the lane moves).
+#[test]
+fn the_offline_gateway_the_item_lane_the_cooldown_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE AIR PLATFORM (the stone plate the sites the test builds —
+    // the terrain the interference never wears)
+    let py = app.spawn_y + 10;
+    let (gx, gz) = (20i32, 20i32);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -10..=10 {
+            for dz in -10..=10 {
+                world.set(gx + dx, py, gz + dz, crate::world::STONE);
+            }
+        }
+        // THE GATEWAY'S OWN SEAT (the cell the kind wears — the
+        // no-item law the placement lane never carries, the store the
+        // test stages; the float the two-above keeps — the fallen
+        // item the platform's own top the OUTSIDE cell rests, the
+        // re-trigger the steal never wears)
+        world.set(gx, py + 3, gz, crate::world::END_GATEWAY);
+    }
+    let gate_cell = (gx, py + 3, gz);
+    let exit_cell = (gx + 8, py + 1, gz);
+    app.gateway_stores.insert(
+        gate_cell,
+        crate::screens::GatewayStore {
+            exit: exit_cell,
+            exact: true,
+            cooldown: 0,
+        },
+    );
+    // THE FIRST ITEM (javap entityInside the cell the item's own read
+    // answers — the spawn the gateway's own center the fall-through
+    // walk the same tick the lane serves)
+    let mut rng = crate::drops::Lcg::new(11);
+    app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+        9001,
+        dirt,
+        1,
+        f64::from(gate_cell.0) + 0.5,
+        f64::from(gate_cell.1) + 0.4,
+        f64::from(gate_cell.2) + 0.5,
+        &mut rng,
+    ));
+    app.update();
+    // THE ARRIVAL (javap getPortalPosition the atBottomCenterOf the
+    // exit cell the bottom-center vector speaks, the transition's own
+    // ZERO the velocity banks, the triggerCooldown the 40 the enter
+    // tick writes)
+    let first = app.drops.iter().find(|d| d.id == 9001).unwrap();
+    assert_eq!(first.x, f64::from(exit_cell.0) + 0.5, "the exit the x");
+    assert_eq!(first.y, f64::from(exit_cell.1), "the exit the y");
+    assert_eq!(first.z, f64::from(exit_cell.2) + 0.5, "the exit the z");
+    assert_eq!(
+        (first.vx, first.vy, first.vz),
+        (0.0, 0.0, 0.0),
+        "the ZERO the velocity"
+    );
+    assert_eq!(
+        app.gateway_stores.get(&gate_cell).unwrap().cooldown,
+        crate::world::GATEWAY_COOLDOWN_TICKS,
+        "the cooldown the 40 the enter tick banks"
+    );
+    // THE SECOND ITEM'S OWN WAIT (javap the isCoolingDown fold — the
+    // cooldown the tick the decay walks, the item the gateway the
+    // fall-through keeps, the teleport the lane never serves)
+    app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+        9002,
+        dirt,
+        1,
+        f64::from(gate_cell.0) + 0.5,
+        f64::from(gate_cell.1) + 0.4,
+        f64::from(gate_cell.2) + 0.5,
+        &mut rng,
+    ));
+    for _ in 0..6 {
+        app.update();
+    }
+    let second = app.drops.iter().find(|d| d.id == 9002).unwrap();
+    assert!(
+        second.x != f64::from(exit_cell.0) + 0.5,
+        "the second item the cooldown the teleport refuses (y={}, the exit the x never wears)",
+        second.y
+    );
+    assert_eq!(
+        app.gateway_stores.get(&gate_cell).unwrap().cooldown,
+        crate::world::GATEWAY_COOLDOWN_TICKS - 6,
+        "the decay the -1 the tick wears"
+    );
+    // THE DRAIN'S OWN RE-ARM (javap portalTick the -1-per-tick the
+    // walk drains — the third item the lane the re-arm serves)
+    for _ in 0..(crate::world::GATEWAY_COOLDOWN_TICKS - 6) {
+        app.update();
+    }
+    assert_eq!(
+        app.gateway_stores.get(&gate_cell).unwrap().cooldown,
+        0,
+        "the drain the cooldown empties"
+    );
+    app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+        9003,
+        dirt,
+        1,
+        f64::from(gate_cell.0) + 0.5,
+        f64::from(gate_cell.1) + 0.4,
+        f64::from(gate_cell.2) + 0.5,
+        &mut rng,
+    ));
+    app.update();
+    let third = app.drops.iter().find(|d| d.id == 9003).unwrap();
+    assert_eq!(third.x, f64::from(exit_cell.0) + 0.5, "the re-arm the x");
+    assert_eq!(third.y, f64::from(exit_cell.1), "the re-arm the y");
+}
+
+/// THE GATEWAY'S OWN HOPPER CHAIN (the autopush-310 round — the
+/// vanilla automation the real beats play: the item the gateway
+/// teleports, the exit the hopper's own top the arrival lands, the
+/// suck walk the entity the store banks — the REAL placement walk
+/// the under lane the 309 record's own pattern keeps).
+#[test]
+fn the_offline_gateway_the_hopper_chain_the_exit_lands_the_suck_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").unwrap();
+    // THE AIR PLATFORM (the sites the test builds)
+    let py = app.spawn_y + 10;
+    let (gx, gz) = (20i32, 20i32);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -10..=10 {
+            for dz in -10..=10 {
+                world.set(gx + dx, py, gz + dz, crate::world::STONE);
+            }
+        }
+        world.set(gx, py + 1, gz, crate::world::END_GATEWAY);
+    }
+    // THE REAL PLACEMENT WALK (the floor look the ray enters — the
+    // hopper the platform cell the DOWN mouth stamps, the tick seed
+    // the queue arms)
+    app.inventory.items[0] = (hopper_id, 4);
+    app.hotbar_slots = app.inventory.hotbar();
+    let hopper_cell = (gx + 8, py + 1, gz);
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(
+            hopper_cell.0 as f32 + 0.5,
+            (py + 5) as f32,
+            hopper_cell.2 as f32 + 0.5,
+        ),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::HOPPER,
+            "the hopper the platform cell the placement lands"
+        );
+    }
+    // THE EXIT'S OWN SEAT (the air above the hopper — the arrival the
+    // item the hopper's own top lands)
+    let exit_cell = (hopper_cell.0, hopper_cell.1 + 1, hopper_cell.2);
+    app.gateway_stores.insert(
+        (gx, py + 1, gz),
+        crate::screens::GatewayStore {
+            exit: exit_cell,
+            exact: true,
+            cooldown: 0,
+        },
+    );
+    // THE ITEM'S OWN WALK (the spawn the gateway's own center, the
+    // teleport the arrival speaks, the fall the hopper's top lands,
+    // the suck walk the store banks)
+    let mut rng = crate::drops::Lcg::new(13);
+    app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+        9101,
+        dirt,
+        1,
+        f64::from(gx) + 0.5,
+        f64::from(py + 1) + 0.4,
+        f64::from(gz) + 0.5,
+        &mut rng,
+    ));
+    for _ in 0..24 {
+        app.update();
+    }
+    // THE STORE'S OWN BANK (javap suckInItems the item-entity arm —
+    // the whole stack the insert serves, the hopper's first slot the
+    // dirt seats)
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the hopper the dirt the suck banks"
+    );
+    // THE DROPS' OWN DISCARD (the empty leftover the removal serves —
+    // the item entity the list keeps silent)
+    assert!(
+        !app.drops.iter().any(|d| d.id == 9101),
+        "the taken item the discard keeps"
+    );
+}
