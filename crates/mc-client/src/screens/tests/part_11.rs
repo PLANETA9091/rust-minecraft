@@ -1531,6 +1531,7 @@ fn the_offline_gateway_the_item_lane_the_cooldown_wears() {
             exit: exit_cell,
             exact: true,
             cooldown: 0,
+            age: crate::world::GATEWAY_SPAWN_TICKS,
         },
     );
     // THE FIRST ITEM (javap entityInside the cell the item's own read
@@ -1675,6 +1676,7 @@ fn the_offline_gateway_the_hopper_chain_the_exit_lands_the_suck_wears() {
             exit: exit_cell,
             exact: true,
             cooldown: 0,
+            age: crate::world::GATEWAY_SPAWN_TICKS,
         },
     );
     // THE ITEM'S OWN WALK (the spawn the gateway's own center, the
@@ -1706,6 +1708,247 @@ fn the_offline_gateway_the_hopper_chain_the_exit_lands_the_suck_wears() {
     assert!(
         !app.drops.iter().any(|d| d.id == 9101),
         "the taken item the discard keeps"
+    );
+}
+
+/// THE GATEWAY'S OWN BEAM STAR LANE (the autopush-316 round — the
+/// REAL walk the starry surface + the spawn beam + the purple
+/// re-fire the live clocks wear: the mesher's Y-face arm the UP +
+/// DOWN sentinel quads bakes, the age clock the spawning ladder
+/// climbs, the 2400-tick re-trigger the purple beam re-arms, the
+/// item lane the cooldown arms, the starfield puffs the sampler
+/// plants).
+#[test]
+fn the_offline_gateway_the_beam_the_starfield_the_clocks_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE AIR PLATFORM (the stone plate the sites the test builds —
+    // the terrain the interference never wears)
+    let py = app.spawn_y + 10;
+    let (gx, gz) = (24i32, 24i32);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -8..=8 {
+            for dz in -8..=8 {
+                world.set(gx + dx, py, gz + dz, crate::world::STONE);
+            }
+        }
+        // THE GATEWAY'S OWN SEAT (the fresh BE the walk stages — the
+        // no-item law the placement lane never carries, the age-0
+        // store the spawning beam's ladder arms)
+        world.set(gx, py + 3, gz, crate::world::END_GATEWAY);
+    }
+    let gate_cell = (gx, py + 3, gz);
+    app.gateway_stores.insert(
+        gate_cell,
+        crate::screens::GatewayStore {
+            exit: (0, 0, 0),
+            exact: false,
+            cooldown: 0,
+            age: 0,
+        },
+    );
+    // THE CAMERA'S OWN SEAT (the animate block's body_cell the camera
+    // proxy keeps — the furnace lanes' own staged look, the gateway
+    // the down-look's own cell the sampler reaches)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(gx as f32 + 0.5, (py + 7) as f32, gz as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE CUBE'S OWN BAKE (javap the facesToShow walk the mesher's
+    // Y-face arm mirrors — the UP + DOWN sentinel quads the starry
+    // surface wears, the four horizontals the INVISIBLE render
+    // retires, the sentinel tile the render pass partitions on)
+    {
+        let world = app.offline_world.as_ref().unwrap();
+        let mesh = crate::mesher::mesh_world(world, None);
+        let gateway_quads: Vec<_> = mesh
+            .iter()
+            .filter(|q| q.tile == crate::mesher::TILE_END_GATEWAY)
+            .collect();
+        assert_eq!(
+            gateway_quads.len(),
+            2,
+            "the UP + DOWN pair the starry surface bakes"
+        );
+        for q in &gateway_quads {
+            // THE FACES' OWN SEATS (the UP the wy+1 plane, the DOWN the
+            // wy plane — the EPS inset the coplanar fight answers)
+            let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+            let up = ys
+                .iter()
+                .all(|&y| (y - (gate_cell.1 + 1) as f32).abs() < 0.01);
+            let down = ys.iter().all(|&y| (y - gate_cell.1 as f32).abs() < 0.01);
+            assert!(up || down, "the face the Y pair alone bakes ({ys:?})");
+        }
+    }
+    // THE AGE CLOCK'S OWN FIRST TICK (javap portalTick the age++ the
+    // every-tick wear — the real update the store's clock banks)
+    app.update();
+    assert_eq!(
+        app.gateway_stores.get(&gate_cell).unwrap().age,
+        1,
+        "the age the tick banks"
+    );
+    // THE SPAWN BEAM'S OWN LADDER (javap extractRenderState the
+    // spawning arm — the age the walk banks the percent the sin
+    // ladder climbs, the render-side fold the live clocks replay:
+    // the mid-climb the MAGENTA beam the world's own max answers)
+    for _ in 0..99 {
+        app.update();
+    }
+    {
+        let st = app.gateway_stores.get(&gate_cell).copied().unwrap();
+        assert_eq!(st.age, 100, "the climb the age banks");
+        assert!(
+            crate::world::gateway_is_spawning(st.age),
+            "the window the spawning gate keeps"
+        );
+        let scale = crate::world::gateway_beam_scale(true, st.age, st.cooldown, 0.0);
+        let height =
+            crate::world::gateway_beam_height(scale, true, crate::world::CHUNK_Y as i32 - 1);
+        assert_eq!(
+            (scale, height),
+            (1.0, crate::world::CHUNK_Y as i32 - 1),
+            "the half-climb the peak wears — the MAGENTA beam the world max climbs"
+        );
+        assert_eq!(
+            crate::world::gateway_beam_color(true),
+            crate::world::GATEWAY_BEAM_MAGENTA,
+            "the spawning arm the MAGENTA row keeps"
+        );
+    }
+    // THE WINDOW'S OWN RETIRE (javap the `age < 200` gate — the walk
+    // past the window the scale the zero fold answers, the beam the
+    // quiet gateway keeps)
+    for _ in 0..100 {
+        app.update();
+    }
+    {
+        let st = app.gateway_stores.get(&gate_cell).copied().unwrap();
+        assert_eq!(st.age, 200);
+        assert!(
+            !crate::world::gateway_is_spawning(st.age),
+            "the window the spawn gate retires"
+        );
+        // THE HEIGHT-0 GATE (javap the floor fold the tiny rung the
+        // zero answer keeps — the drained store the beam retires; the
+        // table's 32767 row the +9.6e-5 sliver the floor retires)
+        let scale = crate::world::gateway_beam_scale(false, st.age, st.cooldown, 0.0);
+        let height =
+            crate::world::gateway_beam_height(scale, false, crate::world::CHUNK_Y as i32 - 1);
+        assert_eq!(
+            height, 0,
+            "the drained store the height-0 gate the beam retires ({scale})"
+        );
+    }
+    // THE ITEM LANE'S OWN COOLDOWN (javap entityInside the
+    // triggerCooldown the enter tick writes — the REAL drop the 40
+    // the store banks, the purple beam the cooling arm serves)
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut rng = crate::drops::Lcg::new(31);
+    app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+        9201,
+        dirt,
+        1,
+        f64::from(gate_cell.0) + 0.5,
+        f64::from(gate_cell.1) + 0.4,
+        f64::from(gate_cell.2) + 0.5,
+        &mut rng,
+    ));
+    app.update();
+    {
+        let st = app.gateway_stores.get(&gate_cell).copied().unwrap();
+        assert_eq!(
+            st.cooldown,
+            crate::world::GATEWAY_COOLDOWN_TICKS,
+            "the enter tick the cooldown writes"
+        );
+    }
+    // THE PURPLE BEAM'S OWN LADDER (javap the cooling arm — the drain
+    // the percent climbs, the mid-drain rung the peak the 50.0 base
+    // answers)
+    for _ in 0..20 {
+        app.update();
+    }
+    {
+        let st = app.gateway_stores.get(&gate_cell).copied().unwrap();
+        assert_eq!(
+            st.cooldown,
+            crate::world::GATEWAY_COOLDOWN_TICKS - 20,
+            "the drain the -1 the tick wears"
+        );
+        let scale = crate::world::gateway_beam_scale(false, st.age, st.cooldown, 0.0);
+        let height =
+            crate::world::gateway_beam_height(scale, false, crate::world::CHUNK_Y as i32 - 1);
+        assert_eq!(
+            (scale, height),
+            (1.0, 50),
+            "the mid-drain the peak wears — the purple beam the 50.0 ceiling keeps"
+        );
+        assert_eq!(
+            crate::world::gateway_beam_color(false),
+            crate::world::GATEWAY_BEAM_PURPLE,
+            "the cooling arm the PURPLE row wears"
+        );
+    }
+    // THE DRAIN'S OWN SILENCE (the 20 remaining ticks the decay walks —
+    // the beam the drained store retires)
+    for _ in 0..20 {
+        app.update();
+    }
+    assert_eq!(
+        app.gateway_stores.get(&gate_cell).unwrap().cooldown,
+        0,
+        "the drain the cooldown empties"
+    );
+    // THE 2400-TICK RE-TRIGGER (javap portalTick the `age % 2400 ==
+    // 0` verdict the triggerCooldown walk serves — the staged age the
+    // one tick the purple beam re-arms)
+    {
+        let st = app.gateway_stores.get_mut(&gate_cell).unwrap();
+        st.age = 2399;
+    }
+    app.update();
+    {
+        let st = app.gateway_stores.get(&gate_cell).copied().unwrap();
+        assert_eq!(
+            st.cooldown,
+            crate::world::GATEWAY_COOLDOWN_TICKS,
+            "the re-trigger the 2400-tick fold arms"
+        );
+        assert_eq!(st.age, 2400, "the re-trigger the age the fold wears");
+    }
+    // THE STARFIELD'S OWN PUFFS (javap EndGatewayBlock.animateTick the
+    // 26.2 jar — the sampler the gateway cell the 2-puff walk hits,
+    // the Portal particles the seeded streams the deterministic
+    // visits answer, the furnace lanes' own 600-tick idiom; the
+    // lifetime the 40-49 ticks the expiry wears — the PEAK the probe
+    // banks, the end-of-walk list the expired rows never keeps)
+    let mut gateway_puff_peak = 0usize;
+    for _ in 0..600 {
+        app.update();
+        let alive = app
+            .particles
+            .iter()
+            .filter(|p| match p.kind {
+                crate::particles::ParticleKind::Portal { sx, sy, sz, .. } => {
+                    // THE ANCHOR'S OWN SEAT (the ctor's own Start fields
+                    // the swirl never rewrites — the spawn pos the
+                    // cell's own space keeps)
+                    (sx.floor() as i32, sy.floor() as i32, sz.floor() as i32) == gate_cell
+                }
+                _ => false,
+            })
+            .count();
+        gateway_puff_peak = gateway_puff_peak.max(alive);
+    }
+
+    assert!(
+        gateway_puff_peak > 0,
+        "the gateway the sampler hears: the peak {} portal puffs over 600 ticks",
+        gateway_puff_peak
     );
 }
 

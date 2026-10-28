@@ -1,0 +1,41 @@
+=== the gateway shader pair ===
+
+########## net/minecraft/world/item/DyeColor
+  FIELD WHITE Lnet/minecraft/world/item/DyeColor;
+  FIELD ORANGE Lnet/minecraft/world/item/DyeColor;
+  FIELD MAGENTA Lnet/minecraft/world/item/DyeColor;
+  FIELD LIGHT_BLUE Lnet/minecraft/world/item/DyeColor;
+  FIELD YELLOW Lnet/minecraft/world/item/DyeColor;
+  FIELD LIME Lnet/minecraft/world/item/DyeColor;
+  FIELD PINK Lnet/minecraft/world/item/DyeColor;
+  FIELD GRAY Lnet/minecraft/world/item/DyeColor;
+  FIELD LIGHT_GRAY Lnet/minecraft/world/item/DyeColor;
+  FIELD CYAN Lnet/minecraft/world/item/DyeColor;
+  FIELD PURPLE Lnet/minecraft/world/item/DyeColor;
+  FIELD BLUE Lnet/minecraft/world/item/DyeColor;
+  FIELD BROWN Lnet/minecraft/world/item/DyeColor;
+  FIELD GREEN Lnet/minecraft/world/item/DyeColor;
+  FIELD RED Lnet/minecraft/world/item/DyeColor;
+  FIELD BLACK Lnet/minecraft/world/item/DyeColor;
+  FIELD VALUES Ljava/util/List;
+  FIELD BY_ID Ljava/util/function/IntFunction;
+  FIELD BY_FIREWORK_COLOR Lit/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap;
+  FIELD CODEC Lnet/minecraft/util/StringRepresentable$EnumCodec;
+  FIELD STREAM_CODEC Lnet/minecraft/network/codec/StreamCodec;
+  FIELD LEGACY_ID_CODEC Lcom/mojang/serialization/Codec;
+  FIELD id I
+  FIELD name Ljava/lang/String;
+  FIELD mapColor Lnet/minecraft/world/level/material/MapColor;
+  FIELD terracottaColor Lnet/minecraft/world/level/material/MapColor;
+  FIELD textureDiffuseColor I
+  FIELD fireworkColor I
+  FIELD textColor I
+  FIELD $VALUES [Lnet/minecraft/world/item/DyeColor;
+
+########## net/minecraft/client/renderer/blockentity/AbstractEndPortalRenderer
+  FIELD FROM Lorg/joml/Vector3fc;
+  FIELD TO Lorg/joml/Vector3fc;
+  FIELD FACES Ljava/util/Map;
+  FIELD END_SKY_LOCATION Lnet/minecraft/resources/Identifier;
+  FIELD END_PORTAL_LOCATION Lnet/minecraft/resources/Identifier;
+  FIELD ALL_FACES Ljava/util/List;

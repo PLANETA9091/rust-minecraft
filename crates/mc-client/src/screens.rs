@@ -8839,6 +8839,13 @@ pub struct App {
     /// failed-overlay lanes keep)
     pub end_portal_sky: Option<(u32, u32, Vec<u8>)>,
     pub end_portal_noise: Option<(u32, u32, Vec<u8>)>,
+    /// THE GATEWAY BEAM'S OWN TEXTURE (the autopush-316 round — the
+    /// `end_gateway_beam.png` master the BeaconRenderer's BEAM
+    /// LOCATION the gateway's own submit wears, the 16x16 palette the
+    /// vertical streaks the beam's v-scroll folds; the lazy load the
+    /// sha1 gate verifies, `None` = the beam's quads stay unseen, the
+    /// honesty the failed-overlay lanes keep)
+    pub gateway_beam_tex: Option<(u32, u32, Vec<u8>)>,
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
     /// draws, the cold cow the ColdCowModel's coat, the warm cow the
@@ -11576,12 +11583,21 @@ pub fn furnace_stores_from_nbt(
 /// read answers, the exactTeleport the flag the re-scan arm the
 /// findExitPosition walk serves, the teleportCooldown the
 /// triggerCooldown's own `bipush 40` the enter tick writes and the
-/// portalTick the -1-per-tick decay wears).
+/// portalTick the -1-per-tick decay wears; the age the autopush-316
+/// round banks — the `long age` field the saveAdditional's own
+/// `Age` word the walk banks, the portalTick the +1-per-tick wear
+/// the isSpawning gate the beam's own 200-tick ladder answers).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GatewayStore {
     pub exit: (i32, i32, i32),
     pub exact: bool,
     pub cooldown: i32,
+    /// THE AGE'S OWN CLOCK (javap saveAdditional the `Age` word the
+    /// putLong wears, loadAdditional the getLongOr(0) parse keeps —
+    /// the isSpawning `age < 200` verdict the beam ladder reads, the
+    /// portalTick's own `age % 2400 == 0` re-trigger the same clock
+    /// consumes).
+    pub age: i64,
 }
 
 /// THE GATEWAY BANK'S OWN WALK (the autopush-310 round — the
@@ -11609,6 +11625,7 @@ pub fn gateway_bank_to_nbt(
                 "Cooldown".to_string(),
                 mc_protocol::nbt::Nbt::Int(st.cooldown),
             ),
+            ("Age".to_string(), mc_protocol::nbt::Nbt::Long(st.age)),
         ]));
     }
     mc_protocol::nbt::Nbt::List(entries)
@@ -11635,6 +11652,12 @@ pub fn gateway_stores_from_nbt(
                 .find(|(k, _)| k == key)
                 .and_then(|(_, v)| v.as_i32())
         };
+        let read_long = |key: &str| -> Option<i64> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i64())
+        };
         let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
             continue;
         };
@@ -11645,12 +11668,16 @@ pub fn gateway_stores_from_nbt(
         );
         let exact = read_int("Exact").unwrap_or(0) != 0;
         let cooldown = read_int("Cooldown").unwrap_or(0);
+        // THE AGE'S OWN PARSE (the long the getLongOr(0) law keeps —
+        // the missing word the fresh-BE zero the honest default wears)
+        let age = read_long("Age").unwrap_or(0);
         stores.insert(
             (x, y, z),
             GatewayStore {
                 exit,
                 exact,
                 cooldown,
+                age,
             },
         );
     }
@@ -12101,6 +12128,7 @@ impl App {
             chicken_cold_model: None,
             end_portal_sky: None,
             end_portal_noise: None,
+            gateway_beam_tex: None,
             chicken_warm_model: None,
             baby_chicken_cold_model: None,
             baby_chicken_warm_model: None,
@@ -13050,7 +13078,11 @@ impl App {
                 let mut crackle_cells: Vec<(i32, i32, i32, &'static str)> = Vec::new();
                 let mut embers: Vec<(f64, f64, f64, bool)> = Vec::new();
                 let mut smoker_smokes: Vec<(f64, f64, f64)> = Vec::new();
-                let animate = &mut self.ambient_rng;
+                // THE GATEWAY'S OWN PUFFS (the autopush-316 round — the
+                // animateTick's PORTAL spawns the walk banks, the
+                // planting the apply lane's own walk serves)
+                let mut gateway_puffs: Vec<crate::world::GatewayPuff> = Vec::new();
+                                let animate = &mut self.ambient_rng;
                 let level = &mut self.level_ambient_rng;
                 crate::furnace_sim::animate_sample_walk(bx, by, bz, level, |sx, sy, sz| {
                     // THE ORIENTABLE TRIO'S OWN ARMS (the LIT kinds
@@ -13117,6 +13149,25 @@ impl App {
                             }
                             smoker_smokes.push((sx as f64 + 0.5, sy as f64 + 1.1, sz as f64 + 0.5));
                         }
+                        crate::world::END_GATEWAY => {
+                            // THE GATEWAY'S OWN STARFIELD (the autopush-316
+                            // round — javap EndGatewayBlock.animateTick
+                            // the 26.2 jar the walk banks: the BE
+                            // instanceof gate the getParticleAmount read
+                            // answers [the shouldRenderFace axis-Y pair
+                            // the count-2 keeps], the per-puff 9-draw
+                            // walk the pos + the velocity trio + the
+                            // side/axis arms wear, the
+                            // addParticle(PORTAL, ...) the ring puff the
+                            // provider's own ctor draws ride — the
+                            // `animate` stream the verdict draws + the
+                            // ctor's own picks the same level stream
+                            // wears, the furnace lanes' own idiom)
+                            for _ in 0..crate::world::gateway_particle_amount() {
+                                let puff = crate::world::gateway_animate_puff(sx, sy, sz, animate);
+                                gateway_puffs.push(puff);
+                            }
+                        }
                         _ => {}
                     }
                 });
@@ -13161,6 +13212,18 @@ impl App {
                     let smoke =
                         crate::particles::shoot_smoke_puff(px, py, pz, 0.0, 0.0, 0.0, level);
                     self.particles.push(smoke);
+                }
+                for puff in gateway_puffs {
+                    // THE GATEWAY'S OWN RING PUFF (javap the
+                    // addParticle(PORTAL, x, y, z, vx, vy, vz) call the
+                    // animateTick tail keeps — the PortalParticle
+                    // provider's own ctor draws the SAME stream the
+                    // velocity args wear, the swirl the tick's own
+                    // blend replays)
+                    let ring = crate::particles::portal_ring_puff(
+                        puff.x, puff.y, puff.z, puff.vx, puff.vy, puff.vz, animate,
+                    );
+                    self.particles.push(ring);
                 }
             }
         }
@@ -17141,18 +17204,32 @@ impl App {
             // — the inventory add, the take voice, the stack's honest
             // discard. The NETWORKED world's entities stay the server's
             // (the voxel prediction's own split).
-            if !self.world_is_network && !self.drops.is_empty() {
-                // THE GATEWAY CLOCK'S OWN DECAY (javap
-                // TheEndGatewayBlockEntity.portalTick pc 22-37 the 26.2
-                // jar the isCoolingDown branch the -1 wear — the
-                // cooldown the enter tick's own 40 the walk drains,
-                // the 2400-tick age fold the beam refresh the client's
-                // no-beam lane the documented absence keeps)
+            // THE GATEWAY CLOCK'S OWN DECAY (the autopush-316 round — the
+            // BE ticker's OWN lane the drop gate never gates: javap
+            // TheEndGatewayBlockEntity.portalTick pc 12-19 the `age++`
+            // putfield the every-tick wear, the isCoolingDown branch
+            // pc 22-37 the -1 decay keeps, the else arm pc 40-57 the
+            // `age % 2400 == 0` verdict the triggerCooldown walk serves
+            // [the 40-tick cooldown the purple beam re-arms] — the
+            // vanilla's own order the cooling arm the age++ FIRST the
+            // same tick wears)
+            if !self.world_is_network {
                 for st in self.gateway_stores.values_mut() {
+                    st.age += 1;
                     if st.cooldown > 0 {
                         st.cooldown -= 1;
+                    } else if st.age % 2400 == 0 {
+                        // THE RE-TRIGGER'S OWN ARM (javap portalTick
+                        // pc 53-57 the triggerCooldown call the 26.2
+                        // jar answers — the triggerEvent walk the
+                        // teleportCooldown 40 the server's own
+                        // blockEvent pair banks, the purple beam the
+                        // ladder re-fires)
+                        st.cooldown = crate::world::GATEWAY_COOLDOWN_TICKS;
                     }
                 }
+            }
+            if !self.world_is_network && !self.drops.is_empty() {
                 {
                     let world = self.offline_world.as_mut();
                     if let Some(world) = world {
@@ -66292,18 +66369,45 @@ impl App {
                 .iter()
                 .filter(|q| q.tile == crate::mesher::TILE_END_PORTAL)
                 .count();
+            // THE GATEWAY'S OWN CUBE PASS (the autopush-316 round — the
+            // same BE-renderer lane the portal pass keeps, the
+            // gateway's own sentinel quads the mesher's Y-face arm
+            // banks, the 16-layer swirl the gateway's own
+            // PORTAL_LAYERS=16 pipeline define serves — the END_GATEWAY
+            // pipeline the END_PORTAL snippet's own shader source wears,
+            // the 16 the portal's 15 the define retires; the same walk
+            // the 16-loop keeps IS the gateway's law)
+            let gateway_count = quads
+                .iter()
+                .filter(|q| q.tile == crate::mesher::TILE_END_GATEWAY)
+                .count();
+            let portals: Vec<crate::mesher::Quad> = quads
+                .iter()
+                .filter(|q| q.tile == crate::mesher::TILE_END_PORTAL)
+                .cloned()
+                .collect();
+            let gateways: Vec<crate::mesher::Quad> = quads
+                .iter()
+                .filter(|q| q.tile == crate::mesher::TILE_END_GATEWAY)
+                .cloned()
+                .collect();
             if portal_count > 0 {
-                let portals: Vec<crate::mesher::Quad> = quads
-                    .iter()
-                    .filter(|q| q.tile == crate::mesher::TILE_END_PORTAL)
-                    .cloned()
-                    .collect();
                 self.render_end_portal(fb, &ctx, &portals);
+            }
+            if gateway_count > 0 {
+                self.render_end_portal(fb, &ctx, &gateways);
             }
         }
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
+        // THE GATEWAY BEAM'S OWN PASS (the autopush-316 round — the BE
+        // renderer's own beam lane the terrain pass never draws: the
+        // prism quads the store's own state the renderer folds, the
+        // translucent halo the alpha-32 blend over the terrain wears —
+        // the vanilla's own entity-layer order the opaque terrain the
+        // beam tests against)
+        self.render_gateway_beams(fb, &ctx);
         // THE DROP LANE's entities (the vanilla LevelRenderer's entity
         // pass: after the terrain, before the clouds) — the item
         // entities bob and spin at their world positions
@@ -70423,6 +70527,93 @@ impl App {
                 255,
             ])
         });
+    }
+
+    /// THE GATEWAY BEAM'S OWN RENDER (the autopush-316 round — javap
+    /// TheEndGatewayRenderer the 26.2 jar the state law the walk
+    /// serves: the spawning/cooling gate the store's own clocks read,
+    /// the scale the sin fold the percent answers, the height the
+    /// floor fold the 50.0/world-max base keeps, the color the
+    /// DyeColor pair speaks, the prisms the submitBeaconBeam walk
+    /// bakes — the core the OPAQUE rotated diamond, the halo the
+    /// alpha-32 static square, the translucent blend the per-quad
+    /// alpha walk wears, the REPEAT wrap the v-scroll the modulo
+    /// fold keeps). The OFFLINE gate the networked world the
+    /// server's own BE words never wears (the store map the
+    /// offline bank keeps).
+    fn render_gateway_beams(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        if self.world_is_network || self.gateway_stores.is_empty() {
+            return;
+        }
+        // THE BEAM TEXTURE'S OWN LOAD (the lazy lane the portal pair
+        // keeps — the sha1 gate the cache's bytes verify, `None` the
+        // unseen beam the failed-overlay honesty keeps)
+        if self.gateway_beam_tex.is_none() {
+            let jar = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+            let path = jar
+                .join("entity/end_portal/end_gateway_beam.png")
+                .to_string_lossy()
+                .into_owned();
+            self.gateway_beam_tex =
+                Self::load_end_portal_texture(&path, "83670ac97e983eee6319b0d77f2b9b5b802df63a");
+        }
+        let Some((bw, bh, tex)) = self.gateway_beam_tex.clone() else {
+            return;
+        };
+        let game_time = self.clock_total as i64;
+        let partial = self.partial_tick;
+        let max_y = crate::world::CHUNK_Y as i32 - 1;
+        // THE STATE'S OWN FOLD (the store pair the beam state the
+        // extractRenderState law serves — the spawning arm the age
+        // clock reads, the cooling arm the cooldown decay answers)
+        let mut quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut alphas: Vec<f32> = Vec::new();
+        for (cell, st) in self.gateway_stores.iter() {
+            let spawning = crate::world::gateway_is_spawning(st.age);
+            let scale = crate::world::gateway_beam_scale(spawning, st.age, st.cooldown, partial);
+            if scale <= 0.0 {
+                continue; // the NEITHER arm the quiet gateway keeps
+            }
+            let height = crate::world::gateway_beam_height(scale, spawning, max_y);
+            if height <= 0 {
+                continue; // the height-0 gate the beam retires
+            }
+            let anim = crate::world::gateway_beam_animation_time(game_time, partial);
+            let color = crate::world::gateway_beam_color(spawning);
+            let tint = [
+                ((color >> 16) & 0xFF) as f32 / 255.0,
+                ((color >> 8) & 0xFF) as f32 / 255.0,
+                (color & 0xFF) as f32 / 255.0,
+            ];
+            for q in crate::world::gateway_beam_prism_quads(*cell, height, scale, anim) {
+                quads.push(crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "gateway_beam",
+                    tint,
+                });
+                alphas.push(q.alpha);
+            }
+        }
+        if quads.is_empty() {
+            return;
+        }
+        // THE TEXEL'S OWN PICK (the REPEAT wrap the negative/large v
+        // the modulo fold answers, the 16x16 the palette decode the
+        // RGBA stride keeps)
+        let pick = |u: f32, v: f32| -> [u8; 4] {
+            let (uw, uh) = (bw as usize, bh as usize);
+            let uu = (u.rem_euclid(1.0) * bw as f32) as usize % uw;
+            let vv = (v.rem_euclid(1.0) * bh as f32) as usize % uh;
+            let o = (vv * uw + uu) * 4;
+            [tex[o], tex[o + 1], tex[o + 2], tex[o + 3]]
+        };
+        fb.draw_translucent_sampled_quads_alphas(
+            ctx.proj.mul(&ctx.view),
+            &quads,
+            &alphas,
+            &mut |_t, u, v| Some(pick(u, v)),
+        );
     }
 
     /// THE PAIR'S OWN LOADER (the sha1 gate the cache's bytes verify —

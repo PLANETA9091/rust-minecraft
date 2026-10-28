@@ -4953,6 +4953,372 @@ fn gateway_tallest_exit(world: &World, exit: (i32, i32, i32)) -> (i32, i32, i32)
     best.unwrap_or((cx, cy, cz))
 }
 
+/// THE GATEWAY'S OWN BEAM STAR LANE (the autopush-316 round — the
+/// TheEndGatewayRenderer's own visual the INVISIBLE block's render
+/// split retires: the CUBE the shouldRenderFace axis-Y pair the
+/// starry surface bakes, the BEAM the spawning/cooling state the
+/// BeaconRenderer.submitBeaconBeam walk serves, the STARFIELD the
+/// animateTick's PORTAL puffs the client lane plants).
+/// THE JAR LAW the live disasm re-pins (the 26.2 jar
+/// scripts/gateway_beam{,2,3,5,6}_scout_316.py the walks bank, rc=0 —
+/// scripts/jar_work/gateway_beam{,2,3,4,5,6,7,8,10}_316.txt the dumps
+/// serve):
+///   - EndGatewayBlock.animateTick pcs 26-258 the per-puff draw order
+///     speaks: the cell + nextDouble x3 the pos wears, the
+///     (nextDouble − 0.5) · 0.5 x3 the velocity trio, the nextInt(2)·2−1
+///     side draw, the nextBoolean axis arm — TRUE the z lane the
+///     `pos.z + 0.5 + 0.25·side` coord + the `nextFloat·2·side` vz
+///     rewrite banks, FALSE the x lane the same pair the x/vx rows
+///     keep — then `addParticle(PORTAL, x, y, z, vx, vy, vz)`;
+///   - TheEndGatewayBlockEntity.getParticleAmount the 6-direction
+///     shouldRenderFace count answers (TheEndPortalBlockEntity's
+///     `axis == Y` verdict the UP + DOWN pair the count-2 keeps),
+///   - TheEndGatewayRenderer.extractRenderState the state law wears:
+///     `isSpawning || isCoolingDown` the beam gate, the percent the
+///     spawning arm the getSpawnPercent fold answers
+///     (`clamp((age + partial) / 200.0, 0, 1)` — the ldc 200.0f the
+///     pool probe pins), the cooling arm the getCooldownPercent fold
+///     (`1 − clamp((cooldown − partial) / 40.0, 0, 1)` — the ldc
+///     40.0f the same probe pins), the scale the
+///     `Mth.sin(percent · 3.1415927f)` table fold banks (the fmul in
+///     f32, the f2d widening the (D)F call keeps), the height the
+///     `Mth.floor(scale · (spawning ? level.getMaxY() : 50.0))`
+///     f64 fold answers, the color the DyeColor pair speaks (the
+///     clinit rows the textureDiffuseColor ints resolve — MAGENTA
+///     0xC74EBD the spawning beam, PURPLE 0x8932B8 the cooling),
+///     the animationTime the `floorMod(gameTime, 40) + partial` fold
+///     keeps, the NEITHER arm the height-0 early return the quiet
+///     gateway answers;
+///   - BeaconRenderer.submitBeaconBeam the prism law wears: TWO
+///     4-faced vertical prisms centered on the block axis, the beam
+///     the BE-local −height..+height span rides (the translate
+///     (0.5, 0, 0.5) the x/z center keeps), submit-1 the ROTATED
+///     diamond ring `rotationDegrees(animationTime · 2.25 − 45.0)`
+///     the (0, r), (r, 0), (0, −r), (−r, 0) corners wear — the
+///     OPAQUE core the beaconBeam(tex, false) law keeps — and
+///     submit-2 the STATIC axis-aligned (±r, ±r) square the
+///     TRANSLUCENT halo the beaconBeam(tex, true) + the
+///     ARGB.color(32, color) vertex-alpha law serves; the gateway's
+///     own radii the direct call resolves (0.15 the core slot, 0.175
+///     the halo slot — the #95/#96 pool rows the scout4 probe pins),
+///     the v-fold the `frac(f · 0.2 − floor(f · 0.1))` body speaks
+///     (the f the height-arg sign picks — the gateway's own +2h the
+///     NEGATE arm keeps, f = −scale), the v the bottom
+///     `−1 + frac` → top `v0 + 2h·scale · (0.5/r)` core span and
+///     `v0 + 2h·scale` halo span the renderQuad uv rows wear, the u
+///     the 0..1 window the face width spans, the light the
+///     fullbright 15728880 constant keeps.
+pub const GATEWAY_SPAWN_TICKS: i64 = 200;
+
+/// THE GATEWAY BEAM'S OWN BASE HEIGHT (javap extractRenderState pc 78
+/// — the `ldc2_w 50.0` the cooling arm's own ceiling the dstore
+/// keeps; the spawning arm the level's own getMaxY the client's
+/// 48-cell column answers).
+pub const GATEWAY_BEAM_BASE_HEIGHT: f64 = 50.0;
+
+/// THE GATEWAY BEAM'S OWN RADII (javap TheEndGatewayRenderer.submit
+/// pcs 35/37 — the #95/#96 pool floats the direct submitBeaconBeam
+/// call resolves: 0.15 the ROTATED opaque core's slot-8 radius, 0.175
+/// the STATIC translucent halo's slot-9 radius — the beacon's own
+/// 0.2/0.25 pair the 6-arg caller keeps, the gateway's direct call
+/// the pair retires).
+pub const GATEWAY_BEAM_CORE_RADIUS: f32 = 0.15;
+pub const GATEWAY_BEAM_HALO_RADIUS: f32 = 0.175;
+
+/// THE GATEWAY BEAM'S OWN COLORS (javap extractRenderState pcs 121/130
+/// the DyeColor.getTextureDiffuseColor reads — the clinit rows the
+/// scout7 probe resolves: MAGENTA 0xC74EBD the spawning beam, PURPLE
+/// 0x8932B8 the cooling beam).
+pub const GATEWAY_BEAM_MAGENTA: u32 = 0xC7_4E_BD;
+pub const GATEWAY_BEAM_PURPLE: u32 = 0x89_32_B8;
+
+/// THE GATEWAY CUBE'S OWN FACE GATE (javap
+/// TheEndPortalBlockEntity.shouldRenderFace the 26.2 jar the live
+/// disasm answers — the `direction.getAxis() == Axis.Y` verdict the
+/// UP + DOWN faces alone the gateway's starry surface wears, the four
+/// horizontal faces the INVISIBLE render the sides never bake).
+pub fn gateway_should_render_face(axis_is_y: bool) -> bool {
+    axis_is_y
+}
+
+/// THE GATEWAY'S OWN PARTICLE AMOUNT (javap
+/// TheEndGatewayBlockEntity.getParticleAmount the 26.2 jar the walk
+/// banks — the Direction.values() walk the shouldRenderFace verdict
+/// counts, the axis-Y pair the count-2 the animateTick's own loop
+/// bound answers).
+pub fn gateway_particle_amount() -> u32 {
+    // THE SIX-DIRECTION WALK (the vanilla Direction.values() order the
+    // count's own shape keeps — DOWN the Y axis the first row wears,
+    // UP the second, the four horizontals the false verdicts keep)
+    let mut count = 0u32;
+    for axis_is_y in [true, true, false, false, false, false] {
+        if gateway_should_render_face(axis_is_y) {
+            count += 1;
+        }
+    }
+    count
+}
+
+/// THE GATEWAY PUFF'S OWN WORDS (the animateTick's own addParticle
+/// args the client lane plants — the pos the cell's own cell-space
+/// keeps, the velocity the verbatim trio).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct GatewayPuff {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+}
+
+/// THE GATEWAY'S OWN ANIMATE PUFF (javap EndGatewayBlock.animateTick
+/// pcs 43-252 the 26.2 jar the draw order the walk banks — the six
+/// nextDouble draws the pos + the velocity trio wear, the nextInt(2)
+/// side draw the `·2 − 1` fold answers, the nextBoolean the axis arm
+/// speaks: TRUE the z lane the `z + 0.5 + 0.25·side` coord + the
+/// `nextFloat·2·side` vz rewrite keeps, FALSE the x lane the same
+/// pair the x/vx rows wear — the addParticle args the (x, y, z, vx,
+/// vy, vz) order the dload rows bank).
+pub fn gateway_animate_puff(cx: i32, cy: i32, cz: i32, rng: &mut crate::drops::Lcg) -> GatewayPuff {
+    let mut x = f64::from(cx) + rng.next_f64();
+    let mut y = f64::from(cy) + rng.next_f64();
+    let mut z = f64::from(cz) + rng.next_f64();
+    let mut vx = (rng.next_f64() - 0.5) * 0.5;
+    let vy = (rng.next_f64() - 0.5) * 0.5;
+    let mut vz = (rng.next_f64() - 0.5) * 0.5;
+    // THE SIDE DRAW (pc 141-151: the nextInt(2)·2 − 1 fold — the ±1
+    // side the arm's own sign wears; the mod-law stand-in the
+    // next_int lane's own convention keeps)
+    let side = rng.next_int(2) * 2 - 1;
+    // THE AXIS ARM (pc 155-160: the nextBoolean verdict — TRUE the z
+    // lane pc 163-196, FALSE the x lane pc 201-234; the mod-2 verdict
+    // the boolean's own one-draw stand-in keeps)
+    if rng.next_int(2) != 0 {
+        z = f64::from(cz) + 0.5 + 0.25 * f64::from(side);
+        vz = f64::from(rng.next_f32() * 2.0 * side as f32);
+    } else {
+        x = f64::from(cx) + 0.5 + 0.25 * f64::from(side);
+        vx = f64::from(rng.next_f32() * 2.0 * side as f32);
+    }
+    GatewayPuff {
+        x,
+        y,
+        z,
+        vx,
+        vy,
+        vz,
+    }
+}
+
+/// THE GATEWAY'S OWN SPAWNING GATE (javap TheEndGatewayBlockEntity
+/// .isSpawning the 26.2 jar the walk banks — the `age < 200` verdict
+/// the ldc2_w 200 the clinit constant keeps).
+pub fn gateway_is_spawning(age: i64) -> bool {
+    age < GATEWAY_SPAWN_TICKS
+}
+
+/// THE SPAWN PERCENT'S OWN FOLD (javap getSpawnPercent the 26.2 jar —
+/// the `(age + partial) / 200.0f` body the fadd/fdiv pair keeps, the
+/// clamp the 0..1 window the fconst pair wears).
+pub fn gateway_spawn_percent(age: i64, partial: f32) -> f32 {
+    crate::mth::clamp((age as f32 + partial) / 200.0, 0.0, 1.0)
+}
+
+/// THE COOLDOWN PERCENT'S OWN FOLD (javap getCooldownPercent the 26.2
+/// jar — the `1 − clamp((cooldown − partial) / 40.0f, 0, 1)` body the
+/// fsub/fdiv/fsub chain keeps).
+pub fn gateway_cooldown_percent(cooldown: i32, partial: f32) -> f32 {
+    1.0 - crate::mth::clamp((cooldown as f32 - partial) / 40.0, 0.0, 1.0)
+}
+
+/// THE BEAM SCALE'S OWN FOLD (javap extractRenderState pcs 83-95 —
+/// the percent the spawning/cooling arm picks, the sin the
+/// `Mth.sin(percent · 3.1415927f)` table fold answers: the fmul in
+/// f32, the f2d widening the (D)F call keeps).
+pub fn gateway_beam_scale(spawning: bool, age: i64, cooldown: i32, partial: f32) -> f32 {
+    let percent = if spawning {
+        gateway_spawn_percent(age, partial)
+    } else {
+        gateway_cooldown_percent(cooldown, partial)
+    };
+    crate::mth::sin((percent * std::f32::consts::PI) as f64)
+}
+
+/// THE BEAM HEIGHT'S OWN FOLD (javap extractRenderState pcs 98-110 —
+/// the `Mth.floor((double)scale · base)` f64 fold the dmul keeps, the
+/// base the spawning arm the level's own max the client's 48-cell
+/// column answers, the cooling arm the 50.0 constant keeps).
+pub fn gateway_beam_height(scale: f32, spawning: bool, max_y: i32) -> i32 {
+    let base = if spawning {
+        f64::from(max_y)
+    } else {
+        GATEWAY_BEAM_BASE_HEIGHT
+    };
+    crate::mth::floor(f64::from(scale) * base)
+}
+
+/// THE BEAM COLOR'S OWN WORD (javap extractRenderState pcs 113-136 —
+/// the spawning arm the MAGENTA row keeps, the cooling arm the PURPLE
+/// row wears).
+pub fn gateway_beam_color(spawning: bool) -> u32 {
+    if spawning {
+        GATEWAY_BEAM_MAGENTA
+    } else {
+        GATEWAY_BEAM_PURPLE
+    }
+}
+
+/// THE BEAM ANIMATION'S OWN TIME (javap extractRenderState pcs
+/// 147-166 — the `floorMod(gameTime, 40) + partial` fold the
+/// Math.floorMod walk keeps, the level-null arm the 0.0 the quiet
+/// lane answers).
+pub fn gateway_beam_animation_time(game_time: i64, partial: f32) -> f32 {
+    game_time.rem_euclid(40) as f32 + partial
+}
+
+/// THE BEAM'S OWN V-FOLD (javap submitBeaconBeam pcs 37-55 the 26.2
+/// jar the walk banks — the `f` the height-arg sign picks (the
+/// gateway's own +2h the NEGATE arm keeps, f = −radius), the frac
+/// the `Mth.frac(f · 0.2F − (float)Mth.floor(f · 0.1F))` body wears —
+/// the f32 floor the (F)I call keeps, the f32 frac the (F)F fold
+/// answers).
+pub fn gateway_beam_frac(scale: f32) -> f32 {
+    let f = -scale;
+    let raw = f * 0.2f32 - (f * 0.1f32).floor();
+    raw - raw.floor()
+}
+
+/// THE BEAM QUAD'S OWN WORDS (the prism face's own corners + the uv
+/// pair + the vertex alpha the translucent lane blends).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct GatewayBeamQuad {
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+    pub alpha: f32,
+}
+
+/// THE PRISM FACE'S OWN PUSH (javap renderQuad the 26.2 jar the walk
+/// banks — the four addVertex rows the vertical face wears: (a, top,
+/// u_a, v_top), (a, bottom, u_a, v_bot), (b, bottom, u_b, v_bot),
+/// (b, top, u_b, v_top) — the u the a-side 1.0 / b-side 0.0 window
+/// the lambda pair keeps, the v the bottom f23 / top f24 rows the
+/// caller folds).
+#[allow(clippy::many_single_char_names)]
+fn gateway_beam_push_prism(
+    out: &mut Vec<GatewayBeamQuad>,
+    cx: f32,
+    cz: f32,
+    y_bot: f32,
+    y_top: f32,
+    ring: &[(f32, f32); 4],
+    v_bot: f32,
+    v_top: f32,
+    alpha: f32,
+) {
+    for k in 0..4 {
+        let (ax, az) = ring[k];
+        let (bx, bz) = ring[(k + 1) % 4];
+        out.push(GatewayBeamQuad {
+            pts: [
+                [cx + ax, y_top, cz + az],
+                [cx + ax, y_bot, cz + az],
+                [cx + bx, y_bot, cz + bz],
+                [cx + bx, y_top, cz + bz],
+            ],
+            uv: [[1.0, v_top], [1.0, v_bot], [0.0, v_bot], [0.0, v_top]],
+            alpha,
+        });
+    }
+}
+
+/// THE GATEWAY BEAM'S OWN PRISMS (javap submitBeaconBeam the 26.2 jar
+/// the walk banks — TWO 4-faced vertical prisms centered on the
+/// block's own axis, the beam the BE-local −height..+height span
+/// rides [the translate (0.5, 0, 0.5) the x/z center keeps, the y the
+/// pose never touches]): the CORE the ROTATED diamond ring the
+/// `rotationDegrees(animationTime · 2.25 − 45.0)` pose wears (the
+/// (0, r), (r, 0), (0, −r), (−r, 0) corners the JOML rotationY fold
+/// carries — the OPAQUE the beaconBeam(tex, false) law keeps, the
+/// v-span the `(0.5 / r) · 2h·scale` fold answers), the HALO the
+/// STATIC axis-aligned (±r, ±r) square (the TRANSLUCENT the
+/// beaconBeam(tex, true) law wears, the alpha-32 vertex color the
+/// ARGB.color(32, ...) speaks, the v-span the plain `2h·scale` fold
+/// keeps). The v the bottom `−1 + frac` → the top the span-added row
+/// the lambda pair banks.
+pub fn gateway_beam_prism_quads(
+    block: (i32, i32, i32),
+    height: i32,
+    scale: f32,
+    animation_time: f32,
+) -> Vec<GatewayBeamQuad> {
+    let mut out = Vec::with_capacity(8);
+    if height <= 0 || scale <= 0.0 {
+        return out;
+    }
+    let frac = gateway_beam_frac(scale);
+    let v_bot = -1.0f32 + frac;
+    let (cx, cz) = (block.0 as f32 + 0.5, block.2 as f32 + 0.5);
+    let y_bot = (block.1 - height) as f32;
+    let y_top = (block.1 + height) as f32;
+
+    // THE CORE'S OWN PRISM (the rotated diamond — the pose fold the
+    // JOML rotationY law carries: x' = x·cosθ + z·sinθ,
+    // z' = −x·sinθ + z·cosθ)
+    let r_core = GATEWAY_BEAM_CORE_RADIUS;
+    let theta = (animation_time * 2.25 - 45.0).to_radians() as f64;
+    let (s, c) = theta.sin_cos();
+    let rot = |x: f32, z: f32| -> (f32, f32) {
+        (
+            (f64::from(x) * c + f64::from(z) * s) as f32,
+            (-f64::from(x) * s + f64::from(z) * c) as f32,
+        )
+    };
+    let core_span = 2.0 * height as f32 * scale * (0.5 / r_core);
+    let core_ring = [
+        rot(0.0, r_core),
+        rot(r_core, 0.0),
+        rot(0.0, -r_core),
+        rot(-r_core, 0.0),
+    ];
+    gateway_beam_push_prism(
+        &mut out,
+        cx,
+        cz,
+        y_bot,
+        y_top,
+        &core_ring,
+        v_bot,
+        v_bot + core_span,
+        1.0,
+    );
+
+    // THE HALO'S OWN PRISM (the static square — the un-rotated ring
+    // the axis-aligned corners keep, the alpha-32 the vertex color
+    // wears)
+    let r_halo = GATEWAY_BEAM_HALO_RADIUS;
+    let halo_span = 2.0 * height as f32 * scale;
+    let halo_ring = [
+        (-r_halo, -r_halo),
+        (r_halo, -r_halo),
+        (r_halo, r_halo),
+        (-r_halo, r_halo),
+    ];
+    gateway_beam_push_prism(
+        &mut out,
+        cx,
+        cz,
+        y_bot,
+        y_top,
+        &halo_ring,
+        v_bot,
+        v_bot + halo_span,
+        32.0 / 255.0,
+    );
+
+    out
+}
+
 /// THE CHORUS WALK'S OWN SAFE SEAT (javap LivingEntity.randomTeleport
 /// the 26.2 jar the live disasm answers — the walk-down loop the
 /// blocksMotion verdict the below cell answers, the y the -1.0 step
@@ -5238,7 +5604,12 @@ pub fn hopper_suck_one_brewing(hopper: &mut [(i32, i32)], source: &mut [(i32, i3
 /// rising-edge walk's own setValue arms).
 #[inline]
 pub fn dispenser_variant(facing: u8, triggered: bool) -> u8 {
-    (facing & DISPENSER_FACING_MASK) | if triggered { DISPENSER_TRIGGERED_BIT } else { 0 }
+    (facing & DISPENSER_FACING_MASK)
+        | if triggered {
+            DISPENSER_TRIGGERED_BIT
+        } else {
+            0
+        }
 }
 
 /// THE FACING'S OWN READ (the three bits the identity unpack serves).
@@ -32692,6 +33063,241 @@ mod tests {
     }
 
     #[test]
+    fn the_gateway_the_beam_the_starfield_the_laws_wear() {
+        // THE FACE GATE + THE PARTICLE AMOUNT (javap shouldRenderFace
+        // the axis-Y verdict, getParticleAmount the 6-direction count
+        // the UP + DOWN pair answers)
+        assert!(
+            gateway_should_render_face(true),
+            "the Y axis the face keeps"
+        );
+        assert!(
+            !gateway_should_render_face(false),
+            "the horizontal axes the faces refuse"
+        );
+        assert_eq!(
+            gateway_particle_amount(),
+            2,
+            "the six-direction walk the pair counts"
+        );
+        // THE ANIMATE PUFF'S OWN DRAW ORDER (javap animateTick the
+        // 9-draw walk the per-puff stream keeps: the six nextDouble,
+        // the nextInt(2) side, the nextBoolean axis, the arm's
+        // nextFloat — the determinism the seeded Lcg replays)
+        let mut rng = crate::drops::Lcg::new(77);
+        let p1 = gateway_animate_puff(10, 20, 30, &mut rng);
+        assert!(
+            (p1.x - 10.0).abs() < 1.0 && (p1.y - 20.0).abs() < 1.0 && (p1.z - 30.0).abs() < 1.0,
+            "the pos the cell's own space keeps ({p1:?})"
+        );
+        // THE ARM'S OWN BANDS (the rewritten axis's coord sits EXACTLY
+        // at the cell + 0.5 ± 0.25 lane the side fold wears [the
+        // offset·4 the 1/3 integers answer], its velocity the
+        // nextFloat·2·side (−2, 2) band keeps; the OTHER axis keeps
+        // the raw nextDouble coord + the ±0.25 velocity trio the
+        // prologue banks; the vy the NEVER-rewritten ±0.25 band)
+        assert!(p1.vy.abs() <= 0.25, "the vy the ±0.25 band keeps ({p1:?})");
+        let x_off = (p1.x - 10.0) * 4.0;
+        let z_off = (p1.z - 30.0) * 4.0;
+        let x_rewritten = ((x_off - 1.0).abs() < 1e-6) || ((x_off - 3.0).abs() < 1e-6);
+        let z_rewritten = ((z_off - 1.0).abs() < 1e-6) || ((z_off - 3.0).abs() < 1e-6);
+        assert!(
+            x_rewritten != z_rewritten,
+            "the EXACTLY one axis the arm rewears ({p1:?})"
+        );
+        assert!(
+            p1.vx.abs() <= 2.0 && p1.vz.abs() <= 2.0,
+            "the arm band keeps ({p1:?})"
+        );
+        if x_rewritten {
+            assert!(
+                p1.vz.abs() <= 0.25,
+                "the unrewritten z the ±0.25 band keeps ({p1:?})"
+            );
+        } else {
+            assert!(
+                p1.vx.abs() <= 0.25,
+                "the unrewritten x the ±0.25 band keeps ({p1:?})"
+            );
+        }
+        // THE REPLAY'S OWN IDENTITY (the same seed the same stream
+        // banks)
+        let mut rng2 = crate::drops::Lcg::new(77);
+        let p2 = gateway_animate_puff(10, 20, 30, &mut rng2);
+        assert_eq!(p1, p2, "the seed the replay answers");
+        // THE SPAWNING GATE + THE PERCENTS (javap isSpawning the age<200
+        // verdict, getSpawnPercent the clamp fold, getCooldownPercent
+        // the 1−clamp fold)
+        assert!(gateway_is_spawning(0) && gateway_is_spawning(199));
+        assert!(!gateway_is_spawning(200));
+        assert_eq!(
+            gateway_spawn_percent(0, 0.0),
+            0.0,
+            "the fresh age the zero keeps"
+        );
+        assert_eq!(
+            gateway_spawn_percent(100, 0.0),
+            0.5,
+            "the half-age the half fold answers"
+        );
+        assert_eq!(
+            gateway_spawn_percent(300, 0.0),
+            1.0,
+            "the overflow the clamp caps"
+        );
+        assert_eq!(
+            gateway_cooldown_percent(40, 0.0),
+            0.0,
+            "the fresh cooldown the zero keeps"
+        );
+        assert_eq!(
+            gateway_cooldown_percent(20, 0.0),
+            0.5,
+            "the half-drained the half fold answers"
+        );
+        assert_eq!(
+            gateway_cooldown_percent(0, 0.0),
+            1.0,
+            "the drained cooldown the 1.0 keeps"
+        );
+        // THE SCALE'S OWN LADDER (javap the sin(percent·π) fold — the
+        // 0/0.5/1 percents the 0/1/0 rungs the table answers)
+        let fresh = gateway_beam_scale(true, 0, 0, 0.0);
+        assert_eq!(fresh, 0.0, "the fresh spawn the zero scale keeps");
+        assert_eq!(
+            gateway_beam_scale(true, 100, 0, 0.0),
+            1.0,
+            "the half-climb the table's peak wears"
+        );
+        assert_eq!(
+            gateway_beam_scale(false, 400, 20, 0.0),
+            1.0,
+            "the half-drain the same peak answers"
+        );
+        let drained = gateway_beam_scale(false, 400, 0, 0.0);
+        assert!(
+            drained.abs() < 1e-6,
+            "the drained cooldown the zero scale keeps ({drained}) — the table's π row the tiny sliver the floor retires"
+        );
+        // THE HEIGHT'S OWN LADDER (javap the floor(scale·base) fold —
+        // the spawning arm the world's own max the client's 47 keeps,
+        // the cooling arm the 50.0 ceiling answers)
+        let max_y = CHUNK_Y as i32 - 1;
+        assert_eq!(
+            gateway_beam_height(1.0, true, max_y),
+            max_y,
+            "the spawning arm the world's own max climbs"
+        );
+        assert_eq!(
+            gateway_beam_height(0.5, false, max_y),
+            25,
+            "the cooling arm the 50.0 base halves"
+        );
+        assert_eq!(
+            gateway_beam_height(0.01, true, max_y),
+            0,
+            "the floor the zero rung keeps — the height-0 gate the beam retires"
+        );
+        // THE COLOR'S OWN PAIR (javap the DyeColor rows — the clinit
+        // constants the probe resolves)
+        assert_eq!(
+            gateway_beam_color(true),
+            0xC7_4E_BD,
+            "the spawn the MAGENTA keeps"
+        );
+        assert_eq!(
+            gateway_beam_color(false),
+            0x89_32_B8,
+            "the cooldown the PURPLE wears"
+        );
+        // THE ANIMATION TIME (javap the floorMod(gameTime, 40) fold)
+        assert_eq!(
+            gateway_beam_animation_time(85, 0.25),
+            5.25,
+            "the floorMod the 5 rung + the partial keeps"
+        );
+        // THE V-FOLD (javap the frac(f·0.2 − floor(f·0.1)) body — the
+        // f = −scale the gateway's own sign wears; s=0 the zero keeps,
+        // s=0.5 the 1−0.1 = 0.9 fold answers)
+        assert_eq!(
+            gateway_beam_frac(0.0),
+            0.0,
+            "the zero scale the zero frac keeps"
+        );
+        let half = gateway_beam_frac(0.5);
+        assert!(
+            (half - 0.9).abs() < 1e-6,
+            "the half-scale the 0.9 fold answers ({half})"
+        );
+        let full = gateway_beam_frac(1.0);
+        assert!(
+            (full - 1.0).abs() < 1e-6 || full < 1.0,
+            "the full-scale frac the 0.8..1 band keeps ({full})"
+        );
+        // THE PRISM QUADS' OWN LADDER (javap submitBeaconBeam the two
+        // prisms the 8 faces the walk banks: the core the ROTATED
+        // diamond ring the OPAQUE law keeps, the halo the STATIC
+        // square the alpha-32 wears, the y the −h..+h span the block
+        // answers, the zero-height gate the empty vec retires)
+        assert!(gateway_beam_prism_quads((5, 10, 5), 0, 1.0, 0.0).is_empty());
+        assert!(gateway_beam_prism_quads((5, 10, 5), 10, 0.0, 0.0).is_empty());
+        let quads = gateway_beam_prism_quads((5, 10, 5), 10, 1.0, 0.0);
+        assert_eq!(quads.len(), 8, "the two prisms the eight faces bank");
+        for (i, q) in quads.iter().enumerate() {
+            if i < 4 {
+                assert_eq!(q.alpha, 1.0, "the core the OPAQUE alpha keeps");
+            } else {
+                assert!(
+                    (q.alpha - 32.0 / 255.0).abs() < 1e-6,
+                    "the halo the alpha-32 vertex color wears"
+                );
+            }
+            // THE Y SPAN (the block's own ±h the BE-local pair keeps)
+            let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+            assert!(
+                ys.iter()
+                    .all(|&y| (y - 0.0).abs() < 1e-4 || (y - 20.0).abs() < 1e-4),
+                "the y the 0/20 span the ±h keeps ({ys:?})"
+            );
+            // THE CENTER (the x/z the +0.5 the translate keeps)
+            for p in q.pts.iter() {
+                assert!(
+                    ((p[0] - 5.5).abs() <= 0.2) && ((p[2] - 5.5).abs() <= 0.2),
+                    "the prism the block axis hugs ({p:?})"
+                );
+            }
+            // THE U WINDOW (the a-side 1.0 / b-side 0.0 the face width
+            // spans)
+            assert_eq!(q.uv[0][0], 1.0, "the a-side u the 1.0 keeps");
+            assert_eq!(q.uv[2][0], 0.0, "the b-side u the 0.0 keeps");
+        }
+        // THE CORE'S OWN SPAN (the v the (0.5/0.15)·2h·scale the
+        // rotated prism answers — the 3.333 factor the halo's plain
+        // 2h·scale fold retires)
+        let core_top_v = quads[0].uv[0][1];
+        let halo_top_v = quads[4].uv[0][1];
+        assert!(
+            core_top_v > halo_top_v,
+            "the core span the (0.5/0.15) factor widens ({core_top_v} vs {halo_top_v})"
+        );
+        // THE ROTATION'S OWN TWIST (the animationTime the diamond ring
+        // turns — the corners the θ fold carries, the halo the static
+        // square never wears)
+        let q_spin = gateway_beam_prism_quads((5, 10, 5), 10, 1.0, 20.0 / 2.25);
+        let q_rest = gateway_beam_prism_quads((5, 10, 5), 10, 1.0, 0.0);
+        let dx_spin = q_spin[0].pts[0][0] - 5.5;
+        let dx_rest = q_rest[0].pts[0][0] - 5.5;
+        assert!(
+            (dx_spin - dx_rest).abs() > 0.01,
+            "the core's spin the corner x moves ({dx_spin} vs {dx_rest})"
+        );
+        assert_eq!(
+            q_spin[4].pts, q_rest[4].pts,
+            "the halo the static square the spin never wears"
+        );
+    }
+
+    #[test]
     fn the_chorus_the_walk_down_and_the_safe_verdicts_wear() {
         let mut w = World::new(2, 7);
         w.chunks
@@ -34526,14 +35132,46 @@ mod tests {
         // `FACING == dir.getOpposite()` verdict the look the re-face
         // wears: the south-facing gate + the north look the north
         // answer keeps, the already-facing gate the keep answers)
-        assert_eq!(fence_gate_open_facing(3, 1), 1, "the south gate the north look re-faces");
-        assert_eq!(fence_gate_open_facing(1, 1), 1, "the facing gate the look the keep answers");
-        assert_eq!(fence_gate_open_facing(2, 1), 2, "the east gate the north look keeps");
-        assert_eq!(fence_gate_open_facing(1, 3), 3, "the north gate the south look re-faces");
-        assert_eq!(fence_gate_open_facing(4, 2), 2, "the west gate the east look re-faces");
-        assert_eq!(fence_gate_open_facing(2, 4), 4, "the east gate the west look re-faces");
-        assert_eq!(fence_gate_open_facing(0, 1), 0, "the no-opinion byte the honest keep wears");
-        assert_eq!(fence_gate_open_facing(3, 0), 3, "the no-opinion look the keep answers");
+        assert_eq!(
+            fence_gate_open_facing(3, 1),
+            1,
+            "the south gate the north look re-faces"
+        );
+        assert_eq!(
+            fence_gate_open_facing(1, 1),
+            1,
+            "the facing gate the look the keep answers"
+        );
+        assert_eq!(
+            fence_gate_open_facing(2, 1),
+            2,
+            "the east gate the north look keeps"
+        );
+        assert_eq!(
+            fence_gate_open_facing(1, 3),
+            3,
+            "the north gate the south look re-faces"
+        );
+        assert_eq!(
+            fence_gate_open_facing(4, 2),
+            2,
+            "the west gate the east look re-faces"
+        );
+        assert_eq!(
+            fence_gate_open_facing(2, 4),
+            4,
+            "the east gate the west look re-faces"
+        );
+        assert_eq!(
+            fence_gate_open_facing(0, 1),
+            0,
+            "the no-opinion byte the honest keep wears"
+        );
+        assert_eq!(
+            fence_gate_open_facing(3, 0),
+            3,
+            "the no-opinion look the keep answers"
+        );
         // THE COLLISION'S OWN ROWS (javap getCollisionShape pc 0-50:
         // the open state's Shapes.empty() the Empty row keeps, the
         // closed SHAPE_COLLISION column the centered strip banks —
@@ -34559,7 +35197,11 @@ mod tests {
         // the y the 8..9.5 band the [.., 24, ..] px law speaks)
         let full = shape_slabs(CollisionShape::CenterBand(0, 4), 10, 8, 10).unwrap();
         assert_eq!((full.0, full.1), (10.0, 11.0), "the x the full span keeps");
-        assert_eq!((full.2, full.3), (8.0, 9.5), "the y the over-tall 24-px band keeps");
+        assert_eq!(
+            (full.2, full.3),
+            (8.0, 9.5),
+            "the y the over-tall 24-px band keeps"
+        );
         assert_eq!(
             (full.4, full.5),
             (10.0 + 6.0 / 16.0, 10.0 + 10.0 / 16.0),
@@ -34571,7 +35213,11 @@ mod tests {
             (10.0 + 6.0 / 16.0, 10.0 + 10.0 / 16.0),
             "the x the centered strip the axis turn wears"
         );
-        assert_eq!((turned.4, turned.5), (10.0, 11.0), "the z the full span keeps");
+        assert_eq!(
+            (turned.4, turned.5),
+            (10.0, 11.0),
+            "the z the full span keeps"
+        );
         let mut w = World::new(2, 0x600D);
         let c = w.size_blocks() / 2;
         let y = 8;
@@ -34697,33 +35343,80 @@ mod tests {
                 Some(k ^ 1),
                 "the rung {i} the ±1 mate the XOR fold wears"
             );
-            assert_eq!(trapdoor_open(k), k & 1 == 1, "the parity the open bit speaks");
+            assert_eq!(
+                trapdoor_open(k),
+                k & 1 == 1,
+                "the parity the open bit speaks"
+            );
         }
-        assert!(!is_trapdoor(REDSTONE_WALL_TORCH_OFF), "the wall torch the family refuses");
-        assert!(!is_trapdoor(END_PORTAL), "the beyond-table seat the family refuses");
+        assert!(
+            !is_trapdoor(REDSTONE_WALL_TORCH_OFF),
+            "the wall torch the family refuses"
+        );
+        assert!(
+            !is_trapdoor(END_PORTAL),
+            "the beyond-table seat the family refuses"
+        );
         assert_eq!(trapdoor_toggled(STONE), None);
-        assert_eq!(trapdoor_stem_of(END_PORTAL), None, "the unknown the None keeps");
+        assert_eq!(
+            trapdoor_stem_of(END_PORTAL),
+            None,
+            "the unknown the None keeps"
+        );
         // THE STEMS' OWN WALK (the wood order the pair's index answers)
         assert_eq!(trapdoor_stem_of(OAK_TRAPDOOR), Some("oak_trapdoor"));
-        assert_eq!(trapdoor_stem_of(SPRUCE_TRAPDOOR_OPEN), Some("spruce_trapdoor"));
-        assert_eq!(trapdoor_stem_of(DARK_OAK_TRAPDOOR), Some("dark_oak_trapdoor"));
-        assert_eq!(trapdoor_stem_of(WARPED_TRAPDOOR_OPEN), Some("warped_trapdoor"));
+        assert_eq!(
+            trapdoor_stem_of(SPRUCE_TRAPDOOR_OPEN),
+            Some("spruce_trapdoor")
+        );
+        assert_eq!(
+            trapdoor_stem_of(DARK_OAK_TRAPDOOR),
+            Some("dark_oak_trapdoor")
+        );
+        assert_eq!(
+            trapdoor_stem_of(WARPED_TRAPDOOR_OPEN),
+            Some("warped_trapdoor")
+        );
         // THE VOICES' OWN FOUR STEMS (the set types' split the official
         // sounds.json banks — the plain woods the WOODEN pair, the
         // cherry the CHERRY_WOOD, the bamboo the BAMBOO_WOOD, the
         // crimson/warped the NETHER_WOOD)
-        assert_eq!(trapdoor_voice_stem(SPRUCE_TRAPDOOR), "block.wooden_trapdoor");
-        assert_eq!(trapdoor_voice_stem(MANGROVE_TRAPDOOR_OPEN), "block.wooden_trapdoor");
-        assert_eq!(trapdoor_voice_stem(CHERRY_TRAPDOOR), "block.cherry_wood_trapdoor");
-        assert_eq!(trapdoor_voice_stem(BAMBOO_TRAPDOOR_OPEN), "block.bamboo_wood_trapdoor");
-        assert_eq!(trapdoor_voice_stem(CRIMSON_TRAPDOOR), "block.nether_wood_trapdoor");
-        assert_eq!(trapdoor_voice_stem(WARPED_TRAPDOOR_OPEN), "block.nether_wood_trapdoor");
+        assert_eq!(
+            trapdoor_voice_stem(SPRUCE_TRAPDOOR),
+            "block.wooden_trapdoor"
+        );
+        assert_eq!(
+            trapdoor_voice_stem(MANGROVE_TRAPDOOR_OPEN),
+            "block.wooden_trapdoor"
+        );
+        assert_eq!(
+            trapdoor_voice_stem(CHERRY_TRAPDOOR),
+            "block.cherry_wood_trapdoor"
+        );
+        assert_eq!(
+            trapdoor_voice_stem(BAMBOO_TRAPDOOR_OPEN),
+            "block.bamboo_wood_trapdoor"
+        );
+        assert_eq!(
+            trapdoor_voice_stem(CRIMSON_TRAPDOOR),
+            "block.nether_wood_trapdoor"
+        );
+        assert_eq!(
+            trapdoor_voice_stem(WARPED_TRAPDOOR_OPEN),
+            "block.nether_wood_trapdoor"
+        );
         // THE NAMES' OWN ROWS (the ONE registry entry both kinds the
         // strip law every rung keeps)
         assert_eq!(NAME_OF[SPRUCE_TRAPDOOR as usize], "spruce_trapdoor");
         assert_eq!(NAME_OF[WARPED_TRAPDOOR_OPEN as usize], "warped_trapdoor");
-        assert_eq!(atlas::KIND_NAMES[CHERRY_TRAPDOOR as usize], "cherry_trapdoor");
-        assert_eq!(atlas::REGISTRY_NAMES[CHERRY_TRAPDOOR_OPEN as usize], "cherry_trapdoor");
+        assert_eq!(
+            atlas::KIND_NAMES[CHERRY_TRAPDOOR as usize],
+            "cherry_trapdoor"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[CHERRY_TRAPDOOR_OPEN as usize],
+            "cherry_trapdoor"
+        );
         // THE TILES' OWN PER-WOOD PAIRS (the SAME sprite both kinds
         // each pair wears, the twelve woods the DISTINCT masters the
         // bank grew by ONE each)
@@ -34744,16 +35437,31 @@ mod tests {
         // THE PLACEABLE'S OWN PAIRINGS (the generic lookups the closed
         // seats answer — the Items clinit rows the eleven pairings
         // speak)
-        assert_eq!(World::placeable_block("spruce_trapdoor"), Some(SPRUCE_TRAPDOOR));
-        assert_eq!(World::placeable_block("cherry_trapdoor"), Some(CHERRY_TRAPDOOR));
-        assert_eq!(World::placeable_block("warped_trapdoor"), Some(WARPED_TRAPDOOR));
+        assert_eq!(
+            World::placeable_block("spruce_trapdoor"),
+            Some(SPRUCE_TRAPDOOR)
+        );
+        assert_eq!(
+            World::placeable_block("cherry_trapdoor"),
+            Some(CHERRY_TRAPDOOR)
+        );
+        assert_eq!(
+            World::placeable_block("warped_trapdoor"),
+            Some(WARPED_TRAPDOOR)
+        );
         assert_eq!(World::placeable_block("spruce_trapdoor_open"), None);
         // THE COLLISION'S OWN ROWS (the spruce rung the variant-aware
         // walk the oak lane's own law wears — the closed slabs the
         // HALF bit reads, the open panel the Band rows the edge fold
         // serves)
-        assert_eq!(collision_shape(SPRUCE_TRAPDOOR), CollisionShape::YSpan(0, 3));
-        assert_eq!(collision_shape(CRIMSON_TRAPDOOR_OPEN), CollisionShape::Band(3, 3));
+        assert_eq!(
+            collision_shape(SPRUCE_TRAPDOOR),
+            CollisionShape::YSpan(0, 3)
+        );
+        assert_eq!(
+            collision_shape(CRIMSON_TRAPDOOR_OPEN),
+            CollisionShape::Band(3, 3)
+        );
         let mut w = World::new(2, 0x600D);
         let c = w.size_blocks() / 2;
         let y = 8;

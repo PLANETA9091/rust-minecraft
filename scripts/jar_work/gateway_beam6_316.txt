@@ -1,0 +1,610 @@
+=== shader files mentioning gateway/end_portal ===
+--- assets/minecraft/blockstates/end_gateway.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/end_gateway"
+    }
+  }
+}
+--- assets/minecraft/blockstates/end_portal.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/end_portal"
+    }
+  }
+}
+--- assets/minecraft/blockstates/end_portal_frame.json
+{
+  "variants": {
+    "eye=false,facing=east": {
+      "model": "minecraft:block/end_portal_frame",
+      "y": 270
+    },
+    "eye=false,facing=north": {
+      "model": "minecraft:block/end_portal_frame",
+      "y": 180
+    },
+    "eye=false,facing=south": {
+      "model": "minecraft:block/end_portal_frame"
+    },
+    "eye=false,facing=west": {
+      "model": "minecraft:block/end_portal_frame",
+      "y": 90
+    },
+    "eye=true,facing=east": {
+      "model": "minecraft:block/end_portal_frame_filled",
+      "y": 270
+    },
+    "eye=true,facing=north": {
+      "model": "minecraft:block/end_portal_frame_filled",
+      "y": 180
+    },
+    "eye=true,facing=south": {
+      "model": "minecraft:block/end_portal_frame_filled"
+    },
+    "eye=true,facing=west": {
+      "model": "minecraft:block/end_portal_frame_filled",
+      "y": 90
+    }
+  }
+}
+--- assets/minecraft/items/end_portal_frame.json
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "minecraft:block/end_portal_frame"
+  }
+}
+--- assets/minecraft/models/block/end_gateway.json
+{
+  "textures": {
+    "particle": "minecraft:block/obsidian"
+  }
+}
+--- assets/minecraft/models/block/end_portal.json
+{
+  "textures": {
+    "particle": "minecraft:block/obsidian"
+  }
+}
+--- assets/minecraft/models/block/end_portal_frame.json
+{   "parent": "block/block",
+    "textures": {
+        "particle": "block/end_portal_frame_side",
+        "bottom": "block/end_stone",
+        "top": "block/end_portal_frame_top",
+        "side": "block/end_portal_frame_side"
+    },
+    "elements": [
+        {   "from": [ 0, 0, 0 ],
+            "to": [ 16, 13, 16 ],
+            "faces": {
+                "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#bottom", "cullface": "down" },
+                "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#top" },
+                "north": { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "north" },
+                "south": { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "south" },
+                "west":  { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "west" },
+                "east":  { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "east" }
+            }
+        }
+    ]
+}
+
+--- assets/minecraft/models/block/end_portal_frame_filled.json
+{
+    "textures": {
+        "particle": "block/end_portal_frame_side",
+        "bottom": "block/end_stone",
+        "top": "block/end_portal_frame_top",
+        "side": "block/end_portal_frame_side",
+        "eye": "block/end_portal_frame_eye"
+    },
+    "elements": [
+        {   "from": [ 0, 0, 0 ],
+            "to": [ 16, 13, 16 ],
+            "faces": {
+                "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#bottom", "cullface": "down" },
+                "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#top" },
+                "north": { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "north" },
+                "south": { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "south" },
+                "west":  { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "west" },
+                "east":  { "uv": [ 0, 3, 16, 16 ], "texture": "#side", "cullface": "east" }
+            }
+        },
+        {   "from": [ 4, 13, 4 ],
+            "to": [ 12, 16, 12 ],
+            "faces": {
+                "up":    { "uv": [ 4, 4, 12, 12 ], "texture": "#eye", "cullface": "up" },
+                "north": { "uv": [ 4, 0, 12,  3 ], "texture": "#eye" },
+                "south": { "uv": [ 4, 0, 12,  3 ], "texture": "#eye" },
+                "west":  { "uv": [ 4, 0, 12,  3 ], "texture": "#eye" },
+                "east":  { "uv": [ 4, 0, 12,  3 ], "texture": "#eye" }
+            }
+        }
+    ]
+}
+
+--- assets/minecraft/shaders/core/rendertype_end_portal.fsh
+#version 330
+
+#moj_import <minecraft:fog.glsl>
+#moj_import <minecraft:matrix.glsl>
+#moj_import <minecraft:globals.glsl>
+
+uniform sampler2D Sampler0;
+uniform sampler2D Sampler1;
+
+in vec4 texProj0;
+in float sphericalVertexDistance;
+in float cylindricalVertexDistance;
+
+const vec3[] COLORS = vec3[](
+    vec3(0.022087, 0.098399, 0.110818),
+    vec3(0.011892, 0.095924, 0.089485),
+    vec3(0.027636, 0.101689, 0.100326),
+    vec3(0.046564, 0.109883, 0.114838),
+    vec3(0.064901, 0.117696, 0.097189),
+    vec3(0.063761, 0.086895, 0.123646),
+    vec3(0.084817, 0.111994, 0.166380),
+    vec3(0.097489, 0.154120, 0.091064),
+    vec3(0.106152, 0.131144, 0.195191),
+    vec3(0.097721, 0.110188, 0.187229),
+    vec3(0.133516, 0.138278, 0.148582),
+    vec3(0.070006, 0.243332, 0.235792),
+    vec3(0.196766, 0.142899, 0.214696),
+    vec3(0.047281, 0.315338, 0.321970),
+    vec3(0.204675, 0.390010, 0.302066),
+    vec3(0.080955, 0.314821, 0.661491)
+);
+
+const mat4 SCALE_TRANSLATE = mat4(
+    0.5, 0.0, 0.0, 0.25,
+    0.0, 0.5, 0.0, 0.25,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+);
+
+mat4 end_portal_layer(float layer) {
+    mat4 translate = mat4(
+        1.0, 0.0, 0.0, 17.0 / layer,
+        0.0, 1.0, 0.0, (2.0 + layer / 1.5) * (GameTime * 1.5),
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    );
+
+    mat2 rotate = mat2_rotate_z(radians((layer * layer * 4321.0 + layer * 9.0) * 2.0));
+
+    mat2 scale = mat2((4.5 - layer / 4.0) * 2.0);
+
+    return mat4(scale * rotate) * translate * SCALE_TRANSLATE;
+}
+
+out vec4 fragColor;
+
+void main() {
+    vec3 color = textureProj(Sampler0, texProj0).rgb * COLORS[0];
+    for (int i = 0; i < PORTAL_LAYERS; i++) {
+        color += textureProj(Sampler1, texProj0 * end_portal_layer(float(i + 1))).rgb * COLORS[i];
+    }
+    fragColor = apply_fog(vec4(color, 1.0), sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+}
+
+--- assets/minecraft/shaders/core/rendertype_end_portal.vsh
+#version 330
+
+#moj_import <minecraft:fog.glsl>
+#moj_import <minecraft:projection.glsl>
+#moj_import <minecraft:dynamictransforms.glsl>
+#moj_import <minecraft:projection.glsl>
+
+in vec3 Position;
+
+out vec4 texProj0;
+out float sphericalVertexDistance;
+out float cylindricalVertexDistance;
+
+void main() {
+    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+
+    texProj0 = projection_from_position(gl_Position);
+    sphericalVertexDistance = fog_spherical_distance(Position);
+    cylindricalVertexDistance = fog_cylindrical_distance(Position);
+}
+
+--- data/minecraft/advancement/end/enter_end_gateway.json
+{
+  "parent": "minecraft:end/kill_dragon",
+  "criteria": {
+    "entered_end_gateway": {
+      "conditions": {
+        "block": "minecraft:end_gateway"
+      },
+      "trigger": "minecraft:enter_block"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.end.enter_end_gateway.description"
+    },
+    "icon": {
+      "id": "minecraft:ender_pearl"
+    },
+    "title": {
+      "translate": "advancements.end.enter_end_gateway.title"
+    }
+  },
+  "requirements": [
+    [
+      "entered_end_gateway"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
+--- data/minecraft/worldgen/configured_feature/end_gateway_delayed.json
+{
+  "type": "minecraft:end_gateway",
+  "config": {
+    "exact": false
+  }
+}
+--- data/minecraft/worldgen/configured_feature/end_gateway_return.json
+{
+  "type": "minecraft:end_gateway",
+  "config": {
+    "exact": true,
+    "exit": [
+      100,
+      50,
+      0
+    ]
+  }
+}
+--- data/minecraft/worldgen/placed_feature/end_gateway_return.json
+{
+  "feature": "minecraft:end_gateway_return",
+  "placement": [
+    {
+      "type": "minecraft:rarity_filter",
+      "chance": 700
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:heightmap",
+      "heightmap": "MOTION_BLOCKING"
+    },
+    {
+      "type": "minecraft:random_offset",
+      "xz_spread": 0,
+      "y_spread": {
+        "type": "minecraft:uniform",
+        "max_inclusive": 9,
+        "min_inclusive": 3
+      }
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}
+
+########## net/minecraft/client/renderer/rendertype/RenderTypes
+--- beaconBeam (Lnet/minecraft/resources/Identifier;Z)Lnet/minecraft/client/renderer/rendertype/RenderType;
+    0 getstatic #181  net/minecraft/client/renderer/rendertype/RenderTypes.BEACON_BEAM Ljava/util/function/BiFunction;
+    3 aload_0
+    4 iload_1
+    5 invokestatic #133  java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    8 invokeinterface java/util/function/BiFunction.apply (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+   13 checkcast #87  net/minecraft/client/renderer/rendertype/RenderType
+   16 areturn
+--- endPortal ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+    0 getstatic #266  net/minecraft/client/renderer/rendertype/RenderTypes.END_PORTAL Lnet/minecraft/client/renderer/rendertype/RenderType;
+    3 areturn
+--- endGateway ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+    0 getstatic #269  net/minecraft/client/renderer/rendertype/RenderTypes.END_GATEWAY Lnet/minecraft/client/renderer/rendertype/RenderType;
+    3 areturn
+
+########## net/minecraft/world/item/DyeColor
+--- getTextureDiffuseColor ()I
+    0 aload_0
+    1 getfield #95  net/minecraft/world/item/DyeColor.textureDiffuseColor I
+    4 ireturn
+--- <clinit> ()V
+    0 new #1  net/minecraft/world/item/DyeColor
+    3 dup
+    4 ldc_w #263 = WHITE
+    7 iconst_0
+    8 iconst_0
+    9 ldc_w #264 = white
+   12 ldc_w #266 = ?
+   15 getstatic #267  net/minecraft/world/level/material/MapColor.SNOW Lnet/minecraft/world/level/material/MapColor;
+   18 getstatic #272  net/minecraft/world/level/material/MapColor.TERRACOTTA_WHITE Lnet/minecraft/world/level/material/MapColor;
+   21 ldc_w #275 = ?
+   24 ldc_w #276 = ?
+   27 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+   30 putstatic #3  net/minecraft/world/item/DyeColor.WHITE Lnet/minecraft/world/item/DyeColor;
+   33 new #1  net/minecraft/world/item/DyeColor
+   36 dup
+   37 ldc_w #280 = ORANGE
+   40 iconst_1
+   41 iconst_1
+   42 ldc_w #281 = orange
+   45 ldc_w #283 = ?
+   48 getstatic #284  net/minecraft/world/level/material/MapColor.COLOR_ORANGE Lnet/minecraft/world/level/material/MapColor;
+   51 getstatic #287  net/minecraft/world/level/material/MapColor.TERRACOTTA_ORANGE Lnet/minecraft/world/level/material/MapColor;
+   54 ldc_w #290 = ?
+   57 ldc_w #291 = ?
+   60 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+   63 putstatic #7  net/minecraft/world/item/DyeColor.ORANGE Lnet/minecraft/world/item/DyeColor;
+   66 new #1  net/minecraft/world/item/DyeColor
+   69 dup
+   70 ldc_w #292 = MAGENTA
+   73 iconst_2
+   74 iconst_2
+   75 ldc_w #293 = magenta
+   78 ldc_w #295 = ?
+   81 getstatic #296  net/minecraft/world/level/material/MapColor.COLOR_MAGENTA Lnet/minecraft/world/level/material/MapColor;
+   84 getstatic #299  net/minecraft/world/level/material/MapColor.TERRACOTTA_MAGENTA Lnet/minecraft/world/level/material/MapColor;
+   87 ldc_w #302 = ?
+   90 ldc_w #303 = ?
+   93 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+   96 putstatic #10  net/minecraft/world/item/DyeColor.MAGENTA Lnet/minecraft/world/item/DyeColor;
+   99 new #1  net/minecraft/world/item/DyeColor
+  102 dup
+  103 ldc_w #304 = LIGHT_BLUE
+  106 iconst_3
+  107 iconst_3
+  108 ldc_w #305 = light_blue
+  111 ldc_w #307 = ?
+  114 getstatic #308  net/minecraft/world/level/material/MapColor.COLOR_LIGHT_BLUE Lnet/minecraft/world/level/material/MapColor;
+  117 getstatic #311  net/minecraft/world/level/material/MapColor.TERRACOTTA_LIGHT_BLUE Lnet/minecraft/world/level/material/MapColor;
+  120 ldc_w #314 = ?
+  123 ldc_w #315 = ?
+  126 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  129 putstatic #13  net/minecraft/world/item/DyeColor.LIGHT_BLUE Lnet/minecraft/world/item/DyeColor;
+  132 new #1  net/minecraft/world/item/DyeColor
+  135 dup
+  136 ldc_w #316 = YELLOW
+  139 iconst_4
+  140 iconst_4
+  141 ldc_w #317 = yellow
+  144 ldc_w #319 = ?
+  147 getstatic #320  net/minecraft/world/level/material/MapColor.COLOR_YELLOW Lnet/minecraft/world/level/material/MapColor;
+  150 getstatic #323  net/minecraft/world/level/material/MapColor.TERRACOTTA_YELLOW Lnet/minecraft/world/level/material/MapColor;
+  153 ldc_w #326 = ?
+  156 ldc_w #327 = ?
+  159 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  162 putstatic #16  net/minecraft/world/item/DyeColor.YELLOW Lnet/minecraft/world/item/DyeColor;
+  165 new #1  net/minecraft/world/item/DyeColor
+  168 dup
+  169 ldc_w #328 = LIME
+  172 iconst_5
+  173 iconst_5
+  174 ldc_w #329 = lime
+  177 ldc_w #331 = ?
+  180 getstatic #332  net/minecraft/world/level/material/MapColor.COLOR_LIGHT_GREEN Lnet/minecraft/world/level/material/MapColor;
+  183 getstatic #335  net/minecraft/world/level/material/MapColor.TERRACOTTA_LIGHT_GREEN Lnet/minecraft/world/level/material/MapColor;
+  186 ldc_w #338 = ?
+  189 ldc_w #339 = ?
+  192 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  195 putstatic #19  net/minecraft/world/item/DyeColor.LIME Lnet/minecraft/world/item/DyeColor;
+  198 new #1  net/minecraft/world/item/DyeColor
+  201 dup
+  202 ldc_w #340 = PINK
+  205 bipush 6
+  207 bipush 6
+  209 ldc_w #341 = pink
+  212 ldc_w #343 = ?
+  215 getstatic #344  net/minecraft/world/level/material/MapColor.COLOR_PINK Lnet/minecraft/world/level/material/MapColor;
+  218 getstatic #347  net/minecraft/world/level/material/MapColor.TERRACOTTA_PINK Lnet/minecraft/world/level/material/MapColor;
+  221 ldc_w #350 = ?
+  224 ldc_w #351 = ?
+  227 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  230 putstatic #22  net/minecraft/world/item/DyeColor.PINK Lnet/minecraft/world/item/DyeColor;
+  233 new #1  net/minecraft/world/item/DyeColor
+  236 dup
+  237 ldc_w #352 = GRAY
+  240 bipush 7
+  242 bipush 7
+  244 ldc_w #353 = gray
+  247 ldc_w #355 = ?
+  250 getstatic #356  net/minecraft/world/level/material/MapColor.COLOR_GRAY Lnet/minecraft/world/level/material/MapColor;
+  253 getstatic #359  net/minecraft/world/level/material/MapColor.TERRACOTTA_GRAY Lnet/minecraft/world/level/material/MapColor;
+  256 ldc_w #362 = ?
+  259 ldc_w #363 = ?
+  262 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  265 putstatic #25  net/minecraft/world/item/DyeColor.GRAY Lnet/minecraft/world/item/DyeColor;
+  268 new #1  net/minecraft/world/item/DyeColor
+  271 dup
+  272 ldc_w #364 = LIGHT_GRAY
+  275 bipush 8
+  277 bipush 8
+  279 ldc_w #365 = light_gray
+  282 ldc_w #367 = ?
+  285 getstatic #368  net/minecraft/world/level/material/MapColor.COLOR_LIGHT_GRAY Lnet/minecraft/world/level/material/MapColor;
+  288 getstatic #371  net/minecraft/world/level/material/MapColor.TERRACOTTA_LIGHT_GRAY Lnet/minecraft/world/level/material/MapColor;
+  291 ldc_w #374 = ?
+  294 ldc_w #375 = ?
+  297 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  300 putstatic #28  net/minecraft/world/item/DyeColor.LIGHT_GRAY Lnet/minecraft/world/item/DyeColor;
+  303 new #1  net/minecraft/world/item/DyeColor
+  306 dup
+  307 ldc_w #376 = CYAN
+  310 bipush 9
+  312 bipush 9
+  314 ldc_w #377 = cyan
+  317 ldc_w #379 = ?
+  320 getstatic #380  net/minecraft/world/level/material/MapColor.COLOR_CYAN Lnet/minecraft/world/level/material/MapColor;
+  323 getstatic #383  net/minecraft/world/level/material/MapColor.TERRACOTTA_CYAN Lnet/minecraft/world/level/material/MapColor;
+  326 ldc_w #386 = ?
+  329 ldc_w #387 = ?
+  332 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  335 putstatic #31  net/minecraft/world/item/DyeColor.CYAN Lnet/minecraft/world/item/DyeColor;
+  338 new #1  net/minecraft/world/item/DyeColor
+  341 dup
+  342 ldc_w #388 = PURPLE
+  345 bipush 10
+  347 bipush 10
+  349 ldc_w #389 = purple
+  352 ldc_w #391 = ?
+  355 getstatic #392  net/minecraft/world/level/material/MapColor.COLOR_PURPLE Lnet/minecraft/world/level/material/MapColor;
+  358 getstatic #395  net/minecraft/world/level/material/MapColor.TERRACOTTA_PURPLE Lnet/minecraft/world/level/material/MapColor;
+  361 ldc_w #398 = ?
+  364 ldc_w #399 = ?
+  367 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  370 putstatic #34  net/minecraft/world/item/DyeColor.PURPLE Lnet/minecraft/world/item/DyeColor;
+  373 new #1  net/minecraft/world/item/DyeColor
+  376 dup
+  377 ldc_w #400 = BLUE
+  380 bipush 11
+  382 bipush 11
+  384 ldc_w #401 = blue
+  387 ldc_w #403 = ?
+  390 getstatic #404  net/minecraft/world/level/material/MapColor.COLOR_BLUE Lnet/minecraft/world/level/material/MapColor;
+  393 getstatic #407  net/minecraft/world/level/material/MapColor.TERRACOTTA_BLUE Lnet/minecraft/world/level/material/MapColor;
+  396 ldc_w #410 = ?
+  399 sipush 255
+  402 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  405 putstatic #37  net/minecraft/world/item/DyeColor.BLUE Lnet/minecraft/world/item/DyeColor;
+  408 new #1  net/minecraft/world/item/DyeColor
+  411 dup
+  412 ldc_w #411 = BROWN
+  415 bipush 12
+  417 bipush 12
+  419 ldc_w #412 = brown
+  422 ldc_w #414 = ?
+  425 getstatic #415  net/minecraft/world/level/material/MapColor.COLOR_BROWN Lnet/minecraft/world/level/material/MapColor;
+  428 getstatic #418  net/minecraft/world/level/material/MapColor.TERRACOTTA_BROWN Lnet/minecraft/world/level/material/MapColor;
+  431 ldc_w #421 = ?
+  434 ldc_w #422 = ?
+  437 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  440 putstatic #40  net/minecraft/world/item/DyeColor.BROWN Lnet/minecraft/world/item/DyeColor;
+  443 new #1  net/minecraft/world/item/DyeColor
+  446 dup
+  447 ldc_w #423 = GREEN
+  450 bipush 13
+  452 bipush 13
+  454 ldc_w #424 = green
+  457 ldc_w #426 = ?
+  460 getstatic #427  net/minecraft/world/level/material/MapColor.COLOR_GREEN Lnet/minecraft/world/level/material/MapColor;
+  463 getstatic #430  net/minecraft/world/level/material/MapColor.TERRACOTTA_GREEN Lnet/minecraft/world/level/material/MapColor;
+  466 ldc_w #433 = ?
+  469 ldc_w #434 = ?
+  472 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  475 putstatic #43  net/minecraft/world/item/DyeColor.GREEN Lnet/minecraft/world/item/DyeColor;
+  478 new #1  net/minecraft/world/item/DyeColor
+  481 dup
+  482 ldc_w #435 = RED
+  485 bipush 14
+  487 bipush 14
+  489 ldc_w #436 = red
+  492 ldc_w #438 = ?
+  495 getstatic #439  net/minecraft/world/level/material/MapColor.COLOR_RED Lnet/minecraft/world/level/material/MapColor;
+  498 getstatic #442  net/minecraft/world/level/material/MapColor.TERRACOTTA_RED Lnet/minecraft/world/level/material/MapColor;
+  501 ldc_w #445 = ?
+  504 ldc_w #446 = ?
+  507 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  510 putstatic #46  net/minecraft/world/item/DyeColor.RED Lnet/minecraft/world/item/DyeColor;
+  513 new #1  net/minecraft/world/item/DyeColor
+  516 dup
+  517 ldc_w #447 = BLACK
+  520 bipush 15
+  522 bipush 15
+  524 ldc_w #448 = black
+  527 ldc_w #450 = ?
+  530 getstatic #451  net/minecraft/world/level/material/MapColor.COLOR_BLACK Lnet/minecraft/world/level/material/MapColor;
+  533 getstatic #454  net/minecraft/world/level/material/MapColor.TERRACOTTA_BLACK Lnet/minecraft/world/level/material/MapColor;
+  536 ldc_w #457 = ?
+  539 iconst_0
+  540 invokespecial #277  net/minecraft/world/item/DyeColor.<init> (Ljava/lang/String;IILjava/lang/String;ILnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;II)V
+  543 putstatic #49  net/minecraft/world/item/DyeColor.BLACK Lnet/minecraft/world/item/DyeColor;
+  546 invokestatic #458  net/minecraft/world/item/DyeColor.$values ()[Lnet/minecraft/world/item/DyeColor;
+  549 putstatic #52  net/minecraft/world/item/DyeColor.$VALUES [Lnet/minecraft/world/item/DyeColor;
+  552 invokestatic #462  net/minecraft/world/item/DyeColor.values ()[Lnet/minecraft/world/item/DyeColor;
+  555 invokestatic #465  java/util/List.of ([Ljava/lang/Object;)Ljava/util/List;
+  558 putstatic #468  net/minecraft/world/item/DyeColor.VALUES Ljava/util/List;
+  561 invokedynamic #472
+  566 getstatic #468  net/minecraft/world/item/DyeColor.VALUES Ljava/util/List;
+  569 invokedynamic #476
+  574 invokeinterface java/util/List.toArray (Ljava/util/function/IntFunction;)[Ljava/lang/Object;
+  579 checkcast #57  [Lnet/minecraft/world/item/DyeColor;
+  582 getstatic #483  net/minecraft/util/ByIdMap$OutOfBoundsStrategy.ZERO Lnet/minecraft/util/ByIdMap$OutOfBoundsStrategy;
+  585 invokestatic #489  net/minecraft/util/ByIdMap.continuous (Ljava/util/function/ToIntFunction;[Ljava/lang/Object;Lnet/minecraft/util/ByIdMap$OutOfBoundsStrategy;)Ljava/util/function/IntFunction;
+  588 putstatic #101  net/minecraft/world/item/DyeColor.BY_ID Ljava/util/function/IntFunction;
+  591 new #126  it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap
+  594 dup
+  595 getstatic #468  net/minecraft/world/item/DyeColor.VALUES Ljava/util/List;
+  598 invokeinterface java/util/List.stream ()Ljava/util/stream/Stream;
+  603 invokedynamic #499
+  608 invokedynamic #502
+  613 invokestatic #503  java/util/stream/Collectors.toMap (Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/util/stream/Collector;
+  616 invokeinterface java/util/stream/Stream.collect (Ljava/util/stream/Collector;)Ljava/lang/Object;
+  621 checkcast #515  java/util/Map
+  624 invokespecial #517  it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap.<init> (Ljava/util/Map;)V
+  627 putstatic #121  net/minecraft/world/item/DyeColor.BY_FIREWORK_COLOR Lit/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap;
+  630 invokedynamic #520
+  635 invokestatic #523  net/minecraft/util/StringRepresentable.fromEnum (Ljava/util/function/Supplier;)Lnet/minecraft/util/StringRepresentable$EnumCodec;
+  638 putstatic #111  net/minecraft/world/item/DyeColor.CODEC Lnet/minecraft/util/StringRepresentable$EnumCodec;
+  641 getstatic #101  net/minecraft/world/item/DyeColor.BY_ID Ljava/util/function/IntFunction;
+  644 invokedynamic #472
+  649 invokestatic #529  net/minecraft/network/codec/ByteBufCodecs.idMapper (Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;)Lnet/minecraft/network/codec/StreamCodec;
+  652 putstatic #535  net/minecraft/world/item/DyeColor.STREAM_CODEC Lnet/minecraft/network/codec/StreamCodec;
+  655 getstatic #539  com/mojang/serialization/Codec.BYTE Lcom/mojang/serialization/codecs/PrimitiveCodec;
+  658 invokedynamic #545
+  663 invokedynamic #546
+  668 invokeinterface com/mojang/serialization/codecs/PrimitiveCodec.xmap (Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  673 putstatic #553  net/minecraft/world/item/DyeColor.LEGACY_ID_CODEC Lcom/mojang/serialization/Codec;
+  676 return
+
+########## net/minecraft/client/renderer/blockentity/AbstractEndPortalRenderer
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndPortalBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndPortalRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 fload_3
+    4 aload 4
+    6 aload 5
+    8 invokespecial #7  net/minecraft/client/renderer/blockentity/BlockEntityRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   11 aload_2
+   12 getfield #13  net/minecraft/client/renderer/blockentity/state/EndPortalRenderState.facesToShow Ljava/util/Set;
+   15 invokeinterface java/util/Set.clear ()V
+   20 invokestatic #24  net/minecraft/core/Direction.values ()[Lnet/minecraft/core/Direction;
+   23 astore 6
+   25 aload 6
+   27 arraylength
+   28 istore 7
+   30 iconst_0
+   31 istore 8
+   33 iload 8
+   35 iload 7
+   37 if_icmpge #37
+   40 aload 6
+   42 iload 8
+   44 aaload
+   45 astore 9
+   47 aload_1
+   48 aload 9
+   50 invokevirtual #30  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity.shouldRenderFace (Lnet/minecraft/core/Direction;)Z
+   53 ifeq #15
+   56 aload_2
+   57 getfield #13  net/minecraft/client/renderer/blockentity/state/EndPortalRenderState.facesToShow Ljava/util/Set;
+   60 aload 9
+   62 invokeinterface java/util/Set.add (Ljava/lang/Object;)Z
+   67 pop
+   68 iinc 8 1
+   71 goto #65498
+   74 return
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 checkcast #31  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity
+    5 aload_2
+    6 checkcast #14  net/minecraft/client/renderer/blockentity/state/EndPortalRenderState
+    9 fload_3
+   10 aload 4
+   12 aload 5
+   14 invokevirtual #83  net/minecraft/client/renderer/blockentity/AbstractEndPortalRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndPortalBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndPortalRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   17 return

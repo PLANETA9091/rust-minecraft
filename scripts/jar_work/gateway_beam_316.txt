@@ -1,0 +1,1147 @@
+=== the beam texture (the jar's own PNG + the mcmeta) ===
+--- assets/minecraft/textures/entity/end_portal/end_gateway_beam.png: 196 bytes
+!! assets/minecraft/textures/entity/end_portal/end_gateway_beam.png.mcmeta MISSING
+
+########## net/minecraft/world/level/block/EndGatewayBlock
+  FIELD CODEC
+--- codec ()Lcom/mojang/serialization/MapCodec;
+    0 getstatic #1  net/minecraft/world/level/block/EndGatewayBlock.CODEC Lcom/mojang/serialization/MapCodec;
+    3 areturn
+--- <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #7  net/minecraft/world/level/block/BaseEntityBlock.<init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    5 return
+--- newBlockEntity (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+    0 new #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+    3 dup
+    4 aload_1
+    5 aload_2
+    6 invokespecial #15  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.<init> (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    9 areturn
+--- getTicker (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntityType;)Lnet/minecraft/world/level/block/entity/BlockEntityTicker;
+    0 aload_3
+    1 getstatic #18  net/minecraft/world/level/block/entity/BlockEntityTypes.END_GATEWAY Lnet/minecraft/world/level/block/entity/BlockEntityType;
+    4 aload_1
+    5 invokevirtual #24  net/minecraft/world/level/Level.isClientSide ()Z
+    8 ifeq #11
+   11 invokedynamic #30
+   16 goto #8
+   19 invokedynamic #34
+   24 invokestatic #35  net/minecraft/world/level/block/EndGatewayBlock.createTickerHelper (Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/world/level/block/entity/BlockEntityTicker;)Lnet/minecraft/world/level/block/entity/BlockEntityTicker;
+   27 areturn
+--- animateTick (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+    0 aload_2
+    1 aload_3
+    2 invokevirtual #39  net/minecraft/world/level/Level.getBlockEntity (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+    5 astore 5
+    7 aload 5
+    9 instanceof #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   12 ifeq #13
+   15 aload 5
+   17 checkcast #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   20 astore 6
+   22 goto #4
+   25 return
+   26 aload 6
+   28 invokevirtual #43  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getParticleAmount ()I
+   31 istore 7
+   33 iconst_0
+   34 istore 8
+   36 iload 8
+   38 iload 7
+   40 if_icmpge #221
+   43 aload_3
+   44 invokevirtual #47  net/minecraft/core/BlockPos.getX ()I
+   47 i2d
+   48 aload 4
+   50 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   55 dadd
+   56 dstore 9
+   58 aload_3
+   59 invokevirtual #58  net/minecraft/core/BlockPos.getY ()I
+   62 i2d
+   63 aload 4
+   65 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   70 dadd
+   71 dstore 11
+   73 aload_3
+   74 invokevirtual #61  net/minecraft/core/BlockPos.getZ ()I
+   77 i2d
+   78 aload 4
+   80 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   85 dadd
+   86 dstore 13
+   88 aload 4
+   90 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   95 ldc2_w #64 = 0.5
+   98 dsub
+   99 ldc2_w #64 = 0.5
+  102 dmul
+  103 dstore 15
+  105 aload 4
+  107 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+  112 ldc2_w #64 = 0.5
+  115 dsub
+  116 ldc2_w #64 = 0.5
+  119 dmul
+  120 dstore 17
+  122 aload 4
+  124 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+  129 ldc2_w #64 = 0.5
+  132 dsub
+  133 ldc2_w #64 = 0.5
+  136 dmul
+  137 dstore 19
+  139 aload 4
+  141 iconst_2
+  142 invokeinterface net/minecraft/util/RandomSource.nextInt (I)I
+  147 iconst_2
+  148 imul
+  149 iconst_1
+  150 isub
+  151 istore 21
+  153 aload 4
+  155 invokeinterface net/minecraft/util/RandomSource.nextBoolean ()Z
+  160 ifeq #41
+  163 aload_3
+  164 invokevirtual #61  net/minecraft/core/BlockPos.getZ ()I
+  167 i2d
+  168 ldc2_w #64 = 0.5
+  171 dadd
+  172 ldc2_w #73 = 0.25
+  175 iload 21
+  177 i2d
+  178 dmul
+  179 dadd
+  180 dstore 13
+  182 aload 4
+  184 invokeinterface net/minecraft/util/RandomSource.nextFloat ()F
+  189 fconst_2
+  190 fmul
+  191 iload 21
+  193 i2f
+  194 fmul
+  195 f2d
+  196 dstore 19
+  198 goto #38
+  201 aload_3
+  202 invokevirtual #47  net/minecraft/core/BlockPos.getX ()I
+  205 i2d
+  206 ldc2_w #64 = 0.5
+  209 dadd
+  210 ldc2_w #73 = 0.25
+  213 iload 21
+  215 i2d
+  216 dmul
+  217 dadd
+  218 dstore 9
+  220 aload 4
+  222 invokeinterface net/minecraft/util/RandomSource.nextFloat ()F
+  227 fconst_2
+  228 fmul
+  229 iload 21
+  231 i2f
+  232 fmul
+  233 f2d
+  234 dstore 15
+  236 aload_2
+  237 getstatic #79  net/minecraft/core/particles/ParticleTypes.PORTAL Lnet/minecraft/core/particles/SimpleParticleType;
+  240 dload 9
+  242 dload 11
+  244 dload 13
+  246 dload 15
+  248 dload 17
+  250 dload 19
+  252 invokevirtual #85  net/minecraft/world/level/Level.addParticle (Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+  255 iinc 8 1
+  258 goto #65314
+  261 return
+--- getCloneItemStack (Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/item/ItemStack;
+    0 getstatic #89  net/minecraft/world/item/ItemStack.EMPTY Lnet/minecraft/world/item/ItemStack;
+    3 areturn
+--- canBeReplaced (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/Fluid;)Z
+    0 iconst_0
+    1 ireturn
+--- entityInside (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/InsideBlockEffectApplier;Z)V
+    0 aload 4
+    2 iconst_0
+    3 invokevirtual #95  net/minecraft/world/entity/Entity.canUsePortal (Z)Z
+    6 ifeq #55
+    9 aload_2
+   10 aload_3
+   11 invokevirtual #39  net/minecraft/world/level/Level.getBlockEntity (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+   14 astore 7
+   16 aload_2
+   17 invokevirtual #24  net/minecraft/world/level/Level.isClientSide ()Z
+   20 ifne #41
+   23 aload 7
+   25 instanceof #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   28 ifeq #33
+   31 aload 7
+   33 checkcast #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   36 astore 8
+   38 aload 8
+   40 invokevirtual #101  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isCoolingDown ()Z
+   43 ifne #18
+   46 aload 4
+   48 aload_0
+   49 aload_3
+   50 invokevirtual #104  net/minecraft/world/entity/Entity.setAsInsidePortal (Lnet/minecraft/world/level/block/Portal;Lnet/minecraft/core/BlockPos;)V
+   53 aload_2
+   54 aload_3
+   55 aload_1
+   56 aload 8
+   58 invokestatic #108  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.triggerCooldown (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;)V
+   61 return
+--- getPortalDestination (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/portal/TeleportTransition;
+    0 aload_1
+    1 aload_3
+    2 invokevirtual #112  net/minecraft/server/level/ServerLevel.getBlockEntity (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+    5 astore 4
+    7 aload 4
+    9 instanceof #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   12 ifeq #13
+   15 aload 4
+   17 checkcast #13  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+   20 astore 5
+   22 goto #5
+   25 aconst_null
+   26 areturn
+   27 aload 5
+   29 aload_1
+   30 aload_3
+   31 invokevirtual #115  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getPortalPosition (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;
+   34 astore 6
+   36 aload 6
+   38 ifnonnull #5
+   41 aconst_null
+   42 areturn
+   43 aload_2
+   44 instanceof #119  net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl
+   47 ifeq #25
+   50 new #121  net/minecraft/world/level/portal/TeleportTransition
+   53 dup
+   54 aload_1
+   55 aload 6
+   57 getstatic #123  net/minecraft/world/phys/Vec3.ZERO Lnet/minecraft/world/phys/Vec3;
+   60 fconst_0
+   61 fconst_0
+   62 invokestatic #129  java/util/Set.of ()Ljava/util/Set;
+   65 getstatic #135  net/minecraft/world/level/portal/TeleportTransition.PLACE_PORTAL_TICKET Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;
+   68 invokespecial #139  net/minecraft/world/level/portal/TeleportTransition.<init> (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FFLjava/util/Set;Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)V
+   71 areturn
+   72 new #121  net/minecraft/world/level/portal/TeleportTransition
+   75 dup
+   76 aload_1
+   77 aload 6
+   79 getstatic #123  net/minecraft/world/phys/Vec3.ZERO Lnet/minecraft/world/phys/Vec3;
+   82 fconst_0
+   83 fconst_0
+   84 iconst_2
+   85 anewarray #130  java/util/Set
+   88 dup
+   89 iconst_0
+   90 getstatic #142  net/minecraft/world/entity/Relative.DELTA Ljava/util/Set;
+   93 aastore
+   94 dup
+   95 iconst_1
+   96 getstatic #148  net/minecraft/world/entity/Relative.ROTATION Ljava/util/Set;
+   99 aastore
+  100 invokestatic #151  net/minecraft/world/entity/Relative.union ([Ljava/util/Set;)Ljava/util/Set;
+  103 getstatic #135  net/minecraft/world/level/portal/TeleportTransition.PLACE_PORTAL_TICKET Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;
+  106 invokespecial #139  net/minecraft/world/level/portal/TeleportTransition.<init> (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FFLjava/util/Set;Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)V
+  109 areturn
+--- getRenderShape (Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/RenderShape;
+    0 getstatic #155  net/minecraft/world/level/block/RenderShape.INVISIBLE Lnet/minecraft/world/level/block/RenderShape;
+    3 areturn
+--- <clinit> ()V
+    0 invokedynamic #161
+    5 invokestatic #165  net/minecraft/world/level/block/EndGatewayBlock.simpleCodec (Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8 putstatic #1  net/minecraft/world/level/block/EndGatewayBlock.CODEC Lcom/mojang/serialization/MapCodec;
+   11 return
+
+########## net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer
+  FIELD BEAM_LOCATION
+--- <init> ()V
+    0 aload_0
+    1 invokespecial #1  net/minecraft/client/renderer/blockentity/AbstractEndPortalRenderer.<init> ()V
+    4 return
+--- createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;
+    0 new #7  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState
+    3 dup
+    4 invokespecial #9  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.<init> ()V
+    7 areturn
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 fload_3
+    4 aload 4
+    6 aload 5
+    8 invokespecial #10  net/minecraft/client/renderer/blockentity/AbstractEndPortalRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndPortalBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndPortalRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   11 aload_1
+   12 invokevirtual #14  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getLevel ()Lnet/minecraft/world/level/Level;
+   15 astore 6
+   17 aload_1
+   18 invokevirtual #20  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isSpawning ()Z
+   21 ifne #15
+   24 aload_1
+   25 invokevirtual #24  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isCoolingDown ()Z
+   28 ifeq #144
+   31 aload 6
+   33 ifnull #139
+   36 aload_2
+   37 aload_1
+   38 invokevirtual #20  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isSpawning ()Z
+   41 ifeq #11
+   44 aload_1
+   45 fload_3
+   46 invokevirtual #27  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getSpawnPercent (F)F
+   49 goto #8
+   52 aload_1
+   53 fload_3
+   54 invokevirtual #31  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getCooldownPercent (F)F
+   57 putfield #34  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.scale F
+   60 aload_1
+   61 invokevirtual #20  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isSpawning ()Z
+   64 ifeq #14
+   67 aload_1
+   68 invokevirtual #14  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getLevel ()Lnet/minecraft/world/level/Level;
+   71 invokevirtual #38  net/minecraft/world/level/Level.getMaxY ()I
+   74 i2d
+   75 goto #6
+   78 ldc2_w #44 = 50.0
+   81 dstore 7
+   83 aload_2
+   84 aload_2
+   85 getfield #34  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.scale F
+   88 ldc #48 = ?
+   90 fmul
+   91 f2d
+   92 invokestatic #49  net/minecraft/util/Mth.sin (D)F
+   95 putfield #34  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.scale F
+   98 aload_2
+   99 aload_2
+  100 getfield #34  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.scale F
+  103 f2d
+  104 dload 7
+  106 dmul
+  107 invokestatic #53  net/minecraft/util/Mth.floor (D)I
+  110 putfield #57  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.height I
+  113 aload_2
+  114 aload_1
+  115 invokevirtual #20  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isSpawning ()Z
+  118 ifeq #12
+  121 getstatic #61  net/minecraft/world/item/DyeColor.MAGENTA Lnet/minecraft/world/item/DyeColor;
+  124 invokevirtual #67  net/minecraft/world/item/DyeColor.getTextureDiffuseColor ()I
+  127 goto #9
+  130 getstatic #70  net/minecraft/world/item/DyeColor.PURPLE Lnet/minecraft/world/item/DyeColor;
+  133 invokevirtual #67  net/minecraft/world/item/DyeColor.getTextureDiffuseColor ()I
+  136 putfield #73  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.color I
+  139 aload_2
+  140 aload_1
+  141 invokevirtual #14  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getLevel ()Lnet/minecraft/world/level/Level;
+  144 ifnull #21
+  147 aload_1
+  148 invokevirtual #14  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getLevel ()Lnet/minecraft/world/level/Level;
+  151 invokevirtual #76  net/minecraft/world/level/Level.getGameTime ()J
+  154 bipush 40
+  156 invokestatic #80  java/lang/Math.floorMod (JI)I
+  159 i2f
+  160 fload_3
+  161 fadd
+  162 goto #4
+  165 fconst_0
+  166 putfield #86  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.animationTime F
+  169 goto #8
+  172 aload_2
+  173 iconst_0
+  174 putfield #57  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.height I
+  177 return
+--- submit (Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+    0 aload_1
+    1 getfield #57  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.height I
+    4 ifle #38
+    7 aload_2
+    8 aload_3
+    9 getstatic #89  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.BEAM_LOCATION Lnet/minecraft/resources/Identifier;
+   12 aload_1
+   13 getfield #34  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.scale F
+   16 aload_1
+   17 getfield #86  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.animationTime F
+   20 aload_1
+   21 getfield #57  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.height I
+   24 ineg
+   25 aload_1
+   26 getfield #57  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.height I
+   29 iconst_2
+   30 imul
+   31 aload_1
+   32 getfield #73  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.color I
+   35 ldc #95 = ?
+   37 ldc #96 = ?
+   39 invokestatic #97  net/minecraft/client/renderer/blockentity/BeaconRenderer.submitBeaconBeam (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/resources/Identifier;FFIIIFF)V
+   42 aload_1
+   43 getfield #103  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState.facesToShow Ljava/util/Set;
+   46 invokestatic #107  net/minecraft/client/renderer/rendertype/RenderTypes.endGateway ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+   49 aload_2
+   50 aload_3
+   51 invokestatic #113  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.submitCube (Ljava/util/Collection;Lnet/minecraft/client/renderer/rendertype/RenderType;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V
+   54 return
+--- getViewDistance ()I
+    0 sipush 256
+    3 ireturn
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndPortalBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndPortalRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 checkcast #15  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+    5 aload_2
+    6 checkcast #7  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState
+    9 fload_3
+   10 aload 4
+   12 aload 5
+   14 invokevirtual #117  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   17 return
+--- submit (Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+    0 aload_0
+    1 aload_1
+    2 checkcast #7  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState
+    5 aload_2
+    6 aload_3
+    7 aload 4
+    9 invokevirtual #120  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.submit (Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+   12 return
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 checkcast #15  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+    5 aload_2
+    6 checkcast #7  net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState
+    9 fload_3
+   10 aload 4
+   12 aload 5
+   14 invokevirtual #117  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   17 return
+--- createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;
+    0 aload_0
+    1 invokevirtual #124  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/EndGatewayRenderState;
+    4 areturn
+--- <clinit> ()V
+    0 ldc #128 = textures/entity/end_portal/end_gateway_beam.png
+    2 invokestatic #130  net/minecraft/resources/Identifier.withDefaultNamespace (Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    5 putstatic #89  net/minecraft/client/renderer/blockentity/TheEndGatewayRenderer.BEAM_LOCATION Lnet/minecraft/resources/Identifier;
+    8 return
+
+########## net/minecraft/client/renderer/blockentity/state/EndGatewayRenderState
+  FIELD height
+  FIELD scale
+  FIELD color
+  FIELD animationTime
+--- <init> ()V
+    0 aload_0
+    1 invokespecial #1  net/minecraft/client/renderer/blockentity/state/EndPortalRenderState.<init> ()V
+    4 return
+
+########## net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity
+  FIELD LOGGER
+  FIELD SPAWN_TIME
+  FIELD COOLDOWN_TIME
+  FIELD ATTENTION_INTERVAL
+  FIELD EVENT_COOLDOWN
+  FIELD GATEWAY_HEIGHT_ABOVE_SURFACE
+  FIELD DEFAULT_AGE
+  FIELD DEFAULT_EXACT_TELEPORT
+  FIELD age
+  FIELD teleportCooldown
+  FIELD exitPortal
+  FIELD exactTeleport
+--- <init> (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    0 aload_0
+    1 getstatic #3  net/minecraft/world/level/block/entity/BlockEntityTypes.END_GATEWAY Lnet/minecraft/world/level/block/entity/BlockEntityType;
+    4 aload_1
+    5 aload_2
+    6 invokespecial #9  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity.<init> (Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    9 aload_0
+   10 lconst_0
+   11 putfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   14 aload_0
+   15 iconst_0
+   16 putfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+   19 return
+--- saveAdditional (Lnet/minecraft/world/level/storage/ValueOutput;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #25  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity.saveAdditional (Lnet/minecraft/world/level/storage/ValueOutput;)V
+    5 aload_1
+    6 ldc #29 = Age
+    8 aload_0
+    9 getfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   12 invokeinterface net/minecraft/world/level/storage/ValueOutput.putLong (Ljava/lang/String;J)V
+   17 aload_1
+   18 ldc #37 = exit_portal
+   20 getstatic #39  net/minecraft/core/BlockPos.CODEC Lcom/mojang/serialization/Codec;
+   23 aload_0
+   24 getfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+   27 invokeinterface net/minecraft/world/level/storage/ValueOutput.storeNullable (Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V
+   32 aload_0
+   33 getfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+   36 ifeq #12
+   39 aload_1
+   40 ldc #53 = ExactTeleport
+   42 iconst_1
+   43 invokeinterface net/minecraft/world/level/storage/ValueOutput.putBoolean (Ljava/lang/String;Z)V
+   48 return
+--- loadAdditional (Lnet/minecraft/world/level/storage/ValueInput;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #59  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity.loadAdditional (Lnet/minecraft/world/level/storage/ValueInput;)V
+    5 aload_0
+    6 aload_1
+    7 ldc #29 = Age
+    9 lconst_0
+   10 invokeinterface net/minecraft/world/level/storage/ValueInput.getLongOr (Ljava/lang/String;J)J
+   15 putfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   18 aload_0
+   19 aload_1
+   20 ldc #37 = exit_portal
+   22 getstatic #39  net/minecraft/core/BlockPos.CODEC Lcom/mojang/serialization/Codec;
+   25 invokeinterface net/minecraft/world/level/storage/ValueInput.read (Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+   30 invokedynamic #73
+   35 invokevirtual #77  java/util/Optional.filter (Ljava/util/function/Predicate;)Ljava/util/Optional;
+   38 aconst_null
+   39 invokevirtual #83  java/util/Optional.orElse (Ljava/lang/Object;)Ljava/lang/Object;
+   42 checkcast #40  net/minecraft/core/BlockPos
+   45 putfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+   48 aload_0
+   49 aload_1
+   50 ldc #53 = ExactTeleport
+   52 iconst_0
+   53 invokeinterface net/minecraft/world/level/storage/ValueInput.getBooleanOr (Ljava/lang/String;Z)Z
+   58 putfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+   61 return
+--- beamAnimationTick (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;)V
+    0 aload_3
+    1 dup
+    2 getfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+    5 lconst_1
+    6 ladd
+    7 putfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   10 aload_3
+   11 invokevirtual #91  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isCoolingDown ()Z
+   14 ifeq #13
+   17 aload_3
+   18 dup
+   19 getfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+   22 iconst_1
+   23 isub
+   24 putfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+   27 return
+--- portalTick (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;)V
+    0 aload_3
+    1 invokevirtual #99  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isSpawning ()Z
+    4 istore 4
+    6 aload_3
+    7 invokevirtual #91  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isCoolingDown ()Z
+   10 istore 5
+   12 aload_3
+   13 dup
+   14 getfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   17 lconst_1
+   18 ladd
+   19 putfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   22 iload 5
+   24 ifeq #16
+   27 aload_3
+   28 dup
+   29 getfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+   32 iconst_1
+   33 isub
+   34 putfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+   37 goto #23
+   40 aload_3
+   41 getfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+   44 ldc2_w #102 = 2400
+   47 lrem
+   48 lconst_0
+   49 lcmp
+   50 ifne #10
+   53 aload_0
+   54 aload_1
+   55 aload_2
+   56 aload_3
+   57 invokestatic #104  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.triggerCooldown (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;)V
+   60 iload 4
+   62 aload_3
+   63 invokevirtual #99  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isSpawning ()Z
+   66 if_icmpne #12
+   69 iload 5
+   71 aload_3
+   72 invokevirtual #91  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isCoolingDown ()Z
+   75 if_icmpeq #9
+   78 aload_0
+   79 aload_1
+   80 aload_2
+   81 invokestatic #108  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.setChanged (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   84 return
+--- isSpawning ()Z
+    0 aload_0
+    1 getfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+    4 ldc2_w #112 = 200
+    7 lcmp
+    8 ifge #7
+   11 iconst_1
+   12 goto #4
+   15 iconst_0
+   16 ireturn
+--- isCoolingDown ()Z
+    0 aload_0
+    1 getfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+    4 ifle #7
+    7 iconst_1
+    8 goto #4
+   11 iconst_0
+   12 ireturn
+--- getSpawnPercent (F)F
+    0 aload_0
+    1 getfield #17  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.age J
+    4 l2f
+    5 fload_1
+    6 fadd
+    7 ldc #114 = ?
+    9 fdiv
+   10 fconst_0
+   11 fconst_1
+   12 invokestatic #115  net/minecraft/util/Mth.clamp (FFF)F
+   15 freturn
+--- getCooldownPercent (F)F
+    0 fconst_1
+    1 aload_0
+    2 getfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+    5 i2f
+    6 fload_1
+    7 fsub
+    8 ldc #121 = ?
+   10 fdiv
+   11 fconst_0
+   12 fconst_1
+   13 invokestatic #115  net/minecraft/util/Mth.clamp (FFF)F
+   16 fsub
+   17 freturn
+--- getUpdatePacket ()Lnet/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket;
+    0 aload_0
+    1 invokestatic #122  net/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket.create (Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket;
+    4 areturn
+--- getUpdateTag (Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/nbt/CompoundTag;
+    0 aload_0
+    1 aload_1
+    2 invokevirtual #128  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.saveCustomOnly (Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/nbt/CompoundTag;
+    5 areturn
+--- triggerCooldown (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/TheEndGatewayBlockEntity;)V
+    0 aload_0
+    1 invokevirtual #132  net/minecraft/world/level/Level.isClientSide ()Z
+    4 ifne #26
+    7 aload_3
+    8 bipush 40
+   10 putfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+   13 aload_0
+   14 aload_1
+   15 aload_2
+   16 invokevirtual #137  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+   19 iconst_1
+   20 iconst_0
+   21 invokevirtual #143  net/minecraft/world/level/Level.blockEvent (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;II)V
+   24 aload_0
+   25 aload_1
+   26 aload_2
+   27 invokestatic #108  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.setChanged (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   30 return
+--- triggerEvent (II)Z
+    0 iload_1
+    1 iconst_1
+    2 if_icmpne #11
+    5 aload_0
+    6 bipush 40
+    8 putfield #95  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.teleportCooldown I
+   11 iconst_1
+   12 ireturn
+   13 aload_0
+   14 iload_1
+   15 iload_2
+   16 invokespecial #147  net/minecraft/world/level/block/entity/TheEndPortalBlockEntity.triggerEvent (II)Z
+   19 ireturn
+--- getPortalPosition (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;
+    0 aload_0
+    1 getfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+    4 ifnonnull #56
+    7 aload_1
+    8 invokevirtual #151  net/minecraft/server/level/ServerLevel.dimension ()Lnet/minecraft/resources/ResourceKey;
+   11 getstatic #157  net/minecraft/world/level/Level.END Lnet/minecraft/resources/ResourceKey;
+   14 if_acmpne #46
+   17 aload_1
+   18 aload_2
+   19 invokestatic #161  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findOrCreateValidTeleportPos (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;
+   22 astore_3
+   23 aload_3
+   24 bipush 10
+   26 invokevirtual #165  net/minecraft/core/BlockPos.above (I)Lnet/minecraft/core/BlockPos;
+   29 astore_3
+   30 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+   33 ldc #173 = Creating portal at {}
+   35 aload_3
+   36 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;)V
+   41 aload_1
+   42 aload_3
+   43 aload_2
+   44 iconst_0
+   45 invokestatic #181  net/minecraft/world/level/levelgen/feature/configurations/EndGatewayConfiguration.knownExit (Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/level/levelgen/feature/configurations/EndGatewayConfiguration;
+   48 invokestatic #187  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.spawnGatewayPortal (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/levelgen/feature/configurations/EndGatewayConfiguration;)V
+   51 aload_0
+   52 aload_3
+   53 aload_0
+   54 getfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+   57 invokevirtual #191  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.setExitPosition (Lnet/minecraft/core/BlockPos;Z)V
+   60 aload_0
+   61 getfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+   64 ifnull #31
+   67 aload_0
+   68 getfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+   71 ifeq #10
+   74 aload_0
+   75 getfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+   78 goto #11
+   81 aload_1
+   82 aload_0
+   83 getfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+   86 invokestatic #195  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findExitPosition (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;
+   89 astore_3
+   90 aload_3
+   91 invokestatic #199  net/minecraft/world/phys/Vec3.atBottomCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+   94 areturn
+   95 aconst_null
+   96 areturn
+--- findExitPosition (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;
+    0 aload_0
+    1 aload_1
+    2 iconst_0
+    3 iconst_2
+    4 iconst_0
+    5 invokevirtual #205  net/minecraft/core/BlockPos.offset (III)Lnet/minecraft/core/BlockPos;
+    8 iconst_5
+    9 iconst_0
+   10 invokestatic #209  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findTallestBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;IZ)Lnet/minecraft/core/BlockPos;
+   13 astore_2
+   14 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+   17 ldc #213 = Best exit position for portal at {} is {}
+   19 aload_1
+   20 aload_2
+   21 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+   26 aload_2
+   27 invokevirtual #218  net/minecraft/core/BlockPos.above ()Lnet/minecraft/core/BlockPos;
+   30 areturn
+--- findOrCreateValidTeleportPos (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;
+    0 aload_0
+    1 aload_1
+    2 invokestatic #221  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findExitPortalXZPosTentative (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;
+    5 astore_2
+    6 aload_0
+    7 aload_2
+    8 invokestatic #225  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getChunk (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/level/chunk/LevelChunk;
+   11 astore_3
+   12 aload_3
+   13 invokestatic #229  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findValidSpawnInChunk (Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/core/BlockPos;
+   16 astore 4
+   18 aload 4
+   20 ifnonnull #77
+   23 aload_2
+   24 getfield #233  net/minecraft/world/phys/Vec3.x D
+   27 ldc2_w #237 = 0.5
+   30 dadd
+   31 ldc2_w #239 = 75.0
+   34 aload_2
+   35 getfield #241  net/minecraft/world/phys/Vec3.z D
+   38 ldc2_w #237 = 0.5
+   41 dadd
+   42 invokestatic #244  net/minecraft/core/BlockPos.containing (DDD)Lnet/minecraft/core/BlockPos;
+   45 astore 5
+   47 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+   50 ldc #248 = Failed to find a suitable block to teleport to, spawning an island on {}
+   52 aload 5
+   54 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;)V
+   59 aload_0
+   60 invokevirtual #250  net/minecraft/server/level/ServerLevel.registryAccess ()Lnet/minecraft/core/RegistryAccess;
+   63 getstatic #254  net/minecraft/core/registries/Registries.CONFIGURED_FEATURE Lnet/minecraft/resources/ResourceKey;
+   66 invokeinterface net/minecraft/core/RegistryAccess.lookup (Lnet/minecraft/resources/ResourceKey;)Ljava/util/Optional;
+   71 invokedynamic #265
+   76 invokevirtual #269  java/util/Optional.flatMap (Ljava/util/function/Function;)Ljava/util/Optional;
+   79 aload_0
+   80 aload 5
+   82 invokedynamic #273
+   87 invokevirtual #277  java/util/Optional.ifPresent (Ljava/util/function/Consumer;)V
+   90 aload 5
+   92 astore 4
+   94 goto #16
+   97 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+  100 ldc_w #281 = Found suitable block to teleport to: {}
+  103 aload 4
+  105 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;)V
+  110 aload_0
+  111 aload 4
+  113 bipush 16
+  115 iconst_1
+  116 invokestatic #209  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.findTallestBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;IZ)Lnet/minecraft/core/BlockPos;
+  119 areturn
+--- findExitPortalXZPosTentative (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;
+    0 new #200  net/minecraft/world/phys/Vec3
+    3 dup
+    4 aload_1
+    5 invokevirtual #283  net/minecraft/core/BlockPos.getX ()I
+    8 i2d
+    9 dconst_0
+   10 aload_1
+   11 invokevirtual #287  net/minecraft/core/BlockPos.getZ ()I
+   14 i2d
+   15 invokespecial #290  net/minecraft/world/phys/Vec3.<init> (DDD)V
+   18 invokevirtual #293  net/minecraft/world/phys/Vec3.normalize ()Lnet/minecraft/world/phys/Vec3;
+   21 astore_2
+   22 sipush 1024
+   25 istore_3
+   26 aload_2
+   27 ldc2_w #301 = 1024.0
+   30 invokevirtual #303  net/minecraft/world/phys/Vec3.scale (D)Lnet/minecraft/world/phys/Vec3;
+   33 astore 4
+   35 bipush 16
+   37 istore 5
+   39 aload_0
+   40 aload 4
+   42 invokestatic #307  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isChunkEmpty (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;)Z
+   45 ifne #41
+   48 iload 5
+   50 iinc 5 -1
+   53 ifle #33
+   56 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+   59 ldc_w #311 = Skipping backwards past nonempty chunk at {}
+   62 aload 4
+   64 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;)V
+   69 aload 4
+   71 aload_2
+   72 ldc2_w #313 = -16.0
+   75 invokevirtual #303  net/minecraft/world/phys/Vec3.scale (D)Lnet/minecraft/world/phys/Vec3;
+   78 invokevirtual #315  net/minecraft/world/phys/Vec3.add (Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+   81 astore 4
+   83 goto #65492
+   86 bipush 16
+   88 istore 5
+   90 aload_0
+   91 aload 4
+   93 invokestatic #307  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.isChunkEmpty (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;)Z
+   96 ifeq #41
+   99 iload 5
+  101 iinc 5 -1
+  104 ifle #33
+  107 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+  110 ldc_w #319 = Skipping forward past empty chunk at {}
+  113 aload 4
+  115 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;)V
+  120 aload 4
+  122 aload_2
+  123 ldc2_w #321 = 16.0
+  126 invokevirtual #303  net/minecraft/world/phys/Vec3.scale (D)Lnet/minecraft/world/phys/Vec3;
+  129 invokevirtual #315  net/minecraft/world/phys/Vec3.add (Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+  132 astore 4
+  134 goto #65492
+  137 getstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+  140 ldc_w #323 = Found chunk at {}
+  143 aload 4
+  145 invokeinterface org/slf4j/Logger.debug (Ljava/lang/String;Ljava/lang/Object;)V
+  150 aload 4
+  152 areturn
+--- isChunkEmpty (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;)Z
+    0 aload_0
+    1 aload_1
+    2 invokestatic #225  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getChunk (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/level/chunk/LevelChunk;
+    5 invokevirtual #325  net/minecraft/world/level/chunk/LevelChunk.getHighestFilledSectionIndex ()I
+    8 iconst_m1
+    9 if_icmpne #7
+   12 iconst_1
+   13 goto #4
+   16 iconst_0
+   17 ireturn
+--- findTallestBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;IZ)Lnet/minecraft/core/BlockPos;
+    0 aconst_null
+    1 astore 4
+    3 iload_2
+    4 ineg
+    5 istore 5
+    7 iload 5
+    9 iload_2
+   10 if_icmpgt #148
+   13 iload_2
+   14 ineg
+   15 istore 6
+   17 iload 6
+   19 iload_2
+   20 if_icmpgt #132
+   23 iload 5
+   25 ifne #15
+   28 iload 6
+   30 ifne #10
+   33 iload_3
+   34 ifne #6
+   37 goto #109
+   40 aload_0
+   41 invokeinterface net/minecraft/world/level/BlockGetter.getMaxY ()I
+   46 istore 7
+   48 iload 7
+   50 aload 4
+   52 ifnonnull #12
+   55 aload_0
+   56 invokeinterface net/minecraft/world/level/BlockGetter.getMinY ()I
+   61 goto #8
+   64 aload 4
+   66 invokevirtual #340  net/minecraft/core/BlockPos.getY ()I
+   69 if_icmple #77
+   72 new #40  net/minecraft/core/BlockPos
+   75 dup
+   76 aload_1
+   77 invokevirtual #283  net/minecraft/core/BlockPos.getX ()I
+   80 iload 5
+   82 iadd
+   83 iload 7
+   85 aload_1
+   86 invokevirtual #287  net/minecraft/core/BlockPos.getZ ()I
+   89 iload 6
+   91 iadd
+   92 invokespecial #343  net/minecraft/core/BlockPos.<init> (III)V
+   95 astore 8
+   97 aload_0
+   98 aload 8
+  100 invokeinterface net/minecraft/world/level/BlockGetter.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  105 astore 9
+  107 aload 9
+  109 aload_0
+  110 aload 8
+  112 invokevirtual #350  net/minecraft/world/level/block/state/BlockState.isCollisionShapeFullBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+  115 ifeq #25
+  118 iload_3
+  119 ifne #14
+  122 aload 9
+  124 getstatic #354  net/minecraft/world/level/block/Blocks.BEDROCK Lnet/minecraft/world/level/block/Block;
+  127 invokevirtual #360  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+  130 ifne #10
+  133 aload 8
+  135 astore 4
+  137 goto #9
+  140 iinc 7 -1
+  143 goto #65441
+  146 iinc 6 1
+  149 goto #65404
+  152 iinc 5 1
+  155 goto #65388
+  158 aload 4
+  160 ifnonnull #7
+  163 aload_1
+  164 goto #5
+  167 aload 4
+  169 areturn
+--- getChunk (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/level/chunk/LevelChunk;
+    0 aload_0
+    1 aload_1
+    2 getfield #233  net/minecraft/world/phys/Vec3.x D
+    5 ldc2_w #321 = 16.0
+    8 ddiv
+    9 invokestatic #364  net/minecraft/util/Mth.floor (D)I
+   12 aload_1
+   13 getfield #241  net/minecraft/world/phys/Vec3.z D
+   16 ldc2_w #321 = 16.0
+   19 ddiv
+   20 invokestatic #364  net/minecraft/util/Mth.floor (D)I
+   23 invokevirtual #368  net/minecraft/world/level/Level.getChunk (II)Lnet/minecraft/world/level/chunk/LevelChunk;
+   26 areturn
+--- findValidSpawnInChunk (Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/core/BlockPos;
+    0 aload_0
+    1 invokevirtual #371  net/minecraft/world/level/chunk/LevelChunk.getPos ()Lnet/minecraft/world/level/ChunkPos;
+    4 astore_1
+    5 new #40  net/minecraft/core/BlockPos
+    8 dup
+    9 aload_1
+   10 invokevirtual #375  net/minecraft/world/level/ChunkPos.getMinBlockX ()I
+   13 bipush 30
+   15 aload_1
+   16 invokevirtual #380  net/minecraft/world/level/ChunkPos.getMinBlockZ ()I
+   19 invokespecial #343  net/minecraft/core/BlockPos.<init> (III)V
+   22 astore_2
+   23 aload_0
+   24 invokevirtual #383  net/minecraft/world/level/chunk/LevelChunk.getHighestSectionPosition ()I
+   27 bipush 16
+   29 iadd
+   30 iconst_1
+   31 isub
+   32 istore_3
+   33 new #40  net/minecraft/core/BlockPos
+   36 dup
+   37 aload_1
+   38 invokevirtual #386  net/minecraft/world/level/ChunkPos.getMaxBlockX ()I
+   41 iload_3
+   42 aload_1
+   43 invokevirtual #389  net/minecraft/world/level/ChunkPos.getMaxBlockZ ()I
+   46 invokespecial #343  net/minecraft/core/BlockPos.<init> (III)V
+   49 astore 4
+   51 aconst_null
+   52 astore 5
+   54 dconst_0
+   55 dstore 6
+   57 aload_2
+   58 aload 4
+   60 invokestatic #392  net/minecraft/core/BlockPos.betweenClosed (Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+   63 invokeinterface java/lang/Iterable.iterator ()Ljava/util/Iterator;
+   68 astore 8
+   70 aload 8
+   72 invokeinterface java/util/Iterator.hasNext ()Z
+   77 ifeq #113
+   80 aload 8
+   82 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   87 checkcast #40  net/minecraft/core/BlockPos
+   90 astore 9
+   92 aload_0
+   93 aload 9
+   95 invokevirtual #411  net/minecraft/world/level/chunk/LevelChunk.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   98 astore 10
+  100 aload 9
+  102 invokevirtual #218  net/minecraft/core/BlockPos.above ()Lnet/minecraft/core/BlockPos;
+  105 astore 11
+  107 aload 9
+  109 iconst_2
+  110 invokevirtual #165  net/minecraft/core/BlockPos.above (I)Lnet/minecraft/core/BlockPos;
+  113 astore 12
+  115 aload 10
+  117 getstatic #412  net/minecraft/world/level/block/Blocks.END_STONE Lnet/minecraft/world/level/block/Block;
+  120 invokevirtual #360  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+  123 ifeq #64
+  126 aload_0
+  127 aload 11
+  129 invokevirtual #411  net/minecraft/world/level/chunk/LevelChunk.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  132 aload_0
+  133 aload 11
+  135 invokevirtual #350  net/minecraft/world/level/block/state/BlockState.isCollisionShapeFullBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+  138 ifne #49
+  141 aload_0
+  142 aload 12
+  144 invokevirtual #411  net/minecraft/world/level/chunk/LevelChunk.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  147 aload_0
+  148 aload 12
+  150 invokevirtual #350  net/minecraft/world/level/block/state/BlockState.isCollisionShapeFullBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+  153 ifne #34
+  156 aload 9
+  158 dconst_0
+  159 dconst_0
+  160 dconst_0
+  161 invokevirtual #415  net/minecraft/core/BlockPos.distToCenterSqr (DDD)D
+  164 dstore 13
+  166 aload 5
+  168 ifnull #11
+  171 dload 13
+  173 dload 6
+  175 dcmpg
+  176 ifge #11
+  179 aload 9
+  181 astore 5
+  183 dload 13
+  185 dstore 6
+  187 goto #65419
+  190 aload 5
+  192 areturn
+--- spawnGatewayPortal (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/levelgen/feature/configurations/EndGatewayConfiguration;)V
+    0 getstatic #419  net/minecraft/world/level/levelgen/feature/Feature.END_GATEWAY Lnet/minecraft/world/level/levelgen/feature/Feature;
+    3 aload_2
+    4 aload_0
+    5 aload_0
+    6 invokevirtual #424  net/minecraft/server/level/ServerLevel.getChunkSource ()Lnet/minecraft/server/level/ServerChunkCache;
+    9 invokevirtual #428  net/minecraft/server/level/ServerChunkCache.getGenerator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
+   12 invokestatic #434  net/minecraft/util/RandomSource.create ()Lnet/minecraft/util/RandomSource;
+   15 aload_1
+   16 invokevirtual #439  net/minecraft/world/level/levelgen/feature/Feature.place (Lnet/minecraft/world/level/levelgen/feature/configurations/FeatureConfiguration;Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z
+   19 pop
+   20 return
+--- shouldRenderFace (Lnet/minecraft/core/Direction;)Z
+    0 aload_0
+    1 invokevirtual #443  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getBlockState ()Lnet/minecraft/world/level/block/state/BlockState;
+    4 aload_0
+    5 getfield #446  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.level Lnet/minecraft/world/level/Level;
+    8 aload_0
+    9 invokevirtual #450  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getBlockPos ()Lnet/minecraft/core/BlockPos;
+   12 aload_1
+   13 invokevirtual #453  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+   16 invokevirtual #457  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   19 aload_1
+   20 invokestatic #458  net/minecraft/world/level/block/Block.shouldRenderFace (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+   23 ireturn
+--- getParticleAmount ()I
+    0 iconst_0
+    1 istore_1
+    2 invokestatic #464  net/minecraft/core/Direction.values ()[Lnet/minecraft/core/Direction;
+    5 astore_2
+    6 aload_2
+    7 arraylength
+    8 istore_3
+    9 iconst_0
+   10 istore 4
+   12 iload 4
+   14 iload_3
+   15 if_icmpge #32
+   18 aload_2
+   19 iload 4
+   21 aaload
+   22 astore 5
+   24 iload_1
+   25 aload_0
+   26 aload 5
+   28 invokevirtual #470  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.shouldRenderFace (Lnet/minecraft/core/Direction;)Z
+   31 ifeq #7
+   34 iconst_1
+   35 goto #4
+   38 iconst_0
+   39 iadd
+   40 istore_1
+   41 iinc 4 1
+   44 goto #65504
+   47 iload_1
+   48 ireturn
+--- setExitPosition (Lnet/minecraft/core/BlockPos;Z)V
+    0 aload_0
+    1 iload_2
+    2 putfield #21  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exactTeleport Z
+    5 aload_0
+    6 aload_1
+    7 putfield #45  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.exitPortal Lnet/minecraft/core/BlockPos;
+   10 aload_0
+   11 invokevirtual #473  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.setChanged ()V
+   14 return
+--- getUpdatePacket ()Lnet/minecraft/network/protocol/Packet;
+    0 aload_0
+    1 invokevirtual #476  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.getUpdatePacket ()Lnet/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket;
+    4 areturn
+--- lambda$findOrCreateValidTeleportPos$1 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Holder$Reference;)V
+    0 aload_2
+    1 invokevirtual #480  net/minecraft/core/Holder$Reference.value ()Ljava/lang/Object;
+    4 checkcast #485  net/minecraft/world/level/levelgen/feature/ConfiguredFeature
+    7 aload_0
+    8 aload_0
+    9 invokevirtual #424  net/minecraft/server/level/ServerLevel.getChunkSource ()Lnet/minecraft/server/level/ServerChunkCache;
+   12 invokevirtual #428  net/minecraft/server/level/ServerChunkCache.getGenerator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
+   15 aload_1
+   16 invokevirtual #487  net/minecraft/core/BlockPos.asLong ()J
+   19 invokestatic #491  net/minecraft/util/RandomSource.create (J)Lnet/minecraft/util/RandomSource;
+   22 aload_1
+   23 invokevirtual #494  net/minecraft/world/level/levelgen/feature/ConfiguredFeature.place (Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z
+   26 pop
+   27 return
+--- lambda$findOrCreateValidTeleportPos$0 (Lnet/minecraft/core/Registry;)Ljava/util/Optional;
+    0 aload_0
+    1 getstatic #497  net/minecraft/data/worldgen/features/EndFeatures.END_ISLAND Lnet/minecraft/resources/ResourceKey;
+    4 invokeinterface net/minecraft/core/Registry.get (Lnet/minecraft/resources/ResourceKey;)Ljava/util/Optional;
+    9 areturn
+--- <clinit> ()V
+    0 invokestatic #507  com/mojang/logging/LogUtils.getLogger ()Lorg/slf4j/Logger;
+    3 putstatic #169  net/minecraft/world/level/block/entity/TheEndGatewayBlockEntity.LOGGER Lorg/slf4j/Logger;
+    6 return

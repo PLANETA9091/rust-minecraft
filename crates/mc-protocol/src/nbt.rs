@@ -95,6 +95,19 @@ impl Nbt {
         }
     }
 
+    /// Long view (the BE clocks like the gateway's own `Age` word —
+    /// the long the putLong walk banks, the parse the exact i64 keeps;
+    /// the narrow ints the honest widen wears).
+    pub fn as_i64(&self) -> Option<i64> {
+        match *self {
+            Nbt::Byte(v) => Some(i64::from(v)),
+            Nbt::Short(v) => Some(i64::from(v)),
+            Nbt::Int(v) => Some(i64::from(v)),
+            Nbt::Long(v) => Some(v),
+            _ => None,
+        }
+    }
+
     /// Float view (the timeline track values: the element codecs write
     /// FLOAT, but a DOUBLE rides just as legally — both widen honestly).
     pub fn as_f32(&self) -> Option<f32> {

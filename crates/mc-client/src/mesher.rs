@@ -84,6 +84,13 @@ const FACE_CORNERS: [[[f32; 3]; 4]; 6] = [
 /// the loader's own lane reads)
 pub const TILE_END_PORTAL: u16 = 65534;
 
+/// THE END GATEWAY'S OWN SENTINEL (the autopush-316 round — the tile
+/// id the gateway's starry quads carry: the render pass partitions on
+/// it, the 16-layer swirl walk the gateway's own PORTAL_LAYERS=16
+/// pipeline law serves; the ATLAS never banks a tile here — the two
+/// end-portal textures the loader's own lane reads).
+pub const TILE_END_GATEWAY: u16 = 65533;
+
 /// THE HEAD'S OWN MODEL-FACE TABLE (the dev-82 round — javap
 /// ModelPart$Cube/<Polygon> the 26.2 ctor law the probe
 /// scripts/skull_probe_82.py decodes): per model face the four corner
@@ -124,7 +131,12 @@ const HEAD_MODEL_FACES: [([[f32; 3]; 4], [[f32; 2]; 4], usize); 6] = [
     // NORTH — THE SKIN'S OWN FACE (slot 3 — the [8,8] region): v20,
     // v19, v22, v21
     (
-        [[4.0, -8.0, -4.0], [-4.0, -8.0, -4.0], [-4.0, 0.0, -4.0], [4.0, 0.0, -4.0]],
+        [
+            [4.0, -8.0, -4.0],
+            [-4.0, -8.0, -4.0],
+            [-4.0, 0.0, -4.0],
+            [4.0, 0.0, -4.0],
+        ],
         [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
         3,
     ),
@@ -6570,7 +6582,63 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // the beam the BE renderer's own lane the vanilla's
                 // own render split speaks, the star field the
                 // documented absence the block lane never wears).
+                // THE CUBE'S OWN Y-FACES (the autopush-316 round — javap
+                // AbstractEndPortalRenderer.extractRenderState the
+                // facesToShow walk the 26.2 jar answers: the six
+                // directions the shouldRenderFace verdict filters, the
+                // TheEndPortalBlockEntity's own `axis == Y` law the UP
+                // + DOWN pair alone the gateway's starry surface wears
+                // [NO neighbor gate the extract walk keeps — the faces
+                // the set unconditionally banks], the submitCube walk
+                // the RenderTypes.endGateway() render type serves, the
+                // 16-layer swirl the PORTAL_LAYERS=16 pipeline define
+                // answers — the sentinel tile the render pass
+                // partitions on, the four horizontals the INVISIBLE
+                // render the sides never bake).
                 if crate::world::is_end_gateway(id) {
+                    const GATEWAY_EPS: f32 = 0.001;
+                    for face in 0..6usize {
+                        // THE AXIS GATE (the shouldRenderFace law — the
+                        // UP + DOWN rows the NEIGHBOR table's own Y
+                        // members keep, the four horizontals the
+                        // invisible sides retire)
+                        if NEIGHBOR[face].1 == 0 {
+                            continue;
+                        }
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                            pts[i] = [
+                                wx as f32
+                                    + (if c[0] < 0.5 {
+                                        GATEWAY_EPS
+                                    } else {
+                                        1.0 - GATEWAY_EPS
+                                    }),
+                                wy as f32
+                                    + (if c[1] < 0.5 {
+                                        GATEWAY_EPS
+                                    } else {
+                                        1.0 - GATEWAY_EPS
+                                    }),
+                                wz as f32
+                                    + (if c[2] < 0.5 {
+                                        GATEWAY_EPS
+                                    } else {
+                                        1.0 - GATEWAY_EPS
+                                    }),
+                            ];
+                            uvs[i] = face_uv(face, *c);
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors: [[1.0; 3]; 4], // the fullbright the BE pass keeps
+                            uvs,
+                            tile: TILE_END_GATEWAY,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
                     continue;
                 }
                 // THE BED'S OWN TWO-CELL LANE (the dev-194 round — the
