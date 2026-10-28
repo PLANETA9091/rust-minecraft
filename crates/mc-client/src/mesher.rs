@@ -10570,6 +10570,7 @@ mod tests {
             detector_ticks: Vec::new(),                    // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             dispenser_ticks: Vec::new(),
+            hopper_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),

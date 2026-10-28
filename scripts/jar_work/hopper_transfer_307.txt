@@ -1,0 +1,497 @@
+== HopperBlockEntity :: tryMoveItems (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/HopperBlockEntity;Ljava/util/function/BooleanSupplier;)Z ==
+    0 aload_0
+    1 invokevirtual #157  net/minecraft/world/level/Level.isClientSide ()Z
+    4 ifeq #5
+    7 iconst_0
+    8 ireturn
+    9 aload_3
+   10 invokevirtual #142  net/minecraft/world/level/block/entity/HopperBlockEntity.isOnCooldown ()Z
+   13 ifne #75
+   16 aload_2
+   17 getstatic #160  net/minecraft/world/level/block/HopperBlock.ENABLED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   20 invokevirtual #41  net/minecraft/world/level/block/state/BlockState.getValue (Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   23 checkcast #164  java/lang/Boolean
+   26 invokevirtual #166  java/lang/Boolean.booleanValue ()Z
+   29 ifeq #59
+   32 iconst_0
+   33 istore 5
+   35 aload_3
+   36 invokevirtual #169  net/minecraft/world/level/block/entity/HopperBlockEntity.isEmpty ()Z
+   39 ifne #11
+   42 aload_0
+   43 aload_1
+   44 aload_3
+   45 invokestatic #172  net/minecraft/world/level/block/entity/HopperBlockEntity.ejectItems (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/HopperBlockEntity;)Z
+   48 istore 5
+   50 aload_3
+   51 invokevirtual #176  net/minecraft/world/level/block/entity/HopperBlockEntity.inventoryFull ()Z
+   54 ifne #15
+   57 iload 5
+   59 aload 4
+   61 invokeinterface java/util/function/BooleanSupplier.getAsBoolean ()Z
+   66 ior
+   67 istore 5
+   69 iload 5
+   71 ifeq #17
+   74 aload_3
+   75 bipush 8
+   77 invokevirtual #146  net/minecraft/world/level/block/entity/HopperBlockEntity.setCooldown (I)V
+   80 aload_0
+   81 aload_1
+   82 aload_2
+   83 invokestatic #183  net/minecraft/world/level/block/entity/HopperBlockEntity.setChanged (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   86 iconst_1
+   87 ireturn
+   88 iconst_0
+   89 ireturn
+
+== HopperBlockEntity :: inventoryFull ()Z ==
+    0 aload_0
+    1 getfield #27  net/minecraft/world/level/block/entity/HopperBlockEntity.items Lnet/minecraft/core/NonNullList;
+    4 invokevirtual #187  net/minecraft/core/NonNullList.iterator ()Ljava/util/Iterator;
+    7 astore_1
+    8 aload_1
+    9 invokeinterface java/util/Iterator.hasNext ()Z
+   14 ifeq #36
+   17 aload_1
+   18 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   23 checkcast #16  net/minecraft/world/item/ItemStack
+   26 astore_2
+   27 aload_2
+   28 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   31 ifne #14
+   34 aload_2
+   35 invokevirtual #201  net/minecraft/world/item/ItemStack.getCount ()I
+   38 aload_2
+   39 invokevirtual #204  net/minecraft/world/item/ItemStack.getMaxStackSize ()I
+   42 if_icmpeq #5
+   45 iconst_0
+   46 ireturn
+   47 goto #65497
+   50 iconst_1
+   51 ireturn
+
+== HopperBlockEntity :: ejectItems (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/HopperBlockEntity;)Z ==
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 invokestatic #206  net/minecraft/world/level/block/entity/HopperBlockEntity.getAttachedContainer (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/HopperBlockEntity;)Lnet/minecraft/world/Container;
+    6 astore_3
+    7 aload_3
+    8 ifnonnull #5
+   11 iconst_0
+   12 ireturn
+   13 aload_2
+   14 getfield #49  net/minecraft/world/level/block/entity/HopperBlockEntity.facing Lnet/minecraft/core/Direction;
+   17 invokevirtual #210  net/minecraft/core/Direction.getOpposite ()Lnet/minecraft/core/Direction;
+   20 astore 4
+   22 aload_3
+   23 aload 4
+   25 invokestatic #214  net/minecraft/world/level/block/entity/HopperBlockEntity.isFullContainer (Lnet/minecraft/world/Container;Lnet/minecraft/core/Direction;)Z
+   28 ifeq #5
+   31 iconst_0
+   32 ireturn
+   33 iconst_0
+   34 istore 5
+   36 iload 5
+   38 aload_2
+   39 invokevirtual #57  net/minecraft/world/level/block/entity/HopperBlockEntity.getContainerSize ()I
+   42 if_icmpge #88
+   45 aload_2
+   46 iload 5
+   48 invokevirtual #218  net/minecraft/world/level/block/entity/HopperBlockEntity.getItem (I)Lnet/minecraft/world/item/ItemStack;
+   51 astore 6
+   53 aload 6
+   55 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   58 ifeq #6
+   61 goto #63
+   64 aload 6
+   66 invokevirtual #201  net/minecraft/world/item/ItemStack.getCount ()I
+   69 istore 7
+   71 aload_2
+   72 aload_3
+   73 aload_2
+   74 iload 5
+   76 iconst_1
+   77 invokevirtual #222  net/minecraft/world/level/block/entity/HopperBlockEntity.removeItem (II)Lnet/minecraft/world/item/ItemStack;
+   80 aload 4
+   82 invokestatic #225  net/minecraft/world/level/block/entity/HopperBlockEntity.addItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/item/ItemStack;
+   85 astore 8
+   87 aload 8
+   89 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   92 ifeq #11
+   95 aload_3
+   96 invokeinterface net/minecraft/world/Container.setChanged ()V
+  101 iconst_1
+  102 ireturn
+  103 aload 6
+  105 iload 7
+  107 invokevirtual #234  net/minecraft/world/item/ItemStack.setCount (I)V
+  110 iload 7
+  112 iconst_1
+  113 if_icmpne #11
+  116 aload_2
+  117 iload 5
+  119 aload 6
+  121 invokevirtual #237  net/minecraft/world/level/block/entity/HopperBlockEntity.setItem (ILnet/minecraft/world/item/ItemStack;)V
+  124 iinc 5 1
+  127 goto #65445
+  130 iconst_0
+  131 ireturn
+
+== HopperBlockEntity :: getSlots (Lnet/minecraft/world/Container;Lnet/minecraft/core/Direction;)[I ==
+    0 aload_0
+    1 instanceof #241  net/minecraft/world/WorldlyContainer
+    4 ifeq #16
+    7 aload_0
+    8 checkcast #241  net/minecraft/world/WorldlyContainer
+   11 astore_2
+   12 aload_2
+   13 aload_1
+   14 invokeinterface net/minecraft/world/WorldlyContainer.getSlotsForFace (Lnet/minecraft/core/Direction;)[I
+   19 areturn
+   20 aload_0
+   21 invokeinterface net/minecraft/world/Container.getContainerSize ()I
+   26 istore_2
+   27 iload_2
+   28 getstatic #248  net/minecraft/world/level/block/entity/HopperBlockEntity.CACHED_SLOTS [[I
+   31 arraylength
+   32 if_icmpge #31
+   35 getstatic #248  net/minecraft/world/level/block/entity/HopperBlockEntity.CACHED_SLOTS [[I
+   38 iload_2
+   39 aaload
+   40 astore_3
+   41 aload_3
+   42 ifnull #5
+   45 aload_3
+   46 areturn
+   47 iload_2
+   48 invokestatic #252  net/minecraft/world/level/block/entity/HopperBlockEntity.createFlatSlots (I)[I
+   51 astore 4
+   53 getstatic #248  net/minecraft/world/level/block/entity/HopperBlockEntity.CACHED_SLOTS [[I
+   56 iload_2
+   57 aload 4
+   59 aastore
+   60 aload 4
+   62 areturn
+   63 iload_2
+   64 invokestatic #252  net/minecraft/world/level/block/entity/HopperBlockEntity.createFlatSlots (I)[I
+   67 areturn
+
+== HopperBlockEntity :: suckInItems (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;)Z ==
+    0 aload_1
+    1 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelX ()D
+    6 aload_1
+    7 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelY ()D
+   12 dconst_1
+   13 dadd
+   14 aload_1
+   15 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelZ ()D
+   20 invokestatic #273  net/minecraft/core/BlockPos.containing (DDD)Lnet/minecraft/core/BlockPos;
+   23 astore_2
+   24 aload_0
+   25 aload_2
+   26 invokevirtual #279  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   29 astore_3
+   30 aload_0
+   31 aload_1
+   32 aload_2
+   33 aload_3
+   34 invokestatic #283  net/minecraft/world/level/block/entity/HopperBlockEntity.getSourceContainer (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/Container;
+   37 astore 4
+   39 aload 4
+   41 ifnull #62
+   44 getstatic #287  net/minecraft/core/Direction.DOWN Lnet/minecraft/core/Direction;
+   47 astore 5
+   49 aload 4
+   51 aload 5
+   53 invokestatic #256  net/minecraft/world/level/block/entity/HopperBlockEntity.getSlots (Lnet/minecraft/world/Container;Lnet/minecraft/core/Direction;)[I
+   56 astore 6
+   58 aload 6
+   60 arraylength
+   61 istore 7
+   63 iconst_0
+   64 istore 8
+   66 iload 8
+   68 iload 7
+   70 if_icmpge #31
+   73 aload 6
+   75 iload 8
+   77 iaload
+   78 istore 9
+   80 aload_1
+   81 aload 4
+   83 iload 9
+   85 aload 5
+   87 invokestatic #290  net/minecraft/world/level/block/entity/HopperBlockEntity.tryTakeInItemFromSlot (Lnet/minecraft/world/level/block/entity/Hopper;Lnet/minecraft/world/Container;ILnet/minecraft/core/Direction;)Z
+   90 ifeq #5
+   93 iconst_1
+   94 ireturn
+   95 iinc 8 1
+   98 goto #65504
+  101 iconst_0
+  102 ireturn
+  103 aload_1
+  104 invokeinterface net/minecraft/world/level/block/entity/Hopper.isGridAligned ()Z
+  109 ifeq #26
+  112 aload_3
+  113 aload_0
+  114 aload_2
+  115 invokevirtual #297  net/minecraft/world/level/block/state/BlockState.isCollisionShapeFullBlock (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+  118 ifeq #17
+  121 aload_3
+  122 getstatic #301  net/minecraft/tags/BlockTags.DOES_NOT_BLOCK_HOPPERS Lnet/minecraft/tags/TagKey;
+  125 invokevirtual #307  net/minecraft/world/level/block/state/BlockState.is (Lnet/minecraft/tags/TagKey;)Z
+  128 ifne #7
+  131 iconst_1
+  132 goto #4
+  135 iconst_0
+  136 istore 5
+  138 iload 5
+  140 ifne #51
+  143 aload_0
+  144 aload_1
+  145 invokestatic #311  net/minecraft/world/level/block/entity/HopperBlockEntity.getItemsAtAndAbove (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;)Ljava/util/List;
+  148 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+  153 astore 6
+  155 aload 6
+  157 invokeinterface java/util/Iterator.hasNext ()Z
+  162 ifeq #29
+  165 aload 6
+  167 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  172 checkcast #318  net/minecraft/world/entity/item/ItemEntity
+  175 astore 7
+  177 aload_1
+  178 aload 7
+  180 invokestatic #320  net/minecraft/world/level/block/entity/HopperBlockEntity.addItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/entity/item/ItemEntity;)Z
+  183 ifeq #5
+  186 iconst_1
+  187 ireturn
+  188 goto #65503
+  191 iconst_0
+  192 ireturn
+
+== HopperBlockEntity :: tryTakeInItemFromSlot (Lnet/minecraft/world/level/block/entity/Hopper;Lnet/minecraft/world/Container;ILnet/minecraft/core/Direction;)Z ==
+    0 aload_1
+    1 iload_2
+    2 invokeinterface net/minecraft/world/Container.getItem (I)Lnet/minecraft/world/item/ItemStack;
+    7 astore 4
+    9 aload 4
+   11 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   14 ifne #76
+   17 aload_0
+   18 aload_1
+   19 aload 4
+   21 iload_2
+   22 aload_3
+   23 invokestatic #323  net/minecraft/world/level/block/entity/HopperBlockEntity.canTakeItemFromContainer (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/core/Direction;)Z
+   26 ifeq #64
+   29 aload 4
+   31 invokevirtual #201  net/minecraft/world/item/ItemStack.getCount ()I
+   34 istore 5
+   36 aload_1
+   37 aload_0
+   38 aload_1
+   39 iload_2
+   40 iconst_1
+   41 invokeinterface net/minecraft/world/Container.removeItem (II)Lnet/minecraft/world/item/ItemStack;
+   46 aconst_null
+   47 invokestatic #225  net/minecraft/world/level/block/entity/HopperBlockEntity.addItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/item/ItemStack;
+   50 astore 6
+   52 aload 6
+   54 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   57 ifeq #11
+   60 aload_1
+   61 invokeinterface net/minecraft/world/Container.setChanged ()V
+   66 iconst_1
+   67 ireturn
+   68 aload 4
+   70 iload 5
+   72 invokevirtual #234  net/minecraft/world/item/ItemStack.setCount (I)V
+   75 iload 5
+   77 iconst_1
+   78 if_icmpne #12
+   81 aload_1
+   82 iload_2
+   83 aload 4
+   85 invokeinterface net/minecraft/world/Container.setItem (ILnet/minecraft/world/item/ItemStack;)V
+   90 iconst_0
+   91 ireturn
+
+== HopperBlockEntity :: addItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/entity/item/ItemEntity;)Z ==
+    0 iconst_0
+    1 istore_2
+    2 aload_1
+    3 invokevirtual #329  net/minecraft/world/entity/item/ItemEntity.getItem ()Lnet/minecraft/world/item/ItemStack;
+    6 invokevirtual #332  net/minecraft/world/item/ItemStack.copy ()Lnet/minecraft/world/item/ItemStack;
+    9 astore_3
+   10 aconst_null
+   11 aload_0
+   12 aload_3
+   13 aconst_null
+   14 invokestatic #225  net/minecraft/world/level/block/entity/HopperBlockEntity.addItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/item/ItemStack;
+   17 astore 4
+   19 aload 4
+   21 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   24 ifeq #19
+   27 iconst_1
+   28 istore_2
+   29 aload_1
+   30 getstatic #15  net/minecraft/world/item/ItemStack.EMPTY Lnet/minecraft/world/item/ItemStack;
+   33 invokevirtual #335  net/minecraft/world/entity/item/ItemEntity.setItem (Lnet/minecraft/world/item/ItemStack;)V
+   36 aload_1
+   37 invokevirtual #338  net/minecraft/world/entity/item/ItemEntity.discard ()V
+   40 goto #9
+   43 aload_1
+   44 aload 4
+   46 invokevirtual #335  net/minecraft/world/entity/item/ItemEntity.setItem (Lnet/minecraft/world/item/ItemStack;)V
+   49 iload_2
+   50 ireturn
+
+== HopperBlockEntity :: addItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/item/ItemStack; ==
+    0 aload_1
+    1 instanceof #241  net/minecraft/world/WorldlyContainer
+    4 ifeq #63
+    7 aload_1
+    8 checkcast #241  net/minecraft/world/WorldlyContainer
+   11 astore 4
+   13 aload_3
+   14 ifnull #53
+   17 aload 4
+   19 aload_3
+   20 invokeinterface net/minecraft/world/WorldlyContainer.getSlotsForFace (Lnet/minecraft/core/Direction;)[I
+   25 astore 5
+   27 iconst_0
+   28 istore 6
+   30 iload 6
+   32 aload 5
+   34 arraylength
+   35 if_icmpge #29
+   38 aload_2
+   39 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   42 ifne #22
+   45 aload_0
+   46 aload_1
+   47 aload_2
+   48 aload 5
+   50 iload 6
+   52 iaload
+   53 aload_3
+   54 invokestatic #341  net/minecraft/world/level/block/entity/HopperBlockEntity.tryMoveInItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/core/Direction;)Lnet/minecraft/world/item/ItemStack;
+   57 astore_2
+   58 iinc 6 1
+   61 goto #65505
+   64 goto #44
+   67 aload_1
+   68 invokeinterface net/minecraft/world/Container.getContainerSize ()I
+   73 istore 5
+   75 iconst_0
+   76 istore 6
+   78 iload 6
+   80 iload 5
+   82 if_icmpge #26
+   85 aload_2
+   86 invokevirtual #200  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   89 ifne #19
+   92 aload_0
+   93 aload_1
+   94 aload_2
+   95 iload 6
+   97 aload_3
+   98 invokestatic #341  net/minecraft/world/level/block/entity/HopperBlockEntity.tryMoveInItem (Lnet/minecraft/world/Container;Lnet/minecraft/world/Container;Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/core/Direction;)Lnet/minecraft/world/item/ItemStack;
+  101 astore_2
+  102 iinc 6 1
+  105 goto #65509
+  108 aload_2
+  109 areturn
+
+== HopperBlockEntity :: getAttachedContainer (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/HopperBlockEntity;)Lnet/minecraft/world/Container; ==
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 getfield #49  net/minecraft/world/level/block/entity/HopperBlockEntity.facing Lnet/minecraft/core/Direction;
+    6 invokevirtual #384  net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+    9 invokestatic #388  net/minecraft/world/level/block/entity/HopperBlockEntity.getContainerAt (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/Container;
+   12 areturn
+
+== HopperBlockEntity :: getSourceContainer (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/Container; ==
+    0 aload_0
+    1 aload_2
+    2 aload_3
+    3 aload_1
+    4 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelX ()D
+    9 aload_1
+   10 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelY ()D
+   15 dconst_1
+   16 dadd
+   17 aload_1
+   18 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelZ ()D
+   23 invokestatic #392  net/minecraft/world/level/block/entity/HopperBlockEntity.getContainerAt (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;DDD)Lnet/minecraft/world/Container;
+   26 areturn
+
+== HopperBlockEntity :: getItemsAtAndAbove (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;)Ljava/util/List; ==
+    0 aload_1
+    1 invokeinterface net/minecraft/world/level/block/entity/Hopper.getSuckAabb ()Lnet/minecraft/world/phys/AABB;
+    6 aload_1
+    7 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelX ()D
+   12 ldc2_w #399 = 0.5
+   15 dsub
+   16 aload_1
+   17 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelY ()D
+   22 ldc2_w #399 = 0.5
+   25 dsub
+   26 aload_1
+   27 invokeinterface net/minecraft/world/level/block/entity/Hopper.getLevelZ ()D
+   32 ldc2_w #399 = 0.5
+   35 dsub
+   36 invokevirtual #401  net/minecraft/world/phys/AABB.move (DDD)Lnet/minecraft/world/phys/AABB;
+   39 astore_2
+   40 aload_0
+   41 ldc_w #318 = net/minecraft/world/entity/item/ItemEntity
+   44 aload_2
+   45 getstatic #407  net/minecraft/world/entity/EntitySelector.ENTITY_STILL_ALIVE Ljava/util/function/Predicate;
+   48 invokevirtual #413  net/minecraft/world/level/Level.getEntitiesOfClass (Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;
+   51 areturn
+
+== HopperBlockEntity :: setCooldown (I)V ==
+    0 aload_0
+    1 iload_1
+    2 putfield #31  net/minecraft/world/level/block/entity/HopperBlockEntity.cooldownTime I
+    5 return
+
+== HopperBlockEntity :: isOnCooldown ()Z ==
+    0 aload_0
+    1 getfield #31  net/minecraft/world/level/block/entity/HopperBlockEntity.cooldownTime I
+    4 ifle #7
+    7 iconst_1
+    8 goto #4
+   11 iconst_0
+   12 ireturn
+
+== BlockEntity :: setChanged ()V ==
+    0 aload_0
+    1 getfield #117  net/minecraft/world/level/block/entity/BlockEntity.level Lnet/minecraft/world/level/Level;
+    4 ifnull #18
+    7 aload_0
+    8 getfield #117  net/minecraft/world/level/block/entity/BlockEntity.level Lnet/minecraft/world/level/Level;
+   11 aload_0
+   12 getfield #28  net/minecraft/world/level/block/entity/BlockEntity.worldPosition Lnet/minecraft/core/BlockPos;
+   15 aload_0
+   16 getfield #36  net/minecraft/world/level/block/entity/BlockEntity.blockState Lnet/minecraft/world/level/block/state/BlockState;
+   19 invokestatic #251  net/minecraft/world/level/block/entity/BlockEntity.setChanged (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   22 return
+
+== BlockEntity :: setChanged (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V ==
+    0 aload_0
+    1 aload_1
+    2 invokevirtual #255  net/minecraft/world/level/Level.blockEntityChanged (Lnet/minecraft/core/BlockPos;)V
+    5 aload_2
+    6 invokevirtual #261  net/minecraft/world/level/block/state/BlockState.isAir ()Z
+    9 ifne #12
+   12 aload_0
+   13 aload_1
+   14 aload_2
+   15 invokevirtual #267  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+   18 invokevirtual #271  net/minecraft/world/level/Level.updateNeighbourForOutputSignal (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V
+   21 return
+

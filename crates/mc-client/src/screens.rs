@@ -39661,6 +39661,24 @@ impl App {
                 // the world-less parse the no-op keeps, the enter tail
                 // the same walk heals)
                 self.container_stores_kind_heal();
+                // THE HOPPER'S OWN BOOT SEED (the autopush-307 round —
+                // the saved hoppers the queue the restart arms: the
+                // kind gate the world's own read answers, the stale
+                // cell the dug hopper the beat drops, the next frame
+                // the entry the beat serves)
+                if self.offline_world.is_some() {
+                    for k in &keys {
+                        if self
+                            .offline_world
+                            .as_ref()
+                            .is_some_and(|w| crate::world::is_hopper(w.get(k.0, k.1, k.2)))
+                        {
+                            if let Some(w) = self.offline_world.as_mut() {
+                                w.schedule_hopper_tick(self.frame + 1, k.0, k.1, k.2);
+                            }
+                        }
+                    }
+                }
                 // THE FILL'S OWN PARSE RIDE (the comparator's container
                 // lane the boot banks — the parsed stores the analog
                 // the same rows wear, the restart the stocked chest's
@@ -55749,6 +55767,12 @@ impl App {
                     cell.2,
                     crate::world::hopper_placement_facing(hit.face),
                 );
+                // THE HOPPER'S OWN TICK SEED (the autopush-307 round —
+                // javap pushItemsTick the block ticker the placement
+                // arms: the every-tick walk the queue entry the next
+                // frame the beat serves, the transfer walks the due
+                // drain answers)
+                world.schedule_hopper_tick(self.frame + 1, cell.0, cell.1, cell.2);
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
@@ -61266,6 +61290,12 @@ impl App {
         // THE DISPENSER/DROPPER'S OWN BEAT (the autopush-139 round —
         // the scheduled shots the diode family's own lane beside)
         self.tick_dispenser_beats();
+        // THE HOPPER'S OWN BEAT (the autopush-307 round — the
+        // scheduled transfers the dispenser family's own lane beside:
+        // the push the attached container the facing neighbor
+        // answers, the suck the above cell the entity column the
+        // full-block gate refuses, the cooldown the success banks)
+        self.tick_hopper_beats();
         // THE ITEM FRAME'S OWN POLL (the HangingEntity.tick's 100-tick
         // clock the survive verdict rides — the popped frames the
         // support's own loss the drop walk serves)
@@ -62015,6 +62045,227 @@ impl App {
             // eject the broadcast re-reads)
             let _ = self.container_fill_sync((x, y, z), None);
             self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE HOPPER'S OWN TRANSFER BEAT (the autopush-307 round — javap
+    /// HopperBlockEntity.pushItemsTick the 26.2 jar the live disasm
+    /// answers: the block ticker the queue drain the every-tick walk
+    /// serves, the drain the scheduled entries the deterministic
+    /// order keeps, the kind gate the dug hopper the stale row drops
+    /// [the dispenser lane's own honest extra the sibling wears]).
+    fn tick_hopper_beats(&mut self) {
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_hopper_ticks(self.frame)
+        };
+        if due.is_empty() {
+            return;
+        }
+        for (x, y, z) in due {
+            let Some(world) = self.offline_world.as_ref() else {
+                return;
+            };
+            // THE RAIL-MATCH GATE the stale row the kind's own verdict
+            // drops (the dug hopper the queued entry the honest extra
+            // keeps)
+            if !crate::world::is_hopper(world.get(x, y, z)) {
+                continue;
+            }
+            // THE FACING'S OWN READ (the low three bits the DIRECTION
+            // vocabulary the placement walk stamps — the mesher's own
+            // funnel lane the same byte rotates)
+            let facing = world.variant(x, y, z) & 7;
+            self.hopper_transfer_tick(x, y, z, facing);
+        }
+    }
+
+    /// THE HOPPER'S OWN TRANSFER TICK (javap 26.2 the live disasm the
+    /// scripts/jar_work/hopper_transfer_307.txt walk banks): the
+    /// tryMoveItems law the pair of walks wears — the EJECT the
+    /// `getAttachedContainer` walk the `pos.relative(FACING)` neighbor
+    /// answers [the isFullContainer gate the all-max row refuses, the
+    /// one-item probe the flat slot order serves], the SUCK the
+    /// `containing(x, y+1.0, z)` cell the supplier walk serves [the
+    /// EAGER `ior` the push-success the suck still runs — the same
+    /// tick the both ways the one item each wears], the full row the
+    /// suck gate refuses, the item-entity column the full-block gate
+    /// the lane refuses [the 1.21.2+ the taller suck area the
+    /// SUCK_AABB shape answers], the `setCooldown(8)` the success
+    /// banks, the queue the cadence the +1 idle re-arm carries.
+    fn hopper_transfer_tick(&mut self, x: i32, y: i32, z: i32, facing: u8) {
+        self.container_stores_load_once();
+        // THE ROW'S OWN SEAT (the fresh five the first beat inserts —
+        // the open walk's own law the same entry keeps)
+        self.container_stores
+            .entry((x, y, z))
+            .or_insert_with(|| vec![(0i32, 0i32); 5]);
+        // THE TWO CELLS (javap getAttachedContainer pc 0-12 the
+        // `pos.relative(FACING)` walk answers, suckInItems pc 0-23 the
+        // `containing(x, y+1.0, z)` the above cell banks)
+        let (adx, ady, adz) = crate::world::dispenser_facing_delta6(facing);
+        let attached = (x + adx, y + ady, z + adz);
+        let above = (x, y + 1, z);
+        let kind_at = |c: (i32, i32, i32)| -> u16 {
+            self.offline_world
+                .as_ref()
+                .map(|w| w.get(c.0, c.1, c.2))
+                .unwrap_or(0)
+        };
+        let store_kind = |c: (i32, i32, i32)| -> Option<u16> {
+            let k = kind_at(c);
+            if crate::world::is_chest(k)
+                || crate::world::is_barrel(k)
+                || crate::world::is_dispenser_kind(k)
+                || crate::world::is_shulker(k)
+                || crate::world::is_hopper(k)
+            {
+                Some(k)
+            } else {
+                None
+            }
+        };
+        let mut changed: Vec<(i32, i32, i32)> = Vec::new();
+        let mut moved = false;
+        // THE PUSH LAW (javap ejectItems pc 0-131 — the attached
+        // container the facing neighbor answers, the target's own
+        // all-max row the isFullContainer gate refuses, the one-item
+        // probe the flat slot order serves)
+        if store_kind(attached).is_some() {
+            let width = {
+                let k = store_kind(attached).unwrap_or(0);
+                crate::world::container_kind_slot_count(k)
+            };
+            self.container_stores
+                .entry(attached)
+                .or_insert_with(|| vec![(0i32, 0i32); width]);
+            let target_full = self
+                .container_stores
+                .get(&attached)
+                .is_some_and(|s| crate::world::hopper_inventory_full(s));
+            if !target_full {
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let did = {
+                    let target = self
+                        .container_stores
+                        .get_mut(&attached)
+                        .expect("the sink the entry arm banks");
+                    crate::world::hopper_push_one(&mut hopper_row, target)
+                };
+                if did {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    changed.push((x, y, z));
+                    changed.push(attached);
+                    moved = true;
+                }
+            }
+        }
+        // THE SUCK LAW (javap tryMoveItems pc 50-67 the EAGER `ior`
+        // walk the push-success the suck still serves, the
+        // inventoryFull gate the full row refuses)
+        let hopper_full_now = self
+            .container_stores
+            .get(&(x, y, z))
+            .is_some_and(|s| crate::world::hopper_inventory_full(s));
+        if !hopper_full_now {
+            if store_kind(above).is_some() {
+                // THE CONTAINER ARM (javap suckInItems pc 39-102 — the
+                // above cell the DOWN face the flat slot order speaks)
+                let width = {
+                    let k = store_kind(above).unwrap_or(0);
+                    crate::world::container_kind_slot_count(k)
+                };
+                self.container_stores
+                    .entry(above)
+                    .or_insert_with(|| vec![(0i32, 0i32); width]);
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let did = {
+                    let src = self
+                        .container_stores
+                        .get_mut(&above)
+                        .expect("the sink the entry arm banks");
+                    crate::world::hopper_suck_one(&mut hopper_row, src)
+                };
+                if did {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    changed.push((x, y, z));
+                    changed.push(above);
+                    moved = true;
+                }
+            } else if crate::world::collision_shape(kind_at(above))
+                != crate::world::CollisionShape::Full
+            {
+                // THE ITEM-ENTITY ARM (javap suckInItems pc 103-192 +
+                // addItem(Container, ItemEntity) pc 0-50 — the full
+                // block above the lane refuses [the DOES_NOT_BLOCK
+                // tag the thin shapes the verdict keeps], the suck
+                // column the box test answers, the WHOLE stack the
+                // insert serves, the empty leftover the discard keeps)
+                let mut hopper_row = self
+                    .container_stores
+                    .get(&(x, y, z))
+                    .cloned()
+                    .unwrap_or_else(|| vec![(0i32, 0i32); 5]);
+                let mut taken_ids: Vec<i32> = Vec::new();
+                for d in self.drops.iter_mut() {
+                    if d.item == 0 || d.count <= 0 {
+                        continue;
+                    }
+                    if !crate::world::hopper_suck_box_hits(x, y, z, d.x, d.y, d.z) {
+                        continue;
+                    }
+                    let take = crate::world::hopper_insert_stack(&mut hopper_row, d.item, d.count);
+                    if take > 0 {
+                        let rest = d.count - take;
+                        d.count = rest;
+                        if rest <= 0 {
+                            taken_ids.push(d.id); // the discard arm the removal serves
+                        }
+                        changed.push((x, y, z));
+                        moved = true;
+                        break; // the vanilla walk the FIRST entity the one walk serves
+                    }
+                }
+                if moved {
+                    self.container_stores.insert((x, y, z), hopper_row);
+                    if !taken_ids.is_empty() {
+                        self.drops.retain(|d| !taken_ids.contains(&d.id));
+                    }
+                }
+            }
+        }
+        // THE NEXT TICK'S OWN ARM (the pushItemsTick's own every-tick
+        // walk the queue entry carries — the +1 the idle re-arm
+        // speaks, the +8 the success cooldown banks)
+        let cooldown = if moved {
+            crate::world::HOPPER_COOLDOWN_TICKS
+        } else {
+            1
+        };
+        let next = self.frame + cooldown;
+        if let Some(world) = self.offline_world.as_mut() {
+            world.schedule_hopper_tick(next, x, y, z);
+        }
+        // THE CHANGED TAIL (javap tryMoveItems pc 80-83 the setChanged
+        // walk the hopper cell answers, ejectItems pc 95-96 the
+        // target's own setChanged keeps — the analog sync the
+        // comparator's next consult re-reads, the disk bank the
+        // transfers the same flush keeps)
+        if moved {
+            for c in changed {
+                let _ = self.container_fill_sync(c, None);
+            }
+            self.container_stores_file_save();
         }
     }
 

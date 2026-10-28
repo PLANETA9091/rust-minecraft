@@ -594,3 +594,244 @@ fn the_offline_hopper_the_door_the_window_the_five_slots_banks() {
         "the flush the five-slot store banks"
     );
 }
+
+/// THE HOPPER'S OWN TRANSFER THE PUSH THE COOLDOWN WEARS (the
+/// autopush-307 round — javap 26.2 the live disasm the
+/// scripts/jar_work/hopper_transfer_307.txt walk banks): the REAL
+/// placement walk the hopper the chest's top face lands [the floor
+/// click the DOWN facing stamps, the placement seed the queue the
+/// next frame arms], the stocked row the beat the chest pushes, the
+/// setChanged tail the analog + the disk bank ride, the cooldown the
+/// `setCooldown(8)` law the next push banks — the eight-tick gap
+/// the second item the same beat serves.
+#[test]
+fn the_offline_hopper_the_push_the_chest_the_cooldown_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").expect("the wire table");
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE OFF-COLUMN SEAT (the player's own body the spawn column
+    // keeps — the chest the two-east cell the BB intersection the
+    // placement's canPlace gate never wears)
+    let chest_cell = (c + 2, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(chest_cell.0, chest_cell.1, chest_cell.2, crate::world::CHEST);
+    app.container_stores_load_once();
+    app.container_stores.insert(chest_cell, vec![(0i32, 0i32); 27]);
+    // THE REAL PLACEMENT WALK (the hopper item the hotbar's first
+    // slot wears, the ANGLED look the chest's south face the ray
+    // enters — the straight-down look the player's own BB the
+    // canPlace gate refuses [the vanilla's own guard the body the
+    // camera-following walk wears], the wall click the hopper the
+    // chest's east cell lands, the NORTH facing the clicked face's
+    // opposite stamps [the funnel the chest the mouth serves], the
+    // tick seed the queue arms)
+    app.inventory.items[0] = (hopper_id, 8);
+    app.hotbar_slots = app.inventory.hotbar();
+    // THE SNEAKING PLACE (the vanilla BlockItem.useOn walk the shift
+    // gate wears — the chest's own use arm the sneaking press the
+    // place fallback serves)
+    app.shift_down = true;
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 2.5, surface as f32 + 3.5, c as f32 + 2.5),
+        yaw: 0.0,
+        pitch: -55.0f32.to_radians(),
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    app.shift_down = false;
+    let hopper_cell = (c + 2, surface + 1, c + 1);
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::HOPPER,
+            "the hopper the chest's east cell the placement lands"
+        );
+        assert_eq!(
+            w.variant(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::DISPENSER_FACING_NORTH,
+            "the clicked face's opposite the NORTH mouth stamps"
+        );
+        assert!(
+            !w.hopper_ticks.is_empty(),
+            "the placement seed the queue arms"
+        );
+    }
+    // THE STOCKED ROW (the pre-bank the door test's own idiom wears —
+    // the fresh five the two dirt the slot 0 keeps)
+    app.container_stores.insert(
+        hopper_cell,
+        vec![(dirt, 2), (0, 0), (0, 0), (0, 0), (0, 0)],
+    );
+    // THE FIRST BEAT (the update the queue drains — the push the one
+    // dirt the chest the seats, the cooldown the success banks)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the hopper row the decrement wears"
+    );
+    assert_eq!(
+        app.container_stores.get(&chest_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the chest the first item seats"
+    );
+    // THE COOLDOWN'S OWN GATE (the next tick the push never wears —
+    // the setCooldown(8) law the intermediate beats refuse)
+    app.update();
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&chest_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the cooldown the second push refuses"
+    );
+    // THE EIGHTH TICK'S OWN SERVE (the six more updates the +8 cadence
+    // completes — the second dirt the same beat lands)
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores.get(&chest_cell).map(|s| s[0]),
+        Some((dirt, 2)),
+        "the cooldown spent the second item serves"
+    );
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((0, 0)),
+        "the emptied slot the honest (0, 0) row banks"
+    );
+}
+
+/// THE HOPPER'S OWN SUCK THE CHEST AND THE ENTITY WEARS (the
+/// autopush-307 round — javap suckInItems the 26.2 jar the live
+/// disasm answers): the chest ABOVE the hopper the container arm
+/// serves [the DOWN face the flat slot order the one item per tick
+/// speaks], the item entity the column arm the WHOLE stack the
+/// insert serves [the empty leftover the discard keeps], the full
+/// block above the entity lane refuses (the DOES_NOT_BLOCK gate the
+/// collision verdict wears).
+#[test]
+fn the_offline_hopper_the_suck_the_chest_and_the_entity_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let hopper_id = mc_registry::item_id_by_name("hopper").expect("the wire table");
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE REAL PLACEMENT WALK FIRST (the open ground cell the floor
+    // look the ray enters — the chest the ABOVE seat the set walk
+    // banks AFTER the placement lands: the pre-placed chest the ray
+    // the top face would preempt)
+    app.inventory.items[0] = (hopper_id, 8);
+    app.hotbar_slots = app.inventory.hotbar();
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 4.0, c as f32 + 0.5),
+        yaw: std::f32::consts::PI,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        app.on_right_press(0, 0),
+        "the hopper placement consumed the press"
+    );
+    let hopper_cell = (c, surface + 1, c);
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(hopper_cell.0, hopper_cell.1, hopper_cell.2),
+            crate::world::HOPPER,
+            "the hopper the ground cell the placement lands"
+        );
+    }
+    // THE CHEST'S OWN SEAT ABOVE (the pre-banked kind the set walk
+    // lands — the suck lane's source the same map keeps)
+    let chest_cell = (c, surface + 2, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(chest_cell.0, chest_cell.1, chest_cell.2, crate::world::CHEST);
+    app.container_stores_load_once();
+    app.container_stores.insert(
+        chest_cell,
+        vec![(dirt, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+    );
+    // THE FIRST BEAT (the suck the one dirt the chest the above row
+    // the hopper the seats — the cooldown the success banks)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the hopper the first dirt seats"
+    );
+    assert_eq!(
+        app.container_stores.get(&chest_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the chest row the decrement wears"
+    );
+    // THE COOLDOWN'S OWN GATE (the seven intermediate beats the
+    // setCooldown(8) law the second suck refuses)
+    for _ in 0..7 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((dirt, 1)),
+        "the cooldown the second suck refuses"
+    );
+    // THE EIGHTH TICK'S OWN SERVE (the second dirt the same beat
+    // lands — the chest row the (0, 0) honest empty wears)
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&hopper_cell).map(|s| s[0]),
+        Some((dirt, 2)),
+        "the cooldown spent the second dirt serves"
+    );
+    assert_eq!(
+        app.container_stores.get(&chest_cell).map(|s| s[0]),
+        Some((0, 0)),
+        "the emptied chest slot the honest row banks"
+    );
+    // THE ENTITY ARM (javap getItemsAtAndAbove + addItem(Container,
+    // ItemEntity) — the drop the hopper's own cell the suck column
+    // answers, the WHOLE stack the insert serves, the discard the
+    // empty leftover keeps). THE CHEST the above cell the container
+    // arm the entity lane NEVER serves — the fresh cell the no-
+    // container-above walk the entity lane arms.
+    let entity_hopper_cell = (c + 4, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(entity_hopper_cell.0, entity_hopper_cell.1, entity_hopper_cell.2, crate::world::HOPPER);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set_variant(entity_hopper_cell.0, entity_hopper_cell.1, entity_hopper_cell.2, 0);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .schedule_hopper_tick(app.frame + 1, entity_hopper_cell.0, entity_hopper_cell.1, entity_hopper_cell.2);
+    let id = app.next_drop_id;
+    app.next_drop_id += 1;
+    let mut rng = crate::drops::Lcg::new(7);
+    let drop = crate::drops::ItemDrop::spawn(id, dirt, 3, entity_hopper_cell.0, entity_hopper_cell.1, entity_hopper_cell.2, &mut rng);
+    let drop_id = drop.id;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.container_stores.get(&entity_hopper_cell).map(|s| s[0]),
+        Some((dirt, 3)),
+        "the entity's whole stack the hopper row seats"
+    );
+    assert!(
+        !app.drops.iter().any(|d| d.id == drop_id),
+        "the empty leftover the entity discards"
+    );
+}

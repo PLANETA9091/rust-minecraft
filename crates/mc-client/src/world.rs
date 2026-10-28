@@ -3578,6 +3578,149 @@ pub fn container_kind_slot_count(kind: u16) -> usize {
     }
 }
 
+/// THE HOPPER'S OWN COOLDOWN LAW (javap HopperBlockEntity.tryMoveItems
+/// pc 74-77 the 26.2 jar the live disasm answers — the `setCooldown(8)`
+/// walk the SUCCESS gate banks, the pushItemsTick's own decrement the
+/// every-tick walk serves: the eight-tick beat the transfer cadence
+/// the dispenser family's own four-tick law siblings).
+pub const HOPPER_COOLDOWN_TICKS: u64 = 8;
+
+/// THE HOPPER'S OWN MOVE-ONE LAW (javap HopperBlockEntity.addItem pc
+/// 75-108 + tryMoveInItem pc 0-114 the 26.2 jar the live disasm
+/// answers — the flat slot order the walk banks: the FIRST slot that
+/// is EMPTY or same-item-with-room the one item takes, the
+/// canMergeItems gate the grow fold the itemMaxStack cap serves —
+/// the true the item seated speaks, the full row the false keeps).
+pub fn hopper_move_one(to: &mut [(i32, i32)], id: i32) -> bool {
+    if id == 0 {
+        return false;
+    }
+    let cap = mc_registry::item_max_stack(id).min(64);
+    for s in to.iter_mut() {
+        if s.0 == 0 || s.1 <= 0 {
+            *s = (id, 1);
+            return true;
+        }
+        if s.0 == id && (s.1 as i64) < cap as i64 {
+            s.1 += 1;
+            return true;
+        }
+    }
+    false
+}
+
+/// THE HOPPER'S OWN PUSH WALK (javap HopperBlockEntity.ejectItems pc
+/// 33-131 the 26.2 jar the live disasm answers — the ONE-ITEM law the
+/// `removeItem(i, 1)` probe wears: the walk the hopper's own slots
+/// the flat order keeps, the non-empty slot the probe takes, the
+/// insert the flat-order law answers, the REFUSED walk the restore
+/// `setCount` fold keeps [the next slot the same walk serves], the
+/// true the one item moved speaks).
+pub fn hopper_push_one(from: &mut [(i32, i32)], to: &mut [(i32, i32)]) -> bool {
+    for i in 0..from.len() {
+        let (id, count) = from[i];
+        if id == 0 || count <= 0 {
+            continue;
+        }
+        if hopper_move_one(to, id) {
+            let rest = count - 1;
+            from[i] = if rest > 0 { (id, rest) } else { (0, 0) };
+            return true;
+        }
+    }
+    false
+}
+
+/// THE HOPPER'S OWN SUCK WALK (javap HopperBlockEntity.suckInItems pc
+/// 39-102 + tryTakeInItemFromSlot pc 0-91 the 26.2 jar the live
+/// disasm answers — the source container the DOWN face the flat
+/// `CACHED_SLOTS` order speaks, the non-empty slot the probe takes,
+/// the hopper row the flat-order law the item seats, the restore
+/// fold the refused walk keeps — the true the one item taken speaks).
+pub fn hopper_suck_one(hopper: &mut [(i32, i32)], source: &mut [(i32, i32)]) -> bool {
+    for i in 0..source.len() {
+        let (id, count) = source[i];
+        if id == 0 || count <= 0 {
+            continue;
+        }
+        if hopper_move_one(hopper, id) {
+            let rest = count - 1;
+            source[i] = if rest > 0 { (id, rest) } else { (0, 0) };
+            return true;
+        }
+    }
+    false
+}
+
+/// THE HOPPER'S OWN STACK INSERT (javap HopperBlockEntity.addItem
+/// (Container, ItemEntity) pc 0-50 the 26.2 jar the live disasm
+/// answers — the entity's WHOLE stack the copy walk inserts, the
+/// flat-order law the seats serve, the moved count the return speaks
+/// [the leftover the caller's own setItem/discard fold answers]).
+pub fn hopper_insert_stack(to: &mut [(i32, i32)], id: i32, count: i32) -> i32 {
+    if id == 0 || count <= 0 {
+        return 0;
+    }
+    let cap = mc_registry::item_max_stack(id).min(64);
+    let mut left = count;
+    for s in to.iter_mut() {
+        if left <= 0 {
+            break;
+        }
+        if s.0 == 0 || s.1 <= 0 {
+            let take = left.min(cap);
+            *s = (id, take);
+            left -= take;
+        } else if s.0 == id {
+            let room = cap - s.1;
+            if room > 0 {
+                let take = left.min(room);
+                s.1 += take;
+                left -= take;
+            }
+        }
+    }
+    count - left
+}
+
+/// THE HOPPER'S OWN FULL VERDICT (javap HopperBlockEntity
+/// .inventoryFull pc 0-51 + isFullContainer the 26.2 jar the live
+/// disasm answers — every slot non-empty AND at the item's own max
+/// the true speaks, the empty slot the false keeps).
+pub fn hopper_inventory_full(store: &[(i32, i32)]) -> bool {
+    store.iter().all(|&(id, count)| {
+        if id == 0 || count <= 0 {
+            return false;
+        }
+        let cap = mc_registry::item_max_stack(id).min(64);
+        count >= cap
+    })
+}
+
+/// THE SUCK COLUMN'S OWN LAW (javap Hopper.SUCK_AABB `<clinit>` the
+/// 26.2 jar the live disasm answers — the `Block.column(16.0, 11.0,
+/// 32.0)` shape's own box the local cell wears [the (0, 3, 0)-
+/// (16, 24, 16) 1/16 units: the funnel mouth the low seat keeps, the
+/// half-block above the 24/16 top speaks — the 1.21.2+ the taller
+/// suck area the item-entity lane answers], the
+/// `getItemsAtAndAbove`'s own `move(level - 0.5)` walk the level
+/// center the box seats — the block cell the final box wears). The
+/// ITEM ENTITY'S OWN BB the intersect test answers (the 0.25 cube
+/// the feet-anchored center the entity protocol speaks — the
+/// ±0.125 horizontal + the y..y+0.25 band the overlap walk wears).
+pub fn hopper_suck_box_hits(bx: i32, by: i32, bz: i32, x: f64, y: f64, z: f64) -> bool {
+    const HALF: f64 = 0.125; // the ItemEntity's own 0.25 BB the half wears
+    let bx = f64::from(bx);
+    let by = f64::from(by);
+    let bz = f64::from(bz);
+    x - HALF < bx + 1.0
+        && x + HALF > bx
+        && y < by + 1.5
+        && y + 0.25 > by + 0.1875
+        && z - HALF < bz + 1.0
+        && z + HALF > bz
+}
+
 /// THE FAMILY'S OWN VARIANT ENCODE (the two fields the one byte
 /// wears — the facing the low 3 bits keep, the triggered bit the
 /// rising-edge walk's own setValue arms).
@@ -14504,6 +14647,17 @@ pub struct World {
     /// world alone fills).
     pub dispenser_ticks: Vec<(u64, i32, i32, i32)>,
 
+    /// THE HOPPER'S OWN QUEUE (the autopush-307 round — javap
+    /// HopperBlockEntity.pushItemsTick the 26.2 jar the live disasm
+    /// answers: the block ticker the placement the every-tick walk
+    /// arms, the (due, x, y, z) shape the diode family's own queues
+    /// wear [the vanilla law the block ticker the EVERY tick serves —
+    /// the queue entry the cadence the cooldown fold carries: the
+    /// +1 idle re-arm, the +8 the success cooldown banks], the drain
+    /// the transfer beat's walk serves — the networked world the
+    /// SERVER ticks, the queue the offline world alone fills).
+    pub hopper_ticks: Vec<(u64, i32, i32, i32)>,
+
     /// THE REPEATER'S OWN QUEUE (the autopush-126 round — the
     /// comparator's own shape the sibling wears, the (due, x, y, z)
     /// entries the mismatch consult banks, the dial the due beat the
@@ -14991,6 +15145,7 @@ impl World {
             detector_ticks: Vec::new(), // the detector's own queue: no cart on the rail, no beat
             comparator_ticks: Vec::new(), // the comparator's own queue: no mismatch, no beat
             dispenser_ticks: Vec::new(), // the dispenser's own queue: no edge, no shot
+            hopper_ticks: Vec::new(), // the hopper's own queue: no placement, no transfer
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(), // the repeater's own queue: no mismatch, no beat
@@ -16439,6 +16594,39 @@ impl World {
     pub fn drain_due_dispenser_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
         let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
         self.dispenser_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due.sort();
+        due.into_iter().map(|(_, x, y, z)| (x, y, z)).collect()
+    }
+
+    /// THE HOPPER'S OWN SCHEDULE (the autopush-307 round — the
+    /// dispenser's own dedup walk the sibling wears: the pending
+    /// entry the re-consult refuses, the willTickThisTick gate the
+    /// same law keeps [the placement seed AND the beat's own re-arm
+    /// the one-entry-per-hopper law banks]).
+    pub fn schedule_hopper_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .hopper_ticks
+            .iter()
+            .any(|&(_, tx, ty, tz)| (tx, ty, tz) == (x, y, z))
+        {
+            return; // the willTickThisTick gate the pending entry keeps
+        }
+        self.hopper_ticks.push((due, x, y, z));
+    }
+
+    /// THE HOPPER'S OWN DRAIN (the dispenser's own shape the sibling
+    /// wears — the sort the deterministic order the test's replay
+    /// banks, the retain the future ticks keep).
+    pub fn drain_due_hopper_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.hopper_ticks.retain(|&(at, x, y, z)| {
             if at <= now {
                 due.push((at, x, y, z));
                 false
@@ -29956,6 +30144,208 @@ mod tests {
             container_kind_slot_count(CHEST),
             27,
             "the chest grid the sibling keeps"
+        );
+    }
+
+    #[test]
+    fn the_hopper_transfer_the_flat_order_laws_wear() {
+        // THE HOPPER'S OWN TRANSFER LAWS (the autopush-307 round —
+        // javap 26.2 the live disasm the
+        // scripts/jar_work/hopper_transfer_307.txt walk banks): the
+        // tryMoveInItem/addItem flat slot order the FIRST empty-or-
+        // mergeable slot the one item seats, the ejectItems
+        // removeItem(i, 1) probe the one-item law the restore fold
+        // keeps, the suckInItems the source's own flat order speaks,
+        // the inventoryFull the all-max row the verdict banks
+        use crate::world::{
+            hopper_insert_stack, hopper_inventory_full, hopper_move_one, hopper_push_one,
+            hopper_suck_one, HOPPER_COOLDOWN_TICKS,
+        };
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // THE COOLDOWN'S OWN PIN (javap tryMoveItems pc 74-77 the
+        // setCooldown(8) walk the success gate banks)
+        assert_eq!(HOPPER_COOLDOWN_TICKS, 8, "the eight-tick beat banks");
+        // THE MOVE-ONE'S OWN FLAT ORDER (the FIRST empty-or-mergeable
+        // slot the walk banks — the EMPTY slot 0 the mergeable slot 2
+        // the same-item row keeps: the first-in-order law the vanilla
+        // chest fill answers)
+        let mut row = vec![(0i32, 0i32), (dirt, 30), (dirt, 30)];
+        assert!(
+            hopper_move_one(&mut row, dirt),
+            "the empty-first law the slot 0 the item seats"
+        );
+        assert_eq!(row[0], (dirt, 1), "the slot 0 the first seat keeps");
+        assert_eq!(
+            row[2],
+            (dirt, 30),
+            "the mergeable slot the probe never wears"
+        );
+        // THE MERGE ARM (the full row the same-item partial the grow
+        // fold serves)
+        let mut row = vec![(stone, 5), (0, 0)];
+        assert!(hopper_move_one(&mut row, stone), "the merge arm seats");
+        assert_eq!(row[0], (stone, 6), "the same-item partial the grow wears");
+        // THE CAP'S OWN REFUSE (the full row the false keeps)
+        let mut row = vec![(dirt, 64), (0, 0)];
+        // dirt's own max the 64 the flat cap keeps — the full slot the
+        // move refuses, the EMPTY slot 1 the same walk answers
+        let mut full_row = vec![(dirt, 64); 3];
+        assert!(
+            !hopper_move_one(&mut full_row, dirt),
+            "the all-max row the move refuses"
+        );
+        assert_eq!(full_row[0], (dirt, 64), "the refused walk the row keeps");
+        // THE ZERO-ID REFUSE (the empty item the honest no-op keeps)
+        let mut row = vec![(0, 0)];
+        assert!(!hopper_move_one(&mut row, 0), "the zero id the no-op keeps");
+        // THE PUSH'S OWN ONE-ITEM LAW (the first non-empty slot the
+        // probe takes, the count the decrement wears, the emptied slot
+        // the (0, 0) row banks)
+        let mut hopper = vec![(dirt, 2), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut chest = vec![(0i32, 0i32); 27];
+        assert!(
+            hopper_push_one(&mut hopper, &mut chest),
+            "the push the one item moves"
+        );
+        assert_eq!(hopper[0], (dirt, 1), "the count the decrement wears");
+        assert_eq!(chest[0], (dirt, 1), "the chest the item seats");
+        // THE MULTI-SLOT WALK (the refused probe the restore keeps, the
+        // next non-empty slot the same walk serves — the all-full row
+        // the dirt probe refuses, the stone the partial slot merges)
+        let mut hopper = vec![(dirt, 4), (stone, 3), (0, 0), (0, 0), (0, 0)];
+        let mut chest = vec![(0i32, 0i32); 27];
+        chest[0] = (stone, 63);
+        for s in chest.iter_mut().skip(1) {
+            *s = (stone, 64);
+        }
+        assert!(
+            hopper_push_one(&mut hopper, &mut chest),
+            "the walk the next slot serves"
+        );
+        assert_eq!(hopper[0], (dirt, 4), "the refused probe the restore keeps");
+        assert_eq!(hopper[1], (stone, 2), "the stone the decrement wears");
+        assert_eq!(chest[0], (stone, 64), "the partial slot the merge fills");
+        // THE FULL-TARGET REFUSE (the all-max chest the false keeps)
+        let mut hopper = vec![(stone, 1), (0, 0), (0, 0), (0, 0), (0, 0)];
+        let mut full_chest = vec![(stone, 64); 27];
+        assert!(
+            !hopper_push_one(&mut hopper, &mut full_chest),
+            "the full target the push refuses"
+        );
+        assert_eq!(hopper[0], (stone, 1), "the refused push the row keeps");
+        // THE SUCK'S OWN SOURCE ORDER (the above container the flat
+        // slot order the first non-empty the probe serves)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut chest = vec![(0i32, 0i32); 27];
+        chest[4] = (dirt, 3);
+        assert!(
+            hopper_suck_one(&mut hopper, &mut chest),
+            "the suck the one item takes"
+        );
+        assert_eq!(hopper[0], (dirt, 1), "the hopper the item seats");
+        assert_eq!(chest[4], (dirt, 2), "the source the decrement wears");
+        // THE EMPTY-SOURCE REFUSE
+        let mut empty = vec![(0i32, 0i32); 27];
+        let mut hopper = vec![(0i32, 0i32); 5];
+        assert!(
+            !hopper_suck_one(&mut hopper, &mut empty),
+            "the empty source the suck refuses"
+        );
+        // THE STACK INSERT'S OWN WHOLE-SEAT (the entity stack the copy
+        // walk inserts, the moved count the return speaks — the roomy
+        // row the whole stack seats)
+        let mut hopper = vec![(0i32, 0i32); 5];
+        assert_eq!(
+            hopper_insert_stack(&mut hopper, dirt, 130),
+            130,
+            "the roomy row the whole stack seats"
+        );
+        assert_eq!(hopper[0], (dirt, 64), "the slot 0 the full cap wears");
+        assert_eq!(hopper[1], (dirt, 64), "the slot 1 the full cap wears");
+        assert_eq!(hopper[2], (dirt, 2), "the slot 2 the leftover wears");
+        // THE PARTIAL SEAT (the cramped row the cap the moved count
+        // speaks — the two empty slots the 128 the answer wears)
+        let mut hopper = vec![(dirt, 64), (dirt, 64), (dirt, 64), (0, 0), (0, 0)];
+        assert_eq!(
+            hopper_insert_stack(&mut hopper, dirt, 130),
+            128,
+            "the cramped row the 128 the moved count speaks"
+        );
+        assert_eq!(hopper[3], (dirt, 64), "the slot 3 the full cap wears");
+        assert_eq!(hopper[4], (dirt, 64), "the slot 4 the full cap wears");
+        // THE FULL VERDICT (the all-max row the true speaks — the
+        // cramped insert the five full slots the verdict answers — the
+        // one empty slot the false keeps, the below-max slot the false
+        // keeps)
+        assert!(
+            hopper_inventory_full(&hopper),
+            "the cramped row the all-max verdict wears"
+        );
+        let mut full5 = vec![(dirt, 64); 5];
+        assert!(
+            hopper_inventory_full(&full5),
+            "the all-max row the true wears"
+        );
+        full5[3] = (0, 0);
+        assert!(
+            !hopper_inventory_full(&full5),
+            "the empty slot the false keeps"
+        );
+        full5[3] = (dirt, 63);
+        assert!(
+            !hopper_inventory_full(&full5),
+            "the below-max slot the false keeps"
+        );
+    }
+
+    #[test]
+    fn the_hopper_queue_the_dedup_and_drain_wear() {
+        // THE HOPPER'S OWN QUEUE (the autopush-307 round — the
+        // dispenser's own shape the sibling wears: the pending entry
+        // the re-consult refuses, the drain the due the sort order
+        // banks, the future ticks the retain keeps)
+        let mut w = World::blank(1, 7);
+        assert!(
+            w.hopper_ticks.is_empty(),
+            "the fresh world the empty queue keeps"
+        );
+        // THE DEDUP GATE (the pending entry the re-schedule refuses —
+        // the one-entry-per-hopper law the beat's re-arm banks)
+        w.schedule_hopper_tick(10, 3, 4, 5);
+        w.schedule_hopper_tick(12, 3, 4, 5);
+        assert_eq!(
+            w.hopper_ticks.len(),
+            1,
+            "the pending entry the re-consult refuses"
+        );
+        // THE SECOND HOPPER'S OWN SEAT (the distinct cell the queue
+        // keeps)
+        w.schedule_hopper_tick(8, 9, 4, 5);
+        assert_eq!(w.hopper_ticks.len(), 2, "the distinct cell the seat keeps");
+        // THE DRAIN'S OWN ORDER (the due the sorted order banks — the
+        // frame-8 cell the frame-10 cell the deterministic walk keeps)
+        let due = w.drain_due_hopper_ticks(10);
+        assert_eq!(
+            due,
+            vec![(9, 4, 5), (3, 4, 5)],
+            "the due the sorted order banks"
+        );
+        assert!(
+            w.hopper_ticks.is_empty(),
+            "the drained entries the queue leaves"
+        );
+        // THE FUTURE'S OWN RETAIN (the due-beyond walk the entry keeps)
+        w.schedule_hopper_tick(20, 1, 2, 3);
+        assert!(
+            w.drain_due_hopper_ticks(19).is_empty(),
+            "the future tick the drain refuses"
+        );
+        assert_eq!(w.hopper_ticks.len(), 1, "the future entry the retain keeps");
+        assert_eq!(
+            w.drain_due_hopper_ticks(20),
+            vec![(1, 2, 3)],
+            "the due tick the drain answers"
         );
     }
 

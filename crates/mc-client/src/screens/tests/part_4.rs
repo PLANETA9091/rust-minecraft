@@ -2553,6 +2553,7 @@ fn the_networked_dial_wears_the_wires_own_word() {
         detector_ticks: Vec::new(),                    // the detector's own queue: empty
         comparator_ticks: Vec::new(),
         dispenser_ticks: Vec::new(),
+        hopper_ticks: Vec::new(),
         repeater_ticks: Vec::new(),
         observer_ticks: Vec::new(),
         piston_ticks: Vec::new(),
@@ -3196,6 +3197,7 @@ fn login_outcomes_route_like_vanilla() {
                 detector_ticks: Vec::new(),                    // the detector's own queue: empty
                 comparator_ticks: Vec::new(),
                 dispenser_ticks: Vec::new(),
+        hopper_ticks: Vec::new(),
                 repeater_ticks: Vec::new(),
                 observer_ticks: Vec::new(),
                 piston_ticks: Vec::new(),
@@ -3717,6 +3719,7 @@ fn network_world_lands_in_the_world_screen_and_quits_cleanly() {
         detector_ticks: Vec::new(),                    // the detector's own queue: empty
         comparator_ticks: Vec::new(),
         dispenser_ticks: Vec::new(),
+        hopper_ticks: Vec::new(),
         repeater_ticks: Vec::new(),
         observer_ticks: Vec::new(),
         piston_ticks: Vec::new(),
@@ -3842,6 +3845,7 @@ fn world_camera_follows_the_teleport_and_falls_back_to_the_flight_camera() {
         detector_ticks: Vec::new(),                    // the detector's own queue: empty
         comparator_ticks: Vec::new(),
         dispenser_ticks: Vec::new(),
+        hopper_ticks: Vec::new(),
         repeater_ticks: Vec::new(),
         observer_ticks: Vec::new(),
         piston_ticks: Vec::new(),
@@ -3952,6 +3956,7 @@ fn late_loaded_join_after_escape_is_dropped() {
                 detector_ticks: Vec::new(),                    // the detector's own queue: empty
                 comparator_ticks: Vec::new(),
                 dispenser_ticks: Vec::new(),
+        hopper_ticks: Vec::new(),
                 repeater_ticks: Vec::new(),
                 observer_ticks: Vec::new(),
                 piston_ticks: Vec::new(),
