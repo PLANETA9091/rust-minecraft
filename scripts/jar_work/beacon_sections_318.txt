@@ -1,0 +1,1384 @@
+
+########## net/minecraft/world/level/block/entity/BeaconBlockEntity
+  FIELD MAX_LEVELS I
+  FIELD LEVELS_NEEDED_FOR_SECONDARY I
+  FIELD BEACON_EFFECTS Ljava/util/List;
+  FIELD VALID_EFFECTS Ljava/util/Set;
+  FIELD DATA_LEVELS I
+  FIELD DATA_PRIMARY I
+  FIELD DATA_SECONDARY I
+  FIELD NUM_DATA_VALUES I
+  FIELD BLOCKS_CHECK_PER_TICK I
+  FIELD DEFAULT_NAME Lnet/minecraft/network/chat/Component;
+  FIELD TAG_PRIMARY Ljava/lang/String;
+  FIELD TAG_SECONDARY Ljava/lang/String;
+  FIELD beamSections Ljava/util/List;
+  FIELD checkingBeamSections Ljava/util/List;
+  FIELD levels I
+  FIELD lastCheckY I
+  FIELD primaryPower Lnet/minecraft/core/Holder;
+  FIELD secondaryPower Lnet/minecraft/core/Holder;
+  FIELD name Lnet/minecraft/network/chat/Component;
+  FIELD lockKey Lnet/minecraft/world/LockCode;
+  FIELD dataAccess Lnet/minecraft/world/inventory/ContainerData;
+--- filterEffect (Lnet/minecraft/core/Holder;)Lnet/minecraft/core/Holder;
+    0 getstatic #3  net/minecraft/world/level/block/entity/BeaconBlockEntity.VALID_EFFECTS Ljava/util/Set;
+    3 aload_0
+    4 invokeinterface java/util/Set.contains (Ljava/lang/Object;)Z
+    9 ifeq #7
+   12 aload_0
+   13 goto #4
+   16 aconst_null
+   17 areturn
+--- <init> (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    0 aload_0
+    1 getstatic #13  net/minecraft/world/level/block/entity/BlockEntityTypes.BEACON Lnet/minecraft/world/level/block/entity/BlockEntityType;
+    4 aload_1
+    5 aload_2
+    6 invokespecial #19  net/minecraft/world/level/block/entity/BlockEntity.<init> (Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    9 aload_0
+   10 new #25  java/util/ArrayList
+   13 dup
+   14 invokespecial #27  java/util/ArrayList.<init> ()V
+   17 putfield #30  net/minecraft/world/level/block/entity/BeaconBlockEntity.beamSections Ljava/util/List;
+   20 aload_0
+   21 new #25  java/util/ArrayList
+   24 dup
+   25 invokespecial #27  java/util/ArrayList.<init> ()V
+   28 putfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+   31 aload_0
+   32 getstatic #37  net/minecraft/world/LockCode.NO_LOCK Lnet/minecraft/world/LockCode;
+   35 putfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+   38 aload_0
+   39 new #46  net/minecraft/world/level/block/entity/BeaconBlockEntity$1
+   42 dup
+   43 aload_0
+   44 invokespecial #48  net/minecraft/world/level/block/entity/BeaconBlockEntity$1.<init> (Lnet/minecraft/world/level/block/entity/BeaconBlockEntity;)V
+   47 putfield #51  net/minecraft/world/level/block/entity/BeaconBlockEntity.dataAccess Lnet/minecraft/world/inventory/ContainerData;
+   50 return
+--- tick (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BeaconBlockEntity;)V
+    0 aload_1
+    1 invokevirtual #55  net/minecraft/core/BlockPos.getX ()I
+    4 istore 4
+    6 aload_1
+    7 invokevirtual #61  net/minecraft/core/BlockPos.getY ()I
+   10 istore 5
+   12 aload_1
+   13 invokevirtual #64  net/minecraft/core/BlockPos.getZ ()I
+   16 istore 6
+   18 aload_3
+   19 getfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+   22 iload 5
+   24 if_icmpge #27
+   27 aload_1
+   28 astore 7
+   30 aload_3
+   31 invokestatic #71  com/google/common/collect/Lists.newArrayList ()Ljava/util/ArrayList;
+   34 putfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+   37 aload_3
+   38 aload 7
+   40 invokevirtual #61  net/minecraft/core/BlockPos.getY ()I
+   43 iconst_1
+   44 isub
+   45 putfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+   48 goto #22
+   51 new #56  net/minecraft/core/BlockPos
+   54 dup
+   55 iload 4
+   57 aload_3
+   58 getfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+   61 iconst_1
+   62 iadd
+   63 iload 6
+   65 invokespecial #77  net/minecraft/core/BlockPos.<init> (III)V
+   68 astore 7
+   70 aload_3
+   71 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+   74 invokeinterface java/util/List.isEmpty ()Z
+   79 ifeq #7
+   82 aconst_null
+   83 goto #26
+   86 aload_3
+   87 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+   90 aload_3
+   91 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+   94 invokeinterface java/util/List.size ()I
+   99 iconst_1
+  100 isub
+  101 invokeinterface java/util/List.get (I)Ljava/lang/Object;
+  106 checkcast #93  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section
+  109 astore 8
+  111 aload_0
+  112 getstatic #95  net/minecraft/world/level/levelgen/Heightmap$Types.WORLD_SURFACE Lnet/minecraft/world/level/levelgen/Heightmap$Types;
+  115 iload 4
+  117 iload 6
+  119 invokevirtual #101  net/minecraft/world/level/Level.getHeight (Lnet/minecraft/world/level/levelgen/Heightmap$Types;II)I
+  122 istore 9
+  124 iconst_0
+  125 istore 10
+  127 iload 10
+  129 bipush 10
+  131 if_icmpge #229
+  134 aload 7
+  136 invokevirtual #61  net/minecraft/core/BlockPos.getY ()I
+  139 iload 9
+  141 if_icmple #6
+  144 goto #216
+  147 aload_0
+  148 aload 7
+  150 invokevirtual #107  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  153 astore 11
+  155 aload 11
+  157 invokevirtual #111  net/minecraft/world/level/block/state/BlockState.getBlock ()Lnet/minecraft/world/level/block/Block;
+  160 astore 12
+  162 aload 12
+  164 instanceof #117  net/minecraft/world/level/block/BeaconBeamBlock
+  167 ifeq #118
+  170 aload 12
+  172 checkcast #117  net/minecraft/world/level/block/BeaconBeamBlock
+  175 astore 13
+  177 aload 13
+  179 invokeinterface net/minecraft/world/level/block/BeaconBeamBlock.getColor ()Lnet/minecraft/world/item/DyeColor;
+  184 invokevirtual #123  net/minecraft/world/item/DyeColor.getTextureDiffuseColor ()I
+  187 istore 14
+  189 aload_3
+  190 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+  193 invokeinterface java/util/List.size ()I
+  198 iconst_1
+  199 if_icmpgt #29
+  202 new #93  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section
+  205 dup
+  206 iload 14
+  208 invokespecial #128  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.<init> (I)V
+  211 astore 8
+  213 aload_3
+  214 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+  217 aload 8
+  219 invokeinterface java/util/List.add (Ljava/lang/Object;)Z
+  224 pop
+  225 goto #57
+  228 aload 8
+  230 ifnull #52
+  233 iload 14
+  235 aload 8
+  237 invokevirtual #134  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.getColor ()I
+  240 if_icmpne #11
+  243 aload 8
+  245 invokevirtual #136  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.increaseHeight ()V
+  248 goto #34
+  251 new #93  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section
+  254 dup
+  255 aload 8
+  257 invokevirtual #134  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.getColor ()I
+  260 iload 14
+  262 invokestatic #139  net/minecraft/util/ARGB.average (II)I
+  265 invokespecial #128  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.<init> (I)V
+  268 astore 8
+  270 aload_3
+  271 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+  274 aload 8
+  276 invokeinterface java/util/List.add (Ljava/lang/Object;)Z
+  281 pop
+  282 goto #55
+  285 aload 8
+  287 ifnull #32
+  290 aload 11
+  292 invokevirtual #145  net/minecraft/world/level/block/state/BlockState.getLightDampening ()I
+  295 bipush 15
+  297 if_icmplt #14
+  300 aload 11
+  302 getstatic #148  net/minecraft/world/level/block/Blocks.BEDROCK Lnet/minecraft/world/level/block/Block;
+  305 invokevirtual #154  net/minecraft/world/level/block/state/BlockState.is (Ljava/lang/Object;)Z
+  308 ifeq #11
+  311 aload 8
+  313 invokevirtual #136  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.increaseHeight ()V
+  316 goto #21
+  319 aload_3
+  320 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+  323 invokeinterface java/util/List.clear ()V
+  328 aload_3
+  329 iload 9
+  331 putfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+  334 goto #26
+  337 aload 7
+  339 invokevirtual #160  net/minecraft/core/BlockPos.above ()Lnet/minecraft/core/BlockPos;
+  342 astore 7
+  344 aload_3
+  345 dup
+  346 getfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+  349 iconst_1
+  350 iadd
+  351 putfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+  354 iinc 10 1
+  357 goto #65306
+  360 aload_3
+  361 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+  364 istore 10
+  366 aload_0
+  367 invokevirtual #167  net/minecraft/world/level/Level.getGameTime ()J
+  370 ldc2_w #173 = 80
+  373 lrem
+  374 lconst_0
+  375 lcmp
+  376 ifne #73
+  379 aload_3
+  380 getfield #30  net/minecraft/world/level/block/entity/BeaconBlockEntity.beamSections Ljava/util/List;
+  383 invokeinterface java/util/List.isEmpty ()Z
+  388 ifne #17
+  391 aload_3
+  392 aload_0
+  393 iload 4
+  395 iload 5
+  397 iload 6
+  399 invokestatic #175  net/minecraft/world/level/block/entity/BeaconBlockEntity.updateBase (Lnet/minecraft/world/level/Level;III)I
+  402 putfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+  405 aload_3
+  406 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+  409 ifle #40
+  412 aload_3
+  413 getfield #30  net/minecraft/world/level/block/entity/BeaconBlockEntity.beamSections Ljava/util/List;
+  416 invokeinterface java/util/List.isEmpty ()Z
+  421 ifne #28
+  424 aload_0
+  425 aload_1
+  426 aload_3
+  427 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+  430 aload_3
+  431 getfield #179  net/minecraft/world/level/block/entity/BeaconBlockEntity.primaryPower Lnet/minecraft/core/Holder;
+  434 aload_3
+  435 getfield #183  net/minecraft/world/level/block/entity/BeaconBlockEntity.secondaryPower Lnet/minecraft/core/Holder;
+  438 invokestatic #186  net/minecraft/world/level/block/entity/BeaconBlockEntity.applyEffects (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;ILnet/minecraft/core/Holder;Lnet/minecraft/core/Holder;)V
+  441 aload_0
+  442 aload_1
+  443 getstatic #190  net/minecraft/sounds/SoundEvents.BEACON_AMBIENT Lnet/minecraft/sounds/SoundEvent;
+  446 invokestatic #196  net/minecraft/world/level/block/entity/BeaconBlockEntity.playSound (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;)V
+  449 aload_3
+  450 getfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+  453 iload 9
+  455 if_icmplt #182
+  458 aload_3
+  459 aload_0
+  460 invokevirtual #200  net/minecraft/world/level/Level.getMinY ()I
+  463 iconst_1
+  464 isub
+  465 putfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+  468 iload 10
+  470 ifle #7
+  473 iconst_1
+  474 goto #4
+  477 iconst_0
+  478 istore 11
+  480 aload_3
+  481 aload_3
+  482 getfield #34  net/minecraft/world/level/block/entity/BeaconBlockEntity.checkingBeamSections Ljava/util/List;
+  485 putfield #30  net/minecraft/world/level/block/entity/BeaconBlockEntity.beamSections Ljava/util/List;
+  488 aload_0
+  489 invokevirtual #203  net/minecraft/world/level/Level.isClientSide ()Z
+  492 ifne #145
+  495 aload_3
+  496 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+  499 ifle #7
+  502 iconst_1
+  503 goto #4
+  506 iconst_0
+  507 istore 12
+  509 iload 11
+  511 ifne #108
+  514 iload 12
+  516 ifeq #103
+  519 aload_0
+  520 aload_1
+  521 getstatic #206  net/minecraft/sounds/SoundEvents.BEACON_ACTIVATE Lnet/minecraft/sounds/SoundEvent;
+  524 invokestatic #196  net/minecraft/world/level/block/entity/BeaconBlockEntity.playSound (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;)V
+  527 aload_0
+  528 ldc #209 = net/minecraft/server/level/ServerPlayer
+  530 new #211  net/minecraft/world/phys/AABB
+  533 dup
+  534 iload 4
+  536 i2d
+  537 iload 5
+  539 i2d
+  540 iload 6
+  542 i2d
+  543 iload 4
+  545 i2d
+  546 iload 5
+  548 iconst_4
+  549 isub
+  550 i2d
+  551 iload 6
+  553 i2d
+  554 invokespecial #213  net/minecraft/world/phys/AABB.<init> (DDDDDD)V
+  557 ldc2_w #216 = 10.0
+  560 ldc2_w #218 = 5.0
+  563 ldc2_w #216 = 10.0
+  566 invokevirtual #220  net/minecraft/world/phys/AABB.inflate (DDD)Lnet/minecraft/world/phys/AABB;
+  569 invokevirtual #224  net/minecraft/world/level/Level.getEntitiesOfClass (Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+  572 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+  577 astore 13
+  579 aload 13
+  581 invokeinterface java/util/Iterator.hasNext ()Z
+  586 ifeq #30
+  589 aload 13
+  591 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  596 checkcast #209  net/minecraft/server/level/ServerPlayer
+  599 astore 14
+  601 getstatic #241  net/minecraft/advancements/triggers/CriteriaTriggers.CONSTRUCT_BEACON Lnet/minecraft/advancements/triggers/ConstructBeaconTrigger;
+  604 aload 14
+  606 aload_3
+  607 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+  610 invokevirtual #247  net/minecraft/advancements/triggers/ConstructBeaconTrigger.trigger (Lnet/minecraft/server/level/ServerPlayer;I)V
+  613 goto #65502
+  616 goto #21
+  619 iload 11
+  621 ifeq #16
+  624 iload 12
+  626 ifne #11
+  629 aload_0
+  630 aload_1
+  631 getstatic #253  net/minecraft/sounds/SoundEvents.BEACON_DEACTIVATE Lnet/minecraft/sounds/SoundEvent;
+  634 invokestatic #196  net/minecraft/world/level/block/entity/BeaconBlockEntity.playSound (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;)V
+  637 return
+--- updateBase (Lnet/minecraft/world/level/Level;III)I
+    0 iconst_0
+    1 istore 4
+    3 iconst_1
+    4 istore 5
+    6 iload 5
+    8 iconst_4
+    9 if_icmpgt #118
+   12 iload_2
+   13 iload 5
+   15 isub
+   16 istore 6
+   18 iload 6
+   20 aload_0
+   21 invokevirtual #200  net/minecraft/world/level/Level.getMinY ()I
+   24 if_icmpge #6
+   27 goto #100
+   30 iconst_1
+   31 istore 7
+   33 iload_1
+   34 iload 5
+   36 isub
+   37 istore 8
+   39 iload 8
+   41 iload_1
+   42 iload 5
+   44 iadd
+   45 if_icmpgt #67
+   48 iload 7
+   50 ifeq #62
+   53 iload_3
+   54 iload 5
+   56 isub
+   57 istore 9
+   59 iload 9
+   61 iload_3
+   62 iload 5
+   64 iadd
+   65 if_icmpgt #41
+   68 aload_0
+   69 new #56  net/minecraft/core/BlockPos
+   72 dup
+   73 iload 8
+   75 iload 6
+   77 iload 9
+   79 invokespecial #77  net/minecraft/core/BlockPos.<init> (III)V
+   82 invokevirtual #107  net/minecraft/world/level/Level.getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   85 getstatic #256  net/minecraft/tags/BlockTags.BEACON_BASE_BLOCKS Lnet/minecraft/tags/TagKey;
+   88 invokevirtual #262  net/minecraft/world/level/block/state/BlockState.is (Lnet/minecraft/tags/TagKey;)Z
+   91 ifne #9
+   94 iconst_0
+   95 istore 7
+   97 goto #9
+  100 iinc 9 1
+  103 goto #65492
+  106 iinc 8 1
+  109 goto #65466
+  112 iload 7
+  114 ifeq #13
+  117 iload 5
+  119 istore 4
+  121 iinc 5 1
+  124 goto #65418
+  127 iload 4
+  129 ireturn
+--- setRemoved ()V
+    0 aload_0
+    1 getfield #265  net/minecraft/world/level/block/entity/BeaconBlockEntity.level Lnet/minecraft/world/level/Level;
+    4 aload_0
+    5 getfield #269  net/minecraft/world/level/block/entity/BeaconBlockEntity.worldPosition Lnet/minecraft/core/BlockPos;
+    8 getstatic #253  net/minecraft/sounds/SoundEvents.BEACON_DEACTIVATE Lnet/minecraft/sounds/SoundEvent;
+   11 invokestatic #196  net/minecraft/world/level/block/entity/BeaconBlockEntity.playSound (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;)V
+   14 aload_0
+   15 invokespecial #273  net/minecraft/world/level/block/entity/BlockEntity.setRemoved ()V
+   18 return
+--- validateEffects (Lnet/minecraft/core/Holder;Lnet/minecraft/core/Holder;I)Z
+    0 aload_1
+    1 ifnull #10
+    4 iload_2
+    5 iconst_4
+    6 if_icmpge #5
+    9 iconst_0
+   10 ireturn
+   11 aload_0
+   12 invokestatic #276  net/minecraft/world/level/block/entity/BeaconBlockEntity.getRequiredLevelsFor (Lnet/minecraft/core/Holder;)I
+   15 istore_3
+   16 aload_1
+   17 invokestatic #276  net/minecraft/world/level/block/entity/BeaconBlockEntity.getRequiredLevelsFor (Lnet/minecraft/core/Holder;)I
+   20 istore 4
+   22 iload_3
+   23 iload_2
+   24 if_icmpgt #9
+   27 iload 4
+   29 iload_2
+   30 if_icmple #5
+   33 iconst_0
+   34 ireturn
+   35 iload_3
+   36 iconst_4
+   37 if_icmplt #5
+   40 iconst_0
+   41 ireturn
+   42 iload 4
+   44 ifeq #21
+   47 iload 4
+   49 iconst_4
+   50 if_icmpge #15
+   53 aload_0
+   54 aload_1
+   55 invokeinterface net/minecraft/core/Holder.equals (Ljava/lang/Object;)Z
+   60 ifne #5
+   63 iconst_0
+   64 ireturn
+   65 iconst_1
+   66 ireturn
+--- getRequiredLevelsFor (Lnet/minecraft/core/Holder;)I
+    0 aload_0
+    1 ifnonnull #5
+    4 iconst_0
+    5 ireturn
+    6 iconst_0
+    7 istore_1
+    8 iload_1
+    9 getstatic #285  net/minecraft/world/level/block/entity/BeaconBlockEntity.BEACON_EFFECTS Ljava/util/List;
+   12 invokeinterface java/util/List.size ()I
+   17 if_icmpge #36
+   20 getstatic #285  net/minecraft/world/level/block/entity/BeaconBlockEntity.BEACON_EFFECTS Ljava/util/List;
+   23 iload_1
+   24 invokeinterface java/util/List.get (I)Ljava/lang/Object;
+   29 checkcast #81  java/util/List
+   32 astore_2
+   33 aload_2
+   34 aload_0
+   35 invokeinterface java/util/List.contains (Ljava/lang/Object;)Z
+   40 ifeq #7
+   43 iload_1
+   44 iconst_1
+   45 iadd
+   46 ireturn
+   47 iinc 1 1
+   50 goto #65494
+   53 ldc_w #291 = ?
+   56 ireturn
+--- applyEffects (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;ILnet/minecraft/core/Holder;Lnet/minecraft/core/Holder;)V
+    0 aload_0
+    1 invokevirtual #203  net/minecraft/world/level/Level.isClientSide ()Z
+    4 ifne #7
+    7 aload_3
+    8 ifnonnull #4
+   11 return
+   12 iload_2
+   13 bipush 10
+   15 imul
+   16 bipush 10
+   18 iadd
+   19 i2d
+   20 dstore 5
+   22 iconst_0
+   23 istore 7
+   25 iload_2
+   26 iconst_4
+   27 if_icmplt #15
+   30 aload_3
+   31 aload 4
+   33 invokestatic #292  java/util/Objects.equals (Ljava/lang/Object;Ljava/lang/Object;)Z
+   36 ifeq #6
+   39 iconst_1
+   40 istore 7
+   42 bipush 9
+   44 iload_2
+   45 iconst_2
+   46 imul
+   47 iadd
+   48 bipush 20
+   50 imul
+   51 istore 8
+   53 new #211  net/minecraft/world/phys/AABB
+   56 dup
+   57 aload_1
+   58 invokespecial #297  net/minecraft/world/phys/AABB.<init> (Lnet/minecraft/core/BlockPos;)V
+   61 dload 5
+   63 invokevirtual #300  net/minecraft/world/phys/AABB.inflate (D)Lnet/minecraft/world/phys/AABB;
+   66 dconst_0
+   67 aload_0
+   68 invokevirtual #303  net/minecraft/world/level/Level.getHeight ()I
+   71 i2d
+   72 dconst_0
+   73 invokevirtual #305  net/minecraft/world/phys/AABB.expandTowards (DDD)Lnet/minecraft/world/phys/AABB;
+   76 astore 9
+   78 aload_0
+   79 ldc_w #308 = net/minecraft/world/entity/player/Player
+   82 aload 9
+   84 invokevirtual #224  net/minecraft/world/level/Level.getEntitiesOfClass (Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+   87 astore 10
+   89 aload 10
+   91 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+   96 astore 11
+   98 aload 11
+  100 invokeinterface java/util/Iterator.hasNext ()Z
+  105 ifeq #38
+  108 aload 11
+  110 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  115 checkcast #308  net/minecraft/world/entity/player/Player
+  118 astore 12
+  120 aload 12
+  122 new #310  net/minecraft/world/effect/MobEffectInstance
+  125 dup
+  126 aload_3
+  127 iload 8
+  129 iload 7
+  131 iconst_1
+  132 iconst_1
+  133 invokespecial #312  net/minecraft/world/effect/MobEffectInstance.<init> (Lnet/minecraft/core/Holder;IIZZ)V
+  136 invokevirtual #315  net/minecraft/world/entity/player/Player.addEffect (Lnet/minecraft/world/effect/MobEffectInstance;)Z
+  139 pop
+  140 goto #65494
+  143 iload_2
+  144 iconst_4
+  145 if_icmplt #71
+  148 aload_3
+  149 aload 4
+  151 invokestatic #292  java/util/Objects.equals (Ljava/lang/Object;Ljava/lang/Object;)Z
+  154 ifne #62
+  157 aload 4
+  159 ifnull #57
+  162 aload 10
+  164 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+  169 astore 11
+  171 aload 11
+  173 invokeinterface java/util/Iterator.hasNext ()Z
+  178 ifeq #38
+  181 aload 11
+  183 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  188 checkcast #308  net/minecraft/world/entity/player/Player
+  191 astore 12
+  193 aload 12
+  195 new #310  net/minecraft/world/effect/MobEffectInstance
+  198 dup
+  199 aload 4
+  201 iload 8
+  203 iconst_0
+  204 iconst_1
+  205 iconst_1
+  206 invokespecial #312  net/minecraft/world/effect/MobEffectInstance.<init> (Lnet/minecraft/core/Holder;IIZZ)V
+  209 invokevirtual #315  net/minecraft/world/entity/player/Player.addEffect (Lnet/minecraft/world/effect/MobEffectInstance;)Z
+  212 pop
+  213 goto #65494
+  216 return
+--- playSound (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;)V
+    0 aload_0
+    1 aconst_null
+    2 aload_1
+    3 aload_2
+    4 getstatic #319  net/minecraft/sounds/SoundSource.BLOCKS Lnet/minecraft/sounds/SoundSource;
+    7 fconst_1
+    8 fconst_1
+    9 invokevirtual #325  net/minecraft/world/level/Level.playSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+   12 return
+--- getBeamSections ()Ljava/util/List;
+    0 aload_0
+    1 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+    4 ifne #9
+    7 invokestatic #328  com/google/common/collect/ImmutableList.of ()Lcom/google/common/collect/ImmutableList;
+   10 goto #7
+   13 aload_0
+   14 getfield #30  net/minecraft/world/level/block/entity/BeaconBlockEntity.beamSections Ljava/util/List;
+   17 areturn
+--- getUpdatePacket ()Lnet/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket;
+    0 aload_0
+    1 invokestatic #334  net/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket.create (Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket;
+    4 areturn
+--- getUpdateTag (Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/nbt/CompoundTag;
+    0 aload_0
+    1 aload_1
+    2 invokevirtual #340  net/minecraft/world/level/block/entity/BeaconBlockEntity.saveCustomOnly (Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/nbt/CompoundTag;
+    5 areturn
+--- storeEffect (Lnet/minecraft/world/level/storage/ValueOutput;Ljava/lang/String;Lnet/minecraft/core/Holder;)V
+    0 aload_2
+    1 ifnull #19
+    4 aload_2
+    5 invokeinterface net/minecraft/core/Holder.unwrapKey ()Ljava/util/Optional;
+   10 aload_0
+   11 aload_1
+   12 invokedynamic #348
+   17 invokevirtual #352  java/util/Optional.ifPresent (Ljava/util/function/Consumer;)V
+   20 return
+--- loadEffect (Lnet/minecraft/world/level/storage/ValueInput;Ljava/lang/String;)Lnet/minecraft/core/Holder;
+    0 aload_0
+    1 aload_1
+    2 getstatic #358  net/minecraft/core/registries/BuiltInRegistries.MOB_EFFECT Lnet/minecraft/core/Registry;
+    5 invokeinterface net/minecraft/core/Registry.holderByNameCodec ()Lcom/mojang/serialization/Codec;
+   10 invokeinterface net/minecraft/world/level/storage/ValueInput.read (Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+   15 getstatic #3  net/minecraft/world/level/block/entity/BeaconBlockEntity.VALID_EFFECTS Ljava/util/Set;
+   18 dup
+   19 invokestatic #376  java/util/Objects.requireNonNull (Ljava/lang/Object;)Ljava/lang/Object;
+   22 pop
+   23 invokedynamic #380
+   28 invokevirtual #384  java/util/Optional.filter (Ljava/util/function/Predicate;)Ljava/util/Optional;
+   31 aconst_null
+   32 invokevirtual #388  java/util/Optional.orElse (Ljava/lang/Object;)Ljava/lang/Object;
+   35 checkcast #281  net/minecraft/core/Holder
+   38 areturn
+--- loadAdditional (Lnet/minecraft/world/level/storage/ValueInput;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #391  net/minecraft/world/level/block/entity/BlockEntity.loadAdditional (Lnet/minecraft/world/level/storage/ValueInput;)V
+    5 aload_0
+    6 aload_1
+    7 ldc_w #395 = primary_effect
+   10 invokestatic #397  net/minecraft/world/level/block/entity/BeaconBlockEntity.loadEffect (Lnet/minecraft/world/level/storage/ValueInput;Ljava/lang/String;)Lnet/minecraft/core/Holder;
+   13 putfield #179  net/minecraft/world/level/block/entity/BeaconBlockEntity.primaryPower Lnet/minecraft/core/Holder;
+   16 aload_0
+   17 aload_1
+   18 ldc_w #401 = secondary_effect
+   21 invokestatic #397  net/minecraft/world/level/block/entity/BeaconBlockEntity.loadEffect (Lnet/minecraft/world/level/storage/ValueInput;Ljava/lang/String;)Lnet/minecraft/core/Holder;
+   24 putfield #183  net/minecraft/world/level/block/entity/BeaconBlockEntity.secondaryPower Lnet/minecraft/core/Holder;
+   27 aload_0
+   28 aload_1
+   29 ldc_w #403 = CustomName
+   32 invokestatic #405  net/minecraft/world/level/block/entity/BeaconBlockEntity.parseCustomNameSafe (Lnet/minecraft/world/level/storage/ValueInput;Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
+   35 putfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+   38 aload_0
+   39 aload_1
+   40 invokestatic #413  net/minecraft/world/LockCode.fromTag (Lnet/minecraft/world/level/storage/ValueInput;)Lnet/minecraft/world/LockCode;
+   43 putfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+   46 return
+--- saveAdditional (Lnet/minecraft/world/level/storage/ValueOutput;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #417  net/minecraft/world/level/block/entity/BlockEntity.saveAdditional (Lnet/minecraft/world/level/storage/ValueOutput;)V
+    5 aload_1
+    6 ldc_w #395 = primary_effect
+    9 aload_0
+   10 getfield #179  net/minecraft/world/level/block/entity/BeaconBlockEntity.primaryPower Lnet/minecraft/core/Holder;
+   13 invokestatic #421  net/minecraft/world/level/block/entity/BeaconBlockEntity.storeEffect (Lnet/minecraft/world/level/storage/ValueOutput;Ljava/lang/String;Lnet/minecraft/core/Holder;)V
+   16 aload_1
+   17 ldc_w #401 = secondary_effect
+   20 aload_0
+   21 getfield #183  net/minecraft/world/level/block/entity/BeaconBlockEntity.secondaryPower Lnet/minecraft/core/Holder;
+   24 invokestatic #421  net/minecraft/world/level/block/entity/BeaconBlockEntity.storeEffect (Lnet/minecraft/world/level/storage/ValueOutput;Ljava/lang/String;Lnet/minecraft/core/Holder;)V
+   27 aload_1
+   28 ldc_w #425 = Levels
+   31 aload_0
+   32 getfield #164  net/minecraft/world/level/block/entity/BeaconBlockEntity.levels I
+   35 invokeinterface net/minecraft/world/level/storage/ValueOutput.putInt (Ljava/lang/String;I)V
+   40 aload_1
+   41 ldc_w #403 = CustomName
+   44 getstatic #433  net/minecraft/network/chat/ComponentSerialization.CODEC Lcom/mojang/serialization/Codec;
+   47 aload_0
+   48 getfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+   51 invokeinterface net/minecraft/world/level/storage/ValueOutput.storeNullable (Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V
+   56 aload_0
+   57 getfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+   60 aload_1
+   61 invokevirtual #443  net/minecraft/world/LockCode.addToTag (Lnet/minecraft/world/level/storage/ValueOutput;)V
+   64 return
+--- setCustomName (Lnet/minecraft/network/chat/Component;)V
+    0 aload_0
+    1 aload_1
+    2 putfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+    5 return
+--- getCustomName ()Lnet/minecraft/network/chat/Component;
+    0 aload_0
+    1 getfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+    4 areturn
+--- createMenu (ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    0 aload_0
+    1 getfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+    4 aload_3
+    5 invokevirtual #446  net/minecraft/world/LockCode.canUnlock (Lnet/minecraft/world/entity/player/Player;)Z
+    8 ifeq #28
+   11 new #450  net/minecraft/world/inventory/BeaconMenu
+   14 dup
+   15 iload_1
+   16 aload_2
+   17 aload_0
+   18 getfield #51  net/minecraft/world/level/block/entity/BeaconBlockEntity.dataAccess Lnet/minecraft/world/inventory/ContainerData;
+   21 aload_0
+   22 getfield #265  net/minecraft/world/level/block/entity/BeaconBlockEntity.level Lnet/minecraft/world/level/Level;
+   25 aload_0
+   26 invokevirtual #452  net/minecraft/world/level/block/entity/BeaconBlockEntity.getBlockPos ()Lnet/minecraft/core/BlockPos;
+   29 invokestatic #455  net/minecraft/world/inventory/ContainerLevelAccess.create (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/inventory/ContainerLevelAccess;
+   32 invokespecial #460  net/minecraft/world/inventory/BeaconMenu.<init> (ILnet/minecraft/world/Container;Lnet/minecraft/world/inventory/ContainerData;Lnet/minecraft/world/inventory/ContainerLevelAccess;)V
+   35 areturn
+   36 aload_0
+   37 invokevirtual #452  net/minecraft/world/level/block/entity/BeaconBlockEntity.getBlockPos ()Lnet/minecraft/core/BlockPos;
+   40 invokestatic #463  net/minecraft/world/phys/Vec3.atCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+   43 aload_3
+   44 aload_0
+   45 invokevirtual #469  net/minecraft/world/level/block/entity/BeaconBlockEntity.getDisplayName ()Lnet/minecraft/network/chat/Component;
+   48 invokestatic #473  net/minecraft/world/level/block/entity/BaseContainerBlockEntity.sendChestLockedNotifications (Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;)V
+   51 aconst_null
+   52 areturn
+--- getDisplayName ()Lnet/minecraft/network/chat/Component;
+    0 aload_0
+    1 invokevirtual #479  net/minecraft/world/level/block/entity/BeaconBlockEntity.getName ()Lnet/minecraft/network/chat/Component;
+    4 areturn
+--- getName ()Lnet/minecraft/network/chat/Component;
+    0 aload_0
+    1 getfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+    4 ifnull #8
+    7 aload_0
+    8 getfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+   11 areturn
+   12 getstatic #482  net/minecraft/world/level/block/entity/BeaconBlockEntity.DEFAULT_NAME Lnet/minecraft/network/chat/Component;
+   15 areturn
+--- applyImplicitComponents (Lnet/minecraft/core/component/DataComponentGetter;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #485  net/minecraft/world/level/block/entity/BlockEntity.applyImplicitComponents (Lnet/minecraft/core/component/DataComponentGetter;)V
+    5 aload_0
+    6 aload_1
+    7 getstatic #489  net/minecraft/core/component/DataComponents.CUSTOM_NAME Lnet/minecraft/core/component/DataComponentType;
+   10 invokeinterface net/minecraft/core/component/DataComponentGetter.get (Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+   15 checkcast #500  net/minecraft/network/chat/Component
+   18 putfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+   21 aload_0
+   22 aload_1
+   23 getstatic #502  net/minecraft/core/component/DataComponents.LOCK Lnet/minecraft/core/component/DataComponentType;
+   26 getstatic #37  net/minecraft/world/LockCode.NO_LOCK Lnet/minecraft/world/LockCode;
+   29 invokeinterface net/minecraft/core/component/DataComponentGetter.getOrDefault (Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+   34 checkcast #38  net/minecraft/world/LockCode
+   37 putfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+   40 return
+--- collectImplicitComponents (Lnet/minecraft/core/component/DataComponentMap$Builder;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #509  net/minecraft/world/level/block/entity/BlockEntity.collectImplicitComponents (Lnet/minecraft/core/component/DataComponentMap$Builder;)V
+    5 aload_1
+    6 getstatic #489  net/minecraft/core/component/DataComponents.CUSTOM_NAME Lnet/minecraft/core/component/DataComponentType;
+    9 aload_0
+   10 getfield #409  net/minecraft/world/level/block/entity/BeaconBlockEntity.name Lnet/minecraft/network/chat/Component;
+   13 invokevirtual #513  net/minecraft/core/component/DataComponentMap$Builder.set (Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/core/component/DataComponentMap$Builder;
+   16 pop
+   17 aload_0
+   18 getfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+   21 getstatic #37  net/minecraft/world/LockCode.NO_LOCK Lnet/minecraft/world/LockCode;
+   24 invokevirtual #519  net/minecraft/world/LockCode.equals (Ljava/lang/Object;)Z
+   27 ifne #15
+   30 aload_1
+   31 getstatic #502  net/minecraft/core/component/DataComponents.LOCK Lnet/minecraft/core/component/DataComponentType;
+   34 aload_0
+   35 getfield #43  net/minecraft/world/level/block/entity/BeaconBlockEntity.lockKey Lnet/minecraft/world/LockCode;
+   38 invokevirtual #513  net/minecraft/core/component/DataComponentMap$Builder.set (Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/core/component/DataComponentMap$Builder;
+   41 pop
+   42 return
+--- removeComponentsFromTag (Lnet/minecraft/world/level/storage/ValueOutput;)V
+    0 aload_1
+    1 ldc_w #403 = CustomName
+    4 invokeinterface net/minecraft/world/level/storage/ValueOutput.discard (Ljava/lang/String;)V
+    9 aload_1
+   10 ldc_w #524 = lock
+   13 invokeinterface net/minecraft/world/level/storage/ValueOutput.discard (Ljava/lang/String;)V
+   18 return
+--- setLevel (Lnet/minecraft/world/level/Level;)V
+    0 aload_0
+    1 aload_1
+    2 invokespecial #526  net/minecraft/world/level/block/entity/BlockEntity.setLevel (Lnet/minecraft/world/level/Level;)V
+    5 aload_0
+    6 aload_1
+    7 invokevirtual #200  net/minecraft/world/level/Level.getMinY ()I
+   10 iconst_1
+   11 isub
+   12 putfield #67  net/minecraft/world/level/block/entity/BeaconBlockEntity.lastCheckY I
+   15 return
+--- getUpdatePacket ()Lnet/minecraft/network/protocol/Packet;
+    0 aload_0
+    1 invokevirtual #530  net/minecraft/world/level/block/entity/BeaconBlockEntity.getUpdatePacket ()Lnet/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket;
+    4 areturn
+--- lambda$storeEffect$0 (Lnet/minecraft/world/level/storage/ValueOutput;Ljava/lang/String;Lnet/minecraft/resources/ResourceKey;)V
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 invokevirtual #534  net/minecraft/resources/ResourceKey.identifier ()Lnet/minecraft/resources/Identifier;
+    6 invokevirtual #540  net/minecraft/resources/Identifier.toString ()Ljava/lang/String;
+    9 invokeinterface net/minecraft/world/level/storage/ValueOutput.putString (Ljava/lang/String;Ljava/lang/String;)V
+   14 return
+--- <clinit> ()V
+    0 getstatic #550  net/minecraft/world/effect/MobEffects.SPEED Lnet/minecraft/core/Holder;
+    3 getstatic #555  net/minecraft/world/effect/MobEffects.HASTE Lnet/minecraft/core/Holder;
+    6 invokestatic #558  java/util/List.of (Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/List;
+    9 getstatic #561  net/minecraft/world/effect/MobEffects.RESISTANCE Lnet/minecraft/core/Holder;
+   12 getstatic #564  net/minecraft/world/effect/MobEffects.JUMP_BOOST Lnet/minecraft/core/Holder;
+   15 invokestatic #558  java/util/List.of (Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/List;
+   18 getstatic #567  net/minecraft/world/effect/MobEffects.STRENGTH Lnet/minecraft/core/Holder;
+   21 invokestatic #570  java/util/List.of (Ljava/lang/Object;)Ljava/util/List;
+   24 getstatic #573  net/minecraft/world/effect/MobEffects.REGENERATION Lnet/minecraft/core/Holder;
+   27 invokestatic #570  java/util/List.of (Ljava/lang/Object;)Ljava/util/List;
+   30 invokestatic #576  java/util/List.of (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/List;
+   33 putstatic #285  net/minecraft/world/level/block/entity/BeaconBlockEntity.BEACON_EFFECTS Ljava/util/List;
+   36 getstatic #285  net/minecraft/world/level/block/entity/BeaconBlockEntity.BEACON_EFFECTS Ljava/util/List;
+   39 invokeinterface java/util/List.stream ()Ljava/util/stream/Stream;
+   44 invokedynamic #583
+   49 invokeinterface java/util/stream/Stream.flatMap (Ljava/util/function/Function;)Ljava/util/stream/Stream;
+   54 invokestatic #593  java/util/stream/Collectors.toSet ()Ljava/util/stream/Collector;
+   57 invokeinterface java/util/stream/Stream.collect (Ljava/util/stream/Collector;)Ljava/lang/Object;
+   62 checkcast #8  java/util/Set
+   65 putstatic #3  net/minecraft/world/level/block/entity/BeaconBlockEntity.VALID_EFFECTS Ljava/util/Set;
+   68 ldc_w #603 = container.beacon
+   71 invokestatic #605  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   74 putstatic #482  net/minecraft/world/level/block/entity/BeaconBlockEntity.DEFAULT_NAME Lnet/minecraft/network/chat/Component;
+   77 return
+
+########## net/minecraft/world/level/block/entity/BeaconBlockEntity$BeaconBeamSection
+!! MISSING
+
+########## net/minecraft/client/renderer/blockentity/state/BeaconRenderState
+  FIELD animationTime F
+  FIELD beamRadiusScale F
+  FIELD sections Ljava/util/List;
+--- <init> ()V
+    0 aload_0
+    1 invokespecial #1  net/minecraft/client/renderer/blockentity/state/BlockEntityRenderState.<init> ()V
+    4 aload_0
+    5 new #7  java/util/ArrayList
+    8 dup
+    9 invokespecial #9  java/util/ArrayList.<init> ()V
+   12 putfield #10  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.sections Ljava/util/List;
+   15 return
+
+########## net/minecraft/client/renderer/blockentity/BeaconRenderer
+  FIELD BEAM_LOCATION Lnet/minecraft/resources/Identifier;
+  FIELD MAX_RENDER_Y I
+  FIELD BEAM_SCALE_THRESHOLD F
+  FIELD SOLID_BEAM_RADIUS F
+  FIELD BEAM_GLOW_RADIUS F
+--- <init> ()V
+    0 aload_0
+    1 invokespecial #1  java/lang/Object.<init> ()V
+    4 return
+--- createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;
+    0 new #7  net/minecraft/client/renderer/blockentity/state/BeaconRenderState
+    3 dup
+    4 invokespecial #9  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.<init> ()V
+    7 areturn
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 fload_3
+    4 aload 4
+    6 aload 5
+    8 invokespecial #10  net/minecraft/client/renderer/blockentity/BlockEntityRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   11 aload_1
+   12 aload_2
+   13 fload_3
+   14 aload 4
+   16 invokestatic #16  net/minecraft/client/renderer/blockentity/BeaconRenderer.extract (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;FLnet/minecraft/world/phys/Vec3;)V
+   19 return
+--- extract (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;FLnet/minecraft/world/phys/Vec3;)V
+    0 aload_1
+    1 aload_0
+    2 invokevirtual #22  net/minecraft/world/level/block/entity/BlockEntity.getLevel ()Lnet/minecraft/world/level/Level;
+    5 ifnull #21
+    8 aload_0
+    9 invokevirtual #22  net/minecraft/world/level/block/entity/BlockEntity.getLevel ()Lnet/minecraft/world/level/Level;
+   12 invokevirtual #28  net/minecraft/world/level/Level.getGameTime ()J
+   15 bipush 40
+   17 invokestatic #34  java/lang/Math.floorMod (JI)I
+   20 i2f
+   21 fload_2
+   22 fadd
+   23 goto #4
+   26 fconst_0
+   27 putfield #40  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.animationTime F
+   30 aload_1
+   31 aload_0
+   32 checkcast #44  net/minecraft/world/level/block/entity/BeaconBeamOwner
+   35 invokeinterface net/minecraft/world/level/block/entity/BeaconBeamOwner.getBeamSections ()Ljava/util/List;
+   40 invokeinterface java/util/List.stream ()Ljava/util/stream/Stream;
+   45 invokedynamic #56
+   50 invokeinterface java/util/stream/Stream.map (Ljava/util/function/Function;)Ljava/util/stream/Stream;
+   55 invokeinterface java/util/stream/Stream.toList ()Ljava/util/List;
+   60 putfield #69  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.sections Ljava/util/List;
+   63 aload_3
+   64 aload_1
+   65 getfield #73  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.blockPos Lnet/minecraft/core/BlockPos;
+   68 invokestatic #77  net/minecraft/world/phys/Vec3.atCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+   71 invokevirtual #83  net/minecraft/world/phys/Vec3.subtract (Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+   74 invokevirtual #87  net/minecraft/world/phys/Vec3.horizontalDistance ()D
+   77 d2f
+   78 fstore 4
+   80 invokestatic #91  net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+   83 getfield #97  net/minecraft/client/Minecraft.player Lnet/minecraft/client/player/LocalPlayer;
+   86 astore 5
+   88 aload_1
+   89 aload 5
+   91 ifnull #15
+   94 aload 5
+   96 invokevirtual #101  net/minecraft/client/player/LocalPlayer.isScoping ()Z
+   99 ifeq #7
+  102 fconst_1
+  103 goto #12
+  106 fconst_1
+  107 fload 4
+  109 ldc #107 = ?
+  111 fdiv
+  112 invokestatic #108  java/lang/Math.max (FF)F
+  115 putfield #112  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.beamRadiusScale F
+  118 return
+--- submit (Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+    0 iconst_0
+    1 istore 5
+    3 iconst_0
+    4 istore 6
+    6 iload 6
+    8 aload_1
+    9 getfield #69  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.sections Ljava/util/List;
+   12 invokeinterface java/util/List.size ()I
+   17 if_icmpge #82
+   20 aload_1
+   21 getfield #69  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.sections Ljava/util/List;
+   24 iload 6
+   26 invokeinterface java/util/List.get (I)Ljava/lang/Object;
+   31 checkcast #123  net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section
+   34 astore 7
+   36 aload_2
+   37 aload_3
+   38 aload_1
+   39 getfield #112  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.beamRadiusScale F
+   42 aload_1
+   43 getfield #40  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.animationTime F
+   46 iload 5
+   48 iload 6
+   50 aload_1
+   51 getfield #69  net/minecraft/client/renderer/blockentity/state/BeaconRenderState.sections Ljava/util/List;
+   54 invokeinterface java/util/List.size ()I
+   59 iconst_1
+   60 isub
+   61 if_icmpne #9
+   64 sipush 2048
+   67 goto #8
+   70 aload 7
+   72 invokevirtual #125  net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section.height ()I
+   75 aload 7
+   77 invokevirtual #128  net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section.color ()I
+   80 invokestatic #131  net/minecraft/client/renderer/blockentity/BeaconRenderer.submitBeaconBeam (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;FFIII)V
+   83 iload 5
+   85 aload 7
+   87 invokevirtual #125  net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section.height ()I
+   90 iadd
+   91 istore 5
+   93 iinc 6 1
+   96 goto #65446
+   99 return
+--- submitBeaconBeam (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;FFIII)V
+    0 aload_0
+    1 aload_1
+    2 getstatic #135  net/minecraft/client/renderer/blockentity/BeaconRenderer.BEAM_LOCATION Lnet/minecraft/resources/Identifier;
+    5 fconst_1
+    6 fload_3
+    7 iload 4
+    9 iload 5
+   11 iload 6
+   13 ldc #139 = ?
+   15 fload_2
+   16 fmul
+   17 ldc #140 = ?
+   19 fload_2
+   20 fmul
+   21 invokestatic #141  net/minecraft/client/renderer/blockentity/BeaconRenderer.submitBeaconBeam (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/resources/Identifier;FFIIIFF)V
+   24 return
+--- submitBeaconBeam (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/resources/Identifier;FFIIIFF)V
+    0 iload 5
+    2 iload 6
+    4 iadd
+    5 istore 10
+    7 aload_0
+    8 invokevirtual #144  com/mojang/blaze3d/vertex/PoseStack.pushPose ()V
+   11 aload_0
+   12 ldc2_w #149 = 0.5
+   15 dconst_0
+   16 ldc2_w #149 = 0.5
+   19 invokevirtual #151  com/mojang/blaze3d/vertex/PoseStack.translate (DDD)V
+   22 iload 6
+   24 ifge #8
+   27 fload 4
+   29 goto #6
+   32 fload 4
+   34 fneg
+   35 fstore 11
+   37 fload 11
+   39 ldc #139 = ?
+   41 fmul
+   42 fload 11
+   44 ldc #155 = ?
+   46 fmul
+   47 invokestatic #156  net/minecraft/util/Mth.floor (F)I
+   50 i2f
+   51 fsub
+   52 invokestatic #162  net/minecraft/util/Mth.frac (F)F
+   55 fstore 12
+   57 aload_0
+   58 invokevirtual #144  com/mojang/blaze3d/vertex/PoseStack.pushPose ()V
+   61 aload_0
+   62 getstatic #166  com/mojang/math/Axis.YP Lcom/mojang/math/Axis;
+   65 fload 4
+   67 ldc #172 = ?
+   69 fmul
+   70 ldc #173 = ?
+   72 fsub
+   73 invokeinterface com/mojang/math/Axis.rotationDegrees (F)Lorg/joml/Quaternionf;
+   78 invokevirtual #178  com/mojang/blaze3d/vertex/PoseStack.mulPose (Lorg/joml/Quaternionfc;)V
+   81 fconst_0
+   82 fstore 13
+   84 fload 8
+   86 fstore 14
+   88 fload 8
+   90 fstore 15
+   92 fconst_0
+   93 fstore 16
+   95 fload 8
+   97 fneg
+   98 fstore 17
+  100 fconst_0
+  101 fstore 18
+  103 fconst_0
+  104 fstore 19
+  106 fload 8
+  108 fneg
+  109 fstore 20
+  111 fconst_0
+  112 fstore 21
+  114 fconst_1
+  115 fstore 22
+  117 ldc #182 = ?
+  119 fload 12
+  121 fadd
+  122 fstore 23
+  124 iload 6
+  126 i2f
+  127 fload_3
+  128 fmul
+  129 ldc #183 = ?
+  131 fload 8
+  133 fdiv
+  134 fmul
+  135 fload 23
+  137 fadd
+  138 fstore 24
+  140 aload_1
+  141 aload_0
+  142 aload_2
+  143 iconst_0
+  144 invokestatic #184  net/minecraft/client/renderer/rendertype/RenderTypes.beaconBeam (Lnet/minecraft/resources/Identifier;Z)Lnet/minecraft/client/renderer/rendertype/RenderType;
+  147 iload 7
+  149 iload 5
+  151 iload 10
+  153 fload 14
+  155 fload 15
+  157 fload 17
+  159 fload 20
+  161 fload 24
+  163 fload 23
+  165 invokedynamic #190
+  170 invokeinterface net/minecraft/client/renderer/SubmitNodeCollector.submitCustomGeometry (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V
+  175 aload_0
+  176 invokevirtual #200  com/mojang/blaze3d/vertex/PoseStack.popPose ()V
+  179 fload 9
+  181 fneg
+  182 fstore 13
+  184 fload 9
+  186 fneg
+  187 fstore 14
+  189 fload 9
+  191 fstore 15
+  193 fload 9
+  195 fneg
+  196 fstore 16
+  198 fload 9
+  200 fneg
+  201 fstore 17
+  203 fload 9
+  205 fstore 18
+  207 fload 9
+  209 fstore 19
+  211 fload 9
+  213 fstore 20
+  215 fconst_0
+  216 fstore 21
+  218 fconst_1
+  219 fstore 22
+  221 ldc #182 = ?
+  223 fload 12
+  225 fadd
+  226 fstore 23
+  228 iload 6
+  230 i2f
+  231 fload_3
+  232 fmul
+  233 fload 23
+  235 fadd
+  236 fstore 24
+  238 aload_1
+  239 aload_0
+  240 aload_2
+  241 iconst_1
+  242 invokestatic #184  net/minecraft/client/renderer/rendertype/RenderTypes.beaconBeam (Lnet/minecraft/resources/Identifier;Z)Lnet/minecraft/client/renderer/rendertype/RenderType;
+  245 iload 7
+  247 iload 5
+  249 iload 10
+  251 fload 13
+  253 fload 14
+  255 fload 15
+  257 fload 16
+  259 fload 17
+  261 fload 18
+  263 fload 19
+  265 fload 20
+  267 fload 24
+  269 fload 23
+  271 invokedynamic #203
+  276 invokeinterface net/minecraft/client/renderer/SubmitNodeCollector.submitCustomGeometry (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V
+  281 aload_0
+  282 invokevirtual #200  com/mojang/blaze3d/vertex/PoseStack.popPose ()V
+  285 return
+--- renderPart (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFFFFFF)V
+    0 aload_0
+    1 aload_1
+    2 iload_2
+    3 iload_3
+    4 iload 4
+    6 fload 5
+    8 fload 6
+   10 fload 7
+   12 fload 8
+   14 fload 13
+   16 fload 14
+   18 fload 15
+   20 fload 16
+   22 invokestatic #206  net/minecraft/client/renderer/blockentity/BeaconRenderer.renderQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFF)V
+   25 aload_0
+   26 aload_1
+   27 iload_2
+   28 iload_3
+   29 iload 4
+   31 fload 11
+   33 fload 12
+   35 fload 9
+   37 fload 10
+   39 fload 13
+   41 fload 14
+   43 fload 15
+   45 fload 16
+   47 invokestatic #206  net/minecraft/client/renderer/blockentity/BeaconRenderer.renderQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFF)V
+   50 aload_0
+   51 aload_1
+   52 iload_2
+   53 iload_3
+   54 iload 4
+   56 fload 7
+   58 fload 8
+   60 fload 11
+   62 fload 12
+   64 fload 13
+   66 fload 14
+   68 fload 15
+   70 fload 16
+   72 invokestatic #206  net/minecraft/client/renderer/blockentity/BeaconRenderer.renderQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFF)V
+   75 aload_0
+   76 aload_1
+   77 iload_2
+   78 iload_3
+   79 iload 4
+   81 fload 9
+   83 fload 10
+   85 fload 5
+   87 fload 6
+   89 fload 13
+   91 fload 14
+   93 fload 15
+   95 fload 16
+   97 invokestatic #206  net/minecraft/client/renderer/blockentity/BeaconRenderer.renderQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFF)V
+  100 return
+--- renderQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFF)V
+    0 aload_0
+    1 aload_1
+    2 iload_2
+    3 iload 4
+    5 fload 5
+    7 fload 6
+    9 fload 10
+   11 fload 11
+   13 invokestatic #210  net/minecraft/client/renderer/blockentity/BeaconRenderer.addVertex (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V
+   16 aload_0
+   17 aload_1
+   18 iload_2
+   19 iload_3
+   20 fload 5
+   22 fload 6
+   24 fload 10
+   26 fload 12
+   28 invokestatic #210  net/minecraft/client/renderer/blockentity/BeaconRenderer.addVertex (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V
+   31 aload_0
+   32 aload_1
+   33 iload_2
+   34 iload_3
+   35 fload 7
+   37 fload 8
+   39 fload 9
+   41 fload 12
+   43 invokestatic #210  net/minecraft/client/renderer/blockentity/BeaconRenderer.addVertex (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V
+   46 aload_0
+   47 aload_1
+   48 iload_2
+   49 iload 4
+   51 fload 7
+   53 fload 8
+   55 fload 9
+   57 fload 11
+   59 invokestatic #210  net/minecraft/client/renderer/blockentity/BeaconRenderer.addVertex (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V
+   62 return
+--- addVertex (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V
+    0 aload_1
+    1 aload_0
+    2 fload 4
+    4 iload_3
+    5 i2f
+    6 fload 5
+    8 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   13 iload_2
+   14 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor (I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   19 fload 6
+   21 fload 7
+   23 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setUv (FF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   28 getstatic #227  net/minecraft/client/renderer/texture/OverlayTexture.NO_OVERLAY I
+   31 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setOverlay (I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   36 ldc #238 = ?
+   38 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setLight (I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   43 aload_0
+   44 fconst_0
+   45 fconst_1
+   46 fconst_0
+   47 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setNormal (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   52 pop
+   53 return
+--- shouldRenderOffScreen ()Z
+    0 iconst_1
+    1 ireturn
+--- getViewDistance ()I
+    0 invokestatic #91  net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+    3 getfield #245  net/minecraft/client/Minecraft.options Lnet/minecraft/client/Options;
+    6 invokevirtual #249  net/minecraft/client/Options.getEffectiveRenderDistance ()I
+    9 bipush 16
+   11 imul
+   12 ireturn
+--- shouldRender (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/phys/Vec3;)Z
+    0 aload_1
+    1 invokevirtual #254  net/minecraft/world/level/block/entity/BlockEntity.getBlockPos ()Lnet/minecraft/core/BlockPos;
+    4 invokestatic #77  net/minecraft/world/phys/Vec3.atCenterOf (Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+    7 dconst_1
+    8 dconst_0
+    9 dconst_1
+   10 invokevirtual #258  net/minecraft/world/phys/Vec3.multiply (DDD)Lnet/minecraft/world/phys/Vec3;
+   13 aload_2
+   14 dconst_1
+   15 dconst_0
+   16 dconst_1
+   17 invokevirtual #258  net/minecraft/world/phys/Vec3.multiply (DDD)Lnet/minecraft/world/phys/Vec3;
+   20 aload_0
+   21 invokevirtual #262  net/minecraft/client/renderer/blockentity/BeaconRenderer.getViewDistance ()I
+   24 i2d
+   25 invokevirtual #265  net/minecraft/world/phys/Vec3.closerThan (Lnet/minecraft/core/Position;D)Z
+   28 ireturn
+--- submit (Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+    0 aload_0
+    1 aload_1
+    2 checkcast #7  net/minecraft/client/renderer/blockentity/state/BeaconRenderState
+    5 aload_2
+    6 aload_3
+    7 aload 4
+    9 invokevirtual #269  net/minecraft/client/renderer/blockentity/BeaconRenderer.submit (Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+   12 return
+--- extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 checkcast #7  net/minecraft/client/renderer/blockentity/state/BeaconRenderState
+    6 fload_3
+    7 aload 4
+    9 aload 5
+   11 invokevirtual #273  net/minecraft/client/renderer/blockentity/BeaconRenderer.extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+   14 return
+--- createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;
+    0 aload_0
+    1 invokevirtual #276  net/minecraft/client/renderer/blockentity/BeaconRenderer.createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;
+    4 areturn
+--- lambda$submitBeaconBeam$1 (IIIFFFFFFFFFFLcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
+    0 aload 13
+    2 aload 14
+    4 bipush 32
+    6 iload_0
+    7 invokestatic #280  net/minecraft/util/ARGB.color (II)I
+   10 iload_1
+   11 iload_2
+   12 fload_3
+   13 fload 4
+   15 fload 5
+   17 fload 6
+   19 fload 7
+   21 fload 8
+   23 fload 9
+   25 fload 10
+   27 fconst_0
+   28 fconst_1
+   29 fload 11
+   31 fload 12
+   33 invokestatic #285  net/minecraft/client/renderer/blockentity/BeaconRenderer.renderPart (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFFFFFF)V
+   36 return
+--- lambda$submitBeaconBeam$0 (IIIFFFFFFLcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
+    0 aload 9
+    2 aload 10
+    4 iload_0
+    5 iload_1
+    6 iload_2
+    7 fconst_0
+    8 fload_3
+    9 fload 4
+   11 fconst_0
+   12 fload 5
+   14 fconst_0
+   15 fconst_0
+   16 fload 6
+   18 fconst_0
+   19 fconst_1
+   20 fload 7
+   22 fload 8
+   24 invokestatic #285  net/minecraft/client/renderer/blockentity/BeaconRenderer.renderPart (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFFFFFF)V
+   27 return
+--- lambda$extract$0 (Lnet/minecraft/world/level/block/entity/BeaconBeamOwner$Section;)Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section;
+    0 new #123  net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section
+    3 dup
+    4 aload_0
+    5 invokevirtual #289  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.getColor ()I
+    8 aload_0
+    9 invokevirtual #294  net/minecraft/world/level/block/entity/BeaconBeamOwner$Section.getHeight ()I
+   12 invokespecial #297  net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section.<init> (II)V
+   15 areturn
+--- <clinit> ()V
+    0 ldc_w #300 = textures/entity/beacon/beacon_beam.png
+    3 invokestatic #302  net/minecraft/resources/Identifier.withDefaultNamespace (Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    6 putstatic #135  net/minecraft/client/renderer/blockentity/BeaconRenderer.BEAM_LOCATION Lnet/minecraft/resources/Identifier;
+    9 return

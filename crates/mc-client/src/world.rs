@@ -5400,6 +5400,262 @@ pub fn gateway_beam_prism_quads(
     out
 }
 
+/// THE BEACON'S OWN BEAM SECTIONS (the 318 round — the law layer the
+/// 317 NEXT list's own first candidate plants: javap
+/// BeaconBlockEntity.tick pc 51-357 the 26.2 jar the live disasm
+/// answers, scripts/beacon_sections_scout_318.py +
+/// dye_color_probe2_318.py the walks bank, rc=0 —
+/// scripts/jar_work/beacon_sections_318.txt the dumps serve).
+///
+/// THE JAR LAWS the round re-pins:
+///   - BeaconBlock IMPLEMENTS BeaconBeamBlock [the classfile's own
+///     interface count 1 the raw walk banks] and `getColor()` pc 0-3
+///     the `getstatic DyeColor.WHITE` answers — THE BEACON'S OWN CELL
+///     the FIRST beam section serves [the cursor the `lastCheckY + 1`
+///     seed the beacon's own y wears, pc 51-68], the WHITE root the
+///     glassless beacon's beam the game's own look keeps;
+///   - the walk the `checkingBeamSections` list fills [the sections
+///     the glass ladder the color ladder wears]: the stained glass
+///     the `BeaconBeamBlock.getColor().getTextureDiffuseColor()` ARGB
+///     the section color keeps, `size() <= 1` the FRESH section pc
+///     202-224 pushes, the SAME color the `increaseHeight` pc 233-248
+///     grows, the DIFFERENT color the `new Section(ARGB.average(last,
+///     color))` pc 251-281 mixes [pc 262 the invokestatic average the
+///     mix fold banks];
+///   - the non-glass arm pc 285-334 [the raw bytes the branch targets
+///     the 287+32 = 319 / 297+14 = 311 / 308+11 = 319 / 316+21 = 337
+///     decode confirms]: the last==null walk the clear+stop arm
+///     serves [the sections the walk never seeds], the transparent
+///     `getLightDampening() < 15` the grow pc 311-316 keeps, the
+///     BEDROCK row the grow arm the beam-through answer wears, the
+///     opaque non-bedrock the `clear + lastCheckY = heightmap`
+///     pc 319-334 the blocked-beam restart keeps;
+///   - the budget pc 124-131 the `bipush 10` the
+///     BLOCKS_CHECK_PER_TICK constant keeps — TEN cells a tick the
+///     incremental walk serves, the heightmap gate pc 134-141 the
+///     `cursor.y <= WORLD_SURFACE` verdict the walk's own ceiling
+///     wears;
+///   - getBeamSections pc 0-17 the LEVELS GATE the beam's own
+///     visibility wears [the `levels == 0` the ImmutableList.of()
+///     empty answer keeps], updateBase pc 0-129 the pyramid scan the
+///     levels ladder answers [the tier 1..4 the (2t+1)^2 square at
+///     `posY - tier` the BEACON_BASE_BLOCKS tag the scan checks, the
+///     incomplete tier the break the cumulative levels keeps], the
+///     tag the data/minecraft/tags/block/beacon_base_blocks.json the
+///     five members speaks [netherite, emerald, diamond, gold, iron];
+///   - BeaconRenderer.submit pc 46-67 the RENDER HEIGHT law the tail
+///     answers [the LAST section the `sipush 2048` render height
+///     wears, the y cursor pc 83-91 the real heights the accumulate
+///     keeps], the beamRadiusScale pc 88-115 the `max(1.0, horizontal
+///     distance / K)` the scope arm keeps.
+pub const BEACON_BLOCKS_CHECK_PER_TICK: usize = 10;
+
+/// THE BEAM'S OWN RENDER TAIL (javap BeaconRenderer.submit pc 64-67
+/// the `sipush 2048` the LAST section's render height the skyward
+/// answer keeps).
+pub const BEACON_BEAM_MAX_RENDER: i32 = 2048;
+
+/// THE 16 DYE DIFFUSE COLORS (javap DyeColor clinit the 26.2 jar the
+/// raw CP ints resolve — scripts/dye_color_probe2_318.py the rows
+/// print, rc=0: WHITE 0xF9FFFE .. BLACK 0x1D1D21 the
+/// getTextureDiffuseColor ARGB the stored `ARGB.opaque(arg5)` the
+/// ctor's pc 38-44 store answers, the MAGENTA 0xC74EBD + PURPLE
+/// 0x8932B8 rows the 316 round's beam colors the same table keeps).
+pub const DYE_DIFFUSE: [u32; 16] = [
+    0xF9_FFFE,  // WHITE
+    0xF9_80_1D, // ORANGE
+    0xC7_4E_BD, // MAGENTA
+    0x3A_B3_DA, // LIGHT_BLUE
+    0xFE_D8_3D, // YELLOW
+    0x80_C7_1F, // LIME
+    0xF3_8B_AA, // PINK
+    0x47_4F_52, // GRAY
+    0x9D_9D_97, // LIGHT_GRAY
+    0x16_9C_9C, // CYAN
+    0x89_32_B8, // PURPLE
+    0x3C_44_AA, // BLUE
+    0x83_54_32, // BROWN
+    0x5E_7C_16, // GREEN
+    0xB0_2E_26, // RED
+    0x1D_1D_21, // BLACK
+];
+
+/// THE STAINED HALF'S OWN DIFFUSE READ (the kind ladder the palette
+/// order keeps — WHITE_STAINED_GLASS..=BLACK_STAINED_GLASS the
+/// DyeColor.values() WHITE..BLACK order the same rung-by-rung map
+/// wears, the plain glass + the panes the None verdict the beam walk
+/// never tints).
+pub fn stained_glass_diffuse(kind: u16) -> Option<u32> {
+    if (WHITE_STAINED_GLASS..=BLACK_STAINED_GLASS).contains(&kind) {
+        Some(DYE_DIFFUSE[(kind - WHITE_STAINED_GLASS) as usize])
+    } else {
+        None
+    }
+}
+
+/// THE ARGB AVERAGE (javap ARGB.average pc 0-47 the 26.2 jar — the
+/// four channels the `(a + b) / 2` floor each keeps, the alpha the
+/// red the green the blue the integer halvings speak).
+pub fn argb_average(a: u32, b: u32) -> u32 {
+    let avg = |shift: u32| (((a >> shift) & 0xFF) + ((b >> shift) & 0xFF)) / 2;
+    (avg(24) << 24) | (avg(16) << 16) | (avg(8) << 8) | avg(0)
+}
+
+/// THE BEAM SECTION'S OWN RECORD (javap BeaconBeamOwner$Section the
+/// 26.2 jar — the `color I` + the `height I` fields speak, the ctor
+/// pc 9-13 the height-1 seed wears, the increaseHeight pc 0-10 the
+/// +1 the walk grows).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct BeaconBeamSection {
+    pub color: u32,
+    pub height: i32,
+}
+
+impl BeaconBeamSection {
+    /// THE CTOR'S OWN SEED (the height-1 the every section wears).
+    pub fn new(color: u32) -> Self {
+        Self { color, height: 1 }
+    }
+
+    /// THE INCREASE'S OWN +1 (pc 0-10 the getfield/iconst_1/iadd
+    /// chain the walk's grow keeps).
+    pub fn increase_height(&mut self) {
+        self.height += 1;
+    }
+}
+
+/// THE BEACON'S OWN BEAM COLOR AT A CELL (the walk's own glass-or-
+/// beacon verdict — the beacon's own kind the WHITE root serves [the
+/// getColor law the interface's own member keeps], the stained glass
+/// the ladder colors answer, the rest the None the non-glass arm
+/// serves).
+pub fn beacon_beam_color_at(kind: u16, is_beacon: impl Fn(u16) -> bool) -> Option<u32> {
+    if is_beacon(kind) {
+        Some(DYE_DIFFUSE[0])
+    } else {
+        stained_glass_diffuse(kind)
+    }
+}
+
+/// THE BEACON'S OWN BEAM SECTIONS WALK (javap tick pc 51-357 the 26.2
+/// jar — the cursor the beacon's own cell the `lastCheckY + 1` seed
+/// wears, the budget the BLOCKS_CHECK_PER_TICK 10 the loop bound
+/// keeps, the heightmap the `cursor.y <= height` gate the walk's own
+/// ceiling wears; the section ladder the glass arms the laws above
+/// bank, the non-glass arm the transparent-grow / bedrock-grow /
+/// opaque-clear trio the raw-byte decode confirms, the last==null
+/// walk the clear+stop arm the walk never seeds).
+///
+/// The `is_beacon` predicate the beacon's own kind seat a future
+/// round banks — the LAW the parameterized verdict serves, the tests
+/// the sentinel kinds the same shape rehearse.
+pub fn beacon_beam_sections(
+    world: &World,
+    x: i32,
+    beacon_y: i32,
+    z: i32,
+    height_y: i32,
+    is_beacon: impl Fn(u16) -> bool,
+) -> Vec<BeaconBeamSection> {
+    let mut sections: Vec<BeaconBeamSection> = Vec::new();
+    let mut cursor_y = beacon_y;
+    let mut budget = 0usize;
+    while budget < BEACON_BLOCKS_CHECK_PER_TICK && cursor_y <= height_y {
+        let kind = world.get(x, cursor_y, z);
+        if let Some(diffuse) = beacon_beam_color_at(kind, &is_beacon) {
+            if sections.len() <= 1 {
+                sections.push(BeaconBeamSection::new(diffuse));
+            } else {
+                let last_color = sections.last().map(|s| s.color).unwrap_or(0);
+                if last_color == diffuse {
+                    sections.last_mut().unwrap().increase_height();
+                } else {
+                    sections.push(BeaconBeamSection::new(argb_average(last_color, diffuse)));
+                }
+            }
+        } else if let Some(last) = sections.last_mut() {
+            // THE TRANSPARENT-GROW / BEDROCK-GROW / OPAQUE-CLEAR TRIO
+            // (pc 285-334 — the dampening the full occluder the
+            // !is_transparent proxy keeps, the bedrock row the pass
+            // wears)
+            if !crate::mesher::is_transparent(kind) && kind != BEDROCK {
+                sections.clear();
+                break;
+            }
+            last.increase_height();
+        } else {
+            // THE LAST-NULL WALK (pc 287 -> 319 — the sections the
+            // walk never seeds, the clear+stop arm the restart the
+            // next tick serves)
+            sections.clear();
+            break;
+        }
+        cursor_y += 1;
+        budget += 1;
+    }
+    sections
+}
+
+/// THE PYRAMID'S OWN LEVELS SCAN (javap updateBase pc 0-129 the 26.2
+/// jar — the tier 1..4 the (2t+1)^2 square at `posY - tier` the
+/// BEACON_BASE_BLOCKS tag checks, the incomplete tier the break the
+/// cumulative levels keeps, the `posY - tier < min` gate the void
+/// floor answers).
+///
+/// The `is_base` predicate the five base kinds the tag names
+/// [netherite, emerald, diamond, gold, iron] — the kind seats the
+/// palette lane a future round banks, the tests the stone sentinel
+/// the same shape rehearse.
+pub fn beacon_levels(world: &World, x: i32, y: i32, z: i32, is_base: impl Fn(u16) -> bool) -> u32 {
+    let mut levels = 0u32;
+    for tier in 1..=4i32 {
+        let ly = y - tier;
+        if ly < 0 {
+            break;
+        }
+        let mut complete = true;
+        'outer: for dx in (x - tier)..=(x + tier) {
+            for dz in (z - tier)..=(z + tier) {
+                if !is_base(world.get(dx, ly, dz)) {
+                    complete = false;
+                    break 'outer;
+                }
+            }
+        }
+        if !complete {
+            break;
+        }
+        levels = tier as u32;
+    }
+    levels
+}
+
+/// THE BEAM'S OWN VISIBILITY GATE (javap getBeamSections pc 0-17 —
+/// the `levels == 0` the empty answer keeps, the leveled pyramid the
+/// sections the walk banks).
+pub fn beacon_get_beam_sections(
+    levels: u32,
+    sections: &[BeaconBeamSection],
+) -> Vec<BeaconBeamSection> {
+    if levels == 0 {
+        Vec::new()
+    } else {
+        sections.to_vec()
+    }
+}
+
+/// THE RENDER HEIGHT'S OWN TAIL LAW (javap BeaconRenderer.submit pc
+/// 46-67 — the LAST section the `sipush 2048` render height wears,
+/// the earlier sections the real heights keep, the y cursor pc 83-91
+/// the real heights the accumulate serves).
+pub fn beacon_render_section_height(index: usize, len: usize, height: i32) -> i32 {
+    if index + 1 == len {
+        BEACON_BEAM_MAX_RENDER
+    } else {
+        height
+    }
+}
+
 /// THE CHORUS WALK'S OWN SAFE SEAT (javap LivingEntity.randomTeleport
 /// the 26.2 jar the live disasm answers — the walk-down loop the
 /// blocksMotion verdict the below cell answers, the y the -1.0 step
@@ -33469,6 +33725,293 @@ mod tests {
         assert_eq!(
             q_spin[4].pts, q_rest[4].pts,
             "the halo the static square the spin never wears"
+        );
+    }
+
+    #[test]
+    fn the_beacon_the_sections_the_ladder_the_laws_wear() {
+        // THE 16 DYE DIFFUSE ROWS (javap DyeColor clinit the raw CP
+        // ints — the WHITE head the BLACK tail the MAGENTA/PURPLE rows
+        // the 316 round's beam colors the same table keeps)
+        assert_eq!(DYE_DIFFUSE[0], 0xF9_FFFE, "the WHITE head the row keeps");
+        assert_eq!(
+            DYE_DIFFUSE[2], GATEWAY_BEAM_MAGENTA,
+            "the MAGENTA row the 316 round's spawning color the same table wears"
+        );
+        assert_eq!(
+            DYE_DIFFUSE[10], GATEWAY_BEAM_PURPLE,
+            "the PURPLE row the 316 round's cooling color the same table wears"
+        );
+        assert_eq!(DYE_DIFFUSE[15], 0x1D_1D_21, "the BLACK tail the row keeps");
+        // THE KIND LADDER'S OWN READ (the stained half the rung map
+        // wears — the plain glass + the panes the None verdict)
+        assert_eq!(
+            stained_glass_diffuse(WHITE_STAINED_GLASS),
+            Some(0xF9_FFFE),
+            "the WHITE rung the head kind wears"
+        );
+        assert_eq!(
+            stained_glass_diffuse(BLACK_STAINED_GLASS),
+            Some(0x1D_1D_21),
+            "the BLACK rung the tail kind wears"
+        );
+        assert_eq!(
+            stained_glass_diffuse(RED_STAINED_GLASS),
+            Some(0xB0_2E_26),
+            "the RED rung the 14th seat wears"
+        );
+        assert_eq!(
+            stained_glass_diffuse(GLASS),
+            None,
+            "the plain glass the tint never wears"
+        );
+        assert_eq!(
+            stained_glass_diffuse(WHITE_STAINED_GLASS_PANE),
+            None,
+            "the pane family the beam never tints"
+        );
+        // THE ARGB AVERAGE (javap ARGB.average — the channels the
+        // integer halvings speak, the floor the odd sums wear)
+        assert_eq!(
+            argb_average(0xFF_00_00_00, 0xFF_00_00_00),
+            0xFF_00_00_00,
+            "the same color the average keeps"
+        );
+        assert_eq!(
+            argb_average(0xFF_00_00_FF, 0xFF_FF_00_00),
+            0xFF_7F_00_7F,
+            "the red-blue mix the channel floors wear"
+        );
+        assert_eq!(
+            argb_average(0x01_01_01_01, 0x03_03_03_03),
+            0x02_02_02_02,
+            "the odd-sum floor the 1+3/2 answer keeps"
+        );
+        // THE SECTION RECORD (javap BeaconBeamOwner$Section — the
+        // height-1 ctor seed the +1 grow wears)
+        let mut s = BeaconBeamSection::new(0xC7_4E_BD);
+        assert_eq!(
+            s,
+            BeaconBeamSection {
+                color: 0xC7_4E_BD,
+                height: 1
+            },
+            "the ctor the height-1 seed wears"
+        );
+        s.increase_height();
+        assert_eq!(s.height, 2, "the increase the +1 the walk grows");
+        // THE WALK'S OWN ROOT (javap BeaconBlock.getColor the WHITE
+        // getstatic — the beacon's own cell the FIRST section serves;
+        // the RESPAWN_ANCHOR kind the TEST SENTINEL the seat a future
+        // round banks wears — the law the parameterized verdict
+        // serves)
+        let mut w = World::blank(2, 7);
+        let (bx, by, bz) = (10, 12, 10);
+        let is_beacon = |k: u16| k == RESPAWN_ANCHOR;
+        w.set(bx, by, bz, RESPAWN_ANCHOR);
+        let root = beacon_beam_sections(&w, bx, by, bz, by + 9, is_beacon);
+        assert_eq!(
+            root,
+            vec![BeaconBeamSection {
+                color: 0xF9_FFFE,
+                height: 10
+            }],
+            "the glassless beacon the white root the budgeted cells grow"
+        );
+        // THE GLASS LADDER (the red pane the fresh section the size-1
+        // arm pushes — the air above the red section the grow wears)
+        w.set(bx, by + 3, bz, RED_STAINED_GLASS);
+        let ladder = beacon_beam_sections(&w, bx, by, bz, by + 9, is_beacon);
+        assert_eq!(
+            ladder,
+            vec![
+                BeaconBeamSection {
+                    color: 0xF9_FFFE,
+                    height: 3
+                },
+                BeaconBeamSection {
+                    color: 0xB0_2E_26,
+                    height: 7
+                },
+            ],
+            "the red glass the fresh section the air above the red grows"
+        );
+        // THE MIX LAW (the two different glasses the size-2 arm the
+        // ARGB.average the new section pushes — the blue the mix pair
+        // the red's own last keeps)
+        w.set(bx, by + 5, bz, BLUE_STAINED_GLASS);
+        let mixed = beacon_beam_sections(&w, bx, by, bz, by + 9, is_beacon);
+        assert_eq!(
+            mixed,
+            vec![
+                BeaconBeamSection {
+                    color: 0xF9_FFFE,
+                    height: 3
+                },
+                BeaconBeamSection {
+                    color: 0xB0_2E_26,
+                    height: 2
+                },
+                BeaconBeamSection {
+                    color: argb_average(0xB0_2E_26, 0x3C_44_AA),
+                    height: 5
+                },
+            ],
+            "the blue glass the size-2 arm the average the mix wears"
+        );
+        // THE SAME-COLOR GROW (the second red glass the size-2 arm the
+        // same color the increase keeps)
+        let mut w2 = World::blank(2, 7);
+        w2.set(bx, by, bz, RESPAWN_ANCHOR);
+        w2.set(bx, by + 2, bz, RED_STAINED_GLASS);
+        w2.set(bx, by + 4, bz, RED_STAINED_GLASS);
+        let same = beacon_beam_sections(&w2, bx, by, bz, by + 9, is_beacon);
+        assert_eq!(
+            same,
+            vec![
+                BeaconBeamSection {
+                    color: 0xF9_FFFE,
+                    height: 2
+                },
+                BeaconBeamSection {
+                    color: 0xB0_2E_26,
+                    height: 8
+                },
+            ],
+            "the second red the size-2 arm the same color the grow keeps"
+        );
+        // THE OPAQUE STOP (the stone wall the non-bedrock occluder the
+        // clear+stop arm serves — the sections the walk empties)
+        let mut w3 = World::blank(2, 7);
+        w3.set(bx, by, bz, RESPAWN_ANCHOR);
+        w3.set(bx, by + 2, bz, STONE);
+        let blocked = beacon_beam_sections(&w3, bx, by, bz, by + 9, is_beacon);
+        assert!(
+            blocked.is_empty(),
+            "the stone wall the beam the blocked restart wears"
+        );
+        // THE BEDROCK PASS (the bedrock row the grow arm wears — the
+        // beam-through the vanilla quirk keeps)
+        let mut w4 = World::blank(2, 7);
+        w4.set(bx, by, bz, RESPAWN_ANCHOR);
+        w4.set(bx, by + 1, bz, BEDROCK);
+        let through = beacon_beam_sections(&w4, bx, by, bz, by + 9, is_beacon);
+        assert_eq!(
+            through,
+            vec![BeaconBeamSection {
+                color: 0xF9_FFFE,
+                height: 10
+            }],
+            "the bedrock the grow arm the beam-through keeps"
+        );
+        // THE HEIGHTMAP CEILING (the gate the walk's own ceiling wears
+        // — the walk past the surface the budget never spends)
+        let below = beacon_beam_sections(&w, bx, by, bz, by + 1, is_beacon);
+        assert_eq!(
+            below,
+            vec![BeaconBeamSection {
+                color: 0xF9_FFFE,
+                height: 2
+            }],
+            "the height-1 ceiling the walk the two cells wears"
+        );
+        // THE BUDGET'S OWN TEN (the ceiling far above the walk the ten
+        // cells a tick spends — the white root the ten-count wears)
+        let budgeted = beacon_beam_sections(&w, bx, by, bz, by + 999, is_beacon);
+        let total: i32 = budgeted.iter().map(|s| s.height).sum();
+        assert_eq!(total, 10, "the budget the ten cells the walk a tick spends");
+        // THE PYRAMID'S OWN LEVELS (javap updateBase — the tier
+        // squares the scan checks, the incomplete tier the break the
+        // cumulative levels keeps; the STONE kind the TEST SENTINEL
+        // the base kinds a future round banks wears)
+        let is_base = |k: u16| k == STONE;
+        let mut w5 = World::blank(3, 7);
+        let (px, py, pz) = (20, 16, 20);
+        w5.set(px, py, pz, RESPAWN_ANCHOR);
+        assert_eq!(
+            beacon_levels(&w5, px, py, pz, is_base),
+            0,
+            "the bare beacon the levels-0 gate wears"
+        );
+        for dx in -1..=1 {
+            for dz in -1..=1 {
+                w5.set(px + dx, py - 1, pz + dz, STONE);
+            }
+        }
+        assert_eq!(
+            beacon_levels(&w5, px, py, pz, is_base),
+            1,
+            "the tier-1 square the first level answers"
+        );
+        for dx in -2..=2 {
+            for dz in -2..=2 {
+                w5.set(px + dx, py - 2, pz + dz, STONE);
+            }
+        }
+        assert_eq!(
+            beacon_levels(&w5, px, py, pz, is_base),
+            2,
+            "the tier-2 square the second level answers"
+        );
+        // THE BROKEN TIER (the gap the tier-3 square the break serves —
+        // the levels the last complete layer keeps)
+        w5.set(px + 3, py - 3, pz, STONE);
+        assert_eq!(
+            beacon_levels(&w5, px, py, pz, is_base),
+            2,
+            "the missing cell the tier-3 scan the break keeps"
+        );
+        for dx in -3..=3 {
+            for dz in -3..=3 {
+                w5.set(px + dx, py - 3, pz + dz, STONE);
+            }
+        }
+        assert_eq!(
+            beacon_levels(&w5, px, py, pz, is_base),
+            3,
+            "the complete tier-3 square the third level answers"
+        );
+        // THE VISIBILITY GATE (javap getBeamSections — the levels-0
+        // the empty answer, the leveled pyramid the sections keep)
+        let secs = [BeaconBeamSection::new(0xF9_FFFE)];
+        assert!(
+            beacon_get_beam_sections(0, &secs).is_empty(),
+            "the levels-0 gate the beam never shows"
+        );
+        assert_eq!(
+            beacon_get_beam_sections(3, &secs),
+            secs.to_vec(),
+            "the leveled pyramid the sections the walk banks"
+        );
+        // THE RENDER HEIGHT'S OWN TAIL (javap BeaconRenderer.submit —
+        // the last section the 2048 the skyward answer wears, the
+        // earlier sections the real heights keep)
+        assert_eq!(
+            beacon_render_section_height(0, 2, 3),
+            3,
+            "the earlier section the real height keeps"
+        );
+        assert_eq!(
+            beacon_render_section_height(1, 2, 3),
+            BEACON_BEAM_MAX_RENDER,
+            "the last section the 2048 tail wears"
+        );
+        // THE COLOR AT A CELL (the beacon's own kind the WHITE root,
+        // the stained glass the ladder colors, the rest the None)
+        assert_eq!(
+            beacon_beam_color_at(RESPAWN_ANCHOR, is_beacon),
+            Some(0xF9_FFFE),
+            "the beacon kind the WHITE root wears"
+        );
+        assert_eq!(
+            beacon_beam_color_at(LIME_STAINED_GLASS, is_beacon),
+            Some(0x80_C7_1F),
+            "the lime glass the ladder color wears"
+        );
+        assert_eq!(
+            beacon_beam_color_at(STONE, is_beacon),
+            None,
+            "the stone the None verdict the non-glass arm serves"
         );
     }
 
