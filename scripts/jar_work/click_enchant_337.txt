@@ -1,0 +1,83 @@
+=== clickMenuButton (Lnet/minecraft/world/entity/player/Player;I)Z acc=0001 codelen=154 ===
+code head hex: 1c9b000c1c2ab40035bea100122bb600811cba00850000b8008903ac2ab4001d03b9006a02004e2ab4001d04b9006a02
+max_stack 7323 max_locals 12
+   0: iload_2
+   1: cmp_3 -> 13
+   4: iload_2
+   5: aload_0
+   6: getfield ?#53
+   9: arraylength
+  10: cmp_9 -> 28
+  13: aload_1
+  14: invokevirtual ?#129
+  17: iload_2
+  18: invokedynamic ?#133
+  23: invokestatic ?#137
+  26: iconst_0
+  27: ireturn
+  28: aload_0
+  29: getfield ?#29
+  32: iconst_0
+  33: invokeinterface ?#106
+  38: astore_3
+  39: aload_0
+  40: getfield ?#29
+  43: iconst_1
+  44: invokeinterface ?#106
+  49: astore 4
+  51: iload_2
+  52: iconst_1
+  53: iadd
+  54: istore 5
+  56: op_0x19
+  57: iconst_1
+  58: invokevirtual ?#112
+  61: cmp_2 -> 74
+  64: op_0x19
+  65: iconst_1
+  66: invokevirtual ?#143
+  69: iload 5
+  71: cmp_10 -> 83
+  74: aload_1
+  75: invokevirtual ?#146
+  78: cmp_2 -> 83
+  81: iconst_0
+  82: ireturn
+  83: aload_0
+  84: getfield ?#53
+  87: iload_2
+  88: iaload fam_0
+  89: cmp_6 -> 152
+  92: aload_3
+  93: invokevirtual ?#112
+  96: cmp_2 -> 152
+  99: aload_1
+ 100: getfield ?#149
+ 103: iload 5
+ 105: cmp_9 -> 121
+ 108: aload_1
+ 109: getfield ?#149
+ 112: aload_0
+ 113: getfield ?#53
+ 116: iload_2
+ 117: iaload fam_0
+ 118: cmp_10 -> 128
+ 121: aload_1
+ 122: invokevirtual ?#146
+ 125: cmp_1 -> 152
+ 128: aload_0
+ 129: getfield ?#63
+ 132: aload_0
+ 133: aload_3
+ 134: iload_2
+ 135: aload_1
+ 136: iload 5
+ 138: op_0x19
+ 139: iconst_1
+ 140: invokedynamic ?#153
+ 145: invokeinterface ?#125
+ 150: iconst_1
+ 151: ireturn
+ 152: iconst_0
+ 153: ireturn
+code end pc=154 cl=154

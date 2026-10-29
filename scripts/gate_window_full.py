@@ -16,10 +16,9 @@ try:
     # the `.CARGO` bare token + the open bracket missing wore (the
     # v0.3.990 clobber — the later rounds the direct part_gate lane
     # answered), the module attr + the list literal the call law wears
-    r = subprocess.run(
-        [m.CARGO, "test", "-p", "mc-client", "--", "--format=terse"],
-        capture_output=True, text=True, timeout=590,
-    )
+    args = ["test", "-p", "mc-client", "--", "--format=terse"]
+    args.insert(0, m.CARGO)
+    r = subprocess.run(args, capture_output=True, text=True, timeout=590)
     out = r.stdout + r.stderr
     for line in out.splitlines():
         low = line.lower()

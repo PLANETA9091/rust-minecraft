@@ -1,0 +1,193 @@
+=== getEnchantmentList codelen=121 ===
+   0: aload_0
+   1: getfield  EnchantmentMenu.randomLnet/minecraft/util/RandomSource;
+   4: aload_0
+   5: getfield  EnchantmentMenu.enchantmentSeedLnet/minecraft/world/inventory/DataSlot;
+   8: invokevirtual DataSlot.get()I
+  11: iload_3
+  12: iadd
+  13: l2i
+  14: invokeinterface RandomSource.setSeed(J)V
+  19: aload_1
+  20: getstatic  Registries.ENCHANTMENTLnet/minecraft/resources/ResourceKey;
+  23: invokeinterface RegistryAccess.lookupOrThrow(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Registry;
+  28: getstatic  EnchantmentTags.IN_ENCHANTING_TABLELnet/minecraft/tags/TagKey;
+  31: invokeinterface Registry.get(Lnet/minecraft/tags/TagKey;)Ljava/util/Optional;
+  36: astore 5
+  38: aload 5
+  40: invokevirtual Optional.isEmpty()Z
+  43: ifeq       -> 50
+  46: invokestatic List.of()Ljava/util/List;
+  49: areturn
+  50: aload_0
+  51: getfield  EnchantmentMenu.randomLnet/minecraft/util/RandomSource;
+  54: aload_2
+  55: iload 4
+  57: aload 5
+  59: invokevirtual Optional.get()Ljava/lang/Object;
+  62: checkcast HolderSet$Named
+  65: invokevirtual HolderSet$Named.stream()Ljava/util/stream/Stream;
+  68: invokestatic EnchantmentHelper.selectEnchantment(Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILjava/util/stream/Stream;)Ljava/util/List;
+  71: astore 6
+  73: aload_2
+  74: getstatic  Items.BOOKLnet/minecraft/world/item/Item;
+  77: invokevirtual ItemStack.is(Ljava/lang/Object;)Z
+  80: ifeq       -> 118
+  83: aload 6
+  85: invokeinterface List.size()I
+  90: iconst_1
+  91: if_icmple  -> 118
+  94: aload 6
+  96: aload_0
+  97: getfield  EnchantmentMenu.randomLnet/minecraft/util/RandomSource;
+ 100: aload 6
+ 102: invokeinterface List.size()I
+ 107: invokeinterface RandomSource.nextInt(I)I
+ 112: invokeinterface List.remove(I)Ljava/lang/Object;
+ 117: pop
+ 118: aload 6
+ 120: areturn
+=== getGoldCount codelen=25 ===
+   0: aload_0
+   1: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+   4: iconst_1
+   5: invokeinterface Container.getItem(I)Lnet/minecraft/world/item/ItemStack;
+  10: astore_1
+  11: aload_1
+  12: invokevirtual ItemStack.isEmpty()Z
+  15: ifeq       -> 20
+  18: iconst_0
+  19: ireturn
+  20: aload_1
+  21: invokevirtual ItemStack.getCount()I
+  24: ireturn
+=== getEnchantmentSeed codelen=8 ===
+   0: aload_0
+   1: getfield  EnchantmentMenu.enchantmentSeedLnet/minecraft/world/inventory/DataSlot;
+   4: invokevirtual DataSlot.get()I
+   7: ireturn
+=== lambda$slotsChanged$0 codelen=278 ===
+   0: aload_2
+   1: invokevirtual Level.registryAccess()Lnet/minecraft/core/RegistryAccess;
+   4: getstatic  Registries.ENCHANTMENTLnet/minecraft/resources/ResourceKey;
+   7: invokeinterface RegistryAccess.lookupOrThrow(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Registry;
+  12: invokeinterface Registry.asHolderIdMap()Lnet/minecraft/core/IdMap;
+  17: astore 4
+  19: iconst_0
+  20: istore 5
+  22: getstatic  EnchantingTableBlock.BOOKSHELF_OFFSETSLjava/util/List;
+  25: invokeinterface List.iterator()Ljava/util/Iterator;
+  30: astore 6
+  32: aload 6
+  34: invokeinterface Iterator.hasNext()Z
+  39: ifeq       -> 70
+  42: aload 6
+  44: invokeinterface Iterator.next()Ljava/lang/Object;
+  49: checkcast BlockPos
+  52: astore 7
+  54: aload_2
+  55: aload_3
+  56: aload 7
+  58: invokestatic EnchantingTableBlock.isValidBookShelf(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Z
+  61: ifeq       -> 67
+  64: iinc 5 1
+  67: goto       -> 32
+  70: aload_0
+  71: getfield  EnchantmentMenu.randomLnet/minecraft/util/RandomSource;
+  74: aload_0
+  75: getfield  EnchantmentMenu.enchantmentSeedLnet/minecraft/world/inventory/DataSlot;
+  78: invokevirtual DataSlot.get()I
+  81: l2i
+  82: invokeinterface RandomSource.setSeed(J)V
+  87: iconst_0
+  88: istore 6
+  90: iload 6
+  92: iconst_3
+  93: if_icmpge  -> 159
+  96: aload_0
+  97: getfield  EnchantmentMenu.costs[I
+ 100: iload 6
+ 102: aload_0
+ 103: getfield  EnchantmentMenu.randomLnet/minecraft/util/RandomSource;
+ 106: iload 6
+ 108: iload 5
+ 110: aload_1
+ 111: invokestatic EnchantmentHelper.getEnchantmentCost(Lnet/minecraft/util/RandomSource;IILnet/minecraft/world/item/ItemStack;)I
+ 114: iastore
+ 115: aload_0
+ 116: getfield  EnchantmentMenu.enchantClue[I
+ 119: iload 6
+ 121: iconst_m1
+ 122: iastore
+ 123: aload_0
+ 124: getfield  EnchantmentMenu.levelClue[I
+ 127: iload 6
+ 129: iconst_m1
+ 130: iastore
+ 131: aload_0
+ 132: getfield  EnchantmentMenu.costs[I
+ 135: iload 6
+ 137: op_0x2e
+ 138: iload 6
+ 140: iconst_1
+ 141: iadd
+ 142: if_icmpge  -> 153
+ 145: aload_0
+ 146: getfield  EnchantmentMenu.costs[I
+ 149: iload 6
+ 151: iconst_0
+ 152: iastore
+ 153: iinc 6 1
+ 156: goto       -> 90
+ 159: iconst_0
+ 160: istore 6
+ 162: iload 6
+ 164: iconst_3
+ 165: if_icmpge  -> 273
+ 168: aload_0
+ 169: getfield  EnchantmentMenu.costs[I
+ 172: iload 6
+ 174: op_0x2e
+ 175: ifle       -> 267
+ 178: aload_0
+ 179: aload_2
+ 180: invokevirtual Level.registryAccess()Lnet/minecraft/core/RegistryAccess;
+ 183: aload_1
+ 184: iload 6
+ 186: aload_0
+ 187: getfield  EnchantmentMenu.costs[I
+ 190: iload 6
+ 192: op_0x2e
+ 193: invokevirtual EnchantmentMenu.getEnchantmentList(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/item/ItemStack;II)Ljava/util/List;
+ 196: astore 7
+ 198: aload 7
+ 200: invokeinterface List.isEmpty()Z
+ 205: ifne       -> 267
+ 208: aload 7
+ 210: aload_0
+ 211: getfield  EnchantmentMenu.randomLnet/minecraft/util/RandomSource;
+ 214: aload 7
+ 216: invokeinterface List.size()I
+ 221: invokeinterface RandomSource.nextInt(I)I
+ 226: invokeinterface List.get(I)Ljava/lang/Object;
+ 231: checkcast EnchantmentInstance
+ 234: astore 8
+ 236: aload_0
+ 237: getfield  EnchantmentMenu.enchantClue[I
+ 240: iload 6
+ 242: aload 4
+ 244: aload 8
+ 246: invokevirtual EnchantmentInstance.enchantment()Lnet/minecraft/core/Holder;
+ 249: invokeinterface IdMap.getId(Ljava/lang/Object;)I
+ 254: iastore
+ 255: aload_0
+ 256: getfield  EnchantmentMenu.levelClue[I
+ 259: iload 6
+ 261: aload 8
+ 263: invokevirtual EnchantmentInstance.level()I
+ 266: iastore
+ 267: iinc 6 1
+ 270: goto       -> 162
+ 273: aload_0
+ 274: invokevirtual EnchantmentMenu.broadcastChanges()V
+ 277: return

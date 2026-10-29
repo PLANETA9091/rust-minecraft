@@ -1,0 +1,76 @@
+   0: iload_2
+   1: iflt       -> 13
+   4: iload_2
+   5: aload_0
+   6: getfield  EnchantmentMenu.costs[I
+   9: arraylength
+  10: if_icmplt  -> 28
+  13: aload_1
+  14: invokevirtual Player.getPlainTextName()Ljava/lang/String;
+  17: iload_2
+  18: invokedynamic 2135
+  23: invokestatic Util.logAndPauseIfInIde(Ljava/lang/String;)V
+  26: iconst_0
+  27: ireturn
+  28: aload_0
+  29: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+  32: iconst_0
+  33: invokeinterface Container.getItem(I)Lnet/minecraft/world/item/ItemStack;
+  38: astore_3
+  39: aload_0
+  40: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+  43: iconst_1
+  44: invokeinterface Container.getItem(I)Lnet/minecraft/world/item/ItemStack;
+  49: astore 4
+  51: iload_2
+  52: iconst_1
+  53: iadd
+  54: istore 5
+  56: aload 4
+  58: invokevirtual ItemStack.isEmpty()Z
+  61: ifne       -> 74
+  64: aload 4
+  66: invokevirtual ItemStack.getCount()I
+  69: iload 5
+  71: if_icmpge  -> 83
+  74: aload_1
+  75: invokevirtual Player.hasInfiniteMaterials()Z
+  78: ifne       -> 83
+  81: iconst_0
+  82: ireturn
+  83: aload_0
+  84: getfield  EnchantmentMenu.costs[I
+  87: iload_2
+  88: op_0x2e
+  89: ifle       -> 152
+  92: aload_3
+  93: invokevirtual ItemStack.isEmpty()Z
+  96: ifne       -> 152
+  99: aload_1
+ 100: getfield  Player.experienceLevelI
+ 103: iload 5
+ 105: if_icmplt  -> 121
+ 108: aload_1
+ 109: getfield  Player.experienceLevelI
+ 112: aload_0
+ 113: getfield  EnchantmentMenu.costs[I
+ 116: iload_2
+ 117: op_0x2e
+ 118: if_icmpge  -> 128
+ 121: aload_1
+ 122: invokevirtual Player.hasInfiniteMaterials()Z
+ 125: ifeq       -> 152
+ 128: aload_0
+ 129: getfield  EnchantmentMenu.accessLnet/minecraft/world/inventory/ContainerLevelAccess;
+ 132: aload_0
+ 133: aload_3
+ 134: iload_2
+ 135: aload_1
+ 136: iload 5
+ 138: aload 4
+ 140: invokedynamic 4123
+ 145: invokeinterface ContainerLevelAccess.execute(Ljava/util/function/BiConsumer;)V
+ 150: iconst_1
+ 151: ireturn
+ 152: iconst_0
+ 153: ireturn

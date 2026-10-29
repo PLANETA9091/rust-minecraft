@@ -570,6 +570,31 @@ impl BlockSounds {
         }
     }
 
+    /// THE ENCHANT TABLE'S OWN USE VOICE (javap 26.2
+    /// EnchantmentMenu `lambda$clickMenuButton$0` pc 211-241 — the
+    /// `playSound(null, pos, ENCHANTMENT_TABLE_USE, BLOCKS, 1.0F,
+    /// 0.9F + nextFloat() * 0.1F)` the enchant click's tail speaks:
+    /// the volume 1.0 the literal keeps, the pitch the same
+    /// 0.9-plus-a-tenth band the container voices wear, the file pick
+    /// the weighted law resolves).
+    pub fn play_enchant_use_voice_at(&mut self, tick: u64, dist: f64, pan: f32) {
+        let r = self.next_rand_f32();
+        let pitch = r * 0.1 + 0.9;
+        let gain = attenuate(1.0, dist, voice_max_distance(1.0));
+        let Some(file) = self.pick_file("block.enchantment_table.use") else {
+            return;
+        };
+        if pan == 0.0 {
+            self.events.push(format!(
+                "block.enchantment_table.use @{tick} #{file} v{gain:.6} p{pitch:.6}"
+            ));
+        } else {
+            self.events.push(format!(
+                "block.enchantment_table.use @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
+            ));
+        }
+    }
+
     /// The FALL VOICE (javap `LivingEntity.causeFallDamage`'s own
     /// call): `playSound(getFallDamageSound(damage), 1.0F, 1.0F)` —
     /// the FIXED volume and pitch lane (no randoms, the fall's own

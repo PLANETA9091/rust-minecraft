@@ -1,0 +1,106 @@
+lambda$clickMenuButton$0 codelen=245
+   0: aload_1
+   1: astore 8
+   3: aload_0
+   4: aload 6
+   6: invokevirtual Level.registryAccess()Lnet/minecraft/core/RegistryAccess;
+   9: aload 8
+  11: iload_2
+  12: aload_0
+  13: getfield  EnchantmentMenu.costs[I
+  16: iload_2
+  17: op_0x2e
+  18: invokevirtual EnchantmentMenu.getEnchantmentList(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/item/ItemStack;II)Ljava/util/List;
+  21: astore 9
+  23: aload 9
+  25: invokeinterface List.isEmpty()Z
+  30: ifne       -> 244
+  33: aload_3
+  34: aload 8
+  36: iload 4
+  38: invokevirtual Player.onEnchantmentPerformed(Lnet/minecraft/world/item/ItemStack;I)V
+  41: aload 8
+  43: getstatic  Items.BOOKLnet/minecraft/world/item/Item;
+  46: invokevirtual ItemStack.is(Ljava/lang/Object;)Z
+  49: ifeq       -> 73
+  52: aload_1
+  53: getstatic  Items.ENCHANTED_BOOKLnet/minecraft/world/item/Item;
+  56: invokevirtual ItemStack.transmuteCopy(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/item/ItemStack;
+  59: astore 8
+  61: aload_0
+  62: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+  65: iconst_0
+  66: aload 8
+  68: invokeinterface Container.setItem(ILnet/minecraft/world/item/ItemStack;)V
+  73: aload 9
+  75: invokeinterface List.iterator()Ljava/util/Iterator;
+  80: astore 10
+  82: aload 10
+  84: invokeinterface Iterator.hasNext()Z
+  89: ifeq       -> 122
+  92: aload 10
+  94: invokeinterface Iterator.next()Ljava/lang/Object;
+  99: checkcast EnchantmentInstance
+ 102: astore 11
+ 104: aload 8
+ 106: aload 11
+ 108: invokevirtual EnchantmentInstance.enchantment()Lnet/minecraft/core/Holder;
+ 111: aload 11
+ 113: invokevirtual EnchantmentInstance.level()I
+ 116: invokevirtual ItemStack.enchant(Lnet/minecraft/core/Holder;I)V
+ 119: goto       -> 82
+ 122: aload 5
+ 124: iload 4
+ 126: aload_3
+ 127: invokevirtual ItemStack.consume(ILnet/minecraft/world/entity/LivingEntity;)V
+ 130: aload 5
+ 132: invokevirtual ItemStack.isEmpty()Z
+ 135: ifeq       -> 151
+ 138: aload_0
+ 139: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+ 142: iconst_1
+ 143: getstatic  ItemStack.EMPTYLnet/minecraft/world/item/ItemStack;
+ 146: invokeinterface Container.setItem(ILnet/minecraft/world/item/ItemStack;)V
+ 151: aload_3
+ 152: getstatic  Stats.ENCHANT_ITEMLnet/minecraft/resources/Identifier;
+ 155: invokevirtual Player.awardStat(Lnet/minecraft/resources/Identifier;)V
+ 158: aload_3
+ 159: instanceof
+ 160: aconst_null
+ 161: irem
+ 162: ifeq       -> 183
+ 165: aload_3
+ 166: checkcast ServerPlayer
+ 169: astore 10
+ 171: getstatic  CriteriaTriggers.ENCHANTED_ITEMLnet/minecraft/advancements/triggers/EnchantedItemTrigger;
+ 174: aload 10
+ 176: aload 8
+ 178: iload 4
+ 180: invokevirtual EnchantedItemTrigger.trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/item/ItemStack;I)V
+ 183: aload_0
+ 184: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+ 187: invokeinterface Container.setChanged()V
+ 192: aload_0
+ 193: getfield  EnchantmentMenu.enchantmentSeedLnet/minecraft/world/inventory/DataSlot;
+ 196: aload_3
+ 197: invokevirtual Player.getEnchantmentSeed()I
+ 200: invokevirtual DataSlot.set(I)V
+ 203: aload_0
+ 204: aload_0
+ 205: getfield  EnchantmentMenu.enchantSlotsLnet/minecraft/world/Container;
+ 208: invokevirtual EnchantmentMenu.slotsChanged(Lnet/minecraft/world/Container;)V
+ 211: aload 6
+ 213: aconst_null
+ 214: aload 7
+ 216: getstatic  SoundEvents.ENCHANTMENT_TABLE_USELnet/minecraft/sounds/SoundEvent;
+ 219: getstatic  SoundSource.BLOCKSLnet/minecraft/sounds/SoundSource;
+ 222: op_0x0c
+ 223: aload 6
+ 225: invokevirtual Level.getRandom()Lnet/minecraft/util/RandomSource;
+ 228: invokeinterface RandomSource.nextFloat()F
+ 233: ldc_w #406 ('flt',)
+ 236: op_0x6a
+ 237: ldc_w #407 ('flt',)
+ 240: op_0x62
+ 241: invokevirtual Level.playSound(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+ 244: return

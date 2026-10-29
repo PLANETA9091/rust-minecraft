@@ -9553,9 +9553,24 @@ pub struct App {
     pub enchanting_power: i32,
     /// THE SPELL WALK'S OWN COST ROWS (the EnchantmentMenu costs [I]
     /// the slotsChanged lambda's getEnchantmentCost walk banks — the
-    /// clamp `cost < i+1 -> 0` the lambda's own branch keeps, the
-    /// seed-0 the DataSlot.standalone() default answers).
+    /// clamp `cost < i+1 -> 0` the lambda's own branch keeps, the seed
+    /// the ctor's `enchantmentSeed.set(player.getEnchantmentSeed())`
+    /// walk answers).
     pub enchanting_costs: [i32; 3],
+    /// THE CLICK-ENCHANT WALK'S OWN SEED (the 26.2 ctor's own init
+    /// walk the bytecode banks — `DataSlot.standalone()` the
+    /// standalone mirror the `set(player.getEnchantmentSeed())` the
+    /// PLAYER's enchantmentSeed int field answers; the client the
+    /// same field the label lane + the cost rolls + the click bump
+    /// consume, the 0 default the ctor's own `iconst_0; putfield`
+    /// the headless world keeps).
+    pub enchant_seed: i32,
+    /// THE PLAYER'S OWN RANDOM (the onEnchantmentPerformed bump the
+    /// bytecode banks — `enchantmentSeed = random.nextInt()` the
+    /// player's RandomSource the full next(32) draw answers; the
+    /// dedicated stream the offline world the deterministic rolls
+    /// keep, the seed-0 boot the headless law wears).
+    pub enchant_rng: crate::noise::VanillaRandom,
     /// THE SPELL WALK'S OWN TABLE SEAT (the open's own pos the scan
     /// reads — the None the closed screens keep, the re-open the
     /// fresh pos the transient menu's own law lays).
@@ -12526,6 +12541,8 @@ impl App {
             enchant_panel: (0, 0),
             enchanting_power: 0,
             enchanting_costs: [0, 0, 0],
+            enchant_seed: 0,
+            enchant_rng: crate::noise::VanillaRandom::new(0),
             enchanting_table_pos: None,
             dispenser_open_kind: 0,
             dispenser_is_live: false,
@@ -27713,10 +27730,10 @@ impl App {
     /// THE SPELL WALK'S OWN COSTS REFRESH (the EnchantmentMenu
     /// slotsChanged's own walk the offline open + the seat mutations
     /// call): the empty item slot the zero costs the vanilla gate
-    /// keeps, the fresh item the three rolls the seed-0
-    /// `DataSlot.standalone()` default answers — the clamp
-    /// `cost < i+1 -> 0` the lambda's own branch the rows' enabled
-    /// verdict banks.
+    /// keeps, the fresh item the three rolls the menu's own seed the
+    /// `random.setSeed(enchantmentSeed.get())` walk answers — the
+    /// clamp `cost < i+1 -> 0` the lambda's own branch the rows'
+    /// enabled verdict banks.
     fn enchant_costs_refresh(&mut self) {
         let item = self.enchant_slots.first().copied().unwrap_or((0, 0));
         let (power, costs) = if item.1 == 0 {
@@ -27724,7 +27741,8 @@ impl App {
         } else {
             let pos = self.enchanting_table_pos.unwrap_or((0, 0, 0));
             let power = self.enchant_power_scan(pos);
-            let mut rng = crate::noise::VanillaRandom::new(0);
+            let seed = self.enchant_seed as i64;
+            let mut rng = crate::noise::VanillaRandom::new(seed);
             let mut costs = [0i32; 3];
             for (i, c) in costs.iter_mut().enumerate() {
                 let mut v = Self::enchant_cost_roll(i as i32, power, &mut rng);
@@ -27737,6 +27755,89 @@ impl App {
         };
         self.enchanting_power = power;
         self.enchanting_costs = costs;
+    }
+
+    /// THE CLICK-ENCHANT WALK (javap 26.2 EnchantmentMenu
+    /// `clickMenuButton(Player, int)` the exact 154-code walk banks —
+    /// scripts/jar_work/click_enchant_exact_337.txt the full stream
+    /// speaks): the id gate the `id < 0 || id >= costs.length` pair
+    /// keeps [the out-of-range press the
+    /// Util.logAndPauseIfInIde arm the offline silence wears], the
+    /// lapis guard the `isEmpty() || getCount() < i` the `i = id + 1`
+    /// pair answers [pc 56-82 — the infinite-materials arm the
+    /// creative gate keeps], the cost guard the `costs[id] <= 0 ||
+    /// itemstack.isEmpty()` the pc 83-96 pair speaks, the xp guard
+    /// the `experienceLevel < i || experienceLevel < costs[id]` the
+    /// pc 99-125 max-of-two law wears [the same creative arm], then
+    /// the SUCCESS walk the `lambda$clickMenuButton$0` banks: the
+    /// onEnchantmentPerformed the xp spend AND the seed draw speaks
+    /// [pc 33-38 — `giveExperienceLevels(-i)` the give_levels floor
+    /// law wears, `enchantmentSeed = random.nextInt()` the
+    /// player-random draw the enchant_rng answers], the lapis the
+    /// `consume(i)` shrink the count-0 the `setItem(1, EMPTY)` the
+    /// empty-pair law keeps [pc 122-146], the costs re-roll the
+    /// slotsChanged walk the fresh seed answers [pc 192-208 — the
+    /// `enchantmentSeed.set(getEnchantmentSeed())` the same field the
+    /// menu's DataSlot mirrors, the slotsChanged the
+    /// `random.setSeed(seed)` the rolls answer]. THE ENCHANT
+    /// APPLICATION the item-stack's own data-model round keeps [pc
+    /// 41-119 — the transmute/enchant walk the (id, count) pair the
+    /// enchantment storage never carries, the stack-extension round
+    /// the harness waits; the getEnchantmentList-empty gate the same
+    /// round answers — vanilla spends NOTHING on a non-enchantable
+    /// item].
+    pub fn click_enchant_option(&mut self, id: usize) -> bool {
+        if id >= 3 {
+            return false; // pc 0-27 — the costs.length gate the log arm keeps
+        }
+        let i = id + 1;
+        let lapis = self.enchant_slots.get(1).copied().unwrap_or((0, 0));
+        let item = self.enchant_slots.first().copied().unwrap_or((0, 0));
+        let creative = self.game_mode == GameMode::Creative;
+        if (lapis.1 == 0 || lapis.1 < i as i32) && !creative {
+            return false; // pc 56-82 — the empty-or-short pair the creative arm answers
+        }
+        if self.enchanting_costs[id] <= 0 || item.1 == 0 {
+            return false; // pc 83-96 — the dead-row or empty-item pair
+        }
+        if !creative && (self.xp.level < i as i32 || self.xp.level < self.enchanting_costs[id]) {
+            return false; // pc 99-125 — the max-of-two xp law the creative arm answers
+        }
+        // THE SUCCESS WALK (the lambda$clickMenuButton$0 the exact
+        // order banks — the xp spend + the seed draw FIRST, the lapis
+        // consume the empty-pair law keeps, the re-roll the tail
+        // answers)
+        self.xp.give_levels(-(i as i32));
+        self.enchant_seed = self.enchant_rng.next_unbounded();
+        let left = lapis.1 - i as i32;
+        self.enchant_slots[1] = if left > 0 {
+            (lapis.0, left)
+        } else {
+            (0, 0) // pc 130-146 — the count-0 the setItem(1, EMPTY) law
+        };
+        self.enchant_costs_refresh();
+        self.enchant_use_voice();
+        true
+    }
+
+    /// THE USE VOICE'S OWN EMIT (the lambda tail pc 211-241 — the
+    /// `playSound(null, pos, ENCHANTMENT_TABLE_USE, BLOCKS, 1.0F,
+    /// 0.9F + rand * 0.1F)` walk the table pos the listener's ear the
+    /// same attenuation the container voices wear)
+    fn enchant_use_voice(&mut self) {
+        let Some(pos) = self.enchanting_table_pos else {
+            return;
+        };
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (x, y, z) = (
+            f64::from(pos.0) + 0.5,
+            f64::from(pos.1) + 0.5,
+            f64::from(pos.2) + 0.5,
+        );
+        let dist = ear_distance(ear, x, y, z);
+        let pan = ear_pan(ear, yaw, x, y, z);
+        self.sounds.play_enchant_use_voice_at(self.frame, dist, pan);
     }
 
     /// the right-press on the placed enchanting table the OFFLINE
@@ -33148,10 +33249,11 @@ impl App {
         // the short #407f10 the -12550384 answer]). THE GIBBERISH
         // LABEL'S OWN SEED (the dev-336 round — the extractBackground
         // bc 81-88 the initSeed(getEnchantmentSeed()) PER-FRAME
-        // re-seed the vanilla anti-flicker law keeps: the same seed-0
-        // the costs walk wears, the three rows' labels the CONTINUOUS
-        // stream the row order consumes)
-        let mut label_rng = crate::noise::VanillaRandom::new(0);
+        // re-seed the vanilla anti-flicker law keeps: the menu's own
+        // seed field the costs walk wears [the 337 round the click
+        // bump the field answers], the three rows' labels the
+        // CONTINUOUS stream the row order consumes)
+        let mut label_rng = crate::noise::VanillaRandom::new(self.enchant_seed as i64);
         for (i, cost) in self.enchanting_costs.iter().enumerate() {
             let rx = panel.0 + 60;
             let ry = panel.1 + 14 + 19 * i as i32;
@@ -38022,6 +38124,25 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Enchanting {
+            // THE OPTION WIDGETS' OWN PRECEDENCE (the
+            // AbstractContainerScreen.mouseClicked walk — the
+            // super.mouseClicked the widget lanes FIRST serves, the
+            // EnchantmentWidget the three (60, 14 + 19*i) 108x19 rows
+            // the clickMenuButton dispatch wears, the consumed press
+            // the slot walk never reaches; the disabled row the widget
+            // the press still swallows [the onClick the
+            // clickMenuButton's own false the silence keeps])
+            let panel = self.enchant_panel;
+            if panel != (0, 0) {
+                for i in 0..3usize {
+                    let rx = panel.0 + 60;
+                    let ry = panel.1 + 14 + 19 * i as i32;
+                    if mx >= rx && mx < rx + 108 && my >= ry && my < ry + 19 {
+                        self.click_enchant_option(i);
+                        return;
+                    }
+                }
+            }
             // THE TRANSIENT PAIR'S OWN PRESS (the same mouseClicked
             // walk the brewing's gate shape wears — the carried press
             // the drag arms, the carried-empty press the PICKUP

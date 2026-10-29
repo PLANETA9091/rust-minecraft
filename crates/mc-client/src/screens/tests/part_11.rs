@@ -7207,3 +7207,175 @@ fn the_enchanting_table_the_labels_the_sga_glyphs_wear() {
         "the row-2 roll the stream keeps"
     );
 }
+
+#[test]
+fn the_enchanting_table_the_click_enchant_walk_wears() {
+    // THE CLICK-ENCHANT WALK (the autopush-337 round — the 26.2
+    // EnchantmentMenu.clickMenuButton the exact guards the spend the
+    // seed draw the re-roll the USE voice wears; the enchant
+    // APPLICATION the item-stack's own data-model round keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    w.set(c + 2, surface, c, crate::world::BOOKSHELF);
+    app.open_enchanting_for(cell);
+    app.enchant_slots[0] = (7, 1);
+    app.enchant_slots[1] = (7, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    // THE POWER-1 ROWS' OWN LIVENESS (the slot-0 roll the
+    // (base / 3).max(1) the NEVER-dead answer keeps — the clamp the
+    // v < 1 never fires, the row-0 the always-enabled law wears)
+    assert!(
+        app.enchanting_costs[0] >= 1,
+        "the row-0 cost the floor law keeps"
+    );
+    // THE ID GATE'S OWN FALSE (the out-of-range id the
+    // costs.length arm keeps)
+    assert!(
+        !app.click_enchant_option(3),
+        "the id-3 press the out-of-range false wears"
+    );
+    // THE XP GUARD'S OWN FALSE (the level-short the max-of-two law
+    // keeps — the level below the cost the same false wears)
+    let c0 = app.enchanting_costs[0];
+    app.xp.level = c0 - 1;
+    assert!(
+        !app.click_enchant_option(0),
+        "the xp-short click the false answer wears"
+    );
+    // THE LAPIS GUARD'S OWN FALSE (the empty slot the
+    // infinite-materials arm the survival's false keeps)
+    app.xp.level = 30;
+    app.enchant_slots[1] = (0, 0);
+    assert!(
+        !app.click_enchant_option(0),
+        "the lapis-empty click the false answer wears"
+    );
+    // THE ITEM GUARD'S OWN FALSE (the empty item the pc 83-96 pair
+    // keeps — the cost row the liveness the item presence gates)
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_slots[1] = (7, 3);
+    assert!(
+        !app.click_enchant_option(0),
+        "the item-empty click the false answer wears"
+    );
+    // THE HAPPY WALK (the guards the pass the spend the exact order
+    // wears — the xp + the seed draw the onEnchantmentPerformed
+    // speaks, the lapis the consume shrink keeps, the re-roll the
+    // slotsChanged answers)
+    app.enchant_slots[0] = (7, 1);
+    let seed_before = app.enchant_seed;
+    assert_eq!(seed_before, 0, "the boot seed the ctor's own 0 keeps");
+    assert!(
+        app.click_enchant_option(0),
+        "the happy click the true answer wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (7, 2),
+        "the lapis the consume-1 shrink wears"
+    );
+    assert_eq!(
+        app.xp.level, 29,
+        "the xp the level-1 spend the onEnchantmentPerformed law keeps"
+    );
+    // THE SEED DRAW (the player-random stand-in the full next(32)
+    // draw answers — the enchantmentSeed the bump the bytecode
+    // banks)
+    let mut seed_rng = crate::noise::VanillaRandom::new(0);
+    let s1 = seed_rng.next_unbounded();
+    assert_eq!(
+        app.enchant_seed, s1,
+        "the seed the first player-random draw wears"
+    );
+    // THE COSTS RE-ROLL (the slotsChanged the fresh seed the
+    // setSeed walk answers — the three rolls the new stream consumes)
+    let power = app.enchanting_power;
+    let mut roll = crate::noise::VanillaRandom::new(s1 as i64);
+    for (j, got) in app.enchanting_costs.iter().enumerate() {
+        let mut want = App::enchant_cost_roll(j as i32, power, &mut roll);
+        if want < j as i32 + 1 {
+            want = 0;
+        }
+        assert_eq!(
+            *got, want,
+            "the row-{j} re-roll the fresh-seed stream wears"
+        );
+    }
+    // THE USE VOICE (the lambda tail the playSound walk the events
+    // log answers — the registry name the sounds.json row keeps, the
+    // legacy block.enchantment_table.use the table wears)
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.contains("block.enchantment_table.use")),
+        "the use voice the enchant click's tail wears"
+    );
+    // THE LAPIS-EXHAUST LAW (the count-1 pair the consume the
+    // setItem(1, EMPTY) the empty-pair answer wears — the row-0 cost
+    // the floor law the second click the liveness keeps)
+    app.enchant_slots[1] = (7, 1);
+    assert!(
+        app.click_enchant_option(0),
+        "the exhaust click the true answer wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the spent slot the empty-pair law wears"
+    );
+    let s2 = seed_rng.next_unbounded();
+    assert_eq!(
+        app.enchant_seed, s2,
+        "the seed the second draw the stream keeps"
+    );
+    // THE ROW WIDGET'S OWN PRECEDENCE (the on_press the option rows
+    // the slot walk BEFORE consumes — the rendered panel the hit box
+    // the row-0 rect answers)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.enchant_panel;
+    assert_ne!(panel, (0, 0), "the render the panel origin lays");
+    // the lapis the press walk the guard the supply answers (the
+    // exhaust walk the empty pair the fresh stack the seat lays)
+    app.enchant_slots[1] = (7, 3);
+    let level_before = app.xp.level;
+    let seed_before_press = app.enchant_seed;
+    app.on_press(panel.0 + 60 + 5, panel.1 + 14 + 5);
+    assert_eq!(
+        app.xp.level,
+        level_before - 1,
+        "the row-0 press the click walk the xp spend wears"
+    );
+    assert_ne!(
+        app.enchant_seed, seed_before_press,
+        "the row-0 press the seed bump wears"
+    );
+    // THE SLOT-RECT'S OWN NON-OVERLAP (the rows x 60..168 the slots
+    // x 15..51 the gutter keeps — the item seat the press the row
+    // walk never steals)
+    let item_seat = app.enchant_slot_rects[0];
+    assert!(
+        item_seat.0 + 16 <= panel.0 + 60,
+        "the item seat the row-0 rect the x-gutter keeps"
+    );
+}

@@ -139,6 +139,14 @@ impl VanillaRandom {
         }
     }
 
+    /// `nextInt()` — the UNBOUNDED draw the RandomSource default keeps:
+    /// ONE full `next(32)` (the javap 26.2 `Player.onEnchantmentPerformed`
+    /// pc 32-38 the `enchantmentSeed = random.nextInt()` bump wears —
+    /// the click-enchant walk the player-random draw answers).
+    pub fn next_unbounded(&mut self) -> i32 {
+        self.next(32)
+    }
+
     /// `consumeCount(n)` — the RandomSource default's walk: `n *
     /// nextInt()`, each a full `next(32)` (the invokeinterface nextInt
     /// the bytecode keeps).
