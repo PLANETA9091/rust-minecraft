@@ -1,0 +1,46 @@
+=== getTooltipLines (Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/TooltipFlag;)Ljava/util/List; ===
+    0 aload_0
+    1 getstatic #845  net/minecraft/core/component/DataComponents.TOOLTIP_DISPLAY Lnet/minecraft/core/component/DataComponentType;
+    4 getstatic #848  net/minecraft/world/item/component/TooltipDisplay.DEFAULT Lnet/minecraft/world/item/component/TooltipDisplay;
+    7 invokevirtual #411  net/minecraft/world/item/ItemStack.getOrDefault (Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+   10 checkcast #837  net/minecraft/world/item/component/TooltipDisplay
+   13 astore 4
+   15 aload_3
+   16 invokeinterface net/minecraft/world/item/TooltipFlag.isCreative ()Z
+   21 ifne #37
+   24 aload 4
+   26 invokevirtual #857  net/minecraft/world/item/component/TooltipDisplay.hideTooltip ()Z
+   29 ifeq #29
+   32 aload_0
+   33 invokevirtual #53  net/minecraft/world/item/ItemStack.getItem ()Lnet/minecraft/world/item/Item;
+   36 aload_0
+   37 aload_2
+   38 invokevirtual #860  net/minecraft/world/item/Item.shouldPrintOpWarning (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;)Z
+   41 istore 5
+   43 iload 5
+   45 ifeq #9
+   48 getstatic #864  net/minecraft/world/item/ItemStack.OP_NBT_WARNING Ljava/util/List;
+   51 goto #6
+   54 invokestatic #868  java/util/List.of ()Ljava/util/List;
+   57 areturn
+   58 invokestatic #871  com/google/common/collect/Lists.newArrayList ()Ljava/util/ArrayList;
+   61 astore 5
+   63 aload 5
+   65 aload_0
+   66 invokevirtual #877  net/minecraft/world/item/ItemStack.getStyledHoverName ()Lnet/minecraft/network/chat/Component;
+   69 invokeinterface java/util/List.add (Ljava/lang/Object;)Z
+   74 pop
+   75 aload_0
+   76 aload_1
+   77 aload 4
+   79 aload_2
+   80 aload_3
+   81 aload 5
+   83 dup
+   84 invokestatic #379  java/util/Objects.requireNonNull (Ljava/lang/Object;)Ljava/lang/Object;
+   87 pop
+   88 invokedynamic #883
+   93 invokevirtual #886  net/minecraft/world/item/ItemStack.addDetailsToTooltip (Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/TooltipFlag;Ljava/util/function/Consumer;)V
+   96 aload 5
+   98 areturn
+

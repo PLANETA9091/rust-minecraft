@@ -8194,3 +8194,244 @@ fn the_enchanting_table_the_clue_tooltip_wears() {
         "the creative box the paint wears"
     );
 }
+
+/// THE ITEM STACK'S OWN ENCHANTMENT TOOLTIP LINES (the dev-198 round —
+/// the `ItemEnchantments.addToTooltip` walk the 26.2 jar serves,
+/// scripts/jar_work/glint198/item_ench_tooltip.txt the javap speaks):
+/// the FIRST pass the `#minecraft:enchantment/tooltip_order` tag rows
+/// the tag order speaks [pc 8-83 — the curse rows the tag's own head
+/// keeps], the SECOND pass the untagged rows the map order answers,
+/// the NO empty spacer the 26.2 bytecode banks [the CommonComponents
+/// reference the class never carries], the ink the getFullname's own
+/// style arms keep [the curse RED the non-curse GRAY], the numeral
+/// the `level != 1 || maxLevel != 1` gate keeps, the ADVANCED id row
+/// the walk lays AFTER the enchantment rows [pc 602-632 the order
+/// banks], the `getInt(holder) > 0` gate the zero-level pair the skip
+/// wears.
+#[test]
+fn the_item_stack_the_enchantment_tooltip_lines_wear() {
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap();
+    let prot = ench_mod::enchantment_index("protection").unwrap();
+    let silk = ench_mod::enchantment_index("silk_touch").unwrap();
+    let bind = ench_mod::enchantment_index("binding_curse").unwrap();
+    // THE TWO PASSES' OWN ORDER (the store order [protection,
+    // sharpness, curse] the TAG order [curse 0, sharpness 7,
+    // protection 21] re-speaks — the curse line FIRST the tag's own
+    // head keeps)
+    let store = vec![(prot as i32, 4), (sharp as i32, 5), (bind as i32, 1)];
+    let rows = App::item_tooltip_rows_enchanted(sword, false, &store);
+    assert_eq!(
+        rows.len(),
+        4,
+        "the name + the three lines the NO-spacer law keeps"
+    );
+    assert!(
+        rows[0].1 == [1.0, 1.0, 1.0],
+        "the name row the WHITE ink wears"
+    );
+    assert_eq!(rows[1].0, "Curse of Binding", "the tag's own head speaks");
+    assert!(
+        rows[1].1 == [1.0, 0.3333, 0.3333],
+        "the curse line the RED ink wears"
+    );
+    assert_eq!(
+        rows[2].0, "Sharpness V",
+        "the sharpness line the tag order speaks"
+    );
+    assert!(
+        rows[2].1 == [0.6667, 0.6667, 0.6667],
+        "the non-curse line the GRAY ink wears"
+    );
+    assert_eq!(
+        rows[3].0, "Protection IV",
+        "the protection line the tail keeps"
+    );
+    // THE NUMERAL GATE (the `level != 1 || maxLevel != 1` walk — the
+    // level-1-max-1 row the BARE name wears, the level-1-max-5 row
+    // the numeral keeps)
+    let rows = App::item_tooltip_rows_enchanted(sword, false, &[(silk as i32, 1)]);
+    assert_eq!(rows.len(), 2, "the name + the one line the count keeps");
+    assert_eq!(
+        rows[1].0, "Silk Touch",
+        "the level-1-max-1 row the bare name wears"
+    );
+    let rows = App::item_tooltip_rows_enchanted(sword, false, &[(sharp as i32, 1)]);
+    assert_eq!(
+        rows[1].0, "Sharpness I",
+        "the level-1-max-5 row the numeral keeps"
+    );
+    // THE ZERO-LEVEL GATE (the `getInt(holder) > 0` pair — the
+    // zero-level store row the skip wears)
+    let rows = App::item_tooltip_rows_enchanted(sword, false, &[(sharp as i32, 0)]);
+    assert_eq!(rows.len(), 1, "the zero-level pair the gate never seats");
+    // THE ADVANCED ID ROW AFTER (the pc 602-632 arm the walk's own
+    // order keeps — the enchantment rows PRECEDE the DARK_GRAY id)
+    let rows = App::item_tooltip_rows_enchanted(sword, true, &[(sharp as i32, 3)]);
+    assert_eq!(
+        rows.len(),
+        3,
+        "the name + the line + the id the count keeps"
+    );
+    assert_eq!(rows[1].0, "Sharpness III", "the line the id PRECEDES");
+    assert_eq!(
+        rows[2].0, "minecraft:diamond_sword",
+        "the id row the tail wears"
+    );
+    // THE UNTOUCHED LANE (the plain rows the empty store the same
+    // shape keeps — the pre-round walk the byte-identical rest wears)
+    let rows = App::item_tooltip_rows(sword, false);
+    assert_eq!(rows.len(), 1, "the plain rows the empty store keeps");
+}
+
+/// THE ENCHANTED STACK'S OWN GLINT (the dev-198 round — the foil pass
+/// the 26.2 jar's own law keeps, scripts/jar_work/glint198/ the
+/// evidence banks): the SCROLL PHASES the setupGlintTexturing walk
+/// answers, the FOOTPRINT the depth-EQUAL law keeps [the transparent
+/// texels the glint never tints], the ADDITIVE the (SRC_COLOR, ONE)
+/// blend the channels never darkens [the out = src.rgb² + dst the
+/// factor pair speaks], the DETERMINISM the same-millis render the
+/// byte-identical answer keeps, the SCROLL the phase shift the
+/// different-millis frame the distinct pixels wear.
+#[test]
+fn the_item_stack_the_enchanted_glint_wears() {
+    // THE PHASES (the pc 26-45 walk — the millis-0 the zero phases,
+    // the 13750 ms the full X cycle [t = 13750*8 = 110000 → f3 = 0,
+    // f4 = 20000/30000] the wrap answer keeps)
+    assert_eq!(
+        glint_scroll_phases(0),
+        (0.0, 0.0),
+        "the millis-0 the zero phases"
+    );
+    let (f3, f4) = glint_scroll_phases(13750);
+    assert!((f3 - 0.0).abs() < 1e-6, "the X phase the full cycle wraps");
+    assert!(
+        (f4 - 20000.0 / 30000.0).abs() < 1e-6,
+        "the Y phase the remainder keeps"
+    );
+    let (f3, f4) = glint_scroll_phases(6875);
+    assert!(
+        (f3 - 0.5).abs() < 1e-6 && (f4 - (55000.0 % 30000.0) / 30000.0).abs() < 1e-6,
+        "the half-cycle phase the exact fold answers"
+    );
+    // THE RENDER (the inventory screen's own enchanted seat — the
+    // store the foil pass the hotbar row's icon wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    app.inventory.items[0] = (sword, 1);
+    app.inventory_enchants[0] = vec![(sharp, 5)];
+    app.open(ScreenKind::Inventory);
+    let render = |app: &mut App| -> crate::raster::Framebuf {
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        let mut a = GuiAssets::open(&assets_root());
+        app.render(&mut fb, &mut a);
+        fb
+    };
+    // THE WARM RENDER (the panel's own layout the render lays — the
+    // inv_panel the (0,0) floor the pre-render read never seats)
+    app.frame_millis = 0;
+    let _warm = render(&mut app);
+    // THE ICON'S OWN SEAT (the hotbar row's slot 0 the inventory
+    // panel geometry speaks — the origin helper the same cell both
+    // lanes answer)
+    let panel = app.inv_panel;
+    let (sx, sy) = inventory_slot_origin(panel, 0);
+    let ix = sx + 1;
+    let iy = sy + 1;
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> [u8; 3] {
+        let o = ((y as usize) * fb.w + x as usize) * 3;
+        [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+    };
+    // THE PLAIN BASELINE (the store-less stack the same seat wears —
+    // the same walk the cleared store the plain icon answers)
+    app.inventory_enchants[0].clear();
+    let plain_fb = render(&mut app);
+    app.inventory_enchants[0] = vec![(sharp, 5)];
+    app.frame_millis = 0;
+    let g0 = render(&mut app);
+    app.frame_millis = 20000;
+    let g20 = render(&mut app);
+    // THE ADDITIVE LAW (the enchanted pixels the channels never
+    // darken — the out = src.rgb² + dst fold the per-channel verdict
+    // keeps, the at-least-one the strict brightening speaks)
+    let mut strict = 0;
+    for py in 0..16i32 {
+        for px in 0..16i32 {
+            let (a, b) = (
+                pixel(&plain_fb, ix + px, iy + py),
+                pixel(&g0, ix + px, iy + py),
+            );
+            for k in 0..3 {
+                assert!(
+                    b[k] >= a[k],
+                    "the additive law the channel never darkens at ({px},{py})[{k}]"
+                );
+            }
+            if a != b {
+                strict += 1;
+            }
+        }
+    }
+    assert!(
+        strict > 0,
+        "the glint the at-least-one pixel the tint speaks"
+    );
+    // THE FOOTPRINT LAW (the icon's own transparent pixels the glint
+    // never tints — the sprite's alpha-0 cells the two millis frames
+    // the identical answer keep)
+    let (rgba, iw, ih) = mc_registry::item_icon(sword).expect("the icon the table keeps");
+    let mut transparent = 0;
+    for py in 0..16i32 {
+        for px in 0..16i32 {
+            let sxp = (px as u32).min(u32::from(iw) - 1);
+            let syp = (py as u32).min(u32::from(ih) - 1);
+            let alpha = rgba[((syp * u32::from(iw) + sxp) * 4 + 3) as usize];
+            if alpha == 0 {
+                transparent += 1;
+                assert_eq!(
+                    pixel(&g0, ix + px, iy + py),
+                    pixel(&g20, ix + px, iy + py),
+                    "the transparent pixel the footprint law keeps at ({px},{py})"
+                );
+                assert_eq!(
+                    pixel(&g0, ix + px, iy + py),
+                    pixel(&plain_fb, ix + px, iy + py),
+                    "the transparent pixel the baseline the identical answer keeps at ({px},{py})"
+                );
+            }
+        }
+    }
+    assert!(
+        transparent > 0,
+        "the sword sprite the transparent cells the footprint speaks"
+    );
+    // THE DETERMINISM + THE SCROLL (the same millis the byte-identical
+    // render, the phase shift the distinct frame wears)
+    app.frame_millis = 0;
+    let g0b = render(&mut app);
+    assert_eq!(
+        fb_bytes(&g0),
+        fb_bytes(&g0b),
+        "the same millis the byte-identical render keeps"
+    );
+    let mut diff = 0;
+    for py in 0..16i32 {
+        for px in 0..16i32 {
+            if pixel(&g0, ix + px, iy + py) != pixel(&g20, ix + px, iy + py) {
+                diff += 1;
+            }
+        }
+    }
+    assert!(
+        diff > 0,
+        "the phase shift the scroll the distinct pixels wear"
+    );
+}
+
+fn fb_bytes(fb: &crate::raster::Framebuf) -> &[u8] {
+    &fb.color
+}

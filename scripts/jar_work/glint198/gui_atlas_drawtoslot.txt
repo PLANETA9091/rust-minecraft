@@ -1,0 +1,145 @@
+=== drawToSlot (IIZLnet/minecraft/client/renderer/item/ItemStackRenderState;)V ===
+    0 iload_1
+    1 aload_0
+    2 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+    5 imul
+    6 istore 5
+    8 iload_2
+    9 aload_0
+   10 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+   13 imul
+   14 istore 6
+   16 iload 6
+   18 aload_0
+   19 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+   22 iadd
+   23 istore 7
+   25 invokestatic ?.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;  com/mojang/blaze3d/systems/RenderSystem.getDevice ()Lcom/mojang/blaze3d/systems/GpuDevice;
+   28 astore 8
+   30 iload_3
+   31 ifeq #40
+   34 aload 8
+   36 invokevirtual ?.createCommandEncoder:()Lcom/mojang/blaze3d/systems/CommandEncoder;  com/mojang/blaze3d/systems/GpuDevice.createCommandEncoder ()Lcom/mojang/blaze3d/systems/CommandEncoder;
+   39 aload_0
+   40 getfield ?.texture:Lcom/mojang/blaze3d/textures/GpuTexture;  net/minecraft/client/gui/render/GuiItemAtlas.texture Lcom/mojang/blaze3d/textures/GpuTexture;
+   43 getstatic ?.CLEAR_COLOR:Lorg/joml/Vector4fc;  net/minecraft/client/gui/render/GuiRenderer.CLEAR_COLOR Lorg/joml/Vector4fc;
+   46 aload_0
+   47 getfield ?.depthTexture:Lcom/mojang/blaze3d/textures/GpuTexture;  net/minecraft/client/gui/render/GuiItemAtlas.depthTexture Lcom/mojang/blaze3d/textures/GpuTexture;
+   50 dconst_0
+   51 iload 5
+   53 aload_0
+   54 getfield ?.textureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.textureSize I
+   57 iload 7
+   59 isub
+   60 aload_0
+   61 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+   64 aload_0
+   65 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+   68 invokevirtual ?.clearColorAndDepthTextures:(Lcom/mojang/blaze3d/textures/GpuTexture;Lorg/joml/Vector4fc;Lcom/mojang/blaze3d/textures/GpuTexture;DIIII)V  com/mojang/blaze3d/systems/CommandEncoder.clearColorAndDepthTextures (Lcom/mojang/blaze3d/textures/GpuTexture;Lorg/joml/Vector4fc;Lcom/mojang/blaze3d/textures/GpuTexture;DIIII)V
+   71 aload_0
+   72 getfield ?.poseStack:Lcom/mojang/blaze3d/vertex/PoseStack;  net/minecraft/client/gui/render/GuiItemAtlas.poseStack Lcom/mojang/blaze3d/vertex/PoseStack;
+   75 invokevirtual ?.pushPose:()V  com/mojang/blaze3d/vertex/PoseStack.pushPose ()V
+   78 aload_0
+   79 getfield ?.poseStack:Lcom/mojang/blaze3d/vertex/PoseStack;  net/minecraft/client/gui/render/GuiItemAtlas.poseStack Lcom/mojang/blaze3d/vertex/PoseStack;
+   82 iload 5
+   84 i2f
+   85 aload_0
+   86 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+   89 i2f
+   90 fconst_2
+   91 fdiv
+   92 fadd
+   93 iload 6
+   95 i2f
+   96 aload_0
+   97 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+  100 i2f
+  101 fconst_2
+  102 fdiv
+  103 fadd
+  104 fconst_0
+  105 invokevirtual ?.translate:(FFF)V  com/mojang/blaze3d/vertex/PoseStack.translate (FFF)V
+  108 aload_0
+  109 getfield ?.poseStack:Lcom/mojang/blaze3d/vertex/PoseStack;  net/minecraft/client/gui/render/GuiItemAtlas.poseStack Lcom/mojang/blaze3d/vertex/PoseStack;
+  112 aload_0
+  113 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+  116 i2f
+  117 aload_0
+  118 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+  121 ineg
+  122 i2f
+  123 aload_0
+  124 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+  127 i2f
+  128 invokevirtual ?.scale:(FFF)V  com/mojang/blaze3d/vertex/PoseStack.scale (FFF)V
+  131 aload_0
+  132 getfield ?.textureView:Lcom/mojang/blaze3d/textures/GpuTextureView;  net/minecraft/client/gui/render/GuiItemAtlas.textureView Lcom/mojang/blaze3d/textures/GpuTextureView;
+  135 putstatic ?.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;  com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride Lcom/mojang/blaze3d/textures/GpuTextureView;
+  138 aload_0
+  139 getfield ?.depthTextureView:Lcom/mojang/blaze3d/textures/GpuTextureView;  net/minecraft/client/gui/render/GuiItemAtlas.depthTextureView Lcom/mojang/blaze3d/textures/GpuTextureView;
+  142 putstatic ?.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;  com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride Lcom/mojang/blaze3d/textures/GpuTextureView;
+  145 aload_0
+  146 getfield ?.projection:Lnet/minecraft/client/renderer/Projection;  net/minecraft/client/gui/render/GuiItemAtlas.projection Lnet/minecraft/client/renderer/Projection;
+  149 ldc #229 = ?
+  151 ldc #230 = ?
+  153 aload_0
+  154 getfield ?.textureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.textureSize I
+  157 i2f
+  158 aload_0
+  159 getfield ?.textureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.textureSize I
+  162 i2f
+  163 iconst_1
+  164 invokevirtual ?.setupOrtho:(FFFFZ)V  net/minecraft/client/renderer/Projection.setupOrtho (FFFFZ)V
+  167 aload_0
+  168 getfield ?.projectionMatrixBuffer:Lnet/minecraft/client/renderer/ProjectionMatrixBuffer;  net/minecraft/client/gui/render/GuiItemAtlas.projectionMatrixBuffer Lnet/minecraft/client/renderer/ProjectionMatrixBuffer;
+  171 aload_0
+  172 getfield ?.projection:Lnet/minecraft/client/renderer/Projection;  net/minecraft/client/gui/render/GuiItemAtlas.projection Lnet/minecraft/client/renderer/Projection;
+  175 invokevirtual ?.getBuffer:(Lnet/minecraft/client/renderer/Projection;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;  net/minecraft/client/renderer/ProjectionMatrixBuffer.getBuffer (Lnet/minecraft/client/renderer/Projection;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;
+  178 getstatic ?.ORTHOGRAPHIC:Lcom/mojang/blaze3d/ProjectionType;  com/mojang/blaze3d/ProjectionType.ORTHOGRAPHIC Lcom/mojang/blaze3d/ProjectionType;
+  181 invokestatic ?.setProjectionMatrix:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V  com/mojang/blaze3d/systems/RenderSystem.setProjectionMatrix (Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V
+  184 iload 5
+  186 aload_0
+  187 getfield ?.textureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.textureSize I
+  190 iload 7
+  192 isub
+  193 aload_0
+  194 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+  197 aload_0
+  198 getfield ?.slotTextureSize:I  net/minecraft/client/gui/render/GuiItemAtlas.slotTextureSize I
+  201 invokestatic ?.enableScissorForRenderTypeDraws:(IIII)V  com/mojang/blaze3d/systems/RenderSystem.enableScissorForRenderTypeDraws (IIII)V
+  204 aload 4
+  206 invokevirtual ?.usesBlockLight:()Z  net/minecraft/client/renderer/item/ItemStackRenderState.usesBlockLight ()Z
+  209 ifeq ?.<init>:()V
+  212 getstatic ?.ITEMS_3D:Lcom/mojang/blaze3d/platform/Lighting$Entry;  com/mojang/blaze3d/platform/Lighting$Entry.ITEMS_3D Lcom/mojang/blaze3d/platform/Lighting$Entry;
+  215 goto #6
+  218 getstatic ?.ITEMS_FLAT:Lcom/mojang/blaze3d/platform/Lighting$Entry;  com/mojang/blaze3d/platform/Lighting$Entry.ITEMS_FLAT Lcom/mojang/blaze3d/platform/Lighting$Entry;
+  221 astore 9
+  223 invokestatic ?.getInstance:()Lnet/minecraft/client/Minecraft;  net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+  226 getfield ?.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;  net/minecraft/client/Minecraft.gameRenderer Lnet/minecraft/client/renderer/GameRenderer;
+  229 invokevirtual ?.lighting:()Lcom/mojang/blaze3d/platform/Lighting;  net/minecraft/client/renderer/GameRenderer.lighting ()Lcom/mojang/blaze3d/platform/Lighting;
+  232 aload 9
+  234 invokevirtual ?.setupFor:(Lcom/mojang/blaze3d/platform/Lighting$Entry;)V  com/mojang/blaze3d/platform/Lighting.setupFor (Lcom/mojang/blaze3d/platform/Lighting$Entry;)V
+  237 aload 4
+  239 aload_0
+  240 getfield ?.poseStack:Lcom/mojang/blaze3d/vertex/PoseStack;  net/minecraft/client/gui/render/GuiItemAtlas.poseStack Lcom/mojang/blaze3d/vertex/PoseStack;
+  243 aload_0
+  244 getfield ?.submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;  net/minecraft/client/gui/render/GuiItemAtlas.submitNodeStorage Lnet/minecraft/client/renderer/SubmitNodeStorage;
+  247 ldc_w #291 = ?
+  250 getstatic ?.NO_OVERLAY:I  net/minecraft/client/renderer/texture/OverlayTexture.NO_OVERLAY I
+  253 iconst_0
+  254 invokevirtual ?.submit:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;III)V  net/minecraft/client/renderer/item/ItemStackRenderState.submit (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;III)V
+  257 aload_0
+  258 getfield ?.featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;  net/minecraft/client/gui/render/GuiItemAtlas.featureRenderDispatcher Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
+  261 aload_0
+  262 getfield ?.submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;  net/minecraft/client/gui/render/GuiItemAtlas.submitNodeStorage Lnet/minecraft/client/renderer/SubmitNodeStorage;
+  265 invokevirtual ?.renderAllFeatures:(Lnet/minecraft/client/renderer/SubmitNodeStorage;)V  net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures (Lnet/minecraft/client/renderer/SubmitNodeStorage;)V
+  268 invokestatic ?.disableScissorForRenderTypeDraws:()V  com/mojang/blaze3d/systems/RenderSystem.disableScissorForRenderTypeDraws ()V
+  271 aconst_null
+  272 putstatic ?.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;  com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride Lcom/mojang/blaze3d/textures/GpuTextureView;
+  275 aconst_null
+  276 putstatic ?.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;  com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride Lcom/mojang/blaze3d/textures/GpuTextureView;
+  279 aload_0
+  280 getfield ?.poseStack:Lcom/mojang/blaze3d/vertex/PoseStack;  net/minecraft/client/gui/render/GuiItemAtlas.poseStack Lcom/mojang/blaze3d/vertex/PoseStack;
+  283 invokevirtual ?.popPose:()V  com/mojang/blaze3d/vertex/PoseStack.popPose ()V
+  286 return
+

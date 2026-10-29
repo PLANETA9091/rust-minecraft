@@ -1,0 +1,63 @@
+=== addToTooltip (Lnet/minecraft/world/item/Item$TooltipContext;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;Lnet/minecraft/core/component/DataComponentGetter;)V ===
+    0 aload_1
+    1 invokeinterface net/minecraft/world/item/Item$TooltipContext.registries ()Lnet/minecraft/core/HolderLookup$Provider;
+    6 astore 5
+    8 aload 5
+   10 getstatic net/minecraft/core/registries/Registries.ENCHANTMENT:Lnet/minecraft/resources/ResourceKey;  net/minecraft/core/registries/Registries.ENCHANTMENT Lnet/minecraft/resources/ResourceKey;
+   13 getstatic net/minecraft/tags/EnchantmentTags.TOOLTIP_ORDER:Lnet/minecraft/tags/TagKey;  net/minecraft/tags/EnchantmentTags.TOOLTIP_ORDER Lnet/minecraft/tags/TagKey;
+   16 invokestatic net/minecraft/world/item/enchantment/ItemEnchantments.getTagOrEmpty:(Lnet/minecraft/core/HolderLookup$Provider;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/tags/TagKey;)Lnet/minecraft/core/HolderSet;  net/minecraft/world/item/enchantment/ItemEnchantments.getTagOrEmpty (Lnet/minecraft/core/HolderLookup$Provider;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/tags/TagKey;)Lnet/minecraft/core/HolderSet;
+   19 astore 6
+   21 aload 6
+   23 invokeinterface net/minecraft/core/HolderSet.iterator ()Ljava/util/Iterator;
+   28 astore 7
+   30 aload 7
+   32 invokeinterface java/util/Iterator.hasNext ()Z
+   37 ifeq #47
+   40 aload 7
+   42 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   47 checkcast #92  net/minecraft/core/Holder
+   50 astore 8
+   52 aload_0
+   53 getfield net/minecraft/world/item/enchantment/ItemEnchantments.enchantments:Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;  net/minecraft/world/item/enchantment/ItemEnchantments.enchantments Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
+   56 aload 8
+   58 invokevirtual it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap.getInt:(Ljava/lang/Object;)I  it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap.getInt (Ljava/lang/Object;)I
+   61 istore 9
+   63 iload 9
+   65 ifle #16
+   68 aload_2
+   69 aload 8
+   71 iload 9
+   73 invokestatic net/minecraft/world/item/enchantment/Enchantment.getFullname:(Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/Component;  net/minecraft/world/item/enchantment/Enchantment.getFullname (Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/Component;
+   76 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+   81 goto #65485
+   84 aload_0
+   85 getfield net/minecraft/world/item/enchantment/ItemEnchantments.enchantments:Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;  net/minecraft/world/item/enchantment/ItemEnchantments.enchantments Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
+   88 invokevirtual it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap.object2IntEntrySet:()Lit/unimi/dsi/fastutil/objects/Object2IntMap$FastEntrySet;  it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap.object2IntEntrySet ()Lit/unimi/dsi/fastutil/objects/Object2IntMap$FastEntrySet;
+   91 invokeinterface it/unimi/dsi/fastutil/objects/Object2IntMap$FastEntrySet.iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+   96 astore 7
+   98 aload 7
+  100 invokeinterface java/util/Iterator.hasNext ()Z
+  105 ifeq #68
+  108 aload 7
+  110 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  115 checkcast #35  it/unimi/dsi/fastutil/objects/Object2IntMap$Entry
+  118 astore 8
+  120 aload 8
+  122 invokeinterface it/unimi/dsi/fastutil/objects/Object2IntMap$Entry.getKey ()Ljava/lang/Object;
+  127 checkcast #92  net/minecraft/core/Holder
+  130 astore 9
+  132 aload 6
+  134 aload 9
+  136 invokeinterface net/minecraft/core/HolderSet.contains (Lnet/minecraft/core/Holder;)Z
+  141 ifne #29
+  144 aload_2
+  145 aload 8
+  147 invokeinterface it/unimi/dsi/fastutil/objects/Object2IntMap$Entry.getKey ()Ljava/lang/Object;
+  152 checkcast #92  net/minecraft/core/Holder
+  155 aload 8
+  157 invokeinterface it/unimi/dsi/fastutil/objects/Object2IntMap$Entry.getIntValue ()I
+  162 invokestatic net/minecraft/world/item/enchantment/Enchantment.getFullname:(Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/Component;  net/minecraft/world/item/enchantment/Enchantment.getFullname (Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/Component;
+  165 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  170 goto #65464
+  173 return
+

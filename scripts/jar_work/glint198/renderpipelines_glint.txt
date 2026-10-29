@@ -1,0 +1,30 @@
+ 2913 ldc_w #533 = pipeline/glint
+ 2916 invokevirtual #305  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withLocation (Ljava/lang/String;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2919 ldc_w #535 = core/glint
+ 2922 invokevirtual #129  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withVertexShader (Ljava/lang/String;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2925 ldc_w #535 = core/glint
+ 2928 invokevirtual #133  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withFragmentShader (Ljava/lang/String;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2931 getstatic #152  net/minecraft/client/renderer/BindGroupLayouts.SAMPLER0 Lcom/mojang/blaze3d/pipeline/BindGroupLayout;
+ 2934 invokevirtual #56  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withBindGroupLayout (Lcom/mojang/blaze3d/pipeline/BindGroupLayout;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2937 iconst_0
+ 2938 invokevirtual #227  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withCull (Z)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2941 new #176  com/mojang/blaze3d/pipeline/ColorTargetState
+ 2944 dup
+ 2945 getstatic #537  com/mojang/blaze3d/pipeline/BlendFunction.GLINT Lcom/mojang/blaze3d/pipeline/BlendFunction;
+ 2948 invokespecial #184  com/mojang/blaze3d/pipeline/ColorTargetState.<init> (Lcom/mojang/blaze3d/pipeline/BlendFunction;)V
+ 2951 invokevirtual #187  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withColorTargetState (Lcom/mojang/blaze3d/pipeline/ColorTargetState;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2954 iconst_0
+ 2955 getstatic #540  com/mojang/blaze3d/vertex/DefaultVertexFormat.POSITION_TEX Lcom/mojang/blaze3d/vertex/VertexFormat;
+ 2958 invokevirtual #94  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withVertexBinding (ILcom/mojang/blaze3d/vertex/VertexFormat;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2961 getstatic #98  com/mojang/blaze3d/PrimitiveTopology.QUADS Lcom/mojang/blaze3d/PrimitiveTopology;
+ 2964 invokevirtual #104  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withPrimitiveTopology (Lcom/mojang/blaze3d/PrimitiveTopology;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2967 new #109  com/mojang/blaze3d/pipeline/DepthStencilState
+ 2970 dup
+ 2971 getstatic #377  com/mojang/blaze3d/platform/CompareOp.EQUAL Lcom/mojang/blaze3d/platform/CompareOp;
+ 2974 iconst_0
+ 2975 invokespecial #251  com/mojang/blaze3d/pipeline/DepthStencilState.<init> (Lcom/mojang/blaze3d/platform/CompareOp;Z)V
+ 2978 invokevirtual #114  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.withDepthStencilState (Lcom/mojang/blaze3d/pipeline/DepthStencilState;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;
+ 2981 invokevirtual #308  com/mojang/blaze3d/pipeline/RenderPipeline$Builder.build ()Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+ 2984 invokestatic #312  net/minecraft/client/renderer/RenderPipelines.register (Lcom/mojang/blaze3d/pipeline/RenderPipeline;)Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+ 2987 putstatic #543  net/minecraft/client/renderer/RenderPipelines.GLINT Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+---

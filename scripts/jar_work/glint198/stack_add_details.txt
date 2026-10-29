@@ -1,0 +1,347 @@
+=== addDetailsToTooltip (Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/TooltipFlag;Ljava/util/function/Consumer;)V ===
+    0 aload_0
+    1 invokevirtual #53  net/minecraft/world/item/ItemStack.getItem ()Lnet/minecraft/world/item/Item;
+    4 aload_0
+    5 aload_1
+    6 aload_2
+    7 aload 5
+    9 aload 4
+   11 invokevirtual #890  net/minecraft/world/item/Item.appendHoverText (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   14 aload_0
+   15 getstatic #894  net/minecraft/core/component/DataComponents.TROPICAL_FISH_PATTERN Lnet/minecraft/core/component/DataComponentType;
+   18 aload_1
+   19 aload_2
+   20 aload 5
+   22 aload 4
+   24 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   27 aload_0
+   28 getstatic #900  net/minecraft/core/component/DataComponents.INSTRUMENT Lnet/minecraft/core/component/DataComponentType;
+   31 aload_1
+   32 aload_2
+   33 aload 5
+   35 aload 4
+   37 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   40 aload_0
+   41 getstatic #903  net/minecraft/core/component/DataComponents.MAP_ID Lnet/minecraft/core/component/DataComponentType;
+   44 aload_1
+   45 aload_2
+   46 aload 5
+   48 aload 4
+   50 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   53 aload_0
+   54 getstatic #906  net/minecraft/core/component/DataComponents.BEES Lnet/minecraft/core/component/DataComponentType;
+   57 aload_1
+   58 aload_2
+   59 aload 5
+   61 aload 4
+   63 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   66 aload_0
+   67 getstatic #909  net/minecraft/core/component/DataComponents.CONTAINER_LOOT Lnet/minecraft/core/component/DataComponentType;
+   70 aload_1
+   71 aload_2
+   72 aload 5
+   74 aload 4
+   76 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   79 aload_0
+   80 getstatic #165  net/minecraft/core/component/DataComponents.CONTAINER Lnet/minecraft/core/component/DataComponentType;
+   83 aload_1
+   84 aload_2
+   85 aload 5
+   87 aload 4
+   89 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+   92 aload_0
+   93 getstatic #912  net/minecraft/core/component/DataComponents.BANNER_PATTERNS Lnet/minecraft/core/component/DataComponentType;
+   96 aload_1
+   97 aload_2
+   98 aload 5
+  100 aload 4
+  102 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  105 aload_0
+  106 getstatic #915  net/minecraft/core/component/DataComponents.POT_DECORATIONS Lnet/minecraft/core/component/DataComponentType;
+  109 aload_1
+  110 aload_2
+  111 aload 5
+  113 aload 4
+  115 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  118 aload_0
+  119 getstatic #773  net/minecraft/core/component/DataComponents.WRITTEN_BOOK_CONTENT Lnet/minecraft/core/component/DataComponentType;
+  122 aload_1
+  123 aload_2
+  124 aload 5
+  126 aload 4
+  128 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  131 aload_0
+  132 getstatic #194  net/minecraft/core/component/DataComponents.CHARGED_PROJECTILES Lnet/minecraft/core/component/DataComponentType;
+  135 aload_1
+  136 aload_2
+  137 aload 5
+  139 aload 4
+  141 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  144 aload_0
+  145 getstatic #918  net/minecraft/core/component/DataComponents.FIREWORKS Lnet/minecraft/core/component/DataComponentType;
+  148 aload_1
+  149 aload_2
+  150 aload 5
+  152 aload 4
+  154 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  157 aload_0
+  158 getstatic #921  net/minecraft/core/component/DataComponents.FIREWORK_EXPLOSION Lnet/minecraft/core/component/DataComponentType;
+  161 aload_1
+  162 aload_2
+  163 aload 5
+  165 aload 4
+  167 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  170 aload_0
+  171 getstatic #924  net/minecraft/core/component/DataComponents.POTION_CONTENTS Lnet/minecraft/core/component/DataComponentType;
+  174 aload_1
+  175 aload_2
+  176 aload 5
+  178 aload 4
+  180 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  183 aload_0
+  184 getstatic #927  net/minecraft/core/component/DataComponents.JUKEBOX_PLAYABLE Lnet/minecraft/core/component/DataComponentType;
+  187 aload_1
+  188 aload_2
+  189 aload 5
+  191 aload 4
+  193 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  196 aload_0
+  197 getstatic #930  net/minecraft/core/component/DataComponents.TRIM Lnet/minecraft/core/component/DataComponentType;
+  200 aload_1
+  201 aload_2
+  202 aload 5
+  204 aload 4
+  206 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  209 aload_0
+  210 getstatic #933  net/minecraft/core/component/DataComponents.STORED_ENCHANTMENTS Lnet/minecraft/core/component/DataComponentType;
+  213 aload_1
+  214 aload_2
+  215 aload 5
+  217 aload 4
+  219 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  222 aload_0
+  223 getstatic #936  net/minecraft/core/component/DataComponents.ENCHANTMENTS Lnet/minecraft/core/component/DataComponentType;
+  226 aload_1
+  227 aload_2
+  228 aload 5
+  230 aload 4
+  232 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  235 aload_0
+  236 getstatic #939  net/minecraft/core/component/DataComponents.DYED_COLOR Lnet/minecraft/core/component/DataComponentType;
+  239 aload_1
+  240 aload_2
+  241 aload 5
+  243 aload 4
+  245 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  248 aload_0
+  249 getstatic #942  net/minecraft/core/component/DataComponents.PROFILE Lnet/minecraft/core/component/DataComponentType;
+  252 aload_1
+  253 aload_2
+  254 aload 5
+  256 aload 4
+  258 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  261 aload_0
+  262 getstatic #945  net/minecraft/core/component/DataComponents.LORE Lnet/minecraft/core/component/DataComponentType;
+  265 aload_1
+  266 aload_2
+  267 aload 5
+  269 aload 4
+  271 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  274 aload_0
+  275 getstatic #948  net/minecraft/core/component/DataComponents.SULFUR_CUBE_CONTENT Lnet/minecraft/core/component/DataComponentType;
+  278 aload_1
+  279 aload_2
+  280 aload 5
+  282 aload 4
+  284 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  287 aload_0
+  288 aload 5
+  290 aload_2
+  291 aload_3
+  292 invokevirtual #951  net/minecraft/world/item/ItemStack.addAttributeTooltips (Ljava/util/function/Consumer;Lnet/minecraft/world/item/component/TooltipDisplay;Lnet/minecraft/world/entity/player/Player;)V
+  295 aload_0
+  296 getstatic #955  net/minecraft/core/component/DataComponents.INTANGIBLE_PROJECTILE Lnet/minecraft/core/component/DataComponentType;
+  299 getstatic #958  net/minecraft/world/item/ItemStack.INTANGIBLE_TOOLTIP Lnet/minecraft/network/chat/Component;
+  302 aload_2
+  303 aload 5
+  305 invokevirtual #962  net/minecraft/world/item/ItemStack.addUnitComponentToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/network/chat/Component;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;)V
+  308 aload_0
+  309 getstatic #402  net/minecraft/core/component/DataComponents.UNBREAKABLE Lnet/minecraft/core/component/DataComponentType;
+  312 getstatic #966  net/minecraft/world/item/ItemStack.UNBREAKABLE_TOOLTIP Lnet/minecraft/network/chat/Component;
+  315 aload_2
+  316 aload 5
+  318 invokevirtual #962  net/minecraft/world/item/ItemStack.addUnitComponentToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/network/chat/Component;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;)V
+  321 aload_0
+  322 getstatic #969  net/minecraft/core/component/DataComponents.OMINOUS_BOTTLE_AMPLIFIER Lnet/minecraft/core/component/DataComponentType;
+  325 aload_1
+  326 aload_2
+  327 aload 5
+  329 aload 4
+  331 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  334 aload_0
+  335 getstatic #972  net/minecraft/core/component/DataComponents.SUSPICIOUS_STEW_EFFECTS Lnet/minecraft/core/component/DataComponentType;
+  338 aload_1
+  339 aload_2
+  340 aload 5
+  342 aload 4
+  344 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  347 aload_0
+  348 getstatic #975  net/minecraft/core/component/DataComponents.BLOCK_STATE Lnet/minecraft/core/component/DataComponentType;
+  351 aload_1
+  352 aload_2
+  353 aload 5
+  355 aload 4
+  357 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  360 aload_0
+  361 getstatic #978  net/minecraft/core/component/DataComponents.ENTITY_DATA Lnet/minecraft/core/component/DataComponentType;
+  364 aload_1
+  365 aload_2
+  366 aload 5
+  368 aload 4
+  370 invokevirtual #897  net/minecraft/world/item/ItemStack.addToTooltip (Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V
+  373 aload_0
+  374 getstatic #981  net/minecraft/world/item/Items.SPAWNER Lnet/minecraft/world/item/Item;
+  377 invokevirtual #589  net/minecraft/world/item/ItemStack.is (Ljava/lang/Object;)Z
+  380 ifne #13
+  383 aload_0
+  384 getstatic #984  net/minecraft/world/item/Items.TRIAL_SPAWNER Lnet/minecraft/world/item/Item;
+  387 invokevirtual #589  net/minecraft/world/item/ItemStack.is (Ljava/lang/Object;)Z
+  390 ifeq #35
+  393 aload_2
+  394 getstatic #987  net/minecraft/core/component/DataComponents.BLOCK_ENTITY_DATA Lnet/minecraft/core/component/DataComponentType;
+  397 invokevirtual #836  net/minecraft/world/item/component/TooltipDisplay.shows (Lnet/minecraft/core/component/DataComponentType;)Z
+  400 ifeq #25
+  403 aload_0
+  404 getstatic #987  net/minecraft/core/component/DataComponents.BLOCK_ENTITY_DATA Lnet/minecraft/core/component/DataComponentType;
+  407 invokevirtual #366  net/minecraft/world/item/ItemStack.get (Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+  410 checkcast #990  net/minecraft/world/item/component/TypedEntityData
+  413 astore 6
+  415 aload 6
+  417 aload 5
+  419 ldc_w #994 = SpawnData
+  422 invokestatic #996  net/minecraft/world/level/Spawner.appendHoverText (Lnet/minecraft/world/item/component/TypedEntityData;Ljava/util/function/Consumer;Ljava/lang/String;)V
+  425 aload_0
+  426 getstatic #1001  net/minecraft/core/component/DataComponents.CAN_BREAK Lnet/minecraft/core/component/DataComponentType;
+  429 invokevirtual #366  net/minecraft/world/item/ItemStack.get (Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+  432 checkcast #1004  net/minecraft/world/item/AdventureModePredicate
+  435 astore 6
+  437 aload 6
+  439 ifnull #40
+  442 aload_2
+  443 getstatic #1001  net/minecraft/core/component/DataComponents.CAN_BREAK Lnet/minecraft/core/component/DataComponentType;
+  446 invokevirtual #836  net/minecraft/world/item/component/TooltipDisplay.shows (Lnet/minecraft/core/component/DataComponentType;)Z
+  449 ifeq #30
+  452 aload 5
+  454 getstatic #1006  net/minecraft/network/chat/CommonComponents.EMPTY Lnet/minecraft/network/chat/Component;
+  457 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  462 aload 5
+  464 getstatic #1010  net/minecraft/world/item/AdventureModePredicate.CAN_BREAK_HEADER Lnet/minecraft/network/chat/Component;
+  467 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  472 aload 6
+  474 aload 5
+  476 invokevirtual #1013  net/minecraft/world/item/AdventureModePredicate.addToTooltip (Ljava/util/function/Consumer;)V
+  479 aload_0
+  480 getstatic #1016  net/minecraft/core/component/DataComponents.CAN_PLACE_ON Lnet/minecraft/core/component/DataComponentType;
+  483 invokevirtual #366  net/minecraft/world/item/ItemStack.get (Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+  486 checkcast #1004  net/minecraft/world/item/AdventureModePredicate
+  489 astore 7
+  491 aload 7
+  493 ifnull #40
+  496 aload_2
+  497 getstatic #1016  net/minecraft/core/component/DataComponents.CAN_PLACE_ON Lnet/minecraft/core/component/DataComponentType;
+  500 invokevirtual #836  net/minecraft/world/item/component/TooltipDisplay.shows (Lnet/minecraft/core/component/DataComponentType;)Z
+  503 ifeq #30
+  506 aload 5
+  508 getstatic #1006  net/minecraft/network/chat/CommonComponents.EMPTY Lnet/minecraft/network/chat/Component;
+  511 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  516 aload 5
+  518 getstatic #1019  net/minecraft/world/item/AdventureModePredicate.CAN_PLACE_HEADER Lnet/minecraft/network/chat/Component;
+  521 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  526 aload 7
+  528 aload 5
+  530 invokevirtual #1013  net/minecraft/world/item/AdventureModePredicate.addToTooltip (Ljava/util/function/Consumer;)V
+  533 aload 4
+  535 invokeinterface net/minecraft/world/item/TooltipFlag.isAdvanced ()Z
+  540 ifeq #138
+  543 aload_0
+  544 invokevirtual #398  net/minecraft/world/item/ItemStack.isDamaged ()Z
+  547 ifeq #55
+  550 aload_2
+  551 getstatic #405  net/minecraft/core/component/DataComponents.DAMAGE Lnet/minecraft/core/component/DataComponentType;
+  554 invokevirtual #836  net/minecraft/world/item/component/TooltipDisplay.shows (Lnet/minecraft/core/component/DataComponentType;)Z
+  557 ifeq #45
+  560 aload 5
+  562 ldc_w #1025 = item.durability
+  565 iconst_2
+  566 anewarray #125  java/lang/Object
+  569 dup
+  570 iconst_0
+  571 aload_0
+  572 invokevirtual #412  net/minecraft/world/item/ItemStack.getMaxDamage ()I
+  575 aload_0
+  576 invokevirtual #408  net/minecraft/world/item/ItemStack.getDamageValue ()I
+  579 isub
+  580 invokestatic #149  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+  583 aastore
+  584 dup
+  585 iconst_1
+  586 aload_0
+  587 invokevirtual #412  net/minecraft/world/item/ItemStack.getMaxDamage ()I
+  590 invokestatic #149  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+  593 aastore
+  594 invokestatic #1027  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  597 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  602 aload 5
+  604 getstatic #1031  net/minecraft/core/registries/BuiltInRegistries.ITEM Lnet/minecraft/core/DefaultedRegistry;
+  607 aload_0
+  608 invokevirtual #53  net/minecraft/world/item/ItemStack.getItem ()Lnet/minecraft/world/item/Item;
+  611 invokeinterface net/minecraft/core/DefaultedRegistry.getKey (Ljava/lang/Object;)Lnet/minecraft/resources/Identifier;
+  616 invokevirtual #1043  net/minecraft/resources/Identifier.toString ()Ljava/lang/String;
+  619 invokestatic #793  net/minecraft/network/chat/Component.literal (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+  622 getstatic #1048  net/minecraft/ChatFormatting.DARK_GRAY Lnet/minecraft/ChatFormatting;
+  625 invokevirtual #824  net/minecraft/network/chat/MutableComponent.withStyle (Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+  628 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  633 aload_0
+  634 getfield #66  net/minecraft/world/item/ItemStack.components Lnet/minecraft/core/component/PatchedDataComponentMap;
+  637 invokevirtual #596  net/minecraft/core/component/PatchedDataComponentMap.size ()I
+  640 istore 8
+  642 iload 8
+  644 ifle #34
+  647 aload 5
+  649 ldc_w #1051 = item.components
+  652 iconst_1
+  653 anewarray #125  java/lang/Object
+  656 dup
+  657 iconst_0
+  658 iload 8
+  660 invokestatic #149  java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+  663 aastore
+  664 invokestatic #1027  net/minecraft/network/chat/Component.translatable (Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  667 getstatic #1048  net/minecraft/ChatFormatting.DARK_GRAY Lnet/minecraft/ChatFormatting;
+  670 invokevirtual #824  net/minecraft/network/chat/MutableComponent.withStyle (Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+  673 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  678 aload_3
+  679 ifnull #30
+  682 aload_0
+  683 invokevirtual #53  net/minecraft/world/item/ItemStack.getItem ()Lnet/minecraft/world/item/Item;
+  686 aload_3
+  687 invokevirtual #1053  net/minecraft/world/entity/player/Player.level ()Lnet/minecraft/world/level/Level;
+  690 invokevirtual #1054  net/minecraft/world/level/Level.enabledFeatures ()Lnet/minecraft/world/flag/FeatureFlagSet;
+  693 invokevirtual #241  net/minecraft/world/item/Item.isEnabled (Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+  696 ifne #13
+  699 aload 5
+  701 getstatic #1060  net/minecraft/world/item/ItemStack.DISABLED_ITEM_TOOLTIP Lnet/minecraft/network/chat/Component;
+  704 invokeinterface java/util/function/Consumer.accept (Ljava/lang/Object;)V
+  709 aload_0
+  710 invokevirtual #53  net/minecraft/world/item/ItemStack.getItem ()Lnet/minecraft/world/item/Item;
+  713 aload_0
+  714 aload_3
+  715 invokevirtual #860  net/minecraft/world/item/Item.shouldPrintOpWarning (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;)Z
+  718 istore 8
+  720 iload 8
+  722 ifeq #13
+  725 getstatic #864  net/minecraft/world/item/ItemStack.OP_NBT_WARNING Ljava/util/List;
+  728 aload 5
+  730 invokeinterface java/util/List.forEach (Ljava/util/function/Consumer;)V
+  735 return
+

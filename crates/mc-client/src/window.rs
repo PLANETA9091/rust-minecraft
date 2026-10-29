@@ -4364,6 +4364,10 @@ pub fn run_gui_app(
         music.sync_block_sounds(&app.sounds.events);
         fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
         let t_render_start = std::time::Instant::now();
+        // THE GLINT'S OWN CLOCK (the Util.getMillis() walk — the wall
+        // millis the foil scroll phases read, the frame the banking
+        // ride answers)
+        app.frame_millis = now_millis().max(0) as u64;
         app.render(&mut fb, &mut assets);
         // THE PROFILER PIE'S OWN STAGE WALK (the client's own frame
         // the vanilla profiler concept serves — the input / tick /

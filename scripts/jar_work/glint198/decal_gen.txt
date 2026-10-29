@@ -1,0 +1,177 @@
+=== <init> (Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;F)V ===
+    0 aload_0
+    1 invokespecial #1  ?
+    4 aload_0
+    5 new #7  ?
+    8 dup
+    9 invokespecial #9  ?
+   12 putfield #10  ?
+   15 aload_0
+   16 new #7  ?
+   19 dup
+   20 invokespecial #9  ?
+   23 putfield #16  ?
+   26 aload_0
+   27 aload_1
+   28 putfield #19  ?
+   31 aload_0
+   32 new #23  ?
+   35 dup
+   36 aload_2
+   37 invokevirtual #25  ?
+   40 invokespecial #31  ?
+   43 invokevirtual #34  ?
+   46 putfield #37  ?
+   49 aload_0
+   50 new #41  ?
+   53 dup
+   54 aload_2
+   55 invokevirtual #43  ?
+   58 invokespecial #46  ?
+   61 invokevirtual #49  ?
+   64 putfield #51  ?
+   67 aload_0
+   68 fload_3
+   69 putfield #55  ?
+   72 return
+
+=== addVertex (FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 fload_1
+    2 putfield #59  ?
+    5 aload_0
+    6 fload_2
+    7 putfield #62  ?
+   10 aload_0
+   11 fload_3
+   12 putfield #65  ?
+   15 aload_0
+   16 getfield #19  ?
+   19 fload_1
+   20 fload_2
+   21 fload_3
+   22 invokeinterface ?
+   27 pop
+   28 aload_0
+   29 areturn
+
+=== setColor (IIII)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 getfield #19  ?
+    4 iconst_m1
+    5 invokeinterface ?
+   10 pop
+   11 aload_0
+   12 areturn
+
+=== setColor (I)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 getfield #19  ?
+    4 iconst_m1
+    5 invokeinterface ?
+   10 pop
+   11 aload_0
+   12 areturn
+
+=== setUv (FF)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 areturn
+
+=== setUv1 (II)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 getfield #19  ?
+    4 iload_1
+    5 iload_2
+    6 invokeinterface ?
+   11 pop
+   12 aload_0
+   13 areturn
+
+=== setUv2 (II)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 getfield #19  ?
+    4 iload_1
+    5 iload_2
+    6 invokeinterface ?
+   11 pop
+   12 aload_0
+   13 areturn
+
+=== setNormal (FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 getfield #19  ?
+    4 fload_1
+    5 fload_2
+    6 fload_3
+    7 invokeinterface ?
+   12 pop
+   13 aload_0
+   14 getfield #51  ?
+   17 fload_1
+   18 fload_2
+   19 fload_3
+   20 aload_0
+   21 getfield #16  ?
+   24 invokevirtual #90  ?
+   27 astore 4
+   29 aload 4
+   31 invokevirtual #94  ?
+   34 aload 4
+   36 invokevirtual #97  ?
+   39 aload 4
+   41 invokevirtual #99  ?
+   44 invokestatic #101  ?
+   47 astore 5
+   49 aload_0
+   50 getfield #37  ?
+   53 aload_0
+   54 getfield #59  ?
+   57 aload_0
+   58 getfield #62  ?
+   61 aload_0
+   62 getfield #65  ?
+   65 aload_0
+   66 getfield #10  ?
+   69 invokevirtual #107  ?
+   72 astore 6
+   74 aload 6
+   76 ldc #112 = ?
+   78 invokevirtual #113  ?
+   81 pop
+   82 aload 6
+   84 ldc #117 = ?
+   86 invokevirtual #118  ?
+   89 pop
+   90 aload 6
+   92 aload 5
+   94 invokevirtual #121  ?
+   97 invokevirtual #125  ?
+  100 pop
+  101 aload_0
+  102 getfield #19  ?
+  105 aload 6
+  107 invokevirtual #94  ?
+  110 fneg
+  111 aload_0
+  112 getfield #55  ?
+  115 fmul
+  116 aload 6
+  118 invokevirtual #97  ?
+  121 fneg
+  122 aload_0
+  123 getfield #55  ?
+  126 fmul
+  127 invokeinterface ?
+  132 pop
+  133 aload_0
+  134 areturn
+
+=== setLineWidth (F)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_0
+    1 getfield #19  ?
+    4 fload_1
+    5 invokeinterface ?
+   10 pop
+   11 aload_0
+   12 areturn
+

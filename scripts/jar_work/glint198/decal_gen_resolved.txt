@@ -1,0 +1,177 @@
+=== <init> (Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;F)V ===
+0 aload_0
+1 invokespecial java/lang/Object.<init>:()V java/lang/Object.<init> ()V
+4 aload_0
+5 new #7 org/joml/Vector3f
+8 dup
+9 invokespecial org/joml/Vector3f.<init>:()V org/joml/Vector3f.<init> ()V
+12 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.worldPos:Lorg/joml/Vector3f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.worldPos Lorg/joml/Vector3f;
+15 aload_0
+16 new #7 org/joml/Vector3f
+19 dup
+20 invokespecial org/joml/Vector3f.<init>:()V org/joml/Vector3f.<init> ()V
+23 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normal:Lorg/joml/Vector3f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normal Lorg/joml/Vector3f;
+26 aload_0
+27 aload_1
+28 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+31 aload_0
+32 new #23 org/joml/Matrix4f
+35 dup
+36 aload_2
+37 invokevirtual com/mojang/blaze3d/vertex/PoseStack$Pose.pose:()Lorg/joml/Matrix4f; com/mojang/blaze3d/vertex/PoseStack$Pose.pose ()Lorg/joml/Matrix4f;
+40 invokespecial org/joml/Matrix4f.<init>:(Lorg/joml/Matrix4fc;)V org/joml/Matrix4f.<init> (Lorg/joml/Matrix4fc;)V
+43 invokevirtual org/joml/Matrix4f.invert:()Lorg/joml/Matrix4f; org/joml/Matrix4f.invert ()Lorg/joml/Matrix4f;
+46 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.cameraInversePose:Lorg/joml/Matrix4f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.cameraInversePose Lorg/joml/Matrix4f;
+49 aload_0
+50 new #41 org/joml/Matrix3f
+53 dup
+54 aload_2
+55 invokevirtual com/mojang/blaze3d/vertex/PoseStack$Pose.normal:()Lorg/joml/Matrix3f; com/mojang/blaze3d/vertex/PoseStack$Pose.normal ()Lorg/joml/Matrix3f;
+58 invokespecial org/joml/Matrix3f.<init>:(Lorg/joml/Matrix3fc;)V org/joml/Matrix3f.<init> (Lorg/joml/Matrix3fc;)V
+61 invokevirtual org/joml/Matrix3f.invert:()Lorg/joml/Matrix3f; org/joml/Matrix3f.invert ()Lorg/joml/Matrix3f;
+64 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normalInversePose:Lorg/joml/Matrix3f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normalInversePose Lorg/joml/Matrix3f;
+67 aload_0
+68 fload_3
+69 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.textureScale:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.textureScale F
+72 return
+
+=== addVertex (FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 fload_1
+2 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.x:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.x F
+5 aload_0
+6 fload_2
+7 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.y:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.y F
+10 aload_0
+11 fload_3
+12 putfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.z:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.z F
+15 aload_0
+16 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+19 fload_1
+20 fload_2
+21 fload_3
+22 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex (FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+27 pop
+28 aload_0
+29 areturn
+
+=== setColor (IIII)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+4 iconst_m1
+5 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor (I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+10 pop
+11 aload_0
+12 areturn
+
+=== setColor (I)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+4 iconst_m1
+5 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor (I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+10 pop
+11 aload_0
+12 areturn
+
+=== setUv (FF)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 areturn
+
+=== setUv1 (II)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+4 iload_1
+5 iload_2
+6 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setUv1 (II)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+11 pop
+12 aload_0
+13 areturn
+
+=== setUv2 (II)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+4 iload_1
+5 iload_2
+6 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setUv2 (II)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+11 pop
+12 aload_0
+13 areturn
+
+=== setNormal (FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+4 fload_1
+5 fload_2
+6 fload_3
+7 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setNormal (FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+12 pop
+13 aload_0
+14 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normalInversePose:Lorg/joml/Matrix3f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normalInversePose Lorg/joml/Matrix3f;
+17 fload_1
+18 fload_2
+19 fload_3
+20 aload_0
+21 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normal:Lorg/joml/Vector3f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.normal Lorg/joml/Vector3f;
+24 invokevirtual org/joml/Matrix3f.transform:(FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f; org/joml/Matrix3f.transform (FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f;
+27 astore 4
+29 aload 4
+31 invokevirtual org/joml/Vector3f.x:()F org/joml/Vector3f.x ()F
+34 aload 4
+36 invokevirtual org/joml/Vector3f.y:()F org/joml/Vector3f.y ()F
+39 aload 4
+41 invokevirtual org/joml/Vector3f.z:()F org/joml/Vector3f.z ()F
+44 invokestatic net/minecraft/core/Direction.getApproximateNearest:(FFF)Lnet/minecraft/core/Direction; net/minecraft/core/Direction.getApproximateNearest (FFF)Lnet/minecraft/core/Direction;
+47 astore 5
+49 aload_0
+50 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.cameraInversePose:Lorg/joml/Matrix4f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.cameraInversePose Lorg/joml/Matrix4f;
+53 aload_0
+54 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.x:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.x F
+57 aload_0
+58 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.y:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.y F
+61 aload_0
+62 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.z:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.z F
+65 aload_0
+66 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.worldPos:Lorg/joml/Vector3f; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.worldPos Lorg/joml/Vector3f;
+69 invokevirtual org/joml/Matrix4f.transformPosition:(FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f; org/joml/Matrix4f.transformPosition (FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f;
+72 astore 6
+74 aload 6
+76 ldc #112 = ?
+78 invokevirtual org/joml/Vector3f.rotateY:(F)Lorg/joml/Vector3f; org/joml/Vector3f.rotateY (F)Lorg/joml/Vector3f;
+81 pop
+82 aload 6
+84 ldc #117 = ?
+86 invokevirtual org/joml/Vector3f.rotateX:(F)Lorg/joml/Vector3f; org/joml/Vector3f.rotateX (F)Lorg/joml/Vector3f;
+89 pop
+90 aload 6
+92 aload 5
+94 invokevirtual net/minecraft/core/Direction.getRotation:()Lorg/joml/Quaternionf; net/minecraft/core/Direction.getRotation ()Lorg/joml/Quaternionf;
+97 invokevirtual org/joml/Vector3f.rotate:(Lorg/joml/Quaternionfc;)Lorg/joml/Vector3f; org/joml/Vector3f.rotate (Lorg/joml/Quaternionfc;)Lorg/joml/Vector3f;
+100 pop
+101 aload_0
+102 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+105 aload 6
+107 invokevirtual org/joml/Vector3f.x:()F org/joml/Vector3f.x ()F
+110 fneg
+111 aload_0
+112 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.textureScale:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.textureScale F
+115 fmul
+116 aload 6
+118 invokevirtual org/joml/Vector3f.y:()F org/joml/Vector3f.y ()F
+121 fneg
+122 aload_0
+123 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.textureScale:F com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.textureScale F
+126 fmul
+127 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setUv (FF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+132 pop
+133 aload_0
+134 areturn
+
+=== setLineWidth (F)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+0 aload_0
+1 getfield com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate:Lcom/mojang/blaze3d/vertex/VertexConsumer; com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.delegate Lcom/mojang/blaze3d/vertex/VertexConsumer;
+4 fload_1
+5 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setLineWidth (F)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+10 pop
+11 aload_0
+12 areturn
+

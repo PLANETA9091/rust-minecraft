@@ -10,12 +10,27 @@ the deterministic test expectations, this generator emits the Rust
 tables the client walks read.
 """
 import importlib.util
+import json
 import os
+import zipfile
 
 spec = importlib.util.spec_from_file_location(
     "twin", os.path.join(os.path.dirname(__file__), "ench_twin_196.py"))
 twin = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(twin)
+
+# THE TOOLTIP ORDER TAG (the dev-198 round — the jar's own
+# `data/minecraft/tags/enchantment/tooltip_order.json` read LIVE, the
+# single-source law the definitions keep): the ItemEnchantments.
+# addToTooltip walk's first pass the tag order serves.
+JAR = os.path.join(os.path.dirname(__file__), "..", ".mc2rs",
+                   "classpath", "client.jar")
+with zipfile.ZipFile(JAR) as z:
+    TOOLTIP_ORDER = [
+        n.split(":", 1)[1] for n in json.loads(
+            z.read("data/minecraft/tags/enchantment/tooltip_order.json")
+        )["values"]
+    ]
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "crates", "mc-registry",
                    "src", "generated", "enchantments.rs")
@@ -157,7 +172,23 @@ pub fn enchantment_accepts_item(ench: &str, item: &str) -> bool {
         Some(p) => item_in_family(item, p),
     }
 }
-'''
+
+/// THE TOOLTIP ORDER TAG (the dev-198 round — the jar's own
+/// `data/minecraft/tags/enchantment/tooltip_order.json` members the
+/// `ItemEnchantments.addToTooltip` walk banks: the FIRST pass the
+/// tagged rows the tag order speaks [pc 30-83 the HolderSet iterator
+/// the `getInt > 0` gate wears], the SECOND pass the untagged rows
+/// the map's own order answers [pc 84-173]).
+pub static TOOLTIP_ORDER: [&str; %d] = [
+    %s,
+];
+
+/// THE ROW'S RANK (the tag order's own index — the untagged rows the
+/// None answer keeps, the second pass the map order wears).
+pub fn tooltip_rank(name: &str) -> Option<usize> {
+    TOOLTIP_ORDER.iter().position(|&n| n == name)
+}
+''' % (len(TOOLTIP_ORDER), ",\n    ".join('"%s"' % n for n in TOOLTIP_ORDER))
 
 lines = [HEAD, "/// THE 43 DEFINITIONS (the registry's alphabetical order — the\n/// json files' own names the sort keeps).\npub static ENCHANTMENTS: [EnchDef; %d] = [" % len(twin.DEFS)]
 for d in twin.DEFS:

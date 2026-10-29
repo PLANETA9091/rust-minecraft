@@ -8073,6 +8073,12 @@ pub struct App {
     pub splashes: Vec<String>,
     pub seed: u64,
     pub frame: u64,
+    /// THE GLINT'S OWN CLOCK (the `Util.getMillis()` walk the foil
+    /// scroll phases read — the wall millis the window loop banks
+    /// every frame, the headless/test lanes the 0 default the
+    /// deterministic phases wear; the field the render call sites
+    /// pass the glint pass's own scroll the law keeps).
+    pub frame_millis: u64,
     pub music: crate::music::MusicScheduler,
     /// In-game state: pause menu open (world frozen underneath).
     pub paused: bool,
@@ -12334,6 +12340,7 @@ impl App {
             splashes,
             seed,
             frame: 0,
+            frame_millis: 0,
             music: crate::music::MusicScheduler::new(seed),
             sounds: crate::sound::BlockSounds::new(seed),
             cave_mood: crate::sound::CaveMood::new(seed),
@@ -31672,7 +31679,22 @@ impl App {
                 continue; // the wire's own emptiness sentinel
             }
             let (sx, sy) = inventory_slot_origin(panel, i);
-            draw_item_icon(g, id, sx + 1, sy + 1);
+            // THE GLINT'S OWN RIDE (the dev-198 round — the enchanted
+            // stack the foil pass wears: the OFFLINE store the
+            // component data the real inventory keeps, the WIRE seats
+            // the (id, count) model the honest wall keeps store-less —
+            // the plain draw the network lane answers)
+            let enchanted = !self.world_is_network
+                && self
+                    .inventory_enchants
+                    .get(i)
+                    .map(|s| !s.is_empty())
+                    .unwrap_or(false);
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx + 1, sy + 1, self.frame_millis);
+            } else {
+                draw_item_icon(g, id, sx + 1, sy + 1);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -33710,7 +33732,21 @@ impl App {
             if count <= 0 {
                 continue; // the wire's own emptiness sentinel
             }
-            draw_item_icon(g, id, sx, sy);
+            // THE GLINT'S OWN RIDE (the dev-198 round — the enchanted
+            // stack the foil pass wears: the item seat the click's
+            // own store keeps, the mirror rows the ride-home stores
+            // the reopen answers — the seat's own store the
+            // enchant_comps numbering speaks)
+            let enchanted = self
+                .enchant_comps
+                .get(slot)
+                .map(|s| !s.is_empty())
+                .unwrap_or(false);
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx, sy, self.frame_millis);
+            } else {
+                draw_item_icon(g, id, sx, sy);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -33722,7 +33758,21 @@ impl App {
         // keeps, the headless scenes track no mouse)
         if self.enchant_carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.enchant_carried.0, mx - 8, my - 8);
+                // THE GLINT'S OWN RIDE (the dev-198 round — the
+                // enchanted carried the foil pass wears, the store
+                // the cursor's own 38 seat keeps)
+                if !self.enchant_comps[38].is_empty() {
+                    draw_item_icon_enchanted(
+                        g,
+                        a,
+                        self.enchant_carried.0,
+                        mx - 8,
+                        my - 8,
+                        self.frame_millis,
+                    );
+                } else {
+                    draw_item_icon(g, self.enchant_carried.0, mx - 8, my - 8);
+                }
                 if self.enchant_carried.1 > 1 {
                     let s = self.enchant_carried.1.to_string();
                     let tw = g.text_width(&s);
@@ -45307,19 +45357,106 @@ impl App {
     /// `item.components` row the same silence keeps) — BOTH the
     /// honest walls the model's own data keeps silent.
     fn item_tooltip_rows(id: i32, advanced: bool) -> Vec<(String, [f32; 3])> {
+        Self::item_tooltip_rows_enchanted(id, advanced, &[])
+    }
+
+    /// THE ENCHANTED STACK'S OWN TOOLTIP ROWS (the dev-198 round — the
+    /// addDetailsToTooltip walk the component lane rides: the name row
+    /// first, the ENCHANTMENTS component the `ItemEnchantments.
+    /// addToTooltip` walk serves [pc 222-232 the addToTooltip call
+    /// rides], the ADVANCED id row the walk lays AFTER — pc 602-632
+    /// the enchantment rows PRECEDE the id row the bytecode's own
+    /// order banks). THE LINES (the ItemEnchantments.addToTooltip the
+    /// 26.2 javap speaks — scripts/jar_work/glint198/item_ench_tooltip.txt
+    /// the evidence): the FIRST pass the `#minecraft:enchantment/
+    /// tooltip_order` tag rows the tag order speaks [pc 8-83 — the
+    /// HolderSet iterator the `getInt(holder) > 0` gate wears, each
+    /// live row the `Enchantment.getFullname(holder, level)` answer],
+    /// the SECOND pass the untagged rows the map's own order answers
+    /// [pc 84-173 — the `!holders.contains(holder)` skip keeps]; the
+    /// NO empty spacer the 26.2 bytecode banks [the CommonComponents
+    /// reference the class never carries — the 1.20.5-era spacer the
+    /// walk retired], the ink the getFullname's own style arms keep
+    /// (the curse RED the non-curse GRAY the [`Self::
+    /// enchant_fullname_row`] walk answers). The (ench, level) pairs
+    /// the [`Self::inventory_enchants`] stores keep, the ride-home
+    /// lanes the dev-196 walk banks.
+    fn item_tooltip_rows_enchanted(
+        id: i32,
+        advanced: bool,
+        ench: &[(i32, i32)],
+    ) -> Vec<(String, [f32; 3])> {
         let Some(reg) = mc_registry::item_name(id) else {
             return Vec::new();
         };
         let mut rows = vec![(item_display_name(reg), WHITE)];
+        if !ench.is_empty() {
+            use mc_registry::generated::enchantments as ench_mod;
+            // THE TWO PASSES (the tag rows the rank sort speaks, the
+            // untagged pass the store's own order keeps)
+            let mut tagged: Vec<(usize, i32, i32)> = Vec::new(); // (rank, ench, level)
+            let mut untagged: Vec<(i32, i32)> = Vec::new();
+            for &(ench, level) in ench {
+                if level <= 0 {
+                    continue; // the getInt > 0 gate
+                }
+                let Some(name) = ench_mod::enchantment_name(ench as usize) else {
+                    continue; // the registry's own miss the skip keeps
+                };
+                match ench_mod::tooltip_rank(name) {
+                    Some(rank) => tagged.push((rank, ench, level)),
+                    None => untagged.push((ench, level)),
+                }
+            }
+            tagged.sort_by_key(|&(rank, _, _)| rank);
+            for (_, ench, level) in tagged {
+                if let Some(row) = Self::enchant_fullname_row(ench as usize, level) {
+                    rows.push(row);
+                }
+            }
+            for (ench, level) in untagged {
+                if let Some(row) = Self::enchant_fullname_row(ench as usize, level) {
+                    rows.push(row);
+                }
+            }
+        }
         if advanced {
             // THE ID ROW (the addDetailsToTooltip pc 602-632 arm — the
-            // registry name the DARK_GRAY wears)
+            // registry name the DARK_GRAY wears, AFTER the enchantment
+            // rows the walk's own order keeps)
             rows.push((
                 format!("minecraft:{reg}"),
                 [0.3333, 0.3333, 0.3333], // 0x555555 — the DARK_GRAY §8
             ));
         }
         rows
+    }
+
+    /// THE ENCHANTMENT ROW'S OWN NAME (the `Enchantment.getFullname`
+    /// walk the dev-197 clue lane banks — the description the lang row
+    /// answers, the numeral the `level != 1 || maxLevel != 1` gate
+    /// keeps [the level-1-max-1 row the bare name wears], the curse
+    /// RED the non-curse GRAY the style arms speak). The (text, ink)
+    /// the item tooltip's enchantment lines wear, the clue tooltip's
+    /// own row the same law answers.
+    fn enchant_fullname_row(ench: usize, level: i32) -> Option<(String, [f32; 3])> {
+        use mc_registry::generated::enchantments as ench_mod;
+        let name = ench_mod::enchantment_name(ench)?;
+        let def = &ench_mod::ENCHANTMENTS[ench];
+        let key = format!("enchantment.minecraft.{name}");
+        let mut fullname = tr(&key).unwrap_or(name).to_string();
+        if level != 1 || def.max_level != 1 {
+            if let Some(numeral) = tr(&format!("enchantment.level.{level}")) {
+                fullname.push(' ');
+                fullname.push_str(numeral);
+            }
+        }
+        let ink = if ench_mod::CURSE_MEMBERS.contains(&name) {
+            [1.0, 0.3333, 0.3333] // the RED the curse arm keeps
+        } else {
+            [0.6667, 0.6667, 0.6667] // the GRAY the non-curse wears
+        };
+        Some((fullname, ink))
     }
 
     /// THE ITEM TOOLTIP'S OWN ORIGIN (the 26.2
@@ -45370,13 +45507,29 @@ impl App {
                 }
             }
         };
+        // THE ENCHANTMENT STORE'S OWN RIDE (the dev-198 round — the
+        // ENCHANTMENTS component the tooltip lines read: the store
+        // seats the [`Self::inventory_enchants`] numbering keys, the
+        // WIRE stacks the component data the (id, count) model never
+        // carries [the honest wall the dev-196 round banks — the
+        // server's own components the wire lane never wears], the
+        // OTHER seats [armor/offhand/craft/result] the stores the
+        // table's ride-home never lands — the empty stores the same
+        // silence keeps)
+        let ench = match hover {
+            InventoryHover::Store(i) => self.inventory_enchants.get(i).cloned().unwrap_or_default(),
+            _ => Vec::new(),
+        };
         if count <= 0 {
             return None; // the hasItem() gate
         }
         if self.inv_carried.1 > 0 {
             return None; // the carried wall (the image-less false answer)
         }
-        Some((id, Self::item_tooltip_rows(id, self.advanced_item_tooltips)))
+        Some((
+            id,
+            Self::item_tooltip_rows_enchanted(id, self.advanced_item_tooltips, &ench),
+        ))
     }
 
     /// THE ITEM TOOLTIP'S OWN RENDER (the extractTooltip pass — the
@@ -45440,28 +45593,43 @@ impl App {
         mx: i32,
         my: i32,
     ) -> Option<(i32, Vec<(String, [f32; 3])>)> {
-        let (id, count) = if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
-            // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
-            match self.creative_wrap_cell(mx, my)? {
-                CreativeWrapSlot::Armor(k) => self.inventory.armor[k],
-                CreativeWrapSlot::Offhand => self.inventory.offhand[0],
-                CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => self.inventory.items[i],
-                CreativeWrapSlot::Bin => return None, // the hasItem false
-            }
-        } else if let Some(cell) = self.creative_palette_cell(mx, my) {
-            self.creative_palette[cell]
-        } else if let Some(slot) = self.creative_store_cell(mx, my) {
-            self.inventory.items[slot]
-        } else {
-            return None; // the seats' outside the walk refuses
-        };
+        let ((id, count), ench) =
+            if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+                // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
+                match self.creative_wrap_cell(mx, my)? {
+                    CreativeWrapSlot::Armor(k) => (self.inventory.armor[k], Vec::new()),
+                    CreativeWrapSlot::Offhand => (self.inventory.offhand[0], Vec::new()),
+                    // THE STORE SEATS (the main/hotbar rows the REAL
+                    // inventory keeps — the enchanted stacks the store's
+                    // own rows answer, the ride-home numbering the keys)
+                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                        let store = self.inventory_enchants.get(i).cloned().unwrap_or_default();
+                        (self.inventory.items[i], store)
+                    }
+                    CreativeWrapSlot::Bin => return None, // the hasItem false
+                }
+            } else if let Some(cell) = self.creative_palette_cell(mx, my) {
+                (self.creative_palette[cell], Vec::new())
+            } else if let Some(slot) = self.creative_store_cell(mx, my) {
+                let store = self
+                    .inventory_enchants
+                    .get(slot)
+                    .cloned()
+                    .unwrap_or_default();
+                (self.inventory.items[slot], store)
+            } else {
+                return None; // the seats' outside the walk refuses
+            };
         if count <= 0 {
             return None; // the hasItem() gate
         }
         if self.inv_carried.1 > 0 {
             return None; // the carried wall (the image-less false answer)
         }
-        Some((id, Self::item_tooltip_rows(id, self.advanced_item_tooltips)))
+        Some((
+            id,
+            Self::item_tooltip_rows_enchanted(id, self.advanced_item_tooltips, &ench),
+        ))
     }
 
     /// THE MIRROR'S OWN OFFLINE SYNC (the projection law — the menu's
@@ -77546,11 +77714,26 @@ impl App {
                 // draws (the squash-wide-spring-tall the projection fold
                 // serves), the settled stack the plain draw keeps; the
                 // count's own text the pose NEVER rides (pc 134-146 the
-                // outside draw the block below keeps).
+                // outside draw the block below keeps). THE GLINT'S OWN
+                // LANE (the dev-198 round — the enchanted stack the
+                // foil pass the SETTLED draw wears: the OFFLINE store
+                // the component data the real inventory keeps, the
+                // WIRE seats the honest wall keeps store-less; the
+                // POP's own pose the glint lane the plain icon the pop
+                // frames keeps — the squash the overlay the settled
+                // law answers)
+                let enchanted = !self.world_is_network
+                    && self
+                        .inventory_enchants
+                        .get(i)
+                        .map(|s| !s.is_empty())
+                        .unwrap_or(false);
                 let f = self.hotbar_pop[i] as f32 - self.partial_tick;
                 if f > 0.0 {
                     let pop_g = 1.0 + f / 5.0;
                     draw_item_icon_pop(g, id, ix, iy, pop_g);
+                } else if enchanted {
+                    draw_item_icon_enchanted(g, a, id, ix, iy, self.frame_millis);
                 } else {
                     draw_item_icon(g, id, ix, iy);
                 }
@@ -84927,10 +85110,167 @@ fn draw_item_icon_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: i32
     }
 }
 
-/// Health row origin: the vanilla layout law (javap
-/// Hud.extractPlayerHealth).
+/// THE GLINT SCROLL PHASES (the `TextureTransform.setupGlintTexturing`
+/// walk — javap 26.2 scripts/jar_work/glint198/texture_transform.txt
+/// the bytecode banks): the `t = (double) Util.getMillis() *
+/// glintSpeed * 8.0` fold the dmul chain keeps [pc 0-24 — the
+/// glintSpeed the OptionsRenderState field the default 1.0 answer
+/// wears], the `l = (long) t` cast the d2l speaks, the f3 the
+/// `(float)(l % 110000L) / 110000.0F` X phase answers [pc 26-35],
+/// the f4 the `(float)(l % 30000L) / 30000.0F` Y phase keeps
+/// [pc 36-45]. The (f3, f4) the texture matrix translation wears.
+fn glint_scroll_phases(millis: u64) -> (f32, f32) {
+    let t = (millis as f64) * 8.0; // the glintSpeed default 1.0 the dmul chain keeps
+    let l = t as i64; // the d2l cast
+    let f3 = (l % 110000) as f32 / 110000.0;
+    let f4 = (l % 30000) as f32 / 30000.0;
+    (f3, f4)
+}
+
+/// THE ENCHANTED STACK'S OWN GLINT (the dev-198 round — the foil pass
+/// the 26.2 jar's own walk keeps, scripts/jar_work/glint198/ the
+/// evidence banks). THE GATE the `ItemStack.hasFoil()` walk serves
+/// [the ENCHANTMENT_GLINT_OVERRIDE component the override answer, the
+/// default the `Item.isFoil` = `isEnchanted()` arm — the (id, count)
+/// model the store's own non-emptiness answers; the CALLER the gate
+/// wears, the plain draw the unenchanted stacks keep]. THE TEXTURE
+/// the `textures/misc/enchanted_glint_item.png` lane serves [the
+/// 128x128 RGB the jar banks, the `blur: true` mcmeta the LINEAR
+/// filter the sampler law wears, the REPEAT wrap the scroll's own
+/// beyond-[0,1] reach answers]. THE MATRIX the
+/// `TextureTransform.GLINT_TEXTURING` law wears —
+/// `translation(-f3, f4, 0).rotateZ(0.17453292).scale(8.0)` the
+/// setupGlintTexturing walk banks [the SCALE 8.0 the
+/// BootstrapMethods resolution proves — bsm[2] → lambda$static$0 →
+/// the 8.0 constant; the 0.5 the ENTITY_GLINT_TEXTURING wears, the
+/// 0.16 the armor-entity lane]. THE DECAL UV the
+/// `SheetedDecalTextureGenerator.setNormal` projection speaks
+/// [`uv = -(decal-space position .xy) * (1/128)` the tail stores
+/// keep — the front face the model-space `(x/128, z0/128)` line
+/// answers, the z0 the flat sprite's own front plane the SUB-TEXEL
+/// the 128-wide texture never separates (0..0.0625 → 0..0.0005 uv)
+/// — the 0.0 plane the clean reading keeps]; the texture mat the
+/// vector fold `T(-f3,f4)·Rz(10°)·S(8.0)·uv` wears. THE SHADER the
+/// `core/glint` walk serves [`color = texture(Sampler0, texCoord0) *
+/// ColorModulator` the white modulator the decal setColor(-1) keeps,
+/// the `color.a < 0.1` discard, the fade the GlintAlpha fold — the
+/// 1.0 default the fog-free GUI the alpha alone answers]. THE BLEND
+/// the `RenderPipelines.GLINT` law keeps [BlendFunction.GLINT =
+/// `(SRC_COLOR, ONE, ZERO, ONE)` — the ADDITIVE
+/// `out.rgb = src.rgb·src.rgb + dst.rgb` the factor pair speaks, the
+/// alpha the dst keeps]. THE FOOTPRINT the depth-EQUAL law answers
+/// [the atlas slot's own depth the icon pass writes, the transparent
+/// texels the alpha-test discard keeps unwritten — the glint
+/// fragments the EQUAL test never pass, the ICON'S OWN WRITTEN
+/// PIXELS the overlay covers]: the before-snapshot the framebuffer
+/// compare serves (the pixels the icon draw wrote the mask wears —
+/// the 3D quad path and the flat fallback the same verdict answer,
+/// the snapshot the 16x16 slot box keeps).
+fn draw_item_icon_enchanted(
+    g: &mut Gui,
+    a: &mut GuiAssets,
+    item_id: i32,
+    x: i32,
+    y: i32,
+    millis: u64,
+) {
+    // THE BEFORE SNAPSHOT (the slot's own fb cells — the GUI box the
+    // scale fold keeps: the gui pixel the scale×scale fb cells wear,
+    // the footprint the cell compare reads)
+    let s = g.scale as i32;
+    let span = 16 * s;
+    let bxi = x * s;
+    let byi = y * s;
+    let (fw, fh) = (g.fb.w as i32, g.fb.h as i32);
+    let mut before = vec![[0u8; 3]; (span * span) as usize];
+    for py in 0..span {
+        for px in 0..span {
+            let fx = bxi + px;
+            let fy = byi + py;
+            if fx < 0 || fy < 0 || fx >= fw || fy >= fh {
+                continue;
+            }
+            let o = ((fy as usize) * g.fb.w + fx as usize) * 3;
+            before[(py * span + px) as usize] =
+                [g.fb.color[o], g.fb.color[o + 1], g.fb.color[o + 2]];
+        }
+    }
+    draw_item_icon(g, item_id, x, y);
+    // THE TEXTURE (the misc lane's own file — the absent asset the
+    // honest silent return keeps)
+    let Some(sprite) = a.sprite_file("misc/enchanted_glint_item.png") else {
+        return;
+    };
+    let tex = sprite.rgba.clone();
+    let (tw, th) = (sprite.w.max(1) as usize, sprite.h.max(1) as usize);
+    let (f3, f4) = glint_scroll_phases(millis);
+    let (sin_a, cos_a) = 0.174_532_92f32.sin_cos(); // the rotateZ(10°) law
+    for py in 0..span {
+        for px in 0..span {
+            let fx = bxi + px;
+            let fy = byi + py;
+            if fx < 0 || fy < 0 || fx >= fw || fy >= fh {
+                continue;
+            }
+            let o = ((fy as usize) * g.fb.w + fx as usize) * 3;
+            let now = [g.fb.color[o], g.fb.color[o + 1], g.fb.color[o + 2]];
+            if now == before[(py * span + px) as usize] {
+                continue; // the depth-EQUAL law: the unwritten cell the glint never tints
+            }
+            // THE DECAL UV (the front face's own law — the GUI pixel
+            // the fb cell's own /scale fold keeps, the model-space x
+            // the pixel center carries, the z0 the 0.0 plane)
+            let gui_px = px / s;
+            let u0 = (gui_px as f32 + 0.5) / 16.0 / 128.0;
+            let v0 = 0.0f32;
+            // THE TEXTURE MAT (the vector fold T·Rz·S·uv — the JOML
+            // composition order the setupGlintTexturing walk keeps)
+            let ux = (8.0 * (cos_a * u0 - sin_a * v0) - f3).rem_euclid(1.0);
+            let uy = (8.0 * (sin_a * u0 + cos_a * v0) + f4).rem_euclid(1.0);
+            // THE LINEAR SAMPLE (the blur:true law — the 4 neighbors
+            // the REPEAT wrap keeps)
+            let sx = ux * tw as f32;
+            let sy = uy * th as f32;
+            let x0f = sx.floor();
+            let y0f = sy.floor();
+            let (tx, ty) = (x0f as usize, y0f as usize);
+            let (du, dv) = (sx - x0f, sy - y0f);
+            let texel = |xx: usize, yy: usize| -> [f32; 4] {
+                let q = (((yy % th) * tw + (xx % tw)) * 4) as usize;
+                [
+                    tex[q] as f32 / 255.0,
+                    tex[q + 1] as f32 / 255.0,
+                    tex[q + 2] as f32 / 255.0,
+                    tex[q + 3] as f32 / 255.0,
+                ]
+            };
+            let c00 = texel(tx, ty);
+            let c10 = texel(tx + 1, ty);
+            let c01 = texel(tx, ty + 1);
+            let c11 = texel(tx + 1, ty + 1);
+            let mut c = [0.0f32; 4];
+            for k in 0..4 {
+                let a0 = c00[k] + (c10[k] - c00[k]) * du;
+                let a1 = c01[k] + (c11[k] - c01[k]) * du;
+                c[k] = a0 + (a1 - a0) * dv;
+            }
+            if c[3] < 0.1 {
+                continue; // the fsh's own discard
+            }
+            // THE BLEND (SRC_COLOR, ONE — the additive fold, the alpha
+            // the dst keeps)
+            for k in 0..3 {
+                let add = c[k] * c[k];
+                let v = (g.fb.color[o + k] as f32 / 255.0 + add).min(1.0);
+                g.fb.color[o + k] = (v * 255.0).round() as u8;
+            }
+        }
+    }
+}
+
 fn hearts_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
-    // THE VANILLA LAYOUT (javap Hud.extractPlayerHealth): the row's
+    // Health row origin: the vanilla layout law (javap
+    // Hud.extractPlayerHealth): the row's
     // left edge at width/2 - 91, the row's top at height - 39 — the
     // y leaves the experience bar's own slot between the hearts and
     // the hotbar, exactly like the original's HUD.

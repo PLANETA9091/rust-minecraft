@@ -1,0 +1,75 @@
+=== putBakedQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/resources/model/geometry/BakedQuad;Lcom/mojang/blaze3d/vertex/QuadInstance;)V ===
+    0 aload_2
+    1 invokevirtual net/minecraft/client/resources/model/geometry/BakedQuad.direction:()Lnet/minecraft/core/Direction;  net/minecraft/client/resources/model/geometry/BakedQuad.direction ()Lnet/minecraft/core/Direction;
+    4 invokevirtual net/minecraft/core/Direction.getUnitVec3f:()Lorg/joml/Vector3fc;  net/minecraft/core/Direction.getUnitVec3f ()Lorg/joml/Vector3fc;
+    7 astore 4
+    9 aload_1
+   10 invokevirtual com/mojang/blaze3d/vertex/PoseStack$Pose.pose:()Lorg/joml/Matrix4f;  com/mojang/blaze3d/vertex/PoseStack$Pose.pose ()Lorg/joml/Matrix4f;
+   13 astore 5
+   15 aload_1
+   16 aload 4
+   18 new #109  org/joml/Vector3f
+   21 dup
+   22 invokespecial org/joml/Vector3f.<init>:()V  org/joml/Vector3f.<init> ()V
+   25 invokevirtual com/mojang/blaze3d/vertex/PoseStack$Pose.transformNormal:(Lorg/joml/Vector3fc;Lorg/joml/Vector3f;)Lorg/joml/Vector3f;  com/mojang/blaze3d/vertex/PoseStack$Pose.transformNormal (Lorg/joml/Vector3fc;Lorg/joml/Vector3f;)Lorg/joml/Vector3f;
+   28 astore 6
+   30 aload_2
+   31 invokevirtual net/minecraft/client/resources/model/geometry/BakedQuad.materialInfo:()Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;  net/minecraft/client/resources/model/geometry/BakedQuad.materialInfo ()Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;
+   34 invokevirtual net/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo.lightEmission:()I  net/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo.lightEmission ()I
+   37 istore 7
+   39 iconst_0
+   40 istore 8
+   42 iload 8
+   44 iconst_4
+   45 if_icmpge #121
+   48 aload_2
+   49 iload 8
+   51 invokevirtual net/minecraft/client/resources/model/geometry/BakedQuad.position:(I)Lorg/joml/Vector3fc;  net/minecraft/client/resources/model/geometry/BakedQuad.position (I)Lorg/joml/Vector3fc;
+   54 astore 9
+   56 aload_2
+   57 iload 8
+   59 invokevirtual net/minecraft/client/resources/model/geometry/BakedQuad.packedUV:(I)J  net/minecraft/client/resources/model/geometry/BakedQuad.packedUV (I)J
+   62 lstore 10
+   64 aload_3
+   65 iload 8
+   67 invokevirtual com/mojang/blaze3d/vertex/QuadInstance.getColor:(I)I  com/mojang/blaze3d/vertex/QuadInstance.getColor (I)I
+   70 istore 12
+   72 aload_3
+   73 iload 8
+   75 iload 7
+   77 invokevirtual com/mojang/blaze3d/vertex/QuadInstance.getLightCoordsWithEmission:(II)I  com/mojang/blaze3d/vertex/QuadInstance.getLightCoordsWithEmission (II)I
+   80 istore 13
+   82 aload 5
+   84 aload 9
+   86 new #109  org/joml/Vector3f
+   89 dup
+   90 invokespecial org/joml/Vector3f.<init>:()V  org/joml/Vector3f.<init> ()V
+   93 invokevirtual org/joml/Matrix4f.transformPosition:(Lorg/joml/Vector3fc;Lorg/joml/Vector3f;)Lorg/joml/Vector3f;  org/joml/Matrix4f.transformPosition (Lorg/joml/Vector3fc;Lorg/joml/Vector3f;)Lorg/joml/Vector3f;
+   96 astore 14
+   98 lload 10
+  100 invokestatic net/minecraft/client/model/geom/builders/UVPair.unpackU:(J)F  net/minecraft/client/model/geom/builders/UVPair.unpackU (J)F
+  103 fstore 15
+  105 lload 10
+  107 invokestatic net/minecraft/client/model/geom/builders/UVPair.unpackV:(J)F  net/minecraft/client/model/geom/builders/UVPair.unpackV (J)F
+  110 fstore 16
+  112 aload_0
+  113 aload 14
+  115 invokevirtual org/joml/Vector3f.x:()F  org/joml/Vector3f.x ()F
+  118 aload 14
+  120 invokevirtual org/joml/Vector3f.y:()F  org/joml/Vector3f.y ()F
+  123 aload 14
+  125 invokevirtual org/joml/Vector3f.z:()F  org/joml/Vector3f.z ()F
+  128 iload 12
+  130 fload 15
+  132 fload 16
+  134 aload_3
+  135 invokevirtual com/mojang/blaze3d/vertex/QuadInstance.overlayCoords:()I  com/mojang/blaze3d/vertex/QuadInstance.overlayCoords ()I
+  138 iload 13
+  140 aload 6
+  142 invokevirtual org/joml/Vector3f.x:()F  org/joml/Vector3f.x ()F
+  145 aload 6
+  147 invokevirtual org/joml/Vector3f.y:()F  org/joml/Vector3f.y ()F
+  150 aload 6
+  152 invokevirtual org/joml/Vector3f.z:()F  org/joml/Vector3f.z ()F
+  155 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex (FFFIFFIIFFF)V
+  160 iinc 8 1

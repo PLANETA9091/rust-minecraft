@@ -1,0 +1,230 @@
+=== prepareSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;Z)V ===
+    0 iload_2
+    1 ifeq #11
+    4 aload_0
+    5 aload_1
+    6 invokevirtual #40  net/minecraft/client/renderer/feature/ItemFeatureRenderer.prepareFoilSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;)V
+    9 goto #23
+   12 aload_1
+   13 invokevirtual #44  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.outlineColor ()I
+   16 ifeq #11
+   19 aload_0
+   20 aload_1
+   21 invokevirtual #48  net/minecraft/client/renderer/feature/ItemFeatureRenderer.prepareOutlineSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;)V
+   24 goto #8
+   27 aload_0
+   28 aload_1
+   29 invokevirtual #51  net/minecraft/client/renderer/feature/ItemFeatureRenderer.prepareMainSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;)V
+   32 return
+
+=== prepareMainSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;)V ===
+    0 aload_0
+    1 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+    4 aload_1
+    5 invokevirtual #54  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.lightCoords ()I
+    8 invokevirtual #57  com/mojang/blaze3d/vertex/QuadInstance.setLightCoords (I)V
+   11 aload_0
+   12 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+   15 aload_1
+   16 invokevirtual #61  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.overlayCoords ()I
+   19 invokevirtual #64  com/mojang/blaze3d/vertex/QuadInstance.setOverlayCoords (I)V
+   22 aload_1
+   23 invokevirtual #67  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.quads ()Ljava/util/List;
+   26 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+   31 astore_2
+   32 aload_2
+   33 invokeinterface java/util/Iterator.hasNext ()Z
+   38 ifeq #65
+   41 aload_2
+   42 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   47 checkcast #71  net/minecraft/client/resources/model/geometry/BakedQuad
+   50 astore_3
+   51 aload_3
+   52 invokevirtual #73  net/minecraft/client/resources/model/geometry/BakedQuad.materialInfo ()Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;
+   55 astore 4
+   57 aload 4
+   59 invokevirtual #77  net/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo.itemRenderType ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+   62 astore 5
+   64 aload_0
+   65 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+   68 aload_1
+   69 invokevirtual #83  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.tintLayers ()[I
+   72 aload 4
+   74 invokestatic #87  net/minecraft/client/renderer/feature/ItemFeatureRenderer.getLayerColorSafe ([ILnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;)I
+   77 invokevirtual #91  com/mojang/blaze3d/vertex/QuadInstance.setColor (I)V
+   80 aload_0
+   81 aload 5
+   83 invokevirtual #94  net/minecraft/client/renderer/feature/ItemFeatureRenderer.getVertexBuilder (Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   86 aload_1
+   87 invokevirtual #98  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.pose ()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+   90 aload_3
+   91 aload_0
+   92 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+   95 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.putBakedQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/resources/model/geometry/BakedQuad;Lcom/mojang/blaze3d/vertex/QuadInstance;)V
+  100 goto #65468
+  103 return
+
+=== prepareOutlineSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;)V ===
+    0 aload_1
+    1 invokevirtual #67  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.quads ()Ljava/util/List;
+    4 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+    9 astore_2
+   10 aload_2
+   11 invokeinterface java/util/Iterator.hasNext ()Z
+   16 ifeq #78
+   19 aload_2
+   20 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   25 checkcast #71  net/minecraft/client/resources/model/geometry/BakedQuad
+   28 astore_3
+   29 aload_3
+   30 invokevirtual #73  net/minecraft/client/resources/model/geometry/BakedQuad.materialInfo ()Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;
+   33 astore 4
+   35 aload 4
+   37 invokevirtual #77  net/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo.itemRenderType ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+   40 invokevirtual #108  net/minecraft/client/renderer/rendertype/RenderType.outline ()Ljava/util/Optional;
+   43 aconst_null
+   44 invokevirtual #114  java/util/Optional.orElse (Ljava/lang/Object;)Ljava/lang/Object;
+   47 checkcast #109  net/minecraft/client/renderer/rendertype/RenderType
+   50 astore 5
+   52 aload 5
+   54 ifnonnull #6
+   57 goto #65489
+   60 aload_0
+   61 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+   64 aload_1
+   65 invokevirtual #44  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.outlineColor ()I
+   68 invokevirtual #91  com/mojang/blaze3d/vertex/QuadInstance.setColor (I)V
+   71 aload_0
+   72 aload 5
+   74 invokevirtual #94  net/minecraft/client/renderer/feature/ItemFeatureRenderer.getVertexBuilder (Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   77 aload_1
+   78 invokevirtual #98  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.pose ()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+   81 aload_3
+   82 aload_0
+   83 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+   86 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.putBakedQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/resources/model/geometry/BakedQuad;Lcom/mojang/blaze3d/vertex/QuadInstance;)V
+   91 goto #65455
+   94 return
+
+=== prepareFoilSubmit (Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit;)V ===
+    0 aload_1
+    1 invokevirtual #120  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.foilType ()Lnet/minecraft/client/renderer/item/ItemStackRenderState$FoilType;
+    4 astore_2
+    5 aload_2
+    6 getstatic #124  net/minecraft/client/renderer/item/ItemStackRenderState$FoilType.NONE Lnet/minecraft/client/renderer/item/ItemStackRenderState$FoilType;
+    9 if_acmpne #4
+   12 return
+   13 aload_2
+   14 getstatic #130  net/minecraft/client/renderer/item/ItemStackRenderState$FoilType.SPECIAL Lnet/minecraft/client/renderer/item/ItemStackRenderState$FoilType;
+   17 if_acmpne #17
+   20 aload_1
+   21 invokevirtual #133  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.displayContext ()Lnet/minecraft/world/item/ItemDisplayContext;
+   24 aload_1
+   25 invokevirtual #98  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.pose ()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+   28 invokestatic #137  net/minecraft/client/renderer/feature/ItemFeatureRenderer.computeFoilDecalPose (Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;)Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+   31 goto #4
+   34 aconst_null
+   35 astore_3
+   36 aload_1
+   37 invokevirtual #67  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.quads ()Ljava/util/List;
+   40 invokeinterface java/util/List.iterator ()Ljava/util/Iterator;
+   45 astore 4
+   47 aload 4
+   49 invokeinterface java/util/Iterator.hasNext ()Z
+   54 ifeq #50
+   57 aload 4
+   59 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+   64 checkcast #71  net/minecraft/client/resources/model/geometry/BakedQuad
+   67 astore 5
+   69 aload_0
+   70 aload 5
+   72 invokevirtual #73  net/minecraft/client/resources/model/geometry/BakedQuad.materialInfo ()Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;
+   75 invokevirtual #77  net/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo.itemRenderType ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+   78 aload_3
+   79 invokevirtual #141  net/minecraft/client/renderer/feature/ItemFeatureRenderer.getFoilBuffer (Lnet/minecraft/client/renderer/rendertype/RenderType;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   82 astore 6
+   84 aload 6
+   86 aload_1
+   87 invokevirtual #98  net/minecraft/client/renderer/feature/ItemFeatureRenderer$Submit.pose ()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+   90 aload 5
+   92 aload_0
+   93 getfield #12  net/minecraft/client/renderer/feature/ItemFeatureRenderer.quadInstance Lcom/mojang/blaze3d/vertex/QuadInstance;
+   96 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.putBakedQuad (Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/resources/model/geometry/BakedQuad;Lcom/mojang/blaze3d/vertex/QuadInstance;)V
+  101 goto #65482
+  104 return
+
+=== getFoilBuffer (Lnet/minecraft/client/renderer/rendertype/RenderType;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;)Lcom/mojang/blaze3d/vertex/VertexConsumer; ===
+    0 aload_1
+    1 invokestatic #145  net/minecraft/client/renderer/feature/ItemFeatureRenderer.useTransparentGlint (Lnet/minecraft/client/renderer/rendertype/RenderType;)Z
+    4 ifeq #9
+    7 invokestatic #149  net/minecraft/client/renderer/rendertype/RenderTypes.glintTranslucent ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+   10 goto #6
+   13 invokestatic #154  net/minecraft/client/renderer/rendertype/RenderTypes.glint ()Lnet/minecraft/client/renderer/rendertype/RenderType;
+   16 astore_3
+   17 aload_0
+   18 aload_3
+   19 invokevirtual #94  net/minecraft/client/renderer/feature/ItemFeatureRenderer.getVertexBuilder (Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+   22 astore 4
+   24 aload_2
+   25 ifnull #17
+   28 new #157  com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator
+   31 dup
+   32 aload 4
+   34 aload_2
+   35 ldc #159 = ?
+   37 invokespecial #160  com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.<init> (Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;F)V
+   40 astore 4
+   42 aload 4
+   44 areturn
+
+=== computeFoilDecalPose (Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;)Lcom/mojang/blaze3d/vertex/PoseStack$Pose; ===
+    0 aload_1
+    1 invokevirtual #163  com/mojang/blaze3d/vertex/PoseStack$Pose.copy ()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+    4 astore_2
+    5 aload_0
+    6 getstatic #168  net/minecraft/world/item/ItemDisplayContext.GUI Lnet/minecraft/world/item/ItemDisplayContext;
+    9 if_acmpne #16
+   12 aload_2
+   13 invokevirtual #174  com/mojang/blaze3d/vertex/PoseStack$Pose.pose ()Lorg/joml/Matrix4f;
+   16 ldc #177 = ?
+   18 invokestatic #178  com/mojang/math/MatrixUtil.mulComponentWise (Lorg/joml/Matrix4f;F)Lorg/joml/Matrix4f;
+   21 pop
+   22 goto #20
+   25 aload_0
+   26 invokevirtual #184  net/minecraft/world/item/ItemDisplayContext.firstPerson ()Z
+   29 ifeq #13
+   32 aload_2
+   33 invokevirtual #174  com/mojang/blaze3d/vertex/PoseStack$Pose.pose ()Lorg/joml/Matrix4f;
+   36 ldc #187 = ?
+   38 invokestatic #178  com/mojang/math/MatrixUtil.mulComponentWise (Lorg/joml/Matrix4f;F)Lorg/joml/Matrix4f;
+   41 pop
+   42 aload_2
+   43 areturn
+
+=== useTransparentGlint (Lnet/minecraft/client/renderer/rendertype/RenderType;)Z ===
+    0 invokestatic #188  net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+    3 getfield #194  net/minecraft/client/Minecraft.gameRenderer Lnet/minecraft/client/renderer/GameRenderer;
+    6 invokevirtual #198  net/minecraft/client/renderer/GameRenderer.gameRenderState ()Lnet/minecraft/client/renderer/state/GameRenderState;
+    9 invokevirtual #204  net/minecraft/client/renderer/state/GameRenderState.useShaderTransparency ()Z
+   12 ifeq #17
+   15 aload_0
+   16 invokevirtual #209  net/minecraft/client/renderer/rendertype/RenderType.outputTarget ()Lnet/minecraft/client/renderer/rendertype/OutputTarget;
+   19 getstatic #213  net/minecraft/client/renderer/rendertype/OutputTarget.ITEM_ENTITY_TARGET Lnet/minecraft/client/renderer/rendertype/OutputTarget;
+   22 if_acmpne #7
+   25 iconst_1
+   26 goto #4
+   29 iconst_0
+   30 ireturn
+
+=== <clinit> ()V ===
+    0 ldc #228 = Item
+    2 invokestatic #230  net/minecraft/client/renderer/feature/FeatureRendererType.create (Ljava/lang/String;)Lnet/minecraft/client/renderer/feature/FeatureRendererType;
+    5 putstatic #236  net/minecraft/client/renderer/feature/ItemFeatureRenderer.TYPE Lnet/minecraft/client/renderer/feature/FeatureRendererType;
+    8 ldc #240 = textures/misc/enchanted_glint_armor.png
+   10 invokestatic #242  net/minecraft/resources/Identifier.withDefaultNamespace (Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+   13 putstatic #248  net/minecraft/client/renderer/feature/ItemFeatureRenderer.ENCHANTED_GLINT_ARMOR Lnet/minecraft/resources/Identifier;
+   16 ldc #252 = textures/misc/enchanted_glint_item.png
+   18 invokestatic #242  net/minecraft/resources/Identifier.withDefaultNamespace (Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+   21 putstatic #254  net/minecraft/client/renderer/feature/ItemFeatureRenderer.ENCHANTED_GLINT_ITEM Lnet/minecraft/resources/Identifier;
+   24 return
+

@@ -328,3 +328,61 @@ pub fn enchantment_accepts_item(ench: &str, item: &str) -> bool {
     }
 }
 
+/// THE TOOLTIP ORDER TAG (the dev-198 round — the jar's own
+/// `data/minecraft/tags/enchantment/tooltip_order.json` members the
+/// `ItemEnchantments.addToTooltip` walk banks: the FIRST pass the
+/// tagged rows the tag order speaks [pc 30-83 the HolderSet iterator
+/// the `getInt > 0` gate wears], the SECOND pass the untagged rows
+/// the map's own order answers [pc 84-173]).
+pub static TOOLTIP_ORDER: [&str; 43] = [
+    "binding_curse",
+    "vanishing_curse",
+    "riptide",
+    "channeling",
+    "wind_burst",
+    "frost_walker",
+    "lunge",
+    "sharpness",
+    "smite",
+    "bane_of_arthropods",
+    "impaling",
+    "power",
+    "density",
+    "breach",
+    "piercing",
+    "sweeping_edge",
+    "multishot",
+    "fire_aspect",
+    "flame",
+    "knockback",
+    "punch",
+    "protection",
+    "blast_protection",
+    "fire_protection",
+    "projectile_protection",
+    "feather_falling",
+    "fortune",
+    "looting",
+    "silk_touch",
+    "luck_of_the_sea",
+    "efficiency",
+    "quick_charge",
+    "lure",
+    "respiration",
+    "aqua_affinity",
+    "soul_speed",
+    "swift_sneak",
+    "depth_strider",
+    "thorns",
+    "loyalty",
+    "unbreaking",
+    "infinity",
+    "mending",
+];
+
+/// THE ROW'S RANK (the tag order's own index — the untagged rows the
+/// None answer keeps, the second pass the map order wears).
+pub fn tooltip_rank(name: &str) -> Option<usize> {
+    TOOLTIP_ORDER.iter().position(|&n| n == name)
+}
+

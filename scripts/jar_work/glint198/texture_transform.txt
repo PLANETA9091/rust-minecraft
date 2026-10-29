@@ -1,0 +1,111 @@
+=== <init> (Ljava/lang/String;Ljava/util/function/Supplier;)V ===
+    0 aload_0
+    1 invokespecial #1  java/lang/Object.<init> ()V
+    4 aload_0
+    5 aload_1
+    6 putfield #7  net/minecraft/client/renderer/rendertype/TextureTransform.name Ljava/lang/String;
+    9 aload_0
+   10 aload_2
+   11 putfield #13  net/minecraft/client/renderer/rendertype/TextureTransform.supplier Ljava/util/function/Supplier;
+   14 return
+
+=== createMatrix ()Lorg/joml/Matrix4f; ===
+    0 aload_0
+    1 getfield #13  net/minecraft/client/renderer/rendertype/TextureTransform.supplier Ljava/util/function/Supplier;
+    4 invokeinterface java/util/function/Supplier.get ()Ljava/lang/Object;
+    9 checkcast #23  org/joml/Matrix4f
+   12 areturn
+
+=== toString ()Ljava/lang/String; ===
+    0 aload_0
+    1 getfield #7  net/minecraft/client/renderer/rendertype/TextureTransform.name Ljava/lang/String;
+    4 invokedynamic #25
+    9 areturn
+
+=== setupGlintTexturing (F)Lorg/joml/Matrix4f; ===
+    0 invokestatic #29  net/minecraft/util/Util.getMillis ()J
+    3 l2d
+    4 invokestatic #35  net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+    7 getfield #41  net/minecraft/client/Minecraft.gameRenderer Lnet/minecraft/client/renderer/GameRenderer;
+   10 invokevirtual #45  net/minecraft/client/renderer/GameRenderer.gameRenderState ()Lnet/minecraft/client/renderer/state/GameRenderState;
+   13 getfield #51  net/minecraft/client/renderer/state/GameRenderState.optionsRenderState Lnet/minecraft/client/renderer/state/OptionsRenderState;
+   16 getfield #57  net/minecraft/client/renderer/state/OptionsRenderState.glintSpeed D
+   19 dmul
+   20 ldc2_w #63 = 8.0
+   23 dmul
+   24 d2l
+   25 lstore_1
+   26 lload_1
+   27 ldc2_w #65 = 110000
+   30 lrem
+   31 l2f
+   32 ldc #67 = ?
+   34 fdiv
+   35 fstore_3
+   36 lload_1
+   37 ldc2_w #68 = 30000
+   40 lrem
+   41 l2f
+   42 ldc #70 = ?
+   44 fdiv
+   45 fstore 4
+   47 new #23  org/joml/Matrix4f
+   50 dup
+   51 invokespecial #71  org/joml/Matrix4f.<init> ()V
+   54 fload_3
+   55 fneg
+   56 fload 4
+   58 fconst_0
+   59 invokevirtual #72  org/joml/Matrix4f.translation (FFF)Lorg/joml/Matrix4f;
+   62 astore 5
+   64 aload 5
+   66 ldc #78 = ?
+   68 invokevirtual #79  org/joml/Matrix4f.rotateZ (F)Lorg/joml/Matrix4f;
+   71 fload_0
+   72 invokevirtual #83  org/joml/Matrix4f.scale (F)Lorg/joml/Matrix4f;
+   75 pop
+   76 aload 5
+   78 areturn
+
+=== lambda$static$2 ()Lorg/joml/Matrix4f; ===
+    0 ldc #86 = ?
+    2 invokestatic #87  net/minecraft/client/renderer/rendertype/TextureTransform.setupGlintTexturing (F)Lorg/joml/Matrix4f;
+    5 areturn
+
+=== lambda$static$1 ()Lorg/joml/Matrix4f; ===
+    0 ldc #90 = ?
+    2 invokestatic #87  net/minecraft/client/renderer/rendertype/TextureTransform.setupGlintTexturing (F)Lorg/joml/Matrix4f;
+    5 areturn
+
+=== lambda$static$0 ()Lorg/joml/Matrix4f; ===
+    0 ldc #91 = ?
+    2 invokestatic #87  net/minecraft/client/renderer/rendertype/TextureTransform.setupGlintTexturing (F)Lorg/joml/Matrix4f;
+    5 areturn
+
+=== <clinit> ()V ===
+    0 new #8  net/minecraft/client/renderer/rendertype/TextureTransform
+    3 dup
+    4 ldc #92 = default_texturing
+    6 invokedynamic #94
+   11 invokespecial #97  net/minecraft/client/renderer/rendertype/TextureTransform.<init> (Ljava/lang/String;Ljava/util/function/Supplier;)V
+   14 putstatic #100  net/minecraft/client/renderer/rendertype/TextureTransform.DEFAULT_TEXTURING Lnet/minecraft/client/renderer/rendertype/TextureTransform;
+   17 new #8  net/minecraft/client/renderer/rendertype/TextureTransform
+   20 dup
+   21 ldc #104 = glint_texturing
+   23 invokedynamic #106
+   28 invokespecial #97  net/minecraft/client/renderer/rendertype/TextureTransform.<init> (Ljava/lang/String;Ljava/util/function/Supplier;)V
+   31 putstatic #107  net/minecraft/client/renderer/rendertype/TextureTransform.GLINT_TEXTURING Lnet/minecraft/client/renderer/rendertype/TextureTransform;
+   34 new #8  net/minecraft/client/renderer/rendertype/TextureTransform
+   37 dup
+   38 ldc #110 = entity_glint_texturing
+   40 invokedynamic #112
+   45 invokespecial #97  net/minecraft/client/renderer/rendertype/TextureTransform.<init> (Ljava/lang/String;Ljava/util/function/Supplier;)V
+   48 putstatic #113  net/minecraft/client/renderer/rendertype/TextureTransform.ENTITY_GLINT_TEXTURING Lnet/minecraft/client/renderer/rendertype/TextureTransform;
+   51 new #8  net/minecraft/client/renderer/rendertype/TextureTransform
+   54 dup
+   55 ldc #116 = armor_entity_glint_texturing
+   57 invokedynamic #118
+   62 invokespecial #97  net/minecraft/client/renderer/rendertype/TextureTransform.<init> (Ljava/lang/String;Ljava/util/function/Supplier;)V
+   65 putstatic #119  net/minecraft/client/renderer/rendertype/TextureTransform.ARMOR_ENTITY_GLINT_TEXTURING Lnet/minecraft/client/renderer/rendertype/TextureTransform;
+   68 return
+
