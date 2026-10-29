@@ -185,6 +185,14 @@ lines.append("/// THE TABLE POOL (the `#minecraft:in_enchanting_table` tag's\n"
 lines.append("    " + ", ".join(f'"{n}"' for n in twin.TABLE_MEMBERS) + ",")
 lines.append("];")
 lines.append("")
+lines.append("/// THE CURSE TAG (the `#minecraft:curse` members the jar's own\n"
+             "/// `data/minecraft/tags/enchantment/curse.json` banks — the RED\n"
+             "/// ink the fullname's own walk answers, the anvil/book lanes the\n"
+             "/// tooltip rows serve).\n"
+             "pub static CURSE_MEMBERS: [&str; %d] = [" % len(twin.CURSE_MEMBERS))
+lines.append("    " + ", ".join(f'"{n}"' for n in twin.CURSE_MEMBERS) + ",")
+lines.append("];")
+lines.append("")
 lines.append("/// THE ENCHANTABLE FAMILIES (the 22 tags resolved — the `#minecraft:`\n"
              "/// references the expansion carried, the direct items the tail rows\n"
              "/// keep; the order the tag file names' alphabetical sort banks).\n"

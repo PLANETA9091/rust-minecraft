@@ -7968,3 +7968,229 @@ fn the_item_stack_the_store_rides_and_refuses_wears() {
         "the reopen the mirror load wears"
     );
 }
+
+/// THE SPELL WALK'S OWN CLUES (the dev-197 round — the slotsChanged
+/// lambda's SECOND pass the pc 159-273 walk the clue rows the
+/// random pick answers: the `get(nextInt(size))` instance the
+/// python twin pins, the -1 sentinel the empty seats + the zeroed
+/// rows keep, the seed+row stream the pick's own draw answers).
+#[test]
+fn the_enchanting_table_the_clue_picks_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    let mut placed = 0;
+    for dx in -2i32..=2 {
+        for dz in -2i32..=2 {
+            if dx.abs() != 2 && dz.abs() != 2 {
+                continue;
+            }
+            if placed >= 15 {
+                break;
+            }
+            w.set(c + dx, surface + 1, c + dz, crate::world::BOOKSHELF);
+            placed += 1;
+        }
+    }
+    app.open_enchanting_for(cell);
+    // THE EMPTY SEATS' OWN SENTINELS (the reset walk the all-minus-
+    // one rows keeps — the fresh open the -1 rows wear)
+    assert!(
+        app.enchant_clues.iter().all(|&clue| clue == -1),
+        "the empty seats the -1 clues keep"
+    );
+    assert!(
+        app.enchant_level_clues.iter().all(|&lv| lv == -1),
+        "the empty seats the -1 levels keep"
+    );
+    // THE POWER-15 FILL (the seed-0 rows the twin clues answer —
+    // the pick the random instance the tail draw wears: the row-0
+    // the unbreaking-I instance, the row-1 the knockback-I, the
+    // row-2 the smite-IV the twin banks)
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    app.enchant_slots[0] = (sword, 1);
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    assert_eq!(
+        app.enchanting_costs,
+        [8, 13, 30],
+        "the power-15 rows the twin costs wear"
+    );
+    assert_eq!(
+        app.enchant_clues[0], 40,
+        "the row-0 clue the unbreaking id wears"
+    );
+    assert_eq!(app.enchant_level_clues[0], 1, "the row-0 level the I wears");
+    assert_eq!(
+        app.enchant_clues[1], 17,
+        "the row-1 clue the knockback id wears"
+    );
+    assert_eq!(app.enchant_level_clues[1], 1, "the row-1 level the I wears");
+    assert_eq!(
+        app.enchant_clues[2], 35,
+        "the row-2 clue the smite id wears"
+    );
+    assert_eq!(
+        app.enchant_level_clues[2], 4,
+        "the row-2 level the IV wears"
+    );
+    // THE BOOK'S OWN CLUE (the trimmed list the single instance the
+    // pick answers — the unbreaking-I clue the trim's tail wears)
+    let book = mc_registry::item_id_by_name("book").unwrap();
+    app.enchant_slots[0] = (book, 1);
+    app.enchant_costs_refresh();
+    assert_eq!(
+        app.enchant_clues[0], 40,
+        "the book clue the unbreaking id wears"
+    );
+    assert_eq!(app.enchant_level_clues[0], 1, "the book level the I wears");
+    // THE ROLL CHAIN (the s1 stream the re-roll + the picks answer —
+    // the row-2 the smite-V instance the five-cost window wears)
+    app.enchant_slots[0] = (sword, 1);
+    app.xp.level = 30;
+    assert!(app.click_enchant_option(0), "the click the true wears");
+    assert_eq!(
+        app.enchant_clues[0], 40,
+        "the s1 row-0 clue the unbreaking id wears"
+    );
+    assert_eq!(
+        app.enchant_level_clues[0], 1,
+        "the s1 row-0 level the I wears"
+    );
+    assert_eq!(
+        app.enchant_clues[1], 33,
+        "the s1 row-1 clue the sharpness id wears"
+    );
+    assert_eq!(
+        app.enchant_level_clues[1], 2,
+        "the s1 row-1 level the II wears"
+    );
+    assert_eq!(
+        app.enchant_clues[2], 35,
+        "the s1 row-2 clue the smite id wears"
+    );
+    assert_eq!(
+        app.enchant_level_clues[2], 5,
+        "the s1 row-2 level the V wears"
+    );
+}
+
+/// THE CLUE TOOLTIP'S OWN RENDER (the dev-197 round — the
+/// EnchantmentScreen.render pc 48-439 walk the hovering row the
+/// tooltip paints: the isHovering(60, 14 + 19*i, 108, 17) box the
+/// hit answers, the clue + the cost gates speak, the box the
+/// mouse-follow origin wears; the headless no-mouse pass the pure
+/// render keeps).
+#[test]
+fn the_enchanting_table_the_clue_tooltip_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    let mut placed = 0;
+    for dx in -2i32..=2 {
+        for dz in -2i32..=2 {
+            if dx.abs() != 2 && dz.abs() != 2 {
+                continue;
+            }
+            if placed >= 15 {
+                break;
+            }
+            w.set(c + dx, surface + 1, c + dz, crate::world::BOOKSHELF);
+            placed += 1;
+        }
+    }
+    app.open_enchanting_for(cell);
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    app.enchant_slots[0] = (sword, 1);
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let render = |app: &mut App| -> crate::raster::Framebuf {
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        let mut a = GuiAssets::open(&assets_root());
+        app.render(&mut fb, &mut a);
+        fb
+    };
+    // THE PURE RENDER (the no-mouse pass the baseline keeps)
+    app.mouse_pos = None;
+    let baseline = render(&mut app);
+    // THE ROW-0 HOVER (the mouse the row's interior the hit answers
+    // — the frame the tooltip the box paints)
+    let panel = app.enchant_panel;
+    let (mx, my) = (panel.0 + 60 + 50, panel.1 + 14 + 8);
+    app.mouse_pos = Some((mx, my));
+    let hovered = render(&mut app);
+    // THE BOX'S OWN PRESENCE (the origin walk the +12/-12 seat keeps
+    // — the interior margin pixel the background ink answers, the
+    // baseline the same seat the pure world wears)
+    let (tx, ty) = (mx + 12, my - 12);
+    assert_ne!(
+        pixel(&hovered, tx + 1, ty + 1),
+        pixel(&baseline, tx + 1, ty + 1),
+        "the tooltip box the interior the paint wears"
+    );
+    // THE OFF-PANEL PASS (the outside mouse the pure render keeps —
+    // the no-seat hover the highlight and the tooltip the skips wear)
+    app.mouse_pos = Some((2, 2));
+    let offpanel = render(&mut app);
+    assert_eq!(
+        pixel(&offpanel, 0, 0),
+        pixel(&baseline, 0, 0),
+        "the off-panel mouse the pure render keeps"
+    );
+    assert_ne!(
+        pixel(&hovered, tx + 1, ty + 1),
+        pixel(&offpanel, tx + 1, ty + 1),
+        "the tooltip render the distinct frames wear"
+    );
+    // THE XP-SHORT PASS (the level the cost below the RED
+    // requirement line the three-row box answers — the box the
+    // shorter height wears)
+    app.xp.level = 1;
+    app.mouse_pos = Some((mx, my));
+    let xpshort = render(&mut app);
+    assert_ne!(
+        pixel(&xpshort, tx + 1, ty + 1),
+        pixel(&baseline, tx + 1, ty + 1),
+        "the xp-short box the paint wears"
+    );
+    // THE CREATIVE PASS (the infinite-materials arm the clue line
+    // ALONE answers — the one-row box the paint keeps)
+    app.game_mode = GameMode::Creative;
+    let creative = render(&mut app);
+    assert_ne!(
+        pixel(&creative, tx + 1, ty + 1),
+        pixel(&baseline, tx + 1, ty + 1),
+        "the creative box the paint wears"
+    );
+}

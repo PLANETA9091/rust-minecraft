@@ -111,6 +111,8 @@ TABLE_MEMBERS = [d[0] for d in DEFS if d[0] not in
                  ("binding_curse", "frost_walker", "mending", "soul_speed",
                   "swift_sneak", "vanishing_curse", "wind_burst")]
 
+CURSE_MEMBERS = ["binding_curse", "vanishing_curse"]
+
 SWORDS = ["copper_sword", "diamond_sword", "golden_sword", "iron_sword",
           "netherite_sword", "stone_sword", "wooden_sword"]
 AXES = ["copper_axe", "diamond_axe", "golden_axe", "iron_axe",

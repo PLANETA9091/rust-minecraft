@@ -9587,6 +9587,19 @@ pub struct App {
     /// load answers). The enchanted item's own data the tooltip/glint
     /// rounds read.
     pub inventory_enchants: [Vec<(i32, i32)>; 36],
+    /// THE SPELL WALK'S OWN CLUES (the dev-197 round — the
+    /// EnchantmentMenu's enchantClue/levelClue int arrays the
+    /// DataSlot.shared lanes network: the row's registry id the
+    /// IdMap pick wears, the level the instance's own answers, the
+    /// -1 the EMPTY sentinel the reset walk lays [the empty-item
+    /// arm the all-minus-one rows keeps, the zeroed cost row the
+    /// same -1 the second pass's own reset answers]). The hover
+    /// tooltip the fullname the clues render.
+    pub enchant_clues: [i32; 3],
+    /// THE SPELL WALK'S OWN CLUE LEVELS (the levelClue int array —
+    /// the picked instance's own level the row wears, the -1 the
+    /// empty sentinel the costs pass resets).
+    pub enchant_level_clues: [i32; 3],
     /// THE SPELL WALK'S OWN TABLE SEAT (the open's own pos the scan
     /// reads — the None the closed screens keep, the re-open the
     /// fresh pos the transient menu's own law lays).
@@ -12561,6 +12574,8 @@ impl App {
             enchant_rng: crate::noise::VanillaRandom::new(0),
             enchant_comps: std::array::from_fn(|_| Vec::new()),
             inventory_enchants: std::array::from_fn(|_| Vec::new()),
+            enchant_clues: [-1; 3],
+            enchant_level_clues: [-1; 3],
             enchanting_table_pos: None,
             dispenser_open_kind: 0,
             dispenser_is_live: false,
@@ -27751,7 +27766,12 @@ impl App {
     /// keeps, the fresh item the three rolls the menu's own seed the
     /// `random.setSeed(enchantmentSeed.get())` walk answers — the
     /// clamp `cost < i+1 -> 0` the lambda's own branch the rows'
-    /// enabled verdict banks.
+    /// enabled verdict banks. THE CLUE FILL (the dev-197 round — the
+    /// lambda's own SECOND pass the pc 159-273 walk the live rows
+    /// the clue picks answer: the -1 reset the cost pass lays, the
+    /// `get(nextInt(size))` random instance the pick wears, the
+    /// zeroed row the -1 the gate keeps; the pick the seed+row
+    /// stream the tail draw answers).
     fn enchant_costs_refresh(&mut self) {
         let item = self.enchant_slots.first().copied().unwrap_or((0, 0));
         let (power, costs) = if item.1 == 0 {
@@ -27773,6 +27793,50 @@ impl App {
         };
         self.enchanting_power = power;
         self.enchanting_costs = costs;
+        // THE SECOND PASS (the lambda pc 159-273 — the clue rows the
+        // pick list's random instance answers: the -1 reset the
+        // FIRST pass lays [pc 115-130], the live row the pick rides,
+        // the empty list the -1 the gate keeps)
+        for i in 0..3usize {
+            self.enchant_clues[i] = -1;
+            self.enchant_level_clues[i] = -1;
+            if costs[i] > 0 && item.1 > 0 {
+                let (_, clue) = self.enchant_clue_pick(i, item.0, costs[i]);
+                if let Some((ench, level)) = clue {
+                    self.enchant_clues[i] = ench;
+                    self.enchant_level_clues[i] = level;
+                }
+            }
+        }
+    }
+
+    /// THE CLUE PICK (the slotsChanged lambda's own pc 208-266 walk
+    /// — the pick list the SAME seed+row stream the tail draw
+    /// answers: the `list.get(random.nextInt(list.size()))` random
+    /// instance the clue wears [NOT the first row — the random pick
+    /// the bytecode speaks], the book trim the pick list's own lane
+    /// keeps, the empty list the None the gate wears).
+    fn enchant_clue_pick(
+        &self,
+        row: usize,
+        item_id: i32,
+        cost: i32,
+    ) -> (Vec<(i32, i32)>, Option<(i32, i32)>) {
+        let mut rng =
+            crate::noise::VanillaRandom::new(self.enchant_seed as i64 + row as i64);
+        let mut list = Self::select_enchantments(item_id, cost, &mut rng);
+        let item = Self::enchant_item_name(item_id);
+        if item == "book" && list.len() > 1 {
+            let at = rng.next_int(list.len() as i32) as usize;
+            list.remove(at);
+        }
+        let clue = if list.is_empty() {
+            None
+        } else {
+            let at = rng.next_int(list.len() as i32) as usize;
+            Some(list[at])
+        };
+        (list, clue)
     }
 
     /// THE STACK'S OWN NAME (the registry's wire-order table the
@@ -33682,6 +33746,144 @@ impl App {
                 24,
                 [1.0, 1.0, 1.0, 1.0],
             );
+        }
+        // THE CLUE TOOLTIP'S OWN LANE (the dev-197 round — javap the
+        // 26.2 EnchantmentScreen.render pc 48-439 the exact walk: the
+        // hovering row the isHovering(60, 14 + 19*i, 108, 17) box the
+        // hit answers [the 17 the ROW's own hit height — the 19 the
+        // pitch the render sprites wear], the clue >= 0 + the cost >
+        // 0 the gates speak [the -1 sentinel the registry miss the
+        // skip keeps, the levelClue < 0 the same skip], the lines the
+        // vanilla structure banks: the clue line the WHITE wrapper
+        // the "%s . . . ?" literal wears [the fullname's own GRAY
+        // ink the non-curse keeps, the RED the #curse tag answers —
+        // the curses the table pool never seats, the arm the
+        // fullname's own walk keeps], the survival rows the EMPTY
+        // spacer + the requirement pair answer [the xp-short the RED
+        // `Level Requirement: %s` line, the affordable the lapis
+        // GRAY/RED-when-short + the level GRAY pair — the one/many
+        // forms the %s rows bank], the creative the clue line ALONE
+        // [pc 222 the hasInfiniteMaterials arm]). The mouse_pos gate
+        // the headless scenes track no mouse — the pixel goldens
+        // never see this pass.
+        if let Some((mx, my)) = self.mouse_pos {
+            'rows: for i in 0..3usize {
+                let cost = self.enchanting_costs[i];
+                if cost <= 0 || self.enchant_clues[i] < 0 || self.enchant_level_clues[i] < 0 {
+                    continue; // pc 110-118 + pc 167-174 — the dead-row
+                              // and the empty-clue gates
+                }
+                let rx = panel.0 + 60;
+                let ry = panel.1 + 14 + 19 * i as i32;
+                if !(mx >= rx && mx < rx + 108 && my >= ry && my < ry + 17) {
+                    continue; // pc 142-164 — the isHovering box
+                }
+                // THE FULLNAME (the Enchantment.getFullname walk —
+                // the description the lang row answers, the numeral
+                // the `level != 1 || maxLevel != 1` gate keeps [the
+                // level-1-max-1 row the bare name wears], the curse
+                // RED the non-curse GRAY the style arms speak)
+                let ench = self.enchant_clues[i] as usize;
+                let level = self.enchant_level_clues[i];
+                use mc_registry::generated::enchantments as ench_mod;
+                let Some(name) = ench_mod::enchantment_name(ench) else {
+                    continue; // the registry's own miss the skip keeps
+                };
+                let def = &ench_mod::ENCHANTMENTS[ench];
+                let key = format!("enchantment.minecraft.{name}");
+                let mut fullname = tr(&key).unwrap_or(name).to_string();
+                if level != 1 || def.max_level != 1 {
+                    if let Some(numeral) = tr(&format!("enchantment.level.{level}")) {
+                        fullname.push(' ');
+                        fullname.push_str(numeral);
+                    }
+                }
+                let clue_ink = if ench_mod::CURSE_MEMBERS.contains(&name) {
+                    [1.0, 0.3333, 0.3333] // the RED the curse arm keeps
+                } else {
+                    [0.6667, 0.6667, 0.6667] // the GRAY the non-curse wears
+                };
+                // THE ROWS (the survival four the structure keeps —
+                // the clue line the DOT tail the WHITE ink answers;
+                // the tail the lang format's own suffix the %s strip
+                // keeps — the "container.enchant.clue" row the
+                // "%s . . . ?" value banks)
+                let tail = tr("container.enchant.clue")
+                    .unwrap_or("%s . . . ?")
+                    .strip_prefix("%s")
+                    .unwrap_or(" . . . ?")
+                    .to_string();
+                let mut rows: Vec<(String, [f32; 3])> = Vec::new();
+                rows.push((fullname.clone(), clue_ink));
+                let creative = self.game_mode == GameMode::Creative;
+                if !creative {
+                    rows.push((String::new(), [1.0, 1.0, 1.0])); // the EMPTY spacer
+                    if self.xp.level < cost {
+                        rows.push((
+                            format!(
+                                "{}",
+                                tr("container.enchant.level.requirement")
+                                    .unwrap_or("Level Requirement: %s")
+                                    .replace("%s", &cost.to_string())
+                            ),
+                            [1.0, 0.3333, 0.3333], // the RED the xp-short wears
+                        ));
+                    } else {
+                        let n = i + 1;
+                        let have_lapis = self.enchant_slots.get(1).map(|s| s.1).unwrap_or(0);
+                        let lapis_ink = if have_lapis >= n as i32 {
+                            [0.6667, 0.6667, 0.6667] // the GRAY the enough wears
+                        } else {
+                            [1.0, 0.3333, 0.3333] // the RED the short keeps
+                        };
+                        let lapis_text = if n == 1 {
+                            tr("container.enchant.lapis.one")
+                                .unwrap_or("1 Lapis Lazuli")
+                                .to_string()
+                        } else {
+                            tr("container.enchant.lapis.many")
+                                .unwrap_or("%s Lapis Lazuli")
+                                .replace("%s", &n.to_string())
+                        };
+                        rows.push((lapis_text, lapis_ink));
+                        let level_text = if n == 1 {
+                            tr("container.enchant.level.one")
+                                .unwrap_or("1 Enchantment Level")
+                                .to_string()
+                        } else {
+                            tr("container.enchant.level.many")
+                                .unwrap_or("%s Enchantment Levels")
+                                .replace("%s", &n.to_string())
+                        };
+                        rows.push((level_text, [0.6667, 0.6667, 0.6667]));
+                    }
+                }
+                // THE PAINT (the shared box the item tooltips wear —
+                // the widest row + the 3px margins, the 9px pitch, the
+                // +12/-12 origin walk; the clue line's DOT tail the
+                // WHITE ink the second segment answers)
+                let mut tw = g.text_width(&tail);
+                for (s, _) in &rows {
+                    tw = tw.max(g.text_width(s));
+                }
+                let bw = tw + 6;
+                let bh = rows.len() as i32 * 9 + 6;
+                let (tx, ty) = Self::item_tooltip_origin(mx, my, bw, bh, g.w(), g.h());
+                Self::paint_tooltip_background(g, tx, ty, bw, bh);
+                for (j, (s, color)) in rows.iter().enumerate() {
+                    g.text(a, tx + 3, ty + 3 + 9 * j as i32, s, *color, true);
+                }
+                let first = &rows[0].0;
+                g.text(
+                    a,
+                    tx + 3 + g.text_width(first),
+                    ty + 3,
+                    &tail,
+                    [1.0, 1.0, 1.0],
+                    true,
+                );
+                break 'rows; // the ONE tooltip the hover answers
+            }
         }
     }
 

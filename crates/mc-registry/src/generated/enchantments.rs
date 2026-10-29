@@ -121,6 +121,14 @@ pub static TABLE_MEMBERS: [&str; 36] = [
     "aqua_affinity", "bane_of_arthropods", "blast_protection", "breach", "channeling", "density", "depth_strider", "efficiency", "feather_falling", "fire_aspect", "fire_protection", "flame", "fortune", "impaling", "infinity", "knockback", "looting", "loyalty", "luck_of_the_sea", "lunge", "lure", "multishot", "piercing", "power", "projectile_protection", "protection", "punch", "quick_charge", "respiration", "riptide", "sharpness", "silk_touch", "smite", "sweeping_edge", "thorns", "unbreaking",
 ];
 
+/// THE CURSE TAG (the `#minecraft:curse` members the jar's own
+/// `data/minecraft/tags/enchantment/curse.json` banks — the RED
+/// ink the fullname's own walk answers, the anvil/book lanes the
+/// tooltip rows serve).
+pub static CURSE_MEMBERS: [&str; 2] = [
+    "binding_curse", "vanishing_curse",
+];
+
 /// THE ENCHANTABLE FAMILIES (the 22 tags resolved — the `#minecraft:`
 /// references the expansion carried, the direct items the tail rows
 /// keep; the order the tag file names' alphabetical sort banks).
