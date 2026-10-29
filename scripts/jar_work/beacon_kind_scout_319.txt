@@ -1,0 +1,5 @@
+beacon: 16x16 colortype=3 alpha=NONE(opaque)
+diamond_block: 16x16 colortype=3 alpha=NONE(opaque)
+emerald_block: 16x16 colortype=3 alpha=NONE(opaque)
+netherite_block: 16x16 colortype=3 alpha=NONE(opaque)
+glass: 16x16 colortype=6 alpha values=[0, 255] (2 distinct)

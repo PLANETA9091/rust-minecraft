@@ -59,22 +59,59 @@ pub fn vertex_ao(side1: bool, side2: bool, corner: bool) -> u8 {
 }
 
 /// Offsets of the 6 neighbors: +X -X +Y -Y +Z -Z.
-const NEIGHBOR: [(i32, i32, i32); 6] = [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)];
+const NEIGHBOR: [(i32, i32, i32); 6] = [
+    (1, 0, 0),
+    (-1, 0, 0),
+    (0, 1, 0),
+    (0, -1, 0),
+    (0, 0, 1),
+    (0, 0, -1),
+];
 
 /// CCW corner offsets per face (unit cube at origin).
 const FACE_CORNERS: [[[f32; 3]; 4]; 6] = [
     // +X
-    [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]],
+    [
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 0.0, 1.0],
+    ],
     // -X
-    [[0.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [0.0, 1.0, 0.0]],
+    [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 1.0, 0.0],
+    ],
     // +Y
-    [[0.0, 1.0, 0.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
+    [
+        [0.0, 1.0, 0.0],
+        [0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 0.0],
+    ],
     // -Y
-    [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+    [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+    ],
     // +Z
-    [[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0]],
+    [
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+    ],
     // -Z
-    [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]],
+    [
+        [0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0],
+    ],
 ];
 
 /// THE END PORTAL'S OWN SENTINEL (the dev-29 round — the tile id the
@@ -110,7 +147,12 @@ const HEAD_MODEL_FACES: [([[f32; 3]; 4], [[f32; 2]; 4], usize); 6] = [
     // v24 (maxX, y0, maxZ), v23 (x0, y0, maxZ), v19 (x0, y0, z0),
     // v20 (maxX, y0, z0)
     (
-        [[4.0, -8.0, 4.0], [-4.0, -8.0, 4.0], [-4.0, -8.0, -4.0], [4.0, -8.0, -4.0]],
+        [
+            [4.0, -8.0, 4.0],
+            [-4.0, -8.0, 4.0],
+            [-4.0, -8.0, -4.0],
+            [4.0, -8.0, -4.0],
+        ],
         [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
         0,
     ),
@@ -118,13 +160,23 @@ const HEAD_MODEL_FACES: [([[f32; 3]; 4], [[f32; 2]; 4], usize); 6] = [
     // z0), v22 (x0, maxY, z0), v26 (x0, maxY, maxZ), v25 (maxX, maxY,
     // maxZ)
     (
-        [[4.0, 0.0, -4.0], [-4.0, 0.0, -4.0], [-4.0, 0.0, 4.0], [4.0, 0.0, 4.0]],
+        [
+            [4.0, 0.0, -4.0],
+            [-4.0, 0.0, -4.0],
+            [-4.0, 0.0, 4.0],
+            [4.0, 0.0, 4.0],
+        ],
         [[1.0, 1.0], [0.0, 1.0], [0.0, 0.0], [1.0, 0.0]],
         1,
     ),
     // WEST (slot 2 — the [0,8] region): v19, v23, v26, v22
     (
-        [[-4.0, -8.0, -4.0], [-4.0, -8.0, 4.0], [-4.0, 0.0, 4.0], [-4.0, 0.0, -4.0]],
+        [
+            [-4.0, -8.0, -4.0],
+            [-4.0, -8.0, 4.0],
+            [-4.0, 0.0, 4.0],
+            [-4.0, 0.0, -4.0],
+        ],
         [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
         2,
     ),
@@ -142,13 +194,23 @@ const HEAD_MODEL_FACES: [([[f32; 3]; 4], [[f32; 2]; 4], usize); 6] = [
     ),
     // EAST (slot 4 — the [16,8] region): v24, v20, v21, v25
     (
-        [[4.0, -8.0, 4.0], [4.0, -8.0, -4.0], [4.0, 0.0, -4.0], [4.0, 0.0, 4.0]],
+        [
+            [4.0, -8.0, 4.0],
+            [4.0, -8.0, -4.0],
+            [4.0, 0.0, -4.0],
+            [4.0, 0.0, 4.0],
+        ],
         [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
         4,
     ),
     // SOUTH (slot 5 — the [24,8] region, the back): v23, v24, v25, v26
     (
-        [[-4.0, -8.0, 4.0], [4.0, -8.0, 4.0], [4.0, 0.0, 4.0], [-4.0, 0.0, 4.0]],
+        [
+            [-4.0, -8.0, 4.0],
+            [4.0, -8.0, 4.0],
+            [4.0, 0.0, 4.0],
+            [-4.0, 0.0, 4.0],
+        ],
         [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
         5,
     ),
@@ -183,6 +245,12 @@ pub(crate) fn is_transparent(kind: u16) -> bool {
         // emits — the generic tile walk the NO-elements model cannot
         // resolve)
         || kind == crate::world::END_PORTAL
+        // THE BEACON'S OWN ROW (the autopush-319 round — the clinit's
+        // `.noOcclusion()` row the banked dump pins: the glass-shell
+        // cell the neighbors' own faces draw against, the beacon the
+        // occluder never wears, the three-element arm the 18 quads
+        // the shell's see-through look renders)
+        || kind == crate::world::BEACON
         // the whole AGE LADDER the non-occluding verdict keeps (the
         // farmland's top face under ANY stage draws — the same
         // noCollision family the 15th audit and the growth round speak)
@@ -447,7 +515,13 @@ fn axis_delta(axis: usize, sign: i32) -> (i32, i32, i32) {
 /// each corner in the plane one step in front of the face.
 fn ao_levels(world: &World, wx: i32, wy: i32, wz: i32, face: usize) -> [u8; 4] {
     let (nx, ny, nz) = NEIGHBOR[face];
-    let normal_axis = if nx != 0 { 0 } else if ny != 0 { 1 } else { 2 };
+    let normal_axis = if nx != 0 {
+        0
+    } else if ny != 0 {
+        1
+    } else {
+        2
+    };
     let (t1, t2) = match normal_axis {
         0 => (1usize, 2usize),
         1 => (0usize, 2usize),
@@ -720,7 +794,13 @@ fn corner_light(
     face: usize,
 ) -> ([Option<f32>; 4], [Option<f32>; 4]) {
     let (nx, ny, nz) = NEIGHBOR[face];
-    let normal_axis = if nx != 0 { 0 } else if ny != 0 { 1 } else { 2 };
+    let normal_axis = if nx != 0 {
+        0
+    } else if ny != 0 {
+        1
+    } else {
+        2
+    };
     let (t1, t2) = match normal_axis {
         0 => (1usize, 2usize),
         1 => (0usize, 2usize),
@@ -802,7 +882,7 @@ pub fn destroy_overlay_quads(pos: (i32, i32, i32), tile: u16) -> Vec<Quad> {
             uvs,
             tile,
             translucent: false,
-                            per_texel_alpha: false,
+            per_texel_alpha: false,
         });
     }
     out
@@ -919,8 +999,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // the all-none arm OR any perpendicular pair the
                     // center wears; the straight N-S / E-W runs the
                     // arms the center never shares)
-                    let perp_pair = (east && north) || (east && south)
-                        || (west && north) || (west && south);
+                    let perp_pair =
+                        (east && north) || (east && south) || (west && north) || (west && south);
                     let show_dot = (!north && !south && !west && !east) || perp_pair;
                     // THE TILES' OWN SLOTS (the kind row's dot/N-S/E-W
                     // seats the generator's wire bank slots 0..2 carry —
@@ -957,13 +1037,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let fy = wy as f32 + FLAT_Y;
                     // THE PIECES' OWN TABLE (the rect the block units
@@ -997,10 +1089,9 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             .map(tint::unpack)
                             .unwrap_or([1.0; 3]);
                         let shade = FACE_SHADE[face];
-                        let clight = light
-                            .map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
-                        for &(px0, pz0, px1, pz1, u0, v0, u1, v1, tile, transposed) in
-                            pieces.iter()
+                        let clight =
+                            light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                        for &(px0, pz0, px1, pz1, u0, v0, u1, v1, tile, transposed) in pieces.iter()
                         {
                             if tile == atlas::TILE_NONE {
                                 continue;
@@ -1019,11 +1110,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 // within-window v wears)
                                 let bx = px0 + c[0] * (px1 - px0);
                                 let bz = pz0 + c[2] * (pz1 - pz0);
-                                let (mut uu, mut vv) = if transposed {
-                                    (bz, bx)
-                                } else {
-                                    (bx, bz)
-                                };
+                                let (mut uu, mut vv) = if transposed { (bz, bx) } else { (bx, bz) };
                                 uu = uu.clamp(u0, u1) / 16.0;
                                 vv = vv.clamp(v0, v1) / 16.0;
                                 uvs[i] = if face == 2 {
@@ -1031,11 +1118,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 } else {
                                     [uu, (v0 + v1) / 16.0 - vv]
                                 };
-                                pts[i] = [
-                                    wx as f32 + bx / 16.0,
-                                    fy,
-                                    wz as f32 + bz / 16.0,
-                                ];
+                                pts[i] = [wx as f32 + bx / 16.0, fy, wz as f32 + bz / 16.0];
                                 let lm = match clight.as_ref() {
                                     Some((sky, block)) => lightmap_combine(
                                         sky[i],
@@ -1125,12 +1208,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // its own lane serves, the neighbor signal the
                     // detector's bit never arms — the mesher renders
                     // whatever bit the world banks)
-                    let powered_on = matches!(
-                        id,
-                        crate::world::POWERED_RAIL
-                            | crate::world::DETECTOR_RAIL
-                            | crate::world::ACTIVATOR_RAIL
-                    ) && world.variant(wx, wy, wz) & crate::world::RAIL_POWERED_BIT != 0;
+                    let powered_on =
+                        matches!(
+                            id,
+                            crate::world::POWERED_RAIL
+                                | crate::world::DETECTOR_RAIL
+                                | crate::world::ACTIVATOR_RAIL
+                        ) && world.variant(wx, wy, wz) & crate::world::RAIL_POWERED_BIT != 0;
                     let tile = if corner {
                         atlas::TILE_RAIL_CORNER
                     } else if powered_on && id == crate::world::ACTIVATOR_RAIL {
@@ -1168,13 +1252,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let fy = wy as f32 + 1.0 / 16.0;
                     for face in [2usize, 3] {
@@ -1183,8 +1279,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             .map(tint::unpack)
                             .unwrap_or([1.0; 3]);
                         let shade = FACE_SHADE[face];
-                        let clight = light
-                            .map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                        let clight =
+                            light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
                         if tile == atlas::TILE_NONE {
                             continue;
                         }
@@ -1229,11 +1325,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 }
                             };
                             let (uu, vv) = (uu / 16.0, vv / 16.0);
-                            uvs[i] = if face == 2 {
-                                [uu, vv]
-                            } else {
-                                [uu, 1.0 - vv]
-                            };
+                            uvs[i] = if face == 2 { [uu, vv] } else { [uu, 1.0 - vv] };
                             // THE ASCENT'S OWN SLOPE (the dev-93 round —
                             // the raised_ne/sw template's 45-degree
                             // rotation the rescale the span keeps: the
@@ -1249,11 +1341,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 5 => wy as f32 + 1.0 / 16.0 + bz / 16.0,
                                 _ => fy,
                             };
-                            pts[i] = [
-                                wx as f32 + bx / 16.0,
-                                py,
-                                wz as f32 + bz / 16.0,
-                            ];
+                            pts[i] = [wx as f32 + bx / 16.0, py, wz as f32 + bz / 16.0];
                             let lm = match clight.as_ref() {
                                 Some((sky, block)) => lightmap_combine(
                                     sky[i],
@@ -1349,20 +1437,32 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // The shader's BlockLightTint: the dimension's STATED
                     // attribute (raw bytes -> 0..1), None = the bytecode
                     // default's verdict (#FFD88C, the corrected blue 140).
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // The shader's NightVisionColor: the dimension's STATED
                     // attribute (raw bytes -> 0..1), None = the bytecode
                     // default's verdict (#999999 gray) — consumed UNDER the
                     // night-vision factor (the effect state, 0.0 here).
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let fy = wy as f32 + FLAT_Y;
                     let variant = world
@@ -1469,7 +1569,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 uvs,
                                 tile,
                                 translucent: false,
-                            per_texel_alpha: false,
+                                per_texel_alpha: false,
                             });
                         }
                     }
@@ -1579,13 +1679,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // THE CELL'S OWN LIGHT — the withoutAO walk's
                     // getLightColor(state, pos): both layers sampled AT
@@ -1687,11 +1799,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                         world.night_vision_factor,
                                         world.darkness_scale,
                                     );
-                                    colors[i] = [
-                                        base[0] * lm[0],
-                                        base[1] * lm[1],
-                                        base[2] * lm[2],
-                                    ];
+                                    colors[i] = [base[0] * lm[0], base[1] * lm[1], base[2] * lm[2]];
                                 }
                                 out.push(Quad {
                                     pts,
@@ -1699,7 +1807,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     uvs,
                                     tile,
                                     translucent: false,
-                            per_texel_alpha: false,
+                                    per_texel_alpha: false,
                                 });
                             }
                         }
@@ -1712,7 +1820,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         (2, 12.0 / 16.0, false),
                     ];
                     for &(axis, fixed, flip) in &planes {
-                        let (fa, fb) = if axis == 0 { (1usize, 0usize) } else { (5usize, 4usize) };
+                        let (fa, fb) = if axis == 0 {
+                            (1usize, 0usize)
+                        } else {
+                            (5usize, 4usize)
+                        };
                         for &face in &[fa, fb] {
                             let mut pts = [[0f32; 3]; 4];
                             let mut colors = [[0f32; 3]; 4];
@@ -1725,10 +1837,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 };
                                 pts[i] = [wx as f32 + fx, wy as f32 + fy, wz as f32 + fz];
                                 let u_raw = if axis == 0 { c[2] } else { c[0] };
-                                uvs[i] = [
-                                    if flip { 1.0 - u_raw } else { u_raw },
-                                    1.0 - c[1],
-                                ];
+                                uvs[i] = [if flip { 1.0 - u_raw } else { u_raw }, 1.0 - c[1]];
                                 let lm = lightmap_combine(
                                     cell_sky,
                                     cell_block,
@@ -1750,7 +1859,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 uvs,
                                 tile,
                                 translucent: false,
-                            per_texel_alpha: false,
+                                per_texel_alpha: false,
                             });
                         }
                     }
@@ -1798,13 +1907,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -1873,8 +1994,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // kinds the identity pair the no-variant lane
                     // keeps.
                     let (wall_sn, wall_cs) = if crate::world::is_redstone_wall_torch(id) {
-                        let facing =
-                            crate::world::wall_torch_facing_of(world.variant(wx, wy, wz));
+                        let facing = crate::world::wall_torch_facing_of(world.variant(wx, wy, wz));
                         let y_deg = match facing {
                             crate::world::WALL_TORCH_FACING_EAST => 0.0f32,
                             crate::world::WALL_TORCH_FACING_SOUTH => 90.0,
@@ -1901,11 +2021,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // the (sn, cs) pair the (0, 1) no-op keeps)
                             let rx = 0.5 + (v[0] - 0.5) * wall_cs - (v[2] - 0.5) * wall_sn;
                             let rz = 0.5 + (v[0] - 0.5) * wall_sn + (v[2] - 0.5) * wall_cs;
-                            pts[i] = [
-                                wx as f32 + rx,
-                                wy as f32 + v[1],
-                                wz as f32 + rz,
-                            ];
+                            pts[i] = [wx as f32 + rx, wy as f32 + v[1], wz as f32 + rz];
                             // the texel-space uv the /16 fold normalizes
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
@@ -2713,13 +2829,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -2775,11 +2903,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             // the texel-space uv the /16 fold normalizes
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
@@ -2834,7 +2958,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // the stick's own ±45° tilt the derive walk's rotated
                 // vertices already wear (the Rodrigues fold the
                 // element-rotation lane speaks).
-                if crate::world::is_lever(id) || crate::world::is_button(id) || crate::world::is_pressure_plate(id) {
+                if crate::world::is_lever(id)
+                    || crate::world::is_button(id)
+                    || crate::world::is_pressure_plate(id)
+                {
                     // (the autopush-660 round the BUTTON the same lane
                     // wears — the FaceAttachedHorizontalDirectionalBlock
                     // parent the two families share, the element lane
@@ -2864,13 +2991,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -2914,15 +3053,19 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let (x_turns, steps) = if crate::world::is_pressure_plate(id) {
                         (0usize, 0usize)
                     } else {
-                    let variant = world.variant(wx, wy, wz);
-                    let lever_face = crate::world::lever_face_of(variant);
-                    let facing_raw = crate::world::lever_facing_of(variant);
-                    let idx = if facing_raw == 0 { 0usize } else { facing_raw as usize - 1 };
-                    match lever_face {
-                        crate::world::LEVER_FACE_WALL => (1usize, idx),
-                        crate::world::LEVER_FACE_CEILING => (2usize, (idx + 2) % 4),
-                        _ => (0usize, idx),
-                    }
+                        let variant = world.variant(wx, wy, wz);
+                        let lever_face = crate::world::lever_face_of(variant);
+                        let facing_raw = crate::world::lever_facing_of(variant);
+                        let idx = if facing_raw == 0 {
+                            0usize
+                        } else {
+                            facing_raw as usize - 1
+                        };
+                        match lever_face {
+                            crate::world::LEVER_FACE_WALL => (1usize, idx),
+                            crate::world::LEVER_FACE_CEILING => (2usize, (idx + 2) % 4),
+                            _ => (0usize, idx),
+                        }
                     };
                     for q in if crate::world::is_button(id) {
                         button_model_quads(id, crate::world::button_powered(id))
@@ -3017,11 +3160,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // keeps, the east row one step wears)
                             let (dx, dz) = (v[0] - 0.5, vz - 0.5);
                             let (rx, rz) = rotate_xz_cw(dx, dz, steps);
-                            pts[i] = [
-                                wx as f32 + 0.5 + rx,
-                                wy as f32 + vy,
-                                wz as f32 + 0.5 + rz,
-                            ];
+                            pts[i] = [wx as f32 + 0.5 + rx, wy as f32 + vy, wz as f32 + 0.5 + rz];
                             // the texel-space uv the /16 fold
                             // normalizes (the rotated rows the UVs
                             // never move — the door lane's own law the
@@ -3119,13 +3258,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -3203,11 +3354,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -3296,13 +3443,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -3360,11 +3519,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             // the texel-space uv the /16 fold normalizes
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
@@ -3455,13 +3610,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -3533,11 +3700,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -3620,13 +3783,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -3686,9 +3861,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             "cake_top" => atlas::TILE_CAKE_TOP,
                             "cake_side" => atlas::TILE_CAKE_SIDE,
                             "candle" => atlas::FACE_TILES[crate::world::CANDLE as usize][2],
-                            "candle_lit" => {
-                                atlas::FACE_TILES[crate::world::CANDLE_LIT as usize][2]
-                            }
+                            "candle_lit" => atlas::FACE_TILES[crate::world::CANDLE_LIT as usize][2],
                             _ => fallback_tile,
                         };
                         // THE SHADE TERM'S OWN READ — the template's
@@ -3710,11 +3883,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -3797,13 +3966,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -3882,11 +4063,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -3982,13 +4159,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -4113,11 +4302,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // the north edge answers)
                             let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
                             let (rx, rz) = rotate_xz_cw(dx, dz, steps);
-                            pts[i] = [
-                                wx as f32 + 0.5 + rx,
-                                wy as f32 + v[1],
-                                wz as f32 + 0.5 + rz,
-                            ];
+                            pts[i] = [wx as f32 + 0.5 + rx, wy as f32 + v[1], wz as f32 + 0.5 + rz];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -4201,13 +4386,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -4300,11 +4497,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // serves — the door lane's own walk shares)
                             let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
                             let (rx, rz) = rotate_xz_cw(dx, dz, steps);
-                            pts[i] = [
-                                wx as f32 + 0.5 + rx,
-                                wy as f32 + v[1],
-                                wz as f32 + 0.5 + rz,
-                            ];
+                            pts[i] = [wx as f32 + 0.5 + rx, wy as f32 + v[1], wz as f32 + 0.5 + rz];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -4386,13 +4579,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -4427,7 +4632,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     };
                     let (post_quads, side_quads) = fence_models(id);
                     for apply in select_parts(fence_parts(id), &props) {
-                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(&apply.model);
+                        let model_id = apply
+                            .model
+                            .strip_prefix("minecraft:")
+                            .unwrap_or(&apply.model);
                         // the side model's y quarter the blockstate's
                         // own y values speak (north 0 / east 90 /
                         // south 180 / west 270 — the steps the CW
@@ -4491,11 +4699,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     3 => (v[2], 1.0 - v[0]),
                                     _ => (v[0], v[2]),
                                 };
-                                pts[i] = [
-                                    wx as f32 + vx,
-                                    wy as f32 + v[1],
-                                    wz as f32 + vz,
-                                ];
+                                pts[i] = [wx as f32 + vx, wy as f32 + v[1], wz as f32 + vz];
                                 uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                                 let lm = lightmap_combine(
                                     cell_sky,
@@ -4579,13 +4783,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -4607,13 +4823,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     };
                     let tall_for = |d: u8| {
                         bits & d != 0
-                            && crate::world::wall_above_covers(
-                                world,
-                                wx,
-                                wy + 1,
-                                wz,
-                                dir_of(d),
-                            )
+                            && crate::world::wall_above_covers(world, wx, wy + 1, wz, dir_of(d))
                     };
                     let side_word = |d: u8| {
                         if bits & d == 0 {
@@ -4649,7 +4859,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     };
                     let (post_quads, side_quads, tall_quads) = wall_models(id);
                     for apply in select_parts(wall_parts(id), &props) {
-                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(&apply.model);
+                        let model_id = apply
+                            .model
+                            .strip_prefix("minecraft:")
+                            .unwrap_or(&apply.model);
                         // the side model's y quarter the blockstate's
                         // own y values speak (north 0 / east 90 /
                         // south 180 / west 270 — the steps the CW
@@ -4715,11 +4928,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     3 => (v[2], 1.0 - v[0]),
                                     _ => (v[0], v[2]),
                                 };
-                                pts[i] = [
-                                    wx as f32 + vx,
-                                    wy as f32 + v[1],
-                                    wz as f32 + vz,
-                                ];
+                                pts[i] = [wx as f32 + vx, wy as f32 + v[1], wz as f32 + vz];
                                 uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                                 let lm = lightmap_combine(
                                     cell_sky,
@@ -4806,13 +5015,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -4904,11 +5125,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // the west edge answers)
                             let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
                             let (rx, rz) = rotate_xz_cw(dx, dz, steps);
-                            pts[i] = [
-                                wx as f32 + 0.5 + rx,
-                                wy as f32 + v[1],
-                                wz as f32 + 0.5 + rz,
-                            ];
+                            pts[i] = [wx as f32 + 0.5 + rx, wy as f32 + v[1], wz as f32 + 0.5 + rz];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -5001,14 +5218,35 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let prop = |read: bool| {
                         // the gate's own verdict — the default state's
                         // all-false shape the below cell's gate keeps
-                        if gate { "false" } else if read { "true" } else { "false" }
+                        if gate {
+                            "false"
+                        } else if read {
+                            "true"
+                        } else {
+                            "false"
+                        }
                     };
                     let props = [
-                        ("north", prop(crate::world::fire_can_burn(world.get(wx, wy, wz - 1)))),
-                        ("east", prop(crate::world::fire_can_burn(world.get(wx + 1, wy, wz)))),
-                        ("south", prop(crate::world::fire_can_burn(world.get(wx, wy, wz + 1)))),
-                        ("west", prop(crate::world::fire_can_burn(world.get(wx - 1, wy, wz)))),
-                        ("up", prop(crate::world::fire_can_burn(world.get(wx, wy + 1, wz)))),
+                        (
+                            "north",
+                            prop(crate::world::fire_can_burn(world.get(wx, wy, wz - 1))),
+                        ),
+                        (
+                            "east",
+                            prop(crate::world::fire_can_burn(world.get(wx + 1, wy, wz))),
+                        ),
+                        (
+                            "south",
+                            prop(crate::world::fire_can_burn(world.get(wx, wy, wz + 1))),
+                        ),
+                        (
+                            "west",
+                            prop(crate::world::fire_can_burn(world.get(wx - 1, wy, wz))),
+                        ),
+                        (
+                            "up",
+                            prop(crate::world::fire_can_burn(world.get(wx, wy + 1, wz))),
+                        ),
                     ];
                     // The attribute-system fold (the shared per-mesh
                     // uniforms both existing paths speak — see the flat
@@ -5036,13 +5274,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // THE CELL'S OWN LIGHT — the withoutAO walk's
                     // getLightColor(state, pos): both layers sampled AT
@@ -5104,7 +5354,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // the bare `builtin/` refs the four special forms
                         // keep ride the same strip (the fire applies all
                         // carry the minecraft: prefix, the honest default)
-                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(apply.model);
+                        let model_id = apply
+                            .model
+                            .strip_prefix("minecraft:")
+                            .unwrap_or(apply.model);
                         let Some(model) = fire_model_quads().get(model_id) else {
                             continue;
                         };
@@ -5145,7 +5398,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 uvs,
                                 tile,
                                 translucent: false,
-                            per_texel_alpha: false,
+                                per_texel_alpha: false,
                             });
                         }
                     }
@@ -5283,13 +5536,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // THE CELL'S OWN LIGHT — the withoutAO walk's
                     // getLightColor(state, pos): both layers sampled AT
@@ -5306,14 +5571,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // plant walk keeps (the stalk the getOffset move
                     // the vanilla shape law rides).
                     let (off_x, off_y, off_z) = crate::world::plant_offset(id, wx, wy, wz);
-                    let (off_x, off_y, off_z) =
-                        (off_x as f32, off_y as f32, off_z as f32);
-                    for apply in select_parts(bamboo_parts(), &props)
-                        .into_iter()
-                        .rev()
-                    {
-                        let model_id =
-                            apply.model.strip_prefix("minecraft:").unwrap_or(apply.model);
+                    let (off_x, off_y, off_z) = (off_x as f32, off_y as f32, off_z as f32);
+                    for apply in select_parts(bamboo_parts(), &props).into_iter().rev() {
+                        let model_id = apply
+                            .model
+                            .strip_prefix("minecraft:")
+                            .unwrap_or(apply.model);
                         let Some(model) = bamboo_model_quads().get(model_id) else {
                             continue;
                         };
@@ -5368,15 +5631,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // carry (the torch lane's own law — the
                             // neighbor the solid render answers)
                             let below = world.get(wx, wy - 1, wz);
-                            if q.cullface
-                                == Some(mc_registry::element_quads::Direction::Down)
+                            if q.cullface == Some(mc_registry::element_quads::Direction::Down)
                                 && !is_transparent(below)
                             {
                                 continue;
                             }
                             let above = world.get(wx, wy + 1, wz);
-                            if q.cullface
-                                == Some(mc_registry::element_quads::Direction::Up)
+                            if q.cullface == Some(mc_registry::element_quads::Direction::Up)
                                 && !is_transparent(above)
                             {
                                 continue;
@@ -5406,11 +5667,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     wz as f32 + v[2] + off_z,
                                 ];
                                 uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
-                                colors[i] = [
-                                    lm[0] * face_shade,
-                                    lm[1] * face_shade,
-                                    lm[2] * face_shade,
-                                ];
+                                colors[i] =
+                                    [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
                             }
                             out.push(Quad {
                                 pts,
@@ -5498,13 +5756,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -5530,7 +5800,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // keeps)
                     let models = pane_models(id);
                     for apply in select_parts(pane_parts(id), &props) {
-                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(&apply.model);
+                        let model_id = apply
+                            .model
+                            .strip_prefix("minecraft:")
+                            .unwrap_or(&apply.model);
                         // the model's y quarter the blockstate's own
                         // y values speak (north/south the y0 rows the
                         // side/side_alt models wear, east/west the
@@ -5639,11 +5912,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     3 => (v[2], 1.0 - v[0]),
                                     _ => (v[0], v[2]),
                                 };
-                                pts[i] = [
-                                    wx as f32 + vx,
-                                    wy as f32 + v[1],
-                                    wz as f32 + vz,
-                                ];
+                                pts[i] = [wx as f32 + vx, wy as f32 + v[1], wz as f32 + vz];
                                 uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                                 let lm = lightmap_combine(
                                     cell_sky,
@@ -5656,11 +5925,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     world.night_vision_factor,
                                     world.darkness_scale,
                                 );
-                                colors[i] = [
-                                    lm[0] * face_shade,
-                                    lm[1] * face_shade,
-                                    lm[2] * face_shade,
-                                ];
+                                colors[i] =
+                                    [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
                             }
                             // THE PER-QUAD TEXTURE VERDICT — the
                             // resolved stem the tile mapping answers
@@ -5759,13 +6025,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -5805,11 +6083,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 3 => (fz, 1.0 - fx),
                                 _ => (fx, fz),
                             };
-                            pts[i] = [
-                                wx as f32 + vx,
-                                wy as f32 + fy,
-                                wz as f32 + vz,
-                            ];
+                            pts[i] = [wx as f32 + vx, wy as f32 + fy, wz as f32 + vz];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -5826,11 +6100,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // elements' shade:false the 1.0 keeps (the
                             // template's own law the flat link wears)
                             let face_shade = 1.0f32;
-                            colors[i] = [
-                                lm[0] * face_shade,
-                                lm[1] * face_shade,
-                                lm[2] * face_shade,
-                            ];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
                         }
                         // THE PER-QUAD TILE VERDICT — the resolved
                         // stem the kind's own master answers (the
@@ -5903,13 +6174,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -5971,11 +6254,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             // the texel-space uv the /16 fold normalizes
                             // (the atlas tile the top 16x16 frame the
                             // first-frame read banks — the model UVs
@@ -6049,13 +6328,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -6154,11 +6445,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut pts = [[0f32; 3]; 4];
                         let mut colors = [[0f32; 3]; 4];
                         for (i, pv) in pts_local.iter().enumerate() {
-                            pts[i] = [
-                                wx as f32 + pv[0],
-                                wy as f32 + pv[1],
-                                wz as f32 + pv[2],
-                            ];
+                            pts[i] = [wx as f32 + pv[0], wy as f32 + pv[1], wz as f32 + pv[2]];
                             let lm = lightmap_combine(
                                 cell_sky,
                                 cell_block,
@@ -6170,11 +6457,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 world.night_vision_factor,
                                 world.darkness_scale,
                             );
-                            colors[i] = [
-                                lm[0] * face_shade,
-                                lm[1] * face_shade,
-                                lm[2] * face_shade,
-                            ];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
                         }
                         // the texel-space uv the /16 fold normalizes
                         // (the hand-built px space the lane's own law
@@ -6579,6 +6863,134 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE BEACON'S OWN THREE-ELEMENT LANE (the autopush-319
+                // round — the 318 NEXT list's own first candidate the
+                // kind mint wears). THE JAR'S OWN MODEL the generated
+                // tables carry (models/elements/blockstates rows the
+                // derive walk resolves — block/beacon.json the THREE
+                // elements speak: the glass shell [0,0,0]->[16,16,16]
+                // the six #glass faces wear, the obsidian base
+                // [2,0.1,2]->[14,3,14] the six #obsidian rows keep, the
+                // inner core [3,3,3]->[13,14,13] the six #beacon faces
+                // serve — the 18 quads the derive banks). THE CULLFACE
+                // THE NO-ROWS LAW KEEPS: the jar's model the cullface
+                // keys never writes — the 18 faces ALWAYS draw (the
+                // beacon the shell's see-through look the neighbor
+                // verdict never culls), the noOcclusion clinit row the
+                // is_transparent seat the neighbors' own faces draw
+                // against. THE SHELL'S OWN CUTOUT LANE: the glass
+                // master the alpha {0,255} map the scout banks — the
+                // per_texel_alpha quads the transparent texels discard,
+                // the obsidian + the core the opaque law wears.
+                if crate::world::is_beacon(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    for q in beacon_model_quads() {
+                        // THE REF'S OWN TILE (the inherited derive the
+                        // three refs resolves in place — "block/glass"
+                        // the pool's own 273 row answers, "block/
+                        // obsidian" the 93 row keeps, "block/beacon"
+                        // the pool tail's 1063 the pin banks)
+                        let tile = match q.texture {
+                            "block/beacon" => atlas::TILE_BEACON,
+                            other => beacon_named_tile(other),
+                        };
+                        if tile == atlas::TILE_NONE {
+                            continue;
+                        }
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let lm = lightmap_combine(
+                            cell_sky,
+                            cell_block,
+                            sky_factor,
+                            sky_tint,
+                            ambient,
+                            block_tint,
+                            night_vision,
+                            world.night_vision_factor,
+                            world.darkness_scale,
+                        );
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for i in 0..4 {
+                            let v = q.vertices[i];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
+                        }
+                        let shell = q.texture == "block/glass";
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: shell,
+                            per_texel_alpha: shell,
+                        });
+                    }
+                    continue;
+                }
                 // THE END GATEWAY'S OWN INVISIBLE LANE (the autopush-310
                 // round — javap EndGatewayBlock.getRenderShape the
                 // `RenderShape.INVISIBLE` verdict the 26.2 jar banks:
@@ -6878,13 +7290,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -7035,13 +7459,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -7094,11 +7530,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 3 => (fz, 1.0 - fx),
                                 _ => (fx, fz),
                             };
-                            pts[i] = [
-                                wx as f32 + vx,
-                                wy as f32 + fy,
-                                wz as f32 + vz,
-                            ];
+                            pts[i] = [wx as f32 + vx, wy as f32 + fy, wz as f32 + vz];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -7133,11 +7565,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 1.0
                             };
-                            colors[i] = [
-                                lm[0] * face_shade,
-                                lm[1] * face_shade,
-                                lm[2] * face_shade,
-                            ];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
                         }
                         // THE PER-QUAD TILE VERDICT — the resolved stem
                         // the kind's own master answers (the #top/#side/
@@ -7214,13 +7643,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                     };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let (cell_sky, cell_block) = match light {
                         Some(l) => {
@@ -7275,11 +7716,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // quads the cell's own frame the identity
                             // walk serves, the y the band's own span
                             // the template pair banks)
-                            pts[i] = [
-                                wx as f32 + v[0],
-                                wy as f32 + v[1],
-                                wz as f32 + v[2],
-                            ];
+                            pts[i] = [wx as f32 + v[0], wy as f32 + v[1], wz as f32 + v[2]];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -7309,11 +7746,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 1.0
                             };
-                            colors[i] = [
-                                lm[0] * face_shade,
-                                lm[1] * face_shade,
-                                lm[2] * face_shade,
-                            ];
+                            colors[i] =
+                                [lm[0] * face_shade, lm[1] * face_shade, lm[2] * face_shade];
                         }
                         // THE PER-QUAD TILE VERDICT — the resolved stem
                         // the kind's own master answers (the #top/#side/
@@ -7654,9 +8088,9 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             let facing = world.variant(wx, wy, wz);
                             let front = atlas::FACE_TILES[id as usize][5];
                             match face {
-                                0 if facing == 2 => front,  // east-facing: +X
-                                4 if facing == 3 => front,  // south-facing: +Z
-                                1 if facing == 4 => front,  // west-facing: -X
+                                0 if facing == 2 => front,                               // east-facing: +X
+                                4 if facing == 3 => front, // south-facing: +Z
+                                1 if facing == 4 => front, // west-facing: -X
                                 5 if facing != 2 && facing != 3 && facing != 4 => front, // north (default)
                                 5 => atlas::FACE_TILES[id as usize][0], // the vacated north
                                 _ => atlas::FACE_TILES[id as usize][face],
@@ -7745,20 +8179,32 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // (overworld #0a0a0a); None = the bytecode-default
                     // black — a no-op base, the pre-ambient arithmetic.
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // The shader's BlockLightTint: the dimension's STATED
                     // attribute (raw bytes -> 0..1), None = the bytecode
                     // default's verdict (#FFD88C, the corrected blue 140).
                     let block_tint = world.block_light_tint.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     // The shader's NightVisionColor: the dimension's STATED
                     // attribute (raw bytes -> 0..1), None = the bytecode
                     // default's verdict (#999999 gray) — consumed UNDER the
                     // night-vision factor (the effect state, 0.0 here).
                     let night_vision = world.night_vision_color.map(|a| {
-                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
                     });
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
@@ -7778,9 +8224,17 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // bit-identical (1.0 + b clamps back to 1.0, the
                         // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
-                            Some((sky, block)) => {
-                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint, night_vision, world.night_vision_factor, world.darkness_scale)
-                            }
+                            Some((sky, block)) => lightmap_combine(
+                                sky[src],
+                                block[src],
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            ),
                             None => [1.0; 3], // no light layer — legacy look
                         };
                         let m = [
@@ -7833,8 +8287,7 @@ fn torch_model_quads() -> &'static [mc_registry::element_quads::Quad] {
     static QUADS: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
         std::sync::OnceLock::new();
     QUADS.get_or_init(|| {
-        mc_registry::element_quads::derive_model_inherited("block/torch")
-            .unwrap_or_default()
+        mc_registry::element_quads::derive_model_inherited("block/torch").unwrap_or_default()
     })
 }
 
@@ -8184,9 +8637,10 @@ fn trapdoor_model_quads(
     let map = QUADS.get_or_init(|| {
         let mut m = std::collections::HashMap::new();
         for (st, suffix) in [(0u8, "bottom"), (1u8, "top"), (2u8, "open")] {
-            for s in crate::world::TRAPDOOR_KINDS.chunks(2).filter_map(|pair| {
-                crate::world::trapdoor_stem_of(pair[0])
-            }) {
+            for s in crate::world::TRAPDOOR_KINDS
+                .chunks(2)
+                .filter_map(|pair| crate::world::trapdoor_stem_of(pair[0]))
+            {
                 let Some(wood) = s.strip_suffix("_trapdoor") else {
                     continue;
                 };
@@ -8194,18 +8648,14 @@ fn trapdoor_model_quads(
                 let Some(model) = lookup_model(&name) else {
                     continue;
                 };
-                m.entry((s, st))
-                    .or_insert_with(|| {
-                        mc_registry::element_quads::derive_model_inherited(model)
-                            .unwrap_or_default()
-                    });
+                m.entry((s, st)).or_insert_with(|| {
+                    mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+                });
             }
         }
         m
     });
-    map.get(&(stem, state))
-        .map(|v| v.as_slice())
-        .unwrap_or(&[])
+    map.get(&(stem, state)).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
 /// THE MODEL REF'S OWN STATIC LIFT (the per-stem names the derive
@@ -8265,7 +8715,11 @@ fn lever_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Qua
     // THE JAR'S OWN REVERSED ROWS (the blockstate's verbatim mapping
     // — powered=false the "_on" model, powered=true the plain): the
     // names the LOOKS carry, the verdict the blockstate speaks.
-    let model = if powered { "block/lever" } else { "block/lever_on" };
+    let model = if powered {
+        "block/lever"
+    } else {
+        "block/lever_on"
+    };
     let cache = if powered { &ON } else { &OFF };
     cache.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
@@ -8443,9 +8897,8 @@ fn honey_model_quads() -> &'static [mc_registry::element_quads::Quad] {
     static QUADS: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
         std::sync::OnceLock::new();
     QUADS.get_or_init(|| {
-        let mut quads =
-            mc_registry::element_quads::derive_model_inherited("block/honey_block")
-                .unwrap_or_default();
+        let mut quads = mc_registry::element_quads::derive_model_inherited("block/honey_block")
+            .unwrap_or_default();
         quads.reverse();
         quads
     })
@@ -8465,7 +8918,11 @@ fn campfire_model_quads(model_id: &str) -> &'static [mc_registry::element_quads:
     static QUADS: std::sync::OnceLock<
         std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();
-    let models = ["block/campfire_off", "block/campfire", "block/soul_campfire"];
+    let models = [
+        "block/campfire_off",
+        "block/campfire",
+        "block/soul_campfire",
+    ];
     let map = QUADS.get_or_init(|| {
         models
             .into_iter()
@@ -8562,8 +9019,7 @@ fn door_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
                 let model = atlas::DOOR_MODEL_BY_ROW[k as usize];
                 (
                     k,
-                    mc_registry::element_quads::derive_model_inherited(model)
-                        .unwrap_or_default(),
+                    mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default(),
                 )
             })
             .collect()
@@ -8586,10 +9042,7 @@ fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
     > = std::sync::OnceLock::new();
     let map = QUADS.get_or_init(|| {
         [
-            (
-                crate::world::OAK_FENCE_GATE,
-                "block/oak_fence_gate",
-            ),
+            (crate::world::OAK_FENCE_GATE, "block/oak_fence_gate"),
             (
                 crate::world::OAK_FENCE_GATE_OPEN,
                 "block/oak_fence_gate_open",
@@ -8601,42 +9054,27 @@ fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
             // parents its OWN bamboo_fence_gate master wears (the
             // jar's own per-wood models the generated MODELS rows
             // bank — the parent chain the derive resolves).
-            (
-                crate::world::SPRUCE_FENCE_GATE,
-                "block/spruce_fence_gate",
-            ),
+            (crate::world::SPRUCE_FENCE_GATE, "block/spruce_fence_gate"),
             (
                 crate::world::SPRUCE_FENCE_GATE_OPEN,
                 "block/spruce_fence_gate_open",
             ),
-            (
-                crate::world::BIRCH_FENCE_GATE,
-                "block/birch_fence_gate",
-            ),
+            (crate::world::BIRCH_FENCE_GATE, "block/birch_fence_gate"),
             (
                 crate::world::BIRCH_FENCE_GATE_OPEN,
                 "block/birch_fence_gate_open",
             ),
-            (
-                crate::world::JUNGLE_FENCE_GATE,
-                "block/jungle_fence_gate",
-            ),
+            (crate::world::JUNGLE_FENCE_GATE, "block/jungle_fence_gate"),
             (
                 crate::world::JUNGLE_FENCE_GATE_OPEN,
                 "block/jungle_fence_gate_open",
             ),
-            (
-                crate::world::ACACIA_FENCE_GATE,
-                "block/acacia_fence_gate",
-            ),
+            (crate::world::ACACIA_FENCE_GATE, "block/acacia_fence_gate"),
             (
                 crate::world::ACACIA_FENCE_GATE_OPEN,
                 "block/acacia_fence_gate_open",
             ),
-            (
-                crate::world::CHERRY_FENCE_GATE,
-                "block/cherry_fence_gate",
-            ),
+            (crate::world::CHERRY_FENCE_GATE, "block/cherry_fence_gate"),
             (
                 crate::world::CHERRY_FENCE_GATE_OPEN,
                 "block/cherry_fence_gate_open",
@@ -8665,26 +9103,17 @@ fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
                 crate::world::MANGROVE_FENCE_GATE_OPEN,
                 "block/mangrove_fence_gate_open",
             ),
-            (
-                crate::world::BAMBOO_FENCE_GATE,
-                "block/bamboo_fence_gate",
-            ),
+            (crate::world::BAMBOO_FENCE_GATE, "block/bamboo_fence_gate"),
             (
                 crate::world::BAMBOO_FENCE_GATE_OPEN,
                 "block/bamboo_fence_gate_open",
             ),
-            (
-                crate::world::CRIMSON_FENCE_GATE,
-                "block/crimson_fence_gate",
-            ),
+            (crate::world::CRIMSON_FENCE_GATE, "block/crimson_fence_gate"),
             (
                 crate::world::CRIMSON_FENCE_GATE_OPEN,
                 "block/crimson_fence_gate_open",
             ),
-            (
-                crate::world::WARPED_FENCE_GATE,
-                "block/warped_fence_gate",
-            ),
+            (crate::world::WARPED_FENCE_GATE, "block/warped_fence_gate"),
             (
                 crate::world::WARPED_FENCE_GATE_OPEN,
                 "block/warped_fence_gate_open",
@@ -8694,8 +9123,7 @@ fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
         .map(|(k, model)| {
             (
                 k,
-                mc_registry::element_quads::derive_model_inherited(model)
-                    .unwrap_or_default(),
+                mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default(),
             )
         })
         .collect()
@@ -8713,11 +9141,31 @@ fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
 /// non-door stems the None the caller's fallback keeps.
 fn door_master_tile(tex_stem: &str) -> Option<u16> {
     const PAIRS: [(&str, u16, u16); 17] = [
-        ("oak_door", atlas::TILE_OAK_DOOR_BOTTOM, atlas::TILE_OAK_DOOR_TOP),
-        ("spruce_door", atlas::TILE_SPRUCE_DOOR_BOTTOM, atlas::TILE_SPRUCE_DOOR_TOP),
-        ("birch_door", atlas::TILE_BIRCH_DOOR_BOTTOM, atlas::TILE_BIRCH_DOOR_TOP),
-        ("jungle_door", atlas::TILE_JUNGLE_DOOR_BOTTOM, atlas::TILE_JUNGLE_DOOR_TOP),
-        ("acacia_door", atlas::TILE_ACACIA_DOOR_BOTTOM, atlas::TILE_ACACIA_DOOR_TOP),
+        (
+            "oak_door",
+            atlas::TILE_OAK_DOOR_BOTTOM,
+            atlas::TILE_OAK_DOOR_TOP,
+        ),
+        (
+            "spruce_door",
+            atlas::TILE_SPRUCE_DOOR_BOTTOM,
+            atlas::TILE_SPRUCE_DOOR_TOP,
+        ),
+        (
+            "birch_door",
+            atlas::TILE_BIRCH_DOOR_BOTTOM,
+            atlas::TILE_BIRCH_DOOR_TOP,
+        ),
+        (
+            "jungle_door",
+            atlas::TILE_JUNGLE_DOOR_BOTTOM,
+            atlas::TILE_JUNGLE_DOOR_TOP,
+        ),
+        (
+            "acacia_door",
+            atlas::TILE_ACACIA_DOOR_BOTTOM,
+            atlas::TILE_ACACIA_DOOR_TOP,
+        ),
         (
             "dark_oak_door",
             atlas::TILE_DARK_OAK_DOOR_BOTTOM,
@@ -8728,19 +9176,31 @@ fn door_master_tile(tex_stem: &str) -> Option<u16> {
             atlas::TILE_MANGROVE_DOOR_BOTTOM,
             atlas::TILE_MANGROVE_DOOR_TOP,
         ),
-        ("cherry_door", atlas::TILE_CHERRY_DOOR_BOTTOM, atlas::TILE_CHERRY_DOOR_TOP),
+        (
+            "cherry_door",
+            atlas::TILE_CHERRY_DOOR_BOTTOM,
+            atlas::TILE_CHERRY_DOOR_TOP,
+        ),
         (
             "pale_oak_door",
             atlas::TILE_PALE_OAK_DOOR_BOTTOM,
             atlas::TILE_PALE_OAK_DOOR_TOP,
         ),
-        ("bamboo_door", atlas::TILE_BAMBOO_DOOR_BOTTOM, atlas::TILE_BAMBOO_DOOR_TOP),
+        (
+            "bamboo_door",
+            atlas::TILE_BAMBOO_DOOR_BOTTOM,
+            atlas::TILE_BAMBOO_DOOR_TOP,
+        ),
         (
             "crimson_door",
             atlas::TILE_CRIMSON_DOOR_BOTTOM,
             atlas::TILE_CRIMSON_DOOR_TOP,
         ),
-        ("warped_door", atlas::TILE_WARPED_DOOR_BOTTOM, atlas::TILE_WARPED_DOOR_TOP),
+        (
+            "warped_door",
+            atlas::TILE_WARPED_DOOR_BOTTOM,
+            atlas::TILE_WARPED_DOOR_TOP,
+        ),
         (
             "copper_door",
             atlas::TILE_COPPER_DOOR_BOTTOM,
@@ -8761,7 +9221,11 @@ fn door_master_tile(tex_stem: &str) -> Option<u16> {
             atlas::TILE_OXIDIZED_COPPER_DOOR_BOTTOM,
             atlas::TILE_OXIDIZED_COPPER_DOOR_TOP,
         ),
-        ("iron_door", atlas::TILE_IRON_DOOR_BOTTOM, atlas::TILE_IRON_DOOR_TOP),
+        (
+            "iron_door",
+            atlas::TILE_IRON_DOOR_BOTTOM,
+            atlas::TILE_IRON_DOOR_TOP,
+        ),
     ];
     let base = tex_stem.strip_suffix("_top").unwrap_or(tex_stem);
     let base = base.strip_suffix("_bottom").unwrap_or(base);
@@ -8926,6 +9390,36 @@ fn hopper_funnel_quads(model_id: &str) -> &'static [DerivedQuad] {
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
+/// THE BEACON'S OWN CACHED BAKE (the autopush-319 round — the jar's
+/// block/beacon model the derive walk resolves ONCE, the three
+/// elements the 18 quads speak: the glass shell + the obsidian base +
+/// the inner core, the #refs the inherited slots resolve in place —
+/// "block/glass"/"block/obsidian"/"block/beacon" the names the
+/// arm's tile map reads. The failed derive the honest empty slice
+/// keeps [the beacon the nothing renders — the 314 hopper law]).
+fn beacon_model_quads() -> &'static [DerivedQuad] {
+    static QUADS: std::sync::OnceLock<Vec<DerivedQuad>> = std::sync::OnceLock::new();
+    QUADS.get_or_init(|| derive_model_inherited("block/beacon").unwrap_or_default())
+}
+
+/// THE BEACON'S OWN NAMED TILE (the pool's own rows the name index
+/// answers — "block/glass" the 273 row, "block/obsidian" the 93 row,
+/// the unknown stem the None the TILE_NONE fallback keeps [the bed
+/// lane's own cache pattern the walk shares]).
+fn beacon_named_tile(tex: &str) -> u16 {
+    static TILES: std::sync::OnceLock<std::collections::HashMap<&'static str, u16>> =
+        std::sync::OnceLock::new();
+    let m = TILES.get_or_init(|| {
+        atlas::TILE_NAMES
+            .iter()
+            .enumerate()
+            .map(|(i, name)| (*name, i as u16))
+            .collect()
+    });
+    let stem = tex.strip_prefix("block/").unwrap_or(tex);
+    m.get(stem).copied().unwrap_or(atlas::TILE_NONE)
+}
+
 /// THE BED MODELS' OWN CACHED BAKES (the dev-194 round — the sixteen
 /// colors' head/foot pair the derive walk bakes ONCE, the cross-level
 /// #ref merge the template textures resolves in place: the per-color
@@ -9036,13 +9530,9 @@ fn fire_model_quads() -> &'static std::collections::HashMap<&'static str, Vec<De
 /// jar's own when-conditions).
 fn bamboo_parts() -> &'static [Part<'static>] {
     static PARTS: std::sync::OnceLock<Vec<Part<'static>>> = std::sync::OnceLock::new();
-    PARTS.get_or_init(|| {
-        match mc_registry::blockstate_lookup::parse("bamboo") {
-            Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) => {
-                parts.to_vec()
-            }
-            _ => Vec::new(),
-        }
+    PARTS.get_or_init(|| match mc_registry::blockstate_lookup::parse("bamboo") {
+        Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) => parts.to_vec(),
+        _ => Vec::new(),
     })
 }
 
@@ -9057,37 +9547,38 @@ fn bamboo_parts() -> &'static [Part<'static>] {
 fn fence_parts(kind: u16) -> &'static [Part<'static>] {
     static PARTS: std::sync::OnceLock<std::collections::HashMap<u16, Vec<Part<'static>>>> =
         std::sync::OnceLock::new();
-    PARTS.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE THIRTEEN KINDS the explicit seats the palette tail
-        // banks (the constant rows the range law reads — the seat
-        // ladder the enclosures' own walk keeps)
-        for k in [
-            crate::world::OAK_FENCE,
-            crate::world::SPRUCE_FENCE,
-            crate::world::BIRCH_FENCE,
-            crate::world::JUNGLE_FENCE,
-            crate::world::ACACIA_FENCE,
-            crate::world::CHERRY_FENCE,
-            crate::world::DARK_OAK_FENCE,
-            crate::world::PALE_OAK_FENCE,
-            crate::world::MANGROVE_FENCE,
-            crate::world::BAMBOO_FENCE,
-            crate::world::CRIMSON_FENCE,
-            crate::world::WARPED_FENCE,
-            crate::world::NETHER_BRICK_FENCE,
-        ] {
-            if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
-                mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
-            {
-                map.insert(k, parts.to_vec());
+    PARTS
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE THIRTEEN KINDS the explicit seats the palette tail
+            // banks (the constant rows the range law reads — the seat
+            // ladder the enclosures' own walk keeps)
+            for k in [
+                crate::world::OAK_FENCE,
+                crate::world::SPRUCE_FENCE,
+                crate::world::BIRCH_FENCE,
+                crate::world::JUNGLE_FENCE,
+                crate::world::ACACIA_FENCE,
+                crate::world::CHERRY_FENCE,
+                crate::world::DARK_OAK_FENCE,
+                crate::world::PALE_OAK_FENCE,
+                crate::world::MANGROVE_FENCE,
+                crate::world::BAMBOO_FENCE,
+                crate::world::CRIMSON_FENCE,
+                crate::world::WARPED_FENCE,
+                crate::world::NETHER_BRICK_FENCE,
+            ] {
+                if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
+                    mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
+                {
+                    map.insert(k, parts.to_vec());
+                }
             }
-        }
-        map
-    })
-    .get(&kind)
-    .map(|v| v.as_slice())
-    .unwrap_or(&[])
+            map
+        })
+        .get(&kind)
+        .map(|v| v.as_slice())
+        .unwrap_or(&[])
 }
 
 /// THE FENCE MODELS' OWN CACHED BAKES — the derive walk's quads per
@@ -9096,47 +9587,46 @@ fn fence_parts(kind: u16) -> &'static [Part<'static>] {
 /// fence_side parent's TWO bar elements wears; the ONE #texture
 /// ref the per-wood planks master the per-quad verdict reads —
 /// the FACE_TILES row the same master the tile banks).
-fn fence_models(
-    kind: u16,
-) -> &'static (Vec<DerivedQuad>, Vec<DerivedQuad>) {
+fn fence_models(kind: u16) -> &'static (Vec<DerivedQuad>, Vec<DerivedQuad>) {
     static MODELS: std::sync::OnceLock<
         std::collections::HashMap<u16, (Vec<DerivedQuad>, Vec<DerivedQuad>)>,
     > = std::sync::OnceLock::new();
-    MODELS.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE THIRTEEN KINDS the explicit seats the palette tail
-        // banks (the constant rows the derive walk reads — the seat
-        // ladder the enclosures' own walk keeps)
-        for k in [
-            crate::world::OAK_FENCE,
-            crate::world::SPRUCE_FENCE,
-            crate::world::BIRCH_FENCE,
-            crate::world::JUNGLE_FENCE,
-            crate::world::ACACIA_FENCE,
-            crate::world::CHERRY_FENCE,
-            crate::world::DARK_OAK_FENCE,
-            crate::world::PALE_OAK_FENCE,
-            crate::world::MANGROVE_FENCE,
-            crate::world::BAMBOO_FENCE,
-            crate::world::CRIMSON_FENCE,
-            crate::world::WARPED_FENCE,
-            crate::world::NETHER_BRICK_FENCE,
-        ] {
-            let name = crate::world::NAME_OF[k as usize];
-            let post = format!("block/{name}_post");
-            let side = format!("block/{name}_side");
-            map.insert(
-                k,
-                (
-                    derive_model_inherited(&post).unwrap_or_default(),
-                    derive_model_inherited(&side).unwrap_or_default(),
-                ),
-            );
-        }
-        map
-    })
-    .get(&kind)
-    .unwrap_or(&EMPTY_FENCE_MODELS)
+    MODELS
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE THIRTEEN KINDS the explicit seats the palette tail
+            // banks (the constant rows the derive walk reads — the seat
+            // ladder the enclosures' own walk keeps)
+            for k in [
+                crate::world::OAK_FENCE,
+                crate::world::SPRUCE_FENCE,
+                crate::world::BIRCH_FENCE,
+                crate::world::JUNGLE_FENCE,
+                crate::world::ACACIA_FENCE,
+                crate::world::CHERRY_FENCE,
+                crate::world::DARK_OAK_FENCE,
+                crate::world::PALE_OAK_FENCE,
+                crate::world::MANGROVE_FENCE,
+                crate::world::BAMBOO_FENCE,
+                crate::world::CRIMSON_FENCE,
+                crate::world::WARPED_FENCE,
+                crate::world::NETHER_BRICK_FENCE,
+            ] {
+                let name = crate::world::NAME_OF[k as usize];
+                let post = format!("block/{name}_post");
+                let side = format!("block/{name}_side");
+                map.insert(
+                    k,
+                    (
+                        derive_model_inherited(&post).unwrap_or_default(),
+                        derive_model_inherited(&side).unwrap_or_default(),
+                    ),
+                );
+            }
+            map
+        })
+        .get(&kind)
+        .unwrap_or(&EMPTY_FENCE_MODELS)
 }
 
 static EMPTY_FENCE_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>) = (Vec::new(), Vec::new());
@@ -9152,23 +9642,24 @@ static EMPTY_FENCE_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>) = (Vec::new(), V
 fn wall_parts(kind: u16) -> &'static [Part<'static>] {
     static PARTS: std::sync::OnceLock<std::collections::HashMap<u16, Vec<Part<'static>>>> =
         std::sync::OnceLock::new();
-    PARTS.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE THIRTY-TWO KINDS the explicit seats the palette tail
-        // banks (the seat ladder the [`crate::world::WALL_KINDS`]
-        // rows wear — the fence tables' own explicit-seat law keeps)
-        for k in crate::world::WALL_KINDS {
-            if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
-                mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
-            {
-                map.insert(k, parts.to_vec());
+    PARTS
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE THIRTY-TWO KINDS the explicit seats the palette tail
+            // banks (the seat ladder the [`crate::world::WALL_KINDS`]
+            // rows wear — the fence tables' own explicit-seat law keeps)
+            for k in crate::world::WALL_KINDS {
+                if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
+                    mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
+                {
+                    map.insert(k, parts.to_vec());
+                }
             }
-        }
-        map
-    })
-    .get(&kind)
-    .map(|v| v.as_slice())
-    .unwrap_or(&[])
+            map
+        })
+        .get(&kind)
+        .map(|v| v.as_slice())
+        .unwrap_or(&[])
 }
 
 /// THE WALL MODELS' OWN CACHED BAKES — the derive walk's quads per
@@ -9178,35 +9669,34 @@ fn wall_parts(kind: u16) -> &'static [Part<'static>] {
 /// parent's full-height bar the y16..24 extension banks; the ONE
 /// #texture ref the per-wall BASE master the per-quad verdict reads —
 /// the FACE_TILES row the same master the tile banks).
-fn wall_models(
-    kind: u16,
-) -> &'static (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>) {
+fn wall_models(kind: u16) -> &'static (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>) {
     static MODELS: std::sync::OnceLock<
         std::collections::HashMap<u16, (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>)>,
     > = std::sync::OnceLock::new();
-    MODELS.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE THIRTY-TWO KINDS the explicit seats the palette tail
-        // banks (the seat ladder the [`crate::world::WALL_KINDS`]
-        // rows wear — the fence tables' own explicit-seat law keeps)
-        for k in crate::world::WALL_KINDS {
-            let name = crate::world::NAME_OF[k as usize];
-            let post = format!("block/{name}_post");
-            let side = format!("block/{name}_side");
-            let tall = format!("block/{name}_side_tall");
-            map.insert(
-                k,
-                (
-                    derive_model_inherited(&post).unwrap_or_default(),
-                    derive_model_inherited(&side).unwrap_or_default(),
-                    derive_model_inherited(&tall).unwrap_or_default(),
-                ),
-            );
-        }
-        map
-    })
-    .get(&kind)
-    .unwrap_or(&EMPTY_WALL_MODELS)
+    MODELS
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE THIRTY-TWO KINDS the explicit seats the palette tail
+            // banks (the seat ladder the [`crate::world::WALL_KINDS`]
+            // rows wear — the fence tables' own explicit-seat law keeps)
+            for k in crate::world::WALL_KINDS {
+                let name = crate::world::NAME_OF[k as usize];
+                let post = format!("block/{name}_post");
+                let side = format!("block/{name}_side");
+                let tall = format!("block/{name}_side_tall");
+                map.insert(
+                    k,
+                    (
+                        derive_model_inherited(&post).unwrap_or_default(),
+                        derive_model_inherited(&side).unwrap_or_default(),
+                        derive_model_inherited(&tall).unwrap_or_default(),
+                    ),
+                );
+            }
+            map
+        })
+        .get(&kind)
+        .unwrap_or(&EMPTY_WALL_MODELS)
 }
 
 static EMPTY_WALL_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>) =
@@ -9224,29 +9714,30 @@ static EMPTY_WALL_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>)
 fn pane_parts(kind: u16) -> &'static [Part<'static>] {
     static PARTS: std::sync::OnceLock<std::collections::HashMap<u16, Vec<Part<'static>>>> =
         std::sync::OnceLock::new();
-    PARTS.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE TWENTY-SIX KINDS the explicit seats the palette tail
-        // banks (the constant rows the range law reads — the seat
-        // ladders the windows' own walk keeps: the dev-58 eighteen +
-        // the dev-59 eight copper rungs)
-        let kinds: Vec<u16> = crate::world::PANE_KINDS
-            .iter()
-            .chain(crate::world::COPPER_BARS_KINDS.iter())
-            .copied()
-            .collect();
-        for k in kinds {
-            if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
-                mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
-            {
-                map.insert(k, parts.to_vec());
+    PARTS
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE TWENTY-SIX KINDS the explicit seats the palette tail
+            // banks (the constant rows the range law reads — the seat
+            // ladders the windows' own walk keeps: the dev-58 eighteen +
+            // the dev-59 eight copper rungs)
+            let kinds: Vec<u16> = crate::world::PANE_KINDS
+                .iter()
+                .chain(crate::world::COPPER_BARS_KINDS.iter())
+                .copied()
+                .collect();
+            for k in kinds {
+                if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
+                    mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
+                {
+                    map.insert(k, parts.to_vec());
+                }
             }
-        }
-        map
-    })
-    .get(&kind)
-    .map(|v| v.as_slice())
-    .unwrap_or(&[])
+            map
+        })
+        .get(&kind)
+        .map(|v| v.as_slice())
+        .unwrap_or(&[])
 }
 
 /// THE PANE MODELS' OWN CACHED BAKES — the derive walk's quads per
@@ -9262,58 +9753,55 @@ fn pane_parts(kind: u16) -> &'static [Part<'static>] {
 /// MODEL IDS THE KIND'S OWN BLOCKSTATE the parts walk speaks — the
 /// jar-driven walk the hardcoded name lists retires (the dev-59
 /// round the copper rungs the same law serves).
-fn pane_models(
-    kind: u16,
-) -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
-    static MODELS: std::sync::OnceLock<std::collections::HashMap<u16, std::collections::HashMap<&'static str, Vec<DerivedQuad>>>> =
-        std::sync::OnceLock::new();
-    MODELS.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE TWENTY-SIX KINDS the explicit seats the palette tail
-        // banks (the constant rows the derive walk reads — the seat
-        // ladders the windows' own walk keeps)
-        let kinds: Vec<u16> = crate::world::PANE_KINDS
-            .iter()
-            .chain(crate::world::COPPER_BARS_KINDS.iter())
-            .copied()
-            .collect();
-        for k in kinds {
-            // THE MODEL IDS THE KIND'S OWN BLOCKSTATE the parts walk
-            // speaks: every apply's model ref the multipart carries
-            // (the strip_prefix walk the minecraft: namespace sheds,
-            // the dedup the order the first-wear keeps — the copper
-            // rungs' cap/cap_alt pair the same model twice the
-            // when-rows reference, the derive walk the ONE bake
-            // serves)
-            let mut ids: Vec<String> = Vec::new();
-            for part in pane_parts(k) {
-                let apply = &part.apply;
-                for a in apply.iter() {
-                    let model = a
-                        .model
-                        .trim_start_matches("minecraft:")
-                        .to_string();
-                    if !ids.contains(&model) {
-                        ids.push(model);
+fn pane_models(kind: u16) -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
+    static MODELS: std::sync::OnceLock<
+        std::collections::HashMap<u16, std::collections::HashMap<&'static str, Vec<DerivedQuad>>>,
+    > = std::sync::OnceLock::new();
+    MODELS
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE TWENTY-SIX KINDS the explicit seats the palette tail
+            // banks (the constant rows the derive walk reads — the seat
+            // ladders the windows' own walk keeps)
+            let kinds: Vec<u16> = crate::world::PANE_KINDS
+                .iter()
+                .chain(crate::world::COPPER_BARS_KINDS.iter())
+                .copied()
+                .collect();
+            for k in kinds {
+                // THE MODEL IDS THE KIND'S OWN BLOCKSTATE the parts walk
+                // speaks: every apply's model ref the multipart carries
+                // (the strip_prefix walk the minecraft: namespace sheds,
+                // the dedup the order the first-wear keeps — the copper
+                // rungs' cap/cap_alt pair the same model twice the
+                // when-rows reference, the derive walk the ONE bake
+                // serves)
+                let mut ids: Vec<String> = Vec::new();
+                for part in pane_parts(k) {
+                    let apply = &part.apply;
+                    for a in apply.iter() {
+                        let model = a.model.trim_start_matches("minecraft:").to_string();
+                        if !ids.contains(&model) {
+                            ids.push(model);
+                        }
                     }
                 }
+                let mut kind_models = std::collections::HashMap::new();
+                for id in ids {
+                    let quads = derive_model_inherited(&id).unwrap_or_default();
+                    // the 'static key the leak law carries (the model id
+                    // strings the ONCE the process lifetime wears — the
+                    // fence cache's own Box::leak precedent the same law
+                    // banks)
+                    let leaked: &'static str = Box::leak(id.into_boxed_str());
+                    kind_models.insert(leaked, quads);
+                }
+                map.insert(k, kind_models);
             }
-            let mut kind_models = std::collections::HashMap::new();
-            for id in ids {
-                let quads = derive_model_inherited(&id).unwrap_or_default();
-                // the 'static key the leak law carries (the model id
-                // strings the ONCE the process lifetime wears — the
-                // fence cache's own Box::leak precedent the same law
-                // banks)
-                let leaked: &'static str = Box::leak(id.into_boxed_str());
-                kind_models.insert(leaked, quads);
-            }
-            map.insert(k, kind_models);
-        }
-        map
-    })
-    .get(&kind)
-    .unwrap_or_else(|| empty_pane_models())
+            map
+        })
+        .get(&kind)
+        .unwrap_or_else(|| empty_pane_models())
 }
 
 fn empty_pane_models() -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
@@ -10463,41 +10951,42 @@ fn lantern_model_quads(kind: u16, hanging: u8) -> &'static [mc_registry::element
     static BAKES: std::sync::OnceLock<
         std::collections::HashMap<(u16, u8), Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();
-    BAKES.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE TEN KINDS the explicit seats the palette tail banks
-        // (the constant rows the blockstate parse reads — the seat
-        // ladder the hanging pair's own walk keeps)
-        for k in crate::world::LANTERN_KINDS {
-            let name = crate::world::NAME_OF[k as usize];
-            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
-                mc_registry::blockstate_lookup::parse(name)
-            else {
-                continue;
-            };
-            for (key, applies) in entries {
-                // THE HANGING KEY'S OWN SEAT (the "hanging=false"/
-                // "hanging=true" entries the variant byte maps: 0 the
-                // standing pair keeps, 1 the hanging pair wears)
-                let hanging = match key {
-                    "hanging=false" => crate::world::LANTERN_STANDING,
-                    "hanging=true" => crate::world::LANTERN_HANGING,
-                    _ => continue,
-                };
-                let Some(apply) = applies.first() else {
+    BAKES
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE TEN KINDS the explicit seats the palette tail banks
+            // (the constant rows the blockstate parse reads — the seat
+            // ladder the hanging pair's own walk keeps)
+            for k in crate::world::LANTERN_KINDS {
+                let name = crate::world::NAME_OF[k as usize];
+                let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                    mc_registry::blockstate_lookup::parse(name)
+                else {
                     continue;
                 };
-                let model_id = apply.model.trim_start_matches("minecraft:");
-                let quads = mc_registry::element_quads::derive_model_inherited(model_id)
-                    .unwrap_or_default();
-                map.insert((k, hanging), quads);
+                for (key, applies) in entries {
+                    // THE HANGING KEY'S OWN SEAT (the "hanging=false"/
+                    // "hanging=true" entries the variant byte maps: 0 the
+                    // standing pair keeps, 1 the hanging pair wears)
+                    let hanging = match key {
+                        "hanging=false" => crate::world::LANTERN_STANDING,
+                        "hanging=true" => crate::world::LANTERN_HANGING,
+                        _ => continue,
+                    };
+                    let Some(apply) = applies.first() else {
+                        continue;
+                    };
+                    let model_id = apply.model.trim_start_matches("minecraft:");
+                    let quads = mc_registry::element_quads::derive_model_inherited(model_id)
+                        .unwrap_or_default();
+                    map.insert((k, hanging), quads);
+                }
             }
-        }
-        map
-    })
-    .get(&(kind, hanging))
-    .map(Vec::as_slice)
-    .unwrap_or(&[])
+            map
+        })
+        .get(&(kind, hanging))
+        .map(Vec::as_slice)
+        .unwrap_or(&[])
 }
 
 /// THE CHAIN MODELS' OWN CACHED BAKES (the dev-60 round — the kind's
@@ -10516,41 +11005,42 @@ fn chain_model_quads(kind: u16, axis: u8) -> (&'static [DerivedQuad], u32, u32) 
     static BAKES: std::sync::OnceLock<
         std::collections::HashMap<(u16, u8), (Vec<DerivedQuad>, u32, u32)>,
     > = std::sync::OnceLock::new();
-    BAKES.get_or_init(|| {
-        let mut map = std::collections::HashMap::new();
-        // THE NINE KINDS the explicit seats the palette tail banks
-        // (the constant rows the blockstate parse reads — the seat
-        // ladder the hanging links' own walk keeps)
-        for k in crate::world::CHAIN_KINDS {
-            let name = crate::world::NAME_OF[k as usize];
-            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
-                mc_registry::blockstate_lookup::parse(name)
-            else {
-                continue;
-            };
-            for (key, applies) in entries {
-                // THE AXIS KEY'S OWN SEAT (the "axis=x"/"axis=y"/
-                // "axis=z" entries the variant byte maps: 0 the y key
-                // the vertical keeps, 1 the x key, 2 the z key)
-                let axis = match key {
-                    "axis=y" => crate::world::CHAIN_AXIS_Y,
-                    "axis=x" => crate::world::CHAIN_AXIS_X,
-                    "axis=z" => crate::world::CHAIN_AXIS_Z,
-                    _ => continue,
-                };
-                let Some(apply) = applies.first() else {
+    BAKES
+        .get_or_init(|| {
+            let mut map = std::collections::HashMap::new();
+            // THE NINE KINDS the explicit seats the palette tail banks
+            // (the constant rows the blockstate parse reads — the seat
+            // ladder the hanging links' own walk keeps)
+            for k in crate::world::CHAIN_KINDS {
+                let name = crate::world::NAME_OF[k as usize];
+                let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                    mc_registry::blockstate_lookup::parse(name)
+                else {
                     continue;
                 };
-                let model_id = apply.model.trim_start_matches("minecraft:");
-                let quads = derive_model_inherited(model_id).unwrap_or_default();
-                map.insert((k, axis), (quads, apply.x, apply.y));
+                for (key, applies) in entries {
+                    // THE AXIS KEY'S OWN SEAT (the "axis=x"/"axis=y"/
+                    // "axis=z" entries the variant byte maps: 0 the y key
+                    // the vertical keeps, 1 the x key, 2 the z key)
+                    let axis = match key {
+                        "axis=y" => crate::world::CHAIN_AXIS_Y,
+                        "axis=x" => crate::world::CHAIN_AXIS_X,
+                        "axis=z" => crate::world::CHAIN_AXIS_Z,
+                        _ => continue,
+                    };
+                    let Some(apply) = applies.first() else {
+                        continue;
+                    };
+                    let model_id = apply.model.trim_start_matches("minecraft:");
+                    let quads = derive_model_inherited(model_id).unwrap_or_default();
+                    map.insert((k, axis), (quads, apply.x, apply.y));
+                }
             }
-        }
-        map
-    })
-    .get(&(kind, axis))
-    .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
-    .unwrap_or((&[], 0, 0))
+            map
+        })
+        .get(&(kind, axis))
+        .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
+        .unwrap_or((&[], 0, 0))
 }
 
 /// THE STAIRS KEY'S OWN PARSE (the blockstate's "facing=X,half=Y,
@@ -10620,47 +11110,48 @@ fn stairs_model_quads(
         std::collections::HashMap<(u16, u8), (std::sync::Arc<Vec<DerivedQuad>>, usize, usize)>,
     > = std::sync::OnceLock::new();
     let idx = stairs_state_index(facing, half_top, shape);
-    BAKES.get_or_init(|| {
-        // THE MODEL DEDUP (the 192 distinct models the whole family
-        // banks — the waxed twins the BASE ids re-wear — the Arc the
-        // 2560 entries share)
-        let mut models: std::collections::HashMap<String, std::sync::Arc<Vec<DerivedQuad>>> =
-            std::collections::HashMap::new();
-        let mut map = std::collections::HashMap::new();
-        for k in crate::world::STAIRS_KINDS {
-            let name = crate::world::NAME_OF[k as usize];
-            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
-                mc_registry::blockstate_lookup::parse(name)
-            else {
-                continue;
-            };
-            for (key, applies) in entries {
-                let Some((facing, half_top, shape)) = stairs_key_parts(&key) else {
+    BAKES
+        .get_or_init(|| {
+            // THE MODEL DEDUP (the 192 distinct models the whole family
+            // banks — the waxed twins the BASE ids re-wear — the Arc the
+            // 2560 entries share)
+            let mut models: std::collections::HashMap<String, std::sync::Arc<Vec<DerivedQuad>>> =
+                std::collections::HashMap::new();
+            let mut map = std::collections::HashMap::new();
+            for k in crate::world::STAIRS_KINDS {
+                let name = crate::world::NAME_OF[k as usize];
+                let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                    mc_registry::blockstate_lookup::parse(name)
+                else {
                     continue;
                 };
-                let Some(apply) = applies.first() else {
-                    continue;
-                };
-                let model_id = apply.model.trim_start_matches("minecraft:").to_string();
-                let quads = models
-                    .entry(model_id.clone())
-                    .or_insert_with(|| {
-                        std::sync::Arc::new(
-                            derive_model_inherited(&model_id).unwrap_or_default(),
-                        )
-                    })
-                    .clone();
-                map.insert(
-                    (k, stairs_state_index(facing, half_top, shape)),
-                    (quads, apply.x as usize / 90, apply.y as usize / 90),
-                );
+                for (key, applies) in entries {
+                    let Some((facing, half_top, shape)) = stairs_key_parts(&key) else {
+                        continue;
+                    };
+                    let Some(apply) = applies.first() else {
+                        continue;
+                    };
+                    let model_id = apply.model.trim_start_matches("minecraft:").to_string();
+                    let quads = models
+                        .entry(model_id.clone())
+                        .or_insert_with(|| {
+                            std::sync::Arc::new(
+                                derive_model_inherited(&model_id).unwrap_or_default(),
+                            )
+                        })
+                        .clone();
+                    map.insert(
+                        (k, stairs_state_index(facing, half_top, shape)),
+                        (quads, apply.x as usize / 90, apply.y as usize / 90),
+                    );
+                }
             }
-        }
-        map
-    })
-    .get(&(kind, idx))
-    .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
-    .unwrap_or((&[], 0, 0))
+            map
+        })
+        .get(&(kind, idx))
+        .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
+        .unwrap_or((&[], 0, 0))
 }
 
 /// THE STAIRS STEMS' OWN TILE INDEX (the parent masters the per-quad
@@ -10693,47 +11184,48 @@ fn slab_model_quads(kind: u16, slab_type: u8) -> &'static [DerivedQuad] {
     static BAKES: std::sync::OnceLock<
         std::collections::HashMap<(u16, u8), std::sync::Arc<Vec<DerivedQuad>>>,
     > = std::sync::OnceLock::new();
-    BAKES.get_or_init(|| {
-        // THE MODEL DEDUP (the bottom/top models the bare+copper pairs
-        // share, the doubles the parent's full-cube model the waxed
-        // twins re-wear — the Arc the entries share)
-        let mut models: std::collections::HashMap<String, std::sync::Arc<Vec<DerivedQuad>>> =
-            std::collections::HashMap::new();
-        let mut map = std::collections::HashMap::new();
-        for k in crate::world::SLAB_KINDS {
-            let name = crate::world::NAME_OF[k as usize];
-            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
-                mc_registry::blockstate_lookup::parse(name)
-            else {
-                continue;
-            };
-            for (key, applies) in entries {
-                let want = match key {
-                    "type=bottom" => crate::world::SLAB_TYPE_BOTTOM,
-                    "type=top" => crate::world::SLAB_TYPE_TOP,
-                    "type=double" => crate::world::SLAB_TYPE_DOUBLE,
-                    _ => continue,
-                };
-                let Some(apply) = applies.first() else {
+    BAKES
+        .get_or_init(|| {
+            // THE MODEL DEDUP (the bottom/top models the bare+copper pairs
+            // share, the doubles the parent's full-cube model the waxed
+            // twins re-wear — the Arc the entries share)
+            let mut models: std::collections::HashMap<String, std::sync::Arc<Vec<DerivedQuad>>> =
+                std::collections::HashMap::new();
+            let mut map = std::collections::HashMap::new();
+            for k in crate::world::SLAB_KINDS {
+                let name = crate::world::NAME_OF[k as usize];
+                let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                    mc_registry::blockstate_lookup::parse(name)
+                else {
                     continue;
                 };
-                let model_id = apply.model.trim_start_matches("minecraft:").to_string();
-                let quads = models
-                    .entry(model_id.clone())
-                    .or_insert_with(|| {
-                        std::sync::Arc::new(
-                            derive_model_inherited(&model_id).unwrap_or_default(),
-                        )
-                    })
-                    .clone();
-                map.insert((k, want), quads);
+                for (key, applies) in entries {
+                    let want = match key {
+                        "type=bottom" => crate::world::SLAB_TYPE_BOTTOM,
+                        "type=top" => crate::world::SLAB_TYPE_TOP,
+                        "type=double" => crate::world::SLAB_TYPE_DOUBLE,
+                        _ => continue,
+                    };
+                    let Some(apply) = applies.first() else {
+                        continue;
+                    };
+                    let model_id = apply.model.trim_start_matches("minecraft:").to_string();
+                    let quads = models
+                        .entry(model_id.clone())
+                        .or_insert_with(|| {
+                            std::sync::Arc::new(
+                                derive_model_inherited(&model_id).unwrap_or_default(),
+                            )
+                        })
+                        .clone();
+                    map.insert((k, want), quads);
+                }
             }
-        }
-        map
-    })
-    .get(&(kind, slab_type))
-    .map(|quads| quads.as_slice())
-    .unwrap_or(&[])
+            map
+        })
+        .get(&(kind, slab_type))
+        .map(|quads| quads.as_slice())
+        .unwrap_or(&[])
 }
 
 /// THE SLAB STEMS' OWN TILE INDEX (the parent masters the per-quad
@@ -10787,7 +11279,9 @@ fn bamboo_model_quads() -> &'static std::collections::HashMap<&'static str, Vec<
 /// Mesh the whole world in parallel.
 pub fn mesh_world(world: &World, lut: Option<&TextureLut>) -> Vec<Quad> {
     let side = world.chunks_per_side;
-    let jobs: Vec<(usize, usize)> = (0..side).flat_map(|cz| (0..side).map(move |cx| (cx, cz))).collect();
+    let jobs: Vec<(usize, usize)> = (0..side)
+        .flat_map(|cz| (0..side).map(move |cx| (cx, cz)))
+        .collect();
     let parts: Vec<Vec<Quad>> = jobs
         .par_iter()
         .map(|&(cx, cz)| mesh_chunk(world, cx, cz, lut))
@@ -10816,7 +11310,11 @@ fn mesh_produces_faces() {
     // smooth lighting: open-sky faces must stay at full brightness
     for quad in &q {
         for c in &quad.colors {
-            assert!(c.iter().all(|v| (0.0..=1.0).contains(v)), "color out of range: {:?}", quad.colors);
+            assert!(
+                c.iter().all(|v| (0.0..=1.0).contains(v)),
+                "color out of range: {:?}",
+                quad.colors
+            );
         }
     }
 }
@@ -10913,7 +11411,6 @@ mod tests {
         );
     }
 
-
     /// 1-chunk world, all air.
     fn empty_world() -> World {
         World {
@@ -10964,7 +11461,7 @@ mod tests {
             // the effect-absent floor: no effect store rides the test
             // scenes, the golden identity holds
             night_vision_factor: 0.0,
-            rain_level: 0.0,  // the air-window scene: the dry world
+            rain_level: 0.0, // the air-window scene: the dry world
             thunder_level: 0.0,
             // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
             // the gate the gen-time default keeps off, the journal the
@@ -11202,7 +11699,11 @@ mod tests {
         };
         let mut out = [0f32; 4];
         for (i, c) in quad.colors.iter().enumerate() {
-            out[i] = if base[0].abs() > 1e-9 { c[0] / base[0] } else { c[0] };
+            out[i] = if base[0].abs() > 1e-9 {
+                c[0] / base[0]
+            } else {
+                c[0]
+            };
         }
         out
     }
@@ -11238,7 +11739,12 @@ mod tests {
             ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             // grass slot carries an extreme color on every cell — if
             // pale leaves wrongly selected a slot, some face would fold
-            tints: vec![[Some(0xFF0000), Some(0xFF0000), Some(0xFF0000), Some(0xFF0000)]],
+            tints: vec![[
+                Some(0xFF0000),
+                Some(0xFF0000),
+                Some(0xFF0000),
+                Some(0xFF0000),
+            ]],
             climates: Vec::new(), // the tint law's own tests: no climate opinion
         });
         let quads = mesh_chunk(&w, 0, 0, None);
@@ -11333,7 +11839,10 @@ mod tests {
             let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
             assert!(xs.contains(&8.0) && xs.contains(&8.5), "x half {xs:?}");
             assert!(zs.contains(&8.0) && zs.contains(&8.5), "z half {zs:?}");
-            assert!(!xs.contains(&9.0) && !zs.contains(&9.0), "a quarter, not full");
+            assert!(
+                !xs.contains(&9.0) && !zs.contains(&9.0),
+                "a quarter, not full"
+            );
             assert_eq!(q.colors[0], q.colors[1], "no AO: uniform corners");
         }
         // the up quad's uv spans the texture's quarter too (u = x, v = z)
@@ -11584,7 +12093,11 @@ mod tests {
 
     #[test]
     fn light_brightness_matches_the_vanilla_ramp() {
-        assert_eq!(light_brightness(15.0), 1.0, "open sky keeps the legacy look");
+        assert_eq!(
+            light_brightness(15.0),
+            1.0,
+            "open sky keeps the legacy look"
+        );
         assert_eq!(light_brightness(0.0), 0.0, "known-dark renders black");
         assert!(
             (light_brightness(8.0) - 0.222_222_22).abs() < 1e-4,
@@ -11617,7 +12130,11 @@ mod tests {
         );
         // known full sky at the face cell — brightness 1.0, still the legacy look
         set_light(&mut w, Some(15), None, 8, 9, 8);
-        assert_eq!(vertex_multiplier(&top_face(&w)), legacy, "full sky is the legacy look");
+        assert_eq!(
+            vertex_multiplier(&top_face(&w)),
+            legacy,
+            "full sky is the legacy look"
+        );
         // the engine says the cell is DARK (both layers known zero) -> black
         set_light(&mut w, Some(0), Some(0), 8, 9, 8);
         for m in vertex_multiplier(&top_face(&w)) {
@@ -11634,7 +12151,11 @@ mod tests {
         set_light(&mut w, None, Some(14), 8, 9, 8);
         let b = light_brightness(14.0) * BLOCK_FACTOR;
         let c = block_light_color(14.0, None);
-        let expect = [(b * c[0]).min(1.0), (b * c[1]).min(1.0), (b * c[2]).min(1.0)];
+        let expect = [
+            (b * c[0]).min(1.0),
+            (b * c[1]).min(1.0),
+            (b * c[2]).min(1.0),
+        ];
         assert!((expect[0] - 1.0).abs() < 1e-6, "red saturates the clamp");
         assert!(expect[2] < 1.0, "blue stays under the clamp");
         for corner in &top_face(&w).colors {
@@ -11659,7 +12180,11 @@ mod tests {
         w.light = Some(unknown_light());
         set_light(&mut w, Some(15), Some(0), 8, 9, 8);
         // day: brightness(15) = 1.0 -> legacy
-        assert_eq!(vertex_multiplier(&top_face(&w)), [1.0; 4], "day sky-15 is legacy");
+        assert_eq!(
+            vertex_multiplier(&top_face(&w)),
+            [1.0; 4],
+            "day sky-15 is legacy"
+        );
         // night (the day timeline's midnight tick -> the 0.24 plateau +
         // the #7a7aff tint on the sky term)
         w.day_tick = Some(18_000);
@@ -11686,7 +12211,10 @@ mod tests {
             "the torch sum saturates the clamp: {night_torch_r}"
         );
         for m in vertex_multiplier(&top_face(&w)) {
-            assert!((m - night_torch_r).abs() < 1e-6, "night torch red saturates: {m}");
+            assert!(
+                (m - night_torch_r).abs() < 1e-6,
+                "night torch red saturates: {m}"
+            );
         }
         // the sum WITHOUT the clamp: day, sky 12 (brightness 0.5) over
         // block 10 (brightness 1/3 × BlockFactor 1.4 × tint-red 1.0) —
@@ -11746,7 +12274,11 @@ mod tests {
         assert!((full - 1.0).abs() < 1e-6, "day product sanity: {full}");
         w.day_tick = Some(14_010); // the goldens' night tick
         let sky = light_brightness(15.0) * 0.24; // factor 0.24 * ramp 1.0
-        let expect = [full * sky * (122.0f32 / 255.0), full * sky * (122.0 / 255.0), full * sky];
+        let expect = [
+            full * sky * (122.0f32 / 255.0),
+            full * sky * (122.0 / 255.0),
+            full * sky,
+        ];
         for corner in &top_face(&w).colors {
             for (c, e) in corner.iter().zip(expect.iter()) {
                 assert!((c - e).abs() < 1e-6, "night tint per channel: {c} vs {e}");
@@ -11776,7 +12308,10 @@ mod tests {
         // #ffd88c (the dip's neighborhood, not the dip itself)
         let m7 = 0.9 * parabolic_mix_factor(7.0 / 15.0);
         let m8 = 0.9 * parabolic_mix_factor(8.0 / 15.0);
-        assert!((m7 - m8).abs() < 1e-6, "the dip is level-symmetric: {m7} vs {m8}");
+        assert!(
+            (m7 - m8).abs() < 1e-6,
+            "the dip is level-symmetric: {m7} vs {m8}"
+        );
         assert!(m7 < 0.01, "near the pure tint: {m7}");
         // red is 1.0 at EVERY level (the tint's red is saturated — the
         // warmth lives entirely in green/blue)
@@ -11790,8 +12325,16 @@ mod tests {
         let expect_b = 140.0f32 / 255.0 + 0.9 * (1.0 - 140.0 / 255.0);
         for b in [0.0f32, 15.0] {
             let c = block_light_color(b, None);
-            assert!((c[1] - expect_g).abs() < 1e-6, "green at {b}: {} vs {expect_g}", c[1]);
-            assert!((c[2] - expect_b).abs() < 1e-6, "blue at {b}: {} vs {expect_b}", c[2]);
+            assert!(
+                (c[1] - expect_g).abs() < 1e-6,
+                "green at {b}: {} vs {expect_g}",
+                c[1]
+            );
+            assert!(
+                (c[2] - expect_b).abs() < 1e-6,
+                "blue at {b}: {} vs {expect_b}",
+                c[2]
+            );
         }
     }
 
@@ -11805,7 +12348,11 @@ mod tests {
         // the parabola itself is unchanged (still 0.9 on the raw
         // level, red saturated at the ends — the stated red is 0x30,
         // so red is NOT 1.0 here: the mix carries it toward white).
-        let stated = Some([0x30 as f32 / 255.0, 0x28 as f32 / 255.0, 0x21 as f32 / 255.0]);
+        let stated = Some([
+            0x30 as f32 / 255.0,
+            0x28 as f32 / 255.0,
+            0x21 as f32 / 255.0,
+        ]);
         let m15 = 0.9 * parabolic_mix_factor(15.0 / 15.0);
         let c = block_light_color(15.0, stated);
         let expect = [
@@ -11814,7 +12361,10 @@ mod tests {
             0x21 as f32 / 255.0 + m15 * (1.0 - 0x21 as f32 / 255.0),
         ];
         for (ch, e) in c.iter().zip(expect.iter()) {
-            assert!((ch - e).abs() < 1e-6, "stated tint rides verbatim: {ch} vs {e}");
+            assert!(
+                (ch - e).abs() < 1e-6,
+                "stated tint rides verbatim: {ch} vs {e}"
+            );
         }
         // the None call is the default's verdict (the corrected blue
         // 140 — NOT the retired 172 literal) — the two differ, the
@@ -11931,7 +12481,10 @@ mod tests {
         let b = light_brightness(7.0) * BLOCK_FACTOR;
         let c = block_light_color(7.0, None);
         let expect = [b * c[0], b * c[1], b * c[2]];
-        assert!(expect.iter().all(|e| *e < 1.0), "block 7 sits under the clamp");
+        assert!(
+            expect.iter().all(|e| *e < 1.0),
+            "block 7 sits under the clamp"
+        );
         for corner in &top_face(&w).colors {
             for (ch, e) in corner.iter().zip(expect.iter()) {
                 assert!((ch - e).abs() < 1e-6, "torch tint per channel: {ch} vs {e}");
@@ -12003,7 +12556,11 @@ mod tests {
         );
         assert_eq!(
             night_vision_base(ambient, Some([0.05, 0.0, 0.15]), 1.0),
-            [ambient[0].max(0.05), ambient[1].max(0.0), ambient[2].max(0.15)],
+            [
+                ambient[0].max(0.05),
+                ambient[1].max(0.0),
+                ambient[2].max(0.15)
+            ],
             "the max is per-channel: a dim stated color cannot darken"
         );
         // the render-path witness: a lit cell renders EXACTLY the same
@@ -12024,7 +12581,15 @@ mod tests {
         );
         // the lifted base, derived through the SAME fold the paths call
         let amb = 0.0f32; // the black default: this scene's ambient
-        let lifted = night_vision_base([amb; 3], Some([0x18 as f32 / 255.0, 0x10 as f32 / 255.0, 0x28 as f32 / 255.0]), 1.0);
+        let lifted = night_vision_base(
+            [amb; 3],
+            Some([
+                0x18 as f32 / 255.0,
+                0x10 as f32 / 255.0,
+                0x28 as f32 / 255.0,
+            ]),
+            1.0,
+        );
         assert_eq!(
             lifted,
             [24.0f32 / 255.0, 16.0 / 255.0, 40.0 / 255.0],
@@ -12053,7 +12618,11 @@ mod tests {
         // EXACTLY the shader's max(AmbientColor, NightVisionColor·1.0)
         // with the unchanged block term on top (lightmap.fsh verbatim)
         w.night_vision_factor = 1.0;
-        let c = [0x18 as f32 / 255.0, 0x10 as f32 / 255.0, 0x28 as f32 / 255.0];
+        let c = [
+            0x18 as f32 / 255.0,
+            0x10 as f32 / 255.0,
+            0x28 as f32 / 255.0,
+        ];
         let b = light_brightness(5.0) * BLOCK_FACTOR;
         let tint = block_light_color(5.0, None);
         let expect = [
@@ -12063,7 +12632,10 @@ mod tests {
         ];
         for corner in &top_face(&w).colors {
             for (ch, e) in corner.iter().zip(expect.iter()) {
-                assert!((ch - e).abs() < 1e-6, "the lifted base per channel: {ch} vs {e}");
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "the lifted base per channel: {ch} vs {e}"
+                );
             }
         }
     }
@@ -12094,7 +12666,11 @@ mod tests {
             let sky = light_brightness(15.0) * 1.0;
             let b = light_brightness(5.0) * BLOCK_FACTOR;
             let c = block_light_color(5.0, None);
-            [0.0 + sky + b * c[0], 0.0 + sky + b * c[1], 0.0 + sky + b * c[2]]
+            [
+                0.0 + sky + b * c[0],
+                0.0 + sky + b * c[1],
+                0.0 + sky + b * c[2],
+            ]
         };
         let expect = [
             expect_raw[0].min(1.0),
@@ -12194,7 +12770,10 @@ mod tests {
         ];
         for corner in &top_face(&w).colors {
             for (ch, e) in corner.iter().zip(expect.iter()) {
-                assert!((ch - e).abs() < 1e-6, "ambient lifts per channel: {ch} vs {e}");
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "ambient lifts per channel: {ch} vs {e}"
+                );
             }
         }
         // the nether floor #302821: every channel a different step
@@ -12299,10 +12878,14 @@ mod tests {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, GRASS); // ground block
         put(&mut w, 9, 9, 8, STONE); // wall one step up, +X side
-        // On the ground top face, corners adjacent to the wall (x=1 side)
-        // pick up occlusion: their +X neighbor at y+1 is stone.
+                                     // On the ground top face, corners adjacent to the wall (x=1 side)
+                                     // pick up occlusion: their +X neighbor at y+1 is stone.
         let levels = ao_levels(&w, 8, 8, 8, 2);
-        assert!(levels.iter().any(|&l| l < 3), "wall must darken some corner: {:?}", levels);
+        assert!(
+            levels.iter().any(|&l| l < 3),
+            "wall must darken some corner: {:?}",
+            levels
+        );
         // the far corners (x=0 side) stay fully open
         let far: Vec<u8> = FACE_CORNERS[2]
             .iter()
@@ -12310,7 +12893,11 @@ mod tests {
             .filter(|(_, c)| c[0] < 0.5)
             .map(|(i, _)| levels[i])
             .collect();
-        assert!(far.iter().all(|&l| l == 3), "far corners must stay bright: {:?}", levels);
+        assert!(
+            far.iter().all(|&l| l == 3),
+            "far corners must stay bright: {:?}",
+            levels
+        );
     }
 
     #[test]
@@ -12321,7 +12908,11 @@ mod tests {
         put(&mut w, 9, 9, 8, STONE);
         put(&mut w, 8, 9, 9, STONE);
         let levels = ao_levels(&w, 8, 8, 8, 2);
-        assert!(levels.contains(&0), "double-sided corner must hit level 0: {:?}", levels);
+        assert!(
+            levels.contains(&0),
+            "double-sided corner must hit level 0: {:?}",
+            levels
+        );
     }
 
     #[test]
@@ -12330,7 +12921,11 @@ mod tests {
         put(&mut w, 8, 8, 8, GRASS);
         put(&mut w, 9, 9, 8, WATER);
         put(&mut w, 9, 9, 9, LEAVES);
-        assert_eq!(ao_levels(&w, 8, 8, 8, 2), [3, 3, 3, 3], "water/leaves must not occlude");
+        assert_eq!(
+            ao_levels(&w, 8, 8, 8, 2),
+            [3, 3, 3, 3],
+            "water/leaves must not occlude"
+        );
     }
 
     #[test]
@@ -12341,7 +12936,12 @@ mod tests {
         // base cell above the block is (8,9,8); corner 0 samples (7,9,7).
         put(&mut w, 7, 9, 7, STONE);
         let levels = ao_levels(&w, 8, 8, 8, 2);
-        assert_eq!(levels, [2, 3, 3, 3], "only the diagonal corner darkens: {:?}", levels);
+        assert_eq!(
+            levels,
+            [2, 3, 3, 3],
+            "only the diagonal corner darkens: {:?}",
+            levels
+        );
     }
 
     #[test]
@@ -12351,7 +12951,11 @@ mod tests {
         let flipped = flip_order(&[1, 3, 1, 3]);
         assert_eq!(flipped, [1, 2, 3, 0]);
         assert!(3 + 3 >= 1 + 3, "new diagonal must carry the max AO sum");
-        assert_eq!(flip_order(&[3, 1, 3, 1]), [0, 1, 2, 3], "optimal diagonal stays");
+        assert_eq!(
+            flip_order(&[3, 1, 3, 1]),
+            [0, 1, 2, 3],
+            "optimal diagonal stays"
+        );
         assert_eq!(flip_order(&[2, 2, 2, 2]), [0, 1, 2, 3], "uniform AO stays");
     }
 
@@ -12361,19 +12965,31 @@ mod tests {
         put(&mut w, 8, 8, 8, STONE);
         let q = mesh_chunk(&w, 0, 0, None);
         // top face of the lone block: shade 1.0, open sky -> full brightness
-        let top = q.iter().find(|quad| quad.pts[0][1] == 9.0 && quad.pts[1][1] == 9.0).expect("top face quad");
+        let top = q
+            .iter()
+            .find(|quad| quad.pts[0][1] == 9.0 && quad.pts[1][1] == 9.0)
+            .expect("top face quad");
         let tile = atlas::FACE_TILES[STONE as usize][2];
         if tile == atlas::TILE_NONE {
             let expected = default_color(STONE, 2);
             for c in &top.colors {
                 for ch in 0..3 {
-                    assert!((c[ch] - expected[ch]).abs() < 1e-6, "{:?} vs {:?}", c, expected);
+                    assert!(
+                        (c[ch] - expected[ch]).abs() < 1e-6,
+                        "{:?} vs {:?}",
+                        c,
+                        expected
+                    );
                 }
             }
         } else {
             // textured path: vertex colors carry the shade*AO multiplier only
             for c in &top.colors {
-                assert!((c[0] - 1.0).abs() < 1e-6, "open-sky top multiplier must be 1.0: {:?}", c);
+                assert!(
+                    (c[0] - 1.0).abs() < 1e-6,
+                    "open-sky top multiplier must be 1.0: {:?}",
+                    c
+                );
                 assert_eq!(c[0], c[1]);
                 assert_eq!(c[1], c[2]);
             }
@@ -12395,8 +13011,7 @@ mod tests {
         );
         // the wet verdict the no-water world never picks
         assert!(
-            !q.iter()
-                .any(|quad| quad.tile == atlas::TILE_FARMLAND_MOIST),
+            !q.iter().any(|quad| quad.tile == atlas::TILE_FARMLAND_MOIST),
             "the dry world the wet tile never speaks"
         );
     }
@@ -12412,9 +13027,8 @@ mod tests {
         // tile the real chain resolves — the is_near_water verdict the
         // vanilla texture pick rides)
         assert!(
-            q.iter().any(
-                |quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST
-            ),
+            q.iter()
+                .any(|quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST),
             "the near-water farmland the farmland_moist master wears"
         );
         assert!(
@@ -12446,9 +13060,8 @@ mod tests {
             "the side quads the dirt master wears"
         );
         assert!(
-            q3.iter().any(
-                |quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST
-            ),
+            q3.iter()
+                .any(|quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST),
             "the wet top the second fill wears"
         );
     }
@@ -12463,9 +13076,7 @@ mod tests {
         // side tile keeps; the byte's no-opinion answer the
         // north-facing default the blockstate's own y=0 row banks)
         let cell = |x: i32, y: i32, z: i32| {
-            (x as usize)
-                + (z as usize) * CHUNK_X
-                + (y as usize) * CHUNK_X * CHUNK_Z
+            (x as usize) + (z as usize) * CHUNK_X + (y as usize) * CHUNK_X * CHUNK_Z
         };
         let front = atlas::FACE_TILES[crate::world::FURNACE as usize][5];
         let side = atlas::FACE_TILES[crate::world::FURNACE as usize][0];
@@ -12481,15 +13092,18 @@ mod tests {
         w.variants = Some(variants);
         let q = mesh_chunk(&w, 0, 0, None);
         assert!(
-            q.iter().any(|quad| quad.pts[0][0] == 9.0 && quad.tile == front),
+            q.iter()
+                .any(|quad| quad.pts[0][0] == 9.0 && quad.tile == front),
             "the east-facing front the +X face wears"
         );
         assert!(
-            q.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
+            q.iter()
+                .any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
             "the vacated north the side tile wears"
         );
         assert!(
-            q.iter().any(|quad| quad.pts[0][1] == 9.0 && quad.tile == top),
+            q.iter()
+                .any(|quad| quad.pts[0][1] == 9.0 && quad.tile == top),
             "the top the top tile keeps"
         );
         // exactly six quads: the full cube the generic path meshes
@@ -12511,11 +13125,13 @@ mod tests {
         put(&mut w2, 8, 8, 8, crate::world::FURNACE);
         let q2 = mesh_chunk(&w2, 0, 0, None);
         assert!(
-            q2.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == front),
+            q2.iter()
+                .any(|quad| quad.pts[0][2] == 8.0 && quad.tile == front),
             "the north-facing front the -Z face wears"
         );
         assert!(
-            q2.iter().any(|quad| quad.pts[0][0] == 9.0 && quad.tile == side),
+            q2.iter()
+                .any(|quad| quad.pts[0][0] == 9.0 && quad.tile == side),
             "the east side the side tile keeps"
         );
 
@@ -12526,7 +13142,8 @@ mod tests {
         put(&mut w3, 8, 8, 8, crate::world::FURNACE_LIT);
         let q3 = mesh_chunk(&w3, 0, 0, None);
         assert!(
-            q3.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == front_on),
+            q3.iter()
+                .any(|quad| quad.pts[0][2] == 8.0 && quad.tile == front_on),
             "the lit furnace's front_on the north face wears"
         );
         assert!(
@@ -12542,11 +13159,13 @@ mod tests {
         w4.variants = Some(variants4);
         let q4 = mesh_chunk(&w4, 0, 0, None);
         assert!(
-            q4.iter().any(|quad| quad.pts[0][2] == 9.0 && quad.tile == front),
+            q4.iter()
+                .any(|quad| quad.pts[0][2] == 9.0 && quad.tile == front),
             "the south-facing front the +Z face wears"
         );
         assert!(
-            q4.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
+            q4.iter()
+                .any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
             "the vacated north the side tile keeps"
         );
     }
@@ -12564,9 +13183,7 @@ mod tests {
         let bottom = atlas::TILE_OAK_DOOR_BOTTOM;
         let top = atlas::TILE_OAK_DOOR_TOP;
         let cell = |x: i32, y: i32, z: i32| {
-            (x as usize)
-                + (z as usize) * CHUNK_X
-                + (y as usize) * CHUNK_X * CHUNK_Z
+            (x as usize) + (z as usize) * CHUNK_X + (y as usize) * CHUNK_X * CHUNK_Z
         };
         let variants = |v: u8| -> Vec<Vec<u8>> {
             let mut g = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
@@ -12582,9 +13199,7 @@ mod tests {
         w.variants = Some(variants(2));
         let q = mesh_chunk(&w, 0, 0, None);
         assert_eq!(
-            q.iter()
-                .filter(|quad| quad.tile == bottom)
-                .count(),
+            q.iter().filter(|quad| quad.tile == bottom).count(),
             5,
             "the lone closed panel's own five faces"
         );
@@ -12658,9 +13273,7 @@ mod tests {
         // oxidization textures the waxed kinds inherit, the mesher's
         // pair table the resolved stems the unwaxed rows answer)
         let cell = |x: i32, y: i32, z: i32| {
-            (x as usize)
-                + (z as usize) * CHUNK_X
-                + (y as usize) * CHUNK_X * CHUNK_Z
+            (x as usize) + (z as usize) * CHUNK_X + (y as usize) * CHUNK_X * CHUNK_Z
         };
         let variants = |v: u8| -> Vec<Vec<u8>> {
             let mut g = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
@@ -12698,7 +13311,10 @@ mod tests {
         // blockstate rows serve — the waxed_copper cell the copper
         // master meshes, the waxed_oxidized the oxidized master keeps)
         for (kind, bottom) in [
-            (crate::world::WAXED_COPPER_DOOR, atlas::TILE_COPPER_DOOR_BOTTOM),
+            (
+                crate::world::WAXED_COPPER_DOOR,
+                atlas::TILE_COPPER_DOOR_BOTTOM,
+            ),
             (
                 crate::world::WAXED_OXIDIZED_COPPER_DOOR,
                 atlas::TILE_OXIDIZED_COPPER_DOOR_BOTTOM,
@@ -12789,9 +13405,7 @@ mod tests {
         // THE TILT'S OWN SPREAD (the stick's own corners the straight
         // band escapes — the rotation's ±45° the y-rot never serves)
         let straight_band = |q: &mc_registry::element_quads::Quad| {
-            q.vertices
-                .iter()
-                .all(|v| v[2] >= 0.4375 && v[2] <= 0.5625)
+            q.vertices.iter().all(|v| v[2] >= 0.4375 && v[2] <= 0.5625)
         };
         assert!(
             off.iter().any(|q| !straight_band(q)),
@@ -12807,13 +13421,9 @@ mod tests {
             .iter()
             .flat_map(|q| q.vertices.iter().copied())
             .collect();
-        let tp: Vec<[f32; 3]> = on
-            .iter()
-            .flat_map(|q| q.vertices.iter().copied())
-            .collect();
+        let tp: Vec<[f32; 3]> = on.iter().flat_map(|q| q.vertices.iter().copied()).collect();
         assert_ne!(fp, tp, "the two tilts the vertex sets split");
     }
-
 
     #[test]
     fn the_button_models_the_plate_and_the_x_turn_wear() {
@@ -12865,7 +13475,11 @@ mod tests {
         // Down->South turn the neighbor culls; the dirt supporter the
         // own tile the filter's clean read keeps)
         let stone_tile = atlas::FACE_TILES[crate::world::BUTTON as usize][2];
-        assert_eq!(atlas::TILE_NAMES[stone_tile as usize], "stone", "the button's own tile the row banks");
+        assert_eq!(
+            atlas::TILE_NAMES[stone_tile as usize],
+            "stone",
+            "the button's own tile the row banks"
+        );
         let mut w = empty_world();
         let (x, y, z) = (5i32, 3, 5);
         w.set(x, y, z + 1, DIRT);
@@ -13003,7 +13617,9 @@ mod tests {
             }
         }
         assert!(
-            sticks.iter().any(|q| q.pts.iter().any(|p| p[2] < z as f32 + 0.5)),
+            sticks
+                .iter()
+                .any(|q| q.pts.iter().any(|p| p[2] < z as f32 + 0.5)),
             "the stick the cell's own depth the protrude wears"
         );
         // THE CULL'S OWN ROTATED DIRECTION (the air south the down-
@@ -13111,11 +13727,13 @@ mod tests {
             .filter(|q| q.tile == lever_tile)
             .flat_map(|q| q.pts.iter().copied())
             .collect();
-        let sort = |pts: &mut Vec<[f32; 3]>| pts.sort_by(|a, b| {
-            a[1].total_cmp(&b[1])
-                .then(a[0].total_cmp(&b[0]))
-                .then(a[2].total_cmp(&b[2]))
-        });
+        let sort = |pts: &mut Vec<[f32; 3]>| {
+            pts.sort_by(|a, b| {
+                a[1].total_cmp(&b[1])
+                    .then(a[0].total_cmp(&b[0]))
+                    .then(a[2].total_cmp(&b[2]))
+            })
+        };
         sort(&mut north_stick);
         sort(&mut south_stick);
         assert_eq!(
@@ -13143,8 +13761,16 @@ mod tests {
     fn face_uv_orientation() {
         // side faces keep +Y at the texture top (v=0)
         for face in [0usize, 1, 4, 5] {
-            assert_eq!(face_uv(face, [0.0, 1.0, 0.0])[1], 0.0, "face {face}: y=1 must be v=0");
-            assert_eq!(face_uv(face, [0.0, 0.0, 0.0])[1], 1.0, "face {face}: y=0 must be v=1");
+            assert_eq!(
+                face_uv(face, [0.0, 1.0, 0.0])[1],
+                0.0,
+                "face {face}: y=1 must be v=0"
+            );
+            assert_eq!(
+                face_uv(face, [0.0, 0.0, 0.0])[1],
+                1.0,
+                "face {face}: y=0 must be v=1"
+            );
         }
         // east (+X): looking down -X, screen-right is -Z -> u = 1-z
         assert_eq!(face_uv(0, [1.0, 0.5, 0.0])[0], 1.0);
@@ -13176,10 +13802,16 @@ mod tests {
         let q = mesh_chunk(&w, 0, 0, None);
         let a = 0.8 / 16.0;
         let b = 15.2 / 16.0;
-        let (dx, dy, dz) =
-            crate::world::plant_offset(crate::world::DANDELION, 8, 9, 8);
+        let (dx, dy, dz) = crate::world::plant_offset(crate::world::DANDELION, 8, 9, 8);
         let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
-        assert_eq!((dx, dy, dz), (0.150_000_005_960_464_48f32, 0.0, -0.083_333_328_366_279_6f32));
+        assert_eq!(
+            (dx, dy, dz),
+            (
+                0.150_000_005_960_464_48f32,
+                0.0,
+                -0.083_333_328_366_279_6f32
+            )
+        );
         let flower: Vec<_> = q
             .iter()
             .filter(|quad| {
@@ -13295,20 +13927,13 @@ mod tests {
         // index (the atlas rows the provider's one-kind-one-tile walk
         // banks — the shared-tile collapse the family never wears)
         let mut tiles = [
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::AZURE_BLUET as usize][2],
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::OXEYE_DAISY as usize][2],
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::CORNFLOWER as usize][2],
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::ORANGE_TULIP as usize][2],
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::RED_TULIP as usize][2],
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::PINK_TULIP as usize][2],
-            mc_registry::generated::atlas::FACE_TILES
-                [crate::world::WHITE_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::AZURE_BLUET as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::OXEYE_DAISY as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::CORNFLOWER as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::ORANGE_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::RED_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::PINK_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES[crate::world::WHITE_TULIP as usize][2],
         ];
         tiles.sort_unstable();
         for pair in tiles.windows(2) {
@@ -13815,12 +14440,17 @@ mod tests {
             .iter()
             .filter(|quad| {
                 quad.pts.iter().all(|p| (9.0..=9.7).contains(&p[1]))
-                    && quad.pts.iter().all(|p| {
-                        (8.0 + 7.0 / 16.0..=8.0 + 9.0 / 16.0).contains(&p[0])
-                    })
+                    && quad
+                        .pts
+                        .iter()
+                        .all(|p| (8.0 + 7.0 / 16.0..=8.0 + 9.0 / 16.0).contains(&p[0]))
             })
             .collect();
-        assert_eq!(stick.len(), 5, "the six faces the culled bottom the five keeps");
+        assert_eq!(
+            stick.len(),
+            5,
+            "the six faces the culled bottom the five keeps"
+        );
         let torch_tile = gen_atlas::FACE_TILES[crate::world::TORCH as usize][2];
         assert_ne!(torch_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
         for quad in &stick {
@@ -13861,7 +14491,10 @@ mod tests {
             .iter()
             .filter(|quad| {
                 quad.pts.iter().any(|p| (p[1] - 9.0).abs() < 1e-6)
-                    && quad.pts.iter().any(|p| (p[1] - 9.0 - 10.0 / 16.0).abs() < 1e-6)
+                    && quad
+                        .pts
+                        .iter()
+                        .any(|p| (p[1] - 9.0 - 10.0 / 16.0).abs() < 1e-6)
             })
             .collect();
         assert_eq!(side_band.len(), 4, "the four sides the y extremes name");
@@ -13904,24 +14537,57 @@ mod tests {
         // resolves.
         let lone: Vec<_> = select_parts(
             fence_parts(crate::world::OAK_FENCE),
-            &[("north", "false"), ("east", "false"), ("south", "false"), ("west", "false")],
+            &[
+                ("north", "false"),
+                ("east", "false"),
+                ("south", "false"),
+                ("west", "false"),
+            ],
         );
         assert_eq!(lone.len(), 1, "the all-false state the post alone wears");
-        assert!(lone[0].model.contains("oak_fence_post"), "the post the unconditional apply banks");
+        assert!(
+            lone[0].model.contains("oak_fence_post"),
+            "the post the unconditional apply banks"
+        );
         assert_eq!(lone[0].y, 0, "the post the no-rotation row wears");
         let north: Vec<_> = select_parts(
             fence_parts(crate::world::OAK_FENCE),
-            &[("north", "true"), ("east", "false"), ("south", "false"), ("west", "false")],
+            &[
+                ("north", "true"),
+                ("east", "false"),
+                ("south", "false"),
+                ("west", "false"),
+            ],
         );
-        assert_eq!(north.len(), 2, "the north connection the post + the north arm wears");
-        let sides: Vec<_> = north.iter().filter(|a| a.model.contains("oak_fence_side")).collect();
-        assert_eq!(sides.len(), 1, "the ONE side arm the north when-row answers");
+        assert_eq!(
+            north.len(),
+            2,
+            "the north connection the post + the north arm wears"
+        );
+        let sides: Vec<_> = north
+            .iter()
+            .filter(|a| a.model.contains("oak_fence_side"))
+            .collect();
+        assert_eq!(
+            sides.len(),
+            1,
+            "the ONE side arm the north when-row answers"
+        );
         assert_eq!(sides[0].y, 0, "the north arm the y=0 row wears");
         let all: Vec<_> = select_parts(
             fence_parts(crate::world::OAK_FENCE),
-            &[("north", "true"), ("east", "true"), ("south", "true"), ("west", "true")],
+            &[
+                ("north", "true"),
+                ("east", "true"),
+                ("south", "true"),
+                ("west", "true"),
+            ],
         );
-        assert_eq!(all.len(), 5, "the full connection the post + the four arms wears");
+        assert_eq!(
+            all.len(),
+            5,
+            "the full connection the post + the four arms wears"
+        );
         // THE FOUR QUARTERS the side arms carry (the jar's own y
         // table: north 0 / east 90 / south 180 / west 270)
         for (y, dir) in [(0u32, "north"), (90, "east"), (180, "south"), (270, "west")] {
@@ -13932,7 +14598,10 @@ mod tests {
                 ("west", if dir == "west" { "true" } else { "false" }),
             ];
             let one: Vec<_> = select_parts(fence_parts(crate::world::OAK_FENCE), &state);
-            let sides: Vec<_> = one.iter().filter(|a| a.model.contains("oak_fence_side")).collect();
+            let sides: Vec<_> = one
+                .iter()
+                .filter(|a| a.model.contains("oak_fence_side"))
+                .collect();
             assert_eq!(sides.len(), 1, "the {dir} arm the when-row alone answers");
             assert_eq!(sides[0].y, y, "the {dir} arm the y={y} quarter wears");
         }
@@ -13940,11 +14609,22 @@ mod tests {
         // multipart shape the nether_bricks master wears)
         let nether: Vec<_> = select_parts(
             fence_parts(crate::world::NETHER_BRICK_FENCE),
-            &[("north", "true"), ("east", "false"), ("south", "false"), ("west", "false")],
+            &[
+                ("north", "true"),
+                ("east", "false"),
+                ("south", "false"),
+                ("west", "false"),
+            ],
         );
-        assert_eq!(nether.len(), 2, "the nether brick fence the same post + arm shape wears");
+        assert_eq!(
+            nether.len(),
+            2,
+            "the nether brick fence the same post + arm shape wears"
+        );
         assert!(
-            nether.iter().all(|a| a.model.contains("nether_brick_fence")),
+            nether
+                .iter()
+                .all(|a| a.model.contains("nether_brick_fence")),
             "the nether models the own column banks"
         );
         // THE DERIVE WALK'S OWN GEOMETRY (the fence_models pair the
@@ -13952,11 +14632,19 @@ mod tests {
         // side's TWO bar elements)
         let (post, side) = fence_models(crate::world::OAK_FENCE);
         assert_eq!(post.len(), 6, "the post's six faces the ONE element wears");
-        assert_eq!(side.len(), 10, "the side's TWO bar elements the ten faces wear");
+        assert_eq!(
+            side.len(),
+            10,
+            "the side's TWO bar elements the ten faces wear"
+        );
         // the post's x/z band the [6,0,6]->[10,16,10] element speaks
-        let xs: Vec<f32> = post.iter().flat_map(|q| q.vertices.iter().map(|v| v[0])).collect();
+        let xs: Vec<f32> = post
+            .iter()
+            .flat_map(|q| q.vertices.iter().map(|v| v[0]))
+            .collect();
         assert!(
-            xs.iter().all(|x| (x - 0.375).abs() < 1e-6 || (x - 0.625).abs() < 1e-6),
+            xs.iter()
+                .all(|x| (x - 0.375).abs() < 1e-6 || (x - 0.625).abs() < 1e-6),
             "the post's 4/16 centered x band the element banks"
         );
     }
@@ -14102,7 +14790,10 @@ mod tests {
             "the mixed state the post + the two low + the two tall wears"
         );
         assert_eq!(
-            mixed.iter().filter(|a| a.model.contains("_side_tall")).count(),
+            mixed
+                .iter()
+                .filter(|a| a.model.contains("_side_tall"))
+                .count(),
             2,
             "the tall pair the east/west rows wear"
         );
@@ -14118,9 +14809,15 @@ mod tests {
                 ("up", "true"),
             ],
         );
-        assert_eq!(mossy.len(), 2, "the mossy wall the same post + arm shape wears");
+        assert_eq!(
+            mossy.len(),
+            2,
+            "the mossy wall the same post + arm shape wears"
+        );
         assert!(
-            mossy.iter().all(|a| a.model.contains("mossy_cobblestone_wall")),
+            mossy
+                .iter()
+                .all(|a| a.model.contains("mossy_cobblestone_wall")),
             "the mossy models the own column banks"
         );
         // THE DERIVE WALK'S OWN GEOMETRY (the wall_models triple the
@@ -14130,24 +14827,46 @@ mod tests {
         // connection edge keeps], the tall's same five)
         let (post, side, tall) = wall_models(crate::world::COBBLESTONE_WALL);
         assert_eq!(post.len(), 6, "the post's six faces the ONE element wears");
-        assert_eq!(side.len(), 5, "the side's ONE bar element the five faces wear");
-        assert_eq!(tall.len(), 5, "the tall's ONE bar element the five faces wear");
+        assert_eq!(
+            side.len(),
+            5,
+            "the side's ONE bar element the five faces wear"
+        );
+        assert_eq!(
+            tall.len(),
+            5,
+            "the tall's ONE bar element the five faces wear"
+        );
         // the post's x/z band the [4,0,4]->[12,16,12] element speaks
-        let xs: Vec<f32> = post.iter().flat_map(|q| q.vertices.iter().map(|v| v[0])).collect();
+        let xs: Vec<f32> = post
+            .iter()
+            .flat_map(|q| q.vertices.iter().map(|v| v[0]))
+            .collect();
         assert!(
-            xs.iter().all(|x| (x - 0.25).abs() < 1e-6 || (x - 0.75).abs() < 1e-6),
+            xs.iter()
+                .all(|x| (x - 0.25).abs() < 1e-6 || (x - 0.75).abs() < 1e-6),
             "the post's 8/16 centered x band the element banks"
         );
         // the tall bar the y 0..16 band the full-height element banks
         // (the side bar the y 0..14 the low element wears)
-        let tall_ys: Vec<f32> = tall.iter().flat_map(|q| q.vertices.iter().map(|v| v[1])).collect();
+        let tall_ys: Vec<f32> = tall
+            .iter()
+            .flat_map(|q| q.vertices.iter().map(|v| v[1]))
+            .collect();
         assert!(
-            tall_ys.iter().all(|y| (*y - 0.0).abs() < 1e-6 || (*y - 1.0).abs() < 1e-6),
+            tall_ys
+                .iter()
+                .all(|y| (*y - 0.0).abs() < 1e-6 || (*y - 1.0).abs() < 1e-6),
             "the tall bar the 0..16 y band the element banks"
         );
-        let side_ys: Vec<f32> = side.iter().flat_map(|q| q.vertices.iter().map(|v| v[1])).collect();
+        let side_ys: Vec<f32> = side
+            .iter()
+            .flat_map(|q| q.vertices.iter().map(|v| v[1]))
+            .collect();
         assert!(
-            side_ys.iter().all(|y| (*y - 0.0).abs() < 1e-6 || (*y - 0.875).abs() < 1e-6),
+            side_ys
+                .iter()
+                .all(|y| (*y - 0.0).abs() < 1e-6 || (*y - 0.875).abs() < 1e-6),
             "the low bar the 0..14 y band the element banks"
         );
     }
@@ -14162,17 +14881,46 @@ mod tests {
         // groups each via its OR's all-false arm, the y quarters the
         // four groups carry), the single-wall state the wall's own
         // group alone answers, the up state the up pair answers.
-        let freestanding: Vec<_> = select_parts(fire_parts(false), &[("north", "false"), ("east", "false"), ("south", "false"), ("west", "false"), ("up", "false")]);
-        assert_eq!(freestanding.len(), 18, "the floor pair + the four side groups the all-false arms wear");
-        let floors = freestanding.iter().filter(|a| a.model.contains("fire_floor")).count();
-        let sides = freestanding.iter().filter(|a| a.model.contains("fire_side")).count();
-        let ups = freestanding.iter().filter(|a| a.model.contains("fire_up")).count();
-        assert_eq!((floors, sides, ups), (2, 16, 0), "the floor pair, the 4x4 side stack, no up pair");
+        let freestanding: Vec<_> = select_parts(
+            fire_parts(false),
+            &[
+                ("north", "false"),
+                ("east", "false"),
+                ("south", "false"),
+                ("west", "false"),
+                ("up", "false"),
+            ],
+        );
+        assert_eq!(
+            freestanding.len(),
+            18,
+            "the floor pair + the four side groups the all-false arms wear"
+        );
+        let floors = freestanding
+            .iter()
+            .filter(|a| a.model.contains("fire_floor"))
+            .count();
+        let sides = freestanding
+            .iter()
+            .filter(|a| a.model.contains("fire_side"))
+            .count();
+        let ups = freestanding
+            .iter()
+            .filter(|a| a.model.contains("fire_up"))
+            .count();
+        assert_eq!(
+            (floors, sides, ups),
+            (2, 16, 0),
+            "the floor pair, the 4x4 side stack, no up pair"
+        );
         // THE FOUR QUARTERS the side groups carry — north y=0, east
         // y=90, south y=180, west y=270 (the jar's own apply rows)
         for (y, quarter_count) in [(0u32, 4usize), (90, 4), (180, 4), (270, 4)] {
             assert_eq!(
-                freestanding.iter().filter(|a| a.model.contains("fire_side") && a.y == y).count(),
+                freestanding
+                    .iter()
+                    .filter(|a| a.model.contains("fire_side") && a.y == y)
+                    .count(),
                 quarter_count,
                 "the y={y} quarter the group's four side models wear"
             );
@@ -14180,23 +14928,62 @@ mod tests {
         // THE EAST WALL ALONE — the floating fire's log-adjacent state:
         // the floor's all-false condition refuses, the other groups'
         // OR arms refuse, the east group's own arm answers at y=90
-        let east: Vec<_> = select_parts(fire_parts(false), &[("north", "false"), ("east", "true"), ("south", "false"), ("west", "false"), ("up", "false")]);
+        let east: Vec<_> = select_parts(
+            fire_parts(false),
+            &[
+                ("north", "false"),
+                ("east", "true"),
+                ("south", "false"),
+                ("west", "false"),
+                ("up", "false"),
+            ],
+        );
         assert_eq!(east.len(), 4, "the east group's four side models alone");
-        assert!(east.iter().all(|a| a.model.contains("fire_side") && a.y == 90));
+        assert!(east
+            .iter()
+            .all(|a| a.model.contains("fire_side") && a.y == 90));
         // THE UP PAIR ALONE — the burnable-above state: the up group's
         // four models at y=0, the floor and the sides all refuse
-        let up: Vec<_> = select_parts(fire_parts(false), &[("north", "false"), ("east", "false"), ("south", "false"), ("west", "false"), ("up", "true")]);
+        let up: Vec<_> = select_parts(
+            fire_parts(false),
+            &[
+                ("north", "false"),
+                ("east", "false"),
+                ("south", "false"),
+                ("west", "false"),
+                ("up", "true"),
+            ],
+        );
         assert_eq!(up.len(), 4, "the up group's four models alone");
         assert!(up.iter().all(|a| a.model.contains("fire_up") && a.y == 0));
         // THE SOUL COLUMN'S OWN UNCONDITIONAL FAN — no when anywhere:
         // ANY state the full 18-applies fan answers, the up pair never
         for state in [
-            [("north", "false"), ("east", "false"), ("south", "false"), ("west", "false"), ("up", "false")],
-            [("north", "true"), ("east", "true"), ("south", "true"), ("west", "true"), ("up", "true")],
+            [
+                ("north", "false"),
+                ("east", "false"),
+                ("south", "false"),
+                ("west", "false"),
+                ("up", "false"),
+            ],
+            [
+                ("north", "true"),
+                ("east", "true"),
+                ("south", "true"),
+                ("west", "true"),
+                ("up", "true"),
+            ],
         ] {
             let soul: Vec<_> = select_parts(fire_parts(true), &state);
-            assert_eq!(soul.len(), 18, "the soul fan the no-when column always speaks");
-            assert!(soul.iter().all(|a| !a.model.contains("up")), "the up pair the soul column never wears");
+            assert_eq!(
+                soul.len(),
+                18,
+                "the soul fan the no-when column always speaks"
+            );
+            assert!(
+                soul.iter().all(|a| !a.model.contains("up")),
+                "the up pair the soul column never wears"
+            );
         }
     }
 
@@ -14207,14 +14994,22 @@ mod tests {
         // same select_parts walk the fire test pins): the four parts
         // the blockstate's own array banks (the age0 fours, the age1
         // fours, the small-leaves arm, the large-leaves arm).
-        assert_eq!(bamboo_parts().len(), 4, "the four parts the blockstate banks");
+        assert_eq!(
+            bamboo_parts().len(),
+            4,
+            "the four parts the blockstate banks"
+        );
         // THE DEFAULT STATE'S OWN VERDICT (age 0, leaves NONE — the
         // kind-only vocabulary the placement law serves): the four
         // overlapping age0 stalks ALONE (the leaves arms the NONE
         // verdict never picks)
         let default_state: Vec<_> =
             select_parts(bamboo_parts(), &[("age", "0"), ("leaves", "none")]);
-        assert_eq!(default_state.len(), 4, "the four age0 stalks the default state wears");
+        assert_eq!(
+            default_state.len(),
+            4,
+            "the four age0 stalks the default state wears"
+        );
         assert!(
             default_state
                 .iter()
@@ -14236,14 +15031,20 @@ mod tests {
         let small: Vec<_> = select_parts(bamboo_parts(), &[("age", "0"), ("leaves", "small")]);
         assert_eq!(small.len(), 5, "the four stalks + the small pair's model");
         assert_eq!(
-            small.iter().filter(|a| a.model.ends_with("bamboo_small_leaves")).count(),
+            small
+                .iter()
+                .filter(|a| a.model.ends_with("bamboo_small_leaves"))
+                .count(),
             1,
             "the small-leaves arm the when verdict picks"
         );
         let large: Vec<_> = select_parts(bamboo_parts(), &[("age", "0"), ("leaves", "large")]);
         assert_eq!(large.len(), 5, "the four stalks + the large pair's model");
         assert_eq!(
-            large.iter().filter(|a| a.model.ends_with("bamboo_large_leaves")).count(),
+            large
+                .iter()
+                .filter(|a| a.model.ends_with("bamboo_large_leaves"))
+                .count(),
             1,
             "the large-leaves arm the when verdict picks"
         );
@@ -14253,16 +15054,37 @@ mod tests {
         // leaves pairs the crossed planes (the shade:false faces the
         // fire lane's own law keeps)
         let quads = bamboo_model_quads();
-        for m in ["block/bamboo1_age0", "block/bamboo2_age0", "block/bamboo3_age0", "block/bamboo4_age0"] {
-            assert_eq!(quads.get(m).map(|v| v.len()), Some(6), "{m}: the box's six faces");
+        for m in [
+            "block/bamboo1_age0",
+            "block/bamboo2_age0",
+            "block/bamboo3_age0",
+            "block/bamboo4_age0",
+        ] {
+            assert_eq!(
+                quads.get(m).map(|v| v.len()),
+                Some(6),
+                "{m}: the box's six faces"
+            );
         }
-        for m in ["block/bamboo1_age1", "block/bamboo2_age1", "block/bamboo3_age1", "block/bamboo4_age1"] {
-            assert_eq!(quads.get(m).map(|v| v.len()), Some(6), "{m}: the box's six faces");
+        for m in [
+            "block/bamboo1_age1",
+            "block/bamboo2_age1",
+            "block/bamboo3_age1",
+            "block/bamboo4_age1",
+        ] {
+            assert_eq!(
+                quads.get(m).map(|v| v.len()),
+                Some(6),
+                "{m}: the box's six faces"
+            );
         }
         for m in ["block/bamboo_small_leaves", "block/bamboo_large_leaves"] {
             let q = quads.get(m).expect("the leaves pair's bake");
             assert_eq!(q.len(), 4, "{m}: the two planes the two faces each");
-            assert!(q.iter().all(|d| !d.shade), "{m}: the shade:false the pairs keep");
+            assert!(
+                q.iter().all(|d| !d.shade),
+                "{m}: the shade:false the pairs keep"
+            );
         }
         // THE AGE0 STALKS' OWN UV STRIPS (the four masters the same box
         // wears — the side faces' u bounds the strips speak: [0..2]/
@@ -14283,8 +15105,14 @@ mod tests {
                 .expect("the side face");
             let min_u = side.uvs.iter().map(|uv| uv[0]).fold(f32::MAX, f32::min);
             let max_u = side.uvs.iter().map(|uv| uv[0]).fold(f32::MIN, f32::max);
-            assert!((min_u - u0).abs() < 1e-4, "{m}: the strip's min u {min_u} the {u0} speaks");
-            assert!((max_u - (u0 + 2.0)).abs() < 1e-4, "{m}: the strip's max u {max_u}");
+            assert!(
+                (min_u - u0).abs() < 1e-4,
+                "{m}: the strip's min u {min_u} the {u0} speaks"
+            );
+            assert!(
+                (max_u - (u0 + 2.0)).abs() < 1e-4,
+                "{m}: the strip's max u {max_u}"
+            );
         }
     }
 
@@ -14322,12 +15150,19 @@ mod tests {
                 })
             })
             .collect();
-        assert_eq!(stalk.len(), 20, "the 24-face fours the four culled downs keep: {}", stalk.len());
+        assert_eq!(
+            stalk.len(),
+            20,
+            "the 24-face fours the four culled downs keep: {}",
+            stalk.len()
+        );
         assert!(
             stalk.iter().all(|quad| quad.tile == stalk_tile),
             "every quad the kind's own atlas tile wears"
         );
-        assert!(stalk.iter().all(|quad| !quad.translucent && !quad.per_texel_alpha));
+        assert!(stalk
+            .iter()
+            .all(|quad| !quad.translucent && !quad.per_texel_alpha));
         // THE UP FACES the air-above draw keeps (the four models' own
         // up quads — the [13,0,15,2] uv band the masters share), the
         // colors the shade-1.0 lm-1.0 fold keeps
@@ -14339,7 +15174,10 @@ mod tests {
         for quad in &ups {
             for c in &quad.colors {
                 for v in c {
-                    assert!((v - 1.0).abs() < 1e-6, "the up face the 1.0 shade wears: {v}");
+                    assert!(
+                        (v - 1.0).abs() < 1e-6,
+                        "the up face the 1.0 shade wears: {v}"
+                    );
                 }
             }
         }
@@ -14350,14 +15188,31 @@ mod tests {
         let sides: Vec<_> = stalk
             .iter()
             .filter(|quad| {
-                quad.pts.iter().filter(|p| (p[1] - 9.0).abs() < 1e-4).count() == 2
-                    && quad.pts.iter().filter(|p| (p[1] - 10.0).abs() < 1e-4).count() == 2
+                quad.pts
+                    .iter()
+                    .filter(|p| (p[1] - 9.0).abs() < 1e-4)
+                    .count()
+                    == 2
+                    && quad
+                        .pts
+                        .iter()
+                        .filter(|p| (p[1] - 10.0).abs() < 1e-4)
+                        .count()
+                        == 2
             })
             .collect();
         assert_eq!(sides.len(), 16, "the four models' own four sides each");
         let first_side = sides[0];
-        let min_u = first_side.uvs.iter().map(|uv| uv[0]).fold(f32::MAX, f32::min);
-        let max_u = first_side.uvs.iter().map(|uv| uv[0]).fold(f32::MIN, f32::max);
+        let min_u = first_side
+            .uvs
+            .iter()
+            .map(|uv| uv[0])
+            .fold(f32::MAX, f32::min);
+        let max_u = first_side
+            .uvs
+            .iter()
+            .map(|uv| uv[0])
+            .fold(f32::MIN, f32::max);
         assert!(
             (min_u - 9.0 / 16.0).abs() < 1e-4 && (max_u - 11.0 / 16.0).abs() < 1e-4,
             "the first side the bamboo4 strip [9..11] wears: {min_u}..{max_u}"
@@ -14366,15 +15221,23 @@ mod tests {
         // lm-1.0 no-grid fold the legacy look wears)
         for c in &first_side.colors {
             for v in c {
-                assert!((v - 0.8).abs() < 1e-6, "the side face the 0.8 shade wears: {v}");
+                assert!(
+                    (v - 0.8).abs() < 1e-6,
+                    "the side face the 0.8 shade wears: {v}"
+                );
             }
         }
         // THE OFFSET the pts carry (the XZ row the seed-sliced fold
         // serves — the non-zero shift the stalk's own jitter wears)
-        let straight = stalk
-            .iter()
-            .any(|quad| quad.pts.iter().any(|p| (p[0] - (8.0 + 7.0 / 16.0 + off_x)).abs() < 1e-5));
-        assert!(straight, "the pts the offset shift carries (off={off_x},{off_y},{off_z})");
+        let straight = stalk.iter().any(|quad| {
+            quad.pts
+                .iter()
+                .any(|p| (p[0] - (8.0 + 7.0 / 16.0 + off_x)).abs() < 1e-5)
+        });
+        assert!(
+            straight,
+            "the pts the offset shift carries (off={off_x},{off_y},{off_z})"
+        );
         assert!(off_y == 0.0, "the XZ row the y the zero keeps");
     }
 
@@ -14409,15 +15272,14 @@ mod tests {
             q.iter()
                 .filter(|quad| {
                     quad.tile == atlas::TILE_BAMBOO_SMALL_LEAVES
-                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                        && quad
+                            .pts
+                            .iter()
+                            .all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
                 })
                 .count()
         };
-        assert_eq!(
-            smalls(10.0, 11.0),
-            4,
-            "the h=2 top the SMALL pair renders"
-        );
+        assert_eq!(smalls(10.0, 11.0), 4, "the h=2 top the SMALL pair renders");
         assert_eq!(smalls(9.0, 10.0), 0, "the h=2 base the NONE keeps");
         assert_eq!(
             q.iter()
@@ -14435,7 +15297,10 @@ mod tests {
             q.iter()
                 .filter(|quad| {
                     quad.tile == atlas::TILE_BAMBOO_SMALL_LEAVES
-                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                        && quad
+                            .pts
+                            .iter()
+                            .all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
                 })
                 .count()
         };
@@ -14452,7 +15317,10 @@ mod tests {
             q.iter()
                 .filter(|quad| {
                     quad.tile == tile
-                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                        && quad
+                            .pts
+                            .iter()
+                            .all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
                 })
                 .collect()
         };
@@ -14528,7 +15396,10 @@ mod tests {
             q.iter()
                 .filter(|quad| {
                     quad.tile == atlas::TILE_BAMBOO_SMALL_LEAVES
-                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                        && quad
+                            .pts
+                            .iter()
+                            .all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
                 })
                 .count()
         };
@@ -14536,35 +15407,22 @@ mod tests {
             q.iter()
                 .filter(|quad| {
                     quad.tile == atlas::TILE_BAMBOO_LARGE_LEAVES
-                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                        && quad
+                            .pts
+                            .iter()
+                            .all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
                 })
                 .count()
         };
-        assert_eq!(
-            larges(14.0, 15.0),
-            4,
-            "the h=6 top the LARGE pair wears"
-        );
-        assert_eq!(
-            smalls(13.0, 14.0),
-            4,
-            "the h=6 second the SMALL pair wears"
-        );
-        assert_eq!(
-            smalls(12.0, 13.0),
-            4,
-            "the h=6 third the SMALL pair wears"
-        );
+        assert_eq!(larges(14.0, 15.0), 4, "the h=6 top the LARGE pair wears");
+        assert_eq!(smalls(13.0, 14.0), 4, "the h=6 second the SMALL pair wears");
+        assert_eq!(smalls(12.0, 13.0), 4, "the h=6 third the SMALL pair wears");
         assert_eq!(
             smalls(9.0, 12.0),
             0,
             "the h=6 floor the NONE steady state keeps"
         );
-        assert_eq!(
-            larges(9.0, 14.0),
-            0,
-            "the LARGE pair the top alone wears"
-        );
+        assert_eq!(larges(9.0, 14.0), 0, "the LARGE pair the top alone wears");
     }
 
     #[test]
@@ -14591,7 +15449,12 @@ mod tests {
                     && quad.pts.iter().any(|p| p[1] == 10.0)
             })
             .collect();
-        assert_eq!(cross.len(), 4, "the two planes the two windings wear: {}", cross.len());
+        assert_eq!(
+            cross.len(),
+            4,
+            "the two planes the two windings wear: {}",
+            cross.len()
+        );
         let sapling_tile = atlas::FACE_TILES[crate::world::BAMBOO_SAPLING as usize][2];
         for quad in &cross {
             assert_eq!(quad.tile, sapling_tile, "the kind's own atlas tile wears");
@@ -14619,10 +15482,26 @@ mod tests {
         let lit_tile = gen_atlas::TILE_CAMPFIRE_LOG_LIT;
         let soul_lit_tile = gen_atlas::TILE_SOUL_CAMPFIRE_LOG_LIT;
         let fire_tile = gen_atlas::CAMPFIRE_FIRE_FRAME0;
-        assert_ne!(log_tile, gen_atlas::TILE_NONE, "the log tile the regen banks");
-        assert_ne!(lit_tile, gen_atlas::TILE_NONE, "the lit-log tile the regen banks");
-        assert_ne!(soul_lit_tile, gen_atlas::TILE_NONE, "the soul lit-log tile the regen banks");
-        assert_ne!(fire_tile, gen_atlas::TILE_NONE, "the fire tile the strip tables bank");
+        assert_ne!(
+            log_tile,
+            gen_atlas::TILE_NONE,
+            "the log tile the regen banks"
+        );
+        assert_ne!(
+            lit_tile,
+            gen_atlas::TILE_NONE,
+            "the lit-log tile the regen banks"
+        );
+        assert_ne!(
+            soul_lit_tile,
+            gen_atlas::TILE_NONE,
+            "the soul lit-log tile the regen banks"
+        );
+        assert_ne!(
+            fire_tile,
+            gen_atlas::TILE_NONE,
+            "the fire tile the strip tables bank"
+        );
         // THE UNLIT KIND'S OWN BAKE — the five-log geometry on stone:
         // the 28 element faces the walk derives, the THREE down
         // cullfaces the solid ground culled (log1/log3/log5's own
@@ -14646,7 +15525,11 @@ mod tests {
             .iter()
             .filter(|quad| quad.tile == log_tile && quad.pts[0][0] >= 12.0)
             .collect();
-        assert_eq!(floating.len(), 28, "the floating campfire the down culls never trigger");
+        assert_eq!(
+            floating.len(),
+            28,
+            "the floating campfire the down culls never trigger"
+        );
         // THE LIT KIND'S OWN BAKE — the same five-log geometry the
         // lit_log faces swap PLUS the two 45-degree fire planes the
         // rotation walk bakes: the 16 log + 9 lit_log + 4 fire quads
@@ -14663,8 +15546,16 @@ mod tests {
         let lit_lits: Vec<_> = q.iter().filter(|quad| quad.tile == lit_tile).collect();
         let fires: Vec<_> = q.iter().filter(|quad| quad.tile == fire_tile).collect();
         assert_eq!(lit_logs.len(), 16, "the #log faces the lit template keeps");
-        assert_eq!(lit_lits.len(), 9, "the #lit_log faces the lit template swaps");
-        assert_eq!(fires.len(), 4, "the two fire planes' north/south + west/east pairs");
+        assert_eq!(
+            lit_lits.len(),
+            9,
+            "the #lit_log faces the lit template swaps"
+        );
+        assert_eq!(
+            fires.len(),
+            4,
+            "the two fire planes' north/south + west/east pairs"
+        );
         for quad in &fires {
             assert!(
                 quad.pts.iter().any(|p| p[1] > 10.0),
@@ -14677,7 +15568,9 @@ mod tests {
         // `shade: false` the lightmap alone multiplies (the no-grid
         // convention the unshaded 1.0 the fire corners carry)
         assert!(
-            fires.iter().all(|quad| quad.colors.iter().all(|c| (c[0] - 1.0).abs() < 1e-5)),
+            fires
+                .iter()
+                .all(|quad| quad.colors.iter().all(|c| (c[0] - 1.0).abs() < 1e-5)),
             "the fire planes the 1.0 shade-false keeps"
         );
         // THE SOUL KIND'S OWN BAKE — the same geometry the soul
@@ -14690,8 +15583,16 @@ mod tests {
             .filter(|quad| quad.tile == gen_atlas::SOUL_CAMPFIRE_FIRE_FRAME0)
             .collect();
         let soul_lits: Vec<_> = q.iter().filter(|quad| quad.tile == soul_lit_tile).collect();
-        assert_eq!(soul_fires.len(), 4, "the soul fire planes the same bake answers");
-        assert_eq!(soul_lits.len(), 9, "the soul lit-log faces the same split wears");
+        assert_eq!(
+            soul_fires.len(),
+            4,
+            "the soul fire planes the same bake answers"
+        );
+        assert_eq!(
+            soul_lits.len(),
+            9,
+            "the soul lit-log faces the same split wears"
+        );
     }
 
     #[test]
@@ -14705,12 +15606,35 @@ mod tests {
         let side_tile = gen_atlas::TILE_CAKE_SIDE;
         let candle_tile = gen_atlas::FACE_TILES[crate::world::CANDLE as usize][2];
         let lit_candle_tile = gen_atlas::FACE_TILES[crate::world::CANDLE_LIT as usize][2];
-        assert_ne!(bottom_tile, gen_atlas::TILE_NONE, "the bottom tile the regen banks");
-        assert_ne!(top_tile, gen_atlas::TILE_NONE, "the top tile the regen banks");
-        assert_ne!(side_tile, gen_atlas::TILE_NONE, "the side tile the regen banks");
-        assert_ne!(candle_tile, gen_atlas::TILE_NONE, "the candle tile the palette banks");
-        assert_ne!(lit_candle_tile, gen_atlas::TILE_NONE, "the lit tile the palette banks");
-        assert_ne!(lit_candle_tile, candle_tile, "the two candle states their own masters");
+        assert_ne!(
+            bottom_tile,
+            gen_atlas::TILE_NONE,
+            "the bottom tile the regen banks"
+        );
+        assert_ne!(
+            top_tile,
+            gen_atlas::TILE_NONE,
+            "the top tile the regen banks"
+        );
+        assert_ne!(
+            side_tile,
+            gen_atlas::TILE_NONE,
+            "the side tile the regen banks"
+        );
+        assert_ne!(
+            candle_tile,
+            gen_atlas::TILE_NONE,
+            "the candle tile the palette banks"
+        );
+        assert_ne!(
+            lit_candle_tile,
+            gen_atlas::TILE_NONE,
+            "the lit tile the palette banks"
+        );
+        assert_ne!(
+            lit_candle_tile, candle_tile,
+            "the two candle states their own masters"
+        );
         // THE UNLIT KIND'S OWN BAKE — the slab + stick + wick geometry
         // on stone: the 16 element faces the walk derives, the TWO
         // down cullfaces the solid ground culled (the slab's and the
@@ -14726,10 +15650,22 @@ mod tests {
         let tops: Vec<_> = q.iter().filter(|quad| quad.tile == top_tile).collect();
         let sides: Vec<_> = q.iter().filter(|quad| quad.tile == side_tile).collect();
         let candles: Vec<_> = q.iter().filter(|quad| quad.tile == candle_tile).collect();
-        assert_eq!(bottoms.len(), 0, "the slab's down face the solid ground culls");
+        assert_eq!(
+            bottoms.len(),
+            0,
+            "the slab's down face the solid ground culls"
+        );
         assert_eq!(tops.len(), 1, "the slab's up face the top tile wears");
-        assert_eq!(sides.len(), 4, "the slab's four side faces the side tile wears");
-        assert_eq!(candles.len(), 9, "the stick's 5 drawn + the wick planes' 4 the candle tile answers");
+        assert_eq!(
+            sides.len(),
+            4,
+            "the slab's four side faces the side tile wears"
+        );
+        assert_eq!(
+            candles.len(),
+            9,
+            "the stick's 5 drawn + the wick planes' 4 the candle tile answers"
+        );
         // THE FLOATING KIND'S OWN CULLS — the air-below cell the two
         // down faces draw (the cullface verdict the neighbor read
         // keeps): the 16 faces the walk answers uncut, the bottom tile
@@ -14746,7 +15682,11 @@ mod tests {
                     && quad.pts[0][0] >= 12.0
             })
             .collect();
-        assert_eq!(floating.len(), 16, "the floating cake the down culls never trigger");
+        assert_eq!(
+            floating.len(),
+            16,
+            "the floating cake the down culls never trigger"
+        );
         assert_eq!(
             floating
                 .iter()
@@ -14765,16 +15705,18 @@ mod tests {
             .iter()
             .filter(|quad| quad.tile == lit_candle_tile)
             .collect();
-        assert_eq!(lit_candles.len(), 9, "the lit faces the same split the lit tile wears");
+        assert_eq!(
+            lit_candles.len(),
+            9,
+            "the lit faces the same split the lit tile wears"
+        );
         // THE SHADE TERM'S OWN SPLIT — the template's shade:true
         // elements the direction table pays: the slab's up face the
         // 1.0 term keeps, the four sides the 0.8/0.6 horizontals wear
         // (the no-grid convention the lightmap alone multiplies)
         assert!(
-            tops.iter().all(|quad| quad
-                .colors
-                .iter()
-                .all(|c| (c[0] - 1.0).abs() < 1e-5)),
+            tops.iter()
+                .all(|quad| quad.colors.iter().all(|c| (c[0] - 1.0).abs() < 1e-5)),
             "the up face the 1.0 shade term wears"
         );
         assert!(
@@ -14796,10 +15738,26 @@ mod tests {
         let top_tile = gen_atlas::TILE_CAKE_TOP;
         let side_tile = gen_atlas::TILE_CAKE_SIDE;
         let inner_tile = gen_atlas::TILE_CAKE_INNER;
-        assert_ne!(bottom_tile, gen_atlas::TILE_NONE, "the bottom tile the regen banks");
-        assert_ne!(top_tile, gen_atlas::TILE_NONE, "the top tile the regen banks");
-        assert_ne!(side_tile, gen_atlas::TILE_NONE, "the side tile the regen banks");
-        assert_ne!(inner_tile, gen_atlas::TILE_NONE, "the inner tile the regen banks");
+        assert_ne!(
+            bottom_tile,
+            gen_atlas::TILE_NONE,
+            "the bottom tile the regen banks"
+        );
+        assert_ne!(
+            top_tile,
+            gen_atlas::TILE_NONE,
+            "the top tile the regen banks"
+        );
+        assert_ne!(
+            side_tile,
+            gen_atlas::TILE_NONE,
+            "the side tile the regen banks"
+        );
+        assert_ne!(
+            inner_tile,
+            gen_atlas::TILE_NONE,
+            "the inner tile the regen banks"
+        );
         // THE FULL KIND'S OWN BAKE — the single box on stone: the SIX
         // element faces the walk derives, the down cullface the solid
         // ground culled (the 5 drawn quads the texture verdict splits
@@ -14810,27 +15768,57 @@ mod tests {
         put(&mut w, 8, 9, 8, crate::world::CAKE);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell = |quad: &&crate::mesher::Quad| quad.pts[0][0] >= 8.0 && quad.pts[0][0] < 9.0;
-        let drawn: Vec<_> = q.iter().filter(|quad| {
-            cell(quad) && (quad.tile == bottom_tile || quad.tile == top_tile
-                || quad.tile == side_tile || quad.tile == inner_tile)
-        }).collect();
-        assert_eq!(drawn.len(), 5, "the six faces the down cull the ground serves");
-        assert_eq!(drawn.iter().filter(|quad| quad.tile == top_tile).count(), 1,
-            "the up face the top tile wears");
-        assert_eq!(drawn.iter().filter(|quad| quad.tile == side_tile).count(), 4,
-            "the four side faces the side tile wears");
+        let drawn: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                cell(quad)
+                    && (quad.tile == bottom_tile
+                        || quad.tile == top_tile
+                        || quad.tile == side_tile
+                        || quad.tile == inner_tile)
+            })
+            .collect();
+        assert_eq!(
+            drawn.len(),
+            5,
+            "the six faces the down cull the ground serves"
+        );
+        assert_eq!(
+            drawn.iter().filter(|quad| quad.tile == top_tile).count(),
+            1,
+            "the up face the top tile wears"
+        );
+        assert_eq!(
+            drawn.iter().filter(|quad| quad.tile == side_tile).count(),
+            4,
+            "the four side faces the side tile wears"
+        );
         // THE FLOATING KIND'S OWN CULLS — the air-below cell the down
         // face draws (the cullface verdict the neighbor read keeps):
         // the 6 faces the walk answers uncut
         put(&mut w, 12, 9, 8, crate::world::CAKE);
         let q = mesh_chunk(&w, 0, 0, None);
-        let floating: Vec<_> = q.iter().filter(|quad| {
-            quad.pts[0][0] >= 12.0 && quad.pts[0][0] < 13.0
-                && (quad.tile == bottom_tile || quad.tile == top_tile || quad.tile == side_tile)
-        }).collect();
-        assert_eq!(floating.len(), 6, "the floating cake the down culls never trigger");
-        assert_eq!(floating.iter().filter(|quad| quad.tile == bottom_tile).count(), 1,
-            "the down face the air below draws");
+        let floating: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts[0][0] >= 12.0
+                    && quad.pts[0][0] < 13.0
+                    && (quad.tile == bottom_tile || quad.tile == top_tile || quad.tile == side_tile)
+            })
+            .collect();
+        assert_eq!(
+            floating.len(),
+            6,
+            "the floating cake the down culls never trigger"
+        );
+        assert_eq!(
+            floating
+                .iter()
+                .filter(|quad| quad.tile == bottom_tile)
+                .count(),
+            1,
+            "the down face the air below draws"
+        );
         // THE BITTEN STAGES' OWN BAKES — every slice the SAME single
         // box the x-start walk narrows (the lambda$static$0 shape the
         // models exactly mirror): the west face the #inside ref the
@@ -14853,12 +15841,20 @@ mod tests {
                 .iter()
                 .filter(|quad| quad.tile == inner_tile && cell(quad))
                 .collect();
-            assert_eq!(inners.len(), 1, "slice {slice}: the west face the inner tile wears");
+            assert_eq!(
+                inners.len(),
+                1,
+                "slice {slice}: the west face the inner tile wears"
+            );
             let tops: Vec<_> = q
                 .iter()
                 .filter(|quad| quad.tile == top_tile && cell(quad))
                 .collect();
-            assert_eq!(tops.len(), 1, "slice {slice}: the up face the top tile wears");
+            assert_eq!(
+                tops.len(),
+                1,
+                "slice {slice}: the up face the top tile wears"
+            );
         }
         // THE SHADE TERM'S OWN SPLIT — the box's shade:true elements
         // the direction table pays: the up face the 1.0 term keeps,
@@ -14873,10 +15869,8 @@ mod tests {
             .filter(|quad| quad.tile == top_tile && cell(quad))
             .collect();
         assert!(
-            tops.iter().all(|quad| quad
-                .colors
-                .iter()
-                .all(|c| (c[0] - 1.0).abs() < 1e-5)),
+            tops.iter()
+                .all(|quad| quad.colors.iter().all(|c| (c[0] - 1.0).abs() < 1e-5)),
             "the up face the 1.0 shade term wears"
         );
         let sides: Vec<_> = q
@@ -14897,8 +15891,16 @@ mod tests {
         use mc_registry::generated::atlas as gen_atlas;
         let web_tile = gen_atlas::FACE_TILES[crate::world::COBWEB as usize][2];
         let wool_tile = gen_atlas::FACE_TILES[crate::world::WHITE_WOOL as usize][0];
-        assert_ne!(web_tile, gen_atlas::TILE_NONE, "the web tile the regen banks");
-        assert_ne!(wool_tile, gen_atlas::TILE_NONE, "the wool tile the regen banks");
+        assert_ne!(
+            web_tile,
+            gen_atlas::TILE_NONE,
+            "the web tile the regen banks"
+        );
+        assert_ne!(
+            wool_tile,
+            gen_atlas::TILE_NONE,
+            "the wool tile the regen banks"
+        );
         // THE WEB'S OWN CROSS (the freestanding cell the two diagonal
         // planes the flowers' own path wears — the 4 quads the two
         // planes × two windings speak, the offset the NONE row zeroes
@@ -14907,7 +15909,11 @@ mod tests {
         put(&mut w, 8, 8, 8, crate::world::COBWEB);
         let q = mesh_chunk(&w, 0, 0, None);
         let webs: Vec<_> = q.iter().filter(|quad| quad.tile == web_tile).collect();
-        assert_eq!(webs.len(), 4, "the web the two diagonals × two windings keeps");
+        assert_eq!(
+            webs.len(),
+            4,
+            "the web the two diagonals × two windings keeps"
+        );
         // THE RIGID PLANE (the offset zero — every point the cell's own
         // 8..9 x-band the no-jitter walk keeps)
         for quad in &webs {
@@ -14932,15 +15938,27 @@ mod tests {
         // the AO the opaque walk casts, the same-tile six the
         // cube_all's `all` ref banks)
         let sand_tile = gen_atlas::FACE_TILES[crate::world::SOUL_SAND as usize][0];
-        assert_ne!(sand_tile, gen_atlas::TILE_NONE, "the sand tile the regen banks");
-        assert_eq!(gen_atlas::tile_name(sand_tile), "soul_sand", "the sand tile the master names");
+        assert_ne!(
+            sand_tile,
+            gen_atlas::TILE_NONE,
+            "the sand tile the regen banks"
+        );
+        assert_eq!(
+            gen_atlas::tile_name(sand_tile),
+            "soul_sand",
+            "the sand tile the master names"
+        );
         for face in 0..6 {
             assert_eq!(
                 gen_atlas::FACE_TILES[crate::world::SOUL_SAND as usize][face],
                 sand_tile,
                 "the sand face {face} the cube_all's same tile keeps"
             );
-            assert_eq!(gen_atlas::TINTS[crate::world::SOUL_SAND as usize][face], 0, "the sand face {face} untinted");
+            assert_eq!(
+                gen_atlas::TINTS[crate::world::SOUL_SAND as usize][face],
+                0,
+                "the sand face {face} untinted"
+            );
         }
         let mut w3 = empty_world();
         put(&mut w3, 8, 8, 8, crate::world::SOUL_SAND);
@@ -14985,7 +16003,10 @@ mod tests {
         let bottoms = honey.iter().filter(|quad| quad.tile == bottom_tile).count();
         let tops = honey.iter().filter(|quad| quad.tile == top_tile).count();
         let sides = honey.iter().filter(|quad| quad.tile == side_tile).count();
-        assert_eq!(bottoms, 7, "the outer six + the inset's own down the #down master wears");
+        assert_eq!(
+            bottoms, 7,
+            "the outer six + the inset's own down the #down master wears"
+        );
         assert_eq!(tops, 1, "the inset's up the #up master wears");
         assert_eq!(sides, 4, "the inset's four sides the #side master wears");
         // THE INSET-FIRST ORDER (the reversed derive walk — the first
@@ -15024,7 +16045,10 @@ mod tests {
         }
         // THE FLAGS (translucent + per-texel — the raster's arm reads)
         for quad in &honey {
-            assert!(quad.translucent, "the honey quad the translucent pass rides");
+            assert!(
+                quad.translucent,
+                "the honey quad the translucent pass rides"
+            );
             assert!(
                 quad.per_texel_alpha,
                 "the honey quad the texel's own alpha composites"
@@ -15043,9 +16067,16 @@ mod tests {
                 quad.tile == bottom_tile || quad.tile == top_tile || quad.tile == side_tile
             })
             .collect();
-        assert_eq!(honey2.len(), 11, "the stone neighbor the shared outer face culls");
         assert_eq!(
-            honey2.iter().filter(|quad| quad.tile == bottom_tile).count(),
+            honey2.len(),
+            11,
+            "the stone neighbor the shared outer face culls"
+        );
+        assert_eq!(
+            honey2
+                .iter()
+                .filter(|quad| quad.tile == bottom_tile)
+                .count(),
             6,
             "the culled face the outer cube's own #down wears — the inset's down the count keeps"
         );
@@ -15068,10 +16099,7 @@ mod tests {
         let white_tile = gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS as usize][2];
         let red_tile = gen_atlas::FACE_TILES[crate::world::RED_STAINED_GLASS as usize][2];
         assert_eq!(gen_atlas::tile_name(glass_tile), "glass");
-        assert_eq!(
-            gen_atlas::tile_name(white_tile),
-            "white_stained_glass"
-        );
+        assert_eq!(gen_atlas::tile_name(white_tile), "white_stained_glass");
         // THE FREESTANDING CELL (all neighbors air — the six quads
         // the full cube keeps)
         let mut w = empty_world();
@@ -15145,14 +16173,8 @@ mod tests {
             "the stone neighbor the glass's shared face culls"
         );
         let stone_tile = gen_atlas::FACE_TILES[crate::world::STONE as usize][2];
-        let stones: Vec<_> = q5
-            .iter()
-            .filter(|quad| quad.tile == stone_tile)
-            .collect();
-        assert!(
-            stones.len() >= 1,
-            "the stone's own faces the mesh keeps"
-        );
+        let stones: Vec<_> = q5.iter().filter(|quad| quad.tile == stone_tile).collect();
+        assert!(stones.len() >= 1, "the stone's own faces the mesh keeps");
         // the stone face AGAINST the glass draws (the +X face at
         // x=8.0 — the glass cell the non-occluding neighbor the draw
         // verdict answers): the plane the two cells' seam wears
@@ -15181,7 +16203,10 @@ mod tests {
         let red_glass_tile = gen_atlas::FACE_TILES[crate::world::RED_STAINED_GLASS as usize][2];
         let bars_tile = gen_atlas::FACE_TILES[crate::world::IRON_BARS as usize][2];
         assert_eq!(gen_atlas::tile_name(edge_tile), "glass_pane_top");
-        assert_eq!(gen_atlas::tile_name(red_edge_tile), "red_stained_glass_pane_top");
+        assert_eq!(
+            gen_atlas::tile_name(red_edge_tile),
+            "red_stained_glass_pane_top"
+        );
         assert_eq!(gen_atlas::tile_name(bars_tile), "iron_bars");
         // THE LONE PANE (all neighbors air — the post caps + the
         // four noside caps the unconnected fan wears; the derived
@@ -15194,11 +16219,18 @@ mod tests {
             .iter()
             .filter(|quad| quad.tile == edge_tile || quad.tile == glass_tile)
             .collect();
-        assert_eq!(pane.len(), 6, "the lone pane the post + the four noside caps wear");
+        assert_eq!(
+            pane.len(),
+            6,
+            "the lone pane the post + the four noside caps wear"
+        );
         // the plain pane the OPAQUE flags wear (the cutout lane)
         for quad in &pane {
             assert!(!quad.translucent, "the plain pane the OPAQUE pass rides");
-            assert!(!quad.per_texel_alpha, "the plain pane the binary cutout wears");
+            assert!(
+                !quad.per_texel_alpha,
+                "the plain pane the binary cutout wears"
+            );
         }
         // the tiles the #edge refs the kind's own row bank (the
         // post caps + the noside caps the SAME edge master wear —
@@ -15209,10 +16241,7 @@ mod tests {
         // GLASS master wear])
         let edges = pane.iter().filter(|quad| quad.tile == edge_tile).count();
         let panes = pane.iter().filter(|quad| quad.tile == glass_tile).count();
-        assert_eq!(
-            edges, 2,
-            "the post's two caps the #edge master wears"
-        );
+        assert_eq!(edges, 2, "the post's two caps the #edge master wears");
         assert_eq!(
             panes, 4,
             "the four noside caps the #pane master wears (the glass block's own tile)"
@@ -15255,8 +16284,7 @@ mod tests {
         let q3 = mesh_chunk(&w3, 0, 0, None);
         let white_edge_tile =
             gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS_PANE as usize][2];
-        let white_glass_tile =
-            gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS as usize][2];
+        let white_glass_tile = gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS as usize][2];
         let stained: Vec<_> = q3
             .iter()
             .filter(|quad| {
@@ -15269,7 +16297,11 @@ mod tests {
         // each pane: 2 post caps + 5 side-arm quads (the END face
         // the DIFFERENT-color neighbor the draw keeps) + 3 noside
         // caps = 10 — the pair the 20 quads the seam wears
-        assert_eq!(stained.len(), 20, "the different-color pair the seam faces wear");
+        assert_eq!(
+            stained.len(),
+            20,
+            "the different-color pair the seam faces wear"
+        );
         for quad in &stained {
             assert!(
                 quad.translucent,
@@ -15286,15 +16318,13 @@ mod tests {
         let seam_a = stained
             .iter()
             .filter(|quad| {
-                quad.tile == white_edge_tile
-                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
+                quad.tile == white_edge_tile && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
             })
             .count();
         let seam_b = stained
             .iter()
             .filter(|quad| {
-                quad.tile == red_edge_tile
-                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
+                quad.tile == red_edge_tile && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
             })
             .count();
         assert_eq!(seam_a, 1, "the white pane's east END the seam draws");
@@ -15347,8 +16377,7 @@ mod tests {
         // same law culls
         use mc_registry::generated::atlas as gen_atlas;
         let copper_tile = gen_atlas::FACE_TILES[crate::world::COPPER_BARS as usize][2];
-        let exposed_tile =
-            gen_atlas::FACE_TILES[crate::world::EXPOSED_COPPER_BARS as usize][2];
+        let exposed_tile = gen_atlas::FACE_TILES[crate::world::EXPOSED_COPPER_BARS as usize][2];
         let iron_tile = gen_atlas::FACE_TILES[crate::world::IRON_BARS as usize][2];
         assert_eq!(gen_atlas::tile_name(copper_tile), "copper_bars");
         assert_eq!(gen_atlas::tile_name(exposed_tile), "exposed_copper_bars");
@@ -15356,7 +16385,10 @@ mod tests {
             copper_tile, exposed_tile,
             "the bare rungs the DISTINCT masters wear"
         );
-        assert_ne!(copper_tile, iron_tile, "the copper voice its own master wears");
+        assert_ne!(
+            copper_tile, iron_tile,
+            "the copper voice its own master wears"
+        );
         // THE WAXED TWIN THE BASE MASTER RE-WEARS (the texture-
         // sharing law the vanilla waxed look keeps)
         assert_eq!(
@@ -15376,7 +16408,10 @@ mod tests {
         put(&mut w, 8, 8, 8, crate::world::COPPER_BARS);
         let q = mesh_chunk(&w, 0, 0, None);
         let lone: Vec<_> = q.iter().filter(|quad| quad.tile == copper_tile).collect();
-        assert!(!lone.is_empty(), "the lone rung the crossed-plane quads wear");
+        assert!(
+            !lone.is_empty(),
+            "the lone rung the crossed-plane quads wear"
+        );
         for quad in &lone {
             assert!(!quad.translucent, "the rung the OPAQUE pass rides");
             assert!(!quad.per_texel_alpha, "the rung the binary cutout wears");
@@ -15488,11 +16523,13 @@ mod tests {
         use mc_registry::generated::atlas as gen_atlas;
         let iron_tile = gen_atlas::FACE_TILES[crate::world::IRON_CHAIN as usize][2];
         let copper_tile = gen_atlas::FACE_TILES[crate::world::COPPER_CHAIN as usize][2];
-        let exposed_tile =
-            gen_atlas::FACE_TILES[crate::world::EXPOSED_COPPER_CHAIN as usize][2];
+        let exposed_tile = gen_atlas::FACE_TILES[crate::world::EXPOSED_COPPER_CHAIN as usize][2];
         assert_eq!(gen_atlas::tile_name(iron_tile), "iron_chain");
         assert_eq!(gen_atlas::tile_name(copper_tile), "copper_chain");
-        assert_ne!(iron_tile, copper_tile, "the two voices the DISTINCT masters wear");
+        assert_ne!(
+            iron_tile, copper_tile,
+            "the two voices the DISTINCT masters wear"
+        );
         assert_ne!(
             copper_tile, exposed_tile,
             "the bare rungs the DISTINCT masters wear"
@@ -15517,10 +16554,7 @@ mod tests {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, crate::world::COPPER_CHAIN);
         let q = mesh_chunk(&w, 0, 0, None);
-        let lone: Vec<_> = q
-            .iter()
-            .filter(|quad| quad.tile == copper_tile)
-            .collect();
+        let lone: Vec<_> = q.iter().filter(|quad| quad.tile == copper_tile).collect();
         assert_eq!(
             lone.len(),
             4,
@@ -15529,16 +16563,8 @@ mod tests {
         for quad in &lone {
             assert!(!quad.translucent, "the link the OPAQUE pass rides");
             assert!(!quad.per_texel_alpha, "the link the binary cutout wears");
-            let y_min = quad
-                .pts
-                .iter()
-                .map(|p| p[1])
-                .fold(f32::MAX, f32::min);
-            let y_max = quad
-                .pts
-                .iter()
-                .map(|p| p[1])
-                .fold(f32::MIN, f32::max);
+            let y_min = quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+            let y_max = quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
             assert!(
                 (y_min - 8.0).abs() < 1e-5 && ((y_max - 9.0).abs() < 1e-5),
                 "the y span the FULL 0..1 band the vertical shaft keeps, got {y_min}..{y_max}"
@@ -15546,22 +16572,17 @@ mod tests {
         }
         let diagonal = lone
             .iter()
-            .filter(|quad| {
-                quad.pts
-                    .iter()
-                    .all(|p| (p[0] - p[2]).abs() < 1e-4)
-            })
+            .filter(|quad| quad.pts.iter().all(|p| (p[0] - p[2]).abs() < 1e-4))
             .count();
         let anti_diagonal = lone
             .iter()
-            .filter(|quad| {
-                quad.pts
-                    .iter()
-                    .all(|p| (p[0] + p[2] - 17.0).abs() < 1e-4)
-            })
+            .filter(|quad| quad.pts.iter().all(|p| (p[0] + p[2] - 17.0).abs() < 1e-4))
             .count();
         assert_eq!(diagonal, 2, "the +45° plane the x==z diagonal wears");
-        assert_eq!(anti_diagonal, 2, "the -45° plane the x+z==17 anti-diagonal wears");
+        assert_eq!(
+            anti_diagonal, 2,
+            "the -45° plane the x+z==17 anti-diagonal wears"
+        );
         // THE AXIS=Z CHAIN THE X-FOLD RENDERS (the variant byte the
         // 2 the placed stamp banks — the x=90 turn the vertical
         // shaft the along-z rung maps: the y the centered 6.5..9.5
@@ -15571,11 +16592,12 @@ mod tests {
         put(&mut w2, 8, 8, 8, crate::world::COPPER_CHAIN);
         w2.set_variant(8, 8, 8, crate::world::CHAIN_AXIS_Z);
         let q2 = mesh_chunk(&w2, 0, 0, None);
-        let rung_z: Vec<_> = q2
-            .iter()
-            .filter(|quad| quad.tile == copper_tile)
-            .collect();
-        assert_eq!(rung_z.len(), 4, "the horizontal rung the same crossed pair wears");
+        let rung_z: Vec<_> = q2.iter().filter(|quad| quad.tile == copper_tile).collect();
+        assert_eq!(
+            rung_z.len(),
+            4,
+            "the horizontal rung the same crossed pair wears"
+        );
         for quad in &rung_z {
             for p in quad.pts.iter() {
                 assert!(
@@ -15590,14 +16612,8 @@ mod tests {
                 );
             }
             assert!(
-                quad
-                    .pts
-                    .iter()
-                    .all(|p| (p[0] + p[1] - 17.0).abs() < 1e-4)
-                    || quad
-                        .pts
-                        .iter()
-                        .all(|p| (p[0] - p[1]).abs() < 1e-4),
+                quad.pts.iter().all(|p| (p[0] + p[1] - 17.0).abs() < 1e-4)
+                    || quad.pts.iter().all(|p| (p[0] - p[1]).abs() < 1e-4),
                 "the diagonal the x±y plane the folded pair wears"
             );
         }
@@ -15608,10 +16624,7 @@ mod tests {
         put(&mut w3, 8, 8, 8, crate::world::COPPER_CHAIN);
         w3.set_variant(8, 8, 8, crate::world::CHAIN_AXIS_X);
         let q3 = mesh_chunk(&w3, 0, 0, None);
-        let rung_x: Vec<_> = q3
-            .iter()
-            .filter(|quad| quad.tile == copper_tile)
-            .collect();
+        let rung_x: Vec<_> = q3.iter().filter(|quad| quad.tile == copper_tile).collect();
         assert_eq!(rung_x.len(), 4, "the x-rung the same crossed pair wears");
         for quad in &rung_x {
             let x_min = quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
@@ -15672,7 +16685,10 @@ mod tests {
         let copper_tile = gen_atlas::FACE_TILES[crate::world::COPPER_LANTERN as usize][2];
         assert_eq!(gen_atlas::tile_name(lantern_tile), "lantern");
         assert_eq!(gen_atlas::tile_name(soul_tile), "soul_lantern");
-        assert_ne!(lantern_tile, soul_tile, "the two voices the DISTINCT masters wear");
+        assert_ne!(
+            lantern_tile, soul_tile,
+            "the two voices the DISTINCT masters wear"
+        );
         assert_ne!(
             copper_tile, lantern_tile,
             "the bare copper rung the DISTINCT master wears"
@@ -15693,10 +16709,7 @@ mod tests {
         put(&mut w, 8, 7, 8, crate::world::STONE); // the support the body's down face culls against
         put(&mut w, 8, 8, 8, crate::world::LANTERN);
         let q = mesh_chunk(&w, 0, 0, None);
-        let standing: Vec<_> = q
-            .iter()
-            .filter(|quad| quad.tile == lantern_tile)
-            .collect();
+        let standing: Vec<_> = q.iter().filter(|quad| quad.tile == lantern_tile).collect();
         assert_eq!(
             standing.len(),
             14,
@@ -15741,10 +16754,7 @@ mod tests {
         let mut wf = empty_world();
         put(&mut wf, 8, 8, 8, crate::world::LANTERN);
         let qf = mesh_chunk(&wf, 0, 0, None);
-        let floating: Vec<_> = qf
-            .iter()
-            .filter(|quad| quad.tile == lantern_tile)
-            .collect();
+        let floating: Vec<_> = qf.iter().filter(|quad| quad.tile == lantern_tile).collect();
         assert_eq!(
             floating.len(),
             15,
@@ -15762,10 +16772,7 @@ mod tests {
         put(&mut wh, 8, 8, 8, crate::world::LANTERN);
         wh.set_variant(8, 8, 8, crate::world::LANTERN_HANGING);
         let qh = mesh_chunk(&wh, 0, 0, None);
-        let hanging: Vec<_> = qh
-            .iter()
-            .filter(|quad| quad.tile == lantern_tile)
-            .collect();
+        let hanging: Vec<_> = qh.iter().filter(|quad| quad.tile == lantern_tile).collect();
         assert_eq!(
             hanging.len(),
             16,
@@ -15835,8 +16842,14 @@ mod tests {
         assert_eq!(gen_atlas::tile_name(oak_tile), "oak_planks");
         assert_eq!(gen_atlas::tile_name(stone_tile), "stone");
         assert_eq!(gen_atlas::tile_name(copper_tile), "cut_copper");
-        assert_ne!(oak_tile, stone_tile, "the two voices the DISTINCT masters wear");
-        assert_ne!(copper_tile, oak_tile, "the copper rung the DISTINCT master wears");
+        assert_ne!(
+            oak_tile, stone_tile,
+            "the two voices the DISTINCT masters wear"
+        );
+        assert_ne!(
+            copper_tile, oak_tile,
+            "the copper rung the DISTINCT master wears"
+        );
         // THE WAXED TWIN THE BASE MASTER RE-WEARS (the texture-sharing
         // law the vanilla waxed look keeps)
         assert_eq!(
@@ -16102,14 +17115,9 @@ mod tests {
         for facing in 0..4u8 {
             for half_top in [false, true] {
                 for shape in 0..5u8 {
-                    let (_, mx, my) = stairs_model_quads(
-                        crate::world::OAK_STAIRS,
-                        facing,
-                        half_top,
-                        shape,
-                    );
-                    let (wx, wy) =
-                        crate::world::stairs_state_turns(facing, half_top, shape);
+                    let (_, mx, my) =
+                        stairs_model_quads(crate::world::OAK_STAIRS, facing, half_top, shape);
+                    let (wx, wy) = crate::world::stairs_state_turns(facing, half_top, shape);
                     assert_eq!(
                         (mx, my),
                         (wx, wy),
@@ -16147,12 +17155,10 @@ mod tests {
                     && p[2] <= 9.0 + 1e-4
             })
         };
-        let y_min_of = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min)
-        };
-        let y_max_of = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max)
-        };
+        let y_min_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+        let y_max_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
         // THE BOTTOM BAND (the unstamped default the registerDefault
         // pin wears — the SIX faces the band bakes: the down + the up
         // + the four sides the open cell draws)
@@ -16176,19 +17182,26 @@ mod tests {
         }
         // THE DOWN FACE + THE UP FACE THE BAND'S OWN PLANES WEAR (the
         // one quad each the flat pair answers)
-        let down_faces = bottom.iter().filter(|quad| {
-            quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5)
-        }).count();
-        let up_faces = bottom.iter().filter(|quad| {
-            quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5)
-        }).count();
+        let down_faces = bottom
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5))
+            .count();
+        let up_faces = bottom
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5))
+            .count();
         assert_eq!(down_faces, 1, "the down face the band's floor banks");
         assert_eq!(up_faces, 1, "the up face the band's ceiling banks");
         // THE TOP BAND (the type=1 the mirrored pair the upper half
         // banks — the same 6 quads the y 0.5..1.0 span wears)
         let mut wt = empty_world();
         put(&mut wt, 8, 8, 8, crate::world::OAK_SLAB);
-        wt.set_variant(8, 8, 8, crate::world::slab_variant(crate::world::SLAB_TYPE_TOP));
+        wt.set_variant(
+            8,
+            8,
+            8,
+            crate::world::slab_variant(crate::world::SLAB_TYPE_TOP),
+        );
         let qt = mesh_chunk(&wt, 0, 0, None);
         let top: Vec<_> = qt.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(top.len(), 6, "the top band the same 6 quads bakes");
@@ -16204,7 +17217,12 @@ mod tests {
         // lane renders — the SIX faces the 0..1 span the cube wears)
         let mut wd = empty_world();
         put(&mut wd, 8, 8, 8, crate::world::OAK_SLAB);
-        wd.set_variant(8, 8, 8, crate::world::slab_variant(crate::world::SLAB_TYPE_DOUBLE));
+        wd.set_variant(
+            8,
+            8,
+            8,
+            crate::world::slab_variant(crate::world::SLAB_TYPE_DOUBLE),
+        );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let dbl: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
         assert_eq!(dbl.len(), 6, "the double the full cube the 6 quads bakes");
@@ -16260,7 +17278,12 @@ mod tests {
         // the ceiling face culls — the 5 quads the band keeps)
         let mut wu = empty_world();
         put(&mut wu, 8, 8, 8, crate::world::OAK_SLAB);
-        wu.set_variant(8, 8, 8, crate::world::slab_variant(crate::world::SLAB_TYPE_TOP));
+        wu.set_variant(
+            8,
+            8,
+            8,
+            crate::world::slab_variant(crate::world::SLAB_TYPE_TOP),
+        );
         put(&mut wu, 8, 9, 8, crate::world::STONE);
         let qu = mesh_chunk(&wu, 0, 0, None);
         let up_culled: Vec<_> = qu
@@ -16290,7 +17313,8 @@ mod tests {
         let sand_bottom = gen_atlas::TILE_NAMES
             .iter()
             .position(|n| *n == "sandstone_bottom")
-            .expect("the sandstone bottom master the split walk banks") as u16;
+            .expect("the sandstone bottom master the split walk banks")
+            as u16;
         let sand_top = gen_atlas::TILE_NAMES
             .iter()
             .position(|n| *n == "sandstone_top")
@@ -16302,7 +17326,10 @@ mod tests {
         assert_eq!(sand.len(), 6, "the sandstone slab the 6 quads bakes");
         for quad in &sand {
             if quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5) {
-                assert_eq!(quad.tile, sand_bottom, "the down face the bottom split wears");
+                assert_eq!(
+                    quad.tile, sand_bottom,
+                    "the down face the bottom split wears"
+                );
             } else if quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5) {
                 assert_eq!(quad.tile, sand_top, "the up face the top split wears");
             } else {
@@ -16330,7 +17357,10 @@ mod tests {
             if quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5)
                 || quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5)
             {
-                assert_eq!(quad.tile, smooth, "the flat pair the smooth_stone master wears");
+                assert_eq!(
+                    quad.tile, smooth,
+                    "the flat pair the smooth_stone master wears"
+                );
             } else {
                 assert_eq!(
                     quad.tile, smooth_side,
@@ -16390,15 +17420,12 @@ mod tests {
                     && p[2] <= 9.0 + 1e-4
             })
         };
-        let y_min_of = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min)
-        };
-        let y_max_of = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max)
-        };
-        let x_max_of = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max)
-        };
+        let y_min_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+        let y_max_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+        let x_max_of =
+            |quad: &crate::mesher::Quad| quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max);
         // THE SINGLE CHEST (the unstamped default the registerDefault
         // pin wears — the FIFTEEN quads the box + the latch bake [the
         // autopush-299 round the lock box the closed front wears, the
@@ -16422,16 +17449,15 @@ mod tests {
                 y_min >= 8.0 - 1e-5 && y_max <= 8.0 + 14.0 / 16.0 + 1e-5,
                 "the 0..14 band the single keeps, got {y_min}..{y_max}"
             );
-            assert!(
-                !quad.translucent,
-                "the chest the opaque cutout lane wears"
-            );
+            assert!(!quad.translucent, "the chest the opaque cutout lane wears");
         }
         // THE TILE LAWS THE FACE ASSIGNMENT SPEAKS (the facing=north
         // default the front tile the -Z face wears, the sides the
         // four vertical bands keep, the top/bottom the centered pair)
         let north_face = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().all(|p| (p[2] - (8.0 + 1.0 / 16.0)).abs() < 1e-5)
+            quad.pts
+                .iter()
+                .all(|p| (p[2] - (8.0 + 1.0 / 16.0)).abs() < 1e-5)
         };
         assert!(
             cell.iter()
@@ -16445,10 +17471,7 @@ mod tests {
             "the north plane the body + the lid pair bakes [the 303 two-band split]"
         );
         assert!(
-            cell.iter()
-                .filter(|quad| quad.tile == side_tile)
-                .count()
-                >= 3,
+            cell.iter().filter(|quad| quad.tile == side_tile).count() >= 3,
             "the side faces the side tile keeps"
         );
         assert!(
@@ -16483,13 +17506,22 @@ mod tests {
             8,
             8,
             8,
-            crate::world::chest_variant(crate::world::CHEST_FACING_EAST, crate::world::CHEST_TYPE_SINGLE),
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_EAST,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
         );
         let qe = mesh_chunk(&we, 0, 0, None);
         let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celle.len(), 15, "the east chest the box 10 + the latch 5 bakes");
+        assert_eq!(
+            celle.len(),
+            15,
+            "the east chest the box 10 + the latch 5 bakes"
+        );
         let east_face = |quad: &crate::mesher::Quad| {
-            quad.pts.iter().all(|p| (p[0] - (8.0 + 15.0 / 16.0)).abs() < 1e-5)
+            quad.pts
+                .iter()
+                .all(|p| (p[0] - (8.0 + 15.0 / 16.0)).abs() < 1e-5)
         };
         assert!(
             celle
@@ -16512,7 +17544,10 @@ mod tests {
             8,
             8,
             8,
-            crate::world::chest_variant(crate::world::CHEST_FACING_NORTH, crate::world::CHEST_TYPE_LEFT),
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_NORTH,
+                crate::world::CHEST_TYPE_LEFT,
+            ),
         );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
@@ -16973,7 +18008,11 @@ mod tests {
         );
         let qs = mesh_chunk(&ws, 0, 0, None);
         let cells: Vec<_> = qs.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cells.len(), 15, "the south closed the box + the latch keeps");
+        assert_eq!(
+            cells.len(),
+            15,
+            "the south closed the box + the latch keeps"
+        );
         let locks = cells
             .iter()
             .filter(|quad| {
@@ -17009,7 +18048,12 @@ mod tests {
                 })
             })
             .collect();
-        assert_eq!(locke.len(), 5, "the east latch the +X band bakes, got {}", locke.len());
+        assert_eq!(
+            locke.len(),
+            5,
+            "the east latch the +X band bakes, got {}",
+            locke.len()
+        );
         let outerz = locke
             .iter()
             .find(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-5))
@@ -17063,7 +18107,11 @@ mod tests {
         );
         let qd = mesh_chunk(&wd, 0, 0, None);
         let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(celld.len(), 15, "the double closed the box + the latch keeps");
+        assert_eq!(
+            celld.len(),
+            15,
+            "the double closed the box + the latch keeps"
+        );
         let lockd: Vec<_> = celld
             .iter()
             .filter(|quad| {
@@ -17200,23 +18248,26 @@ mod tests {
                 .cloned()
                 .collect()
         };
-        let uv_at =
-            |quad: &crate::mesher::Quad, pick: fn(&[f32; 3], &[[f32; 3]; 4]) -> bool| {
-                quad.uvs
-                    .iter()
-                    .zip(quad.pts.iter())
-                    .find(|(_, p)| pick(p, &quad.pts))
-                    .map(|(uv, _)| *uv)
-                    .unwrap_or_else(|| panic!("the picked corner speaks"))
-            };
-        let min_x =
-            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[0] <= all.iter().map(|q| q[0]).fold(f32::MAX, f32::min) + 1e-6;
-        let max_x =
-            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[0] >= all.iter().map(|q| q[0]).fold(f32::MIN, f32::max) - 1e-6;
-        let min_z =
-            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[2] <= all.iter().map(|q| q[2]).fold(f32::MAX, f32::min) + 1e-6;
-        let max_z =
-            |p: &[f32; 3], all: &[[f32; 3]; 4]| p[2] >= all.iter().map(|q| q[2]).fold(f32::MIN, f32::max) - 1e-6;
+        let uv_at = |quad: &crate::mesher::Quad, pick: fn(&[f32; 3], &[[f32; 3]; 4]) -> bool| {
+            quad.uvs
+                .iter()
+                .zip(quad.pts.iter())
+                .find(|(_, p)| pick(p, &quad.pts))
+                .map(|(uv, _)| *uv)
+                .unwrap_or_else(|| panic!("the picked corner speaks"))
+        };
+        let min_x = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[0] <= all.iter().map(|q| q[0]).fold(f32::MAX, f32::min) + 1e-6
+        };
+        let max_x = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[0] >= all.iter().map(|q| q[0]).fold(f32::MIN, f32::max) - 1e-6
+        };
+        let min_z = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[2] <= all.iter().map(|q| q[2]).fold(f32::MAX, f32::min) + 1e-6
+        };
+        let max_z = |p: &[f32; 3], all: &[[f32; 3]; 4]| {
+            p[2] >= all.iter().map(|q| q[2]).fold(f32::MIN, f32::max) - 1e-6
+        };
         // THE SOUTH'S OWN VERDICT (the front the +Z far plane — the ta
         // end the model-x0 the u 3 the light column wears, the tb the u
         // 1 the dark pair)
@@ -17654,7 +18705,11 @@ mod tests {
             })
             .cloned()
             .collect();
-        assert_eq!(front.len(), 2, "the south front the body + the lid pair bakes");
+        assert_eq!(
+            front.len(),
+            2,
+            "the south front the body + the lid pair bakes"
+        );
         front.sort_by(|a, b| {
             let ya = a.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
             let yb = b.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
@@ -17749,8 +18804,7 @@ mod tests {
             crate::world::chest_variant(
                 crate::world::CHEST_FACING_SOUTH,
                 crate::world::CHEST_TYPE_SINGLE,
-            )
-            | crate::world::CHEST_OPEN_BIT,
+            ) | crate::world::CHEST_OPEN_BIT,
         );
         let qo = mesh_chunk(&wo, 0, 0, None);
         // the chunk the lone chest meshes — the front-tile quads the
@@ -18217,6 +19271,223 @@ mod tests {
     }
 
     #[test]
+    fn the_beacon_the_three_elements_the_18_quads_wear() {
+        // THE BEACON'S OWN THREE-ELEMENT LANE (the autopush-319 round
+        // — the 318 NEXT list's own first candidate the kind mint
+        // wears: the generic cube the block/beacon.json three
+        // elements retires — the glass shell [0,0,0]->[16,16,16] the
+        // six #glass faces wear, the obsidian base [2,0.1,2]->
+        // [14,3,14] the six #obsidian rows keep, the inner core
+        // [3,3,3]->[13,14,13] the six #beacon faces serve — the 18
+        // quads the derive banks, the no-cullface rows the neighbor
+        // verdict never culls, the shell's cutout lane the
+        // per_texel_alpha quads wear)
+        use mc_registry::generated::atlas as gen_atlas;
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-6
+                    && p[0] <= 9.0 + 1e-6
+                    && p[1] >= 8.0 - 1e-6
+                    && p[1] <= 9.0 + 1e-6
+                    && p[2] >= 8.0 - 1e-6
+                    && p[2] <= 9.0 + 1e-6
+            })
+        };
+        // THE AIR NEIGHBORS' OWN 18 (the fresh cell the six directions
+        // the air keeps — the no-cullface rows all draw)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::BEACON);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            18,
+            "the beacon's own 18 quads the three elements bake"
+        );
+        // THE TRIAD'S OWN TILE SPLIT (the glass master the pool's 273
+        // row answers, the obsidian the 93 row keeps, the core the
+        // pool tail's 1063 the pin banks)
+        assert_eq!(
+            cell.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_BEACON)
+                .count(),
+            6,
+            "the #beacon refs the core's six faces wear"
+        );
+        let glass_tile = beacon_named_tile("block/glass");
+        let obsidian_tile = beacon_named_tile("block/obsidian");
+        assert_eq!(glass_tile, 273, "the glass master the pool row keeps");
+        assert_eq!(obsidian_tile, 93, "the obsidian master the pool row keeps");
+        assert_eq!(
+            cell.iter().filter(|quad| quad.tile == glass_tile).count(),
+            6,
+            "the #glass refs the shell's six faces wear"
+        );
+        assert_eq!(
+            cell.iter()
+                .filter(|quad| quad.tile == obsidian_tile)
+                .count(),
+            6,
+            "the #obsidian refs the base's six faces wear"
+        );
+        // THE SHELL'S OWN CUTOUT LANE (the glass quads the
+        // translucent + per_texel_alpha flags wear, the obsidian +
+        // the core the opaque law keeps)
+        for quad in &cell {
+            let shell = quad.tile == glass_tile;
+            assert_eq!(
+                quad.translucent, shell,
+                "the shell the cutout lane wears, the rest the opaque keeps"
+            );
+            assert_eq!(quad.per_texel_alpha, shell, "the alpha law rides");
+        }
+        // THE OBSIDIAN BASE'S OWN BAND (the y 0.1..3 the base's own
+        // 2-px inset speaks — the bottom face the 0.1 plane wears,
+        // the shell the full 0..16 box keeps)
+        let base_y_max = cell
+            .iter()
+            .filter(|quad| quad.tile == obsidian_tile)
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MIN, f32::max);
+        let base_y_min = cell
+            .iter()
+            .filter(|quad| quad.tile == obsidian_tile)
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (base_y_min - (8.0 + 0.1 / 16.0)).abs() < 1e-4,
+            "the base the 0.1-px floor wears, got {base_y_min}"
+        );
+        assert!(
+            (base_y_max - (8.0 + 3.0 / 16.0)).abs() < 1e-4,
+            "the base the 3-px ceiling wears, got {base_y_max}"
+        );
+        // THE CORE'S OWN INSET (the y 3..14 the core box speaks — the
+        // beacon texture the pool tail's own master wears)
+        let core_y_min = cell
+            .iter()
+            .filter(|quad| quad.tile == gen_atlas::TILE_BEACON)
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MAX, f32::min);
+        let core_y_max = cell
+            .iter()
+            .filter(|quad| quad.tile == gen_atlas::TILE_BEACON)
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (core_y_min - (8.0 + 3.0 / 16.0)).abs() < 1e-4,
+            "the core the 3-px floor wears, got {core_y_min}"
+        );
+        assert!(
+            (core_y_max - (8.0 + 14.0 / 16.0)).abs() < 1e-4,
+            "the core the 14-px ceiling wears, got {core_y_max}"
+        );
+        // THE SHELL'S OWN FULL RIM (the y 0..16 the full box speaks)
+        let shell_y_min = cell
+            .iter()
+            .filter(|quad| quad.tile == glass_tile)
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MAX, f32::min);
+        let shell_y_max = cell
+            .iter()
+            .filter(|quad| quad.tile == glass_tile)
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (shell_y_min - 8.0).abs() < 1e-6 && (shell_y_max - 9.0).abs() < 1e-6,
+            "the shell the full-block rim keeps, got [{shell_y_min}, {shell_y_max}]"
+        );
+        // THE NO-CULLFACE LAW'S OWN WALK (the stone neighbors the 18
+        // quads NEVER cull — the jar's model the cullface keys never
+        // writes, the buried beacon the same triad renders)
+        let mut wb = empty_world();
+        put(&mut wb, 8, 8, 8, crate::world::BEACON);
+        put(&mut wb, 8, 9, 8, crate::world::STONE);
+        put(&mut wb, 8, 7, 8, crate::world::STONE);
+        put(&mut wb, 7, 8, 8, crate::world::STONE);
+        put(&mut wb, 9, 8, 8, crate::world::STONE);
+        put(&mut wb, 8, 8, 7, crate::world::STONE);
+        put(&mut wb, 8, 8, 9, crate::world::STONE);
+        let qb = mesh_chunk(&wb, 0, 0, None);
+        let cellb: Vec<_> = qb
+            .iter()
+            .filter(|quad| {
+                // THE BEACON'S OWN TILES (the stone neighbors' faces
+                // the x/y/z planes the cell band shares — the tile
+                // filter the beacon quads alone answers)
+                quad.tile == glass_tile
+                    || quad.tile == obsidian_tile
+                    || quad.tile == gen_atlas::TILE_BEACON
+            })
+            .collect();
+        assert_eq!(
+            cellb.len(),
+            18,
+            "the buried beacon the 18 quads the no-cullface law keeps"
+        );
+        // THE NO-OCCLUSION SEAT (the stone's own faces draw against
+        // the beacon cell — the clinit's noOcclusion row the
+        // is_transparent verdict banks; the stone above the beacon's
+        // own 18 the neighbors' bottom face the draw verdict keeps)
+        let mut ws = empty_world();
+        put(&mut ws, 8, 8, 8, crate::world::BEACON);
+        put(&mut ws, 8, 9, 8, crate::world::STONE);
+        let qs = mesh_chunk(&ws, 0, 0, None);
+        // the stone's bottom face (the y=9.0 plane, the 8..9 x/z band
+        // — the shell's own up face the same plane wears, the stone
+        // master's tile the filter answers)
+        let stone_tile = beacon_named_tile("block/stone");
+        let stone_bottom = qs
+            .iter()
+            .filter(|quad| {
+                quad.tile == stone_tile
+                    && quad.pts.iter().all(|p| {
+                        (p[1] - 9.0).abs() < 1e-6
+                            && p[0] >= 8.0 - 1e-6
+                            && p[0] <= 9.0 + 1e-6
+                            && p[2] >= 8.0 - 1e-6
+                            && p[2] <= 9.0 + 1e-6
+                    })
+            })
+            .count();
+        assert_eq!(
+            stone_bottom, 1,
+            "the stone's bottom face the no-occlusion seat draws"
+        );
+        // THE GENERIC PATH'S OWN FIVE (the base blocks the full-cube
+        // kinds the generic FACE_TILES rows wear — the iron cell the
+        // six faces the own-tile row answers; the opaque neighbors'
+        // faces the occluder never draws)
+        let mut wi = empty_world();
+        put(&mut wi, 8, 8, 8, crate::world::IRON_BLOCK);
+        let qi = mesh_chunk(&wi, 0, 0, None);
+        let celli: Vec<_> = qi.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            celli.len(),
+            6,
+            "the iron block the generic full-cube six faces wear"
+        );
+        assert!(
+            celli
+                .iter()
+                .all(|quad| quad.tile == 145 && !quad.translucent),
+            "the iron master the pool's 145 row the six faces wear"
+        );
+        let mut wn2 = empty_world();
+        put(&mut wn2, 8, 8, 8, crate::world::NETHERITE_BLOCK);
+        let qn2 = mesh_chunk(&wn2, 0, 0, None);
+        let celln2: Vec<_> = qn2.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            celln2
+                .iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_NETHERITE_BLOCK)
+                .count(),
+            6,
+            "the netherite master the pool tail's row the six faces wear"
+        );
+    }
+
+    #[test]
     fn the_bed_lane_the_two_cell_template_wears() {
         // THE BED'S OWN TWO CELL (the dev-194 round — the blockstates
         // /<color>_bed.json the eight variants the model split wears:
@@ -18561,7 +19832,12 @@ mod tests {
         put(&mut w, 8, 8, 8, crate::world::BARREL);
         let q = mesh_chunk(&w, 0, 0, None);
         let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
-        assert_eq!(cell.len(), 6, "the barrel the 6 quads bakes, got {}", cell.len());
+        assert_eq!(
+            cell.len(),
+            6,
+            "the barrel the 6 quads bakes, got {}",
+            cell.len()
+        );
         assert_eq!(
             tile_at(&cell, (-1.0, 9.0, -1.0)),
             Some(top_tile),
@@ -18632,7 +19908,11 @@ mod tests {
         let fire_tile = gen_atlas::FACE_TILES[crate::world::FIRE as usize][2];
         let soul_tile = gen_atlas::FACE_TILES[crate::world::SOUL_FIRE as usize][2];
         assert_ne!(fire_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
-        assert_ne!(soul_tile, gen_atlas::TILE_NONE, "the soul tile the regen banks");
+        assert_ne!(
+            soul_tile,
+            gen_atlas::TILE_NONE,
+            "the soul tile the regen banks"
+        );
         // THE SECOND FRAME'S OWN BASE TILES — the *_1 families the
         // appended frame-00 tiles bake (the blockstate's own apply
         // pairs the BOTH-families fan speak)
@@ -18655,7 +19935,11 @@ mod tests {
             .iter()
             .filter(|quad| quad.tile == fire_tile || quad.tile == fire1_tile)
             .collect();
-        assert_eq!(fan.len(), 40, "the floor pair's 8 + the four groups' 32 the fan wears");
+        assert_eq!(
+            fan.len(),
+            40,
+            "the floor pair's 8 + the four groups' 32 the fan wears"
+        );
         assert_eq!(
             fan.iter().filter(|quad| quad.tile == fire_tile).count(),
             20,
@@ -18720,7 +20004,11 @@ mod tests {
             .iter()
             .filter(|quad| quad.tile == fire_tile || quad.tile == fire1_tile)
             .collect();
-        assert_eq!(wall.len(), 8, "the east group's four models x the two faces");
+        assert_eq!(
+            wall.len(),
+            8,
+            "the east group's four models x the two faces"
+        );
         assert_eq!(
             wall.iter().filter(|quad| quad.tile == fire_tile).count(),
             4,
@@ -18741,7 +20029,8 @@ mod tests {
                 assert!(
                     (8.0..=9.0 + 1e-6).contains(&p[2]) && (9.0..=10.4 + 1e-4).contains(&p[1]),
                     "the wall's span the template element keeps: ({},{})",
-                    p[1], p[2]
+                    p[1],
+                    p[2]
                 );
             }
         }
@@ -18766,19 +20055,30 @@ mod tests {
             .iter()
             .filter(|quad| quad.tile == soul_tile || quad.tile == soul1_tile)
             .collect();
-        assert_eq!(soul_fan.len(), 40, "the soul fan the no-when column always wears");
         assert_eq!(
-            soul_fan.iter().filter(|quad| quad.tile == soul_tile).count(),
+            soul_fan.len(),
+            40,
+            "the soul fan the no-when column always wears"
+        );
+        assert_eq!(
+            soul_fan
+                .iter()
+                .filter(|quad| quad.tile == soul_tile)
+                .count(),
             20,
             "the soul *_0 family's own half the even split keeps"
         );
         assert_eq!(
-            soul_fan.iter().filter(|quad| quad.tile == soul1_tile).count(),
+            soul_fan
+                .iter()
+                .filter(|quad| quad.tile == soul1_tile)
+                .count(),
             20,
             "the soul *_1 family's own half the even split keeps"
         );
         assert!(
-            q_soul.iter()
+            q_soul
+                .iter()
                 .all(|quad| quad.tile != fire_tile && quad.tile != fire1_tile),
             "the soul cell the plain flame's tiles never wears"
         );
@@ -18793,7 +20093,11 @@ mod tests {
         let unlit_tile = gen_atlas::FACE_TILES[crate::world::CANDLE as usize][2];
         let lit_tile = gen_atlas::FACE_TILES[crate::world::CANDLE_LIT as usize][2];
         assert_ne!(unlit_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
-        assert_ne!(lit_tile, gen_atlas::TILE_NONE, "the lit tile the regen banks");
+        assert_ne!(
+            lit_tile,
+            gen_atlas::TILE_NONE,
+            "the lit tile the regen banks"
+        );
         assert_ne!(unlit_tile, lit_tile, "the two states' own masters");
         // THE STICK'S OWN BAKE — the unlit candle on stone: the 9 quads
         // the box's six faces (the down face the cullface verdict
@@ -18805,10 +20109,7 @@ mod tests {
         put(&mut w, 8, 8, 8, STONE);
         put(&mut w, 8, 9, 8, crate::world::CANDLE);
         let q = mesh_chunk(&w, 0, 0, None);
-        let stick: Vec<_> = q
-            .iter()
-            .filter(|quad| quad.tile == unlit_tile)
-            .collect();
+        let stick: Vec<_> = q.iter().filter(|quad| quad.tile == unlit_tile).collect();
         assert_eq!(stick.len(), 9, "the box's five faces + the wick's four");
         for quad in &stick {
             assert!(!quad.translucent, "the candle the opaque cutout lane wears");
@@ -18837,15 +20138,15 @@ mod tests {
             "the box top's up face the 1.0 shade keeps"
         );
         assert!(
-            stick.iter().any(|quad| {
-                quad.colors.iter().all(|c| (c[0] - 0.8).abs() < 1e-5)
-            }),
+            stick
+                .iter()
+                .any(|quad| { quad.colors.iter().all(|c| (c[0] - 0.8).abs() < 1e-5) }),
             "the horizontal faces the 0.8 shade wears"
         );
         assert!(
-            stick.iter().all(|quad| {
-                quad.colors.iter().all(|c| (0.5..=1.0).contains(&c[0]))
-            }),
+            stick
+                .iter()
+                .all(|quad| { quad.colors.iter().all(|c| (0.5..=1.0).contains(&c[0])) }),
             "the shade table the cube path's constants keeps"
         );
         // THE AIR BELOW'S OWN TEN — the floating candle the down face
@@ -18953,7 +20254,11 @@ mod tests {
         // (the block palette, the destroy stages, the missing-material
         // sentinel the flat path keeps)
         let stone = gen_atlas::FACE_TILES[STONE as usize][2];
-        assert_eq!(gen_atlas::anim_tile(stone, 7), stone, "the stone tile the identity wears");
+        assert_eq!(
+            gen_atlas::anim_tile(stone, 7),
+            stone,
+            "the stone tile the identity wears"
+        );
         assert_eq!(
             gen_atlas::anim_tile(gen_atlas::DESTROY_TILES[3], 19),
             gen_atlas::DESTROY_TILES[3],
@@ -18968,7 +20273,9 @@ mod tests {
         // 16x16 texel body carries, the frame-00 rows the block tile's
         // own pixels speak (the strip's first frame the palette's crop
         // already banked — the two index spaces the same pixels wear)
-        for f in gen_atlas::FIRE_0_FRAMES.iter().copied()
+        for f in gen_atlas::FIRE_0_FRAMES
+            .iter()
+            .copied()
             .chain(gen_atlas::FIRE_1_FRAMES.iter().copied())
             .chain(gen_atlas::SOUL_FIRE_0_FRAMES.iter().copied())
             .chain(gen_atlas::SOUL_FIRE_1_FRAMES.iter().copied())
@@ -19071,7 +20378,11 @@ mod tests {
                 .map(|(&a, &b)| (a as f64 + (b as f64 - a as f64) * alpha).round() as u8)
                 .collect()
         };
-        assert_eq!(t3, law(0.15), "tick 3 every texel the 150/1000 alpha's mix wears");
+        assert_eq!(
+            t3,
+            law(0.15),
+            "tick 3 every texel the 150/1000 alpha's mix wears"
+        );
         assert_ne!(
             t3,
             law(0.149),
@@ -19086,11 +20397,7 @@ mod tests {
                 .map(|(&a, &b)| (a as f64 + (b as f64 - a as f64) * alpha).round() as u8)
                 .collect()
         };
-        assert_eq!(
-            t79,
-            law_wrap(0.95),
-            "tick 79 the wrap's 950/1000 mix wears"
-        );
+        assert_eq!(t79, law_wrap(0.95), "tick 79 the wrap's 950/1000 mix wears");
         assert_ne!(
             t79,
             law_wrap(0.949),
@@ -19168,7 +20475,11 @@ mod tests {
         // THE FRAME BODIES — every appended frame tile the full 16x16
         // body carries (the water strip's 32, the lava strip's 20)
         for f in gen_atlas::WATER_FRAMES.iter().copied() {
-            assert_eq!(gen_atlas::tile_rgba(f).len(), 16 * 16 * 4, "water frame {f}");
+            assert_eq!(
+                gen_atlas::tile_rgba(f).len(),
+                16 * 16 * 4,
+                "water frame {f}"
+            );
         }
         for f in gen_atlas::LAVA_FRAMES.iter().copied() {
             assert_eq!(gen_atlas::tile_rgba(f).len(), 16 * 16 * 4, "lava frame {f}");
@@ -19197,10 +20508,16 @@ mod tests {
         let q = mesh_chunk(&w, 0, 0, None);
         let a = 0.8 / 16.0;
         let b = 15.2 / 16.0;
-        let (dx, dy, dz) =
-            crate::world::plant_offset(crate::world::SHORT_GRASS, 8, 9, 8);
+        let (dx, dy, dz) = crate::world::plant_offset(crate::world::SHORT_GRASS, 8, 9, 8);
         let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
-        assert_eq!((dx, dy, dz), (0.150_000_005_960_464_48f32, -0.200_000_002_980_232_24f32, -0.083_333_328_366_279_6f32));
+        assert_eq!(
+            (dx, dy, dz),
+            (
+                0.150_000_005_960_464_48f32,
+                -0.200_000_002_980_232_24f32,
+                -0.083_333_328_366_279_6f32
+            )
+        );
         // the shifted span the same corner walk computes (the fy+dy
         // innermost addition the mesher speaks — the f32 the f64 law
         // casts)
@@ -19231,10 +20548,7 @@ mod tests {
                 );
             }
             // the tile: the short_grass's own row (the atlas's 41st kind)
-            assert_eq!(
-                quad.tile,
-                mc_registry::generated::atlas::FACE_TILES[41][2]
-            );
+            assert_eq!(quad.tile, mc_registry::generated::atlas::FACE_TILES[41][2]);
         }
         // THE BUSH'S OWN ROW (the patch_bush kind the same cross bake
         // wears — the 42nd kind the tile row banks)
@@ -19243,8 +20557,8 @@ mod tests {
         put(&mut w2, 8, 9, 8, crate::world::BUSH);
         let q2 = mesh_chunk(&w2, 0, 0, None);
         assert!(
-            q2.iter().any(|quad| quad.tile
-                == mc_registry::generated::atlas::FACE_TILES[42][2]),
+            q2.iter()
+                .any(|quad| quad.tile == mc_registry::generated::atlas::FACE_TILES[42][2]),
             "the bush's own tile the cross quads bank"
         );
         // THE TINT FOLD'S OWN VERDICT (the audited slot walk): the tuft
@@ -19284,8 +20598,7 @@ mod tests {
         // THE DEV-27 OFFSET: the XZ row the pair RIGIDLY rides — the
         // seed the Y-zero law hashes, the two cells the same triple
         // wear, the shift the model-relative reads subtract
-        let (dx, dy, dz) =
-            crate::world::plant_offset(crate::world::TALL_GRASS, 8, 9, 8);
+        let (dx, dy, dz) = crate::world::plant_offset(crate::world::TALL_GRASS, 8, 9, 8);
         let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
         assert_eq!(dy, 0.0, "the XZ row the zero Y keeps");
         assert_eq!(
@@ -19313,10 +20626,10 @@ mod tests {
             .collect();
         assert_eq!(lower.len(), 4, "the two planes the two windings wear");
         assert_eq!(upper.len(), 4, "the pair's upper the same bake wears");
-        let lower_tile = mc_registry::generated::atlas::FACE_TILES
-            [crate::world::TALL_GRASS as usize][2];
-        let upper_tile = mc_registry::generated::atlas::FACE_TILES
-            [crate::world::TALL_GRASS_UPPER as usize][2];
+        let lower_tile =
+            mc_registry::generated::atlas::FACE_TILES[crate::world::TALL_GRASS as usize][2];
+        let upper_tile =
+            mc_registry::generated::atlas::FACE_TILES[crate::world::TALL_GRASS_UPPER as usize][2];
         assert_ne!(
             lower_tile, upper_tile,
             "the half-keyed sprites the two tiles bank"
@@ -19417,7 +20730,11 @@ mod tests {
             .find(|quad| quad.pts.iter().all(|p| p[1] == 6.0))
             .expect("water top face");
         assert_eq!(top.tile, gen_atlas::FACE_TILES[WATER as usize][2]);
-        assert_eq!(top.tile, gen_atlas::WATER_FRAME0, "the still strip's own base");
+        assert_eq!(
+            top.tile,
+            gen_atlas::WATER_FRAME0,
+            "the still strip's own base"
+        );
         // the bottom face: the still master keeps (the vanilla
         // stillMaterial walk the down face wears)
         let bottom = q
@@ -19440,7 +20757,10 @@ mod tests {
         );
         for side in &sides {
             assert_eq!(side.tile, gen_atlas::WATER_FLOW_FRAME0);
-            assert!(side.translucent, "the water side the translucent pass rides");
+            assert!(
+                side.translucent,
+                "the water side the translucent pass rides"
+            );
         }
         // the generated bank's own contract: the base the appended
         // frame-00 quadrant names (the strip the quadrant rows follow)
@@ -19486,7 +20806,11 @@ mod tests {
             .find(|quad| quad.pts.iter().all(|p| p[1] == 6.0))
             .expect("lava top face");
         assert_eq!(top.tile, gen_atlas::FACE_TILES[LAVA as usize][2]);
-        assert_eq!(top.tile, gen_atlas::LAVA_FRAME0, "the still strip's own base");
+        assert_eq!(
+            top.tile,
+            gen_atlas::LAVA_FRAME0,
+            "the still strip's own base"
+        );
     }
 
     #[test]
@@ -19548,7 +20872,11 @@ mod tests {
             gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 10),
             gen_atlas::WATER_FRAMES[5]
         );
-        assert_eq!(gen_atlas::anim_tile(0, 99), 0, "the stone tile the identity wears");
+        assert_eq!(
+            gen_atlas::anim_tile(0, 99),
+            0,
+            "the stone tile the identity wears"
+        );
     }
 
     #[test]
@@ -19559,11 +20887,18 @@ mod tests {
         put(&mut w, 9, 9, 8, STONE); // force asymmetric AO -> flip
         put(&mut w, 8, 9, 9, STONE);
         let q = mesh_chunk(&w, 0, 0, None);
-        let top = q.iter().find(|quad| quad.pts[0][1] == 9.0).expect("top face");
+        let top = q
+            .iter()
+            .find(|quad| quad.pts[0][1] == 9.0)
+            .expect("top face");
         let ao = ao_levels(&w, 8, 8, 8, 2);
         let order = flip_order(&ao);
         for (i, &src) in order.iter().enumerate() {
-            assert_eq!(top.uvs[i], face_uv(2, FACE_CORNERS[2][src]), "uv must track corner {src}");
+            assert_eq!(
+                top.uvs[i],
+                face_uv(2, FACE_CORNERS[2][src]),
+                "uv must track corner {src}"
+            );
         }
     }
 
@@ -19677,7 +21012,8 @@ mod tests {
             );
             for p in &quad.pts {
                 assert!(
-                    (8.25..=8.75).contains(&p[0]) && (8.0..=8.5).contains(&p[1])
+                    (8.25..=8.75).contains(&p[0])
+                        && (8.0..=8.5).contains(&p[1])
                         && (8.25..=8.75).contains(&p[2]),
                     "the 8-px box the cell-center spans keep, got {p:?}"
                 );
@@ -19692,10 +21028,7 @@ mod tests {
         // banks)
         let north_face = q
             .iter()
-            .find(|quad| {
-                quad.tile == row[3]
-                    && quad.pts.iter().all(|p| (p[2] - 8.25).abs() < 1e-5)
-            })
+            .find(|quad| quad.tile == row[3] && quad.pts.iter().all(|p| (p[2] - 8.25).abs() < 1e-5))
             .expect("the rotation-0 north face");
         assert!(
             north_face.pts.iter().all(|p| (8.25..=8.75).contains(&p[0])),
@@ -19709,10 +21042,7 @@ mod tests {
         assert_eq!(q.len(), 6, "the rotated head the same six faces wears");
         let east_face = q
             .iter()
-            .find(|quad| {
-                quad.tile == row[3]
-                    && quad.pts.iter().all(|p| (p[0] - 8.75).abs() < 1e-5)
-            })
+            .find(|quad| quad.tile == row[3] && quad.pts.iter().all(|p| (p[0] - 8.75).abs() < 1e-5))
             .expect("the rotation-4 east face");
         assert!(
             east_face.pts.iter().all(|p| (8.25..=8.75).contains(&p[2])),
@@ -19766,22 +21096,14 @@ mod tests {
         // the up face the straight map, the down the mirrored v the
         // model's [0,16,16,0] window wears): exactly one quad each
         let ns_up = q.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[0] - 8.0)).abs() < 1e-5 && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
+            })
         });
         let ns_down = q.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (9.0 - p[2])).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[0] - 8.0)).abs() < 1e-5 && (uv[1] - (9.0 - p[2])).abs() < 1e-5
+            })
         });
         assert_eq!(ns_up.count(), 1, "the up face the straight N-S map wears");
         assert_eq!(ns_down.count(), 1, "the down face the v-flip wears");
@@ -19797,25 +21119,21 @@ mod tests {
             assert_eq!(quad.tile, tile, "the tile the same row banks");
         }
         let ew_up = q_ew.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[2] - 8.0)).abs() < 1e-5 && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+            })
         });
         let ew_down = q_ew.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (9.0 - p[0])).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[2] - 8.0)).abs() < 1e-5 && (uv[1] - (9.0 - p[0])).abs() < 1e-5
+            })
         });
         assert_eq!(ew_up.count(), 1, "the up face the transposed map wears");
-        assert_eq!(ew_down.count(), 1, "the down face the flipped transpose wears");
+        assert_eq!(
+            ew_down.count(),
+            1,
+            "the down face the flipped transpose wears"
+        );
     }
 
     #[test]
@@ -19856,7 +21174,11 @@ mod tests {
         // nibble the mask reads)
         w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT | 1);
         let q_ew = mesh_chunk(&w, 0, 0, None);
-        assert_eq!(q_ew.len(), 2, "the powered quarter the same two quads wears");
+        assert_eq!(
+            q_ew.len(),
+            2,
+            "the powered quarter the same two quads wears"
+        );
         for quad in &q_ew {
             assert_eq!(
                 quad.tile,
@@ -19865,15 +21187,15 @@ mod tests {
             );
         }
         let ew_up = q_ew.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[2] - 8.0)).abs() < 1e-5 && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+            })
         });
-        assert_eq!(ew_up.count(), 1, "the powered quarter the transposed map wears");
+        assert_eq!(
+            ew_up.count(),
+            1,
+            "the powered quarter the transposed map wears"
+        );
         // THE PLAIN RAIL THE BIT NEVER WEARS: the RAIL kind the same
         // bit the off row keeps (the swap the powered kind alone
         // takes)
@@ -19915,7 +21237,10 @@ mod tests {
         let q = mesh_chunk(&w, 0, 0, None);
         assert_eq!(q.len(), 2, "the flat plane the up+down pair wears");
         for quad in &q {
-            assert_eq!(quad.tile, off_tile, "the off activator the kind's own row keeps");
+            assert_eq!(
+                quad.tile, off_tile,
+                "the off activator the kind's own row keeps"
+            );
         }
         // THE ON SWAP (the POWERED bit the powered=true row speaks):
         // the activator's own _on seat the same two quads wear
@@ -19934,7 +21259,11 @@ mod tests {
         // transposed uv fold the same lane wears
         w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT | 1);
         let q_ew = mesh_chunk(&w, 0, 0, None);
-        assert_eq!(q_ew.len(), 2, "the activator quarter the same two quads wears");
+        assert_eq!(
+            q_ew.len(),
+            2,
+            "the activator quarter the same two quads wears"
+        );
         for quad in &q_ew {
             assert_eq!(
                 quad.tile,
@@ -19943,15 +21272,15 @@ mod tests {
             );
         }
         let ew_up = q_ew.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[2] - 8.0)).abs() < 1e-5 && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+            })
         });
-        assert_eq!(ew_up.count(), 1, "the activator quarter the transposed map wears");
+        assert_eq!(
+            ew_up.count(),
+            1,
+            "the activator quarter the transposed map wears"
+        );
         // THE TWIN KINDS THE OWN SEATS KEEP: the powered kind the
         // same bit the dev-96 seat banks (the activator's seat the
         // powered kind never wears)
@@ -20012,7 +21341,10 @@ mod tests {
         let q = mesh_chunk(&w, 0, 0, None);
         assert_eq!(q.len(), 2, "the flat plane the up+down pair wears");
         for quad in &q {
-            assert_eq!(quad.tile, off_tile, "the off detector the kind's own row keeps");
+            assert_eq!(
+                quad.tile, off_tile,
+                "the off detector the kind's own row keeps"
+            );
         }
         // THE ON SWAP (the POWERED bit the powered=true row speaks):
         // the detector's own _on seat the same two quads wear
@@ -20031,7 +21363,11 @@ mod tests {
         // transposed uv fold the same lane wears
         w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT | 1);
         let q_ew = mesh_chunk(&w, 0, 0, None);
-        assert_eq!(q_ew.len(), 2, "the detector quarter the same two quads wears");
+        assert_eq!(
+            q_ew.len(),
+            2,
+            "the detector quarter the same two quads wears"
+        );
         for quad in &q_ew {
             assert_eq!(
                 quad.tile,
@@ -20040,15 +21376,15 @@ mod tests {
             );
         }
         let ew_up = q_ew.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[2] - 8.0)).abs() < 1e-5 && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+            })
         });
-        assert_eq!(ew_up.count(), 1, "the detector quarter the transposed map wears");
+        assert_eq!(
+            ew_up.count(),
+            1,
+            "the detector quarter the transposed map wears"
+        );
         // THE TWIN KINDS THE OWN SEATS KEEP: the powered kind the
         // dev-96 seat, the activator kind the dev-97 seat (the
         // detector's seat the twins never wear)
@@ -20115,13 +21451,9 @@ mod tests {
             assert_eq!(quad.tile, corner_tile, "the corner tile the byte 6 wears");
         }
         let se_up = q.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5
-                        && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (p[0] - 8.0)).abs() < 1e-5 && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
+            })
         });
         assert_eq!(se_up.count(), 1, "the SE byte the identity fold wears");
         // THE NE QUARTER (the byte 9): the y=270 arm (u=16-z, v=x)
@@ -20134,13 +21466,9 @@ mod tests {
             assert_eq!(quad.tile, corner_tile, "the corner tile the byte 9 wears");
         }
         let ne_up = q_ne.iter().filter(|quad| {
-            quad.pts
-                .iter()
-                .zip(quad.uvs.iter())
-                .all(|(p, uv)| {
-                    (uv[0] - (9.0 - p[2])).abs() < 1e-5
-                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
-                })
+            quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                (uv[0] - (9.0 - p[2])).abs() < 1e-5 && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+            })
         });
         assert_eq!(ne_up.count(), 1, "the NE byte the y=270 fold wears");
     }
@@ -20174,13 +21502,9 @@ mod tests {
         let up = q
             .iter()
             .find(|quad| {
-                quad.pts
-                    .iter()
-                    .zip(quad.uvs.iter())
-                    .all(|(p, uv)| {
-                        (uv[0] - (p[2] - 8.0)).abs() < 1e-5
-                            && (uv[1] - (9.0 - p[0])).abs() < 1e-5
-                    })
+                quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5 && (uv[1] - (9.0 - p[0])).abs() < 1e-5
+                })
             })
             .expect("the up face the y=90 fold wears");
         for p in &up.pts {
@@ -20210,13 +21534,9 @@ mod tests {
         let up4 = q
             .iter()
             .find(|quad| {
-                quad.pts
-                    .iter()
-                    .zip(quad.uvs.iter())
-                    .all(|(p, uv)| {
-                        (uv[0] - (p[0] - 8.0)).abs() < 1e-5
-                            && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
-                    })
+                quad.pts.iter().zip(quad.uvs.iter()).all(|(p, uv)| {
+                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5 && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
+                })
             })
             .expect("the up face the identity fold wears");
         for p in &up4.pts {
@@ -20257,12 +21577,16 @@ mod tests {
             );
             for p in &quad.pts {
                 assert!(
-                    (8.25..=8.75).contains(&p[0]) && (8.25..=8.75).contains(&p[1])
+                    (8.25..=8.75).contains(&p[0])
+                        && (8.25..=8.75).contains(&p[1])
                         && (8.5..=9.0).contains(&p[2]),
                     "the north-facing box the hugging spans keep, got {p:?}"
                 );
             }
-            assert!(row.contains(&quad.tile), "the tile the row's own slots bank");
+            assert!(
+                row.contains(&quad.tile),
+                "the tile the row's own slots bank"
+            );
         }
         // THE FACE'S OWN SEAT (the north facing the rotation-0 law
         // keeps: the FRONT tile the z = 8.5 plane the -Z side banks)
@@ -20284,7 +21608,8 @@ mod tests {
         for quad in &q {
             for p in &quad.pts {
                 assert!(
-                    (8.0..=8.5).contains(&p[0]) && (8.25..=8.75).contains(&p[1])
+                    (8.0..=8.5).contains(&p[0])
+                        && (8.25..=8.75).contains(&p[1])
                         && (8.25..=8.75).contains(&p[2]),
                     "the east-facing box the west-side spans keep, got {p:?}"
                 );
@@ -20307,4 +21632,3 @@ mod tests {
         }
     }
 }
-

@@ -1626,9 +1626,7 @@ pub fn wire_power_of(id: u16) -> Option<u8> {
     match id {
         REDSTONE_WIRE => Some(0),
         REDSTONE_WIRE_ON => Some(15),
-        REDSTONE_WIRE_P1..=REDSTONE_WIRE_P14 => {
-            Some((id - REDSTONE_WIRE_P1 + 1) as u8)
-        }
+        REDSTONE_WIRE_P1..=REDSTONE_WIRE_P14 => Some((id - REDSTONE_WIRE_P1 + 1) as u8),
         _ => None,
     }
 }
@@ -2783,11 +2781,7 @@ fn comparator_weak_back_signal(world: &World, x: i32, y: i32, z: i32, facing: u8
     }
     // THE WEAK FAMILY (Level.getSignal — the any-dir seats the
     // source families answer)
-    if back == LEVER_ON
-        || button_powered(back)
-        || plate_powered(back)
-        || back == REDSTONE_TORCH
-    {
+    if back == LEVER_ON || button_powered(back) || plate_powered(back) || back == REDSTONE_TORCH {
         return 15;
     }
     // THE WALL TORCH'S OWN GATE (RedstoneWallTorchBlock.getSignal —
@@ -3195,12 +3189,12 @@ pub fn observer_powered_of(variant: u8) -> bool {
 /// the eye cell AND the back cell the ±step pairs answer).
 pub fn observer_facing_delta6(facing: u8) -> (i32, i32, i32) {
     match facing {
-        0 => (0, -1, 0),  // down
-        1 => (0, 1, 0),   // up
-        2 => (0, 0, -1),  // north
-        3 => (0, 0, 1),   // south
-        4 => (-1, 0, 0),  // west
-        _ => (1, 0, 0),   // east
+        0 => (0, -1, 0), // down
+        1 => (0, 1, 0),  // up
+        2 => (0, 0, -1), // north
+        3 => (0, 0, 1),  // south
+        4 => (-1, 0, 0), // west
+        _ => (1, 0, 0),  // east
     }
 }
 
@@ -3936,17 +3930,43 @@ pub const BED_YELLOW: u16 = 796;
 /// color-name table keeps — the mesher's model-id walk and the
 /// family predicate the same rows read).
 pub const BED_KINDS: [u16; 16] = [
-    BED_BLACK, BED_BLUE, BED_BROWN, BED_CYAN, BED_GRAY, BED_GREEN,
-    BED_LIGHT_BLUE, BED_LIGHT_GRAY, BED_LIME, BED_MAGENTA, BED_ORANGE,
-    BED_PINK, BED_PURPLE, BED_RED, BED_WHITE, BED_YELLOW,
+    BED_BLACK,
+    BED_BLUE,
+    BED_BROWN,
+    BED_CYAN,
+    BED_GRAY,
+    BED_GREEN,
+    BED_LIGHT_BLUE,
+    BED_LIGHT_GRAY,
+    BED_LIME,
+    BED_MAGENTA,
+    BED_ORANGE,
+    BED_PINK,
+    BED_PURPLE,
+    BED_RED,
+    BED_WHITE,
+    BED_YELLOW,
 ];
 
 /// THE BED COLORS' OWN NAMES (the ladder's own order — the model id
 /// the lane bakes speaks `block/<color>_bed_{head,foot}`).
 pub const BED_COLOR_NAMES: [&str; 16] = [
-    "black", "blue", "brown", "cyan", "gray", "green", "light_blue",
-    "light_gray", "lime", "magenta", "orange", "pink", "purple", "red",
-    "white", "yellow",
+    "black",
+    "blue",
+    "brown",
+    "cyan",
+    "gray",
+    "green",
+    "light_blue",
+    "light_gray",
+    "lime",
+    "magenta",
+    "orange",
+    "pink",
+    "purple",
+    "red",
+    "white",
+    "yellow",
 ];
 
 #[inline]
@@ -3987,7 +4007,12 @@ pub const BED_PART_HEAD: u8 = 1;
 /// the third bit — the placement walk's own byte).
 #[inline]
 pub fn bed_variant(facing: u8, part: u8) -> u8 {
-    (facing & 0b11) | if part == BED_PART_HEAD { BED_PART_BIT } else { 0 }
+    (facing & 0b11)
+        | if part == BED_PART_HEAD {
+            BED_PART_BIT
+        } else {
+            0
+        }
 }
 
 /// THE BED VARIANT'S OWN FACING READ (the low pair the identity
@@ -4622,6 +4647,86 @@ pub fn anchor_variant_charge(v: u8) -> u8 {
 #[inline]
 pub fn anchor_charge_variant(c: u8) -> u8 {
     c.min(4)
+}
+
+/// THE PYRAMID'S OWN SIX SEATS (the autopush-319 round — the 318 NEXT
+/// list's own first candidate the kind mint wears: the five base
+/// blocks the updateBase scan's BEACON_BASE_BLOCKS tag banks [the tag
+/// the data/minecraft/tags/block/beacon_base_blocks.json the five
+/// members names: netherite, emerald, diamond, gold, iron — the 318
+/// round's walk banks] + the beacon the tail seat keeps). The clinit
+/// rows the banked dump scripts/jar_work/blocks_clinit_262.txt pins:
+/// the five base blocks the requiresCorrectToolForDrops()
+/// .strength(FF).sound(METAL/IRON/NETHERITE) opaque full-cube rows
+/// keep [GOLD the METAL sound, IRON the IRON_XYLOPHONE instrument +
+/// IRON sound, DIAMOND the METAL sound, EMERALD the METAL sound,
+/// NETHERITE the NETHERITE_BLOCK sound], the beacon the
+/// mapColor(DIAMOND).instrument(HAT).strength(F).lightLevel(..)
+/// .noOcclusion().isRedstoneConductor(..) chain speaks — the
+/// noOcclusion the is_transparent row banks, the lightLevel 15 the
+/// light engine's own lane keeps. The NAME_OF rows the
+/// dig/drop/sound/item lanes wire (the generated tables' own rows
+/// the mint lights), the FACE_TILES rows the five full cubes the
+/// generic path wears + the beacon row the table shape keeps (the
+/// three-element model the mesher's special arm the generic row
+/// never reads — block/beacon.json the glass shell [0,0,0]->
+/// [16,16,16] + the obsidian base [2,0.1,2]->[14,3,14] + the inner
+/// core [3,3,3]->[13,14,13] the 18 quads the derive walk banks).
+pub const IRON_BLOCK: u16 = 799;
+pub const GOLD_BLOCK: u16 = 800;
+pub const DIAMOND_BLOCK: u16 = 801;
+pub const EMERALD_BLOCK: u16 = 802;
+pub const NETHERITE_BLOCK: u16 = 803;
+pub const BEACON: u16 = 804;
+
+/// THE BASE LADDER'S OWN ROWS (the vanilla tag order the walk banks —
+/// the pyramid scan the is_base predicate the ladder reads).
+pub const BEACON_BASE_KINDS: [u16; 5] = [
+    IRON_BLOCK,
+    GOLD_BLOCK,
+    DIAMOND_BLOCK,
+    EMERALD_BLOCK,
+    NETHERITE_BLOCK,
+];
+
+#[inline]
+pub fn is_iron_block(id: u16) -> bool {
+    id == IRON_BLOCK
+}
+
+#[inline]
+pub fn is_gold_block(id: u16) -> bool {
+    id == GOLD_BLOCK
+}
+
+#[inline]
+pub fn is_diamond_block(id: u16) -> bool {
+    id == DIAMOND_BLOCK
+}
+
+#[inline]
+pub fn is_emerald_block(id: u16) -> bool {
+    id == EMERALD_BLOCK
+}
+
+#[inline]
+pub fn is_netherite_block(id: u16) -> bool {
+    id == NETHERITE_BLOCK
+}
+
+/// THE BEACON BLOCK'S OWN PREDICATE (the 318 law layer's parameter
+/// the kind seat answers — the stand-in the RESPAWN_ANCHOR rows the
+/// tests wore the mint retires).
+#[inline]
+pub fn is_beacon(id: u16) -> bool {
+    id == BEACON
+}
+
+/// THE PYRAMID BASE'S OWN VERDICT (the BEACON_BASE_KINDS ladder the
+/// updateBase scan's tag check wears).
+#[inline]
+pub fn is_beacon_base(id: u16) -> bool {
+    BEACON_BASE_KINDS.contains(&id)
 }
 
 /// THE ANCHOR'S OWN CHARGE-LADDER MESH FOLD (the autopush-315 round —
@@ -6055,10 +6160,7 @@ pub fn dispenser_random_slot(slots: &[(i32, i32)], rng: &mut crate::drops::Lcg) 
 /// the facing step scales, the Y-AXIS ARM the `d1 -= 0.125` fold the
 /// vertical facings wear [the horizontal the 0.15625 keeps — the
 /// spawnItem walk's own two subtract arms]).
-pub fn dispense_position(
-    center: (f64, f64, f64),
-    step: (i32, i32, i32),
-) -> (f64, f64, f64) {
+pub fn dispense_position(center: (f64, f64, f64), step: (i32, i32, i32)) -> (f64, f64, f64) {
     let (sx, sy, sz) = (f64::from(step.0), f64::from(step.1), f64::from(step.2));
     let y_off = if step.1 != 0 { 0.125 } else { 0.15625 };
     (
@@ -6162,7 +6264,6 @@ pub fn dispenser_insert_into(slots: &mut [(i32, i32)], id: i32) -> bool {
     false
 }
 
-
 /// THE MOVING PISTON'S OWN VARIANT BYTE (the piston family's own
 /// layout the sibling bytes mirror: the facing the low 3 bits keep —
 /// the delta6 order the base's own byte speaks — the EXTENDING bit
@@ -6200,19 +6301,18 @@ pub fn moving_progress_quarters_of(variant: u8) -> u8 {
 pub const MOVING_FLAG_LAND: u8 = 0;
 pub const MOVING_FLAG_HEAD_RETRACT: u8 = 1;
 
-
 /// THE PISTON'S OWN FACING STEP (the vanilla Direction order the
 /// variant byte speaks — the same DIRECTION_NORMAL walk the
 /// observer's own step answers, the push cell AND the head cell the
 /// ±step pairs answer).
 pub fn piston_facing_delta6(facing: u8) -> (i32, i32, i32) {
     match facing {
-        0 => (0, -1, 0),  // down
-        1 => (0, 1, 0),   // up
-        2 => (0, 0, -1),  // north
-        3 => (0, 0, 1),   // south
-        4 => (-1, 0, 0),  // west
-        _ => (1, 0, 0),   // east
+        0 => (0, -1, 0), // down
+        1 => (0, 1, 0),  // up
+        2 => (0, 0, -1), // north
+        3 => (0, 0, 1),  // south
+        4 => (-1, 0, 0), // west
+        _ => (1, 0, 0),  // east
     }
 }
 
@@ -6273,11 +6373,7 @@ fn piston_cell_signal(world: &World, cx: i32, cy: i32, cz: i32, dir: u8) -> u8 {
     if let Some(p) = wire_power_of(cell) {
         return p;
     }
-    if cell == LEVER_ON
-        || button_powered(cell)
-        || plate_powered(cell)
-        || cell == REDSTONE_TORCH
-    {
+    if cell == LEVER_ON || button_powered(cell) || plate_powered(cell) || cell == REDSTONE_TORCH {
         return 15;
     }
     // THE WALL TORCH'S OWN GATE (the direction == FACING refusal the
@@ -6412,10 +6508,7 @@ pub fn piston_push_reaction(kind: u16) -> PistonPush {
         || is_flower(kind)
         || is_door(kind)
         || is_rail(kind)
-        || matches!(
-            kind,
-            GRASS | SHORT_GRASS | TALL_GRASS | TALL_GRASS_UPPER
-        )
+        || matches!(kind, GRASS | SHORT_GRASS | TALL_GRASS | TALL_GRASS_UPPER)
     {
         return PistonPush::Destroy;
     }
@@ -6531,7 +6624,14 @@ pub fn piston_try_extend(
     // THE HEAD ARM: the first cell the extension places — the moving
     // head the stash's own PISTON_HEAD state wears.
     let (hx, hy, hz) = (x + dx, y + dy, z + dz);
-    world.set_moving_state(hx, hy, hz, PISTON_HEAD, piston_head_variant(facing, sticky), MOVING_FLAG_LAND);
+    world.set_moving_state(
+        hx,
+        hy,
+        hz,
+        PISTON_HEAD,
+        piston_head_variant(facing, sticky),
+        MOVING_FLAG_LAND,
+    );
     world.set(hx, hy, hz, MOVING_PISTON);
     world.set_variant(hx, hy, hz, moving_variant(facing, true, 0));
     world.schedule_moving_tick(now + 1, hx, hy, hz);
@@ -6644,7 +6744,11 @@ pub fn tick_moving_piston_cell(world: &mut World, now: u64, x: i32, y: i32, z: i
         .moving_state_of(x, y, z)
         .map(|(_, _, f)| f)
         .unwrap_or(MOVING_FLAG_LAND);
-    let cap = if stash_flags == MOVING_FLAG_HEAD_RETRACT { 4 } else { 2 };
+    let cap = if stash_flags == MOVING_FLAG_HEAD_RETRACT {
+        4
+    } else {
+        2
+    };
     if quarters < cap {
         // THE MID-SLIDE ARM: the half step the variant banks, the
         // finalize's own beat the +1 arm schedules.
@@ -6664,7 +6768,10 @@ pub fn tick_moving_piston_cell(world: &mut World, now: u64, x: i32, y: i32, z: i
     // THE FINALIZE ARM: the stashed state the cell wears, the stash
     // row the take clears — the HEAD_RETRACT flag the AIR landing
     // speaks (the head the slide's own sink the base absorbs).
-    let (kind, pvariant, _) = world.take_moving_state(x, y, z).unwrap_or((AIR, 0, MOVING_FLAG_LAND));
+    let (kind, pvariant, _) =
+        world
+            .take_moving_state(x, y, z)
+            .unwrap_or((AIR, 0, MOVING_FLAG_LAND));
     let landed = if stash_flags == MOVING_FLAG_HEAD_RETRACT {
         AIR
     } else {
@@ -6918,7 +7025,6 @@ fn wire_sides_powered_near(world: &World, x: i32, y: i32, z: i32) -> bool {
     false
 }
 
-
 /// THE WIRE'S OWN COMPONENT WALK (the graded POWER lane the
 /// autopush-673 round banks — the DEFAULT evaluator's own walk the
 /// RedStoneWireBlock.updatePowerStrength + the
@@ -7062,8 +7168,7 @@ pub fn redstone_lamp_flips(
     seeds: &[(i32, i32, i32)],
 ) -> Vec<((i32, i32, i32), u16)> {
     let mut out: Vec<((i32, i32, i32), u16)> = Vec::new();
-    let mut seen: std::collections::HashSet<(i32, i32, i32)> =
-        std::collections::HashSet::new();
+    let mut seen: std::collections::HashSet<(i32, i32, i32)> = std::collections::HashSet::new();
     for &(sx, sy, sz) in seeds {
         let mut cells = [
             (sx, sy, sz),
@@ -7130,13 +7235,9 @@ impl Default for DoorLaneFlips {
     }
 }
 
-pub fn redstone_door_lane_flips(
-    world: &World,
-    seeds: &[(i32, i32, i32)],
-) -> DoorLaneFlips {
+pub fn redstone_door_lane_flips(world: &World, seeds: &[(i32, i32, i32)]) -> DoorLaneFlips {
     let mut out = DoorLaneFlips::default();
-    let mut seen: std::collections::HashSet<(i32, i32, i32)> =
-        std::collections::HashSet::new();
+    let mut seen: std::collections::HashSet<(i32, i32, i32)> = std::collections::HashSet::new();
     for &(sx, sy, sz) in seeds {
         for (cx, cy, cz) in [
             (sx, sy - 1, sz),
@@ -7184,8 +7285,7 @@ pub fn redstone_door_lane_flips(
             };
             let mate_kind = world.get(mate.0, mate.1, mate.2);
             let signal = redstone_signal_at(world, cx, cy, cz)
-                || (is_door(mate_kind)
-                    && redstone_signal_at(world, mate.0, mate.1, mate.2));
+                || (is_door(mate_kind) && redstone_signal_at(world, mate.0, mate.1, mate.2));
             if signal != open_now {
                 if let Some(flip) = door_flip_mate(kind) {
                     out.doors.push(((cx, cy, cz), flip));
@@ -9090,7 +9190,15 @@ pub fn chest_can_connect_to(candidate: u16, family: u16) -> bool {
 /// the walk reads: the connect gate + the SINGLE-type gate + the
 /// neighbor's own facing the Some answer keeps, the fail walk the
 /// None refusal banks).
-fn chest_candidate_partner_facing(world: &World, x: i32, y: i32, z: i32, dx: i32, dz: i32, family: u16) -> Option<u8> {
+fn chest_candidate_partner_facing(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+    dx: i32,
+    dz: i32,
+    family: u16,
+) -> Option<u8> {
     let nb = world.get(x + dx, y, z + dz);
     if !chest_can_connect_to(nb, family) {
         return None;
@@ -9165,13 +9273,17 @@ pub fn chest_placement_variant(
         // the clicked block's own cell)
         let (fx, fz) = face_normal_xz(hit_face);
         let opposite = (-fx, -fz);
-        if let Some(partner_facing) =
-            chest_candidate_partner_facing(world, cell.0, cell.1, cell.2, opposite.0, opposite.1, family)
-        {
+        if let Some(partner_facing) = chest_candidate_partner_facing(
+            world, cell.0, cell.1, cell.2, opposite.0, opposite.1, family,
+        ) {
             // THE PERPENDICULAR AXIS GATE (the partner's facing the
             // click face's own axis the if_acmpeq refuses)
             let face_axis = if fx == 0 { 0 } else { 1 }; // z-axis 0, x-axis 1
-            let partner_axis = if stairs_facing_delta(partner_facing).0 == 0 { 0 } else { 1 };
+            let partner_axis = if stairs_facing_delta(partner_facing).0 == 0 {
+                0
+            } else {
+                1
+            };
             if partner_axis != face_axis {
                 facing = partner_facing;
                 // the RIGHT the partner.ccw == face.opposite verdict
@@ -9990,43 +10102,87 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 799] = [
-    "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
-    "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
-    "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
-    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
-    "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
-    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
-    "dandelion", "poppy", "short_grass", "bush",
+pub const NAME_OF: [&str; 805] = [
+    "air",
+    "stone",
+    "dirt",
+    "grass_block",
+    "oak_log",
+    "oak_leaves",
+    "water",
+    "sand",
+    "granite",
+    "diorite",
+    "andesite",
+    "deepslate",
+    "cobbled_deepslate",
+    "gravel",
+    "bedrock",
+    "coal_ore",
+    "copper_ore",
+    "iron_ore",
+    "gold_ore",
+    "redstone_ore",
+    "lapis_ore",
+    "diamond_ore",
+    "emerald_ore",
+    "netherrack",
+    "pale_oak_leaves",
+    "leaf_litter",
+    "lava",
+    "farmland",
+    "dirt_path",
+    "wheat",
+    "wheat_stage1",
+    "wheat_stage2",
+    "wheat_stage3",
+    "wheat_stage4",
+    "wheat_stage5",
+    "wheat_stage6",
+    "wheat_stage7",
+    "crafting_table",
+    "tnt",
+    "dandelion",
+    "poppy",
+    "short_grass",
+    "bush",
     // THE DOUBLE PLANT'S SHARED ROWS: the upper kinds keep the BASE
     // name — the dig row (instabreak 0.0), the drops table (the two
     // pools the jar's identical walk answers), the sounds' grass row
     // and the item id the pick lane grants BOTH halves speak (the
     // blockstate's half property the atlas's own `_upper` palette
     // name resolves — the registry lane the base block's row wears)
-    "tall_grass", "tall_grass",
-    "large_fern", "large_fern",
+    "tall_grass",
+    "tall_grass",
+    "large_fern",
+    "large_fern",
     // THE PROVIDER'S OWN ROWS: the high_states successors and the
     // low_states tulips the provider's own list order wears — the dig
     // row (instabreak 0.0), the drops table (the self-entry the
     // survives gate answers), the sounds' grass row and the item id the
     // pick lane grants the same one-kind-one-row walk the dandelion
     // speaks
-    "azure_bluet", "oxeye_daisy", "cornflower",
-    "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
+    "azure_bluet",
+    "oxeye_daisy",
+    "cornflower",
+    "orange_tulip",
+    "red_tulip",
+    "pink_tulip",
+    "white_tulip",
     "torch",
     // THE CONCRETE PAIR'S OWN ROWS (the powder the falling family's
     // third member wears, the concrete the conversion's own target
     // speaks — the white variant the vanilla's own ctor pair banks,
     // the names the item wire order's rows exactly keep: the
     // placement lane's placeable lookup the reverse walk serves)
-    "white_concrete_powder", "white_concrete",
+    "white_concrete_powder",
+    "white_concrete",
     // THE FIRE KINDS' OWN ROWS (the flint's own product and the
     // entity-inside brand the body's fire walk reads — the names the
     // generated atlas REGISTRY_NAMES rows exactly keep, the runtime
     // mapper's own verdict the networked world's fires land through)
-    "fire", "soul_fire",
+    "fire",
+    "soul_fire",
     // THE CANDLE PAIR'S OWN ROWS (the canLight consult's own kinds —
     // the lit kind the BASE name the shared-row law keeps: the dig
     // row (0.1 hardness), the drops table (the self-entry), the
@@ -10034,7 +10190,8 @@ pub const NAME_OF: [&str; 799] = [
     // states speak — the placeable lookup the reverse walk the
     // UNLIT kind's first row answers, the lit swap the igniter
     // arms' own product never places)
-    "candle", "candle",
+    "candle",
+    "candle",
     // THE CAMPFIRE FAMILY'S OWN ROWS (the douse lane's own kinds —
     // the lit kinds the BASE names the shared-row law keeps: the dig
     // rows (2.0 hardness — the strength(2.0) the clinit arm speaks),
@@ -10042,8 +10199,10 @@ pub const NAME_OF: [&str; 799] = [
     // pick lane grants BOTH states speak — the placeable lookup the
     // reverse walk the UNLIT kinds' rows answer, the lit swaps the
     // canLight branches' own products never place)
-    "campfire", "campfire",
-    "soul_campfire", "soul_campfire",
+    "campfire",
+    "campfire",
+    "soul_campfire",
+    "soul_campfire",
     // THE CANDLE CAKE PAIR'S OWN ROWS (the canLight consult's third
     // row — the lit kind the BASE name the shared-row law keeps: the
     // dig row (the CAKE's own strength the ofLegacyCopy wears), the
@@ -10053,7 +10212,8 @@ pub const NAME_OF: [&str; 799] = [
     // itself grants — the register walk carries NO BlockItemId, the
     // placeable lookup the vanilla itself refuses, the pick lane the
     // getCloneItemStack's CAKE answer a future cake round keeps)
-    "candle_cake", "candle_cake",
+    "candle_cake",
+    "candle_cake",
     // THE CAKE LADDER'S OWN ROWS (the autopush-524 round — every
     // stage the BASE "cake" name the shared-row law keeps: the dig
     // row (0.5 hardness — the strength(0.5f) the clinit arm speaks),
@@ -10063,7 +10223,13 @@ pub const NAME_OF: [&str; 799] = [
     // walk the FULL row's first position answers (the bites=0 cake
     // the item places), the bitten stages the eat lane's own kind
     // swaps never place)
-    "cake", "cake", "cake", "cake", "cake", "cake", "cake",
+    "cake",
+    "cake",
+    "cake",
+    "cake",
+    "cake",
+    "cake",
+    "cake",
     // THE SIGNAL FIRE'S OWN ROW (the autopush-530 round): the hay bale
     // the dig row (1.0 hardness — the strength the clinit arm speaks),
     // the drops table (the self-entry the generated hay_block rows
@@ -10082,7 +10248,8 @@ pub const NAME_OF: [&str; 799] = [
     // the requiresCorrectTool absence wears), the drops table (the
     // self-entry), the sounds' WOOL row and the item id the reverse
     // walk answers
-    "cobweb", "white_wool",
+    "cobweb",
+    "white_wool",
     // THE SPEED FACTOR WAKE'S OWN ROW (the autopush-598 round): the
     // soul sand the dig row (0.5 hardness, no tool demand — the
     // strength(0.5f) pc 10662 the clinit arm speaks), the drops table
@@ -10110,7 +10277,8 @@ pub const NAME_OF: [&str; 799] = [
     // arm carries — the default the registration keeps) and the item
     // id the placeable lookup answers; BOTH kinds the same row the
     // lit swap the smelt lane's own product never places)
-    "furnace", "furnace",
+    "furnace",
+    "furnace",
     // THE BLAST FURNACE / SMOKER QUARTET'S OWN ROWS (the dev-26
     // round — the lit kinds the BASE name the shared-row law the
     // furnace pair keeps: the dig row (3.5 hardness +
@@ -10122,8 +10290,10 @@ pub const NAME_OF: [&str; 799] = [
     // and the item ids the placeable lookup answers; BOTH lit kinds
     // the same row the lit swap the smelt lanes' own products never
     // place)
-    "blast_furnace", "blast_furnace",
-    "smoker", "smoker",
+    "blast_furnace",
+    "blast_furnace",
+    "smoker",
+    "smoker",
     // THE PORTAL'S OWN ROW (the autopush-605 round): the gate the
     // dig row (the strength(-1.0f) pc 11097 the clinit arm speaks —
     // the unbreakable -1 the generated table's own row banks), the
@@ -10207,7 +10377,10 @@ pub const NAME_OF: [&str; 799] = [
     // quartet ladder's rows bank, the kind's own seat 174 the both tables'
     // indexing never reaches — the dig row's own -1.0 the unbreakable
     // verdict the NAME_OF read the unreachable law keeps).
-    "oak_door", "oak_door", "oak_door", "oak_door",
+    "oak_door",
+    "oak_door",
+    "oak_door",
+    "oak_door",
     // THE DOOR FAMILY'S WOOD ROWS (the dev-43 round): the eleven
     // wooden quartets the SAME shared-base law the oak rows wear —
     // all four kinds the BASE "{wood}_door" name (the jar's ONE
@@ -10228,17 +10401,50 @@ pub const NAME_OF: [&str; 799] = [
     // 138 the both tables' indexing never reaches — the dig row's
     // own -1.0 the unbreakable verdict the NAME_OF read the
     // unreachable law keeps).
-    "spruce_door", "spruce_door", "spruce_door", "spruce_door",
-    "birch_door", "birch_door", "birch_door", "birch_door",
-    "jungle_door", "jungle_door", "jungle_door", "jungle_door",
-    "acacia_door", "acacia_door", "acacia_door", "acacia_door",
-    "dark_oak_door", "dark_oak_door", "dark_oak_door", "dark_oak_door",
-    "mangrove_door", "mangrove_door", "mangrove_door", "mangrove_door",
-    "cherry_door", "cherry_door", "cherry_door", "cherry_door",
-    "pale_oak_door", "pale_oak_door", "pale_oak_door", "pale_oak_door",
-    "bamboo_door", "bamboo_door", "bamboo_door", "bamboo_door",
-    "crimson_door", "crimson_door", "crimson_door", "crimson_door",
-    "warped_door", "warped_door", "warped_door", "warped_door",
+    "spruce_door",
+    "spruce_door",
+    "spruce_door",
+    "spruce_door",
+    "birch_door",
+    "birch_door",
+    "birch_door",
+    "birch_door",
+    "jungle_door",
+    "jungle_door",
+    "jungle_door",
+    "jungle_door",
+    "acacia_door",
+    "acacia_door",
+    "acacia_door",
+    "acacia_door",
+    "dark_oak_door",
+    "dark_oak_door",
+    "dark_oak_door",
+    "dark_oak_door",
+    "mangrove_door",
+    "mangrove_door",
+    "mangrove_door",
+    "mangrove_door",
+    "cherry_door",
+    "cherry_door",
+    "cherry_door",
+    "cherry_door",
+    "pale_oak_door",
+    "pale_oak_door",
+    "pale_oak_door",
+    "pale_oak_door",
+    "bamboo_door",
+    "bamboo_door",
+    "bamboo_door",
+    "bamboo_door",
+    "crimson_door",
+    "crimson_door",
+    "crimson_door",
+    "crimson_door",
+    "warped_door",
+    "warped_door",
+    "warped_door",
+    "warped_door",
     // THE COPPER LADDER + IRON'S OWN ROWS (the autopush-656 round):
     // the same shared-base law every quartet wears — all four kinds
     // the BASE "{base}_door" name (the jar's ONE registry entry per
@@ -10250,15 +10456,42 @@ pub const NAME_OF: [&str; 799] = [
     // conditional pool (survives_explosion + half=lower — the
     // {base}_door item every lower rolls), the item id the
     // placeable lookup the FIRST row's position answers).
-    "copper_door", "copper_door", "copper_door", "copper_door",
-    "exposed_copper_door", "exposed_copper_door", "exposed_copper_door", "exposed_copper_door",
-    "weathered_copper_door", "weathered_copper_door", "weathered_copper_door", "weathered_copper_door",
-    "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door",
-    "waxed_copper_door", "waxed_copper_door", "waxed_copper_door", "waxed_copper_door",
-    "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door",
-    "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door",
-    "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door",
-    "iron_door", "iron_door", "iron_door", "iron_door",
+    "copper_door",
+    "copper_door",
+    "copper_door",
+    "copper_door",
+    "exposed_copper_door",
+    "exposed_copper_door",
+    "exposed_copper_door",
+    "exposed_copper_door",
+    "weathered_copper_door",
+    "weathered_copper_door",
+    "weathered_copper_door",
+    "weathered_copper_door",
+    "oxidized_copper_door",
+    "oxidized_copper_door",
+    "oxidized_copper_door",
+    "oxidized_copper_door",
+    "waxed_copper_door",
+    "waxed_copper_door",
+    "waxed_copper_door",
+    "waxed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_oxidized_copper_door",
+    "waxed_oxidized_copper_door",
+    "waxed_oxidized_copper_door",
+    "waxed_oxidized_copper_door",
+    "iron_door",
+    "iron_door",
+    "iron_door",
+    "iron_door",
     // THE DOOR FAMILY'S HINGE-RIGHT ROWS (the autopush-658 round): the
     // twenty-one RIGHT quartets the SAME shared-base law every quartet
     // wears — all four kinds the BASE "{base}_door" name (javap the
@@ -10273,27 +10506,90 @@ pub const NAME_OF: [&str; 799] = [
     // the both tables' indexing never reaches — the dig row's own
     // -1.0 the unbreakable verdict the NAME_OF read the unreachable
     // law keeps).
-    "oak_door", "oak_door", "oak_door", "oak_door",
-    "spruce_door", "spruce_door", "spruce_door", "spruce_door",
-    "birch_door", "birch_door", "birch_door", "birch_door",
-    "jungle_door", "jungle_door", "jungle_door", "jungle_door",
-    "acacia_door", "acacia_door", "acacia_door", "acacia_door",
-    "dark_oak_door", "dark_oak_door", "dark_oak_door", "dark_oak_door",
-    "mangrove_door", "mangrove_door", "mangrove_door", "mangrove_door",
-    "cherry_door", "cherry_door", "cherry_door", "cherry_door",
-    "pale_oak_door", "pale_oak_door", "pale_oak_door", "pale_oak_door",
-    "bamboo_door", "bamboo_door", "bamboo_door", "bamboo_door",
-    "crimson_door", "crimson_door", "crimson_door", "crimson_door",
-    "warped_door", "warped_door", "warped_door", "warped_door",
-    "copper_door", "copper_door", "copper_door", "copper_door",
-    "exposed_copper_door", "exposed_copper_door", "exposed_copper_door", "exposed_copper_door",
-    "weathered_copper_door", "weathered_copper_door", "weathered_copper_door", "weathered_copper_door",
-    "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door",
-    "waxed_copper_door", "waxed_copper_door", "waxed_copper_door", "waxed_copper_door",
-    "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door",
-    "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door",
-    "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door",
-    "iron_door", "iron_door", "iron_door", "iron_door",
+    "oak_door",
+    "oak_door",
+    "oak_door",
+    "oak_door",
+    "spruce_door",
+    "spruce_door",
+    "spruce_door",
+    "spruce_door",
+    "birch_door",
+    "birch_door",
+    "birch_door",
+    "birch_door",
+    "jungle_door",
+    "jungle_door",
+    "jungle_door",
+    "jungle_door",
+    "acacia_door",
+    "acacia_door",
+    "acacia_door",
+    "acacia_door",
+    "dark_oak_door",
+    "dark_oak_door",
+    "dark_oak_door",
+    "dark_oak_door",
+    "mangrove_door",
+    "mangrove_door",
+    "mangrove_door",
+    "mangrove_door",
+    "cherry_door",
+    "cherry_door",
+    "cherry_door",
+    "cherry_door",
+    "pale_oak_door",
+    "pale_oak_door",
+    "pale_oak_door",
+    "pale_oak_door",
+    "bamboo_door",
+    "bamboo_door",
+    "bamboo_door",
+    "bamboo_door",
+    "crimson_door",
+    "crimson_door",
+    "crimson_door",
+    "crimson_door",
+    "warped_door",
+    "warped_door",
+    "warped_door",
+    "warped_door",
+    "copper_door",
+    "copper_door",
+    "copper_door",
+    "copper_door",
+    "exposed_copper_door",
+    "exposed_copper_door",
+    "exposed_copper_door",
+    "exposed_copper_door",
+    "weathered_copper_door",
+    "weathered_copper_door",
+    "weathered_copper_door",
+    "weathered_copper_door",
+    "oxidized_copper_door",
+    "oxidized_copper_door",
+    "oxidized_copper_door",
+    "oxidized_copper_door",
+    "waxed_copper_door",
+    "waxed_copper_door",
+    "waxed_copper_door",
+    "waxed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_exposed_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_weathered_copper_door",
+    "waxed_oxidized_copper_door",
+    "waxed_oxidized_copper_door",
+    "waxed_oxidized_copper_door",
+    "waxed_oxidized_copper_door",
+    "iron_door",
+    "iron_door",
+    "iron_door",
+    "iron_door",
     // THE LEVER PAIR'S OWN SHARED-BASE ROWS (the dev-45 round): the
     // registry the ONE "lever" entry both states the same name speaks
     // (javap Blocks clinit the 26.2 jar — the LEVER register the
@@ -10302,13 +10598,15 @@ pub const NAME_OF: [&str; 799] = [
     // tool demand) / the drops table (the lever item) / the sounds'
     // WOOD row / the item id the pick lane grants BOTH kinds the
     // shared name answers.
-    "lever", "lever",
+    "lever",
+    "lever",
     // THE BUTTON'S OWN ROWS (the autopush-660 round): the ONE
     // "stone_button" registry entry both kinds the same name speaks —
     // the dig row (0.5, false), the item id the pick lane grants BOTH
     // kinds, the sounds' stone set type row the same law keeps (the
     // _pressed strip the generated rows' registry law wears)
-    "stone_button", "stone_button",
+    "stone_button",
+    "stone_button",
     // THE WOODEN BUTTON'S OWN ROWS (the dev-47 round): the ONE
     // "oak_button" registry entry both kinds the same name speaks —
     // the dig row (the wooden SoundType's own hardness the jar's
@@ -10316,7 +10614,8 @@ pub const NAME_OF: [&str; 799] = [
     // keeps), the item id the pick lane grants BOTH kinds, the
     // sounds' wooden set type row the same law keeps (the _pressed
     // strip the generated rows' registry law the stone pair wears)
-    "oak_button", "oak_button",
+    "oak_button",
+    "oak_button",
     // THE BUTTON FAMILY'S FULL LADDER (the autopush-662 round): the
     // ONE "{wood}_button" registry entry both kinds the same name
     // speaks — the dig row (the buttonProperties' strength(0.5f) walk
@@ -10327,18 +10626,30 @@ pub const NAME_OF: [&str; 799] = [
     // _pressed strip the generated rows' registry law the oak pair
     // wears) — the wood order the door family's own ladder wears, the
     // polished rung the stone-family name the shared set type keeps.
-    "spruce_button", "spruce_button",
-    "birch_button", "birch_button",
-    "jungle_button", "jungle_button",
-    "acacia_button", "acacia_button",
-    "dark_oak_button", "dark_oak_button",
-    "mangrove_button", "mangrove_button",
-    "cherry_button", "cherry_button",
-    "pale_oak_button", "pale_oak_button",
-    "bamboo_button", "bamboo_button",
-    "crimson_button", "crimson_button",
-    "warped_button", "warped_button",
-    "polished_blackstone_button", "polished_blackstone_button",
+    "spruce_button",
+    "spruce_button",
+    "birch_button",
+    "birch_button",
+    "jungle_button",
+    "jungle_button",
+    "acacia_button",
+    "acacia_button",
+    "dark_oak_button",
+    "dark_oak_button",
+    "mangrove_button",
+    "mangrove_button",
+    "cherry_button",
+    "cherry_button",
+    "pale_oak_button",
+    "pale_oak_button",
+    "bamboo_button",
+    "bamboo_button",
+    "crimson_button",
+    "crimson_button",
+    "warped_button",
+    "warped_button",
+    "polished_blackstone_button",
+    "polished_blackstone_button",
     // THE PRESSURE PLATES' OWN ROWS (the dev-48 round): the ONE
     // "{base}_pressure_plate" registry entry both kinds the same name
     // speaks — the dig row (the factory's strength(0.5f) the stone
@@ -10347,8 +10658,10 @@ pub const NAME_OF: [&str; 799] = [
     // the sounds' per-set-type rows the click voices' own law keeps
     // (the _down strip the generated rows' registry law the button
     // pair wears).
-    "oak_pressure_plate", "oak_pressure_plate",
-    "stone_pressure_plate", "stone_pressure_plate",
+    "oak_pressure_plate",
+    "oak_pressure_plate",
+    "stone_pressure_plate",
+    "stone_pressure_plate",
     // THE PLATE FAMILY'S FULL LADDER'S OWN ROWS (the autopush-663
     // round): the twelve ladder rungs the same ONE-entry law both
     // kinds speak — the jar's ONE "{wood}_pressure_plate" registry
@@ -10357,18 +10670,30 @@ pub const NAME_OF: [&str; 799] = [
     // grants BOTH kinds (the placement's placeable lookup the reverse
     // walk serves), the sounds' per-set-type rows the click voices'
     // own law keeps.
-    "spruce_pressure_plate", "spruce_pressure_plate",
-    "birch_pressure_plate", "birch_pressure_plate",
-    "jungle_pressure_plate", "jungle_pressure_plate",
-    "acacia_pressure_plate", "acacia_pressure_plate",
-    "dark_oak_pressure_plate", "dark_oak_pressure_plate",
-    "mangrove_pressure_plate", "mangrove_pressure_plate",
-    "cherry_pressure_plate", "cherry_pressure_plate",
-    "pale_oak_pressure_plate", "pale_oak_pressure_plate",
-    "bamboo_pressure_plate", "bamboo_pressure_plate",
-    "crimson_pressure_plate", "crimson_pressure_plate",
-    "warped_pressure_plate", "warped_pressure_plate",
-    "polished_blackstone_pressure_plate", "polished_blackstone_pressure_plate",
+    "spruce_pressure_plate",
+    "spruce_pressure_plate",
+    "birch_pressure_plate",
+    "birch_pressure_plate",
+    "jungle_pressure_plate",
+    "jungle_pressure_plate",
+    "acacia_pressure_plate",
+    "acacia_pressure_plate",
+    "dark_oak_pressure_plate",
+    "dark_oak_pressure_plate",
+    "mangrove_pressure_plate",
+    "mangrove_pressure_plate",
+    "cherry_pressure_plate",
+    "cherry_pressure_plate",
+    "pale_oak_pressure_plate",
+    "pale_oak_pressure_plate",
+    "bamboo_pressure_plate",
+    "bamboo_pressure_plate",
+    "crimson_pressure_plate",
+    "crimson_pressure_plate",
+    "warped_pressure_plate",
+    "warped_pressure_plate",
+    "polished_blackstone_pressure_plate",
+    "polished_blackstone_pressure_plate",
     // THE WEIGHTED PLATES' OWN ROWS (the dev-49 round): the ONE
     // registry name BOTH kinds of each pair speak (the `_down` strip
     // walk the generated rows' registry law wears — the
@@ -10376,8 +10701,10 @@ pub const NAME_OF: [&str; 799] = [
     // / "heavy_weighted_pressure_plate" entry both states the same
     // name keeps, the item id the pick lane grants BOTH kinds), the
     // placement's placeable lookup the reverse walk serves.
-    "light_weighted_pressure_plate", "light_weighted_pressure_plate",
-    "heavy_weighted_pressure_plate", "heavy_weighted_pressure_plate",
+    "light_weighted_pressure_plate",
+    "light_weighted_pressure_plate",
+    "heavy_weighted_pressure_plate",
+    "heavy_weighted_pressure_plate",
     // THE REDSTONE WIRE'S OWN ROWS (the autopush-665 round): the
     // OFF/ON pair the ONE registry entry the strip law keeps (the
     // RedStoneWireBlock's ONE "redstone_wire" registry id both states
@@ -10386,7 +10713,8 @@ pub const NAME_OF: [&str; 799] = [
     // table's redstone item the pick lane grants BOTH kinds speak),
     // the placement's placeable lookup the reverse walk the BlockItem
     // pairing serves.
-    "redstone_wire", "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
     // THE REDSTONE TORCH'S OWN ROWS (the autopush-666 round): the
     // lit/off pair the ONE registry entry the strip law keeps (the
     // RedstoneTorchBlock's ONE "redstone_torch" registry id both
@@ -10397,7 +10725,8 @@ pub const NAME_OF: [&str; 799] = [
     // pairing serves (the standing torch the item's own primary
     // block the lit default state the ctor's registerDefaultState
     // law banks).
-    "redstone_torch", "redstone_torch",
+    "redstone_torch",
+    "redstone_torch",
     // THE REDSTONE WALL TORCH'S OWN ROWS (the autopush-667 round): the
     // lit/off pair the ONE registry entry the strip law keeps (the
     // RedstoneWallTorchBlock's ONE "redstone_wall_torch" registry id
@@ -10408,7 +10737,8 @@ pub const NAME_OF: [&str; 799] = [
     // StandingAndWallBlockItem pairing the wall state the item's own
     // secondary block banks — no "redstone_wall_torch" item the
     // registry carries, the placeable lookup the row never answers).
-    "redstone_wall_torch", "redstone_wall_torch",
+    "redstone_wall_torch",
+    "redstone_wall_torch",
     // THE OAK TRAPDOOR'S OWN ROWS (the autopush-668 round): the
     // closed/open pair the ONE registry entry the strip law keeps
     // (the TrapDoorBlock's ONE "oak_trapdoor" registry id both states
@@ -10417,7 +10747,8 @@ pub const NAME_OF: [&str; 799] = [
     // lane grants BOTH kinds speak), the closed kind the item's own
     // placement lands (the BlockItem pairing the Items clinit row
     // banks, the generic placeable lookup the closed seat answers).
-    "oak_trapdoor", "oak_trapdoor",
+    "oak_trapdoor",
+    "oak_trapdoor",
     // THE LADDER'S OWN WOOD ROWS (the autopush-669 round): the eleven
     // rungs the ONE-registry-entry law each keeps (the
     // TrapDoorBlock's ONE "{wood}_trapdoor" registry id both states
@@ -10425,17 +10756,28 @@ pub const NAME_OF: [&str; 799] = [
     // WOOD rows and the item ids the pick lane grants BOTH kinds
     // speak), the closed kinds the items' own placements land (the
     // generic placeable lookups the closed seats answer)
-    "spruce_trapdoor", "spruce_trapdoor",
-    "birch_trapdoor", "birch_trapdoor",
-    "jungle_trapdoor", "jungle_trapdoor",
-    "acacia_trapdoor", "acacia_trapdoor",
-    "dark_oak_trapdoor", "dark_oak_trapdoor",
-    "mangrove_trapdoor", "mangrove_trapdoor",
-    "cherry_trapdoor", "cherry_trapdoor",
-    "pale_oak_trapdoor", "pale_oak_trapdoor",
-    "bamboo_trapdoor", "bamboo_trapdoor",
-    "crimson_trapdoor", "crimson_trapdoor",
-    "warped_trapdoor", "warped_trapdoor",
+    "spruce_trapdoor",
+    "spruce_trapdoor",
+    "birch_trapdoor",
+    "birch_trapdoor",
+    "jungle_trapdoor",
+    "jungle_trapdoor",
+    "acacia_trapdoor",
+    "acacia_trapdoor",
+    "dark_oak_trapdoor",
+    "dark_oak_trapdoor",
+    "mangrove_trapdoor",
+    "mangrove_trapdoor",
+    "cherry_trapdoor",
+    "cherry_trapdoor",
+    "pale_oak_trapdoor",
+    "pale_oak_trapdoor",
+    "bamboo_trapdoor",
+    "bamboo_trapdoor",
+    "crimson_trapdoor",
+    "crimson_trapdoor",
+    "warped_trapdoor",
+    "warped_trapdoor",
     // THE METAL RUNGS' OWN ROWS (the autopush-670 round): the nine
     // pairs the ONE-registry-entry law each keeps (the TrapDoorBlock's
     // ONE "{stem}_trapdoor" registry id both states the same name
@@ -10446,30 +10788,50 @@ pub const NAME_OF: [&str; 799] = [
     // land (the generic placeable lookups the closed seats answer),
     // the waxed rows the waxed names the SAME sprites the unwaxed
     // tiles wear (the blockstates' own model rows the alias banks)
-    "copper_trapdoor", "copper_trapdoor",
-    "exposed_copper_trapdoor", "exposed_copper_trapdoor",
-    "weathered_copper_trapdoor", "weathered_copper_trapdoor",
-    "oxidized_copper_trapdoor", "oxidized_copper_trapdoor",
-    "waxed_copper_trapdoor", "waxed_copper_trapdoor",
-    "waxed_exposed_copper_trapdoor", "waxed_exposed_copper_trapdoor",
-    "waxed_weathered_copper_trapdoor", "waxed_weathered_copper_trapdoor",
-    "waxed_oxidized_copper_trapdoor", "waxed_oxidized_copper_trapdoor",
-    "iron_trapdoor", "iron_trapdoor",
+    "copper_trapdoor",
+    "copper_trapdoor",
+    "exposed_copper_trapdoor",
+    "exposed_copper_trapdoor",
+    "weathered_copper_trapdoor",
+    "weathered_copper_trapdoor",
+    "oxidized_copper_trapdoor",
+    "oxidized_copper_trapdoor",
+    "waxed_copper_trapdoor",
+    "waxed_copper_trapdoor",
+    "waxed_exposed_copper_trapdoor",
+    "waxed_exposed_copper_trapdoor",
+    "waxed_weathered_copper_trapdoor",
+    "waxed_weathered_copper_trapdoor",
+    "waxed_oxidized_copper_trapdoor",
+    "waxed_oxidized_copper_trapdoor",
+    "iron_trapdoor",
+    "iron_trapdoor",
     // THE LAMP'S OWN PAIR (the autopush-672 round — the ONE
     // "redstone_lamp" registry id both kinds the lit variant's own
     // _on strip wears, the dig rows + item id the generated tables
     // bank, the placement lane the base name the placeable walk
     // answers)
-    "redstone_lamp", "redstone_lamp",
+    "redstone_lamp",
+    "redstone_lamp",
     // THE WIRE'S OWN GRADED LADDER (the autopush-673 round — the ONE
     // "redstone_wire" registry id ALL SIXTEEN rows speak, the _pNN
     // strip the generated rows' law keeps: the dig row (0.0, false),
     // the drops table, the sounds' block row and the item id the
     // pick lane grants every rung the same answer keeps)
-    "redstone_wire", "redstone_wire", "redstone_wire", "redstone_wire",
-    "redstone_wire", "redstone_wire", "redstone_wire", "redstone_wire",
-    "redstone_wire", "redstone_wire", "redstone_wire", "redstone_wire",
-    "redstone_wire", "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
+    "redstone_wire",
     // THE PLANKS' OWN TWELVE ROWS (the autopush-674 round — each plank
     // its OWN "{stem}_planks" registry name the ONE kind speaks: the
     // BlockItem pairing the Items clinit's registerBlock rows answer,
@@ -10477,9 +10839,18 @@ pub const NAME_OF: [&str; 799] = [
     // tables bank, the block.wood sound family and the self-item drop
     // pool the lanes keep, the placement lane the ONE name the reverse
     // walk answers — no strip law the twelve rows never share)
-    "oak_planks", "spruce_planks", "birch_planks", "jungle_planks",
-    "acacia_planks", "dark_oak_planks", "mangrove_planks", "cherry_planks",
-    "pale_oak_planks", "bamboo_planks", "crimson_planks", "warped_planks",
+    "oak_planks",
+    "spruce_planks",
+    "birch_planks",
+    "jungle_planks",
+    "acacia_planks",
+    "dark_oak_planks",
+    "mangrove_planks",
+    "cherry_planks",
+    "pale_oak_planks",
+    "bamboo_planks",
+    "crimson_planks",
+    "warped_planks",
     // THE STONE MASON'S OWN ROWS (the autopush-675 round — each stone
     // its OWN "{name}" registry name the ONE kind speaks: the BlockItem
     // pairing the Items clinit's registerBlock rows answer, the dig
@@ -10487,13 +10858,22 @@ pub const NAME_OF: [&str; 799] = [
     // block.stone sound family and the self-item drop pools the lanes
     // keep, the placement lane the ONE name the reverse walk answers —
     // no strip law the six rows never share)
-    "cobblestone", "smooth_stone", "stone_bricks", "mossy_stone_bricks",
-    "cracked_stone_bricks", "chiseled_stone_bricks",
+    "cobblestone",
+    "smooth_stone",
+    "stone_bricks",
+    "mossy_stone_bricks",
+    "cracked_stone_bricks",
+    "chiseled_stone_bricks",
     // THE DESERT'S OWN SHELF (the autopush-676 round): the sandstone
     // family's eight seats — the ONE "{name}" registry id each kind
     // ALONE speaks (no strip law the eight rows never share).
-    "sandstone", "chiseled_sandstone", "cut_sandstone", "smooth_sandstone",
-    "red_sandstone", "chiseled_red_sandstone", "cut_red_sandstone",
+    "sandstone",
+    "chiseled_sandstone",
+    "cut_sandstone",
+    "smooth_sandstone",
+    "red_sandstone",
+    "chiseled_red_sandstone",
+    "cut_red_sandstone",
     "smooth_red_sandstone",
     // THE WOOL'S OWN SIXTEEN CLOTHS (the autopush-677 round): the
     // wool family's fifteen dyed rungs the tail rows bank — the
@@ -10507,10 +10887,21 @@ pub const NAME_OF: [&str; 799] = [
     // tables already bank, the placeable lane the reverse walk the
     // pairing serves (410..424 — the END_PORTAL the beyond-table
     // 510 the displacement law keeps).
-    "orange_wool", "magenta_wool", "light_blue_wool", "yellow_wool",
-    "lime_wool", "pink_wool", "gray_wool", "light_gray_wool",
-    "cyan_wool", "purple_wool", "blue_wool", "brown_wool",
-    "green_wool", "red_wool", "black_wool",
+    "orange_wool",
+    "magenta_wool",
+    "light_blue_wool",
+    "yellow_wool",
+    "lime_wool",
+    "pink_wool",
+    "gray_wool",
+    "light_gray_wool",
+    "cyan_wool",
+    "purple_wool",
+    "blue_wool",
+    "brown_wool",
+    "green_wool",
+    "red_wool",
+    "black_wool",
     // THE POTTER'S OWN SEVENTEEN KILNS (the autopush-678 round): the
     // terracotta family's seventeen seats the tail rows bank — the
     // ONE "{name}" registry id each kind ALONE speaks (no strip
@@ -10521,12 +10912,23 @@ pub const NAME_OF: [&str; 799] = [
     // the placeable lane the reverse walk the pairing serves (the
     // dyed rungs 425..440 the plain kiln the 441 seat keeps — the
     // END_PORTAL the beyond-table 442 the displacement law keeps).
-    "white_terracotta", "orange_terracotta", "magenta_terracotta",
-    "light_blue_terracotta", "yellow_terracotta", "lime_terracotta",
-    "pink_terracotta", "gray_terracotta", "light_gray_terracotta",
-    "cyan_terracotta", "purple_terracotta", "blue_terracotta",
-    "brown_terracotta", "green_terracotta", "red_terracotta",
-    "black_terracotta", "terracotta",
+    "white_terracotta",
+    "orange_terracotta",
+    "magenta_terracotta",
+    "light_blue_terracotta",
+    "yellow_terracotta",
+    "lime_terracotta",
+    "pink_terracotta",
+    "gray_terracotta",
+    "light_gray_terracotta",
+    "cyan_terracotta",
+    "purple_terracotta",
+    "blue_terracotta",
+    "brown_terracotta",
+    "green_terracotta",
+    "red_terracotta",
+    "black_terracotta",
+    "terracotta",
     // THE FENCE'S OWN GATE (the dev-53 round): the oak pair the
     // tail rows bank — the ONE "oak_fence_gate" registry id BOTH
     // kinds speak (the BlockItemIds.OAK_FENCE_GATE the Items
@@ -10536,7 +10938,8 @@ pub const NAME_OF: [&str; 799] = [
     // the placeable lane the reverse walk the pairing serves —
     // 442/443, the END_PORTAL the beyond-table 510 the
     // displacement law keeps).
-    "oak_fence_gate", "oak_fence_gate",
+    "oak_fence_gate",
+    "oak_fence_gate",
     // THE BUILDER'S OWN FIFTEEN CONCRETE RUNGS (the autopush-679
     // round): the dyed concrete family's fifteen seats the tail
     // rows bank — the ONE "{name}" registry id each kind ALONE
@@ -10544,11 +10947,21 @@ pub const NAME_OF: [&str; 799] = [
     // placeable lane the reverse walk the BlockItem pairing
     // serves — 444..458, the END_PORTAL the beyond-table 510 the
     // displacement law keeps).
-    "orange_concrete", "magenta_concrete", "light_blue_concrete",
-    "yellow_concrete", "lime_concrete", "pink_concrete",
-    "gray_concrete", "light_gray_concrete", "cyan_concrete",
-    "purple_concrete", "blue_concrete", "brown_concrete",
-    "green_concrete", "red_concrete", "black_concrete",
+    "orange_concrete",
+    "magenta_concrete",
+    "light_blue_concrete",
+    "yellow_concrete",
+    "lime_concrete",
+    "pink_concrete",
+    "gray_concrete",
+    "light_gray_concrete",
+    "cyan_concrete",
+    "purple_concrete",
+    "blue_concrete",
+    "brown_concrete",
+    "green_concrete",
+    "red_concrete",
+    "black_concrete",
     // THE POWDER'S OWN FIFTEEN RUNGS (the autopush-680 round): the
     // falling powder family's fifteen seats the tail rows bank — the
     // ONE "{name}" registry id each kind ALONE speaks (no strip
@@ -10562,13 +10975,20 @@ pub const NAME_OF: [&str; 799] = [
     // conversion the [`concrete_powder_target`] ±15-offset pairing
     // serves (459..473 — the END_PORTAL the beyond-table 475 the
     // displacement law keeps).
-    "orange_concrete_powder", "magenta_concrete_powder",
-    "light_blue_concrete_powder", "yellow_concrete_powder",
-    "lime_concrete_powder", "pink_concrete_powder",
-    "gray_concrete_powder", "light_gray_concrete_powder",
-    "cyan_concrete_powder", "purple_concrete_powder",
-    "blue_concrete_powder", "brown_concrete_powder",
-    "green_concrete_powder", "red_concrete_powder",
+    "orange_concrete_powder",
+    "magenta_concrete_powder",
+    "light_blue_concrete_powder",
+    "yellow_concrete_powder",
+    "lime_concrete_powder",
+    "pink_concrete_powder",
+    "gray_concrete_powder",
+    "light_gray_concrete_powder",
+    "cyan_concrete_powder",
+    "purple_concrete_powder",
+    "blue_concrete_powder",
+    "brown_concrete_powder",
+    "green_concrete_powder",
+    "red_concrete_powder",
     "black_concrete_powder",
     // THE GATE'S OWN ELEVEN WOODS (the autopush-681 round): the
     // fence gate's eleven wooden pairs the tail rows bank — the
@@ -10583,17 +11003,28 @@ pub const NAME_OF: [&str; 799] = [
     // open / re-face / collision lanes the dev-53 family fns every
     // wood the same laws serve (474..495 — the END_PORTAL the
     // beyond-table 510 the displacement law keeps).
-    "spruce_fence_gate", "spruce_fence_gate",
-    "birch_fence_gate", "birch_fence_gate",
-    "jungle_fence_gate", "jungle_fence_gate",
-    "acacia_fence_gate", "acacia_fence_gate",
-    "cherry_fence_gate", "cherry_fence_gate",
-    "dark_oak_fence_gate", "dark_oak_fence_gate",
-    "pale_oak_fence_gate", "pale_oak_fence_gate",
-    "mangrove_fence_gate", "mangrove_fence_gate",
-    "bamboo_fence_gate", "bamboo_fence_gate",
-    "crimson_fence_gate", "crimson_fence_gate",
-    "warped_fence_gate", "warped_fence_gate",
+    "spruce_fence_gate",
+    "spruce_fence_gate",
+    "birch_fence_gate",
+    "birch_fence_gate",
+    "jungle_fence_gate",
+    "jungle_fence_gate",
+    "acacia_fence_gate",
+    "acacia_fence_gate",
+    "cherry_fence_gate",
+    "cherry_fence_gate",
+    "dark_oak_fence_gate",
+    "dark_oak_fence_gate",
+    "pale_oak_fence_gate",
+    "pale_oak_fence_gate",
+    "mangrove_fence_gate",
+    "mangrove_fence_gate",
+    "bamboo_fence_gate",
+    "bamboo_fence_gate",
+    "crimson_fence_gate",
+    "crimson_fence_gate",
+    "warped_fence_gate",
+    "warped_fence_gate",
     // THE NOTE BLOCK'S OWN ROW (the dev-54 round — the ONE registry
     // name the single kind alone speaks; the 681 gap seat the tail
     // fills, the dig/sound/drop/place lanes the generated tables'
@@ -10609,9 +11040,18 @@ pub const NAME_OF: [&str; 799] = [
     // keeps — the generated tables' name-keyed rows the names
     // wire), the placeable lookup the reverse walk the kind's own
     // row answers.
-    "oak_fence", "spruce_fence", "birch_fence", "jungle_fence",
-    "acacia_fence", "cherry_fence", "dark_oak_fence", "pale_oak_fence",
-    "mangrove_fence", "bamboo_fence", "crimson_fence", "warped_fence",
+    "oak_fence",
+    "spruce_fence",
+    "birch_fence",
+    "jungle_fence",
+    "acacia_fence",
+    "cherry_fence",
+    "dark_oak_fence",
+    "pale_oak_fence",
+    "mangrove_fence",
+    "bamboo_fence",
+    "crimson_fence",
+    "warped_fence",
     "nether_brick_fence",
     // THE PORTAL'S OWN ROW (the dev-56 round — the beyond-table 510
     // the palette's own row the walls' contiguous run the tail
@@ -10632,132 +11072,273 @@ pub const NAME_OF: [&str; 799] = [
     // placeable lookup the reverse walk the kind's own row answers
     // (511..542 — the END_PORTAL the beyond-table 510 the
     // displacement law keeps).
-    "cobblestone_wall", "mossy_cobblestone_wall", "brick_wall",
-    "prismarine_wall", "red_sandstone_wall", "mossy_stone_brick_wall",
-    "granite_wall", "stone_brick_wall", "nether_brick_wall",
-    "andesite_wall", "red_nether_brick_wall", "sandstone_wall",
-    "end_stone_brick_wall", "diorite_wall", "blackstone_wall",
-    "polished_blackstone_brick_wall", "polished_blackstone_wall",
-    "cobbled_deepslate_wall", "polished_deepslate_wall",
-    "deepslate_tile_wall", "deepslate_brick_wall", "mud_brick_wall",
-    "tuff_wall", "polished_tuff_wall", "tuff_brick_wall",
-    "resin_brick_wall", "cinnabar_wall", "polished_cinnabar_wall",
-    "cinnabar_brick_wall", "sulfur_wall", "polished_sulfur_wall",
+    "cobblestone_wall",
+    "mossy_cobblestone_wall",
+    "brick_wall",
+    "prismarine_wall",
+    "red_sandstone_wall",
+    "mossy_stone_brick_wall",
+    "granite_wall",
+    "stone_brick_wall",
+    "nether_brick_wall",
+    "andesite_wall",
+    "red_nether_brick_wall",
+    "sandstone_wall",
+    "end_stone_brick_wall",
+    "diorite_wall",
+    "blackstone_wall",
+    "polished_blackstone_brick_wall",
+    "polished_blackstone_wall",
+    "cobbled_deepslate_wall",
+    "polished_deepslate_wall",
+    "deepslate_tile_wall",
+    "deepslate_brick_wall",
+    "mud_brick_wall",
+    "tuff_wall",
+    "polished_tuff_wall",
+    "tuff_brick_wall",
+    "resin_brick_wall",
+    "cinnabar_wall",
+    "polished_cinnabar_wall",
+    "cinnabar_brick_wall",
+    "sulfur_wall",
+    "polished_sulfur_wall",
     "sulfur_brick_wall",
     // THE GLASS FAMILY'S OWN ROWS (the dev-57 round — the 17 seats
     // the window rung banks, the ONE registry name each kind alone
     // speaks, the dig/sound/drop/place lanes the generated tables'
     // own rows the names wire)
-    "glass", "white_stained_glass", "orange_stained_glass",
-    "magenta_stained_glass", "light_blue_stained_glass",
-    "yellow_stained_glass", "lime_stained_glass", "pink_stained_glass",
-    "gray_stained_glass", "light_gray_stained_glass",
-    "cyan_stained_glass", "purple_stained_glass", "blue_stained_glass",
-    "brown_stained_glass", "green_stained_glass", "red_stained_glass",
+    "glass",
+    "white_stained_glass",
+    "orange_stained_glass",
+    "magenta_stained_glass",
+    "light_blue_stained_glass",
+    "yellow_stained_glass",
+    "lime_stained_glass",
+    "pink_stained_glass",
+    "gray_stained_glass",
+    "light_gray_stained_glass",
+    "cyan_stained_glass",
+    "purple_stained_glass",
+    "blue_stained_glass",
+    "brown_stained_glass",
+    "green_stained_glass",
+    "red_stained_glass",
     "black_stained_glass",
     // THE PANE FAMILY'S OWN ROWS (the dev-58 round — the 18 seats
     // the thin-strip rung banks, the ONE registry name each kind
     // alone speaks, the dig/sound/drop/place lanes the generated
     // tables' own rows the names wire)
-    "glass_pane", "white_stained_glass_pane", "orange_stained_glass_pane",
-    "magenta_stained_glass_pane", "light_blue_stained_glass_pane",
-    "yellow_stained_glass_pane", "lime_stained_glass_pane",
-    "pink_stained_glass_pane", "gray_stained_glass_pane",
-    "light_gray_stained_glass_pane", "cyan_stained_glass_pane",
-    "purple_stained_glass_pane", "blue_stained_glass_pane",
-    "brown_stained_glass_pane", "green_stained_glass_pane",
-    "red_stained_glass_pane", "black_stained_glass_pane",
+    "glass_pane",
+    "white_stained_glass_pane",
+    "orange_stained_glass_pane",
+    "magenta_stained_glass_pane",
+    "light_blue_stained_glass_pane",
+    "yellow_stained_glass_pane",
+    "lime_stained_glass_pane",
+    "pink_stained_glass_pane",
+    "gray_stained_glass_pane",
+    "light_gray_stained_glass_pane",
+    "cyan_stained_glass_pane",
+    "purple_stained_glass_pane",
+    "blue_stained_glass_pane",
+    "brown_stained_glass_pane",
+    "green_stained_glass_pane",
+    "red_stained_glass_pane",
+    "black_stained_glass_pane",
     "iron_bars",
     // THE COPPER BARS FAMILY'S OWN ROWS (the dev-59 round — the 8
     // seats the PREFIXES order the collection walk banks, the ONE
     // registry name each kind alone speaks, the dig/sound/drop/place
     // lanes the generated tables' own rows the names wire)
-    "copper_bars", "exposed_copper_bars", "weathered_copper_bars",
-    "oxidized_copper_bars", "waxed_copper_bars",
-    "waxed_exposed_copper_bars", "waxed_weathered_copper_bars",
+    "copper_bars",
+    "exposed_copper_bars",
+    "weathered_copper_bars",
+    "oxidized_copper_bars",
+    "waxed_copper_bars",
+    "waxed_exposed_copper_bars",
+    "waxed_weathered_copper_bars",
     "waxed_oxidized_copper_bars",
     // THE CHAIN FAMILY'S OWN ROWS (the dev-60 round — the 9 seats the
     // registration order the clinit rows bank, the ONE registry name
     // each kind alone speaks, the dig/sound/drop/place lanes the
     // generated tables' own rows the names wire)
-    "iron_chain", "copper_chain", "exposed_copper_chain",
-    "weathered_copper_chain", "oxidized_copper_chain",
-    "waxed_copper_chain", "waxed_exposed_copper_chain",
-    "waxed_weathered_copper_chain", "waxed_oxidized_copper_chain",
+    "iron_chain",
+    "copper_chain",
+    "exposed_copper_chain",
+    "weathered_copper_chain",
+    "oxidized_copper_chain",
+    "waxed_copper_chain",
+    "waxed_exposed_copper_chain",
+    "waxed_weathered_copper_chain",
+    "waxed_oxidized_copper_chain",
     // THE LANTERN FAMILY'S OWN ROWS (the dev-61 round — the 10 seats
     // the registration order the clinit rows bank, the ONE registry
     // name each kind alone speaks, the dig/sound/drop/place lanes the
     // generated tables' own rows the names wire)
-    "lantern", "soul_lantern",
-    "copper_lantern", "exposed_copper_lantern",
-    "weathered_copper_lantern", "oxidized_copper_lantern",
-    "waxed_copper_lantern", "waxed_exposed_copper_lantern",
-    "waxed_weathered_copper_lantern", "waxed_oxidized_copper_lantern",
+    "lantern",
+    "soul_lantern",
+    "copper_lantern",
+    "exposed_copper_lantern",
+    "weathered_copper_lantern",
+    "oxidized_copper_lantern",
+    "waxed_copper_lantern",
+    "waxed_exposed_copper_lantern",
+    "waxed_weathered_copper_lantern",
+    "waxed_oxidized_copper_lantern",
     // THE STAIRS FAMILY'S OWN NAMES (the dev-62 round — the 64 rows
     // the vanilla registration order the palette tail banks, the
     // dig/sound/drop/place lanes the generated tables' own rows the
     // names wire)
-    "oak_stairs", "cobblestone_stairs", "brick_stairs",
-    "stone_brick_stairs", "mud_brick_stairs", "resin_brick_stairs",
-    "nether_brick_stairs", "sandstone_stairs", "spruce_stairs",
-    "birch_stairs", "jungle_stairs", "quartz_stairs", "acacia_stairs",
-    "cherry_stairs", "dark_oak_stairs", "pale_oak_stairs",
-    "mangrove_stairs", "bamboo_stairs", "bamboo_mosaic_stairs",
-    "prismarine_stairs", "prismarine_brick_stairs",
-    "dark_prismarine_stairs", "red_sandstone_stairs", "purpur_stairs",
-    "polished_granite_stairs", "smooth_red_sandstone_stairs",
-    "mossy_stone_brick_stairs", "polished_diorite_stairs",
-    "mossy_cobblestone_stairs", "end_stone_brick_stairs", "stone_stairs",
-    "smooth_sandstone_stairs", "smooth_quartz_stairs", "granite_stairs",
-    "andesite_stairs", "red_nether_brick_stairs",
-    "polished_andesite_stairs", "diorite_stairs", "crimson_stairs",
-    "warped_stairs", "blackstone_stairs",
-    "polished_blackstone_brick_stairs", "polished_blackstone_stairs",
-    "tuff_stairs", "polished_tuff_stairs", "tuff_brick_stairs",
-    "sulfur_stairs", "polished_sulfur_stairs", "sulfur_brick_stairs",
-    "cinnabar_stairs", "polished_cinnabar_stairs",
-    "cinnabar_brick_stairs", "cut_copper_stairs",
-    "exposed_cut_copper_stairs", "weathered_cut_copper_stairs",
-    "oxidized_cut_copper_stairs", "waxed_cut_copper_stairs",
-    "waxed_exposed_cut_copper_stairs", "waxed_weathered_cut_copper_stairs",
-    "waxed_oxidized_cut_copper_stairs", "cobbled_deepslate_stairs",
-    "polished_deepslate_stairs", "deepslate_tile_stairs",
+    "oak_stairs",
+    "cobblestone_stairs",
+    "brick_stairs",
+    "stone_brick_stairs",
+    "mud_brick_stairs",
+    "resin_brick_stairs",
+    "nether_brick_stairs",
+    "sandstone_stairs",
+    "spruce_stairs",
+    "birch_stairs",
+    "jungle_stairs",
+    "quartz_stairs",
+    "acacia_stairs",
+    "cherry_stairs",
+    "dark_oak_stairs",
+    "pale_oak_stairs",
+    "mangrove_stairs",
+    "bamboo_stairs",
+    "bamboo_mosaic_stairs",
+    "prismarine_stairs",
+    "prismarine_brick_stairs",
+    "dark_prismarine_stairs",
+    "red_sandstone_stairs",
+    "purpur_stairs",
+    "polished_granite_stairs",
+    "smooth_red_sandstone_stairs",
+    "mossy_stone_brick_stairs",
+    "polished_diorite_stairs",
+    "mossy_cobblestone_stairs",
+    "end_stone_brick_stairs",
+    "stone_stairs",
+    "smooth_sandstone_stairs",
+    "smooth_quartz_stairs",
+    "granite_stairs",
+    "andesite_stairs",
+    "red_nether_brick_stairs",
+    "polished_andesite_stairs",
+    "diorite_stairs",
+    "crimson_stairs",
+    "warped_stairs",
+    "blackstone_stairs",
+    "polished_blackstone_brick_stairs",
+    "polished_blackstone_stairs",
+    "tuff_stairs",
+    "polished_tuff_stairs",
+    "tuff_brick_stairs",
+    "sulfur_stairs",
+    "polished_sulfur_stairs",
+    "sulfur_brick_stairs",
+    "cinnabar_stairs",
+    "polished_cinnabar_stairs",
+    "cinnabar_brick_stairs",
+    "cut_copper_stairs",
+    "exposed_cut_copper_stairs",
+    "weathered_cut_copper_stairs",
+    "oxidized_cut_copper_stairs",
+    "waxed_cut_copper_stairs",
+    "waxed_exposed_cut_copper_stairs",
+    "waxed_weathered_cut_copper_stairs",
+    "waxed_oxidized_cut_copper_stairs",
+    "cobbled_deepslate_stairs",
+    "polished_deepslate_stairs",
+    "deepslate_tile_stairs",
     "deepslate_brick_stairs",
     // THE SLAB FAMILY'S OWN NAMES (the dev-63 round — the 68 rows
     // the vanilla registration order the palette tail banks, the
     // dig/sound/drop/place lanes the generated tables' own rows the
     // names wire)
-    "resin_brick_slab", "prismarine_slab", "prismarine_brick_slab",
-    "dark_prismarine_slab", "oak_slab", "spruce_slab", "birch_slab",
-    "jungle_slab", "acacia_slab", "cherry_slab", "dark_oak_slab",
-    "pale_oak_slab", "mangrove_slab", "bamboo_slab", "bamboo_mosaic_slab",
-    "stone_slab", "smooth_stone_slab", "sandstone_slab",
-    "cut_sandstone_slab", "petrified_oak_slab", "cobblestone_slab",
-    "brick_slab", "stone_brick_slab", "mud_brick_slab",
-    "nether_brick_slab", "quartz_slab", "red_sandstone_slab",
-    "cut_red_sandstone_slab", "purpur_slab", "polished_granite_slab",
-    "smooth_red_sandstone_slab", "mossy_stone_brick_slab",
-    "polished_diorite_slab", "mossy_cobblestone_slab",
-    "end_stone_brick_slab", "smooth_sandstone_slab",
-    "smooth_quartz_slab", "granite_slab", "andesite_slab",
-    "red_nether_brick_slab", "polished_andesite_slab", "diorite_slab",
-    "crimson_slab", "warped_slab", "blackstone_slab",
-    "polished_blackstone_brick_slab", "polished_blackstone_slab",
-    "tuff_slab", "polished_tuff_slab", "tuff_brick_slab",
-    "sulfur_slab", "polished_sulfur_slab", "sulfur_brick_slab",
-    "cinnabar_slab", "polished_cinnabar_slab", "cinnabar_brick_slab",
-    "cut_copper_slab", "exposed_cut_copper_slab",
-    "weathered_cut_copper_slab", "oxidized_cut_copper_slab",
-    "waxed_cut_copper_slab", "waxed_exposed_cut_copper_slab",
-    "waxed_weathered_cut_copper_slab", "waxed_oxidized_cut_copper_slab",
-    "cobbled_deepslate_slab", "polished_deepslate_slab",
-    "deepslate_tile_slab", "deepslate_brick_slab",
+    "resin_brick_slab",
+    "prismarine_slab",
+    "prismarine_brick_slab",
+    "dark_prismarine_slab",
+    "oak_slab",
+    "spruce_slab",
+    "birch_slab",
+    "jungle_slab",
+    "acacia_slab",
+    "cherry_slab",
+    "dark_oak_slab",
+    "pale_oak_slab",
+    "mangrove_slab",
+    "bamboo_slab",
+    "bamboo_mosaic_slab",
+    "stone_slab",
+    "smooth_stone_slab",
+    "sandstone_slab",
+    "cut_sandstone_slab",
+    "petrified_oak_slab",
+    "cobblestone_slab",
+    "brick_slab",
+    "stone_brick_slab",
+    "mud_brick_slab",
+    "nether_brick_slab",
+    "quartz_slab",
+    "red_sandstone_slab",
+    "cut_red_sandstone_slab",
+    "purpur_slab",
+    "polished_granite_slab",
+    "smooth_red_sandstone_slab",
+    "mossy_stone_brick_slab",
+    "polished_diorite_slab",
+    "mossy_cobblestone_slab",
+    "end_stone_brick_slab",
+    "smooth_sandstone_slab",
+    "smooth_quartz_slab",
+    "granite_slab",
+    "andesite_slab",
+    "red_nether_brick_slab",
+    "polished_andesite_slab",
+    "diorite_slab",
+    "crimson_slab",
+    "warped_slab",
+    "blackstone_slab",
+    "polished_blackstone_brick_slab",
+    "polished_blackstone_slab",
+    "tuff_slab",
+    "polished_tuff_slab",
+    "tuff_brick_slab",
+    "sulfur_slab",
+    "polished_sulfur_slab",
+    "sulfur_brick_slab",
+    "cinnabar_slab",
+    "polished_cinnabar_slab",
+    "cinnabar_brick_slab",
+    "cut_copper_slab",
+    "exposed_cut_copper_slab",
+    "weathered_cut_copper_slab",
+    "oxidized_cut_copper_slab",
+    "waxed_cut_copper_slab",
+    "waxed_exposed_cut_copper_slab",
+    "waxed_weathered_cut_copper_slab",
+    "waxed_oxidized_cut_copper_slab",
+    "cobbled_deepslate_slab",
+    "polished_deepslate_slab",
+    "deepslate_tile_slab",
+    "deepslate_brick_slab",
     // THE CHEST FAMILY'S OWN ROWS (the dev-64 round — the 11 seats the
     // registration order the clinit rows speak)
-    "chest", "trapped_chest", "ender_chest",
-    "copper_chest", "exposed_copper_chest", "weathered_copper_chest",
-    "oxidized_copper_chest", "waxed_copper_chest", "waxed_exposed_copper_chest",
-    "waxed_weathered_copper_chest", "waxed_oxidized_copper_chest",
+    "chest",
+    "trapped_chest",
+    "ender_chest",
+    "copper_chest",
+    "exposed_copper_chest",
+    "weathered_copper_chest",
+    "oxidized_copper_chest",
+    "waxed_copper_chest",
+    "waxed_exposed_copper_chest",
+    "waxed_weathered_copper_chest",
+    "waxed_oxidized_copper_chest",
     // THE BARREL'S OWN ROW (the dev-65 round — the one seat the clinit
     // row banks)
     "barrel",
@@ -10767,8 +11348,13 @@ pub const NAME_OF: [&str; 799] = [
     // axe family, the head dig row the honest walk carries], the sounds'
     // STONE rows the SoundType keep, the item ids the pick lane grants —
     // the above consult the note block's law the seats serve)
-    "skeleton_skull", "wither_skeleton_skull", "zombie_head",
-    "player_head", "creeper_head", "dragon_head", "piglin_head",
+    "skeleton_skull",
+    "wither_skeleton_skull",
+    "zombie_head",
+    "player_head",
+    "creeper_head",
+    "dragon_head",
+    "piglin_head",
     // THE TINTED GLASS'S OWN ROW (the dev-81 round — the one seat the
     // palette tail wears, the plain registry name the dig row [the
     // mineable/pickaxe 417 values NO glass row wears — the glass
@@ -10786,8 +11372,13 @@ pub const NAME_OF: [&str; 799] = [
     // dig drop the floor item wears], the ITEM lane the twins never
     // carry [the vanilla item the floor name alone registers — the
     // pick fold the [`World::placeable_block`]-adjacent lanes serve])
-    "skeleton_wall_skull", "wither_skeleton_wall_skull", "zombie_wall_head",
-    "player_wall_head", "creeper_wall_head", "dragon_wall_head", "piglin_wall_head",
+    "skeleton_wall_skull",
+    "wither_skeleton_wall_skull",
+    "zombie_wall_head",
+    "player_wall_head",
+    "creeper_wall_head",
+    "dragon_wall_head",
+    "piglin_wall_head",
     // THE RAILS' OWN FOUR ROWS (the dev-86 round — the vanilla
     // registration order the palette tail banks, the plain registry
     // name each kind speaks: the dig rows the generated table answers
@@ -10796,7 +11387,10 @@ pub const NAME_OF: [&str; 799] = [
     // pick lane grants [all four the Items clinit's BlockItem pairings
     // speak], the DROPS the self-entry pools the generated table
     // banks — the broken rail the same item pops)
-    "rail", "powered_rail", "detector_rail", "activator_rail",
+    "rail",
+    "powered_rail",
+    "detector_rail",
+    "activator_rail",
     "comparator",
     "redstone_block",
     "repeater",
@@ -10810,9 +11404,30 @@ pub const NAME_OF: [&str; 799] = [
     "shulker_box",
     "hopper",
     "brewing_stand",
-    "black_bed", "blue_bed", "brown_bed", "cyan_bed", "gray_bed", "green_bed", "light_blue_bed", "light_gray_bed", "lime_bed", "magenta_bed", "orange_bed", "pink_bed", "purple_bed", "red_bed", "white_bed", "yellow_bed",
+    "black_bed",
+    "blue_bed",
+    "brown_bed",
+    "cyan_bed",
+    "gray_bed",
+    "green_bed",
+    "light_blue_bed",
+    "light_gray_bed",
+    "lime_bed",
+    "magenta_bed",
+    "orange_bed",
+    "pink_bed",
+    "purple_bed",
+    "red_bed",
+    "white_bed",
+    "yellow_bed",
     "end_gateway",
     "respawn_anchor",
+    "iron_block",
+    "gold_block",
+    "diamond_block",
+    "emerald_block",
+    "netherite_block",
+    "beacon",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -10823,8 +11438,7 @@ pub const NAME_OF: [&str; 799] = [
 /// plants). The mesher's non-cube family the cross path meshes, the
 /// collision/clip/solid lanes the noCollision law keeps.
 pub fn is_flower(id: u16) -> bool {
-    (DANDELION..=POPPY).contains(&id)
-        || (AZURE_BLUET..=WHITE_TULIP).contains(&id)
+    (DANDELION..=POPPY).contains(&id) || (AZURE_BLUET..=WHITE_TULIP).contains(&id)
 }
 
 /// THE WEB'S OWN FAMILY — the cross kind the sword/shears rows wake
@@ -10867,10 +11481,7 @@ pub fn is_bamboo_sapling(id: u16) -> bool {
 /// honest subset the placeable kinds alone serve — the gate the
 /// below cell's kind verdict reads).
 pub fn supports_bamboo(id: u16) -> bool {
-    matches!(
-        id,
-        SAND | GRAVEL | DIRT | GRASS | BAMBOO | BAMBOO_SAPLING
-    )
+    matches!(id, SAND | GRAVEL | DIRT | GRASS | BAMBOO | BAMBOO_SAPLING)
 }
 
 /// THE PLACEMENT LAW'S OWN THREE-WAY (javap BambooStalkBlock.
@@ -11021,10 +11632,7 @@ pub fn is_flower_high(id: u16) -> bool {
 /// hash lane never carries).
 #[cfg_attr(not(test), expect(dead_code))]
 pub fn is_flower_low(id: u16) -> bool {
-    matches!(
-        id,
-        ORANGE_TULIP | RED_TULIP | PINK_TULIP | WHITE_TULIP
-    )
+    matches!(id, ORANGE_TULIP | RED_TULIP | PINK_TULIP | WHITE_TULIP)
 }
 
 /// The plains' own GRASS TUFT FAMILY — the two REPLACEABLE tinted
@@ -11344,8 +11952,7 @@ pub fn is_door_open(id: u16) -> bool {
 /// mod-4 alignment the quartet seats never speak, the 91 upper the
 /// ^2 map the 89 seat the wrong law wears).
 pub fn door_flip_mate(id: u16) -> Option<u16> {
-    door_quartet_base(id)
-        .map(|b| if (id - b) & 2 == 0 { id + 2 } else { id - 2 })
+    door_quartet_base(id).map(|b| if (id - b) & 2 == 0 { id + 2 } else { id - 2 })
 }
 
 /// THE DOOR'S OWN UPPER MATE (javap DoorBlock.setPlacedBy pc 0-21 —
@@ -11392,7 +11999,11 @@ pub fn door_hinge_right(id: u16) -> bool {
 /// the None the predicates' false keeps.
 pub fn door_hinge_mate(id: u16) -> Option<u16> {
     if is_door(id) {
-        Some(if door_hinge_right(id) { id - 84 } else { id + 84 })
+        Some(if door_hinge_right(id) {
+            id - 84
+        } else {
+            id + 84
+        })
     } else {
         None
     }
@@ -11494,12 +12105,8 @@ pub fn door_hinge_census(
     );
     // THE SCORE (pcs 110-177): the full blocks -1 LEFT / +1 RIGHT
     let mut score = 0i32;
-    let full = |x: i32, y: i32, z: i32| {
-        matches!(
-            collision_shape_at(world, x, y, z),
-            CollisionShape::Full
-        )
-    };
+    let full =
+        |x: i32, y: i32, z: i32| matches!(collision_shape_at(world, x, y, z), CollisionShape::Full);
     if full(cx + ccw_dx, cy, cz + ccw_dz) {
         score -= 1;
     }
@@ -11549,18 +12156,21 @@ pub fn door_hinge_census(
 /// every event the official table carries).
 pub fn door_voice_stem(id: u16) -> &'static str {
     match id {
-        CHERRY_DOOR..=CHERRY_DOOR_UPPER_OPEN
-        | CHERRY_DOOR_RIGHT..=CHERRY_DOOR_UPPER_OPEN_RIGHT => "block.cherry_wood_door",
-        BAMBOO_DOOR..=BAMBOO_DOOR_UPPER_OPEN
-        | BAMBOO_DOOR_RIGHT..=BAMBOO_DOOR_UPPER_OPEN_RIGHT => "block.bamboo_wood_door",
+        CHERRY_DOOR..=CHERRY_DOOR_UPPER_OPEN | CHERRY_DOOR_RIGHT..=CHERRY_DOOR_UPPER_OPEN_RIGHT => {
+            "block.cherry_wood_door"
+        }
+        BAMBOO_DOOR..=BAMBOO_DOOR_UPPER_OPEN | BAMBOO_DOOR_RIGHT..=BAMBOO_DOOR_UPPER_OPEN_RIGHT => {
+            "block.bamboo_wood_door"
+        }
         CRIMSON_DOOR..=CRIMSON_DOOR_UPPER_OPEN
         | WARPED_DOOR..=WARPED_DOOR_UPPER_OPEN
         | CRIMSON_DOOR_RIGHT..=CRIMSON_DOOR_UPPER_OPEN_RIGHT
         | WARPED_DOOR_RIGHT..=WARPED_DOOR_UPPER_OPEN_RIGHT => "block.nether_wood_door",
         COPPER_DOOR..=WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN
         | COPPER_DOOR_RIGHT..=WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN_RIGHT => "block.copper_door",
-        IRON_DOOR..=IRON_DOOR_UPPER_OPEN
-        | IRON_DOOR_RIGHT..=IRON_DOOR_UPPER_OPEN_RIGHT => "block.iron_door",
+        IRON_DOOR..=IRON_DOOR_UPPER_OPEN | IRON_DOOR_RIGHT..=IRON_DOOR_UPPER_OPEN_RIGHT => {
+            "block.iron_door"
+        }
         _ => "block.wooden_door",
     }
 }
@@ -11714,14 +12324,7 @@ pub fn fence_wood(id: u16) -> bool {
 ///     touches).
 /// `dir`: 1 north (-z), 2 east (+x), 3 south (+z), 4 west (-x) —
 /// the [`door_facing_byte`] vocabulary the horizontal law keeps.
-pub fn fence_connects(
-    world: &World,
-    self_kind: u16,
-    nx: i32,
-    ny: i32,
-    nz: i32,
-    dir: u8,
-) -> bool {
+pub fn fence_connects(world: &World, self_kind: u16, nx: i32, ny: i32, nz: i32, dir: u8) -> bool {
     let other = world.get(nx, ny, nz);
     if other == AIR {
         return false;
@@ -11773,9 +12376,7 @@ pub fn fence_connects(
     }
     matches!(
         collision_shape(other),
-        CollisionShape::Full
-            | CollisionShape::Column(_)
-            | CollisionShape::InsetColumn(_, _)
+        CollisionShape::Full | CollisionShape::Column(_) | CollisionShape::InsetColumn(_, _)
     )
 }
 
@@ -11849,9 +12450,7 @@ pub fn pane_connects(world: &World, nx: i32, ny: i32, nz: i32) -> bool {
     }
     matches!(
         collision_shape(other),
-        CollisionShape::Full
-            | CollisionShape::Column(_)
-            | CollisionShape::InsetColumn(_, _)
+        CollisionShape::Full | CollisionShape::Column(_) | CollisionShape::InsetColumn(_, _)
     )
 }
 
@@ -12332,14 +12931,7 @@ fn stairs_can_take_shape(
 /// same verdict the neighbors answer (the placement walk the SAME fn
 /// the getStateForPlacement's own SHAPE pre-compute wears — the
 /// fence's connection-bits precedent the lane keeps).
-pub fn stairs_shape_of(
-    world: &World,
-    x: i32,
-    y: i32,
-    z: i32,
-    facing: u8,
-    half_top: bool,
-) -> u8 {
+pub fn stairs_shape_of(world: &World, x: i32, y: i32, z: i32, facing: u8, half_top: bool) -> u8 {
     let (fx, fz) = stairs_facing_delta(facing);
     // THE FRONT WALK (pos.relative(FACING) — the ascent direction)
     let front = world.get(x + fx, y, z + fz);
@@ -12510,14 +13102,7 @@ pub fn stairs_state_boxes(v: u8) -> [Option<(i32, i32, i32, i32, i32, i32)>; 3] 
 ///     invariant flip keeps).
 /// `dir`: 1 north (-z), 2 east (+x), 3 south (+z), 4 west (-x) —
 /// the [`door_facing_byte`] vocabulary the horizontal law keeps.
-pub fn wall_connects(
-    world: &World,
-    self_kind: u16,
-    nx: i32,
-    ny: i32,
-    nz: i32,
-    dir: u8,
-) -> bool {
+pub fn wall_connects(world: &World, self_kind: u16, nx: i32, ny: i32, nz: i32, dir: u8) -> bool {
     let _ = self_kind;
     let other = world.get(nx, ny, nz);
     if other == AIR {
@@ -12556,9 +13141,7 @@ pub fn wall_connects(
     }
     matches!(
         collision_shape(other),
-        CollisionShape::Full
-            | CollisionShape::Column(_)
-            | CollisionShape::InsetColumn(_, _)
+        CollisionShape::Full | CollisionShape::Column(_) | CollisionShape::InsetColumn(_, _)
     )
     // THE BARS ARM (the IronBarsBlock instanceof): the client's
     // palette the pane family the vocabulary never banks — the arm
@@ -12740,12 +13323,8 @@ fn collision_face_footprint(
                 Some(2) if strip_covers(0b0010) => {
                     Some((11.0 / 16.0, 1.0, 5.0 / 16.0, 11.0 / 16.0))
                 }
-                Some(3) if strip_covers(0b0100) => {
-                    Some((5.0 / 16.0, 11.0 / 16.0, 5.0 / 16.0, 1.0))
-                }
-                Some(4) if strip_covers(0b1000) => {
-                    Some((0.0, 5.0 / 16.0, 5.0 / 16.0, 11.0 / 16.0))
-                }
+                Some(3) if strip_covers(0b0100) => Some((5.0 / 16.0, 11.0 / 16.0, 5.0 / 16.0, 1.0)),
+                Some(4) if strip_covers(0b1000) => Some((0.0, 5.0 / 16.0, 5.0 / 16.0, 11.0 / 16.0)),
                 _ => Some((4.0 / 16.0, 12.0 / 16.0, 4.0 / 16.0, 12.0 / 16.0)),
             }
         }
@@ -12975,7 +13554,12 @@ pub fn below_instrument(below: u16) -> &'static str {
         // stone-bricks + sandstone families carry, the cobbled
         // deepslate the ofLegacyCopy(DEEPSLATE) inheritance
         // pc 30487-30508 banks)
-        STONE | GRANITE | DIORITE | ANDESITE | DEEPSLATE | COBBLED_DEEPSLATE
+        STONE
+        | GRANITE
+        | DIORITE
+        | ANDESITE
+        | DEEPSLATE
+        | COBBLED_DEEPSLATE
         | OBSIDIAN
         | COBBLESTONE..=SMOOTH_RED_SANDSTONE => "basedrum",
         // THE SNARE'S OWN ROWS (the jar's 6 SNARE rows the two
@@ -13267,7 +13851,10 @@ pub fn lever_support_offset(variant: u8) -> (i32, i32, i32) {
 /// family law wears.
 pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> bool {
     let (dx, dy, dz) = lever_support_offset(variant);
-    !matches!(collision_shape(world.get(x + dx, y + dy, z + dz)), CollisionShape::Empty)
+    !matches!(
+        collision_shape(world.get(x + dx, y + dy, z + dz)),
+        CollisionShape::Empty
+    )
 }
 
 /// THE BUTTON'S OWN FAMILY (the autopush-660 round — the two-kind
@@ -13304,9 +13891,7 @@ pub fn is_button(id: u16) -> bool {
 /// STONE the lambda$static$338 row banks, the shared set type the
 /// shared refusal keeps).
 pub fn button_is_wooden(id: u16) -> bool {
-    id == OAK_BUTTON
-        || id == OAK_BUTTON_ON
-        || (SPRUCE_BUTTON..=WARPED_BUTTON_ON).contains(&id)
+    id == OAK_BUTTON || id == OAK_BUTTON_ON || (SPRUCE_BUTTON..=WARPED_BUTTON_ON).contains(&id)
 }
 
 /// THE BUTTON'S OWN WINDOW (javap the Blocks factory rows — the STONE
@@ -13532,8 +14117,7 @@ pub fn plate_toggled(id: u16) -> Option<u16> {
         STONE_PRESSURE_PLATE_ON => Some(STONE_PRESSURE_PLATE),
         _ => {
             if (SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id)
-                || (LIGHT_WEIGHTED_PRESSURE_PLATE..=HEAVY_WEIGHTED_PRESSURE_PLATE_ON)
-                    .contains(&id)
+                || (LIGHT_WEIGHTED_PRESSURE_PLATE..=HEAVY_WEIGHTED_PRESSURE_PLATE_ON).contains(&id)
             {
                 Some(if id % 2 == 0 { id + 1 } else { id - 1 })
             } else {
@@ -13698,7 +14282,10 @@ pub fn plate_voice_params(id: u16, on: bool) -> (f32, f32) {
 /// reads, the offline equivalence the collision table's non-Empty rows
 /// the lever's own canAttach walk keeps).
 pub fn plate_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
-    !matches!(collision_shape(world.get(x, y - 1, z)), CollisionShape::Empty)
+    !matches!(
+        collision_shape(world.get(x, y - 1, z)),
+        CollisionShape::Empty
+    )
 }
 
 /// THE WIRE'S OWN SOURCE WALK (javap Level.hasNeighborSignal pc 0-33
@@ -13905,8 +14492,7 @@ fn direct_signal_into_cell(world: &World, cx: i32, cy: i32, cz: i32) -> bool {
         if kind == OBSERVER {
             let sibling = world.variant(sx, sy, sz);
             if observer_powered_of(sibling) {
-                let (fdx, fdy, fdz) =
-                    observer_facing_delta6(observer_facing_of(sibling));
+                let (fdx, fdy, fdz) = observer_facing_delta6(observer_facing_of(sibling));
                 if (sx - fdx, sy - fdy, sz - fdz) == (cx, cy, cz) {
                     return true;
                 }
@@ -14094,8 +14680,7 @@ pub fn is_falling_block(id: u16) -> bool {
 /// speaks): the white kind its early seat keeps, the fifteen dyed
 /// rungs the 459..473 tail the collection's own clinit order banks.
 pub fn is_concrete_powder(id: u16) -> bool {
-    id == CONCRETE_POWDER
-        || (ORANGE_CONCRETE_POWDER..=BLACK_CONCRETE_POWDER).contains(&id)
+    id == CONCRETE_POWDER || (ORANGE_CONCRETE_POWDER..=BLACK_CONCRETE_POWDER).contains(&id)
 }
 
 /// THE PAIRING'S OWN WALK (javap the ConcretePowderBlock ctor the
@@ -14161,11 +14746,11 @@ pub fn concrete_touches_liquid(world: &World, x: i32, y: i32, z: i32) -> bool {
         }
     }
     for (dx, dy, dz) in [
-        (0, 1, 0),   // UP — the sturdy read the DOWN face asks
-        (0, 0, -1),  // NORTH — the sturdy read the SOUTH face asks
-        (0, 0, 1),   // SOUTH — the sturdy read the NORTH face asks
-        (-1, 0, 0),  // WEST — the sturdy read the EAST face asks
-        (1, 0, 0),   // EAST — the sturdy read the WEST face asks
+        (0, 1, 0),  // UP — the sturdy read the DOWN face asks
+        (0, 0, -1), // NORTH — the sturdy read the SOUTH face asks
+        (0, 0, 1),  // SOUTH — the sturdy read the NORTH face asks
+        (-1, 0, 0), // WEST — the sturdy read the EAST face asks
+        (1, 0, 0),  // EAST — the sturdy read the WEST face asks
     ] {
         let neighbor = world.get(x + dx, y + dy, z + dz);
         if concrete_can_solidify(neighbor)
@@ -14980,7 +15565,10 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
     // answers.
     if is_trapdoor(id) {
         if trapdoor_open(id) {
-            return CollisionShape::Band(trapdoor_open_edge(trapdoor_facing_of(world.variant(cx, cy, cz))), 3);
+            return CollisionShape::Band(
+                trapdoor_open_edge(trapdoor_facing_of(world.variant(cx, cy, cz))),
+                3,
+            );
         }
         return if trapdoor_half_top(world.variant(cx, cy, cz)) {
             CollisionShape::YSpan(13, 16)
@@ -15194,9 +15782,7 @@ pub fn shape_slabs(
         // consult arms)
         CollisionShape::Fence(_)
         | CollisionShape::CenterBand(_, _)
-        | CollisionShape::Wall(_, _) => {
-            (cy as f64, cy as f64 + 1.5)
-        }
+        | CollisionShape::Wall(_, _) => (cy as f64, cy as f64 + 1.5),
         // THE CHAIN'S OWN HORIZONTAL RUNG (the dev-60 round — the
         // x/z-axis chains the 6.5..9.5 px y band the rotateAllAxis
         // quarter-turns wear: the [0,6,6]->[16,10,10] box the y
@@ -15244,10 +15830,7 @@ pub fn shape_slabs(
         // band every facing wears — the hugging side the variant byte
         // alone moves [the x/z the WallHead override below banks], the
         // y the same band the quarter turns keep)
-        CollisionShape::WallHead(_) => (
-            cy as f64 + 4.0 / 16.0,
-            cy as f64 + 12.0 / 16.0,
-        ),
+        CollisionShape::WallHead(_) => (cy as f64 + 4.0 / 16.0, cy as f64 + 12.0 / 16.0),
         _ => (cy as f64, (cy + 1) as f64),
     };
     let inset = match shape {
@@ -15642,7 +16225,14 @@ pub fn lantern_cap_slabs(
     } else {
         (7.0f64 / 16.0, 9.0f64 / 16.0)
     };
-    [Some((x_lo, x_hi, cy as f64 + y0, cy as f64 + y1, z_lo, z_hi))]
+    [Some((
+        x_lo,
+        x_hi,
+        cy as f64 + y0,
+        cy as f64 + y1,
+        z_lo,
+        z_hi,
+    ))]
 }
 
 /// THE STAIRS STEPS' OWN SLABS (the dev-62 round — the compound's
@@ -15678,10 +16268,7 @@ pub fn stairs_step_slabs(
     // z_lo, z_hi) tuple the [`shape_slabs`] decode keeps — the
     // [`stairs_state_boxes`] px triple the same six-pack the /16
     // fold answers)
-    [
-        to_slab(boxes[1]),
-        to_slab(boxes[2]),
-    ]
+    [to_slab(boxes[1]), to_slab(boxes[2])]
 }
 
 /// THE OVER-TALL FAMILY'S OWN PREDICATE (the dev-55 round — the
@@ -15694,9 +16281,7 @@ pub fn stairs_step_slabs(
 pub fn is_over_tall(shape: CollisionShape) -> bool {
     matches!(
         shape,
-        CollisionShape::Fence(_)
-            | CollisionShape::CenterBand(_, _)
-            | CollisionShape::Wall(_, _)
+        CollisionShape::Fence(_) | CollisionShape::CenterBand(_, _) | CollisionShape::Wall(_, _)
     )
 }
 
@@ -15983,7 +16568,11 @@ pub fn portal_animate_tick(
             purples.push((rx, dy, dz, vx, vy, vz));
         }
     }
-    PortalAnimateTick { sound, pitch, purples }
+    PortalAnimateTick {
+        sound,
+        pitch,
+        purples,
+    }
 }
 
 /// THE FIRE KINDS' OWN FAMILY — the two kinds the placement's igniter
@@ -16047,11 +16636,9 @@ pub fn fire_ignite_odds(id: u16) -> i32 {
         // collection wears; the autopush-677 round the dyed rungs the
         // tail banks — the sixteen colors ONE collection the same
         // lambda walks, the tail seats the same 30 odds wear)
-        WHITE_WOOL
-        | ORANGE_WOOL | MAGENTA_WOOL | LIGHT_BLUE_WOOL | YELLOW_WOOL
-        | LIME_WOOL | PINK_WOOL | GRAY_WOOL | LIGHT_GRAY_WOOL
-        | CYAN_WOOL | PURPLE_WOOL | BLUE_WOOL | BROWN_WOOL
-        | GREEN_WOOL | RED_WOOL | BLACK_WOOL => 30,
+        WHITE_WOOL | ORANGE_WOOL | MAGENTA_WOOL | LIGHT_BLUE_WOOL | YELLOW_WOOL | LIME_WOOL
+        | PINK_WOOL | GRAY_WOOL | LIGHT_GRAY_WOOL | CYAN_WOOL | PURPLE_WOOL | BLUE_WOOL
+        | BROWN_WOOL | GREEN_WOOL | RED_WOOL | BLACK_WOOL => 30,
         LEAF_LITTER | SHORT_GRASS | BUSH | TALL_GRASS | TALL_GRASS_UPPER | LARGE_FERN
         | LARGE_FERN_UPPER => 60,
         _ if is_flower(id) => 60,
@@ -16077,11 +16664,9 @@ pub fn fire_burn_odds(id: u16) -> i32 {
         // the burn column the checkBurnOut roll reads; the
         // autopush-677 round the dyed rungs the tail banks — the
         // sixteen colors ONE collection the same 60 odds wear)
-        WHITE_WOOL
-        | ORANGE_WOOL | MAGENTA_WOOL | LIGHT_BLUE_WOOL | YELLOW_WOOL
-        | LIME_WOOL | PINK_WOOL | GRAY_WOOL | LIGHT_GRAY_WOOL
-        | CYAN_WOOL | PURPLE_WOOL | BLUE_WOOL | BROWN_WOOL
-        | GREEN_WOOL | RED_WOOL | BLACK_WOOL => 60,
+        WHITE_WOOL | ORANGE_WOOL | MAGENTA_WOOL | LIGHT_BLUE_WOOL | YELLOW_WOOL | LIME_WOOL
+        | PINK_WOOL | GRAY_WOOL | LIGHT_GRAY_WOOL | CYAN_WOOL | PURPLE_WOOL | BLUE_WOOL
+        | BROWN_WOOL | GREEN_WOOL | RED_WOOL | BLACK_WOOL => 60,
         TNT | LEAF_LITTER | SHORT_GRASS | BUSH | TALL_GRASS | TALL_GRASS_UPPER | LARGE_FERN
         | LARGE_FERN_UPPER => 100,
         _ if is_flower(id) => 100,
@@ -16162,9 +16747,8 @@ pub fn plant_offset_type(id: u16) -> PlantOffset {
 /// 116129781 (#180), 42317861 (#182), 11 (#184) — the classic values
 /// the decompile chain confirms.
 pub fn mth_get_seed(x: i32, y: i32, z: i32) -> i64 {
-    let mut l: i64 = ((x.wrapping_mul(3129871)) as i64)
-        ^ ((z as i64).wrapping_mul(116129781))
-        ^ (y as i64);
+    let mut l: i64 =
+        ((x.wrapping_mul(3129871)) as i64) ^ ((z as i64).wrapping_mul(116129781)) ^ (y as i64);
     l = l
         .wrapping_mul(l)
         .wrapping_mul(42317861)
@@ -16396,13 +16980,7 @@ pub fn shuffled_horizontal(rng: &mut crate::drops::Lcg) -> [(i32, i32); 4] {
 /// THE RNG: the caller's own crop stream the same source the age
 /// ladder wears (the repo's mod-law stand-in convention the
 /// [`crate::drops::Lcg::next_int`] speaks).
-pub fn bonemeal_grass_walk(
-    world: &mut World,
-    x: i32,
-    y: i32,
-    z: i32,
-    rng: &mut crate::drops::Lcg,
-) {
+pub fn bonemeal_grass_walk(world: &mut World, x: i32, y: i32, z: i32, rng: &mut crate::drops::Lcg) {
     let (ox, oy, oz) = (x, y + 1, z);
     for i in 0..128i32 {
         let (mut px, mut py, mut pz) = (ox, oy, oz);
@@ -17181,7 +17759,13 @@ impl LightGrid {
     /// or above/below the world (the honest unknown, matching
     /// [`World::get`]'s conventions: div_euclid chunks, rem_euclid
     /// locals, y clamped to the grid's height).
-    pub fn cell(&self, chunks_per_side: usize, wx: i32, wy: i32, wz: i32) -> (Option<u8>, Option<u8>) {
+    pub fn cell(
+        &self,
+        chunks_per_side: usize,
+        wx: i32,
+        wy: i32,
+        wz: i32,
+    ) -> (Option<u8>, Option<u8>) {
         if wy < 0 || wy >= CHUNK_Y as i32 {
             return (None, None);
         }
@@ -17203,7 +17787,9 @@ impl LightGrid {
 pub fn hash2(x: i64, z: i64, seed: u64) -> u32 {
     let mut h = seed
         ^ (x as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
-        ^ (z as u64).rotate_left(32).wrapping_mul(0xC2B2_AE3D_27D4_EB4F);
+        ^ (z as u64)
+            .rotate_left(32)
+            .wrapping_mul(0xC2B2_AE3D_27D4_EB4F);
     h ^= h >> 33;
     h = h.wrapping_mul(0xFF51_AFD7_ED55_8CCD);
     h ^= h >> 33;
@@ -17294,15 +17880,13 @@ impl World {
                 // THE RIM'S OWN TAPER (the island's own edge the hash
                 // jitter roughens — the deterministic roll the
                 // overworld tree roll's own hash lane keeps)
-                let jitter =
-                    (hash2(wx as i64, wz as i64, self.seed ^ 0x3E4D) % 3) as f64 - 1.0;
+                let jitter = (hash2(wx as i64, wz as i64, self.seed ^ 0x3E4D) % 3) as f64 - 1.0;
                 if dist > radius + jitter {
                     continue; // the void the rim never fills
                 }
                 // THE DEPTH'S OWN CONE (the center's full depth the
                 // rim's zero keeps — the underside the taper speaks)
-                let depth =
-                    ((radius - dist) / radius * END_ISLAND_DEPTH as f64).ceil() as i32;
+                let depth = ((radius - dist) / radius * END_ISLAND_DEPTH as f64).ceil() as i32;
                 let bottom = (top - depth).max(1);
                 for y in bottom..=top {
                     self.set(wx, y, wz, END_STONE);
@@ -17371,17 +17955,17 @@ impl World {
             chunks_per_side,
             seed,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; chunks_per_side * chunks_per_side],
-            light: None, // the procedural scene carries no light layer
-            day_tick: None, // no clock yet: full day
-            biomes: None, // the procedural scene carries no biome layer
-            variants: None, // the procedural scene carries no state variants
-            ambient_light: None, // the procedural scene: the black bytecode default
-            block_light_tint: None, // the procedural scene: the bytecode default tint
-            sky_light_factor: None, // the procedural scene: the bytecode default 1.0
-            sky_light_color: None, // the procedural scene: the -1 default's white identity
+            light: None,              // the procedural scene carries no light layer
+            day_tick: None,           // no clock yet: full day
+            biomes: None,             // the procedural scene carries no biome layer
+            variants: None,           // the procedural scene carries no state variants
+            ambient_light: None,      // the procedural scene: the black bytecode default
+            block_light_tint: None,   // the procedural scene: the bytecode default tint
+            sky_light_factor: None,   // the procedural scene: the bytecode default 1.0
+            sky_light_color: None,    // the procedural scene: the -1 default's white identity
             night_vision_color: None, // the procedural scene: the #999999 default, factor 0.0
             night_vision_factor: 0.0, // the procedural scene: no effect store, the golden floor
-            rain_level: 0.0,  // the procedural scene: the dry world the goldens keep
+            rain_level: 0.0,          // the procedural scene: the dry world the goldens keep
             thunder_level: 0.0,
             darkness_scale: 0.0, // the procedural scene: no effect the store arms // the procedural scene: no storm the clouds speak
             difficulty: crate::difficulty::Difficulty::Normal, // the host's own new-world default
@@ -17405,15 +17989,15 @@ impl World {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
-            has_skylight: true, // the overworld default: the sky light the column pass speaks
+            has_skylight: true,       // the overworld default: the sky light the column pass speaks
             journaling: false, // the gen's own sets the journal never banks (the App's post-gen arm)
             edit_journal: Vec::new(), // the session's rows: no edits yet
             variant_journal: Vec::new(), // the state rows: no variants yet
-            saved_edits_mark: 0,  // the flush baseline: nothing written yet
+            saved_edits_mark: 0, // the flush baseline: nothing written yet
             saved_variants_mark: 0,
             chest_lids: std::collections::HashMap::new(), // the lid lane: no open chest, no pair
-            lid_gen: 0,           // the lids' own epoch: nothing changed yet
-            lid_partial: 1.0,     // the render fraction: the current tick position
+            lid_gen: 0,       // the lids' own epoch: nothing changed yet
+            lid_partial: 1.0, // the render fraction: the current tick position
         }
     }
 
@@ -18198,7 +18782,8 @@ impl World {
         width: i32,
         height: i32,
     ) -> bool {
-        (0..width).all(|x| self.get(bl.0 + right.0 * x, bl.1 + height, bl.2 + right.1 * x) == OBSIDIAN)
+        (0..width)
+            .all(|x| self.get(bl.0 + right.0 * x, bl.1 + height, bl.2 + right.1 * x) == OBSIDIAN)
     }
 
     /// THE FARMLAND'S OWN HYDRATION SCAN — javap
@@ -18286,8 +18871,7 @@ impl World {
         // the same-layer neighbor reads (the crop's own layer): the
         // cardinal OR-chain the first (f+1)/2 speaks, the diagonal the
         // second — the vanilla's own two sequential halvings
-        let is_crop =
-            |dx: i32, dz: i32| is_wheat(self.get(x + dx, y, z + dz));
+        let is_crop = |dx: i32, dz: i32| is_wheat(self.get(x + dx, y, z + dz));
         if is_crop(0, -1) || is_crop(0, 1) || is_crop(-1, 0) || is_crop(1, 0) {
             f = (f + 1.0) / 2.0;
         }
@@ -18316,7 +18900,13 @@ impl World {
     ///    kind+1 the age family wears).
     ///
     /// Returns whether the crop GREW (the caller's remesh batch rides).
-    pub fn crop_random_tick(&mut self, rng: &mut crate::drops::Lcg, x: i32, y: i32, z: i32) -> bool {
+    pub fn crop_random_tick(
+        &mut self,
+        rng: &mut crate::drops::Lcg,
+        x: i32,
+        y: i32,
+        z: i32,
+    ) -> bool {
         let Some(age) = wheat_age(self.get(x, y, z)) else {
             return false; // the isRandomlyTicking gate — the non-crop cell draws nothing
         };
@@ -18622,9 +19212,8 @@ impl World {
                 // variant decode answers — the same walk the tick's
                 // own verdict banks)
                 let (px, py, pz) = if is_redstone_wall_torch(kind) {
-                    let (dx, dy, dz) = wall_torch_attached_offset(wall_torch_facing_of(
-                        self.variant(tx, ty, tz),
-                    ));
+                    let (dx, dy, dz) =
+                        wall_torch_attached_offset(wall_torch_facing_of(self.variant(tx, ty, tz)));
                     (tx + dx, ty + dy, tz + dz)
                 } else {
                     (tx, ty - 1, tz)
@@ -18997,7 +19586,14 @@ impl World {
     /// `++count >= 8` verdict the BURNOUT row serves). The caller's
     /// own trim the 60-tick window the opening draw keeps — the
     /// verdict the trimmed list the per-pos count reads.
-    pub fn torch_burnout_verdict(&mut self, now: u64, x: i32, y: i32, z: i32, is_lit_now: bool) -> bool {
+    pub fn torch_burnout_verdict(
+        &mut self,
+        now: u64,
+        x: i32,
+        y: i32,
+        z: i32,
+        is_lit_now: bool,
+    ) -> bool {
         if is_lit_now {
             self.torch_toggles.push((now, x, y, z)); // the LIT-true arm the record alone gains
         }
@@ -19032,7 +19628,13 @@ impl World {
     /// quiet floor restores — the verdict the read-only count wears,
     /// the record the relight never adds). The stale entry the kind
     /// gate drops (the fire walk's own law the drain shares).
-    pub fn redstone_torch_tick(&mut self, now: u64, x: i32, y: i32, z: i32) -> RedstoneTorchTickOutcome {
+    pub fn redstone_torch_tick(
+        &mut self,
+        now: u64,
+        x: i32,
+        y: i32,
+        z: i32,
+    ) -> RedstoneTorchTickOutcome {
         let mut out = RedstoneTorchTickOutcome {
             changed: false,
             burnout: false,
@@ -19047,7 +19649,8 @@ impl World {
         // wears, the WALL pair the attached cell the variant decode
         // answers — the same walk the consult lane banks)
         let (px, py, pz) = if is_redstone_wall_torch(kind) {
-            let (dx, dy, dz) = wall_torch_attached_offset(wall_torch_facing_of(self.variant(x, y, z)));
+            let (dx, dy, dz) =
+                wall_torch_attached_offset(wall_torch_facing_of(self.variant(x, y, z)));
             (x + dx, y + dy, z + dz)
         } else {
             (x, y - 1, z)
@@ -19350,25 +19953,27 @@ impl World {
             // shape resolution the ascent connection first serves: the
             // slope the curve the axis verdicts all precede — the
             // flat-only connections the lower verdicts answer)
-            let axis = rail_ascent_byte(self, x, y, z).or_else(|| {
-                rail_connection_axis(
-                    is_rail(self.get(x, y, z - 1)),
-                    is_rail(self.get(x, y, z + 1)),
-                    is_rail(self.get(x - 1, y, z)),
-                    is_rail(self.get(x + 1, y, z)),
-                )
-            }).or_else(|| {
-                if curve_capable {
-                    rail_curve_byte(
+            let axis = rail_ascent_byte(self, x, y, z)
+                .or_else(|| {
+                    rail_connection_axis(
                         is_rail(self.get(x, y, z - 1)),
                         is_rail(self.get(x, y, z + 1)),
                         is_rail(self.get(x - 1, y, z)),
                         is_rail(self.get(x + 1, y, z)),
                     )
-                } else {
-                    None
-                }
-            });
+                })
+                .or_else(|| {
+                    if curve_capable {
+                        rail_curve_byte(
+                            is_rail(self.get(x, y, z - 1)),
+                            is_rail(self.get(x, y, z + 1)),
+                            is_rail(self.get(x - 1, y, z)),
+                            is_rail(self.get(x + 1, y, z)),
+                        )
+                    } else {
+                        None
+                    }
+                });
             if let Some(v) = axis {
                 // THE SHAPE WRITE'S OWN BIT PRESERVE (the dev-96 round
                 // — the powered rails' own POWERED bit the shape verdict
@@ -19583,8 +20188,7 @@ impl World {
                 }
                 // the typed mine the same-kind beat the walk never
                 // demotes (pc 77's if_acmpne 135 — the super returns)
-            } else if ctype != CHEST_TYPE_SINGLE
-                && chest_connected_direction(facing, ctype) == dir
+            } else if ctype != CHEST_TYPE_SINGLE && chest_connected_direction(facing, ctype) == dir
             {
                 // THE DEMOTE ARM (pc 138-160): the connected quarter
                 // the update's own axis speaks, the partner the loss
@@ -19675,7 +20279,9 @@ impl World {
             // EMPTY predicate never filters) banks
             let keeps = flag11
                 || neighbor_kind == NETHER_PORTAL
-                || self.portal_find_any_shape((x, y, z), axis10_x).is_complete();
+                || self
+                    .portal_find_any_shape((x, y, z), axis10_x)
+                    .is_complete();
             if keeps {
                 continue;
             }
@@ -20062,10 +20668,7 @@ impl World {
         // refused or passed, the young flames the gate's own age
         // verdict refuses), the canBurn read the roll's own verdict
         // follows
-        if age == FIRE_MAX_AGE as i32
-            && rng.next_int(4) == 0
-            && !fire_can_burn(below)
-        {
+        if age == FIRE_MAX_AGE as i32 && rng.next_int(4) == 0 && !fire_can_burn(below) {
             self.set(x, y, z, AIR);
             self.fire_age.remove(&(x, y, z));
             out.changed = true;
@@ -20079,9 +20682,9 @@ impl World {
         self.fire_check_burn_out(now, x, y + 1, z, 250, rng, age, &mut out); // above
         self.fire_check_burn_out(now, x, y, z - 1, 300, rng, age, &mut out); // north
         self.fire_check_burn_out(now, x, y, z + 1, 300, rng, age, &mut out); // south
-        // 9. THE SPREAD LOOP (pc 420-655 — the x/z/y nesting the
-        // bytecode's own var order banks, the height falloff the
-        // chance arithmetic wears)
+                                                                             // 9. THE SPREAD LOOP (pc 420-655 — the x/z/y nesting the
+                                                                             // bytecode's own var order banks, the height falloff the
+                                                                             // chance arithmetic wears)
         let difficulty_id = self.difficulty.id() as i32;
         for dx in -1..=1i32 {
             for dz in -1..=1i32 {
@@ -20121,8 +20724,7 @@ impl World {
                     if raining {
                         continue; // the isNearRain fold the raining world keeps
                     }
-                    let spread_age =
-                        ((age + rng.next_int(5) / 4) as u8).min(FIRE_MAX_AGE);
+                    let spread_age = ((age + rng.next_int(5) / 4) as u8).min(FIRE_MAX_AGE);
                     self.set(tx, ty, tz, FIRE);
                     self.fire_age.insert((tx, ty, tz), spread_age);
                     self.schedule_fire_tick(now + fire_tick_delay(rng), tx, ty, tz);
@@ -20237,7 +20839,9 @@ impl World {
         // THE FLUID-NONE LAW (the ClipContext.Fluid.NONE the block clip
         // speaks): neither fluid ever decides the hit — the water AND
         // the lava stay transparent to the pick ray
-        self.clip_by(origin, dir, reach, |id| id != AIR && id != WATER && id != LAVA)
+        self.clip_by(origin, dir, reach, |id| {
+            id != AIR && id != WATER && id != LAVA
+        })
     }
 
     /// THE FLUID-ANY CLIP (the ClipContext.Fluid.ANY the boat's POV
@@ -20352,7 +20956,13 @@ impl World {
         let step_x = if dx > 0.0 { 1i32 } else { -1i32 };
         let step_y = if dy > 0.0 { 1i32 } else { -1i32 };
         let step_z = if dz > 0.0 { 1i32 } else { -1i32 };
-        let t_delta = |d: f64| if d != 0.0 { (1.0 / d).abs() } else { f64::INFINITY };
+        let t_delta = |d: f64| {
+            if d != 0.0 {
+                (1.0 / d).abs()
+            } else {
+                f64::INFINITY
+            }
+        };
         let (t_dx, t_dy, t_dz) = (t_delta(dx), t_delta(dy), t_delta(dz));
         let next_t = |o: f64, d: f64, i: i32, step: i32| {
             if d == 0.0 {
@@ -20474,9 +21084,17 @@ impl World {
                 let beach = top <= WATER_LEVEL + 1;
                 for y in 0..=top {
                     let id = if y == top {
-                        if beach { SAND } else { GRASS }
+                        if beach {
+                            SAND
+                        } else {
+                            GRASS
+                        }
                     } else if y >= top - 2 {
-                        if beach { SAND } else { DIRT }
+                        if beach {
+                            SAND
+                        } else {
+                            DIRT
+                        }
                     } else {
                         STONE
                     };
@@ -20587,8 +21205,7 @@ impl World {
                 if top <= WATER_LEVEL {
                     continue; // the beach/water columns the patch never plants
                 }
-                let roll =
-                    hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F10) % 83;
+                let roll = hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F10) % 83;
                 if roll != 0 {
                     continue;
                 }
@@ -20674,10 +21291,30 @@ mod tests {
         // speak — the replaceable pass-through the body walks
         // THROUGH, the entityInside walk the move tail then brands)
         for id in [
-            AIR, WATER, LAVA, TORCH, DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER,
-            ORANGE_TULIP, RED_TULIP, PINK_TULIP, WHITE_TULIP, SHORT_GRASS, BUSH, TALL_GRASS,
-            TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER, LEAF_LITTER, WHEAT, WHEAT_STAGE7,
-            FIRE, SOUL_FIRE,
+            AIR,
+            WATER,
+            LAVA,
+            TORCH,
+            DANDELION,
+            POPPY,
+            AZURE_BLUET,
+            OXEYE_DAISY,
+            CORNFLOWER,
+            ORANGE_TULIP,
+            RED_TULIP,
+            PINK_TULIP,
+            WHITE_TULIP,
+            SHORT_GRASS,
+            BUSH,
+            TALL_GRASS,
+            TALL_GRASS_UPPER,
+            LARGE_FERN,
+            LARGE_FERN_UPPER,
+            LEAF_LITTER,
+            WHEAT,
+            WHEAT_STAGE7,
+            FIRE,
+            SOUL_FIRE,
         ] {
             assert_eq!(
                 collision_shape(id),
@@ -20717,10 +21354,7 @@ mod tests {
         // Column row speaks — the walk-over feel the auto-step keeps;
         // the stick band the per-cell fold never speaks)
         assert_eq!(collision_shape(CANDLE_CAKE), CollisionShape::Column(8));
-        assert_eq!(
-            collision_shape(CANDLE_CAKE_LIT),
-            CollisionShape::Column(8)
-        );
+        assert_eq!(collision_shape(CANDLE_CAKE_LIT), CollisionShape::Column(8));
         // THE CAKE LADDER'S OWN COLUMN (the autopush-524 round — javap
         // CakeBlock.getShape the SHAPES[bites] field returns, the
         // static init's `Block.boxes(MAX_BITES + 1, lambda$static$0)`
@@ -20728,7 +21362,15 @@ mod tests {
         // 8, 15)` the y-band 0..8 the Column row speaks, the x-start's
         // per-bite narrowing the per-cell vocabulary never carries —
         // the same documented gap the per-cell fold keeps)
-        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+        for id in [
+            CAKE,
+            CAKE_SLICE1,
+            CAKE_SLICE2,
+            CAKE_SLICE3,
+            CAKE_SLICE4,
+            CAKE_SLICE5,
+            CAKE_SLICE6,
+        ] {
             assert_eq!(
                 collision_shape(id),
                 CollisionShape::Column(8),
@@ -20738,7 +21380,17 @@ mod tests {
         }
         // THE FULL-CUBE FAMILY: the default registration — the terrain,
         // the foliage cubes, the machines
-        for id in [STONE, DIRT, GRASS, LOG, LEAVES, PALE_LEAVES, SAND, TNT, CRAFTING_TABLE] {
+        for id in [
+            STONE,
+            DIRT,
+            GRASS,
+            LOG,
+            LEAVES,
+            PALE_LEAVES,
+            SAND,
+            TNT,
+            CRAFTING_TABLE,
+        ] {
             assert_eq!(
                 collision_shape(id),
                 CollisionShape::Full,
@@ -20758,16 +21410,38 @@ mod tests {
         // lane's own kind swaps wear
         assert_eq!(CAKE, 67);
         assert_eq!(CAKE_SLICE6, 73);
-        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+        for id in [
+            CAKE,
+            CAKE_SLICE1,
+            CAKE_SLICE2,
+            CAKE_SLICE3,
+            CAKE_SLICE4,
+            CAKE_SLICE5,
+            CAKE_SLICE6,
+        ] {
             assert!(is_cake(id), "the family predicate {id} answers");
         }
-        assert!(!is_cake(CANDLE_CAKE), "the candle cake the family never carries");
+        assert!(
+            !is_cake(CANDLE_CAKE),
+            "the candle cake the family never carries"
+        );
         assert!(!is_cake(STONE), "the stone the family never carries");
         // THE SHARED-ROW LAW (the world.rs NAME_OF rows the generated
         // REGISTRY_NAMES the cross-check asserts — every stage the
         // BASE "cake" row the dig/drop/sound/item lanes keep)
-        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
-            assert_eq!(NAME_OF[id as usize], "cake", "stage {id} the base row wears");
+        for id in [
+            CAKE,
+            CAKE_SLICE1,
+            CAKE_SLICE2,
+            CAKE_SLICE3,
+            CAKE_SLICE4,
+            CAKE_SLICE5,
+            CAKE_SLICE6,
+        ] {
+            assert_eq!(
+                NAME_OF[id as usize], "cake",
+                "stage {id} the base row wears"
+            );
         }
         // THE ITEM FORM THE REGISTRATION CARRIES (javap the blocks
         // clinit's BlockItemIds.CAKE row — the register walk the item
@@ -20776,7 +21450,15 @@ mod tests {
         // row's first position answers
         assert_eq!(World::placeable_block("cake"), Some(CAKE));
         let cake_item = mc_registry::item_id_by_name("cake").unwrap();
-        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+        for id in [
+            CAKE,
+            CAKE_SLICE1,
+            CAKE_SLICE2,
+            CAKE_SLICE3,
+            CAKE_SLICE4,
+            CAKE_SLICE5,
+            CAKE_SLICE6,
+        ] {
             assert_eq!(
                 mc_registry::item_id_by_name(NAME_OF[id as usize]),
                 Some(cake_item),
@@ -20787,7 +21469,10 @@ mod tests {
         // ldc 0.5f the dig lane answers, the WOOL row the sounds
         // table speaks — the generated tables' own rows)
         let (speed, _) = crate::dig::DigState::block_dig_row(CAKE);
-        assert!((speed - 0.5).abs() < 1e-4, "the 0.5 strength the dig row wears");
+        assert!(
+            (speed - 0.5).abs() < 1e-4,
+            "the 0.5 strength the dig row wears"
+        );
         // THE DROPS THE LOOT TABLE SPEAKS (javap the jar's own
         // data/minecraft/loot_table/blocks/cake.json — the type +
         // random_sequence row the POOLS never carries: the cake the
@@ -20808,9 +21493,17 @@ mod tests {
         assert_eq!(cake_bite_next(CAKE_SLICE3), Some(CAKE_SLICE4));
         assert_eq!(cake_bite_next(CAKE_SLICE4), Some(CAKE_SLICE5));
         assert_eq!(cake_bite_next(CAKE_SLICE5), Some(CAKE_SLICE6));
-        assert_eq!(cake_bite_next(CAKE_SLICE6), None, "the max bite the removeBlock wears");
+        assert_eq!(
+            cake_bite_next(CAKE_SLICE6),
+            None,
+            "the max bite the removeBlock wears"
+        );
         assert_eq!(cake_bite_next(STONE), None, "the stone the PASS keeps");
-        assert_eq!(cake_bite_next(CANDLE_CAKE), None, "the candle cake the map never speaks");
+        assert_eq!(
+            cake_bite_next(CANDLE_CAKE),
+            None,
+            "the candle cake the map never speaks"
+        );
     }
 
     /// THE FLINT'S OWN ODDS LAW (javap FireBlock's static init +
@@ -20830,9 +21523,26 @@ mod tests {
         // the flora 60/100 — the upper halves the SAME block the
         // odds never split)
         for id in [
-            LOG, LEAVES, PALE_LEAVES, LEAF_LITTER, TNT, SHORT_GRASS, BUSH, TALL_GRASS,
-            TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER, DANDELION, POPPY, AZURE_BLUET,
-            OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP, PINK_TULIP, WHITE_TULIP,
+            LOG,
+            LEAVES,
+            PALE_LEAVES,
+            LEAF_LITTER,
+            TNT,
+            SHORT_GRASS,
+            BUSH,
+            TALL_GRASS,
+            TALL_GRASS_UPPER,
+            LARGE_FERN,
+            LARGE_FERN_UPPER,
+            DANDELION,
+            POPPY,
+            AZURE_BLUET,
+            OXEYE_DAISY,
+            CORNFLOWER,
+            ORANGE_TULIP,
+            RED_TULIP,
+            PINK_TULIP,
+            WHITE_TULIP,
         ] {
             assert!(
                 fire_can_burn(id),
@@ -20844,7 +21554,16 @@ mod tests {
         // WHEAT and CRAFTING_TABLE ride NO setFlammable row — the
         // stone/dirt/ore/fluid kinds the same refusal wears)
         for id in [
-            WHEAT, WHEAT_STAGE7, CRAFTING_TABLE, STONE, DIRT, GRASS, SAND, WATER, LAVA, BEDROCK,
+            WHEAT,
+            WHEAT_STAGE7,
+            CRAFTING_TABLE,
+            STONE,
+            DIRT,
+            GRASS,
+            SAND,
+            WATER,
+            LAVA,
+            BEDROCK,
         ] {
             assert!(
                 !fire_can_burn(id),
@@ -20933,7 +21652,8 @@ mod tests {
             let dz = mirror.next_f64();
             let expect = (dx, dy * 0.5 + 0.5, dz);
             assert_eq!(
-                v.smokes.remove(0), expect,
+                v.smokes.remove(0),
+                expect,
                 "the interior fold (x+d, y+d*0.5+0.5, z+d) the bytecode speaks"
             );
         }
@@ -20952,7 +21672,8 @@ mod tests {
             let dz = mirror.next_f64();
             let expect = (dx * 0.1, dy, dz);
             assert_eq!(
-                v.smokes.remove(0), expect,
+                v.smokes.remove(0),
+                expect,
                 "the west inset (x + d*0.1, y+d, z+d) the pc 236 dadd keeps"
             );
         }
@@ -20970,7 +21691,8 @@ mod tests {
             let dz = mirror.next_f64();
             let expect = (1.0 - dx * 0.1, dy, dz);
             assert_eq!(
-                v.smokes.remove(0), expect,
+                v.smokes.remove(0),
+                expect,
                 "the east inset ((x+1) - d*0.1, y+d, z+d) the dsub keeps"
             );
         }
@@ -21103,7 +21825,10 @@ mod tests {
                 seed
             );
         }
-        assert!(passed > 0 && failed > 0, "both gate answers the walk speaks");
+        assert!(
+            passed > 0 && failed > 0,
+            "both gate answers the walk speaks"
+        );
         // THE 1/24 EXPECTED RATE (the gate's own odds the many-seed walk
         // answers — 1/24 the ~83 the 2000-seed count speaks)
         let rate = passed as f64 / (passed + failed) as f64;
@@ -21113,7 +21838,6 @@ mod tests {
             rate
         );
     }
-
 
     /// THE FRAME SCAN'S OWN WALKS (javap `PortalShape` over the 26.2
     /// jar — the autopush-606 round's doc block): the minimal 2x3
@@ -21170,7 +21894,8 @@ mod tests {
         assert_eq!(fill.height, 3, "the interior the three rows keeps");
         assert!(fill.axis_x, "the x-extending frame the first trial wears");
         assert_eq!(
-            fill.bottom_left, (10, 11, 4),
+            fill.bottom_left,
+            (10, 11, 4),
             "the bottom-left the interior corner the EAST-edge walk \
              answers (javap calculateBottomLeft pc 73-81 — the \
              relative(opposite, d) the last interior column keeps)"
@@ -21238,7 +21963,8 @@ mod tests {
             "the z-interior the same band keeps"
         );
         assert_eq!(
-            fill_z.bottom_left, (8, 11, 7),
+            fill_z.bottom_left,
+            (8, 11, 7),
             "the z-descent the NORTH-edge walk the adjacent cell keeps"
         );
         // THE NARROW'S OWN REFUSAL (javap calculateWidth pc 7-20 — the
@@ -21348,7 +22074,8 @@ mod tests {
             "the descended walk the same band keeps"
         );
         assert_eq!(
-            fill_d.bottom_left, (10, 11, 4),
+            fill_d.bottom_left,
+            (10, 11, 4),
             "the descended walk the same interior corner keeps"
         );
     }
@@ -21389,7 +22116,10 @@ mod tests {
             clear(w);
             frame_x(w);
             w.set(9, 11, 4, FIRE);
-            assert!(w.check_portal_spawn((9, 11, 4)), "the fill the verdict speaks");
+            assert!(
+                w.check_portal_spawn((9, 11, 4)),
+                "the fill the verdict speaks"
+            );
         };
         // THE FLAG11 ARM'S OWN KEEP (javap pc 19-66 — the changed
         // neighbor the Z-direction the portal's own X-axis the flag
@@ -21486,14 +22216,21 @@ mod tests {
                 "the interior cell ({x},{y}) the cascade douses"
             );
         }
-        assert!(w.portal_axis.is_empty(), "the dead cells' entries the map drops");
+        assert!(
+            w.portal_axis.is_empty(),
+            "the dead cells' entries the map drops"
+        );
         // THE RING'S OWN INTEGRITY (the douse the frame cells never
         // touches — the dug gap the only loss the walk wears)
         for y in 11..=13 {
             assert_eq!(w.get(11, y, 4), OBSIDIAN, "the east wall the walk keeps");
         }
         for (x, y) in [(8, 11), (8, 13), (9, 10), (10, 10), (9, 14), (10, 14)] {
-            assert_eq!(w.get(x, y, 4), OBSIDIAN, "the ring cell ({x},{y}) the walk keeps");
+            assert_eq!(
+                w.get(x, y, 4),
+                OBSIDIAN,
+                "the ring cell ({x},{y}) the walk keeps"
+            );
         }
         // THE TOP FRAME'S OWN LOSS (javap calculateHeight pc 35-46 —
         // the hasTopFrame consult the missing top the 0 keeps, the
@@ -21548,7 +22285,10 @@ mod tests {
             wz.set(8, y, 9, OBSIDIAN);
         }
         wz.set(8, 11, 7, FIRE);
-        assert!(wz.check_portal_spawn((8, 11, 7)), "the z-fill the verdict speaks");
+        assert!(
+            wz.check_portal_spawn((8, 11, 7)),
+            "the z-fill the verdict speaks"
+        );
         wz.set(8, 12, 10, STONE); // the block in FRONT of the z-plane the X arm reads
         assert!(
             !wz.portal_shape_updates((8, 12, 10)),
@@ -21582,11 +22322,7 @@ mod tests {
     fn the_nether_the_world_the_skylight_the_sea_wears() {
         let w = World::new_nether(2, 0xC0FFEE);
         assert!(!w.has_skylight, "the nether's own flag the build banks");
-        assert_eq!(
-            w.get(0, 0, 0),
-            BEDROCK,
-            "the floor the bedrock kind keeps"
-        );
+        assert_eq!(w.get(0, 0, 0), BEDROCK, "the floor the bedrock kind keeps");
         assert_eq!(
             w.get(7, 47, 3),
             BEDROCK,
@@ -21663,18 +22399,45 @@ mod tests {
         // bedrock rows the fountain's shape keeps, the island body
         // the end_stone kind below keeps, the column the cap the AIR
         // above answers)
-        let (cx, cz) = ((n as f64 / 2.0).round() as i32, (n as f64 / 2.0).round() as i32);
+        let (cx, cz) = (
+            (n as f64 / 2.0).round() as i32,
+            (n as f64 / 2.0).round() as i32,
+        );
         // THE PORTAL'S OWN DIAMOND (the dev-29 round — the interior the
         // END_PORTAL cells the exit portal's own shape keeps: the
         // center + the four orthogonal arms the starry field wears,
         // the ring the bedrock cells keep — the fountain's own base
         // rows the vanilla structure's law banks)
-        assert_eq!(w.get(cx, END_ISLAND_TOP, cz), END_PORTAL, "the portal's own center cell");
-        assert_eq!(w.get(cx + 1, END_ISLAND_TOP, cz), END_PORTAL, "the portal's own east arm");
-        assert_eq!(w.get(cx - 1, END_ISLAND_TOP, cz), END_PORTAL, "the portal's own west arm");
-        assert_eq!(w.get(cx, END_ISLAND_TOP, cz + 1), END_PORTAL, "the portal's own south arm");
-        assert_eq!(w.get(cx, END_ISLAND_TOP, cz - 1), END_PORTAL, "the portal's own north arm");
-        assert_eq!(w.get(cx, END_ISLAND_TOP + 3, cz), BEDROCK, "the column's own head");
+        assert_eq!(
+            w.get(cx, END_ISLAND_TOP, cz),
+            END_PORTAL,
+            "the portal's own center cell"
+        );
+        assert_eq!(
+            w.get(cx + 1, END_ISLAND_TOP, cz),
+            END_PORTAL,
+            "the portal's own east arm"
+        );
+        assert_eq!(
+            w.get(cx - 1, END_ISLAND_TOP, cz),
+            END_PORTAL,
+            "the portal's own west arm"
+        );
+        assert_eq!(
+            w.get(cx, END_ISLAND_TOP, cz + 1),
+            END_PORTAL,
+            "the portal's own south arm"
+        );
+        assert_eq!(
+            w.get(cx, END_ISLAND_TOP, cz - 1),
+            END_PORTAL,
+            "the portal's own north arm"
+        );
+        assert_eq!(
+            w.get(cx, END_ISLAND_TOP + 3, cz),
+            BEDROCK,
+            "the column's own head"
+        );
         assert_eq!(
             w.get(cx, END_ISLAND_TOP + 4, cz),
             AIR,
@@ -21714,9 +22477,11 @@ mod tests {
         let dist_center = ((cx as f64 - (n as f64 - 1.0) / 2.0).powi(2)
             + (cz as f64 - (n as f64 - 1.0) / 2.0).powi(2))
         .sqrt();
-        assert!(dist_center < 1.0, "the center cell the island's own middle keeps");
-        let depth = ((n as f64 / 4.0 - dist_center) / (n as f64 / 4.0)
-            * END_ISLAND_DEPTH as f64)
+        assert!(
+            dist_center < 1.0,
+            "the center cell the island's own middle keeps"
+        );
+        let depth = ((n as f64 / 4.0 - dist_center) / (n as f64 / 4.0) * END_ISLAND_DEPTH as f64)
             .ceil() as i32;
         let bottom = (END_ISLAND_TOP - depth).max(1);
         assert_eq!(
@@ -21788,8 +22553,14 @@ mod tests {
         // serves)
         let bare = crate::dig::DigState::destroy_progress(1.0, 3.0, false);
         let pick = crate::dig::DigState::destroy_progress(1.0, 3.0, true);
-        assert!((bare - 1.0 / 300.0).abs() < 1e-6, "the bare crawl the 100 keeps");
-        assert!((pick - 1.0 / 90.0).abs() < 1e-6, "the pick divisor the 30 serves");
+        assert!(
+            (bare - 1.0 / 300.0).abs() < 1e-6,
+            "the bare crawl the 100 keeps"
+        );
+        assert!(
+            (pick - 1.0 / 90.0).abs() < 1e-6,
+            "the pick divisor the 30 serves"
+        );
         assert!(pick > bare, "the correct tool the progress hastens");
     }
 
@@ -21809,13 +22580,11 @@ mod tests {
         // wears (the flag false the pass never runs)
         let cell = 1 + 1 * CHUNK_X + 47 * CHUNK_X * CHUNK_Z;
         assert_eq!(
-            end_light.sky[0][cell],
-            15,
+            end_light.sky[0][cell], 15,
             "the end's void column the sky pass fills"
         );
         assert_eq!(
-            nether_light.sky[0][cell],
-            0,
+            nether_light.sky[0][cell], 0,
             "the nether's ceiling cell the gate keeps dark"
         );
         // THE ISLAND'S OWN HEAD (the open cell above the pillar tops
@@ -21823,8 +22592,7 @@ mod tests {
         // never shade)
         let head = 4 + 4 * CHUNK_X + 47 * CHUNK_X * CHUNK_Z;
         assert_eq!(
-            end_light.sky[3][head],
-            15,
+            end_light.sky[3][head], 15,
             "the island's own head the sky fills"
         );
         // THE FACTOR'S OWN PIN (the mesher's sky-term multiply the
@@ -21931,7 +22699,8 @@ mod tests {
             let rvz = f64::from(mirror.next_f32() * 2.0f32 * pick as f32);
             let expect = (dx, dy, 0.5 + 0.25 * pick, vx, vy, rvz);
             assert_eq!(
-                v.purples.remove(0), expect,
+                v.purples.remove(0),
+                expect,
                 "the x-arm fold (x+d, y+d, z+0.5+0.25*±1, vx, vy, r*2*±1) the bytecode speaks"
             );
         }
@@ -21942,9 +22711,17 @@ mod tests {
         let mut v = portal_animate_tick(false, false, &mut body);
         assert_eq!(v.purples.len(), 4, "the four iterations the else arm keeps");
         let mut mirror = crate::drops::Lcg::new(0xF117_F31);
-        assert_eq!(v.sound, mirror.next_int(100) == 0, "the 1/100 gate the same seed speaks");
+        assert_eq!(
+            v.sound,
+            mirror.next_int(100) == 0,
+            "the 1/100 gate the same seed speaks"
+        );
         if v.sound {
-            assert_eq!(v.pitch, mirror.next_f32() * 0.4 + 0.8, "the pitch the fold keeps");
+            assert_eq!(
+                v.pitch,
+                mirror.next_f32() * 0.4 + 0.8,
+                "the pitch the fold keeps"
+            );
         }
         for _ in 0..4 {
             let _dx = mirror.next_f64();
@@ -21958,7 +22735,8 @@ mod tests {
             let rvx = f64::from(mirror.next_f32() * 2.0f32 * pick as f32);
             let expect = (0.5 + 0.25 * pick, dy, dz, rvx, vy, vz);
             assert_eq!(
-                v.purples.remove(0), expect,
+                v.purples.remove(0),
+                expect,
                 "the z-arm fold (x+0.5+0.25*±1, y+d, z+d, r*2*±1, vy, vz) the pc 258-291 keeps"
             );
         }
@@ -21968,9 +22746,17 @@ mod tests {
         let mut body = crate::drops::Lcg::new(0xF117_F32);
         let mut v = portal_animate_tick(false, true, &mut body);
         let mut mirror = crate::drops::Lcg::new(0xF117_F32);
-        assert_eq!(v.sound, mirror.next_int(100) == 0, "the 1/100 gate the same seed speaks");
+        assert_eq!(
+            v.sound,
+            mirror.next_int(100) == 0,
+            "the 1/100 gate the same seed speaks"
+        );
         if v.sound {
-            assert_eq!(v.pitch, mirror.next_f32() * 0.4 + 0.8, "the pitch the fold keeps");
+            assert_eq!(
+                v.pitch,
+                mirror.next_f32() * 0.4 + 0.8,
+                "the pitch the fold keeps"
+            );
         }
         for _ in 0..4 {
             let dx = mirror.next_f64();
@@ -22027,7 +22813,10 @@ mod tests {
                 seed
             );
         }
-        assert!(passed > 0 && failed > 0, "both gate answers the walk speaks");
+        assert!(
+            passed > 0 && failed > 0,
+            "both gate answers the walk speaks"
+        );
         // THE 1/100 EXPECTED RATE (the gate's own odds the many-seed
         // walk answers — 1/100 the ~20 the 2000-seed count speaks)
         let rate = passed as f64 / (passed + failed) as f64;
@@ -22057,8 +22846,16 @@ mod tests {
         assert_eq!(fire_ignite_odds(TNT), 15, "the tnt the 15/100 pair keeps");
         // THE WOOL FAMILY'S OWN ROW (the dev-22 round — the collection
         // lambda's 30/60 pair the odds columns speak)
-        assert_eq!(fire_ignite_odds(WHITE_WOOL), 30, "the wool the 30/60 pair keeps");
-        assert_eq!(fire_can_burn(WHITE_WOOL), true, "the wool the burnable verdict keeps");
+        assert_eq!(
+            fire_ignite_odds(WHITE_WOOL),
+            30,
+            "the wool the 30/60 pair keeps"
+        );
+        assert_eq!(
+            fire_can_burn(WHITE_WOOL),
+            true,
+            "the wool the burnable verdict keeps"
+        );
         // THE WEB'S OWN SILENCE (the setFlammable walk the Web row never
         // speaks — the cobweb the zero odds the refusal wears)
         assert_eq!(fire_ignite_odds(COBWEB), 0, "the web the silence keeps");
@@ -22068,13 +22865,37 @@ mod tests {
         // FireBlock the 26.2 jar: NO SOUL_SAND row the full dump's grep
         // answers, the setFlammable walk the nether sand never wears —
         // the nether's own stone the same silence keeps)
-        assert_eq!(fire_ignite_odds(SOUL_SAND), 0, "the soul sand the silence keeps");
-        assert_eq!(fire_burn_odds(SOUL_SAND), 0, "the soul sand the silence keeps");
-        assert_eq!(fire_can_burn(SOUL_SAND), false, "the soul sand the refusal keeps");
+        assert_eq!(
+            fire_ignite_odds(SOUL_SAND),
+            0,
+            "the soul sand the silence keeps"
+        );
+        assert_eq!(
+            fire_burn_odds(SOUL_SAND),
+            0,
+            "the soul sand the silence keeps"
+        );
+        assert_eq!(
+            fire_can_burn(SOUL_SAND),
+            false,
+            "the soul sand the refusal keeps"
+        );
         for id in [
-            SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,
-            DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP,
-            PINK_TULIP, WHITE_TULIP,
+            SHORT_GRASS,
+            BUSH,
+            TALL_GRASS,
+            TALL_GRASS_UPPER,
+            LARGE_FERN,
+            LARGE_FERN_UPPER,
+            DANDELION,
+            POPPY,
+            AZURE_BLUET,
+            OXEYE_DAISY,
+            CORNFLOWER,
+            ORANGE_TULIP,
+            RED_TULIP,
+            PINK_TULIP,
+            WHITE_TULIP,
         ] {
             assert_eq!(
                 fire_ignite_odds(id),
@@ -22089,13 +22910,29 @@ mod tests {
         assert_eq!(fire_burn_odds(LOG), 5);
         assert_eq!(fire_burn_odds(LEAVES), 60);
         assert_eq!(fire_burn_odds(PALE_LEAVES), 60);
-        assert_eq!(fire_burn_odds(TNT), 100, "the tnt the prime chain's own 100 wears");
+        assert_eq!(
+            fire_burn_odds(TNT),
+            100,
+            "the tnt the prime chain's own 100 wears"
+        );
         assert_eq!(fire_burn_odds(WHITE_WOOL), 60, "the wool the 60 burn keeps");
         assert_eq!(fire_burn_odds(LEAF_LITTER), 100);
         for id in [
-            SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,
-            DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP,
-            PINK_TULIP, WHITE_TULIP,
+            SHORT_GRASS,
+            BUSH,
+            TALL_GRASS,
+            TALL_GRASS_UPPER,
+            LARGE_FERN,
+            LARGE_FERN_UPPER,
+            DANDELION,
+            POPPY,
+            AZURE_BLUET,
+            OXEYE_DAISY,
+            CORNFLOWER,
+            ORANGE_TULIP,
+            RED_TULIP,
+            PINK_TULIP,
+            WHITE_TULIP,
         ] {
             assert_eq!(
                 fire_burn_odds(id),
@@ -22108,8 +22945,18 @@ mod tests {
         // wear — the crop, the table, the stones, the fluids, the fire
         // kinds themselves the flammable scan never names)
         for id in [
-            STONE, DIRT, GRASS, SAND, WATER, LAVA, WHEAT, WHEAT_STAGE7, CRAFTING_TABLE,
-            FARMLAND, FIRE, SOUL_FIRE,
+            STONE,
+            DIRT,
+            GRASS,
+            SAND,
+            WATER,
+            LAVA,
+            WHEAT,
+            WHEAT_STAGE7,
+            CRAFTING_TABLE,
+            FARMLAND,
+            FIRE,
+            SOUL_FIRE,
         ] {
             assert_eq!(
                 fire_ignite_odds(id),
@@ -22152,7 +22999,11 @@ mod tests {
         let mut w = World::new(1, 0xF117);
         w.schedule_fire_tick(50, 4, 31, 4);
         w.schedule_fire_tick(60, 4, 31, 4);
-        assert_eq!(w.fire_ticks.len(), 1, "the Set's own law the duplicate refuses");
+        assert_eq!(
+            w.fire_ticks.len(),
+            1,
+            "the Set's own law the duplicate refuses"
+        );
         assert_eq!(w.fire_ticks[0], (50, 4, 31, 4), "the first the slot holds");
         // THE FLOATING FIRE'S OWN REFUSAL (pc 22-37 — the canSurvive
         // verdict the air-below cell fails, the removal the walk
@@ -22168,8 +23019,15 @@ mod tests {
         w.set(4, 40, 4, FIRE);
         let out = w.fire_tick(100, 4, 40, 4, &mut rng);
         assert!(out.changed, "the floating removal the walk speaks");
-        assert_eq!(w.get(4, 40, 4), AIR, "the canSurvive refusal the cell clears");
-        assert!(!w.fire_age.contains_key(&(4, 40, 4)), "the removal the entry drops");
+        assert_eq!(
+            w.get(4, 40, 4),
+            AIR,
+            "the canSurvive refusal the cell clears"
+        );
+        assert!(
+            !w.fire_age.contains_key(&(4, 40, 4)),
+            "the removal the entry drops"
+        );
         assert_eq!(
             w.fire_ticks.len(),
             1,
@@ -22238,7 +23096,11 @@ mod tests {
             other => panic!("the ladder's own law the pair {:?} refuses", other),
         }
         // THE STREAM PARITY (the eight draws the lone stage speaks)
-        assert_eq!(rng.next_int(1000), probe.next_int(1000), "the stream rejoins");
+        assert_eq!(
+            rng.next_int(1000),
+            probe.next_int(1000),
+            "the stream rejoins"
+        );
         // THE PRE-LADDER QUIRK'S OWN DEATH: the walks the age climbs
         // (monotone, +0 or +1 per walk), the death the age>3 walk's
         // own removal serves (the sturdy arm the grown flame refuses)
@@ -22286,21 +23148,33 @@ mod tests {
         w.set(x, y, z, CAMPFIRE_LIT);
         // the stone below: the property the vanilla placement walk
         // banks false — the verdict refuses
-        assert!(!w.is_signal_fire(x, y, z), "the stone below the verdict refuses");
+        assert!(
+            !w.is_signal_fire(x, y, z),
+            "the stone below the verdict refuses"
+        );
         // the hay bale: the isSmokeSource read the SIGNAL arm answers
         w.set(x, y - 1, z, HAY_BLOCK);
-        assert!(w.is_signal_fire(x, y, z), "the hay below the verdict answers");
+        assert!(
+            w.is_signal_fire(x, y, z),
+            "the hay below the verdict answers"
+        );
         // the hay removed: the updateShape's DOWN-neighbor re-answer the
         // live read tracks (the offline read-each-time law the property
         // cache never drifts from)
         w.set(x, y - 1, z, AIR);
-        assert!(!w.is_signal_fire(x, y, z), "the hay removal the verdict re-answers");
+        assert!(
+            !w.is_signal_fire(x, y, z),
+            "the hay removal the verdict re-answers"
+        );
         // THE SOUL CAMPFIRE'S OWN VERDICT: the same below-read the
         // signal law keeps (the vanilla property the two campfire
         // families share)
         w.set(x, y - 1, z, HAY_BLOCK);
         w.set(x, y, z, SOUL_CAMPFIRE_LIT);
-        assert!(w.is_signal_fire(x, y, z), "the soul campfire the same verdict wears");
+        assert!(
+            w.is_signal_fire(x, y, z),
+            "the soul campfire the same verdict wears"
+        );
     }
 
     #[test]
@@ -22313,15 +23187,27 @@ mod tests {
         let mut w = World::new(1, 0xF117);
         let (x, y, z) = (4, 40, 4);
         w.set(x, y, z, CAMPFIRE_LIT);
-        assert_eq!(w.campfire_ticks, vec![(0, x, y, z)], "the lit transition the entry pushes");
+        assert_eq!(
+            w.campfire_ticks,
+            vec![(0, x, y, z)],
+            "the lit transition the entry pushes"
+        );
         // the same-state silence (the set's own early return the
         // maintenance never re-spends)
         w.set(x, y, z, CAMPFIRE_LIT);
-        assert_eq!(w.campfire_ticks.len(), 1, "the same state the queue never doubles");
+        assert_eq!(
+            w.campfire_ticks.len(),
+            1,
+            "the same state the queue never doubles"
+        );
         // the soul campfire's own swap: lit -> lit stays (the
         // is_lit -> is_lit no-transition the maintenance skips)
         w.set(x, y, z, SOUL_CAMPFIRE_LIT);
-        assert_eq!(w.campfire_ticks.len(), 1, "the lit-to-lit swap the entry keeps");
+        assert_eq!(
+            w.campfire_ticks.len(),
+            1,
+            "the lit-to-lit swap the entry keeps"
+        );
         // the douse: the un-lit transition the entry drops (the set's
         // own maintenance the walk never drains a dead cell)
         w.set(x, y, z, CAMPFIRE);
@@ -22329,7 +23215,11 @@ mod tests {
         // the re-lit: the entry re-banks (the ignite lane's own
         // product the queue serves again)
         w.set(x, y, z, CAMPFIRE_LIT);
-        assert_eq!(w.campfire_ticks, vec![(0, x, y, z)], "the re-lit the entry re-banks");
+        assert_eq!(
+            w.campfire_ticks,
+            vec![(0, x, y, z)],
+            "the re-lit the entry re-banks"
+        );
         // THE DRAIN'S OWN SHAPE (the fire queue's own drain the time
         // order the stable sort banks): the due entry the drain gives
         // up, the re-arm the due+1 entry banks, the duplicate the add
@@ -22339,9 +23229,16 @@ mod tests {
         assert!(w.campfire_ticks.is_empty());
         w.rearm_campfire_tick(101, x, y, z);
         w.rearm_campfire_tick(102, x, y, z);
-        assert_eq!(w.campfire_ticks, vec![(101, x, y, z)], "the one-live-entry law the duplicate refuses");
+        assert_eq!(
+            w.campfire_ticks,
+            vec![(101, x, y, z)],
+            "the one-live-entry law the duplicate refuses"
+        );
         // the not-yet-due entry the drain keeps
-        assert!(w.drain_due_campfire_ticks(100).is_empty(), "the future entry the drain keeps");
+        assert!(
+            w.drain_due_campfire_ticks(100).is_empty(),
+            "the future entry the drain keeps"
+        );
         assert_eq!(w.drain_due_campfire_ticks(101), vec![(x, y, z)]);
     }
 
@@ -22411,7 +23308,11 @@ mod tests {
         // Set law keeps)
         w.schedule_torch_tick(10, x, y, z);
         w.schedule_torch_tick(11, x, y, z);
-        assert_eq!(w.torch_ticks, vec![(10, x, y, z)], "the dedup the re-consult refuses");
+        assert_eq!(
+            w.torch_ticks,
+            vec![(10, x, y, z)],
+            "the dedup the re-consult refuses"
+        );
         assert!(
             w.drain_due_torch_ticks(9).is_empty(),
             "the future entry the drain keeps"
@@ -22424,10 +23325,17 @@ mod tests {
         // fills])
         w.set(x - 1, y - 1, z, LEVER_ON);
         let out = w.redstone_torch_tick(10, x, y, z);
-        assert!(out.changed && !out.burnout, "the lit + powered arm the flip speaks");
+        assert!(
+            out.changed && !out.burnout,
+            "the lit + powered arm the flip speaks"
+        );
         assert_eq!(out.flipped, Some((x, y, z)));
         assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF);
-        assert_eq!(w.torch_toggles, vec![(10, x, y, z)], "the record the extinguish alone gains");
+        assert_eq!(
+            w.torch_toggles,
+            vec![(10, x, y, z)],
+            "the record the extinguish alone gains"
+        );
         // THE BURNOUT'S OWN WINDOW (the first extinguish's own row the
         // walk already banked, the 6 backfilled rows the window keeps
         // [1 + 6 = 7 the verdict reads], the 8th extinguish the
@@ -22444,7 +23352,11 @@ mod tests {
             "the 8th extinguish the BURNOUT verdict speaks"
         );
         assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF);
-        assert_eq!(w.torch_toggles.len(), 8, "the 7 backfilled + the 8th the window banks");
+        assert_eq!(
+            w.torch_toggles.len(),
+            8,
+            "the 7 backfilled + the 8th the window banks"
+        );
         assert_eq!(
             w.torch_ticks,
             vec![(12 + 160, x, y, z)],
@@ -22454,7 +23366,11 @@ mod tests {
         // +2 the gate refuses — the vanilla cooldown the consult's own
         // law keeps)
         w.schedule_torch_tick(14, x, y, z);
-        assert_eq!(w.torch_ticks.len(), 1, "the pending cooldown the re-consult refuses");
+        assert_eq!(
+            w.torch_ticks.len(),
+            1,
+            "the pending cooldown the re-consult refuses"
+        );
         // THE RELIGHT'S OWN GATE (the quiet floor the relight arm
         // reads — the burnout rows the window keeps the verdict
         // refuses [the read-only count the relight never adds])
@@ -22464,13 +23380,24 @@ mod tests {
             !out.changed,
             "the unexpired burnout rows the relight gate refuses"
         );
-        assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF, "the gated kind the OFF keeps");
+        assert_eq!(
+            w.get(x, y, z),
+            REDSTONE_TORCH_OFF,
+            "the gated kind the OFF keeps"
+        );
         // THE 160-TICK RETRY (the trim the window's own law the stale
         // rows clears — the verdict the empty list the relight
         // restores)
         let out = w.redstone_torch_tick(12 + 160, x, y, z);
-        assert!(out.changed && !out.burnout, "the cooled retry the relight restores");
-        assert_eq!(w.get(x, y, z), REDSTONE_TORCH, "the quiet floor the lit kind restores");
+        assert!(
+            out.changed && !out.burnout,
+            "the cooled retry the relight restores"
+        );
+        assert_eq!(
+            w.get(x, y, z),
+            REDSTONE_TORCH,
+            "the quiet floor the lit kind restores"
+        );
         // THE POWERED QUIET (the lit-off pair the powered floor the
         // relight arm never wears — the two arms' own verdicts keep)
         w.set(x, y, z, REDSTONE_TORCH_OFF);
@@ -22497,7 +23424,10 @@ mod tests {
             w.torch_toggles.push((when, x + 5, y, z));
         }
         w.trim_torch_toggles(100);
-        assert!(w.torch_toggles.is_empty(), "the stale rows the window clears");
+        assert!(
+            w.torch_toggles.is_empty(),
+            "the stale rows the window clears"
+        );
         assert!(
             !w.torch_burnout_verdict(100, x, y, z, false),
             "the other pos's rows the per-pos count refuses"
@@ -22555,14 +23485,21 @@ mod tests {
         // THE DEDUP'S OWN LAW (the pending entry the re-consult refuses
         // — the changed cell's own repeat the same walk keeps)
         w.schedule_torch_consults(13, &[(x, y, z)]);
-        assert_eq!(w.torch_ticks.len(), 1, "the pending B the re-consult refuses");
+        assert_eq!(
+            w.torch_ticks.len(),
+            1,
+            "the pending B the re-consult refuses"
+        );
         // THE CHAIN'S OWN BEAT (the drain the due entry gives up, the
         // tick walk's own flip the extinguish arm serves, the flip's
         // own broadcast the quiet verdicts the same walk keeps — the
         // OFF A the powered support the state-correct keep wears)
         assert_eq!(w.drain_due_torch_ticks(12), vec![(x + 1, y, z)]);
         let out = w.redstone_torch_tick(12, x + 1, y, z);
-        assert!(out.changed && !out.burnout, "the powered support the flip speaks");
+        assert!(
+            out.changed && !out.burnout,
+            "the powered support the flip speaks"
+        );
         assert_eq!(w.get(x + 1, y, z), REDSTONE_TORCH_OFF);
         w.schedule_torch_consults(14, &[(x + 1, y, z)]);
         assert!(
@@ -22701,13 +23638,12 @@ mod tests {
         );
         assert!(saw_new_fire, "the spread's own rolls placed fire");
         assert!(
-            !is_fire(w.get(fx, fy, fz)) && !is_fire(w.get(tx, ty, tz)) && !is_fire(w.get(gx, gy, gz)),
+            !is_fire(w.get(fx, fy, fz))
+                && !is_fire(w.get(tx, ty, tz))
+                && !is_fire(w.get(gx, gy, gz)),
             "the end the walk's own verdict speaks — the fireless stage"
         );
-        assert!(
-            w.fire_ticks.is_empty(),
-            "the queue the stale drains clear"
-        );
+        assert!(w.fire_ticks.is_empty(), "the queue the stale drains clear");
         // THE FLOOR'S OWN SILENCE (the no-row grass_block the fire
         // never eats — the burnable scan the floor's own kind refuses)
         for x in 0..16 {
@@ -22837,7 +23773,11 @@ mod tests {
                 let _ = w.fire_tick(due, x, y, z, &mut rng);
             }
         }
-        assert_eq!(w.get(4, 31, 4), FIRE, "the dry world's fire the arm never douses");
+        assert_eq!(
+            w.get(4, 31, 4),
+            FIRE,
+            "the dry world's fire the arm never douses"
+        );
         // THE WET WORLD'S OWN DOUSE: the 0.2+ draw the arm's own roll
         // serves — the ladder's own young ages the 0.2 floor wears
         w.rain_level = 1.0;
@@ -22912,8 +23852,15 @@ mod tests {
         w.set(8, 32, 9, AIR); // the log's own loss
         let changed = w.fire_shape_updates((8, 32, 9));
         assert!(changed, "the burnable's loss the chain speaks");
-        assert_eq!(w.get(8, 32, 8), AIR, "the floating flame the scan's loss douses");
-        assert!(!w.fire_age.contains_key(&(8, 32, 8)), "the age entry the death drops");
+        assert_eq!(
+            w.get(8, 32, 8),
+            AIR,
+            "the floating flame the scan's loss douses"
+        );
+        assert!(
+            !w.fire_age.contains_key(&(8, 32, 8)),
+            "the age entry the death drops"
+        );
         // (c) THE STURDY ARM: the grounded flame the below-Full verdict
         // holds — the burnable neighbor's own loss the scan never gates
         let mut w = World::new(1, 0xF117);
@@ -23181,7 +24128,10 @@ mod tests {
             "the patch density the band keeps: {} blooms",
             blooms
         );
-        assert!(dandelions >= 1, "the default state the noise provider wears");
+        assert!(
+            dandelions >= 1,
+            "the default state the noise provider wears"
+        );
     }
 
     /// THE FLOWER PROVIDER'S OWN FULL PALETTE (the autopush-414 round —
@@ -23222,7 +24172,10 @@ mod tests {
         assert!(is_flower_high(OXEYE_DAISY));
         assert!(is_flower_high(CORNFLOWER));
         assert!(!is_flower_high(DANDELION));
-        assert!(!is_flower_high(SHORT_GRASS), "the non-contiguous ids the ride between");
+        assert!(
+            !is_flower_high(SHORT_GRASS),
+            "the non-contiguous ids the ride between"
+        );
         assert!(!is_flower_high(LARGE_FERN_UPPER));
         assert!(is_flower_low(ORANGE_TULIP));
         assert!(is_flower_low(RED_TULIP));
@@ -23325,9 +24278,7 @@ mod tests {
                             };
                             world_rows_seen[row] = true;
                         } else {
-                            panic!(
-                                "the world's blooms the tulip band never speaks — got {id}"
-                            );
+                            panic!("the world's blooms the tulip band never speaks — got {id}");
                         }
                     }
                 }
@@ -23397,9 +24348,7 @@ mod tests {
                     let (now, was) = (a.get(x, y, z), base.get(x, y, z));
                     if now != was {
                         assert!(
-                            now == SHORT_GRASS
-                                || now == DANDELION
-                                || is_flower_high(now),
+                            now == SHORT_GRASS || now == DANDELION || is_flower_high(now),
                             "the placement the walk's own kinds alone speak — got {now}"
                         );
                         assert_eq!(was, AIR, "the placement the air cells alone wears");
@@ -23663,7 +24612,13 @@ mod tests {
             }
             w.set(c, surface, c + 1, DIRT); // the S row the subset answers
             let base = w.clone();
-            bonemeal_grass_walk(&mut w, c, surface, c, &mut crate::drops::Lcg::new(seed * 13 + 1));
+            bonemeal_grass_walk(
+                &mut w,
+                c,
+                surface,
+                c,
+                &mut crate::drops::Lcg::new(seed * 13 + 1),
+            );
             assert_eq!(
                 w.get(c, surface + 1, c),
                 SHORT_GRASS,
@@ -23769,7 +24724,10 @@ mod tests {
         assert!(!can_support_torch(WATER) && !can_support_torch(LAVA));
         assert!(!can_support_torch(WHEAT) && !can_support_torch(DANDELION));
         assert!(!can_support_torch(SHORT_GRASS) && !can_support_torch(TALL_GRASS));
-        assert!(!can_support_torch(TORCH), "the torch the torch never supports");
+        assert!(
+            !can_support_torch(TORCH),
+            "the torch the torch never supports"
+        );
     }
 
     #[test]
@@ -23816,16 +24774,31 @@ mod tests {
         let c = w.size_blocks() / 2;
         let y = 2;
         w.set(c + 1, y, c, LEVER_ON);
-        assert!(redstone_signal_at(&w, c, y, c), "the east seat's powered lever the signal answers");
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the east seat's powered lever the signal answers"
+        );
         w.set(c + 1, y, c, LEVER);
-        assert!(!redstone_signal_at(&w, c, y, c), "the OFF lever the silence keeps");
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the OFF lever the silence keeps"
+        );
         w.set(c, y + 1, c, LEVER_ON);
-        assert!(redstone_signal_at(&w, c, y, c), "the above seat the same verdict wears");
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the above seat the same verdict wears"
+        );
         w.set(c, y + 1, c, AIR);
         w.set(c, y - 1, c, LEVER_ON);
-        assert!(redstone_signal_at(&w, c, y, c), "the below seat the same verdict wears");
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the below seat the same verdict wears"
+        );
         w.set(c, y - 1, c, AIR);
-        assert!(!redstone_signal_at(&w, c, y, c), "the bare cell the silence keeps");
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the bare cell the silence keeps"
+        );
         // THE SURVIVAL'S OWN LAW (javap the base canSurvive pc 0-12 —
         // the connected direction's opposite the support cell reads,
         // the floating lever the refusal keeps; the FLOOR face the
@@ -23955,7 +24928,6 @@ mod tests {
         );
     }
 
-
     #[test]
     fn the_button_pair_the_signal_and_the_pulse_laws_wear() {
         // THE BUTTON'S OWN LAWS (the autopush-660 round — javap
@@ -24083,7 +25055,11 @@ mod tests {
         // default keeps, the 1..=4 rows the 0..3 indexes the -1 fold
         // serves)
         let steps = |byte: u8| {
-            if byte == 0 { 0usize } else { byte as usize - 1 }
+            if byte == 0 {
+                0usize
+            } else {
+                byte as usize - 1
+            }
         };
         assert_eq!(steps(1), 0, "the north row the y=0 step keeps");
         assert_eq!(steps(2), 1, "the east row the y=90 step wears");
@@ -24286,7 +25262,10 @@ mod tests {
                     if !is_tuft(id) {
                         continue;
                     }
-                    assert!(id == SHORT_GRASS || id == BUSH, "the two kinds the roll picks");
+                    assert!(
+                        id == SHORT_GRASS || id == BUSH,
+                        "the two kinds the roll picks"
+                    );
                     // THE SUPPORT'S OWN GATE (the below cell the grass
                     // block keeps — the beach/water columns the patch
                     // never plants, the canSurvive substrate the tuft
@@ -24369,9 +25348,15 @@ mod tests {
         assert_eq!(double_plant_mate(LARGE_FERN_UPPER), Some(LARGE_FERN));
         assert_eq!(double_plant_mate(DANDELION), None);
         assert_eq!(NAME_OF[TALL_GRASS as usize], "tall_grass");
-        assert_eq!(NAME_OF[TALL_GRASS_UPPER as usize], "tall_grass", "the shared row");
+        assert_eq!(
+            NAME_OF[TALL_GRASS_UPPER as usize], "tall_grass",
+            "the shared row"
+        );
         assert_eq!(NAME_OF[LARGE_FERN as usize], "large_fern");
-        assert_eq!(NAME_OF[LARGE_FERN_UPPER as usize], "large_fern", "the shared row");
+        assert_eq!(
+            NAME_OF[LARGE_FERN_UPPER as usize], "large_fern",
+            "the shared row"
+        );
         assert!(is_replaceable(TALL_GRASS) && is_replaceable(LARGE_FERN_UPPER));
         assert!(!is_replaceable(DANDELION));
         assert_eq!(
@@ -24487,7 +25472,11 @@ mod tests {
         assert!(!hit.inside);
         // the cursor the wire speaks: the location minus the origin
         assert_eq!(
-            (hit.location.0 - 8.0, hit.location.1 - 8.0, hit.location.2 - 8.0),
+            (
+                hit.location.0 - 8.0,
+                hit.location.1 - 8.0,
+                hit.location.2 - 8.0
+            ),
             (0.5, 1.0, 0.5)
         );
         // the reach ends the traversal: 5.0 to the surface from y=14
@@ -24527,7 +25516,10 @@ mod tests {
         // entry (UP, the slab's top)
         let hit5 = w5_diag(&w);
         assert_eq!(hit5.pos, (7, 8, 7));
-        assert_eq!(hit5.face, 1, "the -y boundary is the one the ray crossed last");
+        assert_eq!(
+            hit5.face, 1,
+            "the -y boundary is the one the ray crossed last"
+        );
         assert_eq!(hit5.location, (7.5, 9.0, 7.5));
     }
 
@@ -24898,9 +25890,9 @@ mod tests {
         let mut w = slab_world();
         w.set(8, 9, 8, POWERED_RAIL);
         w.set_variant(8, 9, 8, 1); // the E-W look-stamp the placement wears
-        // THE SIDE LEVER'S ON KIND: the six-neighbor scan the verdict
-        // arms — the POWERED bit the byte's own high seat takes, the
-        // E-W nibble the same byte keeps
+                                   // THE SIDE LEVER'S ON KIND: the six-neighbor scan the verdict
+                                   // arms — the POWERED bit the byte's own high seat takes, the
+                                   // E-W nibble the same byte keeps
         w.set(8, 9, 7, LEVER_ON);
         assert!(
             w.rail_neighbor_updates((8, 9, 7)),
@@ -24995,9 +25987,9 @@ mod tests {
         let mut w = slab_world();
         w.set(8, 9, 8, ACTIVATOR_RAIL);
         w.set_variant(8, 9, 8, 1); // the E-W look-stamp the placement wears
-        // THE SIDE LEVER'S ON KIND: the six-neighbor scan the verdict
-        // arms — the POWERED bit the byte's own high seat takes, the
-        // E-W nibble the same byte keeps
+                                   // THE SIDE LEVER'S ON KIND: the six-neighbor scan the verdict
+                                   // arms — the POWERED bit the byte's own high seat takes, the
+                                   // E-W nibble the same byte keeps
         w.set(8, 9, 7, LEVER_ON);
         assert!(
             w.rail_neighbor_updates((8, 9, 7)),
@@ -25151,11 +26143,7 @@ mod tests {
             !w.rail_neighbor_updates((3, 8, 4)),
             "the OFF button nothing moves"
         );
-        assert_eq!(
-            w.variant(3, 9, 4),
-            1,
-            "the OFF source the bit never banks"
-        );
+        assert_eq!(w.variant(3, 9, 4), 1, "the OFF source the bit never banks");
         // THE DETECTOR'S OWN CART LAW: the strong pulse the detector
         // rail the same walk never arms (its own law the cart's
         // presence speaks)
@@ -25279,11 +26267,7 @@ mod tests {
             0,
             "the survivor the single north connection re-stamps"
         );
-        assert_eq!(
-            w.variant(9, 10, 7),
-            0,
-            "the north arm the N-S byte keeps"
-        );
+        assert_eq!(w.variant(9, 10, 7), 0, "the north arm the N-S byte keeps");
         // THE NON-RAIL CELL: the same loss the stone above never reads
         w.set(8, 10, 8, STONE);
         w.set(8, 9, 8, STONE);
@@ -25461,8 +26445,12 @@ mod tests {
     /// the y plane at t≈3.46 (2√3, inside the reach) — the landing sits
     /// on the slab's top plane at (7.5, 9.0, 7.5).
     fn w5_diag(w: &World) -> ClipHit {
-        w.clip((9.5, 11.0, 9.5), (-1.0, -1.0, -1.0), BLOCK_INTERACTION_RANGE)
-            .expect("the slab is within the diagonal's reach")
+        w.clip(
+            (9.5, 11.0, 9.5),
+            (-1.0, -1.0, -1.0),
+            BLOCK_INTERACTION_RANGE,
+        )
+        .expect("the slab is within the diagonal's reach")
     }
 
     /// THE PLACEABLE TABLE — the vanilla BlockItem's own pairing: the
@@ -25477,9 +26465,21 @@ mod tests {
         assert_eq!(World::placeable_block("oak_leaves"), Some(LEAVES));
         assert_eq!(World::placeable_block("sand"), Some(SAND));
         assert_eq!(World::placeable_block("deepslate"), Some(DEEPSLATE));
-        assert_eq!(World::placeable_block("air"), None, "the void is never a stack");
-        assert_eq!(World::placeable_block("diamond"), None, "an item is not a block");
-        assert_eq!(World::placeable_block("water"), None, "no water item places");
+        assert_eq!(
+            World::placeable_block("air"),
+            None,
+            "the void is never a stack"
+        );
+        assert_eq!(
+            World::placeable_block("diamond"),
+            None,
+            "an item is not a block"
+        );
+        assert_eq!(
+            World::placeable_block("water"),
+            None,
+            "no water item places"
+        );
     }
 
     #[test]
@@ -25563,7 +26563,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -25664,7 +26664,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -25675,9 +26675,18 @@ mod tests {
         assert_eq!(NAME_OF[REDSTONE_WIRE as usize], "redstone_wire");
         assert_eq!(NAME_OF[REDSTONE_WIRE_ON as usize], "redstone_wire");
         assert_eq!(atlas::KIND_NAMES[REDSTONE_WIRE as usize], "redstone_wire");
-        assert_eq!(atlas::KIND_NAMES[REDSTONE_WIRE_ON as usize], "redstone_wire_on");
-        assert_eq!(atlas::REGISTRY_NAMES[REDSTONE_WIRE as usize], "redstone_wire");
-        assert_eq!(atlas::REGISTRY_NAMES[REDSTONE_WIRE_ON as usize], "redstone_wire");
+        assert_eq!(
+            atlas::KIND_NAMES[REDSTONE_WIRE_ON as usize],
+            "redstone_wire_on"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_WIRE as usize],
+            "redstone_wire"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_WIRE_ON as usize],
+            "redstone_wire"
+        );
         // THE COLLISION'S OWN PASS-THROUGH (the noCollision() row the
         // factory's Properties chain speaks)
         assert_eq!(collision_shape(REDSTONE_WIRE), CollisionShape::Empty);
@@ -25713,9 +26722,15 @@ mod tests {
         let mut w = World::new(1, 0x600D);
         let (y, c) = (1i32, 4i32);
         w.set(c, 0, c, STONE);
-        assert!(wire_can_survive(&w, c, y, c), "the stone floor the wire holds");
+        assert!(
+            wire_can_survive(&w, c, y, c),
+            "the stone floor the wire holds"
+        );
         w.set(c, 0, c, AIR);
-        assert!(!wire_can_survive(&w, c, y, c), "the air below the refusal keeps");
+        assert!(
+            !wire_can_survive(&w, c, y, c),
+            "the air below the refusal keeps"
+        );
         // THE SOURCE SCAN'S OWN ARMS (javap Level.hasNeighborSignal —
         // the sources the loop's nonzero verdict the kind-only
         // vocabulary answers; the wire kinds the re-entrancy guard
@@ -25724,13 +26739,22 @@ mod tests {
         w.set(c + 1, y, c, LEVER_ON);
         assert!(wire_sources_near(&w, c, y, c), "the ON lever's arm answers");
         w.set(c + 1, y, c, LEVER);
-        assert!(!wire_sources_near(&w, c, y, c), "the OFF lever the silence keeps");
+        assert!(
+            !wire_sources_near(&w, c, y, c),
+            "the OFF lever the silence keeps"
+        );
         w.set(c + 1, y, c, OAK_BUTTON_ON);
-        assert!(wire_sources_near(&w, c, y, c), "the pressed button's arm answers");
+        assert!(
+            wire_sources_near(&w, c, y, c),
+            "the pressed button's arm answers"
+        );
         w.set(c + 1, y, c, OAK_PRESSURE_PLATE_ON);
         assert!(wire_sources_near(&w, c, y, c), "the ON plate's arm answers");
         w.set(c + 1, y, c, AIR);
-        assert!(!wire_sources_near(&w, c, y, c), "the bare cell the silence keeps");
+        assert!(
+            !wire_sources_near(&w, c, y, c),
+            "the bare cell the silence keeps"
+        );
         // THE DOOR'S OWN READ (javap DoorBlock the hasNeighborSignal
         // consult — the ON wire's own arms the same walk wears, the
         // OFF wire the silence keeps. THE AUTOBPUSH-119 ROUND THE
@@ -26000,7 +27024,11 @@ mod tests {
             REDSTONE_WIRE,
             "the climbed cell the severed verdict keeps"
         );
-        assert_eq!(w2.get(c + 2, 2, c), REDSTONE_WIRE, "the tail the dark keeps");
+        assert_eq!(
+            w2.get(c + 2, 2, c),
+            REDSTONE_WIRE,
+            "the tail the dark keeps"
+        );
         // THE UP LANE'S OWN POWER (the top source the full step's
         // conductor read banks — the base wire the 14 the descent's own
         // rung wears)
@@ -26113,7 +27141,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -26204,13 +27232,11 @@ mod tests {
             "the 15 lit rungs the decay banks, the 16th cell the dark keep serves"
         );
         assert_eq!(
-            expected[0].1,
-            REDSTONE_WIRE_ON,
+            expected[0].1, REDSTONE_WIRE_ON,
             "the head the ON kind wears"
         );
         assert_eq!(
-            expected[14].1,
-            REDSTONE_WIRE_P1,
+            expected[14].1, REDSTONE_WIRE_P1,
             "the 15th rung the weakest seat wears"
         );
         // THE PURE WALK'S OWN APPLY (the caller's set walk the flips
@@ -26304,14 +27330,17 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[*kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[*kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[*kind as usize],
                 *name,
@@ -26396,7 +27425,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26450,14 +27479,17 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[*kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[*kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[*kind as usize],
                 *name,
@@ -26540,7 +27572,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26575,14 +27607,70 @@ mod tests {
         use mc_registry::generated::atlas;
         const SHELF: [(&str, u16, f32, &str, &str, &str); 8] = [
             // (name, kind, strength, side tile, top tile, bottom tile)
-            ("sandstone", SANDSTONE, 0.8, "sandstone", "sandstone_top", "sandstone_bottom"),
-            ("chiseled_sandstone", CHISELED_SANDSTONE, 0.8, "chiseled_sandstone", "sandstone_top", "sandstone_top"),
-            ("cut_sandstone", CUT_SANDSTONE, 0.8, "cut_sandstone", "sandstone_top", "sandstone_top"),
-            ("smooth_sandstone", SMOOTH_SANDSTONE, 2.0, "sandstone_top", "sandstone_top", "sandstone_top"),
-            ("red_sandstone", RED_SANDSTONE, 0.8, "red_sandstone", "red_sandstone_top", "red_sandstone_bottom"),
-            ("chiseled_red_sandstone", CHISELED_RED_SANDSTONE, 0.8, "chiseled_red_sandstone", "red_sandstone_top", "red_sandstone_top"),
-            ("cut_red_sandstone", CUT_RED_SANDSTONE, 0.8, "cut_red_sandstone", "red_sandstone_top", "red_sandstone_top"),
-            ("smooth_red_sandstone", SMOOTH_RED_SANDSTONE, 2.0, "red_sandstone_top", "red_sandstone_top", "red_sandstone_top"),
+            (
+                "sandstone",
+                SANDSTONE,
+                0.8,
+                "sandstone",
+                "sandstone_top",
+                "sandstone_bottom",
+            ),
+            (
+                "chiseled_sandstone",
+                CHISELED_SANDSTONE,
+                0.8,
+                "chiseled_sandstone",
+                "sandstone_top",
+                "sandstone_top",
+            ),
+            (
+                "cut_sandstone",
+                CUT_SANDSTONE,
+                0.8,
+                "cut_sandstone",
+                "sandstone_top",
+                "sandstone_top",
+            ),
+            (
+                "smooth_sandstone",
+                SMOOTH_SANDSTONE,
+                2.0,
+                "sandstone_top",
+                "sandstone_top",
+                "sandstone_top",
+            ),
+            (
+                "red_sandstone",
+                RED_SANDSTONE,
+                0.8,
+                "red_sandstone",
+                "red_sandstone_top",
+                "red_sandstone_bottom",
+            ),
+            (
+                "chiseled_red_sandstone",
+                CHISELED_RED_SANDSTONE,
+                0.8,
+                "chiseled_red_sandstone",
+                "red_sandstone_top",
+                "red_sandstone_top",
+            ),
+            (
+                "cut_red_sandstone",
+                CUT_RED_SANDSTONE,
+                0.8,
+                "cut_red_sandstone",
+                "red_sandstone_top",
+                "red_sandstone_top",
+            ),
+            (
+                "smooth_red_sandstone",
+                SMOOTH_RED_SANDSTONE,
+                2.0,
+                "red_sandstone_top",
+                "red_sandstone_top",
+                "red_sandstone_top",
+            ),
         ];
         // THE SEATS' OWN LADDER (the 402..409 contiguous tail the
         // desert order banks, the END_PORTAL the displaced 510 keeps)
@@ -26597,7 +27685,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26610,7 +27698,10 @@ mod tests {
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[*kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[*kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[*kind as usize],
                 *name,
@@ -26667,8 +27758,12 @@ mod tests {
             // the model refs' own masters answer)
             let row = atlas::FACE_TILES[*kind as usize];
             let expect = [
-                tile_id(side_t), tile_id(side_t), tile_id(top_t),
-                tile_id(bot_t), tile_id(side_t), tile_id(side_t),
+                tile_id(side_t),
+                tile_id(side_t),
+                tile_id(top_t),
+                tile_id(bot_t),
+                tile_id(side_t),
+                tile_id(side_t),
             ];
             assert!(
                 (0..6).all(|f| row[f] == expect[f]),
@@ -26695,7 +27790,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26764,7 +27859,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26780,7 +27875,10 @@ mod tests {
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[kind as usize],
                 *name,
@@ -26878,7 +27976,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -26948,12 +28046,19 @@ mod tests {
             BLACK_TERRACOTTA,
             "the sixteen rungs the contiguous tail banks"
         );
-        assert_eq!(TERRACOTTA, 441, "the plain kiln the dyed walk's follower banks");
+        assert_eq!(
+            TERRACOTTA, 441,
+            "the plain kiln the dyed walk's follower banks"
+        );
         assert_eq!(
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the kilns' seventeen banks");
+        assert_eq!(
+            atlas::N_KINDS,
+            805,
+            "the palette the kilns' seventeen banks"
+        );
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -26967,7 +28072,10 @@ mod tests {
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[kind as usize],
                 *name,
@@ -27065,7 +28173,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -27141,7 +28249,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -27155,7 +28263,10 @@ mod tests {
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[kind as usize],
                 *name,
@@ -27258,7 +28369,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -27343,7 +28454,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -27357,7 +28468,10 @@ mod tests {
             // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
             // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
             // rows the same entry the three tables keep)
-            assert_eq!(NAME_OF[kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                NAME_OF[kind as usize], *name,
+                "the NAME_OF row the kind banks"
+            );
             assert_eq!(
                 atlas::KIND_NAMES[kind as usize],
                 *name,
@@ -27430,8 +28544,10 @@ mod tests {
                 "the falling verdict the {name} superclass wears"
             );
             assert!(
-                !crate::world::is_falling_block(crate::world::concrete_powder_target(kind)
-                    .expect("the pairing the powder row speaks")),
+                !crate::world::is_falling_block(
+                    crate::world::concrete_powder_target(kind)
+                        .expect("the pairing the powder row speaks")
+                ),
                 "the solidified target the fall never wears"
             );
             // THE PAIRING'S OWN ±15 OFFSET (javap the ctor the
@@ -27467,7 +28583,10 @@ mod tests {
         // the append-only law banks) AND ITS ADJACENT PAIRING (the
         // 55/56 seats the ctor's own registry argument banks)
         assert_eq!(NAME_OF[CONCRETE_POWDER as usize], "white_concrete_powder");
-        assert_eq!(atlas::KIND_NAMES[CONCRETE_POWDER as usize], "white_concrete_powder");
+        assert_eq!(
+            atlas::KIND_NAMES[CONCRETE_POWDER as usize],
+            "white_concrete_powder"
+        );
         assert_eq!(
             crate::world::concrete_powder_target(CONCRETE_POWDER),
             Some(CONCRETE),
@@ -27494,7 +28613,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -27542,17 +28661,72 @@ mod tests {
             // explicit rows the const-uses law banks (the dead-code
             // lint the every-const reference answers), the clinit
             // ladder's own order the seats speak
-            ("spruce", SPRUCE_FENCE_GATE, SPRUCE_FENCE_GATE_OPEN, "block.wood.break"),
-            ("birch", BIRCH_FENCE_GATE, BIRCH_FENCE_GATE_OPEN, "block.wood.break"),
-            ("jungle", JUNGLE_FENCE_GATE, JUNGLE_FENCE_GATE_OPEN, "block.wood.break"),
-            ("acacia", ACACIA_FENCE_GATE, ACACIA_FENCE_GATE_OPEN, "block.wood.break"),
-            ("cherry", CHERRY_FENCE_GATE, CHERRY_FENCE_GATE_OPEN, "block.cherry_wood.break"),
-            ("dark_oak", DARK_OAK_FENCE_GATE, DARK_OAK_FENCE_GATE_OPEN, "block.wood.break"),
-            ("pale_oak", PALE_OAK_FENCE_GATE, PALE_OAK_FENCE_GATE_OPEN, "block.wood.break"),
-            ("mangrove", MANGROVE_FENCE_GATE, MANGROVE_FENCE_GATE_OPEN, "block.wood.break"),
-            ("bamboo", BAMBOO_FENCE_GATE, BAMBOO_FENCE_GATE_OPEN, "block.bamboo_wood.break"),
-            ("crimson", CRIMSON_FENCE_GATE, CRIMSON_FENCE_GATE_OPEN, "block.nether_wood.break"),
-            ("warped", WARPED_FENCE_GATE, WARPED_FENCE_GATE_OPEN, "block.nether_wood.break"),
+            (
+                "spruce",
+                SPRUCE_FENCE_GATE,
+                SPRUCE_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "birch",
+                BIRCH_FENCE_GATE,
+                BIRCH_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "jungle",
+                JUNGLE_FENCE_GATE,
+                JUNGLE_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "acacia",
+                ACACIA_FENCE_GATE,
+                ACACIA_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "cherry",
+                CHERRY_FENCE_GATE,
+                CHERRY_FENCE_GATE_OPEN,
+                "block.cherry_wood.break",
+            ),
+            (
+                "dark_oak",
+                DARK_OAK_FENCE_GATE,
+                DARK_OAK_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "pale_oak",
+                PALE_OAK_FENCE_GATE,
+                PALE_OAK_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "mangrove",
+                MANGROVE_FENCE_GATE,
+                MANGROVE_FENCE_GATE_OPEN,
+                "block.wood.break",
+            ),
+            (
+                "bamboo",
+                BAMBOO_FENCE_GATE,
+                BAMBOO_FENCE_GATE_OPEN,
+                "block.bamboo_wood.break",
+            ),
+            (
+                "crimson",
+                CRIMSON_FENCE_GATE,
+                CRIMSON_FENCE_GATE_OPEN,
+                "block.nether_wood.break",
+            ),
+            (
+                "warped",
+                WARPED_FENCE_GATE,
+                WARPED_FENCE_GATE_OPEN,
+                "block.nether_wood.break",
+            ),
         ];
         // THE SEATS' OWN LADDER (the eleven pairs the 474..495
         // contiguous tail the clinit order banks, the OAK pair its
@@ -27568,7 +28742,11 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the ladder's twenty-two banks");
+        assert_eq!(
+            atlas::N_KINDS,
+            805,
+            "the palette the ladder's twenty-two banks"
+        );
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -27596,19 +28774,23 @@ mod tests {
                 "the NAME_OF row the open kind the strip law keeps"
             );
             assert_eq!(
-                atlas::KIND_NAMES[kind as usize], registry_name,
+                atlas::KIND_NAMES[kind as usize],
+                registry_name,
                 "the palette kind name the closed row banks"
             );
             assert_eq!(
-                atlas::KIND_NAMES[open_kind as usize], open_name,
+                atlas::KIND_NAMES[open_kind as usize],
+                open_name,
                 "the palette kind name the open row the suffix banks"
             );
             assert_eq!(
-                atlas::REGISTRY_NAMES[kind as usize], registry_name,
+                atlas::REGISTRY_NAMES[kind as usize],
+                registry_name,
                 "the registry id the ONE name answers"
             );
             assert_eq!(
-                atlas::REGISTRY_NAMES[open_kind as usize], registry_name,
+                atlas::REGISTRY_NAMES[open_kind as usize],
+                registry_name,
                 "the registry id the open kind the strip law keeps"
             );
             // THE PLACEABLE LANE (the BlockItem pairing the reverse
@@ -27720,21 +28902,40 @@ mod tests {
                 !fire_can_burn(kind),
                 "the non-flammable verdict the {wood} gate row keeps"
             );
-            assert_eq!(fire_ignite_odds(kind), 0, "the zero encourage the {wood} row speaks");
-            assert_eq!(fire_burn_odds(kind), 0, "the zero burn odds the {wood} row speaks");
+            assert_eq!(
+                fire_ignite_odds(kind),
+                0,
+                "the zero encourage the {wood} row speaks"
+            );
+            assert_eq!(
+                fire_burn_odds(kind),
+                0,
+                "the zero burn odds the {wood} row speaks"
+            );
         }
         // THE FAMILY'S OWN REFUSALS (the non-gate kinds the verdict
         // never arms — the door the lever the stone the None keeps)
         assert!(!is_fence_gate(OAK_DOOR), "the door the family fn refuses");
         assert!(!is_fence_gate(STONE), "the stone the family fn refuses");
-        assert_eq!(fence_gate_toggled(STONE), None, "the stone the flip never arms");
-        assert_eq!(fence_gate_toggled(BLACK_CONCRETE_POWDER), None, "the powder the flip never arms");
+        assert_eq!(
+            fence_gate_toggled(STONE),
+            None,
+            "the stone the flip never arms"
+        );
+        assert_eq!(
+            fence_gate_toggled(BLACK_CONCRETE_POWDER),
+            None,
+            "the powder the flip never arms"
+        );
         // THE OAK PAIR'S OWN EARLY SEAT (the dev-53 round's own rows
         // the 442/443 seats keep — the tail the eleven pairs the
         // append-only law banks)
         assert_eq!(NAME_OF[OAK_FENCE_GATE as usize], "oak_fence_gate");
         assert_eq!(NAME_OF[OAK_FENCE_GATE_OPEN as usize], "oak_fence_gate");
-        assert_eq!(atlas::KIND_NAMES[OAK_FENCE_GATE_OPEN as usize], "oak_fence_gate_open");
+        assert_eq!(
+            atlas::KIND_NAMES[OAK_FENCE_GATE_OPEN as usize],
+            "oak_fence_gate_open"
+        );
         // THE CENTERED PANEL'S OWN COLLISION LANE (javap
         // getCollisionShape the OPEN state's Shapes.empty() walk the
         // pass-through verdict speaks, the closed the SHAPE_COLLISION
@@ -27757,7 +28958,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -27818,7 +29019,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -27919,11 +29120,7 @@ mod tests {
         let mut note = 0u8;
         for step in 1..=25u8 {
             note = crate::world::note_next(note);
-            assert_eq!(
-                note,
-                step % 25,
-                "the cycle walk the step-{step} rung wears"
-            );
+            assert_eq!(note, step % 25, "the cycle walk the step-{step} rung wears");
         }
         assert_eq!(note, 0, "the 24->0 seam the wrap law keeps");
         // THE PITCH FORMULA'S OWN ROWS (javap getPitchFromNote(I)F
@@ -27931,9 +29128,21 @@ mod tests {
         // d2f cast speaks — note 0 the half-pitch, note 12 the
         // unity, note 24 the double-pitch, the semitones the exact
         // pow2 halves the ladder wears)
-        assert_eq!(crate::world::note_pitch(0), 0.5, "the zeroth rung the half-pitch wears");
-        assert_eq!(crate::world::note_pitch(12), 1.0, "the twelfth rung the unity keeps");
-        assert_eq!(crate::world::note_pitch(24), 2.0, "the top rung the double-pitch speaks");
+        assert_eq!(
+            crate::world::note_pitch(0),
+            0.5,
+            "the zeroth rung the half-pitch wears"
+        );
+        assert_eq!(
+            crate::world::note_pitch(12),
+            1.0,
+            "the twelfth rung the unity keeps"
+        );
+        assert_eq!(
+            crate::world::note_pitch(24),
+            2.0,
+            "the top rung the double-pitch speaks"
+        );
         assert_eq!(
             crate::world::note_pitch(6),
             0.5f32 * (2.0f64).sqrt() as f32,
@@ -27974,11 +29183,27 @@ mod tests {
             );
         }
         for stone_kind in [
-            STONE, GRANITE, DIORITE, ANDESITE, DEEPSLATE, COBBLED_DEEPSLATE,
-            OBSIDIAN, COBBLESTONE, SMOOTH_STONE, STONE_BRICKS, MOSSY_STONE_BRICKS,
-            CRACKED_STONE_BRICKS, CHISELED_STONE_BRICKS, SANDSTONE,
-            CHISELED_SANDSTONE, CUT_SANDSTONE, SMOOTH_SANDSTONE, RED_SANDSTONE,
-            CHISELED_RED_SANDSTONE, CUT_RED_SANDSTONE, SMOOTH_RED_SANDSTONE,
+            STONE,
+            GRANITE,
+            DIORITE,
+            ANDESITE,
+            DEEPSLATE,
+            COBBLED_DEEPSLATE,
+            OBSIDIAN,
+            COBBLESTONE,
+            SMOOTH_STONE,
+            STONE_BRICKS,
+            MOSSY_STONE_BRICKS,
+            CRACKED_STONE_BRICKS,
+            CHISELED_STONE_BRICKS,
+            SANDSTONE,
+            CHISELED_SANDSTONE,
+            CUT_SANDSTONE,
+            SMOOTH_SANDSTONE,
+            RED_SANDSTONE,
+            CHISELED_RED_SANDSTONE,
+            CUT_RED_SANDSTONE,
+            SMOOTH_RED_SANDSTONE,
         ] {
             assert_eq!(
                 crate::world::below_instrument(stone_kind),
@@ -28022,7 +29247,13 @@ mod tests {
         // names — the TERRACOTTA family the 26.2 jar the instrument
         // NEVER names, the concrete/powder families the same silence
         // keeps, the leaves/dirt the plain verdict answers)
-        for unmapped in [DIRT, TERRACOTTA, ORANGE_CONCRETE, BLACK_CONCRETE_POWDER, LEAVES] {
+        for unmapped in [
+            DIRT,
+            TERRACOTTA,
+            ORANGE_CONCRETE,
+            BLACK_CONCRETE_POWDER,
+            LEAVES,
+        ] {
             assert_eq!(
                 crate::world::below_instrument(unmapped),
                 "harp",
@@ -28048,13 +29279,13 @@ mod tests {
         // `imitate.X` suffixes wear, the CUSTOM_HEAD the CUSTOM type
         // the [`AboveImitate::Custom`] silence answers — the
         // note_voice suffix the event id the sounds.json banks)
-        use crate::world::{AboveImitate, CREEPER_HEAD, DRAGON_HEAD, PIGLIN_HEAD,
-            PLAYER_HEAD, SKELETON_SKULL, WITHER_SKELETON_SKULL, ZOMBIE_HEAD};
-        let stem = |kind| {
-            match crate::world::above_imitate(kind) {
-                Some(AboveImitate::Stem(s)) => Some(s),
-                _ => None,
-            }
+        use crate::world::{
+            AboveImitate, CREEPER_HEAD, DRAGON_HEAD, PIGLIN_HEAD, PLAYER_HEAD, SKELETON_SKULL,
+            WITHER_SKELETON_SKULL, ZOMBIE_HEAD,
+        };
+        let stem = |kind| match crate::world::above_imitate(kind) {
+            Some(AboveImitate::Stem(s)) => Some(s),
+            _ => None,
         };
         assert_eq!(stem(SKELETON_SKULL), Some("imitate.skeleton"));
         assert_eq!(stem(WITHER_SKELETON_SKULL), Some("imitate.wither_skeleton"));
@@ -28067,8 +29298,15 @@ mod tests {
             Some(AboveImitate::Custom),
             "the player head the CUSTOM verdict wears"
         );
-        for kind in [SKELETON_SKULL, WITHER_SKELETON_SKULL, ZOMBIE_HEAD,
-            PLAYER_HEAD, CREEPER_HEAD, DRAGON_HEAD, PIGLIN_HEAD] {
+        for kind in [
+            SKELETON_SKULL,
+            WITHER_SKELETON_SKULL,
+            ZOMBIE_HEAD,
+            PLAYER_HEAD,
+            CREEPER_HEAD,
+            DRAGON_HEAD,
+            PIGLIN_HEAD,
+        ] {
             assert!(
                 crate::world::is_mob_head(kind),
                 "the head kind the family predicate answers"
@@ -28079,10 +29317,16 @@ mod tests {
         // imitate family banks — the note_voice format the events wear)
         for (suffix, event) in [
             ("imitate.skeleton", "block.note_block.imitate.skeleton"),
-            ("imitate.wither_skeleton", "block.note_block.imitate.wither_skeleton"),
+            (
+                "imitate.wither_skeleton",
+                "block.note_block.imitate.wither_skeleton",
+            ),
             ("imitate.zombie", "block.note_block.imitate.zombie"),
             ("imitate.creeper", "block.note_block.imitate.creeper"),
-            ("imitate.ender_dragon", "block.note_block.imitate.ender_dragon"),
+            (
+                "imitate.ender_dragon",
+                "block.note_block.imitate.ender_dragon",
+            ),
             ("imitate.piglin", "block.note_block.imitate.piglin"),
         ] {
             assert_eq!(
@@ -28180,7 +29424,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -28221,8 +29465,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -28244,7 +29488,10 @@ mod tests {
         // THE WOODEN/STONE HALVES (the WOODEN_FENCES tag the
         // isSameFence parity arms)
         assert!(fence_wood(OAK_FENCE), "the oak rung the wooden half speaks");
-        assert!(fence_wood(WARPED_FENCE), "the warped rung the wooden half keeps");
+        assert!(
+            fence_wood(WARPED_FENCE),
+            "the warped rung the wooden half keeps"
+        );
         assert!(
             !fence_wood(NETHER_BRICK_FENCE),
             "the nether seam the stone half wears"
@@ -28477,8 +29724,8 @@ mod tests {
         // when-rows bank — the north arm the cell edge the post
         // band reaches, the quarter turns the other three wear)
         let arms = fence_arm_slabs(CollisionShape::Fence(0b1111), fc, y, fc);
-        let (ax_lo, ax_hi, _, ay_hi, az_lo, az_hi) = arms[0]
-            .expect("the north arm the connected bit banks");
+        let (ax_lo, ax_hi, _, ay_hi, az_lo, az_hi) =
+            arms[0].expect("the north arm the connected bit banks");
         assert!(
             (ax_lo - (fc as f64 + 0.375)).abs() < 1e-9
                 && (ax_hi - (fc as f64 + 0.625)).abs() < 1e-9,
@@ -28492,22 +29739,17 @@ mod tests {
             (ay_hi - (y as f64 + 1.5)).abs() < 1e-9,
             "the arm's 0..24 band the over-tall law wears"
         );
-        let (ex_lo, ex_hi, _, _, _, _) =
-            arms[1].expect("the east arm the connected bit banks");
+        let (ex_lo, ex_hi, _, _, _, _) = arms[1].expect("the east arm the connected bit banks");
         assert!(
-            (ex_lo - (fc as f64 + 0.5)).abs() < 1e-9
-                && (ex_hi - (fc as f64 + 1.0)).abs() < 1e-9,
+            (ex_lo - (fc as f64 + 0.5)).abs() < 1e-9 && (ex_hi - (fc as f64 + 1.0)).abs() < 1e-9,
             "the east arm the post..edge x span 8..16 banks"
         );
-        let (_, _, _, _, sz_lo, sz_hi) =
-            arms[2].expect("the south arm the connected bit banks");
+        let (_, _, _, _, sz_lo, sz_hi) = arms[2].expect("the south arm the connected bit banks");
         assert!(
-            (sz_lo - (fc as f64 + 0.5)).abs() < 1e-9
-                && (sz_hi - (fc as f64 + 1.0)).abs() < 1e-9,
+            (sz_lo - (fc as f64 + 0.5)).abs() < 1e-9 && (sz_hi - (fc as f64 + 1.0)).abs() < 1e-9,
             "the south arm the post..edge z span 8..16 banks"
         );
-        let (wx_lo, wx_hi, _, _, _, _) =
-            arms[3].expect("the west arm the connected bit banks");
+        let (wx_lo, wx_hi, _, _, _, _) = arms[3].expect("the west arm the connected bit banks");
         assert!(
             (wx_lo - fc as f64).abs() < 1e-9 && (wx_hi - (fc as f64 + 0.5)).abs() < 1e-9,
             "the west arm the edge..post x span 0..8 banks"
@@ -28554,12 +29796,15 @@ mod tests {
         let fx = fc as f64 + 0.5;
         // THE GROUND WALK: the box at the fence cell's north edge
         // moving south — the post's 4/16 band the gap clips
-        let ground_box = (fx - 0.3, y as f64, fc as f64 - 0.3, fx + 0.3, y as f64 + 1.8, fc as f64);
-        let hit = crate::body::collide(
-            &w,
-            ground_box,
-            (0.0, 0.0, 0.5),
+        let ground_box = (
+            fx - 0.3,
+            y as f64,
+            fc as f64 - 0.3,
+            fx + 0.3,
+            y as f64 + 1.8,
+            fc as f64,
         );
+        let hit = crate::body::collide(&w, ground_box, (0.0, 0.0, 0.5));
         assert!(
             (hit.dz - 0.375).abs() < 1e-9,
             "the ground walk the post's 4/16 band the gap clips, got {}",
@@ -28568,7 +29813,14 @@ mod tests {
         // THE MID-JUMP WALK: the feet 1.2 above the fence base — the
         // below-consult the upper half-band the walk refuses (the
         // vanilla jump apex 1.25 the fence never clears)
-        let jump_box = (fx - 0.3, y as f64 + 1.2, fc as f64 - 0.3, fx + 0.3, y as f64 + 3.0, fc as f64);
+        let jump_box = (
+            fx - 0.3,
+            y as f64 + 1.2,
+            fc as f64 - 0.3,
+            fx + 0.3,
+            y as f64 + 3.0,
+            fc as f64,
+        );
         let hit = crate::body::collide(&w, jump_box, (0.0, 0.0, 0.5));
         assert!(
             (hit.dz - 0.375).abs() < 1e-9,
@@ -28578,7 +29830,14 @@ mod tests {
         // THE FENCE-TOP WALK: the feet AT the 1.5 top — the box the
         // band the strict edge refuses, the walk-along the fence
         // tops the vanilla law keeps
-        let top_box = (fx - 0.3, y as f64 + 1.5, fc as f64 - 0.3, fx + 0.3, y as f64 + 3.3, fc as f64);
+        let top_box = (
+            fx - 0.3,
+            y as f64 + 1.5,
+            fc as f64 - 0.3,
+            fx + 0.3,
+            y as f64 + 3.3,
+            fc as f64,
+        );
         let hit = crate::body::collide(&w, top_box, (0.0, 0.0, 0.5));
         assert!(
             hit.dz == 0.5,
@@ -28589,7 +29848,14 @@ mod tests {
         // consult the band's top the feet stops (the vanilla fence
         // top the 1.5 height the standing wears; the box the post's
         // own footprint rides — the z pairing the compound arms)
-        let fall_box = (fx - 0.3, y as f64 + 2.0, fc as f64 + 0.2, fx + 0.3, y as f64 + 3.8, fc as f64 + 0.8);
+        let fall_box = (
+            fx - 0.3,
+            y as f64 + 2.0,
+            fc as f64 + 0.2,
+            fx + 0.3,
+            y as f64 + 3.8,
+            fc as f64 + 0.8,
+        );
         let hit = crate::body::collide(&w, fall_box, (0.0, -0.8, 0.0));
         assert!(
             (hit.dy + 0.5).abs() < 1e-9,
@@ -28624,7 +29890,10 @@ mod tests {
         // THE THIRTY-TWO SEATS' OWN BANK (the contiguous tail the
         // append-only law keeps, the END_PORTAL the displaced seat
         // answers)
-        assert_eq!(COBBLESTONE_WALL, 511, "the rampart rung its tail seat keeps");
+        assert_eq!(
+            COBBLESTONE_WALL, 511,
+            "the rampart rung its tail seat keeps"
+        );
         assert_eq!(
             SULFUR_BRICK_WALL, 542,
             "the sulfur seam the thirty-second seat banks"
@@ -28635,8 +29904,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -28811,13 +30080,11 @@ mod tests {
             shape_slabs(CollisionShape::Wall(0, 0), fc, y, fc)
                 .expect("the wall post the slabs never refuse");
         assert!(
-            (px_lo - (fc as f64 + 0.25)).abs() < 1e-9
-                && (px_hi - (fc as f64 + 0.75)).abs() < 1e-9,
+            (px_lo - (fc as f64 + 0.25)).abs() < 1e-9 && (px_hi - (fc as f64 + 0.75)).abs() < 1e-9,
             "the post's centered 8/16 x band the column law banks"
         );
         assert!(
-            (pz_lo - (fc as f64 + 0.25)).abs() < 1e-9
-                && (pz_hi - (fc as f64 + 0.75)).abs() < 1e-9,
+            (pz_lo - (fc as f64 + 0.25)).abs() < 1e-9 && (pz_hi - (fc as f64 + 0.75)).abs() < 1e-9,
             "the post's centered 8/16 z band the column law banks"
         );
         assert!(
@@ -28830,16 +30097,15 @@ mod tests {
         // other three wear [east x 5..16 z 5..11, south x 5..11
         // z 5..16, west x 0..11 z 5..11])
         let strips = wall_arm_slabs(CollisionShape::Wall(0b1111, 0), fc, y, fc);
-        let (nx_lo, nx_hi, _, ny_hi, nz_lo, nz_hi) = strips[0]
-            .expect("the north strip the connected bit banks");
+        let (nx_lo, nx_hi, _, ny_hi, nz_lo, nz_hi) =
+            strips[0].expect("the north strip the connected bit banks");
         assert!(
             (nx_lo - (fc as f64 + 5.0 / 16.0)).abs() < 1e-9
                 && (nx_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
             "the north strip the centered 6/16 x band keeps"
         );
         assert!(
-            (nz_lo - fc as f64).abs() < 1e-9
-                && (nz_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
+            (nz_lo - fc as f64).abs() < 1e-9 && (nz_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
             "the north strip the edge..11/16 z span banks"
         );
         assert!(
@@ -28865,8 +30131,7 @@ mod tests {
                 && (sz_hi - (fc as f64 + 1.0)).abs() < 1e-9,
             "the south strip the post..edge z span 5..16 banks"
         );
-        let (wx_lo, wx_hi, _, _, _, _) =
-            strips[3].expect("the west strip the connected bit banks");
+        let (wx_lo, wx_hi, _, _, _, _) = strips[3].expect("the west strip the connected bit banks");
         assert!(
             (wx_lo - fc as f64).abs() < 1e-9 && (wx_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
             "the west strip the edge..post x span 0..11 banks"
@@ -28893,10 +30158,7 @@ mod tests {
         let g = w.size_blocks() / 2 - 12;
         // ARM 2a: the LONE POST raises (the all-NONE verdict)
         w.set(g, y, g, COBBLESTONE_WALL);
-        assert!(
-            wall_up(&w, g, y, g),
-            "the lone wall the raised post wears"
-        );
+        assert!(wall_up(&w, g, y, g), "the lone wall the raised post wears");
         // THE STRAIGHT LINE the FLAT TOP wears (the n&s connection
         // the symmetric verdict + the TALL pair the refusal arms —
         // the wall line the raised post NEVER wears)
@@ -28975,8 +30237,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -28994,14 +30256,8 @@ mod tests {
             );
         }
         assert_eq!(NAME_OF[GLASS as usize], "glass");
-        assert_eq!(
-            NAME_OF[WHITE_STAINED_GLASS as usize],
-            "white_stained_glass"
-        );
-        assert_eq!(
-            NAME_OF[BLACK_STAINED_GLASS as usize],
-            "black_stained_glass"
-        );
+        assert_eq!(NAME_OF[WHITE_STAINED_GLASS as usize], "white_stained_glass");
+        assert_eq!(NAME_OF[BLACK_STAINED_GLASS as usize], "black_stained_glass");
         // THE DYE LADDER'S OWN ORDER (the DyeColor ordinals the
         // collection walk banks — the wool ladder's own sequence the
         // window cloths wear)
@@ -29169,8 +30425,14 @@ mod tests {
         assert!(can_support_rail(STONE) && can_support_rail(DIRT));
         assert!(!can_support_rail(AIR) && !can_support_rail(WATER));
         assert!(!can_support_rail(FARMLAND) && !can_support_rail(DIRT_PATH));
-        assert!(!can_support_rail(RAIL), "the rail-on-rail the empty shape refuses");
-        assert!(!can_support_rail(TORCH), "the noCollision family the verdict refuses");
+        assert!(
+            !can_support_rail(RAIL),
+            "the rail-on-rail the empty shape refuses"
+        );
+        assert!(
+            !can_support_rail(TORCH),
+            "the noCollision family the verdict refuses"
+        );
         // THE AXIS FOLD (getHorizontalDirection's RAW look): the east
         // and west looks the X-axis quarter stamps, the south and the
         // north looks the Z-axis default keeps
@@ -29198,17 +30460,20 @@ mod tests {
         // answers, the drops the self-entry pool speaks, the item the
         // BlockItem pairing grants, the placeable the reverse walk
         // serves)
-        let (secs, _) = mc_registry::generated::block_dig::dig_row("rail")
-            .expect("the rail's own dig row");
+        let (secs, _) =
+            mc_registry::generated::block_dig::dig_row("rail").expect("the rail's own dig row");
         assert!(secs > 0.0, "the 0.7 strength the pickaxe row keeps");
-        let pools = mc_registry::generated::block_drops::drops("rail")
-            .expect("the rail's own loot row");
+        let pools =
+            mc_registry::generated::block_drops::drops("rail").expect("the rail's own loot row");
         assert_eq!(pools.len(), 1, "the single pool the drop speaks");
         assert_eq!(pools[0].entries[0].item, "rail", "the rail drops itself");
         assert!(mc_registry::item_id_by_name("rail").is_some());
         assert_eq!(World::placeable_block("rail"), Some(RAIL));
         assert_eq!(World::placeable_block("powered_rail"), Some(POWERED_RAIL));
-        assert_eq!(World::placeable_block("activator_rail"), Some(ACTIVATOR_RAIL));
+        assert_eq!(
+            World::placeable_block("activator_rail"),
+            Some(ACTIVATOR_RAIL)
+        );
     }
 
     #[test]
@@ -29243,8 +30508,7 @@ mod tests {
             "the REGISTRY_NAMES row the seat keeps"
         );
         assert_eq!(
-            NAME_OF[TINTED_GLASS as usize],
-            "tinted_glass",
+            NAME_OF[TINTED_GLASS as usize], "tinted_glass",
             "the plain registry name the lanes wire"
         );
         // THE PREDICATE'S OWN VERDICT (the kind-756 single row the
@@ -29413,7 +30677,13 @@ mod tests {
         // THE ENTITY FACES' OWN ROWS (the five kinds the served tiles
         // bank, the DRAGON/PIGLIN rows the TILE_NONE the custom
         // models keep, the six tiles the DISTINCT masters wear)
-        for k in [SKELETON_SKULL, WITHER_SKELETON_SKULL, ZOMBIE_HEAD, PLAYER_HEAD, CREEPER_HEAD] {
+        for k in [
+            SKELETON_SKULL,
+            WITHER_SKELETON_SKULL,
+            ZOMBIE_HEAD,
+            PLAYER_HEAD,
+            CREEPER_HEAD,
+        ] {
             let row = atlas::ENTITY_HEAD_FACES[k as usize];
             assert!(
                 row.iter().all(|t| *t != atlas::TILE_NONE),
@@ -29472,7 +30742,11 @@ mod tests {
             atlas::KIND_NAMES[PIGLIN_WALL_HEAD as usize],
             "piglin_wall_head"
         );
-        assert_eq!(NAME_OF.len(), atlas::N_KINDS, "the one count the tail keeps");
+        assert_eq!(
+            NAME_OF.len(),
+            atlas::N_KINDS,
+            "the one count the tail keeps"
+        );
         assert_eq!(NAME_OF[SKELETON_WALL_SKULL as usize], "skeleton_wall_skull");
         assert_eq!(NAME_OF[PIGLIN_WALL_HEAD as usize], "piglin_wall_head");
         // THE PREDICATES' OWN SPLIT (the humanoid five the lane
@@ -29505,7 +30779,11 @@ mod tests {
             None,
             "the dragon floor kind the swap never carries"
         );
-        assert_eq!(wall_head_twin(STONE), None, "the non-head kind the pair refuses");
+        assert_eq!(
+            wall_head_twin(STONE),
+            None,
+            "the non-head kind the pair refuses"
+        );
         for k in 757..=763u16 {
             assert!(
                 wall_head_floor_twin(k).is_some(),
@@ -29542,19 +30820,32 @@ mod tests {
             10,
         )
         .unwrap();
-        assert!((x_lo - 10.25).abs() < 1e-9 && (x_hi - 10.75).abs() < 1e-9, "north x 4..12");
-        assert!((y_lo - 20.25).abs() < 1e-9 && (y_hi - 20.75).abs() < 1e-9, "north y 4..12");
-        assert!((z_lo - 10.5).abs() < 1e-9 && (z_hi - 11.0).abs() < 1e-9, "north z 8..16");
-        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = shape_slabs(
-            CollisionShape::WallHead(WALL_TORCH_FACING_EAST),
-            10,
-            20,
-            10,
-        )
-        .unwrap();
-        assert!((x_lo - 10.0).abs() < 1e-9 && (x_hi - 10.5).abs() < 1e-9, "east x 0..8");
-        assert!((y_lo - 20.25).abs() < 1e-9 && (y_hi - 20.75).abs() < 1e-9, "east y 4..12");
-        assert!((z_lo - 10.25).abs() < 1e-9 && (z_hi - 10.75).abs() < 1e-9, "east z 4..12");
+        assert!(
+            (x_lo - 10.25).abs() < 1e-9 && (x_hi - 10.75).abs() < 1e-9,
+            "north x 4..12"
+        );
+        assert!(
+            (y_lo - 20.25).abs() < 1e-9 && (y_hi - 20.75).abs() < 1e-9,
+            "north y 4..12"
+        );
+        assert!(
+            (z_lo - 10.5).abs() < 1e-9 && (z_hi - 11.0).abs() < 1e-9,
+            "north z 8..16"
+        );
+        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(CollisionShape::WallHead(WALL_TORCH_FACING_EAST), 10, 20, 10).unwrap();
+        assert!(
+            (x_lo - 10.0).abs() < 1e-9 && (x_hi - 10.5).abs() < 1e-9,
+            "east x 0..8"
+        );
+        assert!(
+            (y_lo - 20.25).abs() < 1e-9 && (y_hi - 20.75).abs() < 1e-9,
+            "east y 4..12"
+        );
+        assert!(
+            (z_lo - 10.25).abs() < 1e-9 && (z_hi - 10.75).abs() < 1e-9,
+            "east z 4..12"
+        );
         let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = shape_slabs(
             CollisionShape::WallHead(WALL_TORCH_FACING_SOUTH),
             10,
@@ -29562,17 +30853,24 @@ mod tests {
             10,
         )
         .unwrap();
-        assert!((x_lo - 10.25).abs() < 1e-9 && (x_hi - 10.75).abs() < 1e-9, "south x 4..12");
-        assert!((z_lo - 10.0).abs() < 1e-9 && (z_hi - 10.5).abs() < 1e-9, "south z 0..8");
-        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = shape_slabs(
-            CollisionShape::WallHead(WALL_TORCH_FACING_WEST),
-            10,
-            20,
-            10,
-        )
-        .unwrap();
-        assert!((x_lo - 10.5).abs() < 1e-9 && (x_hi - 11.0).abs() < 1e-9, "west x 8..16");
-        assert!((z_lo - 10.25).abs() < 1e-9 && (z_hi - 10.75).abs() < 1e-9, "west z 4..12");
+        assert!(
+            (x_lo - 10.25).abs() < 1e-9 && (x_hi - 10.75).abs() < 1e-9,
+            "south x 4..12"
+        );
+        assert!(
+            (z_lo - 10.0).abs() < 1e-9 && (z_hi - 10.5).abs() < 1e-9,
+            "south z 0..8"
+        );
+        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(CollisionShape::WallHead(WALL_TORCH_FACING_WEST), 10, 20, 10).unwrap();
+        assert!(
+            (x_lo - 10.5).abs() < 1e-9 && (x_hi - 11.0).abs() < 1e-9,
+            "west x 8..16"
+        );
+        assert!(
+            (z_lo - 10.25).abs() < 1e-9 && (z_hi - 10.75).abs() < 1e-9,
+            "west z 4..12"
+        );
         // THE WALL HEADS' OWN LIGHT ROW (the wallVariant noOcclusion
         // copy the sky the cell passes — the compute walk the single
         // head cell the sky fill answers: the wall cell's own sky
@@ -29676,9 +30974,12 @@ mod tests {
             17,
             "the pane run the seventeen seats wear"
         );
-        assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(
+            BLACK_STAINED_GLASS, 559,
+            "the glass family the tail answers"
+        );
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -29879,8 +31180,7 @@ mod tests {
             "the 2px arm band the x walk keeps"
         );
         assert!(
-            ((north.4 - c as f64).abs() < 1e-9)
-                && ((north.5 - (c as f64 + 0.5)).abs() < 1e-9),
+            ((north.4 - c as f64).abs() < 1e-9) && ((north.5 - (c as f64 + 0.5)).abs() < 1e-9),
             "the edge..center z span the base row wears, got {}..{}",
             north.4,
             north.5
@@ -29900,7 +31200,12 @@ mod tests {
                 "the ONE-tile shape the family's kind {} keeps",
                 k
             );
-            assert_ne!(row[2], atlas::TILE_NONE, "the edge master the kind {} resolves", k);
+            assert_ne!(
+                row[2],
+                atlas::TILE_NONE,
+                "the edge master the kind {} resolves",
+                k
+            );
             // THE EDGE TILE THE PANE-TOP STEM BANKS (the atlas
             // tile-name walk the master's own row answers — the
             // pane-top stem the pane name's own _pane strip the
@@ -29963,10 +31268,22 @@ mod tests {
         // append-only law keeps — the pane family the predecessor
         // answers, the PREFIXES order the ladder banks)
         assert_eq!(COPPER_BARS, 578, "the bare rung its tail seat keeps");
-        assert_eq!(EXPOSED_COPPER_BARS, 579, "the exposed rung the ladder banks");
-        assert_eq!(WEATHERED_COPPER_BARS, 580, "the weathered rung the ladder banks");
-        assert_eq!(OXIDIZED_COPPER_BARS, 581, "the oxidized rung the ladder banks");
-        assert_eq!(WAXED_COPPER_BARS, 582, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            EXPOSED_COPPER_BARS, 579,
+            "the exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WEATHERED_COPPER_BARS, 580,
+            "the weathered rung the ladder banks"
+        );
+        assert_eq!(
+            OXIDIZED_COPPER_BARS, 581,
+            "the oxidized rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_COPPER_BARS, 582,
+            "the waxed head the twins' tail keeps"
+        );
         assert_eq!(
             WAXED_EXPOSED_COPPER_BARS, 583,
             "the waxed exposed rung the ladder banks"
@@ -29979,8 +31296,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -29999,7 +31316,10 @@ mod tests {
         }
         assert_eq!(NAME_OF[COPPER_BARS as usize], "copper_bars");
         assert_eq!(NAME_OF[EXPOSED_COPPER_BARS as usize], "exposed_copper_bars");
-        assert_eq!(NAME_OF[OXIDIZED_COPPER_BARS as usize], "oxidized_copper_bars");
+        assert_eq!(
+            NAME_OF[OXIDIZED_COPPER_BARS as usize],
+            "oxidized_copper_bars"
+        );
         assert_eq!(
             NAME_OF[WAXED_OXIDIZED_COPPER_BARS as usize],
             "waxed_oxidized_copper_bars"
@@ -30079,11 +31399,7 @@ mod tests {
                 k,
                 hard
             );
-            assert!(
-                tool,
-                "the pickaxe demand the rung {} the law wears",
-                k
-            );
+            assert!(tool, "the pickaxe demand the rung {} the law wears", k);
         }
         // THE VOICE LAWS THE FAMILY WEARS (the SoundType.COPPER row
         // the lambda$static$163 chain banks — the block.copper.*
@@ -30284,10 +31600,22 @@ mod tests {
         // predecessor answers)
         assert_eq!(IRON_CHAIN, 586, "the metal link its tail seat keeps");
         assert_eq!(COPPER_CHAIN, 587, "the bare rung the ladder banks");
-        assert_eq!(EXPOSED_COPPER_CHAIN, 588, "the exposed rung the ladder banks");
-        assert_eq!(WEATHERED_COPPER_CHAIN, 589, "the weathered rung the ladder banks");
-        assert_eq!(OXIDIZED_COPPER_CHAIN, 590, "the oxidized rung the ladder banks");
-        assert_eq!(WAXED_COPPER_CHAIN, 591, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            EXPOSED_COPPER_CHAIN, 588,
+            "the exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WEATHERED_COPPER_CHAIN, 589,
+            "the weathered rung the ladder banks"
+        );
+        assert_eq!(
+            OXIDIZED_COPPER_CHAIN, 590,
+            "the oxidized rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_COPPER_CHAIN, 591,
+            "the waxed head the twins' tail keeps"
+        );
         assert_eq!(
             WAXED_EXPOSED_COPPER_CHAIN, 592,
             "the waxed exposed rung the ladder banks"
@@ -30300,8 +31628,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -30320,7 +31648,10 @@ mod tests {
         }
         assert_eq!(NAME_OF[IRON_CHAIN as usize], "iron_chain");
         assert_eq!(NAME_OF[COPPER_CHAIN as usize], "copper_chain");
-        assert_eq!(NAME_OF[OXIDIZED_COPPER_CHAIN as usize], "oxidized_copper_chain");
+        assert_eq!(
+            NAME_OF[OXIDIZED_COPPER_CHAIN as usize],
+            "oxidized_copper_chain"
+        );
         assert_eq!(
             NAME_OF[WAXED_OXIDIZED_COPPER_CHAIN as usize],
             "waxed_oxidized_copper_chain"
@@ -30351,12 +31682,36 @@ mod tests {
         // state wears: the floor/ceiling hits the Y axis keeps, the
         // north/south normals the Z axis wears, the west/east normals
         // the X axis banks)
-        assert_eq!(chain_placement_variant(0), CHAIN_AXIS_Y, "the ceiling hit the y axis keeps");
-        assert_eq!(chain_placement_variant(1), CHAIN_AXIS_Y, "the floor hit the y axis keeps");
-        assert_eq!(chain_placement_variant(2), CHAIN_AXIS_Z, "the north hit the z axis wears");
-        assert_eq!(chain_placement_variant(3), CHAIN_AXIS_Z, "the south hit the z axis wears");
-        assert_eq!(chain_placement_variant(4), CHAIN_AXIS_X, "the west hit the x axis banks");
-        assert_eq!(chain_placement_variant(5), CHAIN_AXIS_X, "the east hit the x axis banks");
+        assert_eq!(
+            chain_placement_variant(0),
+            CHAIN_AXIS_Y,
+            "the ceiling hit the y axis keeps"
+        );
+        assert_eq!(
+            chain_placement_variant(1),
+            CHAIN_AXIS_Y,
+            "the floor hit the y axis keeps"
+        );
+        assert_eq!(
+            chain_placement_variant(2),
+            CHAIN_AXIS_Z,
+            "the north hit the z axis wears"
+        );
+        assert_eq!(
+            chain_placement_variant(3),
+            CHAIN_AXIS_Z,
+            "the south hit the z axis wears"
+        );
+        assert_eq!(
+            chain_placement_variant(4),
+            CHAIN_AXIS_X,
+            "the west hit the x axis banks"
+        );
+        assert_eq!(
+            chain_placement_variant(5),
+            CHAIN_AXIS_X,
+            "the east hit the x axis banks"
+        );
         // THE PLACEABLE LANE (the Items pairing rows the reverse walk
         // answers — the nine item forms the placement grants)
         for (i, name) in [
@@ -30553,7 +31908,12 @@ mod tests {
                 "the ONE-tile shape the family's kind {} keeps",
                 k
             );
-            assert_ne!(row[2], atlas::TILE_NONE, "the master the kind {} resolves", k);
+            assert_ne!(
+                row[2],
+                atlas::TILE_NONE,
+                "the master the kind {} resolves",
+                k
+            );
         }
     }
 
@@ -30583,10 +31943,22 @@ mod tests {
         assert_eq!(LANTERN, 595, "the iron seam its tail seat keeps");
         assert_eq!(SOUL_LANTERN, 596, "the soul flame the ladder banks");
         assert_eq!(COPPER_LANTERN, 597, "the bare copper rung the ladder banks");
-        assert_eq!(EXPOSED_COPPER_LANTERN, 598, "the exposed rung the ladder banks");
-        assert_eq!(WEATHERED_COPPER_LANTERN, 599, "the weathered rung the ladder banks");
-        assert_eq!(OXIDIZED_COPPER_LANTERN, 600, "the oxidized rung the ladder banks");
-        assert_eq!(WAXED_COPPER_LANTERN, 601, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            EXPOSED_COPPER_LANTERN, 598,
+            "the exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WEATHERED_COPPER_LANTERN, 599,
+            "the weathered rung the ladder banks"
+        );
+        assert_eq!(
+            OXIDIZED_COPPER_LANTERN, 600,
+            "the oxidized rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_COPPER_LANTERN, 601,
+            "the waxed head the twins' tail keeps"
+        );
         assert_eq!(
             WAXED_EXPOSED_COPPER_LANTERN, 602,
             "the waxed exposed rung the ladder banks"
@@ -30599,8 +31971,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -30619,7 +31991,10 @@ mod tests {
         }
         assert_eq!(NAME_OF[LANTERN as usize], "lantern");
         assert_eq!(NAME_OF[SOUL_LANTERN as usize], "soul_lantern");
-        assert_eq!(NAME_OF[OXIDIZED_COPPER_LANTERN as usize], "oxidized_copper_lantern");
+        assert_eq!(
+            NAME_OF[OXIDIZED_COPPER_LANTERN as usize],
+            "oxidized_copper_lantern"
+        );
         assert_eq!(
             NAME_OF[WAXED_OXIDIZED_COPPER_LANTERN as usize],
             "waxed_oxidized_copper_lantern"
@@ -30640,7 +32015,9 @@ mod tests {
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
             assert!(is_lantern(k), "the lantern {} the range banks", k);
         }
-        assert!(is_copper_lantern(COPPER_LANTERN) && is_copper_lantern(WAXED_OXIDIZED_COPPER_LANTERN));
+        assert!(
+            is_copper_lantern(COPPER_LANTERN) && is_copper_lantern(WAXED_OXIDIZED_COPPER_LANTERN)
+        );
         assert!(
             !is_copper_lantern(LANTERN) && !is_copper_lantern(SOUL_LANTERN),
             "the vanilla pair the copper half the range refuses"
@@ -30695,8 +32072,14 @@ mod tests {
         // delegate the can_support_lantern fold answers — the chains
         // the sturdy default the classic lamp post keeps, the fluids
         // and the plants the verdict refuses)
-        assert!(can_support_lantern(IRON_CHAIN), "the chain the sturdy default keeps");
-        assert!(can_support_lantern(STONE), "the stone the sturdy face keeps");
+        assert!(
+            can_support_lantern(IRON_CHAIN),
+            "the chain the sturdy default keeps"
+        );
+        assert!(
+            can_support_lantern(STONE),
+            "the stone the sturdy face keeps"
+        );
         assert!(
             !can_support_lantern(AIR) && !can_support_lantern(WATER) && !can_support_lantern(LAVA),
             "the fluids the support verdict refuses"
@@ -30708,7 +32091,10 @@ mod tests {
         // THE HANGING VOCABULARY (the registerDefaultState pin the
         // standing default keeps)
         assert_eq!(LANTERN_STANDING, 0, "the unstamped byte the standing wears");
-        assert_ne!(LANTERN_HANGING, LANTERN_STANDING, "the pair the distinct bytes bank");
+        assert_ne!(
+            LANTERN_HANGING, LANTERN_STANDING,
+            "the pair the distinct bytes bank"
+        );
         // THE PLACEABLE LANE (the Items pairing rows the reverse walk
         // answers — the ten item forms the placement grants)
         for (i, name) in [
@@ -30745,11 +32131,7 @@ mod tests {
                 k,
                 hard
             );
-            assert!(
-                !tool,
-                "the no-tool demand the lantern {} the law wears",
-                k
-            );
+            assert!(!tool, "the no-tool demand the lantern {} the law wears", k);
         }
         // THE VOICE LAWS THE FAMILY WEARS (the SoundType.LANTERN row
         // the lambda$static$308 chain banks — the block.lantern.*
@@ -30811,8 +32193,7 @@ mod tests {
             "the 0.5±3/16 band the body's z walk keeps, got {z_lo}..{z_hi}"
         );
         assert!(
-            ((y_lo - y as f64).abs() < 1e-9)
-                && ((y_hi - (y as f64 + 7.0 / 16.0)).abs() < 1e-9),
+            ((y_lo - y as f64).abs() < 1e-9) && ((y_hi - (y as f64 + 7.0 / 16.0)).abs() < 1e-9),
             "the 0..7/16 y band the standing body keeps, got {y_lo}..{y_hi}"
         );
         // the standing cap box (the column(4.0, 7.0, 9.0) fold the
@@ -30838,7 +32219,10 @@ mod tests {
         let CollisionShape::Lantern(hanging) = shape else {
             panic!("the lantern shape the variant-aware lane banks");
         };
-        assert_eq!(hanging, LANTERN_HANGING, "the placed byte the hanging wears");
+        assert_eq!(
+            hanging, LANTERN_HANGING,
+            "the placed byte the hanging wears"
+        );
         let (_x_lo, _x_hi, y_lo, y_hi, _z_lo, _z_hi) =
             shape_slabs(shape, c, y, c).expect("the lantern shape the slabs never refuse");
         assert!(
@@ -30915,7 +32299,12 @@ mod tests {
                 "the ONE-tile shape the family's kind {} keeps",
                 k
             );
-            assert_ne!(row[2], atlas::TILE_NONE, "the master the kind {} resolves", k);
+            assert_ne!(
+                row[2],
+                atlas::TILE_NONE,
+                "the master the kind {} resolves",
+                k
+            );
         }
     }
 
@@ -30943,10 +32332,19 @@ mod tests {
         assert_eq!(OAK_STAIRS, 605, "the wooden head its tail seat keeps");
         assert_eq!(COBBLESTONE_STAIRS, 606, "the cobble row the ladder banks");
         assert_eq!(BRICK_STAIRS, 607, "the brick row the ladder banks");
-        assert_eq!(STONE_BRICK_STAIRS, 608, "the stone brick row the ladder banks");
+        assert_eq!(
+            STONE_BRICK_STAIRS, 608,
+            "the stone brick row the ladder banks"
+        );
         assert_eq!(MUD_BRICK_STAIRS, 609, "the mud brick row the ladder banks");
-        assert_eq!(RESIN_BRICK_STAIRS, 610, "the resin brick row the ladder banks");
-        assert_eq!(NETHER_BRICK_STAIRS, 611, "the nether brick row the ladder banks");
+        assert_eq!(
+            RESIN_BRICK_STAIRS, 610,
+            "the resin brick row the ladder banks"
+        );
+        assert_eq!(
+            NETHER_BRICK_STAIRS, 611,
+            "the nether brick row the ladder banks"
+        );
         assert_eq!(SANDSTONE_STAIRS, 612, "the sandstone row the ladder banks");
         assert_eq!(SPRUCE_STAIRS, 613, "the spruce row the ladder banks");
         assert_eq!(BIRCH_STAIRS, 614, "the birch row the ladder banks");
@@ -30959,7 +32357,10 @@ mod tests {
         assert_eq!(MANGROVE_STAIRS, 621, "the mangrove row the ladder banks");
         assert_eq!(BAMBOO_STAIRS, 622, "the bamboo row the ladder banks");
         assert_eq!(BAMBOO_MOSAIC_STAIRS, 623, "the mosaic row the ladder banks");
-        assert_eq!(PRISMARINE_STAIRS, 624, "the prismarine row the ladder banks");
+        assert_eq!(
+            PRISMARINE_STAIRS, 624,
+            "the prismarine row the ladder banks"
+        );
         assert_eq!(
             PRISMARINE_BRICK_STAIRS, 625,
             "the prismarine brick row the ladder banks"
@@ -30968,7 +32369,10 @@ mod tests {
             DARK_PRISMARINE_STAIRS, 626,
             "the dark prismarine row the ladder banks"
         );
-        assert_eq!(RED_SANDSTONE_STAIRS, 627, "the red sandstone row the ladder banks");
+        assert_eq!(
+            RED_SANDSTONE_STAIRS, 627,
+            "the red sandstone row the ladder banks"
+        );
         assert_eq!(PURPUR_STAIRS, 628, "the purpur row the ladder banks");
         assert_eq!(
             POLISHED_GRANITE_STAIRS, 629,
@@ -31016,7 +32420,10 @@ mod tests {
         assert_eq!(DIORITE_STAIRS, 642, "the diorite row the ladder banks");
         assert_eq!(CRIMSON_STAIRS, 643, "the crimson row the ladder banks");
         assert_eq!(WARPED_STAIRS, 644, "the warped row the ladder banks");
-        assert_eq!(BLACKSTONE_STAIRS, 645, "the blackstone row the ladder banks");
+        assert_eq!(
+            BLACKSTONE_STAIRS, 645,
+            "the blackstone row the ladder banks"
+        );
         assert_eq!(
             POLISHED_BLACKSTONE_BRICK_STAIRS, 646,
             "the polished blackstone brick row the ladder banks"
@@ -31030,13 +32437,19 @@ mod tests {
             POLISHED_TUFF_STAIRS, 649,
             "the polished tuff row the ladder banks"
         );
-        assert_eq!(TUFF_BRICK_STAIRS, 650, "the tuff brick row the ladder banks");
+        assert_eq!(
+            TUFF_BRICK_STAIRS, 650,
+            "the tuff brick row the ladder banks"
+        );
         assert_eq!(SULFUR_STAIRS, 651, "the sulfur row the ladder banks");
         assert_eq!(
             POLISHED_SULFUR_STAIRS, 652,
             "the polished sulfur row the ladder banks"
         );
-        assert_eq!(SULFUR_BRICK_STAIRS, 653, "the sulfur brick row the ladder banks");
+        assert_eq!(
+            SULFUR_BRICK_STAIRS, 653,
+            "the sulfur brick row the ladder banks"
+        );
         assert_eq!(CINNABAR_STAIRS, 654, "the cinnabar row the ladder banks");
         assert_eq!(
             POLISHED_CINNABAR_STAIRS, 655,
@@ -31046,11 +32459,26 @@ mod tests {
             CINNABAR_BRICK_STAIRS, 656,
             "the cinnabar brick row the ladder banks"
         );
-        assert_eq!(CUT_COPPER_STAIRS, 657, "the copper head its tail seat keeps");
-        assert_eq!(EXPOSED_CUT_COPPER_STAIRS, 658, "the exposed rung the ladder banks");
-        assert_eq!(WEATHERED_CUT_COPPER_STAIRS, 659, "the weathered rung the ladder banks");
-        assert_eq!(OXIDIZED_CUT_COPPER_STAIRS, 660, "the oxidized rung the ladder banks");
-        assert_eq!(WAXED_CUT_COPPER_STAIRS, 661, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            CUT_COPPER_STAIRS, 657,
+            "the copper head its tail seat keeps"
+        );
+        assert_eq!(
+            EXPOSED_CUT_COPPER_STAIRS, 658,
+            "the exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WEATHERED_CUT_COPPER_STAIRS, 659,
+            "the weathered rung the ladder banks"
+        );
+        assert_eq!(
+            OXIDIZED_CUT_COPPER_STAIRS, 660,
+            "the oxidized rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_CUT_COPPER_STAIRS, 661,
+            "the waxed head the twins' tail keeps"
+        );
         assert_eq!(
             WAXED_EXPOSED_CUT_COPPER_STAIRS, 662,
             "the waxed exposed rung the ladder banks"
@@ -31079,8 +32507,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -31100,15 +32528,32 @@ mod tests {
         // THE LADDER'S OWN CONTIGUITY (the STAIRS_KINDS walk the
         // 605..669 range the same order banks)
         for (i, k) in STAIRS_KINDS.iter().enumerate() {
-            assert_eq!(*k, OAK_STAIRS + i as u16, "the ladder seat {} the walk keeps", i);
+            assert_eq!(
+                *k,
+                OAK_STAIRS + i as u16,
+                "the ladder seat {} the walk keeps",
+                i
+            );
         }
         assert!(is_stairs(OAK_STAIRS), "the head the kind read answers");
-        assert!(is_stairs(DEEPSLATE_BRICK_STAIRS), "the tail the kind read answers");
-        assert!(!is_stairs(OAK_STAIRS - 1), "the lantern tail the read refuses");
-        assert!(!is_stairs(DEEPSLATE_BRICK_STAIRS + 1), "beyond the tail the read refuses");
+        assert!(
+            is_stairs(DEEPSLATE_BRICK_STAIRS),
+            "the tail the kind read answers"
+        );
+        assert!(
+            !is_stairs(OAK_STAIRS - 1),
+            "the lantern tail the read refuses"
+        );
+        assert!(
+            !is_stairs(DEEPSLATE_BRICK_STAIRS + 1),
+            "beyond the tail the read refuses"
+        );
         assert!(is_copper_stairs(CUT_COPPER_STAIRS));
         assert!(is_copper_stairs(WAXED_OXIDIZED_CUT_COPPER_STAIRS));
-        assert!(!is_copper_stairs(CINNABAR_BRICK_STAIRS), "the non-copper the read refuses");
+        assert!(
+            !is_copper_stairs(CINNABAR_BRICK_STAIRS),
+            "the non-copper the read refuses"
+        );
         // THE VARIANT'S OWN PACK/UNPACK (the facing pair + the half bit
         // the roundtrip keeps, the default state's NORTH+BOTTOM pin the
         // zero byte wears — the HALF vocabulary the bits the consts
@@ -31133,8 +32578,16 @@ mod tests {
         for facing in 0..4u8 {
             for half_top in [false, true] {
                 let v = stairs_variant(facing, half_top);
-                assert_eq!(stairs_variant_facing(v), facing, "the facing the unpack keeps");
-                assert_eq!(stairs_variant_half(v), half_top, "the half the unpack keeps");
+                assert_eq!(
+                    stairs_variant_facing(v),
+                    facing,
+                    "the facing the unpack keeps"
+                );
+                assert_eq!(
+                    stairs_variant_half(v),
+                    half_top,
+                    "the half the unpack keeps"
+                );
             }
         }
         // THE PLACEABLE LANES THE ITEMS TABLE BANKS (the 64 pairing
@@ -31169,7 +32622,11 @@ mod tests {
                 hard,
                 h
             );
-            assert_eq!(t, tool, "the tool demand the {} row keeps", NAME_OF[k as usize]);
+            assert_eq!(
+                t, tool,
+                "the tool demand the {} row keeps",
+                NAME_OF[k as usize]
+            );
         }
         // THE VOICE LAWS THE FAMILY WEARS (the SoundType rows the
         // generated table banks — the wooden rows block.wood.*, the
@@ -31346,23 +32803,34 @@ mod tests {
         );
         let (x0, y0, _z0, x1, y1, _z1) =
             boxes[1].expect("the straight step the boxes never refuse");
-        assert_eq!((x0, y0, x1, y1), (8, 8, 16, 16), "the east step the straight keeps");
+        assert_eq!(
+            (x0, y0, x1, y1),
+            (8, 8, 16, 16),
+            "the east step the straight keeps"
+        );
         // the top-half flip (the x=180 the slab the upper band + the
         // step the lower band wears)
         let boxes = stairs_state_boxes(
             stairs_variant(STAIRS_FACING_EAST, true) | (STAIRS_SHAPE_STRAIGHT << 3),
         );
         let (x0, y0, _z0, x1, y1, _z1) = boxes[0].expect("the top slab never refuses");
-        assert_eq!((x0, y0, x1, y1), (0, 8, 16, 16), "the top slab the x=180 flip keeps");
+        assert_eq!(
+            (x0, y0, x1, y1),
+            (0, 8, 16, 16),
+            "the top slab the x=180 flip keeps"
+        );
         let (x0, y0, _z0, x1, y1, _z1) = boxes[1].expect("the top step never refuses");
-        assert_eq!((x0, y0, x1, y1), (8, 0, 16, 8), "the top step the lower band wears");
+        assert_eq!(
+            (x0, y0, x1, y1),
+            (8, 0, 16, 8),
+            "the top step the lower band wears"
+        );
         // the north-bottom straight's step (the y=270 the three CW
         // quarters the north half banks)
         let boxes = stairs_state_boxes(
             stairs_variant(STAIRS_FACING_NORTH, false) | (STAIRS_SHAPE_STRAIGHT << 3),
         );
-        let (x0, y0, z0, x1, y1, z1) =
-            boxes[1].expect("the north step never refuses");
+        let (x0, y0, z0, x1, y1, z1) = boxes[1].expect("the north step never refuses");
         assert_eq!(
             (x0, y0, z0, x1, y1, z1),
             (0, 8, 0, 16, 16, 8),
@@ -31376,19 +32844,30 @@ mod tests {
         let (x0, _y0, _z0, x1, _y1, _z1) = boxes[1].expect("the inner east arm never refuses");
         assert_eq!((x0, x1), (8, 16), "the east arm the inner keeps");
         let (x0, _y0, z0, x1, _y1, z1) = boxes[2].expect("the inner SW arm never refuses");
-        assert_eq!((x0, z0, x1, z1), (0, 8, 8, 16), "the SW quarter the inner keeps");
+        assert_eq!(
+            (x0, z0, x1, z1),
+            (0, 8, 8, 16),
+            "the SW quarter the inner keeps"
+        );
         // the outer's quarter step (the east-bottom outer-right the
         // SE quarter the corner keeps)
         let boxes = stairs_state_boxes(
             stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_OUTER_RIGHT << 3),
         );
         let (x0, _y0, z0, x1, _y1, z1) = boxes[1].expect("the outer quarter never refuses");
-        assert_eq!((x0, z0, x1, z1), (8, 8, 16, 16), "the SE quarter the outer keeps");
+        assert_eq!(
+            (x0, z0, x1, z1),
+            (8, 8, 16, 16),
+            "the SE quarter the outer keeps"
+        );
         // the straight flight the third box NEVER wears
         let boxes = stairs_state_boxes(
             stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_STRAIGHT << 3),
         );
-        assert!(boxes[2].is_none(), "the straight flight the third box refuses");
+        assert!(
+            boxes[2].is_none(),
+            "the straight flight the third box refuses"
+        );
         // THE STEPS' OWN ROSTER (the body walks the 2-slot walk the
         // compound serves — the world-space tuple the /16 fold
         // answers)
@@ -31399,14 +32878,16 @@ mod tests {
         let (x_lo, x_hi, _y_lo, _y_hi, _z_lo, _z_hi) =
             step0.expect("the inner step the roster never refuses");
         assert!(
-            ((x_lo - (cc as f64 + 0.5)).abs() < 1e-9)
-                && ((x_hi - (cc as f64 + 1.0)).abs() < 1e-9),
+            ((x_lo - (cc as f64 + 0.5)).abs() < 1e-9) && ((x_hi - (cc as f64 + 1.0)).abs() < 1e-9),
             "the east arm the roster's x walk keeps, got {x_lo}..{x_hi}"
         );
         assert!(step1.is_some(), "the inner the second arm the roster banks");
         let shape = CollisionShape::Stairs(stairs_variant(STAIRS_FACING_EAST, false));
         let [step0, step1] = stairs_step_slabs(shape, cc, yy, cc);
-        assert!(step0.is_some(), "the straight the one step the roster banks");
+        assert!(
+            step0.is_some(),
+            "the straight the one step the roster banks"
+        );
         assert!(step1.is_none(), "the straight the second slot refuses");
     }
 
@@ -31434,8 +32915,14 @@ mod tests {
         // answers)
         assert_eq!(RESIN_BRICK_SLAB, 669, "the resin head its tail seat keeps");
         assert_eq!(PRISMARINE_SLAB, 670, "the prismarine row the ladder banks");
-        assert_eq!(PRISMARINE_BRICK_SLAB, 671, "the prismarine brick row the ladder banks");
-        assert_eq!(DARK_PRISMARINE_SLAB, 672, "the dark prismarine row the ladder banks");
+        assert_eq!(
+            PRISMARINE_BRICK_SLAB, 671,
+            "the prismarine brick row the ladder banks"
+        );
+        assert_eq!(
+            DARK_PRISMARINE_SLAB, 672,
+            "the dark prismarine row the ladder banks"
+        );
         assert_eq!(OAK_SLAB, 673, "the wooden head its seat keeps");
         assert_eq!(SPRUCE_SLAB, 674, "the spruce row the ladder banks");
         assert_eq!(BIRCH_SLAB, 675, "the birch row the ladder banks");
@@ -31448,20 +32935,47 @@ mod tests {
         assert_eq!(BAMBOO_SLAB, 682, "the bamboo row the ladder banks");
         assert_eq!(BAMBOO_MOSAIC_SLAB, 683, "the mosaic row the ladder banks");
         assert_eq!(STONE_SLAB, 684, "the stone row the ladder banks");
-        assert_eq!(SMOOTH_STONE_SLAB, 685, "the smooth stone row the ladder banks");
+        assert_eq!(
+            SMOOTH_STONE_SLAB, 685,
+            "the smooth stone row the ladder banks"
+        );
         assert_eq!(SANDSTONE_SLAB, 686, "the sandstone row the ladder banks");
-        assert_eq!(CUT_SANDSTONE_SLAB, 687, "the cut sandstone row the ladder banks");
-        assert_eq!(PETRIFIED_OAK_SLAB, 688, "the petrified row the ladder banks");
-        assert_eq!(COBBLESTONE_SLAB, 689, "the cobblestone row the ladder banks");
+        assert_eq!(
+            CUT_SANDSTONE_SLAB, 687,
+            "the cut sandstone row the ladder banks"
+        );
+        assert_eq!(
+            PETRIFIED_OAK_SLAB, 688,
+            "the petrified row the ladder banks"
+        );
+        assert_eq!(
+            COBBLESTONE_SLAB, 689,
+            "the cobblestone row the ladder banks"
+        );
         assert_eq!(BRICK_SLAB, 690, "the brick row the ladder banks");
-        assert_eq!(STONE_BRICK_SLAB, 691, "the stone brick row the ladder banks");
+        assert_eq!(
+            STONE_BRICK_SLAB, 691,
+            "the stone brick row the ladder banks"
+        );
         assert_eq!(MUD_BRICK_SLAB, 692, "the mud brick row the ladder banks");
-        assert_eq!(NETHER_BRICK_SLAB, 693, "the nether brick row the ladder banks");
+        assert_eq!(
+            NETHER_BRICK_SLAB, 693,
+            "the nether brick row the ladder banks"
+        );
         assert_eq!(QUARTZ_SLAB, 694, "the quartz row the ladder banks");
-        assert_eq!(RED_SANDSTONE_SLAB, 695, "the red sandstone row the ladder banks");
-        assert_eq!(CUT_RED_SANDSTONE_SLAB, 696, "the cut red sandstone row the ladder banks");
+        assert_eq!(
+            RED_SANDSTONE_SLAB, 695,
+            "the red sandstone row the ladder banks"
+        );
+        assert_eq!(
+            CUT_RED_SANDSTONE_SLAB, 696,
+            "the cut red sandstone row the ladder banks"
+        );
         assert_eq!(PURPUR_SLAB, 697, "the purpur row the ladder banks");
-        assert_eq!(POLISHED_GRANITE_SLAB, 698, "the polished granite row the ladder banks");
+        assert_eq!(
+            POLISHED_GRANITE_SLAB, 698,
+            "the polished granite row the ladder banks"
+        );
         assert_eq!(
             SMOOTH_RED_SANDSTONE_SLAB, 699,
             "the smooth red sandstone row the ladder banks"
@@ -31523,7 +33037,10 @@ mod tests {
             POLISHED_SULFUR_SLAB, 720,
             "the polished sulfur row the ladder banks"
         );
-        assert_eq!(SULFUR_BRICK_SLAB, 721, "the sulfur brick row the ladder banks");
+        assert_eq!(
+            SULFUR_BRICK_SLAB, 721,
+            "the sulfur brick row the ladder banks"
+        );
         assert_eq!(CINNABAR_SLAB, 722, "the cinnabar row the ladder banks");
         assert_eq!(
             POLISHED_CINNABAR_SLAB, 723,
@@ -31546,7 +33063,10 @@ mod tests {
             OXIDIZED_CUT_COPPER_SLAB, 728,
             "the oxidized rung the collection banks"
         );
-        assert_eq!(WAXED_CUT_COPPER_SLAB, 729, "the waxed rung the collection banks");
+        assert_eq!(
+            WAXED_CUT_COPPER_SLAB, 729,
+            "the waxed rung the collection banks"
+        );
         assert_eq!(
             WAXED_EXPOSED_CUT_COPPER_SLAB, 730,
             "the waxed exposed rung the collection banks"
@@ -31575,8 +33095,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -31604,9 +33124,18 @@ mod tests {
             );
         }
         assert!(is_slab(RESIN_BRICK_SLAB), "the head the kind read answers");
-        assert!(is_slab(DEEPSLATE_BRICK_SLAB), "the tail the kind read answers");
-        assert!(!is_slab(RESIN_BRICK_SLAB - 1), "the stairs tail the read refuses");
-        assert!(!is_slab(DEEPSLATE_BRICK_SLAB + 1), "beyond the tail the read refuses");
+        assert!(
+            is_slab(DEEPSLATE_BRICK_SLAB),
+            "the tail the kind read answers"
+        );
+        assert!(
+            !is_slab(RESIN_BRICK_SLAB - 1),
+            "the stairs tail the read refuses"
+        );
+        assert!(
+            !is_slab(DEEPSLATE_BRICK_SLAB + 1),
+            "beyond the tail the read refuses"
+        );
         assert!(is_copper_slab(CUT_COPPER_SLAB));
         assert!(is_copper_slab(WAXED_OXIDIZED_CUT_COPPER_SLAB));
         assert!(
@@ -31753,8 +33282,7 @@ mod tests {
         let (_x_lo, _x_hi, y_lo, y_hi, _z_lo, _z_hi) =
             shape_slabs(shape, c, y, c).expect("the top slab the slabs never refuse");
         assert!(
-            ((y_lo - (y as f64 + 0.5)).abs() < 1e-9)
-                && ((y_hi - (y as f64 + 1.0)).abs() < 1e-9),
+            ((y_lo - (y as f64 + 0.5)).abs() < 1e-9) && ((y_hi - (y as f64 + 1.0)).abs() < 1e-9),
             "the 8..16 band the top slab keeps, got {y_lo}..{y_hi}"
         );
         w.set_variant(c, y, c, slab_variant(SLAB_TYPE_DOUBLE));
@@ -31813,7 +33341,9 @@ mod tests {
             "the sandstone top split the walk banks"
         );
         assert!(
-            atlas::TILE_NAMES.iter().any(|n| *n == "quartz_block_bottom"),
+            atlas::TILE_NAMES
+                .iter()
+                .any(|n| *n == "quartz_block_bottom"),
             "the quartz bottom split the walk banks"
         );
         assert!(
@@ -31862,10 +33392,7 @@ mod tests {
             OXIDIZED_COPPER_CHEST, 743,
             "the oxidized rung the ladder banks"
         );
-        assert_eq!(
-            WAXED_COPPER_CHEST, 744,
-            "the waxed head its seat keeps"
-        );
+        assert_eq!(WAXED_COPPER_CHEST, 744, "the waxed head its seat keeps");
         assert_eq!(
             WAXED_EXPOSED_COPPER_CHEST, 745,
             "the waxed exposed rung the ladder banks"
@@ -31878,7 +33405,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -31887,8 +33414,7 @@ mod tests {
             );
             assert!(is_chest(k), "the kind {} the family predicate keeps", k);
             assert_eq!(
-                NAME_OF[k as usize],
-                NAME_OF[k as usize],
+                NAME_OF[k as usize], NAME_OF[k as usize],
                 "the name row the ladder banks"
             );
         }
@@ -32025,7 +33551,12 @@ mod tests {
         // the same-facing neighbor at the CW side (facing north -> the
         // east side) the LEFT pair banks
         w.set(c + 1, y, c, CHEST);
-        w.set_variant(c + 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(
+            c + 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         assert_eq!(
             chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
             CHEST_TYPE_LEFT,
@@ -32033,7 +33564,12 @@ mod tests {
         );
         // the CCW side the RIGHT arm answers (the west neighbor)
         w.set(c - 1, y, c, CHEST);
-        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         w.set(c + 1, y, c, AIR);
         assert_eq!(
             chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
@@ -32051,7 +33587,12 @@ mod tests {
         );
         // the DOUBLE partner the SINGLE-type gate refuses
         w.set(c + 1, y, c, CHEST);
-        w.set_variant(c + 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT));
+        w.set_variant(
+            c + 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT),
+        );
         assert_eq!(
             chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
             CHEST_TYPE_SINGLE,
@@ -32065,7 +33606,12 @@ mod tests {
         assert_eq!(collision_shape(CHEST), CollisionShape::Chest(0));
         let mut wc = World::blank(3, 0x6D42);
         wc.set(c, y, c, CHEST);
-        wc.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        wc.set_variant(
+            c,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         let shape = collision_shape_at(&wc, c, y, c);
         let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
             shape_slabs(shape, c, y, c).expect("the single chest the slabs never refuse");
@@ -32077,18 +33623,12 @@ mod tests {
             "the 14/16 inset box the single keeps, got {x_lo}..{x_hi} {z_lo}..{z_hi}"
         );
         assert!(
-            ((y_lo - y as f64).abs() < 1e-9)
-                && ((y_hi - (y as f64 + 14.0 / 16.0)).abs() < 1e-9),
+            ((y_lo - y as f64).abs() < 1e-9) && ((y_hi - (y as f64 + 14.0 / 16.0)).abs() < 1e-9),
             "the 0..14 band the single keeps, got {y_lo}..{y_hi}"
         );
         // the LEFT double (facing north, the partner east) the flush
         // EAST edge the x 2..16 arm wears + the 15/16 band
-        wc.set_variant(
-            c,
-            y,
-            c,
-            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT),
-        );
+        wc.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
         let shape = collision_shape_at(&wc, c, y, c);
         let (x_lo, x_hi, _y_lo, y_hi, _z_lo, _z_hi) =
             shape_slabs(shape, c, y, c).expect("the double the slabs never refuse");
@@ -32132,7 +33672,9 @@ mod tests {
             "the waxed twin the bare copper tiles re-wears"
         );
         assert!(
-            atlas::TILE_NAMES.iter().any(|n| *n == "trapped_chest_front"),
+            atlas::TILE_NAMES
+                .iter()
+                .any(|n| *n == "trapped_chest_front"),
             "the trapped family the own tiles banks"
         );
         assert!(
@@ -32140,7 +33682,9 @@ mod tests {
             "the ender family the own tiles banks"
         );
         assert!(
-            atlas::TILE_NAMES.iter().any(|n| *n == "oxidized_copper_chest_front"),
+            atlas::TILE_NAMES
+                .iter()
+                .any(|n| *n == "oxidized_copper_chest_front"),
             "the oxidized rung its own tiles banks"
         );
     }
@@ -32278,8 +33822,8 @@ mod tests {
         // bytes serve
         use crate::world::{
             shulker_variant, shulker_variant_facing, shulker_variant_open, SHULKER_FACING_DOWN,
-            SHULKER_FACING_EAST, SHULKER_FACING_NORTH, SHULKER_FACING_SOUTH,
-            SHULKER_FACING_UP, SHULKER_FACING_WEST, SHULKER_OPEN_BIT,
+            SHULKER_FACING_EAST, SHULKER_FACING_NORTH, SHULKER_FACING_SOUTH, SHULKER_FACING_UP,
+            SHULKER_FACING_WEST, SHULKER_OPEN_BIT,
         };
         // THE COMPOSE'S OWN BYTES (the closed default the fresh
         // placement wears, the open bit the container walk rides)
@@ -32297,7 +33841,11 @@ mod tests {
             (SHULKER_FACING_EAST, 5),
         ] {
             let v = shulker_variant(facing, true);
-            assert_eq!(shulker_variant_facing(v), facing, "the facing read the ordinal {ordinal} wears");
+            assert_eq!(
+                shulker_variant_facing(v),
+                facing,
+                "the facing read the ordinal {ordinal} wears"
+            );
             assert!(shulker_variant_open(v), "the open read the bit keeps");
         }
         // THE STAMP'S OWN ORTHOGONALITY (the close walk the bit clear
@@ -32858,7 +34406,11 @@ mod tests {
             Some("red"),
             "the kind's own color the lookup serves"
         );
-        assert_eq!(bed_color_name(STONE), None, "the unknown the honest None keeps");
+        assert_eq!(
+            bed_color_name(STONE),
+            None,
+            "the unknown the honest None keeps"
+        );
         // THE VARIANT'S OWN ROUND-TRIP (the facing the low pair, the
         // part the third bit — the stamp the read the same byte
         // answers)
@@ -32869,7 +34421,11 @@ mod tests {
             (BED_FACING_WEST, BED_PART_FOOT),
         ] {
             let v = bed_variant(facing, part);
-            assert_eq!(bed_variant_facing(v), facing, "the facing the low pair keeps");
+            assert_eq!(
+                bed_variant_facing(v),
+                facing,
+                "the facing the low pair keeps"
+            );
             assert_eq!(bed_variant_part(v), part, "the part the third bit keeps");
         }
         assert_eq!(
@@ -34016,6 +35572,117 @@ mod tests {
     }
 
     #[test]
+    fn the_beacon_the_kinds_the_six_seats_the_law_wears() {
+        // THE SIX SEATS' OWN LADDER (the autopush-319 round — the 318
+        // NEXT list's own first candidate the kind mint wears: the
+        // five base blocks the BEACON_BASE_BLOCKS tag the 318 walk
+        // banks + the beacon the tail seat keeps; the 318 test's own
+        // RESPAWN_ANCHOR stand-in the mint retires)
+        assert_eq!(IRON_BLOCK, 799);
+        assert_eq!(GOLD_BLOCK, 800);
+        assert_eq!(DIAMOND_BLOCK, 801);
+        assert_eq!(EMERALD_BLOCK, 802);
+        assert_eq!(NETHERITE_BLOCK, 803);
+        assert_eq!(BEACON, 804);
+        assert_eq!(atlas::N_KINDS, 805, "the palette the six seats bank");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF the one length keeps");
+        // the NAME_OF rows the dig/drop/sound/item lanes wire
+        assert_eq!(NAME_OF[IRON_BLOCK as usize], "iron_block");
+        assert_eq!(NAME_OF[GOLD_BLOCK as usize], "gold_block");
+        assert_eq!(NAME_OF[DIAMOND_BLOCK as usize], "diamond_block");
+        assert_eq!(NAME_OF[EMERALD_BLOCK as usize], "emerald_block");
+        assert_eq!(NAME_OF[NETHERITE_BLOCK as usize], "netherite_block");
+        assert_eq!(NAME_OF[BEACON as usize], "beacon");
+        // the KIND_NAMES + REGISTRY_NAMES rows the generated tables keep
+        assert_eq!(atlas::KIND_NAMES[BEACON as usize], "beacon");
+        assert_eq!(atlas::REGISTRY_NAMES[BEACON as usize], "beacon");
+        assert_eq!(
+            atlas::KIND_NAMES[NETHERITE_BLOCK as usize],
+            "netherite_block"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[EMERALD_BLOCK as usize],
+            "emerald_block"
+        );
+        // the predicates the lanes read
+        assert!(is_beacon(BEACON) && !is_beacon(RESPAWN_ANCHOR));
+        assert!(is_iron_block(IRON_BLOCK) && !is_iron_block(BEACON));
+        assert!(is_gold_block(GOLD_BLOCK));
+        assert!(is_diamond_block(DIAMOND_BLOCK));
+        assert!(is_emerald_block(EMERALD_BLOCK));
+        assert!(is_netherite_block(NETHERITE_BLOCK));
+        // the BASE LADDER the tag's five members wear (the vanilla
+        // order the 318 walk's own names keep)
+        assert_eq!(
+            BEACON_BASE_KINDS,
+            [
+                IRON_BLOCK,
+                GOLD_BLOCK,
+                DIAMOND_BLOCK,
+                EMERALD_BLOCK,
+                NETHERITE_BLOCK
+            ]
+        );
+        for &k in BEACON_BASE_KINDS.iter() {
+            assert!(is_beacon_base(k), "the base member {k} the verdict wears");
+        }
+        assert!(!is_beacon_base(BEACON), "the beacon the base never is");
+        assert!(!is_beacon_base(STONE), "the stone the base never is");
+        // THE TAIL TILES' OWN SEATS (the pool tail's four the pin
+        // banks — the beacon core + the three base masters)
+        assert_eq!(atlas::TILE_BEACON, 1063);
+        assert_eq!(atlas::TILE_DIAMOND_BLOCK, 1064);
+        assert_eq!(atlas::TILE_EMERALD_BLOCK, 1065);
+        assert_eq!(atlas::TILE_NETHERITE_BLOCK, 1066);
+        assert_eq!(atlas::tile_name(atlas::TILE_BEACON), "beacon");
+        assert_eq!(
+            atlas::tile_name(atlas::TILE_NETHERITE_BLOCK),
+            "netherite_block"
+        );
+        // THE DERIVE'S OWN 18 (the jar's block/beacon model the three
+        // elements speak — the glass shell + the obsidian base + the
+        // inner core the six-face triads wear, the #refs the slots
+        // resolve in place)
+        let quads = mc_registry::element_quads::derive_model_inherited("block/beacon")
+            .expect("the beacon model the derive resolves");
+        assert_eq!(quads.len(), 18, "the three elements the 18 quads bake");
+        let glass = quads.iter().filter(|q| q.texture == "block/glass").count();
+        let obsidian = quads
+            .iter()
+            .filter(|q| q.texture == "block/obsidian")
+            .count();
+        let core = quads.iter().filter(|q| q.texture == "block/beacon").count();
+        assert_eq!((glass, obsidian, core), (6, 6, 6), "the triad split wears");
+        // THE NO-CULLFACE LAW (the jar's model the cullface keys never
+        // writes — the 18 faces the neighbor verdict never culls)
+        assert!(
+            quads.iter().all(|q| q.cullface.is_none()),
+            "the model the no-cullface rows keep"
+        );
+        // THE SHELL'S OWN SPAN (the full-cube element the 0..1 box
+        // wears [the derive's own model space], the core the 3..13
+        // inset keeps — the y the 16-px law the 1/16 scale speaks)
+        let shell_top = quads
+            .iter()
+            .filter(|q| q.texture == "block/glass")
+            .flat_map(|q| q.vertices.iter().map(|v| v[1]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (shell_top - 1.0).abs() < 1e-6,
+            "the shell the full-block rim keeps, got {shell_top}"
+        );
+        let core_lo = quads
+            .iter()
+            .filter(|q| q.texture == "block/beacon")
+            .flat_map(|q| q.vertices.iter().map(|v| v[1]))
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (core_lo - 3.0 / 16.0).abs() < 1e-6,
+            "the core the 3-px inset keeps, got {core_lo}"
+        );
+    }
+
+    #[test]
     fn the_chorus_the_walk_down_and_the_safe_verdicts_wear() {
         let mut w = World::new(2, 7);
         w.chunks
@@ -34919,7 +36586,12 @@ mod tests {
         w.set(c, y, c, CHEST);
         w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT));
         w.set(c - 1, y, c, CHEST);
-        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
+        w.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT),
+        );
         // the break: the LEFT half the AIR the removal walks (the
         // destroy_block walk the set the broadcast's own beat wears)
         w.set(c - 1, y, c, AIR);
@@ -34959,9 +36631,19 @@ mod tests {
         let c = w.size_blocks() / 2;
         let y = 8;
         w.set(c, y, c, CHEST);
-        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(
+            c,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         w.set(c - 1, y, c, CHEST);
-        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
+        w.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT),
+        );
         assert!(
             w.chest_shape_updates((c - 1, y, c)),
             "the placement the promote beat speaks"
@@ -34996,9 +36678,19 @@ mod tests {
         let y = 8;
         // (a) the single/single the super returns
         w.set(c, y, c, CHEST);
-        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(
+            c,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         w.set(c - 1, y, c, CHEST);
-        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         assert!(
             !w.chest_shape_updates((c - 1, y, c)),
             "the single/single the walk never pairs"
@@ -35009,8 +36701,18 @@ mod tests {
             "the lone half the SINGLE keeps"
         );
         // (b) the facing mismatch the promote refuses
-        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
-        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_EAST, CHEST_TYPE_LEFT));
+        w.set_variant(
+            c,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
+        w.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_EAST, CHEST_TYPE_LEFT),
+        );
         assert!(
             !w.chest_shape_updates((c - 1, y, c)),
             "the facing mismatch the promote refuses"
@@ -35024,10 +36726,20 @@ mod tests {
         // facing north whose partner slot (the cw = EAST side) the
         // neighbor cell never wears — the west-side chest the gate
         // refuses
-        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
+        w.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT),
+        );
         w.set(c, y, c, AIR);
         w.set(c - 2, y, c, CHEST);
-        w.set_variant(c - 2, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(
+            c - 2,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         assert!(
             !w.chest_shape_updates((c - 1, y, c)),
             "the non-partner cell the promote refuses"
@@ -35044,7 +36756,12 @@ mod tests {
         w2.set(c, y, c, CHEST);
         w2.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT));
         w2.set(c - 1, y, c, CHEST);
-        w2.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w2.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         assert!(
             !w2.chest_shape_updates((c - 1, y, c)),
             "the typed mine the same-kind beat never demotes"
@@ -35072,9 +36789,19 @@ mod tests {
         // pair the demote never wears, the typed bits stay SINGLE
         let mut w3 = World::blank(3, 0x6D42);
         w3.set(c, y, c, ENDER_CHEST);
-        w3.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w3.set_variant(
+            c,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         w3.set(c - 1, y, c, ENDER_CHEST);
-        w3.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w3.set_variant(
+            c - 1,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE),
+        );
         assert!(
             !w3.chest_shape_updates((c - 1, y, c)),
             "the ender pair the walk never speaks"
@@ -35105,7 +36832,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 799, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 805, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -35114,11 +36841,7 @@ mod tests {
         for f in 0u8..6 {
             for open in [false, true] {
                 let v = barrel_variant(f, open);
-                assert_eq!(
-                    barrel_variant_facing(v),
-                    f,
-                    "the facing the pack keeps"
-                );
+                assert_eq!(barrel_variant_facing(v), f, "the facing the pack keeps");
                 assert_eq!(barrel_variant_open(v), open, "the bit the pack keeps");
             }
         }
@@ -35133,7 +36856,10 @@ mod tests {
         // registry banks — the strength(2.5) row the no-tool demand
         // keeps)
         let (h, t) = crate::dig::DigState::block_dig_row(BARREL);
-        assert!((h - 2.5).abs() < 1e-4, "the barrel dig row the 2.5 wears, got {h}");
+        assert!(
+            (h - 2.5).abs() < 1e-4,
+            "the barrel dig row the 2.5 wears, got {h}"
+        );
         assert!(!t, "the no-tool demand the barrel row keeps");
         // THE VOICE (the SoundType.WOOD row the generated table banks)
         let idx = mc_registry::generated::block_sounds::sound_index("barrel")
@@ -35181,12 +36907,36 @@ mod tests {
         // THE LID'S OWN FACE TABLE (the facing byte the mesher's tile
         // law rotates — the blockstate's x/y turns the same rotation
         // the model law speaks)
-        assert_eq!(barrel_lid_face(BARREL_FACING_UP), 2, "the up lid the UP face keeps");
-        assert_eq!(barrel_lid_face(BARREL_FACING_DOWN), 3, "the down lid the DOWN face wears");
-        assert_eq!(barrel_lid_face(BARREL_FACING_NORTH), 5, "the north lid the north face banks");
-        assert_eq!(barrel_lid_face(BARREL_FACING_SOUTH), 4, "the south lid the south face wears");
-        assert_eq!(barrel_lid_face(BARREL_FACING_WEST), 1, "the west lid the west face banks");
-        assert_eq!(barrel_lid_face(BARREL_FACING_EAST), 0, "the east lid the east face wears");
+        assert_eq!(
+            barrel_lid_face(BARREL_FACING_UP),
+            2,
+            "the up lid the UP face keeps"
+        );
+        assert_eq!(
+            barrel_lid_face(BARREL_FACING_DOWN),
+            3,
+            "the down lid the DOWN face wears"
+        );
+        assert_eq!(
+            barrel_lid_face(BARREL_FACING_NORTH),
+            5,
+            "the north lid the north face banks"
+        );
+        assert_eq!(
+            barrel_lid_face(BARREL_FACING_SOUTH),
+            4,
+            "the south lid the south face wears"
+        );
+        assert_eq!(
+            barrel_lid_face(BARREL_FACING_WEST),
+            1,
+            "the west lid the west face banks"
+        );
+        assert_eq!(
+            barrel_lid_face(BARREL_FACING_EAST),
+            0,
+            "the east lid the east face wears"
+        );
         // THE COLLISION'S OWN FULL CUBE (the barrel the Shapes.block()
         // family the default keeps — the occlude verdict the light
         // the flood never passes, the sky_opacity row the full-cube
@@ -35253,15 +37003,25 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 799, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
         assert!(!redstone_torch_lit(REDSTONE_TORCH_OFF));
         assert_eq!(REDSTONE_TORCH + 1, REDSTONE_TORCH_OFF, "the +1 mate wears");
-        assert_eq!(redstone_torch_toggled(REDSTONE_TORCH), Some(REDSTONE_TORCH_OFF));
-        assert_eq!(redstone_torch_toggled(REDSTONE_TORCH_OFF), Some(REDSTONE_TORCH));
-        assert_eq!(redstone_torch_toggled(TORCH), None, "the unknown id the None keeps");
+        assert_eq!(
+            redstone_torch_toggled(REDSTONE_TORCH),
+            Some(REDSTONE_TORCH_OFF)
+        );
+        assert_eq!(
+            redstone_torch_toggled(REDSTONE_TORCH_OFF),
+            Some(REDSTONE_TORCH)
+        );
+        assert_eq!(
+            redstone_torch_toggled(TORCH),
+            None,
+            "the unknown id the None keeps"
+        );
         assert_eq!(NAME_OF[REDSTONE_TORCH as usize], "redstone_torch");
         assert_eq!(NAME_OF[REDSTONE_TORCH_OFF as usize], "redstone_torch");
         assert_eq!(atlas::KIND_NAMES[REDSTONE_TORCH as usize], "redstone_torch");
@@ -35269,7 +37029,10 @@ mod tests {
             atlas::KIND_NAMES[REDSTONE_TORCH_OFF as usize],
             "redstone_torch_off"
         );
-        assert_eq!(atlas::REGISTRY_NAMES[REDSTONE_TORCH as usize], "redstone_torch");
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_TORCH as usize],
+            "redstone_torch"
+        );
         assert_eq!(
             atlas::REGISTRY_NAMES[REDSTONE_TORCH_OFF as usize],
             "redstone_torch"
@@ -35281,11 +37044,20 @@ mod tests {
         // template_torch_unlit parent the stick box alone keeps)
         let lit_tiles = atlas::FACE_TILES[REDSTONE_TORCH as usize];
         let off_tiles = atlas::FACE_TILES[REDSTONE_TORCH_OFF as usize];
-        assert!(lit_tiles.iter().all(|&t| t == lit_tiles[2]), "the lit kind the ONE tile wears");
-        assert!(off_tiles.iter().all(|&t| t == off_tiles[2]), "the off kind the ONE tile wears");
+        assert!(
+            lit_tiles.iter().all(|&t| t == lit_tiles[2]),
+            "the lit kind the ONE tile wears"
+        );
+        assert!(
+            off_tiles.iter().all(|&t| t == off_tiles[2]),
+            "the off kind the ONE tile wears"
+        );
         assert_eq!(atlas::tile_name(lit_tiles[2]), "redstone_torch");
         assert_eq!(atlas::tile_name(off_tiles[2]), "redstone_torch_off");
-        assert_ne!(lit_tiles[2], off_tiles[2], "the two masters the seats differ");
+        assert_ne!(
+            lit_tiles[2], off_tiles[2],
+            "the two masters the seats differ"
+        );
         // THE COLLISION'S OWN PASS-THROUGH (the noCollision() row the
         // factory's Properties chain pc 10081 speaks)
         assert_eq!(collision_shape(REDSTONE_TORCH), CollisionShape::Empty);
@@ -35298,7 +37070,10 @@ mod tests {
         // THE PLACEMENT'S OWN ITEM (javap Items.<clinit> pc 7265-7276 —
         // the StandingAndWallBlockItem pairing the lit default state
         // the ctor's registerDefaultState law banks)
-        assert_eq!(World::placeable_block("redstone_torch"), Some(REDSTONE_TORCH));
+        assert_eq!(
+            World::placeable_block("redstone_torch"),
+            Some(REDSTONE_TORCH)
+        );
         assert_eq!(World::placeable_block("redstone_torch_off"), None);
         // THE SURVIVAL GATE'S OWN WALK (javap BaseTorchBlock.canSurvive
         // — the canSupportCenter(below, UP) delegate the sturdy read
@@ -35324,10 +37099,16 @@ mod tests {
         );
         w.set(c, y, c, AIR);
         w.set(c + 1, y, c, REDSTONE_TORCH);
-        assert!(torch_sources_near(&w, c, y, c), "the east torch's arm answers");
+        assert!(
+            torch_sources_near(&w, c, y, c),
+            "the east torch's arm answers"
+        );
         w.set(c + 1, y, c, AIR);
         w.set(c, y - 1, c, REDSTONE_TORCH);
-        assert!(torch_sources_near(&w, c, y, c), "the below torch's arm answers");
+        assert!(
+            torch_sources_near(&w, c, y, c),
+            "the below torch's arm answers"
+        );
         w.set(c, y - 1, c, REDSTONE_TORCH_OFF);
         assert!(
             !torch_sources_near(&w, c, y, c),
@@ -35338,7 +37119,10 @@ mod tests {
         // walk wears — the lit torch's own neighborhood the read
         // answers, the OFF kind the silence keeps)
         w.set(c + 1, y, c, REDSTONE_TORCH);
-        assert!(redstone_signal_at(&w, c, y, c), "the lit torch's arm answers");
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the lit torch's arm answers"
+        );
         w.set(c + 1, y, c, REDSTONE_TORCH_OFF);
         assert!(
             !redstone_signal_at(&w, c, y, c),
@@ -35394,7 +37178,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 799, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -35405,7 +37189,11 @@ mod tests {
         );
         assert!(redstone_torch_lit(REDSTONE_WALL_TORCH));
         assert!(!redstone_torch_lit(REDSTONE_WALL_TORCH_OFF));
-        assert_eq!(REDSTONE_WALL_TORCH + 1, REDSTONE_WALL_TORCH_OFF, "the +1 mate wears");
+        assert_eq!(
+            REDSTONE_WALL_TORCH + 1,
+            REDSTONE_WALL_TORCH_OFF,
+            "the +1 mate wears"
+        );
         assert_eq!(
             redstone_torch_toggled(REDSTONE_WALL_TORCH),
             Some(REDSTONE_WALL_TORCH_OFF)
@@ -35414,13 +37202,23 @@ mod tests {
             redstone_torch_toggled(REDSTONE_WALL_TORCH_OFF),
             Some(REDSTONE_WALL_TORCH)
         );
-        assert_eq!(redstone_torch_toggled(STONE), None, "the unknown the None keeps");
+        assert_eq!(
+            redstone_torch_toggled(STONE),
+            None,
+            "the unknown the None keeps"
+        );
         // THE NAMES' OWN ROWS (the ONE registry entry both kinds the
         // strip law keeps — the dig/sounds/drops lanes the same row
         // speaks)
         assert_eq!(NAME_OF[REDSTONE_WALL_TORCH as usize], "redstone_wall_torch");
-        assert_eq!(NAME_OF[REDSTONE_WALL_TORCH_OFF as usize], "redstone_wall_torch");
-        assert_eq!(atlas::KIND_NAMES[REDSTONE_WALL_TORCH as usize], "redstone_wall_torch");
+        assert_eq!(
+            NAME_OF[REDSTONE_WALL_TORCH_OFF as usize],
+            "redstone_wall_torch"
+        );
+        assert_eq!(
+            atlas::KIND_NAMES[REDSTONE_WALL_TORCH as usize],
+            "redstone_wall_torch"
+        );
         assert_eq!(
             atlas::KIND_NAMES[REDSTONE_WALL_TORCH_OFF as usize],
             "redstone_wall_torch_off"
@@ -35451,7 +37249,10 @@ mod tests {
         // wallVariant chain speaks — the noCollision the Empty row
         // wears, the instabreak the (0.0, false) row answers)
         assert_eq!(collision_shape(REDSTONE_WALL_TORCH), CollisionShape::Empty);
-        assert_eq!(collision_shape(REDSTONE_WALL_TORCH_OFF), CollisionShape::Empty);
+        assert_eq!(
+            collision_shape(REDSTONE_WALL_TORCH_OFF),
+            CollisionShape::Empty
+        );
         assert_eq!(
             crate::dig::DigState::block_dig_row(REDSTONE_WALL_TORCH),
             crate::dig::DigState::block_dig_row(REDSTONE_TORCH),
@@ -35461,16 +37262,31 @@ mod tests {
         // the registry carries — the StandingAndWallBlockItem pairing
         // the wall state the item's own scan arms, the placeable
         // lookup the row never answers)
-        assert_eq!(World::placeable_block("redstone_torch"), Some(REDSTONE_TORCH));
+        assert_eq!(
+            World::placeable_block("redstone_torch"),
+            Some(REDSTONE_TORCH)
+        );
         assert_eq!(World::placeable_block("redstone_wall_torch"), None);
         // THE FACING BYTE'S OWN LAW (the blockstate y-table's own
         // vocabulary — north 1, east 2, south 3, west 4; the 0 byte
         // the default NORTH read answers, the 5+ the same default)
         assert_eq!(wall_torch_facing_of(0), WALL_TORCH_FACING_NORTH);
-        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_NORTH), WALL_TORCH_FACING_NORTH);
-        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_EAST), WALL_TORCH_FACING_EAST);
-        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_SOUTH), WALL_TORCH_FACING_SOUTH);
-        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_WEST), WALL_TORCH_FACING_WEST);
+        assert_eq!(
+            wall_torch_facing_of(WALL_TORCH_FACING_NORTH),
+            WALL_TORCH_FACING_NORTH
+        );
+        assert_eq!(
+            wall_torch_facing_of(WALL_TORCH_FACING_EAST),
+            WALL_TORCH_FACING_EAST
+        );
+        assert_eq!(
+            wall_torch_facing_of(WALL_TORCH_FACING_SOUTH),
+            WALL_TORCH_FACING_SOUTH
+        );
+        assert_eq!(
+            wall_torch_facing_of(WALL_TORCH_FACING_WEST),
+            WALL_TORCH_FACING_WEST
+        );
         assert_eq!(wall_torch_facing_of(5), WALL_TORCH_FACING_NORTH);
         // THE DELTA'S OWN STEPS (the vanilla 2D byte order wears —
         // north the -z arm, east the +x, south the +z, west the -x;
@@ -35479,8 +37295,14 @@ mod tests {
         assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_EAST), (1, 0, 0));
         assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_SOUTH), (0, 0, 1));
         assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_WEST), (-1, 0, 0));
-        assert_eq!(wall_torch_attached_offset(WALL_TORCH_FACING_NORTH), (0, 0, 1));
-        assert_eq!(wall_torch_attached_offset(WALL_TORCH_FACING_EAST), (-1, 0, 0));
+        assert_eq!(
+            wall_torch_attached_offset(WALL_TORCH_FACING_NORTH),
+            (0, 0, 1)
+        );
+        assert_eq!(
+            wall_torch_attached_offset(WALL_TORCH_FACING_EAST),
+            (-1, 0, 0)
+        );
         // THE CANDIDATES' OWN SCAN (javap WallTorchBlock
         // .getStateForPlacement pc 0-101 the survive-first walk — the
         // north look the SOUTH facing the opposite fold answers, the
@@ -35638,10 +37460,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR, 326);
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(
-            atlas::N_KINDS, 799,
-            "the palette the trapdoor pair banks"
-        );
+        assert_eq!(atlas::N_KINDS, 805, "the palette the trapdoor pair banks");
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
         assert!(is_oak_trapdoor(OAK_TRAPDOOR) && is_oak_trapdoor(OAK_TRAPDOOR_OPEN));
         assert!(!is_oak_trapdoor(OAK_DOOR), "the door the family fn refuses");
@@ -35658,9 +37477,15 @@ mod tests {
         assert_eq!(NAME_OF[OAK_TRAPDOOR as usize], "oak_trapdoor");
         assert_eq!(NAME_OF[OAK_TRAPDOOR_OPEN as usize], "oak_trapdoor");
         assert_eq!(atlas::KIND_NAMES[OAK_TRAPDOOR as usize], "oak_trapdoor");
-        assert_eq!(atlas::KIND_NAMES[OAK_TRAPDOOR_OPEN as usize], "oak_trapdoor_open");
+        assert_eq!(
+            atlas::KIND_NAMES[OAK_TRAPDOOR_OPEN as usize],
+            "oak_trapdoor_open"
+        );
         assert_eq!(atlas::REGISTRY_NAMES[OAK_TRAPDOOR as usize], "oak_trapdoor");
-        assert_eq!(atlas::REGISTRY_NAMES[OAK_TRAPDOOR_OPEN as usize], "oak_trapdoor");
+        assert_eq!(
+            atlas::REGISTRY_NAMES[OAK_TRAPDOOR_OPEN as usize],
+            "oak_trapdoor"
+        );
         // THE TILE'S OWN IDENTITY (the SAME oak_trapdoor sprite both
         // kinds' seats wear — the atlas's tile set the pair grew by
         // exactly ONE)
@@ -35669,18 +37494,30 @@ mod tests {
             atlas::FACE_TILES[OAK_TRAPDOOR_OPEN as usize],
             "the open kind the closed kind's tile wears"
         );
-        assert_eq!(atlas::TILE_NAMES[atlas::FACE_TILES[OAK_TRAPDOOR as usize][2] as usize], "oak_trapdoor");
+        assert_eq!(
+            atlas::TILE_NAMES[atlas::FACE_TILES[OAK_TRAPDOOR as usize][2] as usize],
+            "oak_trapdoor"
+        );
         // THE VOICE'S OWN STEM (the BlockSetType's trapdoorOpen/
         // trapdoorClose events the WOODEN pair carries)
         assert_eq!(trapdoor_voice_stem(OAK_TRAPDOOR), "block.wooden_trapdoor");
-        assert_eq!(trapdoor_voice_stem(OAK_TRAPDOOR_OPEN), "block.wooden_trapdoor");
+        assert_eq!(
+            trapdoor_voice_stem(OAK_TRAPDOOR_OPEN),
+            "block.wooden_trapdoor"
+        );
         // THE VARIANT'S OWN FOLD (the facing the low nibble the wall
         // torch's own vocabulary keeps, the +8 bit the half word banks:
         // the 0 byte the NORTH+BOTTOM default the ctor law answers)
         assert_eq!(trapdoor_facing_of(0), WALL_TORCH_FACING_NORTH);
         assert_eq!(trapdoor_facing_of(9), WALL_TORCH_FACING_NORTH);
-        assert_eq!(trapdoor_facing_of(WALL_TORCH_FACING_EAST), WALL_TORCH_FACING_EAST);
-        assert_eq!(trapdoor_facing_of(WALL_TORCH_FACING_WEST | 8), WALL_TORCH_FACING_WEST);
+        assert_eq!(
+            trapdoor_facing_of(WALL_TORCH_FACING_EAST),
+            WALL_TORCH_FACING_EAST
+        );
+        assert_eq!(
+            trapdoor_facing_of(WALL_TORCH_FACING_WEST | 8),
+            WALL_TORCH_FACING_WEST
+        );
         assert!(!trapdoor_half_top(0));
         assert!(!trapdoor_half_top(WALL_TORCH_FACING_SOUTH));
         assert!(trapdoor_half_top(WALL_TORCH_FACING_SOUTH | 8));
@@ -35791,20 +37628,26 @@ mod tests {
         assert_eq!(OAK_FENCE_GATE, 442);
         assert_eq!(OAK_FENCE_GATE_OPEN, 443);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(
-            atlas::N_KINDS,
-             799,
-            "the palette the gate pair banks"
-        );
+        assert_eq!(atlas::N_KINDS, 805, "the palette the gate pair banks");
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
         assert!(is_fence_gate(OAK_FENCE_GATE) && is_fence_gate(OAK_FENCE_GATE_OPEN));
         assert!(!is_fence_gate(OAK_DOOR), "the door the family fn refuses");
         assert!(!is_fence_gate(LEVER), "the lever the family fn refuses");
         assert!(!fence_gate_open(OAK_FENCE_GATE));
         assert!(fence_gate_open(OAK_FENCE_GATE_OPEN));
-        assert_eq!(fence_gate_toggled(OAK_FENCE_GATE), Some(OAK_FENCE_GATE_OPEN));
-        assert_eq!(fence_gate_toggled(OAK_FENCE_GATE_OPEN), Some(OAK_FENCE_GATE));
-        assert_eq!(fence_gate_toggled(STONE), None, "the unknown the None keeps");
+        assert_eq!(
+            fence_gate_toggled(OAK_FENCE_GATE),
+            Some(OAK_FENCE_GATE_OPEN)
+        );
+        assert_eq!(
+            fence_gate_toggled(OAK_FENCE_GATE_OPEN),
+            Some(OAK_FENCE_GATE)
+        );
+        assert_eq!(
+            fence_gate_toggled(STONE),
+            None,
+            "the unknown the None keeps"
+        );
         // THE NAMES' OWN ROWS (the ONE registry entry both kinds the
         // strip law keeps — the dig/sounds/drops/item lanes the same
         // row speaks)
@@ -35815,7 +37658,10 @@ mod tests {
             atlas::KIND_NAMES[OAK_FENCE_GATE_OPEN as usize],
             "oak_fence_gate_open"
         );
-        assert_eq!(atlas::REGISTRY_NAMES[OAK_FENCE_GATE as usize], "oak_fence_gate");
+        assert_eq!(
+            atlas::REGISTRY_NAMES[OAK_FENCE_GATE as usize],
+            "oak_fence_gate"
+        );
         assert_eq!(
             atlas::REGISTRY_NAMES[OAK_FENCE_GATE_OPEN as usize],
             "oak_fence_gate"
@@ -36051,7 +37897,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 799, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -36227,7 +38073,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 799, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 805, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -36237,12 +38083,26 @@ mod tests {
                 Some(k ^ 1),
                 "the rung {i} the ±1 mate the XOR fold wears"
             );
-            assert_eq!(trapdoor_open(k), k & 1 == 1, "the parity the open bit speaks");
+            assert_eq!(
+                trapdoor_open(k),
+                k & 1 == 1,
+                "the parity the open bit speaks"
+            );
         }
-        assert!(!is_trapdoor(REDSTONE_WALL_TORCH_OFF), "the wall torch the family refuses");
-        assert!(!is_trapdoor(END_PORTAL), "the beyond-table seat the family refuses");
+        assert!(
+            !is_trapdoor(REDSTONE_WALL_TORCH_OFF),
+            "the wall torch the family refuses"
+        );
+        assert!(
+            !is_trapdoor(END_PORTAL),
+            "the beyond-table seat the family refuses"
+        );
         assert_eq!(trapdoor_toggled(STONE), None);
-        assert_eq!(trapdoor_stem_of(END_PORTAL), None, "the unknown the None keeps");
+        assert_eq!(
+            trapdoor_stem_of(END_PORTAL),
+            None,
+            "the unknown the None keeps"
+        );
         // THE HAND GATE'S OWN SPLIT (the set types' first boolean the
         // clinit rows bank — the iron pair the refusal keeps, the
         // copper ladder the hand's PASS speaks, the wooden rungs the
@@ -36260,7 +38120,10 @@ mod tests {
             trapdoor_stem_of(EXPOSED_COPPER_TRAPDOOR_OPEN),
             Some("exposed_copper_trapdoor")
         );
-        assert_eq!(trapdoor_stem_of(WAXED_COPPER_TRAPDOOR), Some("copper_trapdoor"));
+        assert_eq!(
+            trapdoor_stem_of(WAXED_COPPER_TRAPDOOR),
+            Some("copper_trapdoor")
+        );
         assert_eq!(
             trapdoor_stem_of(WAXED_WEATHERED_COPPER_TRAPDOOR_OPEN),
             Some("weathered_copper_trapdoor")
@@ -36269,24 +38132,36 @@ mod tests {
         // THE VOICES' OWN METAL STEMS (the COPPER set type's trapdoor
         // pair the copper ladder speaks, the IRON pair the iron row
         // wears — the clinit's getstatic rows the events bank)
-        assert_eq!(trapdoor_voice_stem(COPPER_TRAPDOOR), "block.copper_trapdoor");
+        assert_eq!(
+            trapdoor_voice_stem(COPPER_TRAPDOOR),
+            "block.copper_trapdoor"
+        );
         assert_eq!(
             trapdoor_voice_stem(WAXED_EXPOSED_COPPER_TRAPDOOR_OPEN),
             "block.copper_trapdoor"
         );
         assert_eq!(trapdoor_voice_stem(IRON_TRAPDOOR), "block.iron_trapdoor");
-        assert_eq!(trapdoor_voice_stem(IRON_TRAPDOOR_OPEN), "block.iron_trapdoor");
+        assert_eq!(
+            trapdoor_voice_stem(IRON_TRAPDOOR_OPEN),
+            "block.iron_trapdoor"
+        );
         // THE NAMES' OWN ROWS (the ONE registry entry both kinds each
         // pair wears — the waxed rows the waxed names the ONE entry
         // keeps)
         assert_eq!(NAME_OF[COPPER_TRAPDOOR as usize], "copper_trapdoor");
-        assert_eq!(NAME_OF[WAXED_COPPER_TRAPDOOR_OPEN as usize], "waxed_copper_trapdoor");
+        assert_eq!(
+            NAME_OF[WAXED_COPPER_TRAPDOOR_OPEN as usize],
+            "waxed_copper_trapdoor"
+        );
         assert_eq!(NAME_OF[IRON_TRAPDOOR as usize], "iron_trapdoor");
         assert_eq!(
             atlas::KIND_NAMES[WAXED_COPPER_TRAPDOOR as usize],
             "waxed_copper_trapdoor"
         );
-        assert_eq!(atlas::REGISTRY_NAMES[IRON_TRAPDOOR_OPEN as usize], "iron_trapdoor");
+        assert_eq!(
+            atlas::REGISTRY_NAMES[IRON_TRAPDOOR_OPEN as usize],
+            "iron_trapdoor"
+        );
         // THE TILES' OWN ALIAS LAW (the waxed pairs the UNWAXED
         // sprites the blockstates' own model rows wear — the SAME tile
         // the unwaxed mate answers, the five metal masters the
@@ -36312,7 +38187,10 @@ mod tests {
         let iron_tile = atlas::FACE_TILES[IRON_TRAPDOOR as usize][2];
         assert_eq!(atlas::TILE_NAMES[copper_tile as usize], "copper_trapdoor");
         assert_eq!(atlas::TILE_NAMES[iron_tile as usize], "iron_trapdoor");
-        assert_ne!(copper_tile, iron_tile, "the metals the distinct masters wear");
+        assert_ne!(
+            copper_tile, iron_tile,
+            "the metals the distinct masters wear"
+        );
         assert_ne!(
             atlas::FACE_TILES[EXPOSED_COPPER_TRAPDOOR as usize][2],
             copper_tile
@@ -36328,7 +38206,10 @@ mod tests {
         // THE PLACEABLE'S OWN PAIRINGS (the generic lookups the closed
         // seats answer — the Items clinit rows the nine pairings
         // speak)
-        assert_eq!(World::placeable_block("copper_trapdoor"), Some(COPPER_TRAPDOOR));
+        assert_eq!(
+            World::placeable_block("copper_trapdoor"),
+            Some(COPPER_TRAPDOOR)
+        );
         assert_eq!(
             World::placeable_block("waxed_oxidized_copper_trapdoor"),
             Some(WAXED_OXIDIZED_COPPER_TRAPDOOR)
@@ -36520,7 +38401,11 @@ mod tests {
             Some(IRON_DOOR_UPPER_OPEN_RIGHT)
         );
         assert_eq!(door_hinge_mate(STONE), None);
-        assert_eq!(DOOR_KINDS.len(), 168, "the twenty-one octets the ladder banks");
+        assert_eq!(
+            DOOR_KINDS.len(),
+            168,
+            "the twenty-one octets the ladder banks"
+        );
         // THE HAND GATE'S OWN LAW (javap canOpenByHand the set type's
         // own field — the iron iconst_0 the refusal, the wooden +
         // copper families the iconst_1 the delegations and the full
@@ -36584,7 +38469,10 @@ mod tests {
         // halves the same name speaks — the dig row, the sounds'
         // WOODEN row and the item id the pick lane grants BOTH halves)
         for id in [OAK_DOOR, OAK_DOOR_UPPER, OAK_DOOR_OPEN, OAK_DOOR_UPPER_OPEN] {
-            assert_eq!(NAME_OF[id as usize], "oak_door", "kind {id} the base row wears");
+            assert_eq!(
+                NAME_OF[id as usize], "oak_door",
+                "kind {id} the base row wears"
+            );
         }
         for id in [
             OAK_DOOR_RIGHT,
@@ -36593,12 +38481,11 @@ mod tests {
             OAK_DOOR_UPPER_OPEN_RIGHT,
         ] {
             assert_eq!(
-                NAME_OF[id as usize],
-                "oak_door",
+                NAME_OF[id as usize], "oak_door",
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 799, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 805, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
@@ -36618,7 +38505,11 @@ mod tests {
         // byte the FACING_BY_2D's own row wears, the -PI/2 the west
         // look the byte 4 keeps, the +PI/2 the east look the byte 2)
         use std::f32::consts::{FRAC_PI_2, PI};
-        assert_eq!(door_facing_byte(0.0), 1, "the yaw-0 look the north byte wears");
+        assert_eq!(
+            door_facing_byte(0.0),
+            1,
+            "the yaw-0 look the north byte wears"
+        );
         assert_eq!(
             door_facing_byte(-FRAC_PI_2),
             4,
@@ -36730,15 +38621,47 @@ mod tests {
         // rows the LEFT quartets the clockWise arm the RIGHT the
         // counterClockWise arm wear)
         assert_eq!(door_strip_edge(0, false, false), 3);
-        assert_eq!(door_strip_edge(0, false, true), 3, "the closed the hinge never reads");
+        assert_eq!(
+            door_strip_edge(0, false, true),
+            3,
+            "the closed the hinge never reads"
+        );
         assert_eq!(door_strip_edge(0, true, false), 4);
-        assert_eq!(door_strip_edge(0, true, true), 2, "the open-right north the east strip");
-        assert_eq!(door_strip_edge(2, false, false), 4, "the closed east the west strip");
-        assert_eq!(door_strip_edge(2, true, false), 1, "the open east the north strip");
-        assert_eq!(door_strip_edge(2, true, true), 3, "the open-right east the south strip");
-        assert_eq!(door_strip_edge(3, true, true), 4, "the open-right south the west strip");
-        assert_eq!(door_strip_edge(4, true, true), 1, "the open-right west the north strip");
-        assert_eq!(door_strip_edge(9, false, false), 3, "the stray byte the north seat");
+        assert_eq!(
+            door_strip_edge(0, true, true),
+            2,
+            "the open-right north the east strip"
+        );
+        assert_eq!(
+            door_strip_edge(2, false, false),
+            4,
+            "the closed east the west strip"
+        );
+        assert_eq!(
+            door_strip_edge(2, true, false),
+            1,
+            "the open east the north strip"
+        );
+        assert_eq!(
+            door_strip_edge(2, true, true),
+            3,
+            "the open-right east the south strip"
+        );
+        assert_eq!(
+            door_strip_edge(3, true, true),
+            4,
+            "the open-right south the west strip"
+        );
+        assert_eq!(
+            door_strip_edge(4, true, true),
+            1,
+            "the open-right west the north strip"
+        );
+        assert_eq!(
+            door_strip_edge(9, false, false),
+            3,
+            "the stray byte the north seat"
+        );
     }
 
     #[test]
@@ -36767,7 +38690,10 @@ mod tests {
         // and the boundary the LEFT)
         assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9));
         assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9));
-        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.5, 0.9), "the boundary the LEFT keeps");
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 1, 0.5, 0.9),
+            "the boundary the LEFT keeps"
+        );
         // THE STRAY BYTE THE NORTH DEFAULT (the no-opinion 0 the
         // facing tables' own seat wears — the north arm the same walk
         // serves)
@@ -36779,22 +38705,34 @@ mod tests {
         // never reaches)
         w.set(cx + 1, cy, cz, STONE);
         w.set(cx + 1, cy + 1, cz, STONE);
-        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the east wall the RIGHT wears");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9),
+            "the east wall the RIGHT wears"
+        );
         w.set(cx + 1, cy, cz, AIR);
         w.set(cx + 1, cy + 1, cz, AIR);
         w.set(cx - 1, cy, cz, STONE);
         w.set(cx - 1, cy + 1, cz, STONE);
-        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the west wall the LEFT wears");
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9),
+            "the west wall the LEFT wears"
+        );
         // THE SINGLE-CELL WALL THE 0 SCORE KEEPS (the one block the
         // ±1 the tie the click walk answers — the above-row read the
         // vanilla's own four-cell scan speaks)
         w.set(cx - 1, cy, cz, AIR);
-        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the -1 upper score the LEFT verdict wears");
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9),
+            "the -1 upper score the LEFT verdict wears"
+        );
         // THE ZERO SCORE'S OWN TIE (the last west block the AIR the
         // score-0 walk restores — the click arms the boundary law
         // wears again)
         w.set(cx - 1, cy + 1, cz, AIR);
-        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the score-0 the east-half click the RIGHT wears");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9),
+            "the score-0 the east-half click the RIGHT wears"
+        );
         // THE DOOR-PRESENCE ARMS (the side cell's own LOWER door the
         // lone-neighbor verdicts bank: the west cell's door the RIGHT
         // [the double-door seam], the east cell's door the LEFT, the
@@ -36802,35 +38740,65 @@ mod tests {
         w.set(cx + 1, cy, cz, AIR);
         w.set(cx + 1, cy + 1, cz, AIR);
         w.set(cx - 1, cy, cz, OAK_DOOR);
-        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the west door the RIGHT seam wears");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9),
+            "the west door the RIGHT seam wears"
+        );
         w.set(cx - 1, cy, cz, AIR);
         w.set(cx + 1, cy, cz, OAK_DOOR);
-        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the east door the LEFT seam wears");
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9),
+            "the east door the LEFT seam wears"
+        );
         // THE BOTH-DOORS TIE-BREAK (the score the full cells alone
         // speak — the both-doors zero the click walk serves, the +1
         // east wall the RIGHT, the -1 west wall the LEFT)
         w.set(cx - 1, cy, cz, OAK_DOOR);
-        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the both doors the east-half click the RIGHT wears");
-        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the both doors the west-half click the LEFT keeps");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9),
+            "the both doors the east-half click the RIGHT wears"
+        );
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9),
+            "the both doors the west-half click the LEFT keeps"
+        );
         w.set(cx + 1, cy + 1, cz, STONE);
-        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the +1 east wall the both-doors tie the RIGHT banks");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9),
+            "the +1 east wall the both-doors tie the RIGHT banks"
+        );
         w.set(cx + 1, cy + 1, cz, AIR);
         w.set(cx - 1, cy + 1, cz, STONE);
-        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the -1 west wall the both-doors tie the LEFT keeps");
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9),
+            "the -1 west wall the both-doors tie the LEFT keeps"
+        );
         // THE EAST FACING'S OWN STEP ARM (the stepX>0 arm the dz reads
         // — the south half the RIGHT, the boundary the LEFT; the ccw
         // side the north cell the door presence reads)
         w.set(cx - 1, cy, cz, AIR);
         w.set(cx + 1, cy, cz, AIR);
         w.set(cx - 1, cy + 1, cz, AIR);
-        assert!(door_hinge_census(&w, cx, cy, cz, 2, 0.9, 0.7), "the east facing the south-half click the RIGHT wears");
-        assert!(!door_hinge_census(&w, cx, cy, cz, 2, 0.9, 0.5), "the east facing the boundary the LEFT keeps");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 2, 0.9, 0.7),
+            "the east facing the south-half click the RIGHT wears"
+        );
+        assert!(
+            !door_hinge_census(&w, cx, cy, cz, 2, 0.9, 0.5),
+            "the east facing the boundary the LEFT keeps"
+        );
         // THE SOUTH FACING'S OWN ARM (the stepZ>0 arm the dx<0.5 read
         // — the west half the RIGHT)
-        assert!(door_hinge_census(&w, cx, cy, cz, 3, 0.3, 0.9), "the south facing the west-half click the RIGHT wears");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 3, 0.3, 0.9),
+            "the south facing the west-half click the RIGHT wears"
+        );
         // THE WEST FACING'S OWN ARM (the stepX<0 arm the dz<0.5 read —
         // the north half the RIGHT)
-        assert!(door_hinge_census(&w, cx, cy, cz, 4, 0.9, 0.3), "the west facing the north-half click the RIGHT wears");
+        assert!(
+            door_hinge_census(&w, cx, cy, cz, 4, 0.9, 0.3),
+            "the west facing the north-half click the RIGHT wears"
+        );
     }
 
     #[test]
@@ -36870,7 +38838,10 @@ mod tests {
         assert_eq!(baked, 0x3F76E4, "the baked water default IS vanilla plains");
         let mut w = World::new(1, 42);
         // id 0 = plains (water == the baked constant), id 1 = swamp-ish
-        w.biomes = Some(layer(vec![[None, None, Some(baked), None], [None, None, Some(0x617B64), None]]));
+        w.biomes = Some(layer(vec![
+            [None, None, Some(baked), None],
+            [None, None, Some(0x617B64), None],
+        ]));
         assert_eq!(
             w.face_tint(WATER, 0, 8, 10, 8),
             None,
@@ -36891,12 +38862,29 @@ mod tests {
     fn face_tint_walks_overrides_and_unknowns() {
         let mut w = World::new(1, 42);
         // the badlands family: real overrides on both tint slots
-        w.biomes = Some(layer(vec![[Some(0x90814D), Some(0x9E814D), Some(0x3F76E4), None]]));
-        assert_eq!(w.face_tint(GRASS, 2, 0, 0, 0), Some(0x90814D), "the grass override");
-        assert_eq!(w.face_tint(LEAVES, 2, 0, 20, 0), Some(0x9E814D), "the foliage override");
+        w.biomes = Some(layer(vec![[
+            Some(0x90814D),
+            Some(0x9E814D),
+            Some(0x3F76E4),
+            None,
+        ]]));
+        assert_eq!(
+            w.face_tint(GRASS, 2, 0, 0, 0),
+            Some(0x90814D),
+            "the grass override"
+        );
+        assert_eq!(
+            w.face_tint(LEAVES, 2, 0, 20, 0),
+            Some(0x9E814D),
+            "the foliage override"
+        );
         // above the world and outside the grid: no opinion
         assert_eq!(w.face_tint(LEAVES, 2, 0, CHUNK_Y as i32, 0), None);
-        assert_eq!(w.face_tint(LEAVES, 2, 20, 0, 0), None, "past chunks_per_side");
+        assert_eq!(
+            w.face_tint(LEAVES, 2, 20, 0, 0),
+            None,
+            "past chunks_per_side"
+        );
         assert_eq!(w.face_tint(LEAVES, 2, 0, -1, 0), None, "below the world");
         // an id the tint table never named: the baked look
         w.biomes.as_mut().unwrap().ids[0][0] = 7;
@@ -36963,13 +38951,23 @@ mod tests {
         // never reaches — the clone probe the zero-draw verdict keeps)
         let mut rng = crate::drops::Lcg::new(7);
         let mut probe = rng.clone();
-        assert!(!w.crop_random_tick(&mut rng, 8, 20, 8), "the max age refuses");
+        assert!(
+            !w.crop_random_tick(&mut rng, 8, 20, 8),
+            "the max age refuses"
+        );
         assert_eq!(rng.next_int(1000), probe.next_int(1000), "zero draws at 7");
         // THE NON-CROP CELL DRAWS NOTHING (the isRandomlyTicking gate)
         let mut rng = crate::drops::Lcg::new(7);
         let mut probe = rng.clone();
-        assert!(!w.crop_random_tick(&mut rng, 8, 20, 9), "the air cell refuses");
-        assert_eq!(rng.next_int(1000), probe.next_int(1000), "zero draws on air");
+        assert!(
+            !w.crop_random_tick(&mut rng, 8, 20, 9),
+            "the air cell refuses"
+        );
+        assert_eq!(
+            rng.next_int(1000),
+            probe.next_int(1000),
+            "zero draws on air"
+        );
     }
 
     /// THE GROWTH SPEED — the audited getGrowthSpeed formula's dyadic
@@ -37065,10 +39063,7 @@ mod tests {
         // furrow) the box scans, the below-cell water it never wears
         // (the betweenClosed's y the offset(4, 1, 4) corner keeps)
         w.set(8, 20, 8, WATER);
-        assert!(
-            w.is_near_water(8, 19, 8),
-            "the y+1 cell the box scans"
-        );
+        assert!(w.is_near_water(8, 19, 8), "the y+1 cell the box scans");
         w.set(8, 20, 8, AIR);
         w.set(8, 18, 8, WATER);
         assert!(
@@ -37194,11 +39189,7 @@ mod tests {
             WHEAT_STAGE1,
             "the wet crop the ladder climbed"
         );
-        assert_eq!(
-            dry.get(8, 20, 8),
-            WHEAT,
-            "the dry crop the stage keeps"
-        );
+        assert_eq!(dry.get(8, 20, 8), WHEAT, "the dry crop the stage keeps");
         // THE ONE-DRAW LAW: the moduli 7 and 13 the raw draw the same
         // count spends — the post-tick streams re-join
         assert_eq!(
@@ -37266,10 +39257,7 @@ mod tests {
         for x in 0..16 {
             for z in 0..16 {
                 let id = w.get(x, 25, z);
-                assert!(
-                    is_wheat(id),
-                    "the cell {x},{z} left the family: {id}"
-                );
+                assert!(is_wheat(id), "the cell {x},{z} left the family: {id}");
                 if (x, z) == (3, 3) || (x, z) == (12, 12) {
                     assert_eq!(id, WHEAT_STAGE7, "the stage-7 cell stayed");
                 }
@@ -37328,11 +39316,7 @@ mod tests {
         );
         // THE MIRROR PAIR: the fresh-seed replay's first draw IS the roll
         let mut mirror = crate::drops::Lcg::new(s);
-        assert_eq!(
-            mirror.next_int(3),
-            0,
-            "the sapling's own modulus-3 roll"
-        );
+        assert_eq!(mirror.next_int(3), 0, "the sapling's own modulus-3 roll");
         // THE OCCUPIED-ABOVE REFUSAL still consumes the roll (the pc
         // 11-19 empty check the roll PRECEDES): the grown pair's base —
         // the roll lands, the empty verdict refuses, ONE draw spent
@@ -37397,11 +39381,7 @@ mod tests {
             w.bamboo_random_tick(&mut rng, 14, 34, 8),
             "the 15-tall grows the 16th"
         );
-        assert_eq!(
-            w.get(14, 35, 8),
-            BAMBOO,
-            "the 16th block the growth places"
-        );
+        assert_eq!(w.get(14, 35, 8), BAMBOO, "the 16th block the growth places");
         // THE DISPATCH'S OWN ROUTES (the one-tick one-arm law): the
         // wheat cell the crop arm, the rest the zero-draw refusal keeps
         w.set(4, 20, 4, WHEAT);
@@ -37453,11 +39433,7 @@ mod tests {
             BAMBOO,
             "the walk's growth the base conversion wears"
         );
-        assert_eq!(
-            w2.get(6, 22, 6),
-            BAMBOO,
-            "the walk's growth the top places"
-        );
+        assert_eq!(w2.get(6, 22, 6), BAMBOO, "the walk's growth the top places");
     }
 
     #[test]
@@ -37539,11 +39515,7 @@ mod tests {
         for y in 21..24 {
             assert_eq!(w.get(8, y, 8), AIR, "the fall the column clears");
         }
-        assert_eq!(
-            w.get(8, 19, 8),
-            GRASS,
-            "the floor the walk never reads"
-        );
+        assert_eq!(w.get(8, 19, 8), GRASS, "the floor the walk never reads");
         // THE REPAIRED SUPPORT THE QUEUE NEVER POPS (the tick's own
         // surviving arm the re-check keeps): the scheduled stalk the
         // dirt beneath the placement's own repair answers
@@ -37569,11 +39541,7 @@ mod tests {
             !w.bamboo_tick(201, 8, 21, 8),
             "the repaired support the surviving arm keeps"
         );
-        assert_eq!(
-            w.get(8, 21, 8),
-            BAMBOO,
-            "the stalk the repair saves"
-        );
+        assert_eq!(w.get(8, 21, 8), BAMBOO, "the stalk the repair saves");
         // THE STALE ROW THE BLOCK-MATCH GATE DROPS (the re-dig the
         // queue's stale entry the verdict refuses)
         w.set(8, 21, 8, AIR);
@@ -37821,16 +39789,20 @@ mod tests {
         );
         // THE DROPS the generated rows speak (the stalk the self-entry,
         // the sapling the bamboo item the loot serves)
-        let stalk_drops = mc_registry::generated::block_drops::drops("bamboo")
-            .expect("the stalk's drops row");
+        let stalk_drops =
+            mc_registry::generated::block_drops::drops("bamboo").expect("the stalk's drops row");
         assert!(
-            stalk_drops.iter().any(|p| p.entries.iter().any(|e| e.item == "bamboo")),
+            stalk_drops
+                .iter()
+                .any(|p| p.entries.iter().any(|e| e.item == "bamboo")),
             "the stalk the self-entry drops"
         );
         let sapling_drops = mc_registry::generated::block_drops::drops("bamboo_sapling")
             .expect("the sapling's drops row");
         assert!(
-            sapling_drops.iter().any(|p| p.entries.iter().any(|e| e.item == "bamboo")),
+            sapling_drops
+                .iter()
+                .any(|p| p.entries.iter().any(|e| e.item == "bamboo")),
             "the sapling the bamboo item drops (the item-less block the loot law keeps)"
         );
         // THE SOUNDS the name-driven lane reads (the break events the
@@ -37868,7 +39840,10 @@ mod tests {
         assert!(supports_bamboo(DIRT), "the dirt the #dirt subtag banks");
         assert!(supports_bamboo(SAND), "the sand the #sand subtag banks");
         assert!(supports_bamboo(GRAVEL), "the gravel the tag banks");
-        assert!(supports_bamboo(BAMBOO), "the stalk the tag's own member keeps");
+        assert!(
+            supports_bamboo(BAMBOO),
+            "the stalk the tag's own member keeps"
+        );
         assert!(
             supports_bamboo(BAMBOO_SAPLING),
             "the sapling the tag's own member keeps"
@@ -38044,7 +40019,11 @@ mod tests {
         assert_eq!(comparator_facing_of(fresh), 1, "the facing the byte keeps");
         assert!(!comparator_subtract_of(fresh), "the compare mode keeps");
         assert!(comparator_powered_of(fresh), "the 15 back the lit verdict");
-        assert_eq!(comparator_output_of(fresh), 15, "the output the cache banks");
+        assert_eq!(
+            comparator_output_of(fresh),
+            15,
+            "the output the cache banks"
+        );
         // THE SCHEDULE'S OWN DEDUP (the two schedules the one entry
         // the willTickThisTick law keeps, the drain the due cell the
         // sort order answers, the re-drain the empty keeps)
@@ -38346,8 +40325,10 @@ mod tests {
     /// never spoke).
     #[test]
     fn the_fill_formula_the_item_max_stack_cap_the_slots_wear() {
-        let snowball = mc_registry::item_id_by_name("snowball").expect("the snowball rides the wire table");
-        let sword = mc_registry::item_id_by_name("diamond_sword").expect("the sword rides the wire table");
+        let snowball =
+            mc_registry::item_id_by_name("snowball").expect("the snowball rides the wire table");
+        let sword =
+            mc_registry::item_id_by_name("diamond_sword").expect("the sword rides the wire table");
         let stone = mc_registry::item_id_by_name("stone").expect("the stone rides the wire table");
         // THE FULL CHESTS THE SIZE NEVER BENDS (the 15 the count==cap
         // full weight speaks — the 16-stack snowball the 1-stack sword
@@ -38475,9 +40456,7 @@ mod tests {
         // THE SIX SEATS THE SEED ANSWERS (the wire above, the wire
         // beside, the wire below — the any-dir constant 15 the flood
         // banks)
-        for (sx, sy, sz) in
-            [(bx, by + 1, bz), (bx + 1, by, bz), (bx, by - 1, bz)]
-        {
+        for (sx, sy, sz) in [(bx, by + 1, bz), (bx + 1, by, bz), (bx, by - 1, bz)] {
             assert_eq!(
                 wire_source_strength_near(&w, sx, sy, sz),
                 15,
@@ -38604,7 +40583,10 @@ mod tests {
             1,
             "the 4 dial the cycle the 1 wraps"
         );
-        assert!(repeater_locked_of(repeater_delay_cycled(v)), "the lock bit the cycle keeps");
+        assert!(
+            repeater_locked_of(repeater_delay_cycled(v)),
+            "the lock bit the cycle keeps"
+        );
         // THE PLACEMENT LOOK'S OWN STAMP (the east look the west
         // FACING keeps — the DiodeBlock super call the same walk the
         // comparator placement banks, the dial the DELAY=1 answers,
@@ -38680,8 +40662,8 @@ mod tests {
             repeater_should_turn_on(&w, rx, ry, rz),
             "the lever back the any-input verdict speaks"
         );
-        let fresh = repeater_refresh_variant(&w, rx, ry, rz)
-            .expect("the mismatch the refresh banks");
+        let fresh =
+            repeater_refresh_variant(&w, rx, ry, rz).expect("the mismatch the refresh banks");
         assert!(
             repeater_powered_of(fresh),
             "the fresh verdict the powered bit wears"
@@ -38799,7 +40781,10 @@ mod tests {
             15,
             "the side comparator the 15 the diodes-only walk reads"
         );
-        assert!(repeater_locked_at(&w, rx, ry, rz), "the side diode the lock banks");
+        assert!(
+            repeater_locked_at(&w, rx, ry, rz),
+            "the side diode the lock banks"
+        );
         // THE LOCKED CELL THE REFRESH THE SILENCE KEEPS (the back
         // input the dark mismatch the freeze the None answers — the
         // tick's own guard the same law wears)
@@ -38835,10 +40820,18 @@ mod tests {
         // pulse verdict keeps)
         for facing in 0..6u8 {
             let v = observer_variant(facing, true);
-            assert_eq!(observer_facing_of(v), facing, "the facing {facing} the byte keeps");
+            assert_eq!(
+                observer_facing_of(v),
+                facing,
+                "the facing {facing} the byte keeps"
+            );
             assert!(observer_powered_of(v), "the powered bit the byte keeps");
             let dark = observer_variant(facing, false);
-            assert_eq!(observer_facing_of(dark), facing, "the facing the dark byte keeps");
+            assert_eq!(
+                observer_facing_of(dark),
+                facing,
+                "the facing the dark byte keeps"
+            );
             assert!(!observer_powered_of(dark), "the dark byte the quiet keep");
         }
         // THE FACING STEP'S OWN SIX (the vanilla Direction order the
@@ -38846,7 +40839,11 @@ mod tests {
         // pairs answer)
         assert_eq!(observer_facing_delta6(0), (0, -1, 0), "the down the -y arm");
         assert_eq!(observer_facing_delta6(1), (0, 1, 0), "the up the +y arm");
-        assert_eq!(observer_facing_delta6(2), (0, 0, -1), "the north the -z arm");
+        assert_eq!(
+            observer_facing_delta6(2),
+            (0, 0, -1),
+            "the north the -z arm"
+        );
         assert_eq!(observer_facing_delta6(3), (0, 0, 1), "the south the +z arm");
         assert_eq!(observer_facing_delta6(4), (-1, 0, 0), "the west the -x arm");
         assert_eq!(observer_facing_delta6(5), (1, 0, 0), "the east the +x arm");
@@ -38868,7 +40865,11 @@ mod tests {
         let v = observer_placement_variant(0.0, 0.9);
         assert_eq!(observer_facing_of(v), 1, "the look up the UP eye wears");
         let v = observer_placement_variant(0.0, -0.6);
-        assert_eq!(observer_facing_of(v), 2, "the shallow look the horizontal byte keeps");
+        assert_eq!(
+            observer_facing_of(v),
+            2,
+            "the shallow look the horizontal byte keeps"
+        );
         // THE FULL CUBE THE DEFAULT COLLISION KEEPS (the body the
         // block walks AROUND — the DiodeBlock family's Empty row the
         // observer never wears)
@@ -39082,20 +41083,37 @@ mod tests {
         // bit the push state keeps)
         for facing in 0..6u8 {
             let v = piston_variant(facing, true);
-            assert_eq!(piston_facing_of(v), facing, "the facing {facing} the byte keeps");
+            assert_eq!(
+                piston_facing_of(v),
+                facing,
+                "the facing {facing} the byte keeps"
+            );
             assert!(piston_extended_of(v), "the extended bit the byte keeps");
             let retracted = piston_variant(facing, false);
-            assert_eq!(piston_facing_of(retracted), facing, "the facing the retracted keeps");
-            assert!(!piston_extended_of(retracted), "the retracted byte the quiet keep");
+            assert_eq!(
+                piston_facing_of(retracted),
+                facing,
+                "the facing the retracted keeps"
+            );
+            assert!(
+                !piston_extended_of(retracted),
+                "the retracted byte the quiet keep"
+            );
         }
         // THE HEAD VARIANT'S ROUND TRIP (the facing + the TYPE bit —
         // the sticky arm the pair banks)
         for facing in 0..6u8 {
             let v = piston_head_variant(facing, true);
-            assert_eq!(piston_head_facing_of(v), facing, "the head facing {facing} keeps");
+            assert_eq!(
+                piston_head_facing_of(v),
+                facing,
+                "the head facing {facing} keeps"
+            );
             assert!(piston_head_sticky_of(v), "the sticky bit the byte keeps");
-            assert!(!piston_head_sticky_of(piston_head_variant(facing, false)),
-                "the normal head the quiet keep");
+            assert!(
+                !piston_head_sticky_of(piston_head_variant(facing, false)),
+                "the normal head the quiet keep"
+            );
         }
         // THE FACING STEP'S OWN SIX (the vanilla Direction order the
         // deltas speak — the push cell AND the head cell the ±step
@@ -39122,7 +41140,11 @@ mod tests {
         let v = piston_placement_variant(0.0, 0.9);
         assert_eq!(piston_facing_of(v), 0, "the look up the DOWN front wears");
         let v = piston_placement_variant(0.0, -0.6);
-        assert_eq!(piston_facing_of(v), 3, "the shallow look the horizontal front keeps");
+        assert_eq!(
+            piston_facing_of(v),
+            3,
+            "the shallow look the horizontal front keeps"
+        );
         // THE COLLISION'S OWN ROWS (the bases the DEFAULT full cube
         // the body walks around — the head the compound the
         // pass-through precedent the honest approximation keeps)
@@ -39499,22 +41521,34 @@ mod tests {
         assert_eq!(DISPENSER, 776, "the dispenser its tail seat keeps");
         assert_eq!(DROPPER, 777, "the dropper its tail seat keeps");
         assert_eq!(
-            NAME_OF[DISPENSER as usize],
-            "dispenser",
+            NAME_OF[DISPENSER as usize], "dispenser",
             "the jar's own registry word the dig/sound/drop tables key"
         );
         assert_eq!(NAME_OF[DROPPER as usize], "dropper", "the sibling row");
         assert!(is_dispenser_kind(DISPENSER) && is_dispenser_kind(DROPPER));
-        assert!(!is_dispenser_kind(MOVING_PISTON), "the piston the refusal keeps");
+        assert!(
+            !is_dispenser_kind(MOVING_PISTON),
+            "the piston the refusal keeps"
+        );
         // THE VARIANT'S OWN ROUND TRIP (the two fields the one byte
         // wears — the six facings, the triggered bit)
         for facing in 0u8..6 {
             let v = dispenser_variant(facing, false);
             assert_eq!(dispenser_facing_of(v), facing, "the facing the byte keeps");
-            assert!(!dispenser_triggered_of(v), "the fresh byte the clear bit keeps");
+            assert!(
+                !dispenser_triggered_of(v),
+                "the fresh byte the clear bit keeps"
+            );
             let vt = dispenser_variant(facing, true);
-            assert_eq!(dispenser_facing_of(vt), facing, "the facing the bit never moves");
-            assert!(dispenser_triggered_of(vt), "the triggered bit the set banks");
+            assert_eq!(
+                dispenser_facing_of(vt),
+                facing,
+                "the facing the bit never moves"
+            );
+            assert!(
+                dispenser_triggered_of(vt),
+                "the triggered bit the set banks"
+            );
         }
         // THE DELTA6'S OWN SIX (the DIRECTION_NORMAL order the front
         // cell's own step wears — the piston family's own table the
@@ -39665,16 +41699,24 @@ mod tests {
         // bound wears)
         let mut rng = crate::drops::Lcg::new(7);
         let (vx, vy, vz) = dispense_item_velocity(&mut rng, (1, 0, 0));
-        assert!(vx > 0.2 && vx < 0.5, "the +x mean the step*d3 answers ({vx})");
-        assert!(vy > 0.2 - 0.32 && vy < 0.2 + 0.32, "the y mean the 0.2 keeps ({vy})");
-        assert!(vz.abs() < 0.32, "the z the step-less axis the jitter alone ({vz})");
+        assert!(
+            vx > 0.2 && vx < 0.5,
+            "the +x mean the step*d3 answers ({vx})"
+        );
+        assert!(
+            vy > 0.2 - 0.32 && vy < 0.2 + 0.32,
+            "the y mean the 0.2 keeps ({vy})"
+        );
+        assert!(
+            vz.abs() < 0.32,
+            "the z the step-less axis the jitter alone ({vz})"
+        );
         // THE SHOOT LAW'S OWN FOLDS (the axis shot the power 1.1 the
         // speed keeps — the uncertainty 6 the spread the ±0.103365
         // band the triangle's own bound wears; the rotations the
         // atan2 degrees fold speaks)
         let mut rng = crate::drops::Lcg::new(9);
-        let ((vx, vy, vz), y_rot, x_rot) =
-            projectile_shoot_law(&mut rng, (0, 0, -1), 1.1, 6.0);
+        let ((vx, vy, vz), y_rot, x_rot) = projectile_shoot_law(&mut rng, (0, 0, -1), 1.1, 6.0);
         let speed = (vx * vx + vy * vy + vz * vz).sqrt();
         assert!(
             speed > 1.1 - 0.4 && speed < 1.1 + 0.4,
@@ -39686,10 +41728,7 @@ mod tests {
         // wears, the |±180| band the honest verdict keeps; the
         // 180-only band the FIRST draft's mis-model the gate's own
         // run caught)
-        assert!(
-            y_rot.abs() > 170.0,
-            "the -z shot the ±180 yRot ({y_rot})"
-        );
+        assert!(y_rot.abs() > 170.0, "the -z shot the ±180 yRot ({y_rot})");
         assert!(x_rot.abs() < 10.0, "the flat shot the 0 xRot ({x_rot})");
         // THE INSERT WALK'S OWN VERDICTS (the merge the same-id slot
         // tops up, the first-empty the split arm fills, the cap the
@@ -39837,7 +41876,11 @@ mod tests {
         assert_eq!(w.get(5, 10, 4), PISTON_HEAD, "the head the landing wears");
         // THE NO-PULL RETRACT (the head's own slide the stash banks)
         let _ = piston_try_retract(&mut w, 10, 4, 10, 4, 5, false);
-        assert_eq!(w.get(5, 10, 4), MOVING_PISTON, "the head the mid-state wears");
+        assert_eq!(
+            w.get(5, 10, 4),
+            MOVING_PISTON,
+            "the head the mid-state wears"
+        );
         assert_eq!(
             w.moving_state_of(5, 10, 4),
             Some((
@@ -39863,7 +41906,11 @@ mod tests {
         for (x, y, z) in w.drain_due_moving_ticks(13) {
             tick_moving_piston_cell(&mut w, 13, x, y, z);
         }
-        assert_eq!(w.get(5, 10, 4), AIR, "the head's sink the AIR landing wears");
+        assert_eq!(
+            w.get(5, 10, 4),
+            AIR,
+            "the head's sink the AIR landing wears"
+        );
         assert!(
             w.moving_state_of(5, 10, 4).is_none(),
             "the stash row the take clears"
