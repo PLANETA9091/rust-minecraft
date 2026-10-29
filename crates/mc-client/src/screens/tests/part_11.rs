@@ -5113,3 +5113,167 @@ fn the_offline_inventory_highlight_the_paint_the_cell_wear() {
         "the far face the same verdict keeps"
     );
 }
+
+/// THE CRAFTING TABLE'S OWN HIGHLIGHT SEAT (the 327 round — the
+/// same shared AbstractContainerScreen law the beacon + inventory
+/// rounds bank): the hovered seat's inner origin the table_hover_menu
+/// walk's own verdict answers — the grid cells / the result seat /
+/// the store rows the +1 inset keep, the NO-GATE law the 325 round
+/// banks (the carried stack the wall never speaks, the empty seat
+/// the highlight answers), the wrong screen the None answers. The
+/// REAL walk the offline door wears.
+#[test]
+fn the_offline_table_highlight_the_seat_the_no_gates_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_crafting_table();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Crafting,
+        "the table door the walk wears"
+    );
+    // THE PANEL THE RENDER BANKS (the 320x180 the centered canvas
+    // keeps — the logic walk the same origin fns the render wears)
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    app.table_panel = panel;
+    // THE STORE ROW'S OWN ORIGIN (the +1 inset the Slot.x keeps)
+    let (sx, sy) = inventory_slot_origin(panel, 0);
+    let origin = (sx + 1, sy + 1);
+    assert_eq!(
+        app.table_highlight_origin(sx + 1 + 8, sy + 1 + 8),
+        Some(origin),
+        "the store row the origin answers"
+    );
+    // THE MAIN GRID'S OWN ROWS (the menu 10 the store 9 the inverse
+    // law keys, the menu 36 the store 35 the tail answers)
+    let (mx9, my9) = inventory_slot_origin(panel, 9);
+    assert_eq!(
+        app.table_highlight_origin(mx9 + 1 + 8, my9 + 1 + 8),
+        Some((mx9 + 1, my9 + 1)),
+        "the main grid row the origin answers"
+    );
+    let (mx35, my35) = inventory_slot_origin(panel, 35);
+    assert_eq!(
+        app.table_highlight_origin(mx35 + 1 + 8, my35 + 1 + 8),
+        Some((mx35 + 1, my35 + 1)),
+        "the main grid tail the origin answers"
+    );
+    // THE HOTBAR ROW'S OWN ANSWER (the menu 45 the store 8 the
+    // inverse walk keys)
+    let (hx, hy) = inventory_slot_origin(panel, 8);
+    assert_eq!(
+        app.table_highlight_origin(hx + 1 + 8, hy + 1 + 8),
+        Some((hx + 1, hy + 1)),
+        "the hotbar row the origin answers"
+    );
+    // THE GRID CELL'S OWN ANSWER (the 3x3 cell the same walk serves)
+    let (gx, gy) = table_craft_origin(panel, 4);
+    assert_eq!(
+        app.table_highlight_origin(gx + 1 + 8, gy + 1 + 8),
+        Some((gx + 1, gy + 1)),
+        "the grid cell the origin answers"
+    );
+    // THE RESULT SEAT'S OWN ANSWER (the addResultSlot(124, 35) seat
+    // the same walk serves)
+    let (rx, ry) = table_craft_origin(panel, 9);
+    assert_eq!(
+        app.table_highlight_origin(rx + 1 + 8, ry + 1 + 8),
+        Some((rx + 1, ry + 1)),
+        "the result seat the origin answers"
+    );
+    // THE NO-GATE LAW (the 325 round's own verdict the table screen
+    // re-wears — the carried stack the wall NEVER speaks, the empty
+    // seats the plain answer keeps)
+    app.inv_carried = (7, 3);
+    assert_eq!(
+        app.table_highlight_origin(sx + 1 + 8, sy + 1 + 8),
+        Some(origin),
+        "the carried stack the highlight never refuses"
+    );
+    app.inv_carried = (0, 0);
+    // THE BLANK FACE (the no-seat walk the None answers)
+    assert_eq!(
+        app.table_highlight_origin(panel.0 - 20, panel.1 - 20),
+        None,
+        "the outside face the None speaks"
+    );
+    // THE WRONG SCREEN (the world view the highlight never wears)
+    app.close_crafting_table(ScreenKind::World);
+    assert_eq!(
+        app.table_highlight_origin(sx + 1 + 8, sy + 1 + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE CRAFTING TABLE'S OWN HIGHLIGHT PAINT (the REAL render walk —
+/// the 320x180 headless canvas the table screen renders, the
+/// same-frame pair the mouse the only delta wears): the empty store
+/// cell the back-96 + the front-32 the EXACT alpha math answers (the
+/// two-layer order the composite pins), the transparent border ring
+/// the 24x24 sprite's own 4px margin keeps, the no-mouse pass the
+/// paint never serves.
+#[test]
+fn the_offline_table_highlight_the_paint_the_cell_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_crafting_table();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the empty seats the paint law reads
+    }
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let blend = |dst: u8, alpha: f32| -> u8 {
+        let d = dst as f32 / 255.0;
+        let v = d * (1.0 - alpha) + 1.0 * alpha;
+        ((v.clamp(0.0, 1.0)) * 255.0 + 0.5) as u8
+    };
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_a, &mut a);
+    }
+    // THE REAL GEOMETRY THE RENDER BANKS (the panel the centered
+    // canvas keeps — the store row 0 the hotbar's own cell answers)
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let (sx, sy) = inventory_slot_origin(panel, 0);
+    let (ox, oy) = (sx + 1, sy + 1);
+    let cx = ox + 8;
+    let cy = oy + 8;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((cx, cy));
+        app.render(&mut fb_b, &mut a);
+    }
+    // THE CELL'S OWN TINT (the empty seat the highlight paints —
+    // the exact two-layer math the sprite alphas answer)
+    let a0 = pixel(&fb_a, cx, cy);
+    let expected = blend(blend(a0, 96.0 / 255.0), 32.0 / 255.0);
+    assert_eq!(
+        pixel(&fb_b, cx, cy),
+        expected,
+        "the two-layer tint the exact math wears (back 96 + front 32)"
+    );
+    assert_ne!(
+        a0, expected,
+        "the tint the paint speaks (the highlight the canvas moves)"
+    );
+    // THE BORDER RING (the 1px inside the hover walk's band the
+    // sprite's own 4px transparent margin keeps — the cell-only
+    // tint the geometry pins)
+    assert_eq!(
+        pixel(&fb_a, ox - 1, cy),
+        pixel(&fb_b, ox - 1, cy),
+        "the border ring the sprite's margin keeps (no paint)"
+    );
+    // THE FAR FACE (the panel's own distance the paint never wears)
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 20, panel.1 + 20),
+        pixel(&fb_b, panel.0 + 20, panel.1 + 20),
+        "the far face the same verdict keeps"
+    );
+}

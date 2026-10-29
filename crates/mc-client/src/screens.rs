@@ -30804,6 +30804,43 @@ impl App {
         }
     }
 
+    /// THE CRAFTING TABLE'S OWN HIGHLIGHT SEAT (the 327 round — the
+    /// same shared AbstractContainerScreen law the beacon + inventory
+    /// rounds bank, the CraftingScreen the plain extension the 326
+    /// probe walk keeps — no re-probe the subclass absence the
+    /// shared verdict wears): the hovered seat's INNER origin (the
+    /// +1 inset the vanilla Slot.x keeps — the 24x24 sprite the
+    /// (x - 4, y - 4) seat blits) the table_hover_menu walk's own
+    /// verdict answers — the ONE hover walk the clicks and the drag
+    /// share (the vanilla's own single getHoveredSlot law the walk
+    /// re-keys). The NO-GATE law the 325 round banks (the
+    /// isHighlightable default TRUE the plain verdict keeps): NO
+    /// carried wall, NO hasItem gate — the empty seat the highlight
+    /// answers. The (ox, oy) the paint serves — None the gates speak.
+    fn table_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Crafting {
+            return None; // the table's own screen the walk serves
+        }
+        let panel = self.table_panel;
+        let menu = self.table_hover_menu(mx, my)?;
+        let (x, y) = if menu == 0 {
+            table_craft_origin(panel, 9)
+        } else if menu <= 9 {
+            table_craft_origin(panel, menu as usize - 1)
+        } else {
+            // the store rows the menu ids 10..45 the inverse walk
+            // speaks — 37..45 the hotbar row 0..8 keys, 10..36 the
+            // main grid 9..35 the same law answers
+            let store = if menu >= 37 {
+                (menu - 37) as usize
+            } else {
+                9 + (menu - 10) as usize
+            };
+            inventory_slot_origin(panel, store)
+        };
+        Some((x + 1, y + 1))
+    }
+
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
     /// — the extractBackground then extractRenderState order the draw
     /// keeps: the dimmed world the container convention dims, the
@@ -31277,6 +31314,29 @@ impl App {
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
         }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the 327 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the beacon + inventory
+        // rounds bank): the hovered seat's own 24x24 sprite the
+        // (slot.x - 4, slot.y - 4) seat blits, the isHighlightable gate
+        // the ONLY wall speaks — NO carried wall, NO hasItem gate (the
+        // 325 round's own law the table screen re-wears), the white
+        // alpha-96 the back layer keeps. The mouse_pos gate the headless
+        // scenes track no mouse — the pixel goldens never see this pass.
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.table_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
         // THE 3x3 GRID + THE RESULT SLOT (the menu's own slot order —
         // the icons the store's own draw keeps, the recompute verdict
         // the offline walk speaks / the sync's belief the wire keeps)
@@ -31371,6 +31431,22 @@ impl App {
             }
         }
         self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
     }
 
     /// THE CREATIVE PICKER'S OWN RENDER (javap 26.2
