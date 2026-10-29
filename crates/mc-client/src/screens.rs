@@ -29982,9 +29982,48 @@ impl App {
         if !chest_title.is_empty() {
             g.text(a, px + 8, py + 6, &chest_title, label, false);
         }
+        // THE SLOT SPRITES FIRST (the renderBg decomposition's own
+        // chrome — the vanilla generic_54 texture the slots bake, the
+        // hand-drawn panel the explicit rows serves: the back layer
+        // the vanilla renderBg-then-highlight order the chrome's
+        // AFTER serves — the opaque 16x16 center the back tint never
+        // under-runs)
         for i in 0..n {
             let (sx, sy) = chest_container_slot((px, py), i);
             g.sprite(a, "container/slot", sx, sy);
+        }
+        for i in 0..36 {
+            let (sx, sy) = chest_mirror_slot((px, py + extra), i);
+            g.sprite(a, "container/slot", sx, sy);
+        }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the 329 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the beacon + inventory
+        // + table + furnace rounds bank): the hovered seat's own 24x24
+        // sprite the (slot.x - 4, slot.y - 4) seat blits, the
+        // isHighlightable gate the ONLY wall speaks — NO carried wall,
+        // NO hasItem gate (the 325 round's own law the chest screen
+        // re-wears), the white alpha-96 the back layer keeps. The
+        // mouse_pos gate the headless scenes track no mouse — the
+        // pixel goldens never see this pass. THE CHEST'S OWN ORDER
+        // the texture-baked brothers never speak: the slot sprites
+        // the explicit chrome rows the bg IS — the back layer the
+        // sprites' AFTER paints (the opaque sprite center the
+        // under-painted tint the erase never wears), the icons the
+        // extractSlots items the back's AFTER the vanilla order keeps.
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.chest_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
         }
         for (i, (id, count)) in self.chest_slots.iter().enumerate() {
             if *count <= 0 {
@@ -29997,10 +30036,6 @@ impl App {
                 let tw = g.text_width(&s);
                 g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
             }
-        }
-        for i in 0..36 {
-            let (sx, sy) = chest_mirror_slot((px, py + extra), i);
-            g.sprite(a, "container/slot", sx, sy);
         }
         // the live mirror's contents (the networked store's rows 27..63):
         // the same icon/count treatment the grid rides over the mirror's
@@ -30048,6 +30083,22 @@ impl App {
         // bundle's contents grid the chest lane's rows speak, the
         // topmost layer the panel and the carried stack keep under)
         self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
     }
 
     /// THE HOPPER'S OWN RENDER (javap 26.2 HopperScreen the 176x133
@@ -30876,6 +30927,45 @@ impl App {
             return None; // the furnace's own screen the walk serves
         }
         let (sx, sy, _) = self.furnace_hover_seat(mx, my)?;
+        Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
+    /// THE CHEST'S OWN HOVER SEAT (the 329 round — the vanilla's own
+    /// single getHoveredSlot law the chest lane finally wears: the
+    /// ONE pure walk the clicks and the drops and the swaps and the
+    /// drags and the tooltip and the highlight ALL share — the nine
+    /// inline finds the same strict 16x16 predicate wore the walk
+    /// retires). The rects the last render laid (the inner origins
+    /// the +1 inset the Slot.x keeps — the chest's own N grid the
+    /// mirror rows the menu numbering banks, the HOPPER the same
+    /// field's five-seat row wears) the find answers — the FIRST
+    /// match the non-overlapping cells keep.
+    fn chest_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.chest_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE CHEST'S OWN HIGHLIGHT SEAT (the 329 round — the same
+    /// shared AbstractContainerScreen law the beacon + inventory +
+    /// table + furnace rounds bank, the ChestScreen the plain
+    /// extension the subclass absence banks [the ChestScreen the
+    /// AbstractContainerScreen chain the Highlight rows never wears —
+    /// the 326 probe's own family verdict the same plain extension
+    /// keeps]): the hovered seat's INNER origin the chest_hover_seat
+    /// walk's own verdict answers — the ONE hover walk the clicks
+    /// and the drops and the drags share (the vanilla's own single
+    /// getHoveredSlot law the walk re-keys). The NO-GATE law the 325
+    /// round banks (the isHighlightable default TRUE the plain
+    /// verdict keeps): NO carried wall, NO hasItem gate — the empty
+    /// cell the highlight answers. The (ox, oy) the paint serves —
+    /// None the gates speak.
+    fn chest_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Chest {
+            return None; // the chest's own screen the walk serves
+        }
+        let (sx, sy, _) = self.chest_hover_seat(mx, my)?;
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
@@ -34024,11 +34114,7 @@ impl App {
         let Some((mx, my)) = self.mouse_pos else {
             return; // no cursor — no hoveredSlot (the null gate's shape)
         };
-        let Some(&(_, _, slot)) = self
-            .chest_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
             return; // the press landed between the slots — the null hover
         };
         let Some(sink) = self.live_clicks.as_ref() else {
@@ -34137,11 +34223,7 @@ impl App {
         let Some((mx, my)) = self.mouse_pos else {
             return false; // no cursor — no hoveredSlot (the null gate's shape)
         };
-        let Some(&(_, _, slot)) = self
-            .chest_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
             return false; // the press landed between the slots — the null hover
         };
         // THE CARRIED GATE (pc 0-10 — the getCarried().isEmpty() arm
@@ -34667,10 +34749,7 @@ impl App {
             return; // no render spoke yet — no geometry to hit
         }
         let panel = self.chest_panel;
-        let on_seat = self
-            .chest_slot_rects
-            .iter()
-            .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+        let on_seat = self.chest_hover_seat(mx, my).is_some();
         // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
         // the canvas chrome the panel origin frames, the height the
         // rows speak — 166 the single, 220 the double): the render
@@ -34702,11 +34781,7 @@ impl App {
     /// (the OFFLINE sim the SAME field's own stack holds — the click
     /// walk's own carried the both lanes share).
     fn qc_paint_chest(&mut self, mx: i32, my: i32) {
-        let Some(&(_, _, slot)) = self
-            .chest_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
             return; // pc 25 — the no-seat frame the paint skips
         };
         let carried = self.chest_carried;
@@ -35498,10 +35573,7 @@ impl App {
             // place-back the offline stores speak), the outside the
             // -999 drop serves, the between the -1 no-op keeps.
             let panel = self.chest_panel;
-            let on_seat = self
-                .chest_slot_rects
-                .iter()
-                .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            let on_seat = self.chest_hover_seat(mx, my).is_some();
             let outside = mx < panel.0
                 || my < panel.1
                 || mx >= panel.0 + 176
@@ -42455,10 +42527,7 @@ impl App {
                 Some((id, count, slot as i32))
             }
             ScreenKind::Chest => {
-                let &(_, _, slot) = self
-                    .chest_slot_rects
-                    .iter()
-                    .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)?;
+                let (_, _, slot) = self.chest_hover_seat(mx, my)?;
                 let s = slot as usize;
                 // THE BELIEF'S OWN BOUNDS (the offline stand-in the
                 // chrome-only shape keeps — the arrays the sync never
@@ -43360,11 +43429,7 @@ impl App {
         if self.chest_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
         }
-        let Some(&(_, _, slot)) = self
-            .chest_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
             return; // the press landed between the slots — no click
         };
         let menu = slot as usize;
@@ -43661,11 +43726,7 @@ impl App {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
         };
-        let Some(&(_, _, slot)) = self
-            .chest_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
             return; // the press landed between the slots — no click
         };
         let believed = if (slot as usize) < self.chest_slots.len() {
@@ -44009,11 +44070,7 @@ impl App {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
         };
-        let Some(&(_, _, slot)) = self
-            .chest_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
             return; // the press landed between the slots — the null hover
         };
         if self.chest_carried.1 > 0 {
