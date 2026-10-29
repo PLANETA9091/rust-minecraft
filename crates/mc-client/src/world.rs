@@ -4729,6 +4729,218 @@ pub fn is_beacon_base(id: u16) -> bool {
     BEACON_BASE_KINDS.contains(&id)
 }
 
+/// THE BEACON'S OWN EFFECT TIERS (javap 26.2 BeaconBlockEntity clinit
+/// pc 0-77 — the `BEACON_EFFECTS` static the four List.of rows keep:
+/// `List.of(SPEED, HASTE)` the tier-1 row, `List.of(RESISTANCE,
+/// JUMP_BOOST)` the tier-2 row, `List.of(STRENGTH)` the tier-3 row,
+/// `List.of(REGENERATION)` the tier-4 row — the VALID_EFFECTS set the
+/// flatMap stream the same walk flattens). The effect ids the
+/// [`crate::effects`] registry rows the client's own constants wear.
+pub const BEACON_EFFECT_TIERS: [&[i32]; 4] = [
+    &[
+        crate::effects::MOB_EFFECT_SPEED,
+        crate::effects::MOB_EFFECT_HASTE,
+    ] as &[i32],
+    &[
+        crate::effects::MOB_EFFECT_RESISTANCE,
+        crate::effects::MOB_EFFECT_JUMP_BOOST,
+    ] as &[i32],
+    &[crate::effects::MOB_EFFECT_STRENGTH] as &[i32],
+    &[crate::effects::MOB_EFFECT_REGENERATION] as &[i32],
+];
+
+/// THE TIER'S OWN REQUIREMENT (javap 26.2
+/// BeaconBlockEntity.getRequiredLevelsFor pc 0-53 — the null the
+/// iconst_0 return keeps, the BEACON_EFFECTS ladder the `i + 1`
+/// verdict speaks [the tier index the contains scan finds, the ONE
+/// the add wears], the unlisted effect the ldc_w Integer.MAX_VALUE
+/// row answers).
+pub fn beacon_required_levels_for(effect: Option<i32>) -> i32 {
+    let Some(effect) = effect else {
+        return 0;
+    };
+    for (i, tier) in BEACON_EFFECT_TIERS.iter().enumerate() {
+        if tier.contains(&effect) {
+            return i as i32 + 1;
+        }
+    }
+    i32::MAX
+}
+
+/// THE SELECTION'S OWN VALIDATOR (javap 26.2
+/// BeaconBlockEntity.validateEffects pc 0-66 — the five verdicts the
+/// bytecode's own branches keep: the secondary the levels-4 gate
+/// wears [the null check pc 0-1 + the iconst_4 compare pc 4-9], the
+/// pair's requirements the levels compare speaks [pc 11-34 — the
+/// primary `req > levels` arm the false keeps, the secondary the
+/// same verdict], the tier-4 effect the primary seat NEVER takes
+/// [pc 35-41 — the `priReq >= 4` arm the false returns], and the
+/// cheap secondary the SAME effect the tier-4 upgrade alone serves
+/// [pc 42-64 — the `secReq != 0 && secReq < 4 && primary !=
+/// secondary` arm the false keeps — the Regeneration row the 4 the
+/// requirement wears, the mismatched cheap pair the gate refuses]).
+pub fn beacon_validate_effects(primary: Option<i32>, secondary: Option<i32>, levels: i32) -> bool {
+    if secondary.is_some() && levels < 4 {
+        return false;
+    }
+    let pri_req = beacon_required_levels_for(primary);
+    let sec_req = beacon_required_levels_for(secondary);
+    if pri_req > levels || sec_req > levels {
+        return false;
+    }
+    if pri_req >= 4 {
+        return false;
+    }
+    if sec_req != 0 && sec_req < 4 && primary != secondary {
+        return false;
+    }
+    true
+}
+
+/// THE SEAT'S OWN ENCODE (javap 26.2 BeaconMenu.encodeEffect pc 0-24
+/// — the null the iconst_0 keeps, the holder id the +1 the add
+/// wears; decodeEffect the inverse pair keeps — the 0 the null
+/// speaks, the id-1 the byId read answers). The client's own bank
+/// the RAW effect ids keeps — the pair law the encode walks the
+/// wire's data slots carry, the offline stand-in the same +1 shape
+/// the stores row never needs (the raw id the -1 the absent seat
+/// names). THE RAW LANE: the fn the encode walk's honest mirror
+/// keeps for the data-slot semantics the tests pin.
+pub fn beacon_encode_effect(effect: Option<i32>) -> i32 {
+    match effect {
+        None => 0,
+        Some(id) => id + 1,
+    }
+}
+
+/// THE DURATION'S OWN FORMULA (javap 26.2 BeaconBlockEntity.
+/// applyEffects pc 42-51 — the `(9 + levels * 2) * 20` the bipush-9
+/// + the imul/imul pair keeps, the TICKS the 20 the beat wears).
+pub const BEACON_EFFECT_DURATION_BASE: i32 = 9;
+pub const BEACON_EFFECT_DURATION_PER_LEVEL: i32 = 2;
+pub const BEACON_EFFECT_TICKS_PER_SECOND: i32 = 20;
+
+#[inline]
+pub fn beacon_effect_duration(levels: i32) -> i32 {
+    (BEACON_EFFECT_DURATION_BASE + levels * BEACON_EFFECT_DURATION_PER_LEVEL)
+        * BEACON_EFFECT_TICKS_PER_SECOND
+}
+
+/// THE AMPLIFIER'S OWN VERDICT (javap 26.2 applyEffects pc 22-41 —
+/// the amplifier local the iconst_0 starts, the `levels >= 4 &&
+/// primary.equals(secondary)` arm the iconst_1 wears — the tier-4
+/// same-effect pick the level-II primary serves; the mismatched
+/// secondary the level-I primary keeps and the secondary pass the
+/// level-0 dose wears).
+#[inline]
+pub fn beacon_effect_amplifier(levels: i32, primary: Option<i32>, secondary: Option<i32>) -> i32 {
+    if levels >= 4 && primary.is_some() && primary == secondary {
+        1
+    } else {
+        0
+    }
+}
+
+/// THE RANGE'S OWN FORMULA (javap 26.2 applyEffects pc 12-21 — the
+/// `levels * 10 + 10` the bipush-10 pair keeps, the i2d the AABB
+/// inflate wears).
+#[inline]
+pub fn beacon_effect_range(levels: i32) -> f64 {
+    (levels * 10 + 10) as f64
+}
+
+/// THE AMBIENT BEAT'S OWN GATE (javap 26.2 BeaconBlockEntity.tick
+/// pc 366-378 — the `getGameTime() % 80 == 0` the ldc2_w 80 lrem
+/// pair keeps: the effects the re-apply the ambient sound the same
+/// 80-tick beat wears).
+pub const BEACON_EFFECTS_BEAT: i64 = 80;
+
+#[inline]
+pub fn beacon_effects_due(game_time: i64) -> bool {
+    game_time % BEACON_EFFECTS_BEAT == 0
+}
+
+/// THE EFFECTS' OWN INSTANCES (javap 26.2 applyEffects pc 89-215 —
+/// the rows the addEffect walk serves: the PRIMARY pass the every
+/// player in the AABB wears [the MobEffectInstance(primary,
+/// duration, amplifier, true, true) ctor the five args keep], the
+/// SECONDARY pass the `levels >= 4 && primary != secondary &&
+/// secondary != null` gate arms [pc 143-216 — the separate
+/// iteration the amplifier-0 dose speaks]). The vec the (effect,
+/// duration, amplifier) rows the player's own effects store feeds.
+pub fn beacon_apply_effect_instances(
+    levels: i32,
+    primary: Option<i32>,
+    secondary: Option<i32>,
+) -> Vec<(i32, i32, i32)> {
+    let Some(primary) = primary else {
+        return Vec::new(); // the null primary the pc 7-11 return keeps
+    };
+    if levels <= 0 {
+        return Vec::new();
+    }
+    let duration = beacon_effect_duration(levels);
+    let amplifier = beacon_effect_amplifier(levels, Some(primary), secondary);
+    let mut out = vec![(primary, duration, amplifier)];
+    if levels >= 4 && secondary.is_some() && secondary != Some(primary) {
+        out.push((secondary.unwrap(), duration, 0));
+    }
+    out
+}
+
+/// THE AABB'S OWN TOUCH (javap 26.2 applyEffects pc 53-87 — the
+/// `new AABB(pos).inflate(range).expandTowards(0.0,
+/// level.getHeight(), 0.0)` box the getEntitiesOfClass wears: the
+/// single-block cube the inflate speaks [the pos..pos+1 cube the
+/// ±range pair widens — the horizontal band AND the downward
+/// skirt], the expandTowards the UPWARD stretch keeps [the box the
+/// world height the tail adds — the sky-high player the same box
+/// answers]). The player's box the intersect test the whole walk
+/// wears — the feet pos the half-width 0.3 the client body wears,
+/// the 1.8 the height keeps.
+pub fn beacon_aabb_touches(
+    player: (f64, f64, f64),
+    beacon: (i32, i32, i32),
+    range: f64,
+    world_height: i32,
+) -> bool {
+    let (px, py, pz) = player;
+    let (bx, by, bz) = (beacon.0 as f64, beacon.1 as f64, beacon.2 as f64);
+    let (hw, hh) = (0.3f64, 1.8f64); // the player box the client body wears
+    let min_x = bx - range;
+    let max_x = bx + 1.0 + range;
+    let min_y = by - range;
+    let max_y = by + 1.0 + range + world_height as f64;
+    let min_z = bz - range;
+    let max_z = bz + 1.0 + range;
+    px + hw > min_x
+        && px - hw < max_x
+        && py + hh > min_y
+        && py < max_y
+        && pz + hw > min_z
+        && pz - hw < max_z
+}
+
+/// THE PAYMENT'S OWN VERDICT (javap 26.2 BeaconMenu$PaymentSlot.
+/// mayPlace pc 0-7 — the `stack.is(BEACON_PAYMENT_ITEMS)` tag the
+/// verdict keeps; the tag the data/minecraft/tags/item/
+/// beacon_payment_items.json the five members names — the vanilla
+/// law the client's own item-name table answers).
+pub const BEACON_PAYMENT_ITEMS: [&str; 5] = [
+    "netherite_ingot",
+    "emerald",
+    "diamond",
+    "gold_ingot",
+    "iron_ingot",
+];
+
+pub fn is_beacon_payment_item(item_id: i32) -> bool {
+    match mc_registry::item_name(item_id) {
+        Some(name) => BEACON_PAYMENT_ITEMS.contains(&name),
+        None => false,
+    }
+}
+
 /// THE ANCHOR'S OWN CHARGE-LADDER MESH FOLD (the autopush-315 round —
 /// the jar's own JSON the live scout re-pins, scripts/
 /// anchor_light_scout_315.py the dump banks): the blockstate

@@ -3707,16 +3707,23 @@ fn the_offline_beacon_the_beam_the_pyramid_the_sections_wear() {
 
     // THE BANK'S OWN ROUND TRIP (the containers lane the cells the
     // disk banks — the parse the same set the boot wears, the
-    // missing list the honest empties keep)
-    let banked = crate::screens::beacon_bank_to_nbt(&app.beacon_stores);
+    // missing list the honest empties keep; the powers the pairs
+    // the 322 rows wear)
+    let banked = crate::screens::beacon_bank_to_nbt(&app.beacon_stores, &app.beacon_powers);
     let root = mc_protocol::nbt::Nbt::Compound(vec![("beacons".to_string(), banked)]);
-    let parsed = crate::screens::beacon_cells_from_nbt(&root);
+    let (parsed, parsed_powers) = crate::screens::beacon_cells_from_nbt(&root);
     assert_eq!(
         parsed, app.beacon_stores,
         "the round trip the same set wears"
     );
-    let empty = crate::screens::beacon_cells_from_nbt(&mc_protocol::nbt::Nbt::Compound(vec![]));
+    assert_eq!(
+        parsed_powers, app.beacon_powers,
+        "the powers the trip keeps"
+    );
+    let (empty, empty_powers) =
+        crate::screens::beacon_cells_from_nbt(&mc_protocol::nbt::Nbt::Compound(vec![]));
     assert!(empty.is_empty(), "the missing list the honest empties keep");
+    assert!(empty_powers.is_empty(), "the missing list the powers keep");
 }
 
 /// THE BEACON'S OWN PLACEMENT WALK (the autopush-321 round — the REAL
@@ -3800,4 +3807,453 @@ fn the_offline_beacon_the_placement_walk_the_store_feeds_wear() {
         !app.beacon_stores.contains(&(c, top, c)),
         "the blast arm the store retires"
     );
+}
+
+/// THE BEACON'S OWN GUI DOOR (the autopush-322 round — the REAL walk
+/// the hands serve: the right-press on the placed beacon the screen
+/// opens [the banked powers' sync the open walk wears], the power
+/// seats the press laws answer [the isSelected noop the re-press
+/// keeps], the payment slot the mayPlace + max-1 laws keep [the
+/// click walk the mirror write-through wears], the confirm the
+/// updateEffects walk serves [the invalid pair the validator
+/// refuses, the valid pair the bank feeds + the ONE payment the
+/// remove(1) consumes + the close the tail speaks], the cancel the
+/// payment drop wears, the 80-tick beat the effects re-apply
+/// serves, the reopen the banked sync speaks). The drive the
+/// part_9 slot lanes keep: the rect geometry the render's own
+/// seats bank, the press dispatch the real walks serve.
+#[test]
+fn the_offline_beacon_the_gui_door_the_powers_the_payment_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE TIER-1 PYRAMID'S OWN BASE (the iron ring the levels-1
+    // verdict answers — the 3x3 the tier-1 scan wears)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    // THE COIN'S OWN SEAT (the diamond pair the main row carries —
+    // the mirror the open walk projects)
+    let diamond = mc_registry::item_id_by_name("diamond").expect("the diamond id");
+    app.inventory.items[9] = (diamond, 2);
+    app.inventory.items[10] = (diamond, 1);
+    app.inventory.items[11] = (1, 4); // the stone row the refusal wears
+    app.hotbar_slots = app.inventory.hotbar();
+    // THE BODY'S OWN SEAT (the feet pos the range walk reads — the
+    // two blocks east the levels-1 range-20 answers; the BODY the
+    // camera's highest authority wears, the aim the body's own
+    // angles speak)
+    {
+        // THE AIM'S OWN PAIR (the eye at +1.62 the forward law reads:
+        // `forward = (sin(yaw)cp, sinP, -cos(yaw)cp)` — the beacon
+        // center the ray the top face enters)
+        let ex = c as f64 + 2.5;
+        let ey = top as f64 + 1.0 + 1.62;
+        let ez = c as f64 + 2.5;
+        let dx = (c as f64 + 0.5) - ex;
+        let dy = (top as f64 + 0.5) - ey;
+        let dz = (c as f64 + 0.5) - ez;
+        let len = (dx * dx + dy * dy + dz * dz).sqrt();
+        // THE BODY'S OWN ANGLE PAIR (the camera's own walk the body
+        // wears — `yaw.to_radians() + PI` + the `-pitch.to_radians()`
+        // pair the body.camera speaks, the DEGREES the fields keep,
+        // the DOWN-LOOK the positive pitch the vanilla convention
+        // banks)
+        let yaw_deg = dx.atan2(-dz).to_degrees() - 180.0;
+        let pitch_deg = -(dy / len).asin().to_degrees();
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 2.5,
+            top as f64 + 1.0,
+            c as f64 + 2.5,
+            yaw_deg as f32,
+            pitch_deg as f32,
+        ));
+    }
+    // THE DOOR'S OWN OPEN (the body-aimed look the hit speaks — the
+    // beacon cell the block lane answers)
+    assert!(app.on_right_press(0, 0), "the beacon's press consumed");
+    assert_eq!(app.screen, ScreenKind::Beacon, "the door the screen opens");
+    assert_eq!(app.beacon_open_cell, Some((c, top, c)));
+    assert_eq!(app.beacon_primary, None, "the fresh open the zeros keep");
+    assert_eq!(
+        app.beacon_mirror[0],
+        (diamond, 2),
+        "the mirror the inventory projects"
+    );
+    // THE GEOMETRY THE RENDER BANKS (the honest stand-in the panel
+    // centers — the payment slot + the mirror row the two seats
+    // keep)
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    app.beacon_panel = panel;
+    let pay = (panel.0 + 136 + 1 + 8, panel.1 + 110 + 1 + 8);
+    let row0 = (panel.0 + 36 + 1 + 8, panel.1 + 137 + 1 + 8);
+    app.beacon_slot_rects = vec![(pay.0 - 8, pay.1 - 8, 0), (row0.0 - 8, row0.1 - 8, 1)];
+    let speed = crate::effects::MOB_EFFECT_SPEED;
+    let regen = crate::effects::MOB_EFFECT_REGENERATION;
+    // THE POWER SEAT'S OWN PRESS (the isSelected gate the re-press
+    // noop keeps — the primary the effect banks)
+    app.beacon_power_press(speed, true);
+    assert_eq!(app.beacon_primary, Some(speed), "the press the field banks");
+    app.beacon_power_press(speed, true);
+    assert_eq!(
+        app.beacon_primary,
+        Some(speed),
+        "the re-press the noop keeps"
+    );
+    // THE TIER-4 PICK'S OWN WALK (the secondary the field banks —
+    // the cheap pair the validator the CONFIRM refuses)
+    app.beacon_power_press(regen, false);
+    assert_eq!(
+        app.beacon_secondary,
+        Some(regen),
+        "the pick the field banks"
+    );
+    // THE PAYMENT'S OWN RIDE (the click walk the row serves: the
+    // pick-up the carried speaks, the write-through the inventory
+    // wears, the place the max-1 cap keeps)
+    app.on_press(row0.0, row0.1);
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 2),
+        "the pick-up the carried speaks"
+    );
+    assert_eq!(app.beacon_mirror[0], (0, 0), "the row the pick empties");
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the write-through the inventory wears"
+    );
+    app.on_press(pay.0, pay.1);
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the max-1 cap the place wears"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 1),
+        "the remainder the cursor keeps"
+    );
+    // THE MAYPLACE'S OWN REFUSAL (the non-payment carried the slot
+    // never takes — the stone row the SWAP walk carries: the cursor
+    // diamond the stone's row takes, the stone the cursor wears)
+    let stone_seat = (panel.0 + 36 + 2 * 18 + 1 + 8, panel.1 + 137 + 1 + 8);
+    app.beacon_slot_rects
+        .push((stone_seat.0 - 8, stone_seat.1 - 8, 3));
+    app.on_press(stone_seat.0, stone_seat.1);
+    assert_eq!(app.beacon_carried, (1, 4), "the swap the stone carries");
+    app.on_press(pay.0, pay.1);
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the refusal the slot keeps"
+    );
+    assert_eq!(app.beacon_carried, (1, 4), "the refusal the carried keeps");
+    // THE INVALID CONFIRM'S OWN VERDICT (the validator the levels-1
+    // pyramid wears — the REGEN secondary the pair refuses, the
+    // payment the ground drop wears, the close the tail speaks)
+    app.beacon_confirm_press();
+    assert_eq!(app.screen, ScreenKind::World, "the close the tail speaks");
+    assert!(
+        app.beacon_powers.get(&(c, top, c)).is_none(),
+        "the refused pair the bank never banks"
+    );
+    assert_eq!(app.beacon_payment, (0, 0), "the close the payment strips");
+    assert!(
+        app.drops.iter().any(|d| d.item == diamond),
+        "the removed walk the coin drops"
+    );
+    // THE RE-OPEN'S OWN SYNC (the door the same seat speaks — the
+    // fresh open the zeros keep [the bank never banked])
+    assert!(app.on_right_press(0, 0), "the re-open consumed");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Beacon,
+        "the re-open the screen wears"
+    );
+    app.beacon_panel = panel;
+    // THE COIN'S OWN SEAT (the close walk's first-empty law the row
+    // the mirror scan finds — the carried home the seat the real
+    // inventory order wears)
+    let (coin_rect, coin_slot) = beacon_coin_seat(&app, panel, diamond);
+    app.beacon_slot_rects = vec![
+        (pay.0 - 8, pay.1 - 8, 0),
+        (coin_rect.0, coin_rect.1, coin_slot),
+    ];
+    // THE VALID CONFIRM'S OWN WALK (the primary alone the levels-1
+    // answers — the coin the slot rides, the confirm the bank feeds)
+    app.on_press(coin_rect.0 + 8, coin_rect.1 + 8);
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 1),
+        "the fresh mirror the remainder carries"
+    );
+    app.on_press(pay.0, pay.1);
+    assert_eq!(app.beacon_payment, (diamond, 1), "the coin the slot takes");
+    app.beacon_power_press(speed, true);
+    assert_eq!(
+        app.beacon_secondary, None,
+        "the fresh open the secondary clears"
+    );
+    app.beacon_confirm_press();
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the confirm the close speaks"
+    );
+    assert_eq!(
+        app.beacon_powers.get(&(c, top, c)),
+        Some(&(Some(speed), None)),
+        "the bank the powers feed"
+    );
+    assert_eq!(
+        app.beacon_payment,
+        (0, 0),
+        "the ONE payment the remove(1) consumes"
+    );
+    // THE REOPEN'S OWN BANKED SYNC (the BeaconScreen$1 dataChanged
+    // walk — the menu's data slots the screen fields mirror)
+    assert!(app.on_right_press(0, 0), "the reopen consumed");
+    assert_eq!(app.screen, ScreenKind::Beacon);
+    assert_eq!(
+        app.beacon_primary,
+        Some(speed),
+        "the banked sync the reopen wears"
+    );
+    // THE CANCEL'S OWN DROP (the fresh coin the seat rides — the
+    // close the removed walk the strip + the drop serves)
+    app.beacon_panel = panel;
+    let (coin_rect, coin_slot) = beacon_coin_seat(&app, panel, diamond);
+    app.beacon_slot_rects = vec![
+        (pay.0 - 8, pay.1 - 8, 0),
+        (coin_rect.0, coin_rect.1, coin_slot),
+    ];
+    app.on_press(coin_rect.0 + 8, coin_rect.1 + 8);
+    app.on_press(pay.0, pay.1);
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the fresh coin the slot takes"
+    );
+    let drops_before = app.drops.len();
+    // THE SEAT RECTS THE RENDER BANKS (the honest stand-in the headless
+    // walk keeps — the (164,107)/(190,107) pair the init walk speaks)
+    app.beacon_confirm_rect = (panel.0 + 164, panel.1 + 107);
+    app.beacon_cancel_rect = (panel.0 + 190, panel.1 + 107);
+    app.on_press(panel.0 + 190 + 11, panel.1 + 107 + 11);
+    assert_eq!(app.screen, ScreenKind::World, "the cancel the close speaks");
+    assert_eq!(app.beacon_payment, (0, 0), "the cancel the slot strips");
+    assert!(app.drops.len() > drops_before, "the cancel the coin drops");
+    // THE 80-TICK BEAT'S OWN DOSE (the banked powers the effects
+    // serve — the clock the gate the beat wears, the range the
+    // near-seated body answers)
+    app.close_beacon(ScreenKind::World);
+    app.clock_total = 79;
+    app.update();
+    assert!(app.effects.has_effect(speed), "the beat the primary serves");
+    // THE STALE ROW'S OWN RETIRE (the dug-out beacon the walk never
+    // re-serves — the cell the kind gate retires)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c, top, c, crate::world::AIR);
+    app.clock_total = 159;
+    app.update();
+    assert!(
+        !app.beacon_powers.contains_key(&(c, top, c)),
+        "the stale cell the walk retires"
+    );
+}
+
+/// THE BEACON'S OWN LAWS THE PURE LAYER BANKS (the autopush-322
+/// round — the tier ladder the required-levels walk answers, the
+/// validator the five verdicts keeps, the duration/amplifier/range
+/// the applyEffects formulas speak, the encode the data-slot
+/// semantics wears, the beat the 80-tick gate answers).
+#[test]
+fn the_beacon_the_tier_laws_the_validator_the_formulas_wear() {
+    let speed = crate::effects::MOB_EFFECT_SPEED;
+    let haste = crate::effects::MOB_EFFECT_HASTE;
+    let resistance = crate::effects::MOB_EFFECT_RESISTANCE;
+    let jump = crate::effects::MOB_EFFECT_JUMP_BOOST;
+    let strength = crate::effects::MOB_EFFECT_STRENGTH;
+    let regen = crate::effects::MOB_EFFECT_REGENERATION;
+    // THE TIERS' OWN LADDER (the clinit's four rows the walk banks)
+    assert_eq!(
+        crate::world::BEACON_EFFECT_TIERS,
+        [
+            [speed, haste].as_slice(),
+            [resistance, jump].as_slice(),
+            [strength].as_slice(),
+            [regen].as_slice(),
+        ]
+    );
+    // THE REQUIREMENTS' OWN WALK (the tier index + 1 the scan speaks)
+    assert_eq!(crate::world::beacon_required_levels_for(None), 0);
+    assert_eq!(crate::world::beacon_required_levels_for(Some(speed)), 1);
+    assert_eq!(crate::world::beacon_required_levels_for(Some(haste)), 1);
+    assert_eq!(
+        crate::world::beacon_required_levels_for(Some(resistance)),
+        2
+    );
+    assert_eq!(crate::world::beacon_required_levels_for(Some(jump)), 2);
+    assert_eq!(crate::world::beacon_required_levels_for(Some(strength)), 3);
+    assert_eq!(crate::world::beacon_required_levels_for(Some(regen)), 4);
+    assert_eq!(
+        crate::world::beacon_required_levels_for(Some(999)),
+        i32::MAX,
+        "the unlisted effect the MAX keeps"
+    );
+    // THE VALIDATOR'S OWN VERDICTS (the five branches the walk keeps)
+    assert!(crate::world::beacon_validate_effects(Some(speed), None, 1));
+    assert!(
+        !crate::world::beacon_validate_effects(Some(speed), Some(regen), 1),
+        "the cheap secondary the levels-4 gate refuses"
+    );
+    assert!(
+        !crate::world::beacon_validate_effects(Some(strength), None, 2),
+        "the tier-3 primary the levels-2 gate refuses"
+    );
+    assert!(
+        !crate::world::beacon_validate_effects(Some(regen), None, 4),
+        "the tier-4 effect the primary seat refuses"
+    );
+    assert!(
+        !crate::world::beacon_validate_effects(Some(speed), Some(strength), 4),
+        "the mismatched cheap pair the same-effect gate refuses"
+    );
+    assert!(
+        crate::world::beacon_validate_effects(Some(speed), Some(speed), 4),
+        "the same-effect upgrade the tier-4 answers"
+    );
+    assert!(
+        crate::world::beacon_validate_effects(Some(speed), Some(regen), 4),
+        "the regen secondary the levels-4 answers"
+    );
+    // THE FORMULAS' OWN WALK (the applyEffects pair the bytecode keeps)
+    assert_eq!(crate::world::beacon_effect_duration(1), (9 + 2) * 20);
+    assert_eq!(crate::world::beacon_effect_duration(4), (9 + 8) * 20);
+    assert_eq!(
+        crate::world::beacon_effect_amplifier(4, Some(speed), Some(speed)),
+        1
+    );
+    assert_eq!(
+        crate::world::beacon_effect_amplifier(4, Some(speed), Some(regen)),
+        0
+    );
+    assert_eq!(
+        crate::world::beacon_effect_amplifier(3, Some(speed), Some(speed)),
+        0
+    );
+    assert_eq!(crate::world::beacon_effect_range(1), 20.0);
+    assert_eq!(crate::world::beacon_effect_range(4), 50.0);
+    // THE ENCODE'S OWN WALK (the data-slot semantics the +1 wears)
+    assert_eq!(crate::world::beacon_encode_effect(None), 0);
+    assert_eq!(crate::world::beacon_encode_effect(Some(speed)), speed + 1);
+    // THE BEAT'S OWN GATE (the 80-tick remainder the walk keeps)
+    assert!(crate::world::beacon_effects_due(0));
+    assert!(crate::world::beacon_effects_due(80));
+    assert!(!crate::world::beacon_effects_due(79));
+    // THE ROWS' OWN WALK (the applyEffects instances the passes keep)
+    assert_eq!(
+        crate::world::beacon_apply_effect_instances(1, Some(speed), None),
+        vec![(speed, (9 + 2) * 20, 0)]
+    );
+    assert_eq!(
+        crate::world::beacon_apply_effect_instances(4, Some(speed), Some(regen)),
+        vec![(speed, (9 + 8) * 20, 0), (regen, (9 + 8) * 20, 0),],
+        "the tier-4 mismatched pair the secondary pass serves"
+    );
+    assert_eq!(
+        crate::world::beacon_apply_effect_instances(4, Some(speed), Some(speed)),
+        vec![(speed, (9 + 8) * 20, 1)],
+        "the same-effect pick the level-II primary serves"
+    );
+    assert!(
+        crate::world::beacon_apply_effect_instances(2, None, Some(speed)).is_empty(),
+        "the null primary the empty walk keeps"
+    );
+    // THE AABB'S OWN TOUCH (the inflate + the expandTowards pair the
+    // intersect answers)
+    let beacon = (10, 20, 10);
+    assert!(crate::world::beacon_aabb_touches(
+        (12.5, 21.0, 12.5),
+        beacon,
+        20.0,
+        48
+    ));
+    assert!(
+        !crate::world::beacon_aabb_touches((50.5, 21.0, 12.5), beacon, 20.0, 48),
+        "the far player the box refuses"
+    );
+    assert!(
+        !crate::world::beacon_aabb_touches((12.5, 5.0, 12.5), beacon, 5.0, 48),
+        "the below-range skirt the box refuses"
+    );
+    // THE PAYMENT'S OWN VERDICT (the tag the five members keep)
+    for name in [
+        "netherite_ingot",
+        "emerald",
+        "diamond",
+        "gold_ingot",
+        "iron_ingot",
+    ] {
+        let id = mc_registry::item_id_by_name(name).expect(name);
+        assert!(
+            crate::world::is_beacon_payment_item(id),
+            "the {name} the tag answers"
+        );
+    }
+    assert!(
+        !crate::world::is_beacon_payment_item(1),
+        "the stone row the tag refuses"
+    );
+    // THE DISK ROW'S OWN WALK (the name strings the save keeps, the
+    // tolerant parse the round trip answers)
+    let mut stores = std::collections::BTreeSet::new();
+    stores.insert((3, 4, 5));
+    let mut powers = std::collections::HashMap::new();
+    powers.insert((3, 4, 5), (Some(speed), Some(regen)));
+    let nbt = crate::screens::beacon_bank_to_nbt(&stores, &powers);
+    let (cells, parsed) = crate::screens::beacon_cells_from_nbt(&mc_protocol::nbt::Nbt::Compound(
+        vec![("beacons".to_string(), nbt)],
+    ));
+    assert!(cells.contains(&(3, 4, 5)));
+    assert_eq!(parsed.get(&(3, 4, 5)), Some(&(Some(speed), Some(regen))));
+    // the powers-less row the bare triple keeps (the 320 rows the
+    // parse never breaks)
+    let mut bare = std::collections::BTreeSet::new();
+    bare.insert((6, 7, 8));
+    let nbt = crate::screens::beacon_bank_to_nbt(&bare, &std::collections::HashMap::new());
+    let (cells, parsed) = crate::screens::beacon_cells_from_nbt(&mc_protocol::nbt::Nbt::Compound(
+        vec![("beacons".to_string(), nbt)],
+    ));
+    assert!(cells.contains(&(6, 7, 8)));
+    assert!(parsed.is_empty(), "the bare row the powers keep");
+}
+
+/// THE COIN SEAT'S OWN SCAN (the tests' helper — the diamond row the
+/// mirror keeps the real geometry the render's own law speaks: the
+/// 18-pitch grid the +58 hotbar row wears, the +1 inset the Slot's
+/// hit shape keeps).
+fn beacon_coin_seat(app: &App, panel: (i32, i32), diamond: i32) -> ((i32, i32), i16) {
+    let idx = app
+        .beacon_mirror
+        .iter()
+        .position(|&p| p.0 == diamond && p.1 > 0)
+        .expect("the coin row the mirror keeps");
+    let row = (idx / 9) as i32;
+    let col = (idx % 9) as i32;
+    let sx = panel.0 + 36 + col * 18 + 1;
+    let sy = panel.1 + 137 + row * 18 + if row == 3 { 4 } else { 0 } + 1;
+    ((sx, sy), (idx + 1) as i16)
 }

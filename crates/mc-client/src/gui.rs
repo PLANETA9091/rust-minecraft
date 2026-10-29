@@ -320,6 +320,22 @@ impl GuiAssets {
         if let Some(key) = self.static_key(name) {
             return self.sprite(key);
         }
+        // THE BEACON BUTTONS' OWN LANE (the autopush-322 round — the
+        // `container/beacon/{button,button_disabled,button_highlighted,
+        // button_selected,confirm,cancel}` sprites the BeaconScreen
+        // clinit's six ldc rows name, the dynamic walk the mob_effect
+        // lane's own shape wears: the `gui/sprites/` prefix the cache
+        // root joins, the leak the bounded six-name set keeps)
+        if name.starts_with("container/beacon/") && !name.contains("..") {
+            if !self.sprites.contains_key(name) {
+                let path = self.root.join(format!("gui/sprites/{name}.png"));
+                let bytes = std::fs::read(path).ok()?;
+                let s = Sprite::decode(&bytes).ok()?;
+                let key: &'static str = Box::leak(name.to_string().into_boxed_str());
+                self.sprites.insert(key, s);
+            }
+            return self.sprites.get(name);
+        }
         if !name.starts_with("mob_effect/") || name.contains("..") {
             return None; // the atlas's own source list: mob_effect only
         }

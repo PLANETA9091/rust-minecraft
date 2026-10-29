@@ -7087,6 +7087,34 @@ pub enum ScreenKind {
     /// ServerboundLockDifficultyPacket walk wears, the hardcore arm
     /// the client's own worlds never wear).
     WorldOptions,
+    /// THE BEACON'S OWN GUI DOOR (the autopush-322 round — javap 26.2
+    /// BeaconScreen + BeaconMenu the live disasm the walk banks —
+    /// scripts/jar_work/beacon_gui_322.txt the dump serves): the
+    /// right-press on the placed beacon the block-use lane opens (the
+    /// useWithoutItem walk the openMenu + the awardStat
+    /// (INTERACT_WITH_BEACON) + the SUCCESS verdict speaks), the
+    /// canvas the REAL `gui/container/beacon.png` blitted 230x219 at
+    /// the centered panel (the clinit's BEACON_LOCATION the
+    /// 256x256 master the region read wears). THE TIER LAWS the
+    /// [`crate::world::BEACON_EFFECT_TIERS`] ladder banks ([[SPEED,
+    /// HASTE], [RESISTANCE, JUMP_BOOST], [STRENGTH],
+    /// [REGENERATION]] — the BeaconBlockEntity clinit's own four
+    /// List.of rows the disasm speaks), the buttons the
+    /// `container/beacon/button*` sprites the 22x22 seats draw (the
+    /// disabled/selected/highlighted states the extractContents
+    /// dispatch keeps, the 18x18 effect icon the +2 inset wears),
+    /// the payment slot the menu ctor's (136,110) pos banks, the
+    /// static payment examples the extractBackground's five item
+    /// draws keep (netherite@20 / emerald@41 / diamond@63 / gold@86 /
+    /// iron@108, the y=109 row), the confirm (164,107) + cancel
+    /// (190,107) pair the 22x22 seats speak, the standard rows the
+    /// addStandardInventorySlots(36, 137) walk mirrors (the main
+    /// 1..27 the items 9..35 mirror, the hotbar 28..36 the items
+    /// 0..8). The OFFLINE deterministic lane the beacon's own power
+    /// bank wears — the WIRE session the local screen never opens
+    /// (the server's own OpenScreen word owns the container — the
+    /// BEACON menu type lane the projection feeds).
+    Beacon,
     /// THE ACCESSIBILITY SCREEN'S OWN SEAT (javap 26.2
     /// AccessibilityOptionsScreen — the OptionsScreen's
     /// `options.accessibility` button the lambda$init$8 walk opens:
@@ -8860,6 +8888,36 @@ pub struct App {
     /// the store feeds [the placement seat the INSERT speaks, the dig
     /// pair + the blast clears the REMOVE arms wear])
     pub beacon_stores: std::collections::BTreeSet<(i32, i32, i32)>,
+    /// THE BEACON POWERS' OWN BANK (the autopush-322 round — the
+    /// confirm walk the updateEffects verdict banks: the cell the
+    /// (primary, secondary) pair the RAW effect ids the
+    /// Option-the-absent-seat shape keeps, the NBT row the
+    /// `primary_effect`/`secondary_effect` NAME strings the BE's
+    /// saveAdditional walk wears [the loadAdditional's
+    /// holderByNameCodec read the VALID_EFFECTS filter answers],
+    /// the re-apply lane the 80-tick beat the powers feed)
+    pub beacon_powers: std::collections::HashMap<(i32, i32, i32), (Option<i32>, Option<i32>)>,
+    /// THE BEACON SCREEN'S OWN STATE (the 322 round — the open cell
+    /// the offline door's seat keeps, the payment slot the BE's
+    /// wrapped one-slot container the fresh ctor speaks, the carried
+    /// the menu cursor the close's own return wears, the mirror rows
+    /// the addStandardInventorySlots(36, 137) projection keeps, the
+    /// primary/secondary the screen's own selection fields the
+    /// BeaconScreen$1 dataChanged walk mirrors [the menu's data
+    /// slots the BE's banked powers carry, the open the listener
+    /// syncs], the rects the render's own hit boxes bank)
+    pub beacon_open_cell: Option<(i32, i32, i32)>,
+    pub beacon_payment: (i32, i32),
+    pub beacon_carried: (i32, i32),
+    pub beacon_mirror: Vec<(i32, i32)>,
+    pub beacon_primary: Option<i32>,
+    pub beacon_secondary: Option<i32>,
+    pub beacon_slot_rects: Vec<(i32, i32, i16)>,
+    pub beacon_panel: (i32, i32),
+    pub beacon_power_rects: Vec<(i32, i32, i32, bool)>,
+    pub beacon_upgrade_rect: Option<(i32, i32)>,
+    pub beacon_confirm_rect: (i32, i32),
+    pub beacon_cancel_rect: (i32, i32),
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
     /// draws, the cold cow the ColdCowModel's coat, the warm cow the
@@ -11703,30 +11761,75 @@ pub fn gateway_stores_from_nbt(
 /// the x/y/z triple the BE's own block pos the disk banks, the
 /// BTree cell order the deterministic bytes keep — the beam's own
 /// levels + sections the live world the walk derives, the bank the
-/// cells alone carries).
+/// cells alone carries). THE POWERS' OWN ROWS (the autopush-322
+/// round — javap 26.2 BeaconBlockEntity.saveAdditional pc 5-27 the
+/// live disasm the walk banks: the `primary_effect`/`secondary_effect`
+/// NAME strings the storeEffect walk writes [the registry
+/// identifier the ResourceKey toString speaks — "minecraft:speed"
+/// the holder's own key keeps], the absent power the row the write
+/// never speaks [the storeEffect's null return keeps], the tolerant
+/// old rows the parse keeps).
 pub fn beacon_bank_to_nbt(
     stores: &std::collections::BTreeSet<(i32, i32, i32)>,
+    powers: &std::collections::HashMap<(i32, i32, i32), (Option<i32>, Option<i32>)>,
 ) -> mc_protocol::nbt::Nbt {
     let mut entries = Vec::new();
     for &(x, y, z) in stores.iter() {
-        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+        let mut fields = vec![
             ("x".to_string(), mc_protocol::nbt::Nbt::Int(x)),
             ("y".to_string(), mc_protocol::nbt::Nbt::Int(y)),
             ("z".to_string(), mc_protocol::nbt::Nbt::Int(z)),
-        ]));
+        ];
+        // THE EFFECT NAME'S OWN RIDE (the storeEffect walk — the
+        // registry order table the id the row names)
+        if let Some(&(pri, _)) = powers.get(&(x, y, z)) {
+            if let Some(name) = effect_name_by_id(pri) {
+                fields.push((
+                    "primary_effect".to_string(),
+                    mc_protocol::nbt::Nbt::String(name.to_string()),
+                ));
+            }
+        }
+        if let Some(&(_, sec)) = powers.get(&(x, y, z)) {
+            if let Some(name) = effect_name_by_id(sec) {
+                fields.push((
+                    "secondary_effect".to_string(),
+                    mc_protocol::nbt::Nbt::String(name.to_string()),
+                ));
+            }
+        }
+        entries.push(mc_protocol::nbt::Nbt::Compound(fields));
     }
     mc_protocol::nbt::Nbt::List(entries)
 }
 
+/// THE EFFECT'S OWN NAME RIDE (the saveAdditional walk's storeEffect
+/// arm — the registry order table the id the name answers, the out-
+/// of-range id the None keeps).
+fn effect_name_by_id(effect_id: Option<i32>) -> Option<&'static str> {
+    let id = effect_id?;
+    mc_registry::generated::mob_effects::MOB_EFFECT_ORDER
+        .get(id as usize)
+        .copied()
+}
+
 /// THE BEACON BANK'S OWN PARSE (the tolerant walk the gateway parse
 /// wears: the missing coordinate the entry skip keeps, the missing
-/// list the honest empties keep).
+/// list the honest empties keep). THE POWERS' OWN READ (the
+/// autopush-322 round — javap 26.2 loadAdditional pc 5-24 the
+/// loadEffect walk the tolerant answer keeps: the NAME string the
+/// holderByNameCodec parses, the VALID_EFFECTS filter the unknown
+/// name refuses, the absent row the None the null keep).
 pub fn beacon_cells_from_nbt(
     value: &mc_protocol::nbt::Nbt,
-) -> std::collections::BTreeSet<(i32, i32, i32)> {
+) -> (
+    std::collections::BTreeSet<(i32, i32, i32)>,
+    std::collections::HashMap<(i32, i32, i32), (Option<i32>, Option<i32>)>,
+) {
     let mut cells = std::collections::BTreeSet::new();
+    let mut powers = std::collections::HashMap::new();
     let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("beacons") else {
-        return cells;
+        return (cells, powers);
     };
     for entry in entries {
         let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
@@ -11738,12 +11841,27 @@ pub fn beacon_cells_from_nbt(
                 .find(|(k, _)| k == key)
                 .and_then(|(_, v)| v.as_i32())
         };
+        let read_name = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| match v {
+                    mc_protocol::nbt::Nbt::String(s) => Some(s.as_str()),
+                    _ => None,
+                })
+                .and_then(crate::effects::effect_id_by_name)
+        };
         let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
             continue;
         };
+        let pri = read_name("primary_effect");
+        let sec = read_name("secondary_effect");
+        if pri.is_some() || sec.is_some() {
+            powers.insert((x, y, z), (pri, sec));
+        }
         cells.insert((x, y, z));
     }
-    cells
+    (cells, powers)
 }
 
 /// THE BED SPAWN'S OWN BANK (the autopush-312 round — the banked
@@ -12193,6 +12311,19 @@ impl App {
             gateway_beam_tex: None,
             beacon_beam_tex: None,
             beacon_stores: std::collections::BTreeSet::new(),
+            beacon_powers: std::collections::HashMap::new(),
+            beacon_open_cell: None,
+            beacon_payment: (0, 0),
+            beacon_carried: (0, 0),
+            beacon_mirror: Vec::new(),
+            beacon_primary: None,
+            beacon_secondary: None,
+            beacon_slot_rects: Vec::new(),
+            beacon_panel: (0, 0),
+            beacon_power_rects: Vec::new(),
+            beacon_upgrade_rect: None,
+            beacon_confirm_rect: (0, 0),
+            beacon_cancel_rect: (0, 0),
             chicken_warm_model: None,
             baby_chicken_cold_model: None,
             baby_chicken_warm_model: None,
@@ -17043,6 +17174,15 @@ impl App {
                         self.food_data.add_exhaustion(e);
                     }
                 }
+                // THE BEACON'S OWN EFFECTS BEAT (the autopush-322 round
+                // — javap BeaconBlockEntity.tick pc 366-448 the
+                // `getGameTime() % 80 == 0` gate the walk keeps: the
+                // banked powers the applyEffects walk re-serves, the
+                // ambient beat the same 80-tick lane wears — the
+                // stand-in server's BE arc the offline walk answers)
+                if crate::world::beacon_effects_due(self.clock_total as i64) {
+                    self.beacon_effects_reapply();
+                }
             } else if self.health > 0.0 {
                 // THE NETWORKED LANE'S CLIENT COPY (the LocalPlayer's
                 // own tickClient — the durations tick down so the HUD's
@@ -17233,6 +17373,7 @@ impl App {
                         // own gate never re-arms)
                         if broke_kind == crate::world::BEACON {
                             self.beacon_stores.remove(&pos);
+                            self.beacon_powers.remove(&pos);
                             self.container_stores_file_save();
                         }
                     }
@@ -20548,6 +20689,7 @@ impl App {
                     if !beacon_blasts.is_empty() {
                         for cell in beacon_blasts.iter().copied() {
                             self.beacon_stores.remove(&cell);
+                            self.beacon_powers.remove(&cell);
                         }
                         self.container_stores_file_save();
                     }
@@ -21261,6 +21403,7 @@ impl App {
                 // rides)
                 if kind == crate::world::BEACON {
                     self.beacon_stores.remove(&pos);
+                    self.beacon_powers.remove(&pos);
                     self.container_stores_file_save();
                 }
             }
@@ -23050,6 +23193,7 @@ impl App {
                     | ScreenKind::Furnace
                     | ScreenKind::Crafting
                     | ScreenKind::Creative
+                    | ScreenKind::Beacon
             )
         {
             self.container_seats_removed(kind);
@@ -23922,6 +24066,7 @@ impl App {
             ScreenKind::Chest => self.close_chest_container(ScreenKind::World),
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
+            ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             _ => {}
         }
     }
@@ -27159,6 +27304,516 @@ impl App {
         self.dispenser_open_kind = 0;
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
+    }
+
+    /// THE BEACON'S OWN OFFLINE OPEN (the autopush-322 round — javap
+    /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door
+    /// speaks + BeaconMenu ctor the disasm banks: the PaymentSlot the
+    /// (136, 110) pos wears, the 3-word beaconData the addDataSlots
+    /// ride [levels 0 / primary 1 / secondary 2], the standard rows
+    /// addStandardInventorySlots(36, 137) the 36 mirror cells keep):
+    /// the screen the fresh state opens over the standing world, the
+    /// cell's BANKED POWERS the BeaconScreen$1 dataChanged walk
+    /// mirrors (the listener the menu's data slots the screen's
+    /// primary/secondary fields sync — the reopen the banked
+    /// selection the highlighted seats wear), the payment slot the
+    /// fresh-empty ctor speaks (the BE's wrapped one-slot container
+    /// the menu opens never persists — the saveAdditional walk the
+    /// powers alone writes, the payment the confirm consumes or the
+    /// removed() drops), the carried the fresh-empty open keeps.
+    pub fn open_beacon_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE DISK BANK'S OWN LAZY LOAD (the chest's own law — the
+        // first store access the once-flag's parse answers; the
+        // powers ride the same containers file the beacons rows
+        // keep)
+        self.container_stores_load_once();
+        self.beacon_payment = (0, 0);
+        self.beacon_carried = (0, 0);
+        // THE BANKED POWERS' OWN SYNC (the BeaconScreen$1.dataChanged
+        // walk — the primary the data slot 1 decodes, the secondary
+        // the slot 2; the missing cell the fresh menu's zeros keep)
+        let (pri, sec) = self
+            .beacon_powers
+            .get(&pos)
+            .copied()
+            .unwrap_or((None, None));
+        self.beacon_primary = pri;
+        self.beacon_secondary = sec;
+        // THE STANDARD ROWS' OWN PROJECTION (the addStandardInventorySlots
+        // (36, 137) walk — the main 1..27 the items 9..35 mirror, the
+        // hotbar 28..36 the items 0..8; the FRESH rows every open the
+        // inventory IS)
+        self.beacon_mirror = self
+            .inventory
+            .items
+            .iter()
+            .skip(9)
+            .take(27)
+            .copied()
+            .chain(self.inventory.items.iter().take(9).copied())
+            .collect();
+        self.beacon_open_cell = Some(pos);
+        self.open(ScreenKind::Beacon);
+    }
+
+    /// THE BEACON'S OWN CLOSE (javap 26.2 BeaconMenu.removed pc 0-45
+    /// the live disasm the walk banks — the super.removed the
+    /// carried's placeItemBackInInventory speaks, the !isClientSide
+    /// gate the payment drop arms, the paymentSlot.remove
+    /// (getMaxStackSize) the WHOLE slot strip wears, the
+    /// player.drop(stack, false) the item entity spawns): the
+    /// carried stack the inventory rides home (the furnace close's
+    /// own merge/empty pass), the PAYMENT the drop walk serves (the
+    /// offline world the spawn_drop_at_player lane answers — the
+    /// confirm-less close the vanilla player keeps the coin, the
+    /// ground drop the same entity the furnace Q wears), the powers
+    /// the bank keeps (the BE's own save the close never clears).
+    pub fn close_beacon(&mut self, back: ScreenKind) {
+        // THE CARRIED'S OWN HOME RIDE (the super.removed walk — the
+        // close_furnace shape)
+        if self.beacon_carried.1 > 0 {
+            let (id, count) = self.beacon_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.beacon_carried = (0, 0);
+        }
+        // THE PAYMENT'S OWN GROUND DROP (javap BeaconMenu.removed pc
+        // 16-44 — the `paymentSlot.remove(getMaxStackSize())` the
+        // whole stack strips, the isEmpty gate the no-op keeps, the
+        // `player.drop(stack, false)` the entity spawns; the OFFLINE
+        // world the spawn_drop_at_player lane the same entity wears)
+        if self.beacon_payment.1 > 0 {
+            let (id, count) = self.beacon_payment;
+            self.spawn_drop_at_player(id, count);
+            self.beacon_payment = (0, 0);
+        }
+        self.beacon_open_cell = None;
+        self.container_removed_rode = true; // the removed law rode
+        self.open(back);
+    }
+
+    /// THE BEACON'S OWN SCREEN CLICK (the autopush-322 round — the
+    /// BeaconScreen's widget dispatch the menu slots PRECEDE: the
+    /// power buttons the BeaconPowerButton.onPress walk serves, the
+    /// upgrade seat the inherited isPrimary=false arm wears, the
+    /// confirm/cancel pair the BeaconConfirmButton/CancelButton
+    /// onPress walks speak, then the menu's own slots the doClick
+    /// PICKUP walk answers — the payment slot the mayPlace +
+    /// getMaxStackSize laws keep, the standard rows the generic
+    /// predictor mirrors).
+    fn beacon_screen_click(&mut self, mx: i32, my: i32, button: i8) {
+        // THE POWER SEATS' OWN WALK (the widget dispatch the slots
+        // precede — the 22x22 rects the render's own hit boxes keep)
+        let power_hit = self
+            .beacon_power_rects
+            .iter()
+            .find(|&&(x, y, _, _)| mx >= x && mx < x + 22 && my >= y && my < y + 22)
+            .map(|&(_, _, effect, is_primary)| (effect, is_primary));
+        if let Some((effect, is_primary)) = power_hit {
+            self.beacon_power_press(effect, is_primary);
+            return;
+        }
+        // THE UPGRADE SEAT'S OWN PRESS (the BeaconUpgradePowerButton
+        // the inherited onPress wears — the effect the setEffect
+        // rebind the primary names, the isPrimary=false arm the
+        // secondary serves; the invisible seat the press never
+        // reaches — the primary null the visible gate keeps)
+        if let Some((ux, uy)) = self.beacon_upgrade_rect {
+            if self.beacon_primary.is_some() && mx >= ux && mx < ux + 22 && my >= uy && my < uy + 22
+            {
+                if self.beacon_secondary != self.beacon_primary {
+                    self.beacon_secondary = self.beacon_primary;
+                }
+                return;
+            }
+        }
+        // THE CONFIRM'S OWN SEAT (javap BeaconConfirmButton.onPress pc
+        // 0-53 — the active gate the updateStatus walk banks [the
+        // hasPayment && primary != null verdict], the press the
+        // updateEffects walk the offline authority serves)
+        let (cx, cy) = self.beacon_confirm_rect;
+        if cx != 0 && mx >= cx && mx < cx + 22 && my >= cy && my < cy + 22 {
+            let active = self.beacon_payment.1 > 0 && self.beacon_primary.is_some();
+            if active {
+                self.beacon_confirm_press();
+            }
+            return;
+        }
+        // THE CANCEL'S OWN SEAT (javap BeaconCancelButton.onPress pc
+        // 0-13 — the closeContainer the whole walk speaks)
+        let (cx, cy) = self.beacon_cancel_rect;
+        if cx != 0 && mx >= cx && mx < cx + 22 && my >= cy && my < cy + 22 {
+            self.close_beacon(ScreenKind::World);
+            return;
+        }
+        // THE SLOTS' OWN WALK (the menu's doClick the hit test the
+        // rects ride, the outside the THROW lane serves)
+        let Some(&(_, _, slot)) = self
+            .beacon_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            let panel = self.beacon_panel;
+            if panel != (0, 0)
+                && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 230 || my >= panel.1 + 219)
+            {
+                self.throw_beacon_carried_outside(button);
+            }
+            return;
+        };
+        let slot = slot as usize;
+        // THE QUICK-MOVE LANE (the shift-click — javap
+        // BeaconMenu.quickMoveStack pc 43-242 the routing the walk
+        // banks)
+        if self.shift_down {
+            self.beacon_quick_move(slot);
+            return;
+        }
+        if slot == 0 {
+            // THE PAYMENT SLOT'S OWN PICKUP (javap
+            // BeaconMenu$PaymentSlot the mayPlace + the
+            // getMaxStackSize laws the walk keeps — the tag verdict
+            // the non-payment carried refuses, the iconst_1 the
+            // stack cap speaks, the swap arm the vanilla PICKUP
+            // keeps)
+            let (sid, scount) = self.beacon_payment;
+            let (cid, ccount) = self.beacon_carried;
+            if ccount <= 0 {
+                if scount > 0 {
+                    self.beacon_carried = (sid, scount);
+                    self.beacon_payment = (0, 0);
+                }
+                return;
+            }
+            if !crate::world::is_beacon_payment_item(cid) {
+                return; // the mayPlace refusal — silence
+            }
+            if scount > 0 && scount != cid {
+                // the swap arm (the vanilla PICKUP's own law)
+                self.beacon_payment = (cid, 1);
+                self.beacon_carried = (sid, scount);
+                return;
+            }
+            // the place arm (left: up to the max-1 cap; right: ONE —
+            // the full slot the both buttons' zero-move answer keeps)
+            if scount == 0 {
+                self.beacon_payment = (cid, 1);
+                self.beacon_carried = if ccount > 1 {
+                    (cid, ccount - 1)
+                } else {
+                    (0, 0)
+                };
+            }
+            return;
+        }
+        // THE STANDARD ROWS' OWN WALK (the menu 1..27 the main grid
+        // rides, the 28..36 the hotbar — the write-through projection
+        // the inventory IS, the furnace close's own law the click
+        // lane keeps)
+        let idx = slot - 1; // 0..35 in the mirror
+        let inv_idx = if idx < 27 { 9 + idx } else { idx - 27 };
+        let believed = self.beacon_mirror.get(idx).copied().unwrap_or((0, 0));
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.beacon_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.beacon_carried)
+        };
+        if let Some(cell) = self.beacon_mirror.get_mut(idx) {
+            *cell = new_slot;
+        }
+        if let Some(item) = self.inventory.items.get_mut(inv_idx) {
+            *item = new_slot;
+        }
+        self.beacon_carried = new_carried;
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE BEACON'S OWN CARRIED THROW (the 26.2 mouseClicked's own
+    /// walk the doClick-OUTSIDE lane serves — the
+    /// [`Self::throw_furnace_carried_outside`] shape the offline
+    /// stand-in's cursor wears).
+    fn throw_beacon_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.beacon_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.beacon_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
+    /// THE POWER SEAT'S OWN PRESS (javap 26.2 BeaconScreen$
+    /// BeaconPowerButton.onPress pc 0-72 the live disasm the walk
+    /// banks — the isSelected gate pc 0-7 the re-press noop keeps,
+    /// the isPrimary arm pc 8-53 the screen's primary field the
+    /// effect banks [the mismatched secondary the null clears], the
+    /// secondary arm pc 54-64 the field the effect banks, the
+    /// updateButtons tail the states re-speak [the render's
+    /// per-frame recompute the stand-in wears]).
+    fn beacon_power_press(&mut self, effect: i32, is_primary: bool) {
+        if is_primary {
+            if self.beacon_primary == Some(effect) {
+                return; // the isSelected gate — the re-press noop
+            }
+            self.beacon_primary = Some(effect);
+            if self.beacon_secondary != Some(effect) {
+                self.beacon_secondary = None;
+            }
+        } else {
+            if self.beacon_secondary == Some(effect) {
+                return; // the isSelected gate — the re-press noop
+            }
+            self.beacon_secondary = Some(effect);
+        }
+    }
+
+    /// THE CONFIRM'S OWN WALK (the autopush-322 round — javap 26.2
+    /// BeaconConfirmButton.onPress pc 0-53 the packet + the
+    /// closeContainer speaks, the SERVER's handleSetBeaconPacket the
+    /// updateEffects walk answers; the OFFLINE authority the
+    /// BeaconMenu.updateEffects pc 0-104 walk IS: the hasItem gate
+    /// pc 0-7 the empty slot refuses, the getLevels read pc 10-14
+    /// the live pyramid answers, the validateEffects verdict pc
+    /// 35-46 the false the whole walk refuses, the data slots'
+    /// encode pc 48-77 the powers bank, the paymentSlot.remove(1)
+    /// pc 78-86 the ONE coin consumes [the updateEffects the confirm
+    /// speaks — the vanilla beacon's own tax], the access.execute
+    /// pc 87-101 the voice lambda plays). The close the BOTH
+    /// verdicts wear — the vanilla press the closeContainer
+    /// unconditionally tail speaks.
+    fn beacon_confirm_press(&mut self) {
+        let Some(pos) = self.beacon_open_cell else {
+            return;
+        };
+        let levels = self
+            .offline_world
+            .as_ref()
+            .map(|w| {
+                crate::world::beacon_levels(w, pos.0, pos.1, pos.2, crate::world::is_beacon_base)
+            })
+            .unwrap_or(0) as i32;
+        if self.beacon_payment.1 > 0
+            && crate::world::beacon_validate_effects(
+                self.beacon_primary,
+                self.beacon_secondary,
+                levels,
+            )
+        {
+            // THE POWERS' OWN BANK (the data slots' encode the pair
+            // the RAW ids the map keeps — the NBT row the name
+            // strings the save lane wears)
+            self.beacon_powers
+                .insert(pos, (self.beacon_primary, self.beacon_secondary));
+            // THE ONE PAYMENT'S OWN CONSUME (the remove(1) walk —
+            // the slot's single stack the count drop serves)
+            self.beacon_payment.1 -= 1;
+            if self.beacon_payment.1 <= 0 {
+                self.beacon_payment = (0, 0);
+            }
+            // THE POWER_SELECT VOICE (the access.execute lambda — the
+            // beacon pos the positional walk keeps)
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            let (tx, ty, tz) = (pos.0 as f64 + 0.5, pos.1 as f64 + 0.5, pos.2 as f64 + 0.5);
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.beacon.power_select",
+                1.0,
+                1.0,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            // THE DISK ROW'S OWN RIDE (the powers the containers
+            // file's beacons rows keep — the save walk the whole
+            // bank writes)
+            self.container_stores_file_save();
+        }
+        self.close_beacon(ScreenKind::World); // the closeContainer tail
+    }
+
+    /// THE QUICK-MOVE'S OWN WALK (javap 26.2 BeaconMenu.quickMoveStack
+    /// pc 43-242 the live disasm the walk banks: the slot-0 stack the
+    /// 1..37 range answers, the single payment item the EMPTY
+    /// payment slot the mayPlace verdict arms [pc 75-121 — the
+    /// insert attempt the click CONSUMES either way, the failed
+    /// moveItemStackTo the EMPTY return keeps], the 1..27 rows the
+    /// hotbar 28..37 speak, the 28..36 rows the main 1..28 answer,
+    /// the tail slots the whole 1..37 range keeps; the
+    /// moveItemStackTo walk the merge-then-empty pass the
+    /// reverse=false ascending order wears).
+    fn beacon_quick_move(&mut self, slot: usize) {
+        let mut menu: Vec<(i32, i32)> = Vec::with_capacity(37);
+        menu.push(self.beacon_payment);
+        menu.extend(self.beacon_mirror.iter().copied());
+        if slot >= menu.len() {
+            return; // the menu's own bounds the walk never wears
+        }
+        let moved = menu[slot];
+        if moved.1 <= 0 {
+            return; // the hasItem gate — silence
+        }
+        // THE PAYMENT-INSERT ARM (pc 75-121 — the empty slot + the
+        // mayPlace verdict + the single count the walk keeps; the
+        // attempt the click consumes either way)
+        if slot != 0
+            && menu[0].1 <= 0
+            && moved.1 == 1
+            && crate::world::is_beacon_payment_item(moved.0)
+        {
+            menu[0] = moved;
+            menu[slot] = (0, 0);
+        } else {
+            // THE ROUTING LAW (pc 43-74 the slot-0 arm, pc 122-179 the
+            // row split, pc 180-196 the tail keeps)
+            let (lo, hi) = if slot == 0 {
+                (1usize, 37usize)
+            } else if (1..28).contains(&slot) {
+                (28usize, 37usize)
+            } else {
+                (1usize, 28usize)
+            };
+            // THE MERGE PASS (the same-id rows fill first — the
+            // item_max_stack cap the merge wears)
+            let mut rest = moved.1;
+            let max = crate::world_view::item_max_stack(moved.0);
+            for cell in menu.iter_mut().take(hi).skip(lo) {
+                if rest == 0 {
+                    break;
+                }
+                if cell.1 > 0 && cell.0 == moved.0 && cell.1 < max {
+                    let take = (max - cell.1).min(rest);
+                    cell.1 += take;
+                    rest -= take;
+                }
+            }
+            // THE EMPTY PASS (the remainder the first empties take)
+            for cell in menu.iter_mut().take(hi).skip(lo) {
+                if rest == 0 {
+                    break;
+                }
+                if cell.1 <= 0 {
+                    *cell = (moved.0, rest);
+                    rest = 0;
+                }
+            }
+            // THE SOURCE'S OWN TAIL (the moved remainder the source
+            // keeps — the quickMoveStack law the getCount compare
+            // speaks)
+            menu[slot] = if rest > 0 { (moved.0, rest) } else { (0, 0) };
+        }
+        self.beacon_payment = menu[0];
+        self.beacon_mirror = menu[1..].to_vec();
+        // THE WRITE-THROUGH (the projection the inventory IS — the
+        // mirror rows the inventory cells answer)
+        for (i, pair) in self.beacon_mirror.iter().enumerate() {
+            let inv_idx = if i < 27 { 9 + i } else { i - 27 };
+            if let Some(item) = self.inventory.items.get_mut(inv_idx) {
+                *item = *pair;
+            }
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE BEACON'S OWN EFFECTS BEAT (the autopush-322 round — javap
+    /// 26.2 BeaconBlockEntity.tick pc 366-448 the live disasm the
+    /// walk banks: the `getGameTime() % 80 == 0` gate the ldc2_w 80
+    /// pair keeps, the levels re-read the updateBase the beam
+    /// non-empty gate wears [pc 379-421], the applyEffects walk the
+    /// powers the banked pair serves + the BEACON_AMBIENT voice the
+    /// same beat plays [pc 424-448]). The OFFLINE walk the banked
+    /// powers map serves: the stale cell the live kind gate retires
+    /// [the dug-out beacon the powers never re-apply], the levels-0
+    /// + the blocked beam the walk skips, the range the AABB touch
+    /// test answers, the effects the store's add_effect the
+    /// (ambient, visible, show-icon) flags wear.
+    fn beacon_effects_reapply(&mut self) {
+        if self.world_is_network || self.offline_world.is_none() || self.health <= 0.0 {
+            return;
+        }
+        // THE LIVE WORLD'S OWN READS (the immutable consults BEFORE
+        // the mutable map walk — the flint arm's own discipline)
+        let world = self.offline_world.as_ref().unwrap();
+        let height = crate::world::CHUNK_Y as i32;
+        let mut due: Vec<((i32, i32, i32), i32, (Option<i32>, Option<i32>))> = Vec::new();
+        let mut stale: Vec<(i32, i32, i32)> = Vec::new();
+        for (&cell, &pair) in self.beacon_powers.iter() {
+            if world.get(cell.0, cell.1, cell.2) != crate::world::BEACON {
+                stale.push(cell);
+                continue;
+            }
+            let levels = crate::world::beacon_levels(
+                world,
+                cell.0,
+                cell.1,
+                cell.2,
+                crate::world::is_beacon_base,
+            ) as i32;
+            if levels <= 0 {
+                continue; // the levels-0 gate — the pyramidless beacon
+            }
+            // THE BEAM'S OWN GATE (the BE tick's `!beamSections.isEmpty()`
+            // read — the blocked beam the empty sections keep)
+            let sections = crate::world::beacon_beam_sections(
+                world,
+                cell.0,
+                cell.1,
+                cell.2,
+                cell.1 + crate::world::BEACON_BEAM_MAX_RENDER,
+                |k| crate::world::is_beacon(k),
+            );
+            if sections.is_empty() {
+                continue;
+            }
+            // THE RANGE'S OWN GATE (the AABB touch — the feet pos the
+            // client body wears)
+            let Some(body) = self.body.as_ref() else {
+                continue;
+            };
+            let range = crate::world::beacon_effect_range(levels);
+            if !crate::world::beacon_aabb_touches((body.x, body.y, body.z), cell, range, height) {
+                continue;
+            }
+            due.push((cell, levels, pair));
+        }
+        drop(world);
+        for cell in stale {
+            self.beacon_powers.remove(&cell);
+        }
+        // THE EFFECTS' OWN DOSE (the applyEffects rows the store
+        // feeds — the primary pass the amplifier law wears, the
+        // secondary pass the tier-4 gate arms)
+        let flags = crate::effects::FLAG_AMBIENT
+            | crate::effects::FLAG_VISIBLE
+            | crate::effects::FLAG_SHOW_ICON;
+        for (_, levels, (pri, sec)) in due {
+            for (effect, duration, amplifier) in
+                crate::world::beacon_apply_effect_instances(levels, pri, sec)
+            {
+                self.effects.add_effect(effect, amplifier, duration, flags);
+            }
+        }
     }
 
     /// THE STORE'S OWN FLUSH (the dev-66 round — the vanilla
@@ -31197,6 +31852,264 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
+    /// THE BEACON'S OWN ROUND (the autopush-322 round — the vanilla
+    /// BeaconScreen over the frozen world, the 26.2 disasm's own
+    /// layout the walk banks — scripts/jar_work/beacon_gui_322.txt
+    /// the dump serves): the REAL `gui/container/beacon.png`
+    /// background blitted 230x219 at the centered panel, the label
+    /// pair the extractLabels walk draws (`block.minecraft.beacon.
+    /// primary` centered at 62/10, the secondary at 169/10, the
+    /// 0xFFE0E0E0 color the ldc row keeps, shadowless), the power
+    /// buttons the updateButtons walk states (the init walk's own
+    /// rows: the tier trio the left block keeps — Speed/Haste at
+    /// y+22, Resistance/Jump at y+47, Strength at y+72, each row the
+    /// 24-pitch buttons the center-76 wear — and the tier-3 row the
+    /// right block answers at center-167/y+47: the Regeneration
+    /// pick + the upgrade seat the primary-selected visibility
+    /// banks), the button sprites the extractContents dispatch
+    /// draws (the disabled/selected/highlighted states the
+    /// active+selected+hover verdicts key, the 18x18 effect icon the
+    /// +2 inset wears), the payment slot the menu ctor's (136,110)
+    /// pos keeps, the static payment examples the
+    /// extractBackground's five draws speak (netherite@20,
+    /// emerald@41, diamond@63, gold@86, iron@108 — the y=109 row),
+    /// the standard rows the addStandardInventorySlots(36, 137)
+    /// mirror rides, the carried follows the cursor (the vanilla
+    /// carried render — the dispenser's own shape).
+    fn render_beacon(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = ((w - 230) / 2, (h - 219) / 2);
+        self.beacon_panel = panel;
+        // THE TIER STATES' OWN RECOMPUTE (the updateButtons walk the
+        // per-frame answer wears — the levels the live pyramid
+        // speaks, the active/selected/visible the verdicts key)
+        let levels = self
+            .offline_world
+            .as_ref()
+            .and_then(|world| {
+                self.beacon_open_cell.map(|pos| {
+                    crate::world::beacon_levels(
+                        world,
+                        pos.0,
+                        pos.1,
+                        pos.2,
+                        crate::world::is_beacon_base,
+                    ) as i32
+                })
+            })
+            .unwrap_or(0);
+        // THE HIT BOXES (the menu's own numbering — the payment slot 0
+        // the ctor's (136, 110) pos keeps, the standard rows 1..36 the
+        // addStandardInventorySlots(36, 137) walk speaks — the main
+        // 1..27 the 18-pitch grid rides, the hotbar 28..36 the +58
+        // row wears; the 16x16 inner cells the +1 inset the Slot's
+        // own hit shape keeps)
+        let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(37);
+        rects.push((panel.0 + 136 + 1, panel.1 + 110 + 1, 0));
+        for i in 0..36usize {
+            let row = (i / 9) as i32;
+            let col = (i % 9) as i32;
+            let sx = panel.0 + 36 + col * 18;
+            let sy = panel.1 + 137 + row * 18 + if row == 3 { 58 - 54 } else { 0 };
+            rects.push((sx + 1, sy + 1, (1 + i) as i16));
+        }
+        self.beacon_slot_rects = rects;
+        // THE BACKGROUND (the clinit's BEACON_LOCATION — the 230x219
+        // region the 256x256 master wears)
+        g.sprite_file_region(
+            a,
+            "gui/container/beacon.png",
+            0,
+            0,
+            230,
+            219,
+            panel.0,
+            panel.1,
+        );
+        // THE LABEL PAIR (the extractLabels walk — the centeredText
+        // calls the 62/169 x pair + the y+10 row keep, the 0xE0E0E0
+        // the color ldc speaks, the shadowless draw the vanilla
+        // centered render banks)
+        let label = [0.878, 0.878, 0.878];
+        if let Some(t) = tr("block.minecraft.beacon.primary") {
+            let tx = panel.0 + 62 - g.text_width(t) / 2;
+            g.text(a, tx, panel.1 + 10, t, label, false);
+        }
+        if let Some(t) = tr("block.minecraft.beacon.secondary") {
+            let tx = panel.0 + 169 - g.text_width(t) / 2;
+            g.text(a, tx, panel.1 + 10, t, label, false);
+        }
+        // THE STATIC PAYMENT EXAMPLES (the extractBackground's five
+        // item draws — the netherite/emerald/diamond/gold/iron row
+        // the y=109 lane wears; the ids the item-name registry
+        // resolves, the missing row the silent skip keeps)
+        for (name, ex) in [
+            ("netherite_ingot", 20i32),
+            ("emerald", 41),
+            ("diamond", 63),
+            ("gold_ingot", 86),
+            ("iron_ingot", 108),
+        ] {
+            if let Some(id) = mc_registry::item_id_by_name(name) {
+                draw_item_icon(g, id, panel.0 + ex, panel.1 + 109);
+            }
+        }
+        // THE POWER BUTTONS' OWN ROWS (the init walk's geometry — the
+        // row centering law `x = center + j*24 - rowWidth/2` the
+        // colHeight/2 isub speaks, the 22x22 seats the 24-pitch
+        // wears; THE TIER-3 ROW'S OWN SIZE the `size + 1` walk keeps
+        // — the upgrade seat the row hosts, the widened rowWidth the
+        // centering answers [the n=2 row: the Regeneration seat at
+        // center-23, the upgrade at center+1])
+        let mut power_rects: Vec<(i32, i32, i32, bool)> = Vec::new();
+        for (ti, tier) in crate::world::BEACON_EFFECT_TIERS.iter().enumerate() {
+            let n = tier.len() as i32 + if ti == 3 { 1 } else { 0 };
+            let row_width = n * 22 + (n - 1) * 2;
+            let (center, y) = if ti == 3 {
+                (167, 47)
+            } else {
+                (76, 22 + ti as i32 * 25)
+            };
+            for (j, &effect) in tier.iter().enumerate() {
+                let x = panel.0 + center + j as i32 * 24 - row_width / 2;
+                power_rects.push((x, y, effect, ti != 3));
+            }
+            if ti == 3 {
+                let ux = panel.0 + 167 + (n - 1) as i32 * 24 - row_width / 2;
+                self.beacon_upgrade_rect = Some((ux, y));
+            }
+        }
+        // THE BUTTON SPRITES' OWN STATES (the extractContents dispatch
+        // — the disabled the !active verdict keeps, the selected the
+        // field compare speaks, the highlighted the hover wears, the
+        // plain the rest answers; the icon the 18x18 inset wears)
+        for &(x, y, effect, is_primary) in &power_rects {
+            let tier = crate::world::BEACON_EFFECT_TIERS
+                .iter()
+                .position(|t| t.contains(&effect))
+                .unwrap_or(0) as i32;
+            let active = tier < levels;
+            let selected = if is_primary {
+                self.beacon_primary == Some(effect)
+            } else {
+                self.beacon_secondary == Some(effect)
+            };
+            let hovered = self
+                .mouse_pos
+                .is_some_and(|(mx, my)| mx >= x && mx < x + 22 && my >= y && my < y + 22);
+            let sprite = if !active {
+                "container/beacon/button_disabled"
+            } else if selected {
+                "container/beacon/button_selected"
+            } else if hovered {
+                "container/beacon/button_highlighted"
+            } else {
+                "container/beacon/button"
+            };
+            g.sprite_at_tinted(a, sprite, x, y, 22, 22, [1.0, 1.0, 1.0, 1.0]);
+            if let Some(icon) = crate::effects::effect_icon_sprite(effect) {
+                g.sprite_at_tinted(a, icon, x + 2, y + 2, 18, 18, [1.0, 1.0, 1.0, 1.0]);
+            }
+        }
+        // THE UPGRADE SEAT'S OWN DRAW (the updateStatus walk — the
+        // primary-selected visibility the setEffect rebind wears, the
+        // tier-3 active gate the levels compare keeps)
+        if let Some((ux, uy)) = self.beacon_upgrade_rect {
+            if let Some(pri) = self.beacon_primary {
+                let active = 3 < levels;
+                let selected = self.beacon_secondary == self.beacon_primary;
+                let hovered = self
+                    .mouse_pos
+                    .is_some_and(|(mx, my)| mx >= ux && mx < ux + 22 && my >= uy && my < uy + 22);
+                let sprite = if !active {
+                    "container/beacon/button_disabled"
+                } else if selected {
+                    "container/beacon/button_selected"
+                } else if hovered {
+                    "container/beacon/button_highlighted"
+                } else {
+                    "container/beacon/button"
+                };
+                g.sprite_at_tinted(a, sprite, ux, uy, 22, 22, [1.0, 1.0, 1.0, 1.0]);
+                if let Some(icon) = crate::effects::effect_icon_sprite(pri) {
+                    g.sprite_at_tinted(a, icon, ux + 2, uy + 2, 18, 18, [1.0, 1.0, 1.0, 1.0]);
+                }
+            }
+        }
+        // THE CONFIRM/CANCEL PAIR (the init walk's (164,107)/(190,107)
+        // seats — the same button-state dispatch the sprite class
+        // inherits, the icon the 18x18 inset wears; the confirm the
+        // hasPayment && primary verdict the active gate keeps, the
+        // cancel the always-active row wears [the updateStatus the
+        // empty walk speaks])
+        let confirm_active = self.beacon_payment.1 > 0 && self.beacon_primary.is_some();
+        for (rx, ry, sprite, active) in [
+            (
+                panel.0 + 164,
+                panel.1 + 107,
+                "container/beacon/confirm",
+                confirm_active,
+            ),
+            (
+                panel.0 + 190,
+                panel.1 + 107,
+                "container/beacon/cancel",
+                true,
+            ),
+        ] {
+            let hovered = self
+                .mouse_pos
+                .is_some_and(|(mx, my)| mx >= rx && mx < rx + 22 && my >= ry && my < ry + 22);
+            let bg = if !active {
+                "container/beacon/button_disabled"
+            } else if hovered {
+                "container/beacon/button_highlighted"
+            } else {
+                "container/beacon/button"
+            };
+            g.sprite_at_tinted(a, bg, rx, ry, 22, 22, [1.0, 1.0, 1.0, 1.0]);
+            g.sprite_at_tinted(a, sprite, rx + 2, ry + 2, 18, 18, [1.0, 1.0, 1.0, 1.0]);
+        }
+        self.beacon_confirm_rect = (panel.0 + 164, panel.1 + 107);
+        self.beacon_cancel_rect = (panel.0 + 190, panel.1 + 107);
+        self.beacon_power_rects = power_rects;
+        // THE SLOT ICONS (the believed rows the payment + the mirror
+        // keep: the payment slot the fresh container speaks, the
+        // standard rows the real inventory projects)
+        for &(sx, sy, slot) in &self.beacon_slot_rects {
+            let slot = slot as usize;
+            let believed = if slot == 0 {
+                Some(self.beacon_payment)
+            } else {
+                self.beacon_mirror.get(slot - 1).copied()
+            };
+            let Some((id, count)) = believed else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the dispenser's own shape)
+        if self.beacon_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.beacon_carried.0, mx - 8, my - 8);
+                if self.beacon_carried.1 > 1 {
+                    let s = self.beacon_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+    }
+
     /// THE DIMENSION SWAP (the verdict's own teleport tail — the
     /// vanilla handlePortal walk the countdown's TRUE return serves;
     /// the offline fiction's own lane: the far side's slot the
@@ -35072,6 +35985,18 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Beacon {
+            // THE BEACON'S OWN PRESS (the autopush-322 round — the
+            // widget dispatch the menu slots precede: the power
+            // buttons the BeaconPowerButton.onPress walk serves, the
+            // confirm/cancel pair the own onPress walks speak, the
+            // payment + the standard rows the doClick PICKUP walk
+            // answers). THE QUICKCRAFT DRAG the follow-up keeps (the
+            // beacon's slot set the drag lanes the later round banks
+            // — the carried press the direct PICKUP walk serves).
+            self.beacon_screen_click(mx, my, 0);
+            return;
+        }
         if self.screen == ScreenKind::Inventory {
             // THE DOUBLE-CLICK FLAG (mouseClicked pcs 61-80 — the
             // `lastClickSlot == hovered && the event's doubled tag`
@@ -35311,6 +36236,17 @@ impl App {
             } else {
                 self.click_table_slot(mx, my, 1);
             }
+            return false;
+        }
+        if self.screen == ScreenKind::Beacon {
+            // THE BEACON'S OWN RIGHT PRESS (the autopush-322 round —
+            // the widget dispatch the menu slots precede: the power
+            // buttons the same walk both buttons serve, the payment +
+            // the standard rows the doClick PICKUP walk answers [the
+            // button-1 byte the split-pickup place-ONE speaks]). THE
+            // QUICKCRAFT DRAG the follow-up keeps (the direct PICKUP
+            // walk the press serves).
+            self.beacon_screen_click(mx, my, 1);
             return false;
         }
         if self.screen == ScreenKind::Creative {
@@ -40358,7 +41294,9 @@ impl App {
                 // the same read the cell bank answers: the missing list
                 // the honest empties keep, the extend law the in-memory
                 // entry never clobbers)
-                self.beacon_stores.extend(beacon_cells_from_nbt(&root));
+                let (cells, powers) = beacon_cells_from_nbt(&root);
+                self.beacon_stores.extend(cells);
+                self.beacon_powers.extend(powers);
                 // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
@@ -40455,7 +41393,7 @@ impl App {
             // own block pos the disk banks)
             (
                 "beacons".to_string(),
-                beacon_bank_to_nbt(&self.beacon_stores),
+                beacon_bank_to_nbt(&self.beacon_stores, &self.beacon_powers),
             ),
             (
                 "furnace_words".to_string(),
@@ -48469,6 +49407,7 @@ impl App {
             ScreenKind::Chest => self.close_chest_container(back),
             ScreenKind::Dispenser => self.close_dispenser(back),
             ScreenKind::Furnace => self.close_furnace(back),
+            ScreenKind::Beacon => self.close_beacon(back),
             ScreenKind::Crafting => self.close_crafting_table(back),
             ScreenKind::Creative => self.close_creative_picker(back),
             _ => self.open(back),
@@ -54837,6 +55776,32 @@ impl App {
             })
         {
             self.open_dispenser_for(hit.pos);
+            return true;
+        }
+        // THE BEACON'S OWN GUI DOOR (the autopush-322 round — javap 26.2
+        // BeaconBlock.useWithoutItem pc 0-48 the live disasm the walk
+        // banks — scripts/jar_work/beacon_gui_322.txt the dump serves:
+        // the !isClientSide gate pc 0-4 the BE instanceof check pc
+        // 7-19 wears, the player.openMenu(beacon) pc 29-36 the
+        // awardStat(INTERACT_WITH_BEACON) pc 37-42 carries, the
+        // SUCCESS pc 45-48 the unconditional return keeps — the
+        // press consumes even the client-side arm the walk speaks):
+        // the hit cell's beacon kind the OFFLINE world answers — the
+        // screen the banked powers' sync opens. The sneaking player
+        // the arm SKIPS (the useWithoutItem the use walk the shift
+        // gate the block family's own doors wear — the
+        // BlockItem.useOn's sneaking-place fallback the item lanes
+        // follow). The WIRE session the local screen never opens (the
+        // server's own OpenScreen word owns the container — the
+        // BEACON menu type lane the projection feeds); the press
+        // stays unconsumed there, the item lanes follow.
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_beacon(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            self.open_beacon_for(hit.pos);
             return true;
         }
         // THE CAKE'S OWN BLOCK-USE ARM (javap 26.2 CakeBlock — the
@@ -61715,6 +62680,7 @@ impl App {
                 | ScreenKind::Inventory
                 | ScreenKind::Crafting
                 | ScreenKind::Furnace
+                | ScreenKind::Beacon
         )
     }
 
@@ -61737,6 +62703,7 @@ impl App {
             }
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
+            ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
             ScreenKind::Creative => self.close_creative_picker(ScreenKind::World),
             ScreenKind::Crafting => self.close_crafting_table(ScreenKind::World),
@@ -66076,6 +67043,19 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_dispenser(&mut g, a, gw, gh);
+            }
+            ScreenKind::Beacon => {
+                // THE BEACON'S OWN ROUND (the vanilla BeaconScreen over
+                // the frozen world — the dispenser's own shape the
+                // texture-blitted base keeps): world underneath,
+                // dimmed, the REAL 230x219 background, the power
+                // buttons' sprite states, the payment row, the
+                // carried follow — no mannequin (the BeaconScreen the
+                // vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_beacon(&mut g, a, gw, gh);
             }
             ScreenKind::Inventory => {
                 // the survival inventory's own round (the vanilla
