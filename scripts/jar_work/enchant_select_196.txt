@@ -1,0 +1,89 @@
+=== dev-196 THE ITEM-STACK'S OWN ENCHANTMENT ROUND — the 26.2 client.jar javap banks ===
+jar: piston-data.mojang.com client.jar sha1 2dc72797acbc1b63fc16a11c4ac393605f453754 (26.2, the piston-meta 26.2.json's own object row)
+classes: net/minecraft/world/item/enchantment/EnchantmentHelper + EnchantmentMenu + Enchantment + EnchantmentInstance + ItemEnchantments + net/minecraft/util/random/WeightedRandom
+
+--- EnchantmentHelper.getEnchantmentCost(RandomSource,int,int,ItemStack) [the dev-195 lane re-verified] ---
+pc 0-17: Enchantable e = stack.get(DataComponents.ENCHANTABLE); if (e == null) return 0;
+pc 19-27: int p = power; if (p > 15) p = 15;
+pc 28-52: int base = random.nextInt(8) + 1 + (p >> 1) + random.nextInt(p + 1);
+pc 54-66: slot==0 -> return Math.max(base / 3, 1);
+pc 67-80: slot==1 -> return base * 2 / 3 + 1;
+pc 81-89: else -> return Math.max(base, p * 2);
+
+--- EnchantmentHelper.selectEnchantment(RandomSource,ItemStack,int,Stream<Holder<Enchantment>>) ---
+pc 5-24: Enchantable e = stack.get(ENCHANTABLE); if (e == null) return list (EMPTY);
+pc 25-60: level = level + 1 + random.nextInt(e.value()/4 + 1) + random.nextInt(e.value()/4 + 1);
+pc 61-80: float f = (random.nextFloat() + random.nextFloat() - 1.0F) * 0.15F;
+pc 82-100: level = Mth.clamp(Math.round((float)level + (float)level * f), 1, Integer.MAX_VALUE);
+pc 101-107: List<EnchantmentInstance> avail = getAvailableEnchantmentResults(level, stack, stream);
+pc 109-116: if (avail.isEmpty()) return list;
+pc 119-142: WeightedRandom.getRandomItem(random, avail, EnchantmentInstance::weight).ifPresent(list::add);
+pc 145-154: LOOP HEAD: if (random.nextInt(50) > level) goto exit;
+pc 157-179: if (!list.isEmpty()) filterCompatibleEnchantments(avail, list.getLast());
+pc 182-192: if (avail.isEmpty()) goto exit;
+pc 195-218: WeightedRandom.getRandomItem(random, avail, ::weight).ifPresent(list::add);
+pc 221-224: level /= 2; goto LOOP HEAD;
+pc 228: return list;
+
+--- EnchantmentHelper.getAvailableEnchantmentResults(int,ItemStack,Stream) ---
+pc 4-11: boolean book = stack.is(Items.BOOK);
+pc 13-22: stream.filter(h -> lambda$0(stack, book, h))
+pc 27-34:   .forEach(h -> lambda$1(cost, list, h));
+lambda$0 (pc 0-25): return holder.value().isPrimaryItem(stack) || book;
+lambda$1 (pc 10-71): for (int i = ench.getMaxLevel(); i >= ench.getMinLevel(); --i)
+    if (cost >= ench.getMinCost(i) && cost <= ench.getMaxCost(i)) { list.add(new EnchantmentInstance(h, i)); break; }
+
+--- EnchantmentHelper.filterCompatibleEnchantments / isEnchantmentCompatible ---
+removeIf(inst -> !Enchantment.areCompatible(inst.enchantment(), given));
+areCompatible(a, b) pc 0-57: a != b (Holder.equals) && !a.value().exclusiveSet.contains(b) && !b.value().exclusiveSet.contains(a)
+
+--- Enchantment (the definition record's walks) ---
+isPrimaryItem(stack) = isSupportedItem(stack) && (definition.primaryItems.isEmpty() || stack.is(primaryItems))
+isSupportedItem(stack) = stack.is(definition.supportedItems)
+getWeight() = definition.weight; getAnvilCost() = definition.anvilCost;
+getMinLevel() = 1 (CONSTANT iconst_1); getMaxLevel() = definition.maxLevel;
+getMinCost(l) = definition.minCost.calculate(l); getMaxCost(l) = maxCost.calculate(l)
+Enchantment$Cost.calculate(l) = base + perLevelAboveFirst * (l - 1)
+
+--- WeightedRandom.getRandomItem(random, list, toIntFn) ---
+pc 0-19: total < 0 -> IllegalArgumentException; pc 20-27: total == 0 -> Optional.empty();
+pc 28-35: int i = random.nextInt(total);
+getWeightedItem walk: for (item : list) { i -= fn(item); if (i < 0) return item; } -> empty
+EnchantmentInstance.weight() = enchantment.value().getWeight()
+
+--- EnchantmentMenu.getEnchantmentList(RegistryAccess,ItemStack,int,int) [the 337 evidence re-verified] ---
+pc 0-14: random.setSeed((long)(enchantmentSeed.get() + enchantRow));   // seed + ROW
+pc 19-49: Optional<HolderSet.Named> opt = registry.get(EnchantmentTags.IN_ENCHANTING_TABLE); if empty -> List.of();
+pc 50-68: List list = EnchantmentHelper.selectEnchantment(random, stack, cost, opt.get().stream());
+pc 73-117: if (stack.is(Items.BOOK) && list.size() > 1) list.remove(random.nextInt(list.size()));
+
+--- EnchantmentMenu.lambda$clickMenuButton$0 (the SUCCESS walk, the pc walk re-banked) ---
+pc 0-21: list = getEnchantmentList(registryAccess, itemstack, id, costs[id]);
+pc 23-30: if (list.isEmpty()) return;          // THE EMPTY GATE — NOTHING spent
+pc 33-38: player.onEnchantmentPerformed(itemstack, i);   // xp spend + seed bump
+pc 41-68: if (itemstack.is(BOOK)) { itemstack = itemstack.transmuteCopy(ENCHANTED_BOOK); enchantSlots.setItem(0, itemstack); }
+pc 73-119: for (inst : list) itemstack.enchant(inst.enchantment(), inst.level());
+pc 122-146: lapis.consume(i, null); if (lapis.isEmpty()) setItem(1, EMPTY);
+pc 151-155: awardStat(ENCHANT_ITEM); pc 158-180: ServerPlayer -> ENCHANTED_ITEM trigger;
+pc 183-187: enchantSlots.setChanged();
+pc 192-208: enchantmentSeed.set(player.getEnchantmentSeed()); slotsChanged(enchantSlots);
+pc 211-241: playSound(null, pos, ENCHANTMENT_TABLE_USE, BLOCKS, 1.0F, 0.9F + random.nextFloat() * 0.1F);
+
+--- ItemStack.enchant(Holder,int) ---
+-> EnchantmentHelper.updateEnchantments(stack, mutable -> mutable.set(holder, level)) — the ItemEnchantments component write
+
+--- the DATA (the jar's data/minecraft lanes) ---
+data/minecraft/enchantment/*.json: 43 definitions (weight, max_level, min_cost/max_cost {base, per_level_above_first}, anvil_cost, supported_items, primary_items, exclusive_set, slots)
+data/minecraft/tags/enchantment/in_enchanting_table.json = ['#minecraft:non_treasure'] (36 members)
+treasure-only (7): binding_curse, frost_walker, mending, soul_speed, swift_sneak, vanishing_curse, wind_burst
+data/minecraft/tags/enchantment/curse.json = [binding_curse, vanishing_curse]
+exclusive_set tags (7): armor{protection,blast_protection,fire_protection,projectile_protection} boots{frost_walker,depth_strider} bow{infinity,mending} crossbow{multishot,piercing} damage{sharpness,smite,bane_of_arthropods,impaling,density,breach} mining{fortune,silk_touch} riptide{loyalty,channeling}
+data/minecraft/tags/item/enchantable/*.json: 22 families (the tag trees resolved: swords/axes/pickaxes/shovels/hoes/spears 7 each; foot/leg/chest armor 7 each; head_armor 8 incl turtle_helmet; skulls 7; durability direct: elytra shield bow crossbow trident flint_and_steel shears brush fishing_rod carrot_on_a_stick warped_fungus_on_a_stick mace; equippable direct: elytra carved_pumpkin; vanishing direct: compass carved_pumpkin; mining direct: shears; weapon direct: mace; bow/crossbow/fishing/mace/trident 1 each)
+
+--- the ENCHANTABILITY (the Enchantable component values) ---
+ToolMaterial clinit (jar-proven): WOOD 15, STONE 5, COPPER 13, IRON 14, DIAMOND 10, GOLD 22, NETHERITE 15
+ArmorMaterials clinit (jar-proven): LEATHER 15, COPPER 8, CHAINMAIL 12, IRON 9, GOLD 25, DIAMOND 10, NETHERITE 15, TURTLE_SCUTE 9
+specials (the classic Item.Properties values): book 1, bow 1, crossbow 1, fishing_rod 1, trident 1, mace 15, elytra 1, shield 1, flint_and_steel 1, shears 1, brush 1, carrot_on_a_stick 1, warped_fungus_on_a_stick 1
+
+--- the TWIN (scripts/ench_twin_196.py, scripts/jar_work/enchant_twin_196.txt) ---
+the python bit-exact lane the deterministic tests pin

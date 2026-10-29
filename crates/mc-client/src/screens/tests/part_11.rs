@@ -1,5 +1,12 @@
 use super::*;
 
+
+
+
+
+
+
+
 /// THE SNOWBALL'S OWN BREAK (javap `Snowball.handleEntityEvent`
 /// case 3 the 26.2 jar — the `bipush 8` loop the plain case
 /// speaks, the ZERO-velocity shards the jitter walk never wears,
@@ -7275,8 +7282,12 @@ fn the_enchanting_table_the_click_enchant_walk_wears() {
     // THE HAPPY WALK (the guards the pass the spend the exact order
     // wears — the xp + the seed draw the onEnchantmentPerformed
     // speaks, the lapis the consume shrink keeps, the re-roll the
-    // slotsChanged answers)
-    app.enchant_slots[0] = (7, 1);
+    // slotsChanged answers; the dev-196 round the ENCHANTABLE item
+    // the walk wears — the 337 round's own andesite the empty gate
+    // the honest stop now answers, the diamond sword the list the
+    // live walk serves)
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    app.enchant_slots[0] = (sword, 1);
     let seed_before = app.enchant_seed;
     assert_eq!(seed_before, 0, "the boot seed the ctor's own 0 keeps");
     assert!(
@@ -7291,6 +7302,15 @@ fn the_enchanting_table_the_click_enchant_walk_wears() {
     assert_eq!(
         app.xp.level, 29,
         "the xp the level-1 spend the onEnchantmentPerformed law keeps"
+    );
+    // THE ENCHANT APPLICATION (the dev-196 round — the instances the
+    // store's own rows wear: the seed-0 row-0 twin the
+    // [sharpness 1] list answers, the registry index the
+    // alphabetical order keeps)
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(33, 1)],
+        "the seat-0 store the sharpness-I instance wears"
     );
     // THE SEED DRAW (the player-random stand-in the full next(32)
     // draw answers — the enchantmentSeed the bump the bytecode
@@ -7327,7 +7347,8 @@ fn the_enchanting_table_the_click_enchant_walk_wears() {
     );
     // THE LAPIS-EXHAUST LAW (the count-1 pair the consume the
     // setItem(1, EMPTY) the empty-pair answer wears — the row-0 cost
-    // the floor law the second click the liveness keeps)
+    // the floor law the second click the liveness keeps; the
+    // enchanted sword the fresh seed the fresh list serves)
     app.enchant_slots[1] = (7, 1);
     assert!(
         app.click_enchant_option(0),
@@ -7337,6 +7358,13 @@ fn the_enchanting_table_the_click_enchant_walk_wears() {
         app.enchant_slots[1],
         (0, 0),
         "the spent slot the empty-pair law wears"
+    );
+    // THE FRESH LIST (the seed-1 stream the pick answers — the
+    // sharpness-I instance the s1 row-0 twin wears)
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(33, 1)],
+        "the fresh-seed store the sharpness-I instance wears"
     );
     let s2 = seed_rng.next_unbounded();
     assert_eq!(
@@ -7377,5 +7405,566 @@ fn the_enchanting_table_the_click_enchant_walk_wears() {
     assert!(
         item_seat.0 + 16 <= panel.0 + 60,
         "the item seat the row-0 rect the x-gutter keeps"
+    );
+}
+
+/// THE ITEM-STACK'S OWN ENCHANTMENT ROUND (the dev-196 round — the
+/// registry the jar's own 43 definitions the alphabetical order
+/// keeps, the walks the javap evidence banks:
+/// scripts/jar_work/enchant_select_196.txt the stream speaks): the
+/// spot rows the exact numbers answer, the table pool the 36
+/// members wear, the compatibility the exclusive sets speak, the
+/// families the resolved trees answer, the enchantability the
+/// material rows keep.
+#[test]
+fn the_item_stack_the_enchantment_registry_wears() {
+    use mc_registry::generated::enchantments as ench;
+    // THE COUNT (the 43 definitions the jar's own data lane serves)
+    assert_eq!(ench::ENCHANTMENTS.len(), 43, "the 43 rows the registry keeps");
+    assert_eq!(ench::TABLE_MEMBERS.len(), 36, "the 36 table members the non_treasure tag keeps");
+    // THE SPOT ROWS (the jar's own numbers the json files bank)
+    let sharp = ench::enchantment_index("sharpness").unwrap();
+    assert_eq!(sharp, 33, "the alphabetical order the registry id keeps");
+    assert_eq!(ench::ENCHANTMENTS[sharp].weight, 10, "the weight the json row keeps");
+    assert_eq!(ench::ENCHANTMENTS[sharp].max_level, 5, "the max level the json row keeps");
+    assert_eq!(ench::ENCHANTMENTS[sharp].min_cost, (1, 11), "the min curve the json row keeps");
+    assert_eq!(ench::ENCHANTMENTS[sharp].max_cost, (21, 11), "the max curve the json row keeps");
+    assert_eq!(ench::ENCHANTMENTS[sharp].primary, Some("melee_weapon"), "the primary family the json row keeps");
+    let prot = ench::enchantment_index("protection").unwrap();
+    assert_eq!(prot, 28, "the protection id the alphabetical order keeps");
+    assert_eq!(ench::ENCHANTMENTS[prot].min_cost, (1, 11), "the protection min curve keeps");
+    assert_eq!(ench::ENCHANTMENTS[prot].max_cost, (12, 11), "the protection max curve keeps");
+    assert_eq!(ench::ENCHANTMENTS[prot].exclusive, Some("armor"), "the exclusive tag keeps");
+    let silk = ench::enchantment_index("silk_touch").unwrap();
+    assert_eq!(ench::ENCHANTMENTS[silk].weight, 1, "the very-rare weight the json row keeps");
+    assert_eq!(ench::ENCHANTMENTS[silk].min_cost, (15, 0), "the silk min curve keeps");
+    assert_eq!(ench::ENCHANTMENTS[silk].max_cost, (65, 0), "the silk max curve keeps");
+    // THE COST CURVE (the Enchantment$Cost.calculate law — base +
+    // per * (l - 1))
+    assert_eq!(ench::EnchDef::cost_at((1, 11), 1), 1, "the level-1 cost the base keeps");
+    assert_eq!(ench::EnchDef::cost_at((1, 11), 4), 34, "the level-4 cost the per-level fold keeps");
+    // THE TABLE POOL (the non_treasure tag's own resolution — the 7
+    // treasure-only rows the pool never seats)
+    for treasure in ["binding_curse", "frost_walker", "mending", "soul_speed", "swift_sneak", "vanishing_curse", "wind_burst"] {
+        assert!(
+            !ench::is_table_member(treasure),
+            "the {treasure} treasure row the pool never seats"
+        );
+    }
+    assert!(ench::is_table_member("sharpness"), "the sharpness row the pool seats");
+    // THE COMPATIBILITY (the areCompatible law — the exclusive set
+    // the containment speaks)
+    let blast = ench::enchantment_index("blast_protection").unwrap();
+    assert!(!ench::are_compatible(prot, blast), "the armor exclusivity the false wears");
+    assert!(!ench::are_compatible(blast, prot), "the symmetric check the false wears");
+    assert!(ench::are_compatible(prot, sharp), "the cross-family pair the true wears");
+    let sharp2 = ench::enchantment_index("sharpness").unwrap();
+    assert!(!ench::are_compatible(sharp2, sharp2), "the self-pair the false wears");
+    // THE FAMILIES (the resolved tag trees the plain names answer)
+    assert!(ench::item_in_family("diamond_sword", "sharp_weapon"), "the sword the sharp family keeps");
+    assert!(ench::item_in_family("diamond_sword", "melee_weapon"), "the sword the melee family keeps");
+    assert!(ench::item_in_family("diamond_axe", "sharp_weapon"), "the axe the sharp family keeps");
+    assert!(!ench::item_in_family("diamond_axe", "melee_weapon"), "the axe the melee family refuses");
+    assert!(ench::item_in_family("bow", "durability"), "the bow the durability family keeps");
+    assert!(ench::item_in_family("mace", "weapon"), "the mace the weapon family keeps");
+    assert!(ench::item_in_family("wooden_spear", "lunge"), "the spear the lunge family keeps");
+    assert!(!ench::item_in_family("dirt", "durability"), "the dirt no family seats");
+    // THE ENCHANTABILITY (the Enchantable component values — the
+    // ToolMaterial/ArmorMaterial clinit rows jar-proven)
+    assert_eq!(ench::item_enchantability("wooden_sword"), 15, "the wood row keeps");
+    assert_eq!(ench::item_enchantability("stone_pickaxe"), 5, "the stone row keeps");
+    assert_eq!(ench::item_enchantability("copper_sword"), 13, "the copper row keeps");
+    assert_eq!(ench::item_enchantability("iron_sword"), 14, "the iron row keeps");
+    assert_eq!(ench::item_enchantability("diamond_sword"), 10, "the diamond row keeps");
+    assert_eq!(ench::item_enchantability("golden_sword"), 22, "the gold row keeps");
+    assert_eq!(ench::item_enchantability("netherite_sword"), 15, "the netherite row keeps");
+    assert_eq!(ench::item_enchantability("golden_helmet"), 25, "the gold armor row keeps");
+    assert_eq!(ench::item_enchantability("turtle_helmet"), 9, "the turtle row keeps");
+    assert_eq!(ench::item_enchantability("leather_boots"), 15, "the leather row keeps");
+    assert_eq!(ench::item_enchantability("book"), 1, "the book row keeps");
+    assert_eq!(ench::item_enchantability("mace"), 15, "the mace row keeps");
+    assert_eq!(ench::item_enchantability("dirt"), 0, "the missing row the 0 keeps");
+    // THE PRIMARY LAW (the isPrimaryItem pair — the supported gate
+    // the primary set refines)
+    assert!(ench::enchantment_accepts_item("sharpness", "diamond_sword"), "the primary sword accepts");
+    // THE AXE'S OWN REFUSAL (the data-driven law — the sharpness
+    // primary = melee_weapon = swords + spears, the axe the table
+    // never seats [the anvil/book lane the axe's own road keeps])
+    assert!(!ench::enchantment_accepts_item("sharpness", "diamond_axe"), "the axe the primary refuses");
+    let thorns = ench::enchantment_index("thorns").unwrap();
+    assert!(ench::enchantment_accepts_item("thorns", "diamond_chestplate"), "the chest the thorns primary keeps");
+    assert!(!ench::enchantment_accepts_item("thorns", "diamond_helmet"), "the helmet the thorns primary refuses");
+    assert!(!ench::enchantment_accepts_item("fire_aspect", "diamond_axe"), "the fire_aspect the axe refuses");
+}
+
+/// THE SELECTION WALK (the dev-196 round — the
+/// selectEnchantment walk the python twin pins: the level roll the
+/// spread the available scan the weighted pick the halving loop
+/// the exact stream wears; the seed-0 rows the deterministic
+/// lists answer).
+#[test]
+fn the_enchanting_table_the_selection_walk_wears() {
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let book = mc_registry::item_id_by_name("book").unwrap();
+    let helmet = mc_registry::item_id_by_name("golden_helmet").unwrap();
+    // THE SEED-0 ROWS (the twin's costs the same stream keeps —
+    // the twin scripts/jar_work/enchant_twin_196.txt banks)
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(sword, 2, &mut rng),
+        vec![(33, 1)],
+        "the cost-2 list the sharpness-I twin wears"
+    );
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(sword, 3, &mut rng),
+        vec![(35, 1), (40, 1)],
+        "the cost-3 list the smite+unbreaking twin wears"
+    );
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(sword, 6, &mut rng),
+        vec![(35, 1), (40, 1)],
+        "the cost-6 list the smite+unbreaking twin wears"
+    );
+    // THE SEED-0 BIG-COST ROWS (the direct walk the wide windows
+    // answer — the multi-instance lists the halving loop lays)
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(sword, 13, &mut rng),
+        vec![(40, 2), (1, 2)],
+        "the cost-13 list the unbreaking+bane twin wears"
+    );
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(sword, 30, &mut rng),
+        vec![(40, 3), (1, 4), (17, 2), (37, 3)],
+        "the cost-30 list the four-instance twin wears"
+    );
+    // THE ARMOR WALK (the golden helmet the armor pool the
+    // projectile-protection primary wears)
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(helmet, 8, &mut rng),
+        vec![(27, 3), (40, 2)],
+        "the helmet list the projectile-protection twin wears"
+    );
+    // THE NON-ENCHANTABLE GATE (the Enchantable null the empty
+    // list wears — the dirt the honest empty answer keeps)
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert!(
+        App::select_enchantments(dirt, 30, &mut rng).is_empty(),
+        "the dirt walk the empty list wears"
+    );
+    // THE BOOK WALK (the isBook bypass the whole pool serves — the
+    // cost-2 the power-I instance, the cost-8 the unbreaking)
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(book, 2, &mut rng),
+        vec![(26, 1), (8, 1)],
+        "the cost-2 book the power+efficiency twin wears"
+    );
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::select_enchantments(book, 8, &mut rng),
+        vec![(40, 1), (17, 1)],
+        "the cost-8 book the unbreaking+knockback twin wears"
+    );
+    // THE PICK LIST (the menu's own seed + ROW law the
+    // getEnchantmentList walk wears — the rows the DISTINCT streams
+    // answer: the seed-0 app the row-0 the [sharpness, unbreaking]
+    // list, the row-1 the smite-II trio, the row-2 the
+    // unbreaking-III pair the twin banks)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.enchant_seed = 0;
+    let cost_row = app.enchant_pick_list(0, sword, 8);
+    assert_eq!(
+        cost_row,
+        vec![(33, 1), (40, 1)],
+        "the row-0 pick the seed+0 stream wears"
+    );
+    let cost_row1 = app.enchant_pick_list(1, sword, 13);
+    assert_eq!(
+        cost_row1,
+        vec![(35, 2), (17, 1), (10, 1)],
+        "the row-1 pick the seed+1 stream wears"
+    );
+    let cost_row2 = app.enchant_pick_list(2, sword, 30);
+    assert_eq!(
+        cost_row2,
+        vec![(40, 3), (35, 4)],
+        "the row-2 pick the seed+2 stream wears"
+    );
+}
+
+/// THE EMPTY GATE (the dev-196 round — the lambda pc 23-30 walk the
+/// getEnchantmentList-empty the NOTHING-spent return wears: the
+/// non-enchantable item the guards pass the list never forms, the
+/// xp and the lapis and the seed the untouched keep — the 337
+/// round's own unconditional spend the honest stop answers).
+#[test]
+fn the_enchanting_table_the_empty_gate_the_honest_stop_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    w.set(c + 2, surface, c, crate::world::BOOKSHELF);
+    app.open_enchanting_for(cell);
+    let andesite = 7i32;
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE ANDESITE WALK (the 337 test's own item the gate now
+    // refuses — the guards pass, the list never forms, NOTHING
+    // spends)
+    app.enchant_slots[0] = (andesite, 1);
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    assert!(
+        app.enchanting_costs.iter().any(|&cost| cost > 0),
+        "the cost rows the live walk lays"
+    );
+    assert!(
+        !app.click_enchant_option(0),
+        "the non-enchantable click the false wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 3),
+        "the lapis the untouched keep"
+    );
+    assert_eq!(app.xp.level, 30, "the xp the untouched keep");
+    assert_eq!(app.enchant_seed, 0, "the seed the untouched keep");
+    assert!(app.enchant_comps[0].is_empty(), "the store the empty keep");
+    // THE DIRT WALK (the same honest stop the plain block wears)
+    app.enchant_slots[0] = (dirt, 1);
+    app.enchant_costs_refresh();
+    assert!(
+        !app.click_enchant_option(1),
+        "the dirt click the false wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 3),
+        "the lapis the untouched keep"
+    );
+    assert_eq!(app.xp.level, 30, "the xp the untouched keep");
+}
+
+/// THE ENCHANT APPLICATION (the dev-196 round — the happy walk the
+/// real instances the store wears: the power-15 ring the twin
+/// costs lay, the click the [sharpness I, unbreaking I] list the
+/// seat-0 store answers, the lapis and the xp the spend keeps, the
+/// sword the unchanged item wears).
+#[test]
+fn the_enchanting_table_the_enchant_application_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    // THE 15-SHELF RING (the scanned rows the y = surface+1 band
+    // keeps — the ring cells the dx/dz = ±2 the scan iterates, the
+    // power the 15 count answers)
+    let mut placed = 0;
+    for dx in -2i32..=2 {
+        for dz in -2i32..=2 {
+            if dx.abs() != 2 && dz.abs() != 2 {
+                continue;
+            }
+            if placed >= 15 {
+                break;
+            }
+            w.set(c + dx, surface + 1, c + dz, crate::world::BOOKSHELF);
+            placed += 1;
+        }
+    }
+    app.open_enchanting_for(cell);
+    // THE OPEN'S OWN ZERO (the empty seats the slotsChanged's own
+    // isEmpty gate keeps — the power the fresh-open zero wears, the
+    // seat setup the refresh the real scan answers)
+    assert_eq!(
+        app.enchanting_power, 0,
+        "the empty seats the zero power keeps"
+    );
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    app.enchant_slots[0] = (sword, 1);
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    assert_eq!(
+        app.enchanting_power, 15,
+        "the 15-shelf ring the power scan keeps"
+    );
+    // THE TWIN COSTS (the seed-0 power-15 stream the [8, 13, 30]
+    // rows answer)
+    assert_eq!(
+        app.enchanting_costs,
+        [8, 13, 30],
+        "the power-15 rows the twin costs wear"
+    );
+    // THE HAPPY CLICK (the row-0 the [sharpness I, unbreaking I]
+    // list the store wears)
+    assert!(
+        app.click_enchant_option(0),
+        "the power-15 click the true answer wears"
+    );
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(33, 1), (40, 1)],
+        "the store the two-instance list wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 2),
+        "the lapis the consume-1 shrink wears"
+    );
+    assert_eq!(app.xp.level, 29, "the xp the level-1 spend wears");
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the sword the unchanged item wears"
+    );
+    // THE ROW-1 WALK (the fresh seed the re-roll + the fresh pick
+    // serve — the costs the s1 stream [5, 10, 30] lays, the pick the
+    // s1+1 stream the [sharpness II, knockback I] list wears)
+    let seed_after_first = app.enchant_seed;
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    assert!(
+        app.click_enchant_option(1),
+        "the row-1 click the true answer wears"
+    );
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(33, 2), (17, 1)],
+        "the row-1 store the re-roll chain list wears"
+    );
+    assert_ne!(
+        app.enchant_seed, seed_after_first,
+        "the seed the second bump wears"
+    );
+    // THE ROW-2 WALK (the s2 stream the re-roll + the pick the
+    // [sharpness IV, unbreaking III] list wears)
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    assert!(
+        app.click_enchant_option(2),
+        "the row-2 click the true answer wears"
+    );
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(33, 4), (40, 3)],
+        "the row-2 store the big-cost list wears"
+    );
+}
+
+/// THE BOOK TRANSMUTE (the lambda pc 41-68 walk — the
+/// transmuteCopy(ENCHANTED_BOOK) the count keeps, the seat-0 item
+/// the enchanted-book id wears, the store the single instance the
+/// book trim keeps).
+#[test]
+fn the_enchanting_table_the_book_transmute_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    let mut placed = 0;
+    for dx in -2i32..=2 {
+        for dz in -2i32..=2 {
+            if dx.abs() != 2 && dz.abs() != 2 {
+                continue;
+            }
+            if placed >= 15 {
+                break;
+            }
+            w.set(c + dx, surface + 1, c + dz, crate::world::BOOKSHELF);
+            placed += 1;
+        }
+    }
+    app.open_enchanting_for(cell);
+    let book = mc_registry::item_id_by_name("book").unwrap();
+    let enchanted_book = mc_registry::item_id_by_name("enchanted_book").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    app.enchant_slots[0] = (book, 1);
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    assert!(
+        app.click_enchant_option(0),
+        "the book click the true answer wears"
+    );
+    assert_eq!(
+        app.enchant_slots[0],
+        (enchanted_book, 1),
+        "the seat-0 item the enchanted-book transmute wears"
+    );
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(40, 1)],
+        "the store the single-instance trim wears"
+    );
+}
+
+/// THE STORE'S OWN RIDE (the dev-196 round — the enchanted stack
+/// the seats the metadata follows: the pickup the store hands to
+/// the carried, the merge refusal the SWAP answers, the close the
+/// ride-home the inventory store answers, the reopen the mirror
+/// load wears).
+#[test]
+fn the_item_stack_the_store_rides_and_refuses_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    let mut placed = 0;
+    for dx in -2i32..=2 {
+        for dz in -2i32..=2 {
+            if dx.abs() != 2 && dz.abs() != 2 {
+                continue;
+            }
+            if placed >= 15 {
+                break;
+            }
+            w.set(c + dx, surface + 1, c + dz, crate::world::BOOKSHELF);
+            placed += 1;
+        }
+    }
+    app.open_enchanting_for(cell);
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    app.enchant_slots[0] = (sword, 1);
+    app.enchant_slots[1] = (lapis, 3);
+    app.xp.level = 30;
+    app.enchant_costs_refresh();
+    assert!(app.click_enchant_option(0), "the enchant the true wears");
+    let store = app.enchant_comps[0].clone();
+    assert_eq!(
+        store,
+        vec![(33, 1), (40, 1)],
+        "the store the twin list wears"
+    );
+    // THE PICKUP (the seat click the store hands to the carried —
+    // the empty hand the whole stack takes; the render the rects
+    // the layout answers)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root());
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    assert!(
+        !app.enchant_slot_rects.is_empty(),
+        "the render the rects lay"
+    );
+    let (sx, sy, seat0) = app.enchant_slot_rects[0];
+    assert_eq!(seat0, 0, "the first rect the item seat keeps");
+    app.click_enchanting_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.enchant_carried,
+        (sword, 1),
+        "the pickup the whole stack takes"
+    );
+    assert!(
+        app.enchant_comps[38] == store && app.enchant_comps[0].is_empty(),
+        "the store the carried rides"
+    );
+    // THE PLACE-BACK (the second click the enchanted stack the seat
+    // returns — the carried's store the place-all arm rides home)
+    app.click_enchanting_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the place-back the whole stack wears"
+    );
+    assert!(
+        app.enchant_comps[0] == store && app.enchant_comps[38].is_empty(),
+        "the store the seat rides home"
+    );
+    // THE MERGE REFUSAL (the plain sword the carried the enchanted
+    // seat the SWAP answers — the components the stack identity
+    // carries, the full-slot same-id pair the merge never rides)
+    app.enchant_carried = (sword, 1);
+    app.enchant_comps[38].clear();
+    app.click_enchanting_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.enchant_carried,
+        (sword, 1),
+        "the carried the enchanted stack wears"
+    );
+    assert!(
+        app.enchant_comps[38] == store && app.enchant_comps[0].is_empty(),
+        "the refusal the swap keeps the store with the carried"
+    );
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the seat the plain stack wears"
+    );
+    // THE RIDE-HOME (the close the enchanted stack the first-empty
+    // placement the store answers — the merge lane never rides)
+    app.close_enchanting(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
+    assert_eq!(
+        app.inventory.items[0],
+        (sword, 1),
+        "the first-empty slot the enchanted stack wears"
+    );
+    assert_eq!(
+        app.inventory_enchants[0], store,
+        "the inventory store the ride-home keeps"
+    );
+    // THE REOPEN (the mirror load the store answers — the menu seat
+    // 29 the hotbar row 0 keys)
+    app.open_enchanting_for(cell);
+    assert_eq!(
+        app.enchant_comps[29], store,
+        "the reopen the mirror load wears"
     );
 }

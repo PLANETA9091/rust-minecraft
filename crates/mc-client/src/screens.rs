@@ -9571,6 +9571,22 @@ pub struct App {
     /// dedicated stream the offline world the deterministic rolls
     /// keep, the seed-0 boot the headless law wears).
     pub enchant_rng: crate::noise::VanillaRandom,
+    /// THE STACK'S OWN ENCHANTMENT STORE (the dev-196 round — the
+    /// `minecraft:enchantments` component the (id, count) pair the
+    /// metadata never rides, the side lane the SAME menu numbering
+    /// keys: 0 = the item seat, 1 = the lapis seat, 2..37 the mirror
+    /// rows, 38 = the carried cursor; the rows the (registry index,
+    /// level) pairs wear, the empty row the plain stack keeps). The
+    /// mutations the store the item moves answer — the pickup/place
+    /// swap, the quick-move whole ride, the close's home ride.
+    pub enchant_comps: [Vec<(i32, i32)>; 39],
+    /// THE INVENTORY'S OWN ENCHANTMENT STORE (the ride-home lane —
+    /// the close walk the enchanted stacks the FIRST-EMPTY placement
+    /// answers [the enchanted pair the merge lane never rides], the
+    /// store the SAME 36-slot numbering keys, the reopen the mirror
+    /// load answers). The enchanted item's own data the tooltip/glint
+    /// rounds read.
+    pub inventory_enchants: [Vec<(i32, i32)>; 36],
     /// THE SPELL WALK'S OWN TABLE SEAT (the open's own pos the scan
     /// reads — the None the closed screens keep, the re-open the
     /// fresh pos the transient menu's own law lays).
@@ -12543,6 +12559,8 @@ impl App {
             enchanting_costs: [0, 0, 0],
             enchant_seed: 0,
             enchant_rng: crate::noise::VanillaRandom::new(0),
+            enchant_comps: std::array::from_fn(|_| Vec::new()),
+            inventory_enchants: std::array::from_fn(|_| Vec::new()),
             enchanting_table_pos: None,
             dispenser_open_kind: 0,
             dispenser_is_live: false,
@@ -27757,6 +27775,177 @@ impl App {
         self.enchanting_costs = costs;
     }
 
+    /// THE STACK'S OWN NAME (the registry's wire-order table the
+    /// resolution lane keeps — the unknown id the empty name the
+    /// enchantability-0 gate answers, the same honest-unknown law
+    /// [`mc_registry::item_name`] banks).
+    fn enchant_item_name(item_id: i32) -> &'static str {
+        mc_registry::item_name(item_id).unwrap_or("")
+    }
+
+    /// THE SELECTION WALK (javap 26.2 EnchantmentHelper
+    /// `selectEnchantment(RandomSource, ItemStack, int, Stream)` the
+    /// exact walk banks — scripts/jar_work/enchant_select_196.txt the
+    /// stream speaks): the ENCHANTABLE gate the component's absence
+    /// the empty list wears [pc 17-24 — the non-enchantable item the
+    /// honest empty selection keeps], the level roll the
+    /// `level + 1 + nextInt(e/4+1) + nextInt(e/4+1)` fold the iadd
+    /// chain keeps [pc 25-60], the spread the `(f1 + f2 - 1) * 0.15`
+    /// band answers [pc 61-80], the round+clamp the
+    /// `Mth.clamp(Math.round(level + level * f), 1, MAX)` walk wears
+    /// [pc 82-100], the available scan the pool the registry order
+    /// iterates [pc 101-107 — the lambda$0 law
+    /// `isPrimaryItem(stack) || isBook` the availability filter
+    /// keeps, the lambda$1 level scan the `maxLevel..minLevel` walk
+    /// the FIRST cost-window hit breaks], the weighted pick the
+    /// `WeightedRandom.getRandomItem` law answers [the total-weight
+    /// walk the `i -= weight; if (i < 0)` fold keeps], the halving
+    /// loop the `nextInt(50) <= level` head wears [pc 145-154 — the
+    /// conflict filter the LAST instance's exclusive set keys
+    /// [pc 157-179], the re-pick the fresh pick answers [pc 195-218],
+    /// the `level /= 2` fold the tail keeps].
+    fn select_enchantments(
+        item_id: i32,
+        level: i32,
+        rng: &mut crate::noise::VanillaRandom,
+    ) -> Vec<(i32, i32)> {
+        use mc_registry::generated::enchantments as ench;
+        let item = Self::enchant_item_name(item_id);
+        let book = item == "book";
+        let e = ench::item_enchantability(item);
+        if e <= 0 {
+            return Vec::new(); // pc 17-24 — the Enchantable null gate
+        }
+        // pc 25-60 — the level roll
+        let rolled = level + 1 + rng.next_int(e / 4 + 1) + rng.next_int(e / 4 + 1);
+        // pc 61-100 — the spread + the round + the clamp
+        let f = (rng.next_f32() + rng.next_f32() - 1.0) * 0.15;
+        let total = (rolled as f32) + (rolled as f32) * f;
+        let mut lvl = (total.round() as i64).clamp(1, i64::from(i32::MAX)) as i32;
+        // pc 101-107 — the available scan (the pool the registry order keeps)
+        let mut avail: Vec<(usize, i32)> = Vec::new();
+        for (idx, d) in ench::ENCHANTMENTS.iter().enumerate() {
+            if !ench::is_table_member(d.name) {
+                continue;
+            }
+            // the lambda$0 law: isPrimaryItem(stack) || isBook
+            let ok = book
+                || (ench::item_in_family(item, d.supported)
+                    && match d.primary {
+                        None => true,
+                        Some(p) => ench::item_in_family(item, p),
+                    });
+            if !ok {
+                continue;
+            }
+            // the lambda$1 level scan — maxLevel..minLevel, the first
+            // cost-window hit breaks
+            let mut l = d.max_level;
+            while l >= 1 {
+                let lo = ench::EnchDef::cost_at(d.min_cost, l);
+                let hi = ench::EnchDef::cost_at(d.max_cost, l);
+                if lvl >= lo && lvl <= hi {
+                    avail.push((idx, l));
+                    break;
+                }
+                l -= 1;
+            }
+        }
+        let mut out: Vec<(i32, i32)> = Vec::new();
+        if avail.is_empty() {
+            return out; // pc 109-116 — the empty pool the empty list wears
+        }
+        // pc 119-142 — the weighted pick
+        if let Some((idx, l)) = Self::enchant_weighted_pick(&avail, rng) {
+            out.push((idx as i32, l));
+        }
+        loop {
+            // pc 145-154 — the loop head
+            if rng.next_int(50) > lvl {
+                break;
+            }
+            // pc 157-179 — the conflict filter (the LAST instance keys)
+            if !out.is_empty() {
+                let last = out.last().unwrap().0 as usize;
+                avail.retain(|&(idx, _)| ench::are_compatible(idx, last));
+            }
+            if avail.is_empty() {
+                break; // pc 182-192
+            }
+            // pc 195-218 — the re-pick
+            if let Some((idx, l)) = Self::enchant_weighted_pick(&avail, rng) {
+                out.push((idx as i32, l));
+            }
+            // pc 221-224 — the halving
+            lvl /= 2;
+        }
+        out
+    }
+
+    /// THE WEIGHTED PICK (javap 26.2 WeightedRandom.getRandomItem the
+    /// exact walk banks — the zero-total the empty Optional keeps
+    /// [pc 20-27], the `i = nextInt(total)` roll answers [pc 28-35],
+    /// the walk the `i -= weight; if (i < 0) return item` fold wears;
+    /// the instance's own weight the `EnchantmentInstance::weight`
+    /// method-ref answers — the enchantment's definition weight).
+    fn enchant_weighted_pick(
+        avail: &[(usize, i32)],
+        rng: &mut crate::noise::VanillaRandom,
+    ) -> Option<(usize, i32)> {
+        use mc_registry::generated::enchantments as ench;
+        let total: i32 = avail
+            .iter()
+            .map(|&(idx, _)| ench::ENCHANTMENTS[idx].weight)
+            .sum();
+        if total <= 0 {
+            return None; // pc 20-27 — the zero-total arm
+        }
+        let mut i = rng.next_int(total);
+        for &(idx, l) in avail {
+            i -= ench::ENCHANTMENTS[idx].weight;
+            if i < 0 {
+                return Some((idx, l));
+            }
+        }
+        None // the exact arithmetic the tail never reaches
+    }
+
+    /// THE PICK LIST (javap 26.2 EnchantmentMenu.getEnchantmentList
+    /// the exact walk banks — the seed + ROW law the
+    /// `setSeed((long)(enchantmentSeed.get() + enchantRow))` walk
+    /// keeps [pc 0-14 — the ROW offset the costs lane's own seed the
+    /// distinct stream answers], the selection walk the pool serves,
+    /// the book trim the `size > 1 -> remove(nextInt(size))` fold
+    /// keeps [pc 73-117 — the enchanted book the ONE instance the
+    /// menu's own law wears]).
+    fn enchant_pick_list(&self, row: usize, item_id: i32, cost: i32) -> Vec<(i32, i32)> {
+        let mut rng =
+            crate::noise::VanillaRandom::new(self.enchant_seed as i64 + row as i64);
+        let list = Self::select_enchantments(item_id, cost, &mut rng);
+        let item = Self::enchant_item_name(item_id);
+        if item == "book" && list.len() > 1 {
+            let mut list = list;
+            let at = rng.next_int(list.len() as i32) as usize;
+            list.remove(at);
+            return list;
+        }
+        list
+    }
+
+    /// THE MIRROR SEAT'S OWN INVENTORY CELL (the menu numbering the
+    /// write-through projection keeps — the main rows 2..28 the items
+    /// 9..35 answer, the hotbar 29..37 the items 0..8 speak; the pair
+    /// seats 0/1 the None the transient seats wear).
+    fn enchant_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (2..29).contains(&menu) {
+            Some(9 + menu - 2)
+        } else if (29..38).contains(&menu) {
+            Some(menu - 29)
+        } else {
+            None
+        }
+    }
+
     /// THE CLICK-ENCHANT WALK (javap 26.2 EnchantmentMenu
     /// `clickMenuButton(Player, int)` the exact 154-code walk banks —
     /// scripts/jar_work/click_enchant_exact_337.txt the full stream
@@ -27803,12 +27992,34 @@ impl App {
         if !creative && (self.xp.level < i as i32 || self.xp.level < self.enchanting_costs[id]) {
             return false; // pc 99-125 — the max-of-two xp law the creative arm answers
         }
+        // THE LIST BUILD + THE EMPTY GATE (the lambda's pc 0-30 walk
+        // the dev-196 round banks — the getEnchantmentList the seed
+        // + row the pick list answers, the EMPTY list the
+        // NOTHING-spent return wears: vanilla spends NO xp and NO
+        // lapis on a non-enchantable item [the 337 walk's
+        // unconditional spend the honest stop answers])
+        let list = self.enchant_pick_list(id, item.0, self.enchanting_costs[id]);
+        if list.is_empty() {
+            return false; // lambda pc 23-30 — the empty gate
+        }
         // THE SUCCESS WALK (the lambda$clickMenuButton$0 the exact
-        // order banks — the xp spend + the seed draw FIRST, the lapis
-        // consume the empty-pair law keeps, the re-roll the tail
-        // answers)
+        // order banks — the xp spend + the seed draw FIRST, the book
+        // transmute the enchanted-book stack wears, the instances the
+        // store rides, the lapis consume the empty-pair law keeps,
+        // the re-roll the tail answers)
         self.xp.give_levels(-(i as i32));
         self.enchant_seed = self.enchant_rng.next_unbounded();
+        // THE BOOK TRANSMUTE (the lambda pc 41-68 — the
+        // transmuteCopy(ENCHANTED_BOOK) the count keeps, the setItem
+        // (0, stack) the slot wears)
+        if Self::enchant_item_name(item.0) == "book" {
+            if let Some(eb) = mc_registry::item_id_by_name("enchanted_book") {
+                self.enchant_slots[0] = (eb, item.1);
+            }
+        }
+        // THE ENCHANT LOOP (the lambda pc 73-119 — the stack.enchant
+        // walk the instances the store's own component lane wears)
+        self.enchant_comps[0] = list;
         let left = lapis.1 - i as i32;
         self.enchant_slots[1] = if left > 0 {
             (lapis.0, left)
@@ -27871,6 +28082,19 @@ impl App {
         // menu's addStandardInventorySlots(8, 84) the mirror rows the
         // same projection keeps)
         self.enchant_mirror_sync_from_inventory();
+        // THE STORE'S OWN MIRROR LOAD (the dev-196 round — the
+        // inventory_enchants the SAME numbering the mirror rows
+        // project: the enchanted stacks the reopen the store's own
+        // rows answer, the transient pair + the carried the fresh
+        // empty stores keep)
+        for menu in 0..self.enchant_comps.len() {
+            match Self::enchant_menu_to_inventory(menu) {
+                Some(idx) => {
+                    self.enchant_comps[menu] = self.inventory_enchants[idx].clone()
+                }
+                None => self.enchant_comps[menu].clear(),
+            }
+        }
         // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
         // — the enchanting kind the vanilla's own silence arm the
         // emit call returns)
@@ -27901,29 +28125,52 @@ impl App {
     /// clearContainer the PAIR home returns: the same-item merges, the
     /// first-empty pass, the full store the remainder drops — the
     /// close_brewing shape, the NO store flush the table's BE never
-    /// keeps), the screen back to the world.
+    /// keeps), the screen back to the world. THE ENCHANTED STACKS'
+    /// OWN LAW (the dev-196 round — the component-bearing pair the
+    /// merge lane never rides [the vanilla components the stack
+    /// identity carries, the same-id plain stack the different
+    /// component set refuses], the FIRST-EMPTY placement the store's
+    /// own rows answer, the inventory_enchants the same 36-slot
+    /// numbering keys).
     pub fn close_enchanting(&mut self, back: ScreenKind) {
+        // THE MIRROR ROWS' OWN STORE RIDE FIRST (the write-through
+        // projection the pairs already keep — the SAME numbering the
+        // stores ride: the menu seat's component rows the inventory
+        // cell answers; the FLUSH the carried/pair rides PRECEDES —
+        // the first-empty placements the mirror cells may take, the
+        // fresh store the ride's own write wins)
+        for menu in 0..self.enchant_comps.len() {
+            if let Some(idx) = Self::enchant_menu_to_inventory(menu) {
+                self.inventory_enchants[idx] = self.enchant_comps[menu].clone();
+            }
+        }
         // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
-        // placeItemBackInInventory walk — the close_brewing shape)
+        // placeItemBackInInventory walk — the close_brewing shape;
+        // the enchanted carried the merge lane never rides — the
+        // first-empty placement the store answers)
         if self.enchant_carried.1 > 0 {
             let (id, count) = self.enchant_carried;
+            let enchanted = !self.enchant_comps[38].is_empty();
             let mut rest = count;
-            for it in self.inventory.items.iter_mut() {
-                if rest == 0 {
-                    break;
-                }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
-                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
-                    it.1 += take;
-                    rest -= take;
+            if !enchanted {
+                for it in self.inventory.items.iter_mut() {
+                    if rest == 0 {
+                        break;
+                    }
+                    if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                        let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                        it.1 += take;
+                        rest -= take;
+                    }
                 }
             }
-            for it in self.inventory.items.iter_mut() {
+            for idx in 0..self.inventory.items.len() {
                 if rest == 0 {
                     break;
                 }
-                if it.1 <= 0 {
-                    *it = (id, rest);
+                if self.inventory.items[idx].1 <= 0 {
+                    self.inventory.items[idx] = (id, rest);
+                    self.inventory_enchants[idx] = self.enchant_comps[38].clone();
                     rest = 0;
                 }
             }
@@ -27931,32 +28178,38 @@ impl App {
                 self.spawn_drop_at_player(id, rest);
             }
             self.enchant_carried = (0, 0);
+            self.enchant_comps[38].clear();
         }
         // THE PAIR'S OWN HOME RIDE (the removed()'s clearContainer walk —
         // the transient seats the close NEVER banks: each held stack
-        // the same merge/first-empty/drop lane returns)
+        // the same merge/first-empty/drop lane returns; the enchanted
+        // seat the first-empty placement the store's own rows answer)
         for seat in 0..2usize {
             let (id, count) = self.enchant_slots[seat];
             if count <= 0 {
                 continue;
             }
+            let enchanted = !self.enchant_comps[seat].is_empty();
             let mut rest = count;
-            for it in self.inventory.items.iter_mut() {
-                if rest == 0 {
-                    break;
-                }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
-                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
-                    it.1 += take;
-                    rest -= take;
+            if !enchanted {
+                for it in self.inventory.items.iter_mut() {
+                    if rest == 0 {
+                        break;
+                    }
+                    if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                        let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                        it.1 += take;
+                        rest -= take;
+                    }
                 }
             }
-            for it in self.inventory.items.iter_mut() {
+            for idx in 0..self.inventory.items.len() {
                 if rest == 0 {
                     break;
                 }
-                if it.1 <= 0 {
-                    *it = (id, rest);
+                if self.inventory.items[idx].1 <= 0 {
+                    self.inventory.items[idx] = (id, rest);
+                    self.inventory_enchants[idx] = self.enchant_comps[seat].clone();
                     rest = 0;
                 }
             }
@@ -36819,6 +37072,19 @@ impl App {
             }
         }
         self.enchant_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // THE STORE'S OWN DRAG RIDE (the dev-196 round — the emptied
+        // carried the store hands to the FIRST placed seat: the
+        // enchanted stack the count-1 law the one-seat distribution
+        // wears, the partial carry the store keeps)
+        if self.enchant_carried.1 <= 0 && !self.enchant_comps[38].is_empty() {
+            for &menu in &seats {
+                let (sid, scount) = self.qc_seat_stack(menu);
+                if sid == carried.0 && scount > 0 {
+                    self.enchant_comps[menu] = std::mem::take(&mut self.enchant_comps[38]);
+                    break;
+                }
+            }
+        }
         // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation re-syncs
         // — the open's own law the write-through's tail wears)
         self.enchant_mirror_sync_from_inventory();
@@ -45386,6 +45652,15 @@ impl App {
         let dropped = if button == 0 { count } else { 1 };
         self.drop_item_entity_aimed(id, dropped);
         self.enchant_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+        // THE THROWN STACK'S OWN STORE (the dev-196 round — the
+        // emptied carried the store clears; the dropped item entity
+        // the metadata lane never carries [the entity's own
+        // component round the NEXT list keeps — the vanilla drop the
+        // components ride, the offline item entity the (id, count)
+        // pair wears, the honest note the gap keeps])
+        if self.enchant_carried.1 <= 0 {
+            self.enchant_comps[38].clear();
+        }
     }
 
     /// THE ENCHANTING TABLE'S OWN CLICK LANE (the offline sim's own walk
@@ -45435,6 +45710,27 @@ impl App {
                     self.inventory.items[*i - 29] = *pair;
                 }
             }
+            // THE STORE'S OWN QUICK-MOVE RIDE (the dev-196 round — the
+            // enchanted stack the WHOLE move the count-1 law wears:
+            // the tools/armor/enchanted books the max-stack-1 rows
+            // keep, the source seat the cleared store hands over, the
+            // destination the gained seat answers)
+            let src_store = self.enchant_comps[menu].clone();
+            if !src_store.is_empty() {
+                let src_id = snapshot[menu].0;
+                let mut moved = false;
+                for (i, pair) in &changed {
+                    let j = *i as usize;
+                    if j != menu && pair.0 == src_id && pair.1 > 0 {
+                        self.enchant_comps[j] = src_store.clone();
+                        moved = true;
+                        break;
+                    }
+                }
+                if moved {
+                    self.enchant_comps[menu].clear();
+                }
+            }
             self.enchant_mirror_sync_from_inventory();
             // THE SLOTSCHANGED'S OWN WALK (the dev-195 round — the
             // vanilla menu the container's every change the costs
@@ -45453,10 +45749,36 @@ impl App {
         } else {
             self.inventory.items[menu - 29]
         };
+        let old_car = self.enchant_carried;
+        // THE COMPONENT IDENTITY LAW (the dev-196 round — the
+        // enchanted pair the same-id merge never rides: the vanilla
+        // components the stack identity carries, the merge the
+        // canItemQuickReplace refusal wears [the different component
+        // set the same item id never combines] — the SWAP the left
+        // press's refusal answers, the no-op the right press's keeps)
+        let seat_ench = !self.enchant_comps[menu].is_empty();
+        let car_ench = !self.enchant_comps[38].is_empty();
         let (new_slot, new_carried) = if button == 0 {
-            crate::world_view::predict_pickup(believed, self.enchant_carried)
+            if (seat_ench || car_ench)
+                && believed.1 > 0
+                && old_car.1 > 0
+                && believed.0 == old_car.0
+            {
+                (old_car, believed) // the swap the merge refusal wears —
+                                    // the full slot the vanilla's own
+                                    // `if (!itemstack1.isEmpty())
+                                    // setByPlayer` swap keeps
+            } else {
+                crate::world_view::predict_pickup(believed, old_car)
+            }
+        } else if (seat_ench || car_ench)
+            && believed.1 > 0
+            && old_car.1 > 0
+            && believed.0 == old_car.0
+        {
+            (believed, old_car) // the no-op the refusal keeps
         } else {
-            crate::world_view::predict_pickup_right(believed, self.enchant_carried)
+            crate::world_view::predict_pickup_right(believed, old_car)
         };
         if menu < 2 {
             self.enchant_slots[menu] = new_slot;
@@ -45466,6 +45788,57 @@ impl App {
             self.inventory.items[menu - 29] = new_slot;
         }
         self.enchant_carried = new_carried;
+        // THE STORE'S OWN RIDE (the dev-196 round — the pair the
+        // metadata follows: the whole move the hand-over answers, the
+        // swap the exchange keeps, the split the COPY law the vanilla
+        // components wear [the plain stacks the empty stores ride];
+        // the IDENTICAL-pair refusal the explicit exchange arm wears
+        // — the (id, count) pairs the swap the pair layer never
+        // shows, the stores the component layer answers)
+        {
+            let refusal_swap = (seat_ench || car_ench)
+                && believed.1 > 0
+                && old_car.1 > 0
+                && believed.0 == old_car.0;
+            let seat_store = self.enchant_comps[menu].clone();
+            let car_store = self.enchant_comps[38].clone();
+            let (mut new_seat_store, mut new_car_store) =
+                (seat_store.clone(), car_store.clone());
+            if new_slot != believed || new_carried != old_car {
+                if new_carried.1 == 0 && old_car.1 > 0 && new_slot.0 == old_car.0 {
+                    // the place-all: the carried store rides to the seat
+                    new_seat_store = car_store;
+                    new_car_store = Vec::new();
+                } else if new_slot.1 == 0 && believed.1 > 0 && new_carried.0 == believed.0 {
+                    // the pickup-all: the seat store rides to the carried
+                    new_seat_store = Vec::new();
+                    new_car_store = seat_store;
+                } else if believed.1 > 0
+                    && old_car.1 > 0
+                    && new_slot.0 == old_car.0
+                    && new_carried.0 == believed.0
+                {
+                    // the swap: the stores exchange
+                    new_seat_store = car_store;
+                    new_car_store = seat_store;
+                } else if new_carried.1 > old_car.1
+                    && new_carried.0 == believed.0
+                    && believed.1 > 0
+                {
+                    // the partial pickup (the split): the picked half COPIES
+                    new_car_store = seat_store.clone();
+                } else if new_slot.1 > believed.1 && new_slot.0 == old_car.0 {
+                    // the partial place: the placed half COPIES
+                    new_seat_store = car_store.clone();
+                }
+            } else if refusal_swap && button == 0 {
+                // the identical-pair refusal swap: the stores exchange
+                new_seat_store = car_store;
+                new_car_store = seat_store;
+            }
+            self.enchant_comps[menu] = new_seat_store;
+            self.enchant_comps[38] = new_car_store;
+        }
         self.enchant_mirror_sync_from_inventory();
         // THE SLOTSCHANGED'S OWN WALK (the pickup/place the pair may
         // move — the costs the fresh rolls the vanilla menu's own

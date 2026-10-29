@@ -12,6 +12,7 @@ pub mod block_sword;
 pub mod blockstates;
 pub mod blocks;
 pub mod elements;
+pub mod enchantments;
 pub mod equipment;
 pub mod furnace_data;
 pub mod gui;
