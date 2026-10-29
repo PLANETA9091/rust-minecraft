@@ -1,0 +1,38 @@
+Compiled from "BrewingStandBlockEntity.java"
+public class net.minecraft.world.level.block.entity.BrewingStandBlockEntity extends net.minecraft.world.level.block.entity.BaseContainerBlockEntity implements net.minecraft.world.WorldlyContainer {
+  private static final int INGREDIENT_SLOT = 3;
+  private static final int FUEL_SLOT = 4;
+  private static final int[] SLOTS_FOR_UP;
+  private static final int[] SLOTS_FOR_DOWN;
+  private static final int[] SLOTS_FOR_SIDES;
+  public static final int FUEL_USES = 20;
+  public static final int DATA_BREW_TIME = 0;
+  public static final int DATA_FUEL_USES = 1;
+  public static final int NUM_DATA_VALUES = 2;
+  private static final short DEFAULT_BREW_TIME = 0;
+  private static final byte DEFAULT_FUEL = 0;
+  private static final net.minecraft.network.chat.Component DEFAULT_NAME;
+  private net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> items;
+  private int brewTime;
+  private boolean[] lastPotionCount;
+  private net.minecraft.world.item.Item ingredient;
+  private int fuel;
+  protected final net.minecraft.world.inventory.ContainerData dataAccess;
+  public net.minecraft.world.level.block.entity.BrewingStandBlockEntity(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+  protected net.minecraft.network.chat.Component getDefaultName();
+  public int getContainerSize();
+  protected net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> getItems();
+  protected void setItems(net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack>);
+  public static void serverTick(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.entity.BrewingStandBlockEntity);
+  private boolean[] getPotionBits();
+  private static boolean isBrewable(net.minecraft.world.item.alchemy.PotionBrewing, net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack>);
+  private static void doBrew(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack>);
+  protected void loadAdditional(net.minecraft.world.level.storage.ValueInput);
+  protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput);
+  public boolean canPlaceItem(int, net.minecraft.world.item.ItemStack);
+  public int[] getSlotsForFace(net.minecraft.core.Direction);
+  public boolean canPlaceItemThroughFace(int, net.minecraft.world.item.ItemStack, net.minecraft.core.Direction);
+  public boolean canTakeItemThroughFace(int, net.minecraft.world.item.ItemStack, net.minecraft.core.Direction);
+  protected net.minecraft.world.inventory.AbstractContainerMenu createMenu(int, net.minecraft.world.entity.player.Inventory);
+  static {};
+}

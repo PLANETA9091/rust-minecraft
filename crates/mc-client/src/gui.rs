@@ -390,6 +390,22 @@ impl GuiAssets {
             }
             return self.sprites.get(name);
         }
+        // THE BREWING ROWS' OWN LANE (the dev-338 round — the
+        // `container/brewing_stand/{fuel_length, brew_progress,
+        // bubbles}` sprites the BrewingStandScreen clinit's three ldc
+        // rows name, the dynamic walk the enchanting lane's own shape
+        // wears: the `gui/sprites/` prefix the cache root joins, the
+        // leak the bounded three-name set keeps)
+        if name.starts_with("container/brewing_stand/") && !name.contains("..") {
+            if !self.sprites.contains_key(name) {
+                let path = self.root.join(format!("gui/sprites/{name}.png"));
+                let bytes = std::fs::read(path).ok()?;
+                let s = Sprite::decode(&bytes).ok()?;
+                let key: &'static str = Box::leak(name.to_string().into_boxed_str());
+                self.sprites.insert(key, s);
+            }
+            return self.sprites.get(name);
+        }
         if !name.starts_with("mob_effect/") || name.contains("..") {
             return None; // the atlas's own source list: mob_effect only
         }

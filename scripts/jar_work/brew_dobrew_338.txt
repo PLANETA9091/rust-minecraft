@@ -1,0 +1,69 @@
+  private static void doBrew(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack>);
+    Code:
+         0: aload_2
+         1: iconst_3
+         2: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+         5: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+         8: astore_3
+         9: aload_0
+        10: invokevirtual #74                 // Method net/minecraft/world/level/Level.potionBrewing:()Lnet/minecraft/world/item/alchemy/PotionBrewing;
+        13: astore        4
+        15: iconst_0
+        16: istore        5
+        18: iload         5
+        20: iconst_3
+        21: if_icmpge     52
+        24: aload_2
+        25: iload         5
+        27: aload         4
+        29: aload_3
+        30: aload_2
+        31: iload         5
+        33: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+        36: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+        39: invokevirtual #160                // Method net/minecraft/world/item/alchemy/PotionBrewing.mix:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+        42: invokevirtual #164                // Method net/minecraft/core/NonNullList.set:(ILjava/lang/Object;)Ljava/lang/Object;
+        45: pop
+        46: iinc          5, 1
+        49: goto          18
+        52: aload_3
+        53: iconst_1
+        54: invokevirtual #66                 // Method net/minecraft/world/item/ItemStack.shrink:(I)V
+        57: aload_3
+        58: invokevirtual #102                // Method net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+        61: invokevirtual #168                // Method net/minecraft/world/item/Item.getCraftingRemainder:()Lnet/minecraft/world/item/ItemStackTemplate;
+        64: astore        5
+        66: aload         5
+        68: ifnull        111
+        71: aload_3
+        72: invokevirtual #148                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+        75: ifeq          87
+        78: aload         5
+        80: invokevirtual #174                // Method net/minecraft/world/item/ItemStackTemplate.create:()Lnet/minecraft/world/item/ItemStack;
+        83: astore_3
+        84: goto          111
+        87: aload_0
+        88: aload_1
+        89: invokevirtual #180                // Method net/minecraft/core/BlockPos.getX:()I
+        92: i2d
+        93: aload_1
+        94: invokevirtual #185                // Method net/minecraft/core/BlockPos.getY:()I
+        97: i2d
+        98: aload_1
+        99: invokevirtual #188                // Method net/minecraft/core/BlockPos.getZ:()I
+       102: i2d
+       103: aload         5
+       105: invokevirtual #174                // Method net/minecraft/world/item/ItemStackTemplate.create:()Lnet/minecraft/world/item/ItemStack;
+       108: invokestatic  #191                // Method net/minecraft/world/Containers.dropItemStack:(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/item/ItemStack;)V
+       111: aload_2
+       112: iconst_3
+       113: aload_3
+       114: invokevirtual #164                // Method net/minecraft/core/NonNullList.set:(ILjava/lang/Object;)Ljava/lang/Object;
+       117: pop
+       118: aload_0
+       119: sipush        1035
+       122: aload_1
+       123: iconst_0
+       124: invokevirtual #199                // Method net/minecraft/world/level/Level.levelEvent:(ILnet/minecraft/core/BlockPos;I)V
+       127: return
+

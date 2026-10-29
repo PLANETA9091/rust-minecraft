@@ -1,0 +1,151 @@
+  public static void serverTick(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.entity.BrewingStandBlockEntity);
+    Code:
+         0: aload_3
+         1: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+         4: iconst_4
+         5: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+         8: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+        11: astore        4
+        13: aload_3
+        14: getfield      #52                 // Field fuel:I
+        17: ifgt          49
+        20: aload         4
+        22: getstatic     #56                 // Field net/minecraft/tags/ItemTags.BREWING_FUEL:Lnet/minecraft/tags/TagKey;
+        25: invokevirtual #62                 // Method net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+        28: ifeq          49
+        31: aload_3
+        32: bipush        20
+        34: putfield      #52                 // Field fuel:I
+        37: aload         4
+        39: iconst_1
+        40: invokevirtual #66                 // Method net/minecraft/world/item/ItemStack.shrink:(I)V
+        43: aload_0
+        44: aload_1
+        45: aload_2
+        46: invokestatic  #70                 // Method setChanged:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+        49: aload_0
+        50: invokevirtual #74                 // Method net/minecraft/world/level/Level.potionBrewing:()Lnet/minecraft/world/item/alchemy/PotionBrewing;
+        53: aload_3
+        54: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+        57: invokestatic  #80                 // Method isBrewable:(Lnet/minecraft/world/item/alchemy/PotionBrewing;Lnet/minecraft/core/NonNullList;)Z
+        60: istore        5
+        62: aload_3
+        63: getfield      #84                 // Field brewTime:I
+        66: ifle          73
+        69: iconst_1
+        70: goto          74
+        73: iconst_0
+        74: istore        6
+        76: aload_3
+        77: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+        80: iconst_3
+        81: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+        84: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+        87: astore        7
+        89: iload         6
+        91: ifeq          171
+        94: aload_3
+        95: dup
+        96: getfield      #84                 // Field brewTime:I
+        99: iconst_1
+       100: isub
+       101: putfield      #84                 // Field brewTime:I
+       104: aload_3
+       105: getfield      #84                 // Field brewTime:I
+       108: ifne          115
+       111: iconst_1
+       112: goto          116
+       115: iconst_0
+       116: istore        8
+       118: iload         8
+       120: ifeq          140
+       123: iload         5
+       125: ifeq          140
+       128: aload_0
+       129: aload_1
+       130: aload_3
+       131: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+       134: invokestatic  #87                 // Method doBrew:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/NonNullList;)V
+       137: goto          162
+       140: iload         5
+       142: ifeq          157
+       145: aload         7
+       147: aload_3
+       148: getfield      #91                 // Field ingredient:Lnet/minecraft/world/item/Item;
+       151: invokevirtual #95                 // Method net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+       154: ifne          162
+       157: aload_3
+       158: iconst_0
+       159: putfield      #84                 // Field brewTime:I
+       162: aload_0
+       163: aload_1
+       164: aload_2
+       165: invokestatic  #70                 // Method setChanged:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+       168: goto          215
+       171: iload         5
+       173: ifeq          215
+       176: aload_3
+       177: getfield      #52                 // Field fuel:I
+       180: ifle          215
+       183: aload_3
+       184: dup
+       185: getfield      #52                 // Field fuel:I
+       188: iconst_1
+       189: isub
+       190: putfield      #52                 // Field fuel:I
+       193: aload_3
+       194: sipush        400
+       197: putfield      #84                 // Field brewTime:I
+       200: aload_3
+       201: aload         7
+       203: invokevirtual #102                // Method net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+       206: putfield      #91                 // Field ingredient:Lnet/minecraft/world/item/Item;
+       209: aload_0
+       210: aload_1
+       211: aload_2
+       212: invokestatic  #70                 // Method setChanged:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+       215: aload_3
+       216: invokevirtual #106                // Method getPotionBits:()[Z
+       219: astore        8
+       221: aload         8
+       223: aload_3
+       224: getfield      #110                // Field lastPotionCount:[Z
+       227: invokestatic  #114                // Method java/util/Arrays.equals:([Z[Z)Z
+       230: ifne          305
+       233: aload_3
+       234: aload         8
+       236: putfield      #110                // Field lastPotionCount:[Z
+       239: aload_2
+       240: astore        9
+       242: aload         9
+       244: invokevirtual #120                // Method net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+       247: instanceof    #126                // class net/minecraft/world/level/block/BrewingStandBlock
+       250: ifne          254
+       253: return
+       254: iconst_0
+       255: istore        10
+       257: iload         10
+       259: getstatic     #128                // Field net/minecraft/world/level/block/BrewingStandBlock.HAS_BOTTLE:[Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       262: arraylength
+       263: if_icmpge     296
+       266: aload         9
+       268: getstatic     #128                // Field net/minecraft/world/level/block/BrewingStandBlock.HAS_BOTTLE:[Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       271: iload         10
+       273: aaload
+       274: aload         8
+       276: iload         10
+       278: baload
+       279: invokestatic  #132                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+       282: invokevirtual #138                // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       285: checkcast     #121                // class net/minecraft/world/level/block/state/BlockState
+       288: astore        9
+       290: iinc          10, 1
+       293: goto          257
+       296: aload_0
+       297: aload_1
+       298: aload         9
+       300: iconst_2
+       301: invokevirtual #144                // Method net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+       304: pop
+       305: return
+

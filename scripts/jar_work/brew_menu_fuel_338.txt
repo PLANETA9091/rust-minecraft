@@ -1,0 +1,8 @@
+  public int getFuel();
+    Code:
+         0: aload_0
+         1: getfield      #40                 // Field brewingStandData:Lnet/minecraft/world/inventory/ContainerData;
+         4: iconst_1
+         5: invokeinterface #161,  2          // InterfaceMethod net/minecraft/world/inventory/ContainerData.get:(I)I
+        10: ireturn
+

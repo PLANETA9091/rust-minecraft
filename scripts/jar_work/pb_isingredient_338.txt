@@ -1,0 +1,15 @@
+  public boolean isIngredient(net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #19                 // Method isContainerIngredient:(Lnet/minecraft/world/item/ItemStack;)Z
+         5: ifne          16
+         8: aload_0
+         9: aload_1
+        10: invokevirtual #23                 // Method isPotionIngredient:(Lnet/minecraft/world/item/ItemStack;)Z
+        13: ifeq          20
+        16: iconst_1
+        17: goto          21
+        20: iconst_0
+        21: ireturn
+

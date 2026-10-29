@@ -1,0 +1,51 @@
+  public boolean canPlaceItem(int, net.minecraft.world.item.ItemStack);
+    Code:
+         0: iload_1
+         1: iconst_3
+         2: if_icmpne     32
+         5: aload_0
+         6: getfield      #248                // Field level:Lnet/minecraft/world/level/Level;
+         9: ifnull        22
+        12: aload_0
+        13: getfield      #248                // Field level:Lnet/minecraft/world/level/Level;
+        16: invokevirtual #74                 // Method net/minecraft/world/level/Level.potionBrewing:()Lnet/minecraft/world/item/alchemy/PotionBrewing;
+        19: goto          25
+        22: getstatic     #252                // Field net/minecraft/world/item/alchemy/PotionBrewing.EMPTY:Lnet/minecraft/world/item/alchemy/PotionBrewing;
+        25: astore_3
+        26: aload_3
+        27: aload_2
+        28: invokevirtual #152                // Method net/minecraft/world/item/alchemy/PotionBrewing.isIngredient:(Lnet/minecraft/world/item/ItemStack;)Z
+        31: ireturn
+        32: iload_1
+        33: iconst_4
+        34: if_icmpne     45
+        37: aload_2
+        38: getstatic     #56                 // Field net/minecraft/tags/ItemTags.BREWING_FUEL:Lnet/minecraft/tags/TagKey;
+        41: invokevirtual #62                 // Method net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+        44: ireturn
+        45: aload_2
+        46: getstatic     #255                // Field net/minecraft/world/item/Items.POTION:Lnet/minecraft/world/item/Item;
+        49: invokevirtual #95                 // Method net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+        52: ifne          85
+        55: aload_2
+        56: getstatic     #260                // Field net/minecraft/world/item/Items.SPLASH_POTION:Lnet/minecraft/world/item/Item;
+        59: invokevirtual #95                 // Method net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+        62: ifne          85
+        65: aload_2
+        66: getstatic     #263                // Field net/minecraft/world/item/Items.LINGERING_POTION:Lnet/minecraft/world/item/Item;
+        69: invokevirtual #95                 // Method net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+        72: ifne          85
+        75: aload_2
+        76: getstatic     #266                // Field net/minecraft/world/item/Items.GLASS_BOTTLE:Lnet/minecraft/world/item/Item;
+        79: invokevirtual #95                 // Method net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+        82: ifeq          100
+        85: aload_0
+        86: iload_1
+        87: invokevirtual #269                // Method getItem:(I)Lnet/minecraft/world/item/ItemStack;
+        90: invokevirtual #148                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+        93: ifeq          100
+        96: iconst_1
+        97: goto          101
+       100: iconst_0
+       101: ireturn
+

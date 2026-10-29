@@ -1,0 +1,12 @@
+Compiled from "BrewingStandScreen.java"
+public class net.minecraft.client.gui.screens.inventory.BrewingStandScreen extends net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<net.minecraft.world.inventory.BrewingStandMenu> {
+  private static final net.minecraft.resources.Identifier FUEL_LENGTH_SPRITE;
+  private static final net.minecraft.resources.Identifier BREW_PROGRESS_SPRITE;
+  private static final net.minecraft.resources.Identifier BUBBLES_SPRITE;
+  private static final net.minecraft.resources.Identifier BREWING_STAND_LOCATION;
+  private static final int[] BUBBLELENGTHS;
+  public net.minecraft.client.gui.screens.inventory.BrewingStandScreen(net.minecraft.world.inventory.BrewingStandMenu, net.minecraft.world.entity.player.Inventory, net.minecraft.network.chat.Component);
+  protected void init();
+  public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  static {};
+}

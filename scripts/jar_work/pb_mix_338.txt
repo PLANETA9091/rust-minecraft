@@ -1,0 +1,83 @@
+  public net.minecraft.world.item.ItemStack mix(net.minecraft.world.item.ItemStack, net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_2
+         1: invokevirtual #107                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+         4: ifeq          9
+         7: aload_2
+         8: areturn
+         9: aload_2
+        10: getstatic     #79                 // Field net/minecraft/core/component/DataComponents.POTION_CONTENTS:Lnet/minecraft/core/component/DataComponentType;
+        13: getstatic     #85                 // Field net/minecraft/world/item/alchemy/PotionContents.EMPTY:Lnet/minecraft/world/item/alchemy/PotionContents;
+        16: invokevirtual #91                 // Method net/minecraft/world/item/ItemStack.getOrDefault:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+        19: checkcast     #86                 // class net/minecraft/world/item/alchemy/PotionContents
+        22: invokevirtual #95                 // Method net/minecraft/world/item/alchemy/PotionContents.potion:()Ljava/util/Optional;
+        25: astore_3
+        26: aload_3
+        27: invokevirtual #99                 // Method java/util/Optional.isEmpty:()Z
+        30: ifeq          35
+        33: aload_2
+        34: areturn
+        35: aload_0
+        36: getfield      #16                 // Field containerMixes:Ljava/util/List;
+        39: invokeinterface #26,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        44: astore        4
+        46: aload         4
+        48: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        53: ifeq          119
+        56: aload         4
+        58: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        63: checkcast     #47                 // class net/minecraft/world/item/alchemy/PotionBrewing$Mix
+        66: astore        5
+        68: aload_2
+        69: aload         5
+        71: getfield      #73                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.from:Lnet/minecraft/core/Holder;
+        74: invokevirtual #76                 // Method net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/core/Holder;)Z
+        77: ifeq          116
+        80: aload         5
+        82: getfield      #49                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.ingredient:Lnet/minecraft/world/item/crafting/Ingredient;
+        85: aload_1
+        86: invokevirtual #44                 // Method net/minecraft/world/item/crafting/Ingredient.test:(Lnet/minecraft/world/item/ItemStack;)Z
+        89: ifeq          116
+        92: aload         5
+        94: getfield      #53                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.to:Lnet/minecraft/core/Holder;
+        97: invokeinterface #108,  1          // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+       102: checkcast     #111                // class net/minecraft/world/item/Item
+       105: aload_3
+       106: invokevirtual #104                // Method java/util/Optional.get:()Ljava/lang/Object;
+       109: checkcast     #58                 // class net/minecraft/core/Holder
+       112: invokestatic  #113                // Method net/minecraft/world/item/alchemy/PotionContents.createItemStack:(Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;
+       115: areturn
+       116: goto          46
+       119: aload_0
+       120: getfield      #13                 // Field potionMixes:Ljava/util/List;
+       123: invokeinterface #26,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       128: astore        4
+       130: aload         4
+       132: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+       137: ifeq          200
+       140: aload         4
+       142: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       147: checkcast     #47                 // class net/minecraft/world/item/alchemy/PotionBrewing$Mix
+       150: astore        5
+       152: aload         5
+       154: getfield      #73                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.from:Lnet/minecraft/core/Holder;
+       157: aload_3
+       158: invokevirtual #104                // Method java/util/Optional.get:()Ljava/lang/Object;
+       161: checkcast     #58                 // class net/minecraft/core/Holder
+       164: invokeinterface #57,  2           // InterfaceMethod net/minecraft/core/Holder.is:(Lnet/minecraft/core/Holder;)Z
+       169: ifeq          197
+       172: aload         5
+       174: getfield      #49                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.ingredient:Lnet/minecraft/world/item/crafting/Ingredient;
+       177: aload_1
+       178: invokevirtual #44                 // Method net/minecraft/world/item/crafting/Ingredient.test:(Lnet/minecraft/world/item/ItemStack;)Z
+       181: ifeq          197
+       184: aload_2
+       185: invokevirtual #117                // Method net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+       188: aload         5
+       190: getfield      #53                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.to:Lnet/minecraft/core/Holder;
+       193: invokestatic  #113                // Method net/minecraft/world/item/alchemy/PotionContents.createItemStack:(Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;
+       196: areturn
+       197: goto          130
+       200: aload_2
+       201: areturn
+

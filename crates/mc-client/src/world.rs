@@ -6308,7 +6308,9 @@ pub fn brewing_face_order(face: u8) -> &'static [usize] {
 /// registry order banks — the gates the ids alone speak, the
 /// ingredient set the addVanillaMixes walk re-pins).
 pub const ITEM_BLAZE_POWDER: i32 = 1153;
+pub const ITEM_DRAGON_BREATH: i32 = 1320;
 pub const ITEM_GLASS_BOTTLE: i32 = 1149;
+pub const ITEM_GUNPOWDER: i32 = 978;
 pub const ITEM_LINGERING_POTION: i32 = 1324;
 pub const ITEM_POTION: i32 = 1150;
 pub const ITEM_SPLASH_POTION: i32 = 1321;

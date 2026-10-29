@@ -1,0 +1,23 @@
+  private boolean isContainer(net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field containers:Ljava/util/List;
+         4: invokeinterface #26,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_2
+        10: aload_2
+        11: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          42
+        19: aload_2
+        20: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #42                 // class net/minecraft/world/item/crafting/Ingredient
+        28: astore_3
+        29: aload_3
+        30: aload_1
+        31: invokevirtual #44                 // Method net/minecraft/world/item/crafting/Ingredient.test:(Lnet/minecraft/world/item/ItemStack;)Z
+        34: ifeq          39
+        37: iconst_1
+        38: ireturn
+        39: goto          10
+        42: iconst_0
+        43: ireturn
+

@@ -10,6 +10,7 @@
 mod avatar;
 mod audio;
 mod body;
+mod brewing_sim;
 mod build_info;
 mod camera;
 mod cart;

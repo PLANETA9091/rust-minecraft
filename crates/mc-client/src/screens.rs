@@ -9526,6 +9526,28 @@ pub struct App {
     /// close flush the key takes home — the None the closed screens
     /// keep; the per-cell law the brewing bank speaks).
     pub brewing_open_cell: Option<(i32, i32, i32)>,
+    /// THE BREWING STAND'S OWN LIVE WORDS (the 26.2 menu's
+    /// SimpleContainerData(2) the offline canvas wears + the BE's own
+    /// `ingredient` Item field the bank's third word keeps — the
+    /// [`crate::brewing_sim`] consts the seats speak): 0 the brewTime
+    /// count, 1 the fuel uses, 2 the start-ingredient id. The render's
+    /// fuel bar and the bubbles/arrow folds read these; a word the
+    /// walk never spoke stays 0 (the fresh stand's own zeros).
+    pub brewing_data: [i32; 3],
+    /// THE BREWING WORDS' OWN BANK (the furnace words' own law — the
+    /// per-cell progress the closed stands the world walk wears: the
+    /// open the cell's three LOADS, the close flush the tick-worn
+    /// words the map banks, the disk bank the furnace_words lane
+    /// speaks).
+    pub brewing_word_stores: std::collections::HashMap<(i32, i32, i32), [i32; 3]>,
+    /// THE OFFLINE SIM'S OWN BREWING STAND (the opened block entity's
+    /// cell the right-press door records — the retained lane the
+    /// furnace_pos law wears: the close the cell KEEPS, the world
+    /// walk the live trio the skip answers, the mined stand the
+    /// block check retires). `None` while the wire lane owns the
+    /// screen (the live window the server's own words drive) and
+    /// before any offline door ever spoke.
+    pub brewing_pos: Option<(i32, i32, i32)>,
     /// THE ENCHANTING TABLE'S OWN TRANSIENT PAIR (the EnchantmentMenu's
     /// SimpleContainer(2) the offline canvas projects — the item 0 the
     /// lapis 1 the menu numbering banks; the (0, 0) stacks the empty
@@ -12149,6 +12171,75 @@ pub fn furnace_words_from_nbt(
     stores
 }
 
+/// THE BREWING WORDS' OWN BANK (the dev-338 round — the furnace
+/// words' own law the brewing lane re-wears: the same file the
+/// "brewing_words" list wears, each entry the x/y/z triple + the
+/// "Words" list of 3 Int compounds the BE's own fields the width
+/// speaks — 0 the brewTime count, 1 the fuel uses, 2 the
+/// start-ingredient id; the BTree order the deterministic bytes
+/// keep, the cap the 3-word width speaks).
+pub fn brewing_words_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), [i32; 3]>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for ((x, y, z), words) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            (
+                "Words".to_string(),
+                mc_protocol::nbt::Nbt::List(
+                    words
+                        .iter()
+                        .map(|&w| mc_protocol::nbt::Nbt::Int(w))
+                        .collect(),
+                ),
+            ),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE BREWING WORDS' OWN PARSE (the tolerant walk the furnace parse
+/// wears: the missing coordinate the entry skip keeps, the short
+/// list the zero pad fills, the over-long list the 3-word cap
+/// truncates, the missing list the honest empties keep).
+pub fn brewing_words_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), [i32; 3]> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("brewing_words") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        let mut words = [0i32; 3];
+        if let Some(mc_protocol::nbt::Nbt::List(items)) =
+            fields.iter().find(|(k, _)| k == "Words").map(|(_, v)| v)
+        {
+            for (i, item) in items.iter().enumerate().take(3) {
+                if let Some(w) = item.as_i32() {
+                    words[i] = w;
+                }
+            }
+        }
+        stores.insert((x, y, z), words);
+    }
+    stores
+}
+
 /// THE FRAME BANK'S OWN WALK (the autopush-136 round — the
 /// "item_frames" list the containers file's fourth bank wears: the
 /// wall frames the RESTART OUTLIVES the same file the chest/furnace
@@ -12570,6 +12661,9 @@ impl App {
             brewing_slot_rects: Vec::new(),
             brewing_panel: (0, 0),
             brewing_open_cell: None,
+            brewing_data: [0, 0, 0],
+            brewing_word_stores: std::collections::HashMap::new(),
+            brewing_pos: None,
             enchant_slots: Vec::new(),
             enchant_mirror: Vec::new(),
             enchant_carried: (0, 0),
@@ -13281,6 +13375,38 @@ impl App {
                 }
             }
         }
+        // THE BREWING STAND'S OWN LIVE WALK (the dev-338 round — the
+        // furnace live arm's own shape the brewing lane re-wears:
+        // javap BrewingStandBlockEntity.serverTick the opened stand's
+        // block entity the fresh-menu stand-in the walk serves — the
+        // blaze powder the fuel refills, the 400-tick count the
+        // bubbles wear, the finish the voice wears). The live lane
+        // never rides (the wire window the server's own words drive).
+        // The NO-FLIP law the brewing kind keeps (the LIT state the
+        // furnace family wears, the brewing stand the blockstate
+        // never carries — the HAS_BOTTLE bits the model's variant
+        // lane never renders, the re-mesh the walk never needs).
+        if !self.world_is_network
+            && self.brewing_pos.is_some()
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_brewing_stand(w.get(
+                    self.brewing_pos.unwrap().0,
+                    self.brewing_pos.unwrap().1,
+                    self.brewing_pos.unwrap().2,
+                ))
+            })
+        {
+            let pos = self.brewing_pos.unwrap();
+            let mut five: Vec<(i32, i32)> = self.brewing_slots.iter().copied().collect();
+            while five.len() < 5 {
+                five.push((0, 0));
+            }
+            let finished = crate::brewing_sim::tick(&mut five, &mut self.brewing_data);
+            self.brewing_slots = five;
+            if finished {
+                self.brew_finish_voice(pos);
+            }
+        }
         // THE FURNACES' OWN WORLD WALK (the dev-72 round — the vanilla
         // law the block entity's serverTick EVERY stocked furnace
         // speaks: the opened screen the ONE live trio the walk above
@@ -13367,6 +13493,61 @@ impl App {
                 if any_flip {
                     if let Some(world) = self.offline_world.as_ref() {
                         self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                    }
+                }
+            }
+        }
+        // THE BREWING STANDS' OWN WORLD WALK (the dev-338 round — the
+        // vanilla law the block entity's serverTick EVERY stocked
+        // stand speaks: the opened screen the ONE live five the walk
+        // above serves, the OTHER cells the per-cell banks the tick
+        // now wears — the blaze powder the banks refill, the 400-tick
+        // count the banks advance, the finish the banks spend. THE
+        // LIVE CELL the skip keeps (the brewing_pos trio the live
+        // arm's own walk serves — the open screen AND the
+        // close-retained walk — the doubled tick the skip never
+        // speaks). The mined cell the walk never serves (the block
+        // the brewing family lost — the same frozen law the furnace
+        // arm speaks). The NO-FLIP law the world walk keeps (the
+        // blockstate the brewing kind never carries — no re-mesh the
+        // walk ever needs).
+        if !self.world_is_network {
+            self.container_stores_load_once();
+            if !self.brewing_stores.is_empty() {
+                // the deterministic order the BTree fold keeps (the
+                // house law — the same verdicts every run speaks)
+                let mut cells: Vec<(i32, i32, i32)> = self.brewing_stores.keys().copied().collect();
+                cells.sort();
+                let live_cell = self.brewing_pos;
+                for cell in cells {
+                    if live_cell == Some(cell) {
+                        continue; // the live arm's own five never doubles
+                    }
+                    let block = self
+                        .offline_world
+                        .as_ref()
+                        .map(|w| w.get(cell.0, cell.1, cell.2))
+                        .unwrap_or(0);
+                    if !crate::world::is_brewing_stand(block) {
+                        continue; // the mined cell the walk never serves
+                    }
+                    let mut five: Vec<(i32, i32)> = self
+                        .brewing_stores
+                        .entry(cell)
+                        .or_insert_with(|| vec![(0, 0); 5])
+                        .iter()
+                        .copied()
+                        .take(5)
+                        .collect();
+                    while five.len() < 5 {
+                        five.push((0, 0));
+                    }
+                    let mut words = *self.brewing_word_stores.entry(cell).or_insert([0i32; 3]);
+                    let finished = crate::brewing_sim::tick(&mut five, &mut words);
+                    self.brewing_stores.insert(cell, five);
+                    self.brewing_word_stores.insert(cell, words);
+                    if finished {
+                        self.brew_finish_voice(cell);
                     }
                 }
             }
@@ -27522,6 +27703,16 @@ impl App {
         self.brewing_slots = store.clone();
         self.brewing_open_cell = Some(pos);
         self.brewing_carried = (0, 0);
+        // THE PROGRESS WORDS' OWN READ (the dev-338 round — the banked
+        // brew/fuel state the fresh branch wears: the restart the
+        // mid-brew the resume wears, the fresh cell the zeros keep,
+        // the SAME stand the retention law the words never clobbers —
+        // the furnace words' own open law the lane re-wears)
+        self.brewing_data = *self.brewing_word_stores.entry(pos).or_insert([0i32; 3]);
+        // THE LIVE LANE'S OWN CELL (the furnace_pos law — the
+        // retained walk the close keeps, the mined stand the block
+        // check retires)
+        self.brewing_pos = Some(pos);
         // the player's own rows the REAL inventory projects (the
         // menu's addStandardInventorySlots(8, 84) the mirror rows the
         // same projection keeps)
@@ -27597,6 +27788,10 @@ impl App {
         if let Some(pos) = self.brewing_open_cell.take() {
             let five: Vec<(i32, i32)> = self.brewing_slots.iter().copied().collect();
             self.brewing_stores.insert(pos, five);
+            // THE WORDS' OWN FLUSH (the furnace store-flush law — the
+            // tick-worn brew/fuel state the bank keeps, the reopen
+            // the resume wears)
+            self.brewing_word_stores.insert(pos, self.brewing_data);
             self.container_stores_file_save();
             // THE FILL'S OWN RIDE HOME (the comparator's container lane
             // the close flush banks — the 309 round's own five the
@@ -28120,6 +28315,25 @@ impl App {
         let dist = ear_distance(ear, x, y, z);
         let pan = ear_pan(ear, yaw, x, y, z);
         self.sounds.play_enchant_use_voice_at(self.frame, dist, pan);
+    }
+
+    /// THE BREW FINISH'S OWN VOICE (the dev-338 round — javap 26.2
+    /// LevelEventHandler.levelEvent case 1035 the 26.2 jar serves:
+    /// `playLocalSound(pos, BREWING_STAND_BREW, BLOCKS, 1.0F, 1.0F,
+    /// false)` — the FIXED volume and pitch lane (no randoms, the
+    /// brewing's own deadpan pour), the stand pos the listener's ear
+    /// the same attenuation the container voices wear)
+    fn brew_finish_voice(&mut self, pos: (i32, i32, i32)) {
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (x, y, z) = (
+            f64::from(pos.0) + 0.5,
+            f64::from(pos.1) + 0.5,
+            f64::from(pos.2) + 0.5,
+        );
+        let dist = ear_distance(ear, x, y, z);
+        let pan = ear_pan(ear, yaw, x, y, z);
+        self.sounds.play_brew_voice_at(self.frame, dist, pan);
     }
 
     /// the right-press on the placed enchanting table the OFFLINE
@@ -33435,6 +33649,56 @@ impl App {
             panel.0,
             panel.1,
         );
+        // THE PROGRESS SPRITES' OWN LANE (the dev-338 round — javap
+        // 26.2 BrewingStandScreen.extractBackground the exact order
+        // the draws keep: the fuel bar FIRST, the arrow + the bubbles
+        // the brewingTicks > 0 gate pair wears). The words the LIVE
+        // bank reads (the idle stand the zero words the draws never
+        // speak — the fresh canvas the goldens byte-keep). The
+        // sprite_region crop the blitSprite's own 1:1 law wears (the
+        // no-stretch the region's smaller width keeps).
+        let (fuel, ticks) = (self.brewing_data[1], self.brewing_data[0]);
+        let k = crate::brewing_sim::fuel_bar_width(fuel);
+        if k > 0 {
+            g.sprite_region(
+                a,
+                "container/brewing_stand/fuel_length",
+                0,
+                0,
+                k,
+                4,
+                panel.0 + 60,
+                panel.1 + 44,
+            );
+        }
+        if ticks > 0 {
+            let l = crate::brewing_sim::arrow_height(ticks);
+            if l > 0 {
+                g.sprite_region(
+                    a,
+                    "container/brewing_stand/brew_progress",
+                    0,
+                    0,
+                    9,
+                    l,
+                    panel.0 + 97,
+                    panel.1 + 16,
+                );
+            }
+            let m = crate::brewing_sim::bubble_height(ticks);
+            if m > 0 {
+                g.sprite_region(
+                    a,
+                    "container/brewing_stand/bubbles",
+                    0,
+                    (29 - m) as u32,
+                    12,
+                    m,
+                    panel.0 + 63,
+                    panel.1 + 14 + 29 - m,
+                );
+            }
+        }
         // THE CENTERED TITLE (the init walk's own formula the
         // DispenserScreen's own override speaks — the kind's own lang
         // row the opened kind banks)
@@ -44097,6 +44361,11 @@ impl App {
                 // extend law the in-memory entry keeps)
                 self.furnace_word_stores
                     .extend(furnace_words_from_nbt(&root));
+                // THE BREWING WORDS' OWN PARSE (the dev-338 round —
+                // the same read the brew/fuel bank answers, the same
+                // extend law the in-memory entry keeps)
+                self.brewing_word_stores
+                    .extend(brewing_words_from_nbt(&root));
                 // THE ENDER BANK'S OWN PARSE (the autopush-289 round —
                 // the "ender" row the shared store the boot banks:
                 // the missing row the honest empties keep, the present
@@ -44193,6 +44462,14 @@ impl App {
             (
                 "furnace_words".to_string(),
                 furnace_words_bank_to_nbt(&self.furnace_word_stores),
+            ),
+            // THE BREWING WORDS' OWN ROW (the dev-338 round — the
+            // stands the same file the list wears, the BTree cell
+            // order the deterministic bytes keep, the triple the
+            // BE's own fields the disk banks)
+            (
+                "brewing_words".to_string(),
+                brewing_words_bank_to_nbt(&self.brewing_word_stores),
             ),
             // THE ENDER BANK'S OWN ROW (the autopush-289 round — the
             // shared per-player inventory the same file the fifth

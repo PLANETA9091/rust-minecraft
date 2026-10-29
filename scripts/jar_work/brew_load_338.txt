@@ -1,0 +1,40 @@
+  protected void loadAdditional(net.minecraft.world.level.storage.ValueInput);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokespecial #203                // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.loadAdditional:(Lnet/minecraft/world/level/storage/ValueInput;)V
+         5: aload_0
+         6: aload_0
+         7: invokevirtual #207                // Method getContainerSize:()I
+        10: getstatic     #13                 // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+        13: invokestatic  #19                 // Method net/minecraft/core/NonNullList.withSize:(ILjava/lang/Object;)Lnet/minecraft/core/NonNullList;
+        16: putfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+        19: aload_1
+        20: aload_0
+        21: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+        24: invokestatic  #210                // Method net/minecraft/world/ContainerHelper.loadAllItems:(Lnet/minecraft/world/level/storage/ValueInput;Lnet/minecraft/core/NonNullList;)V
+        27: aload_0
+        28: aload_1
+        29: ldc           #216                // String BrewTime
+        31: iconst_0
+        32: invokeinterface #218,  3          // InterfaceMethod net/minecraft/world/level/storage/ValueInput.getShortOr:(Ljava/lang/String;S)I
+        37: putfield      #84                 // Field brewTime:I
+        40: aload_0
+        41: getfield      #84                 // Field brewTime:I
+        44: ifle          65
+        47: aload_0
+        48: aload_0
+        49: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+        52: iconst_3
+        53: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+        56: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+        59: invokevirtual #102                // Method net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+        62: putfield      #91                 // Field ingredient:Lnet/minecraft/world/item/Item;
+        65: aload_0
+        66: aload_1
+        67: ldc           #224                // String Fuel
+        69: iconst_0
+        70: invokeinterface #226,  3          // InterfaceMethod net/minecraft/world/level/storage/ValueInput.getByteOr:(Ljava/lang/String;B)B
+        75: putfield      #52                 // Field fuel:I
+        78: return
+

@@ -1,0 +1,23 @@
+  public boolean hasMix(net.minecraft.world.item.ItemStack, net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #63                 // Method isContainer:(Lnet/minecraft/world/item/ItemStack;)Z
+         5: ifne          10
+         8: iconst_0
+         9: ireturn
+        10: aload_0
+        11: aload_1
+        12: aload_2
+        13: invokevirtual #66                 // Method hasContainerMix:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+        16: ifne          28
+        19: aload_0
+        20: aload_1
+        21: aload_2
+        22: invokevirtual #70                 // Method hasPotionMix:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+        25: ifeq          32
+        28: iconst_1
+        29: goto          33
+        32: iconst_0
+        33: ireturn
+

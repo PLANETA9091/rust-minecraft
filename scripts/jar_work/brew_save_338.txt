@@ -1,0 +1,23 @@
+  protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokespecial #230                // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.saveAdditional:(Lnet/minecraft/world/level/storage/ValueOutput;)V
+         5: aload_1
+         6: ldc           #216                // String BrewTime
+         8: aload_0
+         9: getfield      #84                 // Field brewTime:I
+        12: i2s
+        13: invokeinterface #234,  3          // InterfaceMethod net/minecraft/world/level/storage/ValueOutput.putShort:(Ljava/lang/String;S)V
+        18: aload_1
+        19: aload_0
+        20: getfield      #25                 // Field items:Lnet/minecraft/core/NonNullList;
+        23: invokestatic  #240                // Method net/minecraft/world/ContainerHelper.saveAllItems:(Lnet/minecraft/world/level/storage/ValueOutput;Lnet/minecraft/core/NonNullList;)V
+        26: aload_1
+        27: ldc           #224                // String Fuel
+        29: aload_0
+        30: getfield      #52                 // Field fuel:I
+        33: i2b
+        34: invokeinterface #244,  3          // InterfaceMethod net/minecraft/world/level/storage/ValueOutput.putByte:(Ljava/lang/String;B)V
+        39: return
+

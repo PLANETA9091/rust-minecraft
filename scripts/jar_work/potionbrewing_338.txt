@@ -1,0 +1,21 @@
+Compiled from "PotionBrewing.java"
+public class net.minecraft.world.item.alchemy.PotionBrewing {
+  public static final int BREWING_TIME_SECONDS = 20;
+  public static final net.minecraft.world.item.alchemy.PotionBrewing EMPTY;
+  private final java.util.List<net.minecraft.world.item.crafting.Ingredient> containers;
+  private final java.util.List<net.minecraft.world.item.alchemy.PotionBrewing$Mix<net.minecraft.world.item.alchemy.Potion>> potionMixes;
+  private final java.util.List<net.minecraft.world.item.alchemy.PotionBrewing$Mix<net.minecraft.world.item.Item>> containerMixes;
+  private net.minecraft.world.item.alchemy.PotionBrewing(java.util.List<net.minecraft.world.item.crafting.Ingredient>, java.util.List<net.minecraft.world.item.alchemy.PotionBrewing$Mix<net.minecraft.world.item.alchemy.Potion>>, java.util.List<net.minecraft.world.item.alchemy.PotionBrewing$Mix<net.minecraft.world.item.Item>>);
+  public boolean isIngredient(net.minecraft.world.item.ItemStack);
+  private boolean isContainer(net.minecraft.world.item.ItemStack);
+  public boolean isContainerIngredient(net.minecraft.world.item.ItemStack);
+  public boolean isPotionIngredient(net.minecraft.world.item.ItemStack);
+  public boolean isBrewablePotion(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+  public boolean hasMix(net.minecraft.world.item.ItemStack, net.minecraft.world.item.ItemStack);
+  public boolean hasContainerMix(net.minecraft.world.item.ItemStack, net.minecraft.world.item.ItemStack);
+  public boolean hasPotionMix(net.minecraft.world.item.ItemStack, net.minecraft.world.item.ItemStack);
+  public net.minecraft.world.item.ItemStack mix(net.minecraft.world.item.ItemStack, net.minecraft.world.item.ItemStack);
+  public static net.minecraft.world.item.alchemy.PotionBrewing bootstrap(net.minecraft.world.flag.FeatureFlagSet);
+  public static void addVanillaMixes(net.minecraft.world.item.alchemy.PotionBrewing$Builder);
+  static {};
+}

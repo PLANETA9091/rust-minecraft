@@ -1,0 +1,60 @@
+Compiled from "PotionBrewing.java"
+final class net.minecraft.world.item.alchemy.PotionBrewing$Mix<T> extends java.lang.Record {
+  private final net.minecraft.core.Holder<T> from;
+
+  private final net.minecraft.world.item.crafting.Ingredient ingredient;
+
+  private final net.minecraft.core.Holder<T> to;
+
+  private net.minecraft.world.item.alchemy.PotionBrewing$Mix(net.minecraft.core.Holder<T>, net.minecraft.world.item.crafting.Ingredient, net.minecraft.core.Holder<T>);
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Record."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: putfield      #7                  // Field from:Lnet/minecraft/core/Holder;
+         9: aload_0
+        10: aload_2
+        11: putfield      #13                 // Field ingredient:Lnet/minecraft/world/item/crafting/Ingredient;
+        14: aload_0
+        15: aload_3
+        16: putfield      #17                 // Field to:Lnet/minecraft/core/Holder;
+        19: return
+
+  public final java.lang.String toString();
+    Code:
+         0: aload_0
+         1: invokedynamic #20,  0             // InvokeDynamic #0:toString:(Lnet/minecraft/world/item/alchemy/PotionBrewing$Mix;)Ljava/lang/String;
+         6: areturn
+
+  public final int hashCode();
+    Code:
+         0: aload_0
+         1: invokedynamic #24,  0             // InvokeDynamic #0:hashCode:(Lnet/minecraft/world/item/alchemy/PotionBrewing$Mix;)I
+         6: ireturn
+
+  public final boolean equals(java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #28,  0             // InvokeDynamic #0:equals:(Lnet/minecraft/world/item/alchemy/PotionBrewing$Mix;Ljava/lang/Object;)Z
+         7: ireturn
+
+  public net.minecraft.core.Holder<T> from();
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field from:Lnet/minecraft/core/Holder;
+         4: areturn
+
+  public net.minecraft.world.item.crafting.Ingredient ingredient();
+    Code:
+         0: aload_0
+         1: getfield      #13                 // Field ingredient:Lnet/minecraft/world/item/crafting/Ingredient;
+         4: areturn
+
+  public net.minecraft.core.Holder<T> to();
+    Code:
+         0: aload_0
+         1: getfield      #17                 // Field to:Lnet/minecraft/core/Holder;
+         4: areturn
+}

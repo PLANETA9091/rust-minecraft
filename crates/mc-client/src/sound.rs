@@ -595,6 +595,30 @@ impl BlockSounds {
         }
     }
 
+    /// THE BREWING STAND'S OWN BREW VOICE (the dev-338 round — javap
+    /// 26.2 LevelEventHandler.levelEvent case 1035 the 26.2 jar
+    /// serves: `playLocalSound(pos, BREWING_STAND_BREW, BLOCKS, 1.0F,
+    /// 1.0F, false)` the doBrew walk's levelEvent the client answers —
+    /// the FIXED volume and pitch lane (no randoms, the pour's own
+    /// deadpan), the file pick the weighted law resolves).
+    pub fn play_brew_voice_at(&mut self, tick: u64, dist: f64, pan: f32) {
+        let Some(file) = self.pick_file("block.brewing_stand.brew") else {
+            return;
+        };
+        let gain = attenuate(1.0, dist, voice_max_distance(1.0));
+        if pan == 0.0 {
+            self.events.push(format!(
+                "block.brewing_stand.brew @{tick} #{file} v{gain:.6} p{:.6}",
+                1.0
+            ));
+        } else {
+            self.events.push(format!(
+                "block.brewing_stand.brew @{tick} #{file} v{gain:.6} p{:.6} s{pan:+.6}",
+                1.0
+            ));
+        }
+    }
+
     /// The FALL VOICE (javap `LivingEntity.causeFallDamage`'s own
     /// call): `playSound(getFallDamageSound(damage), 1.0F, 1.0F)` —
     /// the FIXED volume and pitch lane (no randoms, the fall's own

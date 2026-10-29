@@ -1,0 +1,16 @@
+  public net.minecraft.world.inventory.BrewingStandMenu(int, net.minecraft.world.entity.player.Inventory);
+    Code:
+         0: aload_0
+         1: iload_1
+         2: aload_2
+         3: new           #7                  // class net/minecraft/world/SimpleContainer
+         6: dup
+         7: iconst_5
+         8: invokespecial #9                  // Method net/minecraft/world/SimpleContainer."<init>":(I)V
+        11: new           #13                 // class net/minecraft/world/inventory/SimpleContainerData
+        14: dup
+        15: iconst_2
+        16: invokespecial #15                 // Method net/minecraft/world/inventory/SimpleContainerData."<init>":(I)V
+        19: invokespecial #16                 // Method "<init>":(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/Container;Lnet/minecraft/world/inventory/ContainerData;)V
+        22: return
+

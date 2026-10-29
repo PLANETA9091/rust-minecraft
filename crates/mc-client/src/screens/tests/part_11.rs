@@ -1225,18 +1225,31 @@ fn the_offline_hopper_the_brewing_side_the_fuel_lane_the_cooldown_wears() {
         "the stand's fuel slot the first blaze seats"
     );
     // THE COOLDOWN'S OWN GATE (the setCooldown(8) law the
-    // intermediate beats refuse)
+    // intermediate beats refuse) + THE WALK'S OWN REFILL (the
+    // dev-338 round — the vanilla serverTick the dry stand the NEXT
+    // beat wears: the fuel word the zero reads, the powder the
+    // refill arm consumes, the twenty uses the tank banks — the
+    // frozen-stand expectation the walk's own vanilla law retires)
     app.update();
     app.update();
     assert_eq!(
         app.brewing_stores
             .get(&stand_cell)
             .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
-        Some((blaze_powder, 1)),
-        "the cooldown the second push refuses"
+        Some((0, 0)),
+        "the refill arm the first blaze converts"
+    );
+    assert_eq!(
+        app.brewing_word_stores
+            .get(&stand_cell)
+            .map(|w| w[crate::brewing_sim::DATA_FUEL_USES]),
+        Some(20),
+        "the twenty uses the tank banks"
     );
     // THE EIGHTH TICK'S OWN SERVE (the six more updates the +8 cadence
-    // completes — the second blaze the same beat lands)
+    // completes — the second blaze the same beat lands, the FULL tank
+    // the walk's refill arm never touches [the fuel > 0 gate the
+    // powder keeps])
     for _ in 0..6 {
         app.update();
     }
@@ -1244,7 +1257,7 @@ fn the_offline_hopper_the_brewing_side_the_fuel_lane_the_cooldown_wears() {
         app.brewing_stores
             .get(&stand_cell)
             .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
-        Some((blaze_powder, 2)),
+        Some((blaze_powder, 1)),
         "the cooldown spent the second blaze serves"
     );
     // THE FUEL GATE'S OWN REFUSE (the blaze row spent the dirt probe
@@ -1263,8 +1276,8 @@ fn the_offline_hopper_the_brewing_side_the_fuel_lane_the_cooldown_wears() {
         app.brewing_stores
             .get(&stand_cell)
             .map(|s| s[crate::world::BREWING_SLOT_FUEL]),
-        Some((blaze_powder, 2)),
-        "the fuel slot the two blaze keeps"
+        Some((blaze_powder, 1)),
+        "the fuel slot the full tank the second blaze keeps"
     );
     assert_eq!(
         app.container_stores.get(&hopper_cell).map(|s| s[0]),
@@ -8429,6 +8442,362 @@ fn the_item_stack_the_enchanted_glint_wears() {
     assert!(
         diff > 0,
         "the phase shift the scroll the distinct pixels wear"
+    );
+}
+
+/// THE BREWING STAND'S OWN SCREEN TICK (the dev-338 round — javap 26.2
+/// BrewingStandBlockEntity.serverTick the opened stand the live arm
+/// serves: the blaze powder the fuel twenty refills, the 400-tick
+/// count the start arms, the finish the ingredient spends — the
+/// POTION_CONTENTS wall the mix never transforms, the vanilla's own
+/// component-less verdict the (id, count) model wears). THE RESUME
+/// the close/reopen pair the words bank keeps.
+#[test]
+fn the_offline_brewing_the_tick_walk_the_screen_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world.as_mut().unwrap().set(
+        cell.0,
+        cell.1,
+        cell.2,
+        crate::world::BREWING_STAND,
+    );
+    let gunpowder = mc_registry::item_id_by_name("gunpowder").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    app.brewing_stores.insert(
+        cell,
+        vec![(potion, 1), (0, 0), (0, 0), (gunpowder, 2), (powder, 1)],
+    );
+    app.open_brewing_for(cell);
+    assert_eq!(app.screen, ScreenKind::Brewing);
+    assert_eq!(
+        app.brewing_data,
+        [0, 0, 0],
+        "the fresh stand the zero words keep"
+    );
+    // THE FIRST TICK the refill + the start pair (the order the
+    // bytecode keeps: the refill arm BEFORE the brewable gate reads).
+    app.update();
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::DATA_BREW_TIME],
+        400,
+        "the sipush 400 the start arms"
+    );
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::DATA_FUEL_USES],
+        19,
+        "the refill's twenty the start's own spend answers"
+    );
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::INGREDIENT_WORD],
+        gunpowder,
+        "the start word banks"
+    );
+    assert_eq!(app.brewing_slots[4], (0, 0), "the powder the refill spent");
+    // THE COUNT the middle walk wears (the 399 ticks the countdown
+    // speaks, the finish the zero tick fires — the voice the
+    // levelEvent 1035 the client answers).
+    for _ in 0..399 {
+        app.update();
+    }
+    assert_eq!(app.brewing_data[0], 1, "the last-before tick the one keeps");
+    app.update();
+    assert_eq!(app.brewing_data[0], 0, "the finish the zero wears");
+    assert_eq!(
+        app.brewing_slots[3],
+        (gunpowder, 1),
+        "the doBrew the ingredient spends"
+    );
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the POTION_CONTENTS wall the bottle never transforms"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("block.brewing_stand.brew ")),
+        "the brew voice the finish fires"
+    );
+    // THE CLOSE the words the bank flushes, the REOPEN the resume
+    // wears (the retention law the words never clobbers — the tank's
+    // 18 the bank keeps).
+    app.close_brewing(ScreenKind::World);
+    assert_eq!(
+        app.brewing_word_stores
+            .get(&cell)
+            .map(|w| w[crate::brewing_sim::DATA_FUEL_USES]),
+        Some(19),
+        "the close flush the tank banks"
+    );
+    app.open_brewing_for(cell);
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::DATA_FUEL_USES],
+        19,
+        "the reopen the tank resumes"
+    );
+}
+
+/// THE BREWING STANDS' OWN WORLD WALK (the dev-338 round — the vanilla
+/// law the block entity's serverTick EVERY stocked stand speaks: the
+/// closed cell the per-cell bank the tick wears, the finish the same
+/// voice fires, the MINED cell the frozen walk keeps).
+#[test]
+fn the_offline_brewing_the_world_walk_the_banks_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world.as_mut().unwrap().set(
+        cell.0,
+        cell.1,
+        cell.2,
+        crate::world::BREWING_STAND,
+    );
+    let gunpowder = mc_registry::item_id_by_name("gunpowder").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    app.brewing_stores.insert(
+        cell,
+        vec![(potion, 1), (0, 0), (0, 0), (gunpowder, 1), (powder, 1)],
+    );
+    // THE CLOSED CELL the world walk ticks (the open never spoke —
+    // the brewing_pos the None keeps).
+    app.update();
+    assert_eq!(
+        app.brewing_word_stores
+            .get(&cell)
+            .map(|w| w[crate::brewing_sim::DATA_BREW_TIME]),
+        Some(400),
+        "the closed stand the start arms"
+    );
+    // THE FINISH the same 400-tick walk answers.
+    for _ in 0..400 {
+        app.update();
+    }
+    assert_eq!(
+        app.brewing_stores.get(&cell).map(|f| f[3]),
+        Some((0, 0)),
+        "the finish the ingredient spends"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("block.brewing_stand.brew ")),
+        "the world walk the voice wears"
+    );
+    // THE MINED CELL the frozen walk keeps (the block the family
+    // lost — the tick the walk never serves).
+    let mined = (c + 3, surface + 1, c);
+    app.brewing_stores.insert(
+        mined,
+        vec![(potion, 1), (0, 0), (0, 0), (gunpowder, 1), (powder, 1)],
+    );
+    app.brewing_word_stores.insert(mined, [0, 0, 0]);
+    app.update();
+    assert_eq!(
+        app.brewing_word_stores.get(&mined).map(|w| w[0]),
+        Some(0),
+        "the mined stand the walk never serves"
+    );
+}
+
+/// THE BREWING WORDS' OWN DISK BANK (the dev-338 round — the furnace
+/// words' own law the brewing lane re-wears: the BTree order the
+/// deterministic bytes keep, the short list the zero pad fills, the
+/// over-long list the 3-word cap truncates, the missing list the
+/// honest empties keep).
+#[test]
+fn the_brewing_stand_the_words_bank_the_disk_wears() {
+    let mut bank = std::collections::HashMap::new();
+    bank.insert((3, 40, -7), [400i32, 18, 978]);
+    bank.insert((-1, 64, 2), [0, 20, 0]);
+    let nbt = mc_protocol::nbt::Nbt::Compound(vec![(
+        "brewing_words".to_string(),
+        brewing_words_bank_to_nbt(&bank),
+    )]);
+    let parsed = brewing_words_from_nbt(&nbt);
+    assert_eq!(parsed.len(), 2, "the two cells the round trip keeps");
+    assert_eq!(parsed.get(&(3, 40, -7)), Some(&[400, 18, 978]));
+    assert_eq!(parsed.get(&(-1, 64, 2)), Some(&[0, 20, 0]));
+    // THE SHORT LIST the zero pad fills (the missing ingredient word
+    // the honest zero keeps).
+    let short = mc_protocol::nbt::Nbt::Compound(vec![(
+        "brewing_words".to_string(),
+        mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(1)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(2)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(3)),
+            (
+                "Words".to_string(),
+                mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Int(123)]),
+            ),
+        ])]),
+    )]);
+    let parsed = brewing_words_from_nbt(&short);
+    assert_eq!(parsed.get(&(1, 2, 3)), Some(&[123, 0, 0]));
+    // THE OVER-LONG LIST the cap truncates (the corrupt width the
+    // 3-word law keeps).
+    let long = mc_protocol::nbt::Nbt::Compound(vec![(
+        "brewing_words".to_string(),
+        mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(4)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(5)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(6)),
+            (
+                "Words".to_string(),
+                mc_protocol::nbt::Nbt::List(vec![
+                    mc_protocol::nbt::Nbt::Int(1),
+                    mc_protocol::nbt::Nbt::Int(2),
+                    mc_protocol::nbt::Nbt::Int(3),
+                    mc_protocol::nbt::Nbt::Int(4),
+                ]),
+            ),
+        ])]),
+    )]);
+    let parsed = brewing_words_from_nbt(&long);
+    assert_eq!(parsed.get(&(4, 5, 6)), Some(&[1, 2, 3]));
+    // THE MISSING LIST the honest empties keep.
+    let none = mc_protocol::nbt::Nbt::Compound(vec![]);
+    assert!(brewing_words_from_nbt(&none).is_empty());
+}
+
+/// THE BREWING SCREEN'S OWN PROGRESS SPRITES (the dev-338 round —
+/// javap 26.2 BrewingStandScreen.extractBackground the exact draws
+/// the words wear: the fuel bar the (60, 44) seat the k width keeps,
+/// the arrow the (97, 16) seat the l height grows, the bubbles the
+/// (63, 14 + 29 - m) seat the m rise keeps; the IDLE words the zero
+/// words the draws never speak — the byte-identical rest the golden
+/// law keeps).
+#[test]
+fn the_offline_brewing_the_render_the_progress_sprites_wear() {
+    fn px(fb: &crate::raster::Framebuf, x: usize, y: usize) -> [u8; 3] {
+        let o = (y * fb.w + x) * 3;
+        [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+    }
+    // the idle bytes' own reader (the cloned baseline the compare
+    // wears — the fb-free access the byte slice keeps)
+    fn px_at(bytes: &[u8], w: usize, x: usize, y: usize) -> [u8; 3] {
+        let o = (y * w + x) * 3;
+        [bytes[o], bytes[o + 1], bytes[o + 2]]
+    }
+    let root = [
+        "assets-cache/jar",
+        "../assets-cache/jar",
+        "../../assets-cache/jar",
+    ]
+    .iter()
+    .map(std::path::Path::new)
+    .find(|p| {
+        p.join("gui/sprites/container/brewing_stand/fuel_length.png")
+            .exists()
+    });
+    let Some(root) = root else { return };
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world.as_mut().unwrap().set(
+        cell.0,
+        cell.1,
+        cell.2,
+        crate::world::BREWING_STAND,
+    );
+    app.open_brewing_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut a = GuiAssets::open(&root);
+    app.mouse_pos = None;
+    app.render(&mut fb, &mut a);
+    let idle = fb.color.clone();
+    let panel = app.brewing_panel;
+    // THE STAGED WORDS: the half-counted brew + the half-spent tank
+    // (ticks 200 the arrow 14 + the bubbles 24 wears, fuel 10 the
+    // 9-wide bar keeps).
+    app.brewing_data = [200, 10, 0];
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    app.render(&mut fb, &mut a);
+    // THE FUEL BAR the drawn width speaks (the k=9 bar the (60, 44)
+    // seat wears — the idle render the region never painted).
+    let mut bar_diff = 0;
+    for dx in 0..9i32 {
+        for dy in 0..4i32 {
+            if px(
+                &fb,
+                (panel.0 + 60 + dx) as usize,
+                (panel.1 + 44 + dy) as usize,
+            ) != px_at(
+                &idle,
+                fb.w as usize,
+                (panel.0 + 60 + dx) as usize,
+                (panel.1 + 44 + dy) as usize,
+            ) {
+                bar_diff += 1;
+            }
+        }
+    }
+    assert!(bar_diff > 0, "the fuel bar the region paints ({bar_diff})");
+    // THE PAST-BAR COLUMNS the idle keep (the no-stretch the crop
+    // law wears — the k..18 tail the draw never reaches).
+    let past_same = px(&fb, (panel.0 + 60 + 17) as usize, (panel.1 + 45) as usize)
+        == px_at(
+            &idle,
+            fb.w as usize,
+            (panel.0 + 60 + 17) as usize,
+            (panel.1 + 45) as usize,
+        );
+    assert!(past_same, "the past-bar tail the idle keeps");
+    // THE ARROW the fill speaks (the 14-tall fill the (97, 16) seat
+    // wears) + THE BUBBLES the rise (the 24-tall column the (63,
+    // 14 + 29 - 24) seat wears).
+    let mut arrow_diff = 0;
+    for dy in 0..14i32 {
+        for dx in 0..9i32 {
+            if px(
+                &fb,
+                (panel.0 + 97 + dx) as usize,
+                (panel.1 + 16 + dy) as usize,
+            ) != px_at(
+                &idle,
+                fb.w as usize,
+                (panel.0 + 97 + dx) as usize,
+                (panel.1 + 16 + dy) as usize,
+            ) {
+                arrow_diff += 1;
+            }
+        }
+    }
+    assert!(arrow_diff > 0, "the arrow the fill paints ({arrow_diff})");
+    let mut bubble_diff = 0;
+    for dy in 0..24i32 {
+        for dx in 0..12i32 {
+            if px(
+                &fb,
+                (panel.0 + 63 + dx) as usize,
+                (panel.1 + 14 + 29 - 24 + dy) as usize,
+            ) != px_at(
+                &idle,
+                fb.w as usize,
+                (panel.0 + 63 + dx) as usize,
+                (panel.1 + 14 + 29 - 24 + dy) as usize,
+            ) {
+                bubble_diff += 1;
+            }
+        }
+    }
+    assert!(
+        bubble_diff > 0,
+        "the bubbles the rise paints ({bubble_diff})"
     );
 }
 

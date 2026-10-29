@@ -1,0 +1,24 @@
+  public boolean isContainerIngredient(net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_0
+         1: getfield      #16                 // Field containerMixes:Ljava/util/List;
+         4: invokeinterface #26,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_2
+        10: aload_2
+        11: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          45
+        19: aload_2
+        20: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #47                 // class net/minecraft/world/item/alchemy/PotionBrewing$Mix
+        28: astore_3
+        29: aload_3
+        30: getfield      #49                 // Field net/minecraft/world/item/alchemy/PotionBrewing$Mix.ingredient:Lnet/minecraft/world/item/crafting/Ingredient;
+        33: aload_1
+        34: invokevirtual #44                 // Method net/minecraft/world/item/crafting/Ingredient.test:(Lnet/minecraft/world/item/ItemStack;)Z
+        37: ifeq          42
+        40: iconst_1
+        41: ireturn
+        42: goto          10
+        45: iconst_0
+        46: ireturn
+

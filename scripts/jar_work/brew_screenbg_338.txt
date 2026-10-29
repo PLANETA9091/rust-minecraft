@@ -1,0 +1,143 @@
+  public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: iload_2
+         3: iload_3
+         4: fload         4
+         6: invokespecial #34                 // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.extractBackground:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+         9: aload_0
+        10: getfield      #38                 // Field width:I
+        13: aload_0
+        14: getfield      #11                 // Field imageWidth:I
+        17: isub
+        18: iconst_2
+        19: idiv
+        20: istore        5
+        22: aload_0
+        23: getfield      #40                 // Field height:I
+        26: aload_0
+        27: getfield      #43                 // Field imageHeight:I
+        30: isub
+        31: iconst_2
+        32: idiv
+        33: istore        6
+        35: aload_1
+        36: getstatic     #46                 // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+        39: getstatic     #52                 // Field BREWING_STAND_LOCATION:Lnet/minecraft/resources/Identifier;
+        42: iload         5
+        44: iload         6
+        46: fconst_0
+        47: fconst_0
+        48: aload_0
+        49: getfield      #11                 // Field imageWidth:I
+        52: aload_0
+        53: getfield      #43                 // Field imageHeight:I
+        56: sipush        256
+        59: sipush        256
+        62: invokevirtual #56                 // Method net/minecraft/client/gui/GuiGraphicsExtractor.blit:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V
+        65: aload_0
+        66: getfield      #62                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+        69: checkcast     #66                 // class net/minecraft/world/inventory/BrewingStandMenu
+        72: invokevirtual #68                 // Method net/minecraft/world/inventory/BrewingStandMenu.getFuel:()I
+        75: istore        7
+        77: bipush        18
+        79: iload         7
+        81: imul
+        82: bipush        20
+        84: iadd
+        85: iconst_1
+        86: isub
+        87: bipush        20
+        89: idiv
+        90: iconst_0
+        91: bipush        18
+        93: invokestatic  #74                 // Method net/minecraft/util/Mth.clamp:(III)I
+        96: istore        8
+        98: iload         8
+       100: ifle          131
+       103: aload_1
+       104: getstatic     #46                 // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+       107: getstatic     #80                 // Field FUEL_LENGTH_SPRITE:Lnet/minecraft/resources/Identifier;
+       110: bipush        18
+       112: iconst_4
+       113: iconst_0
+       114: iconst_0
+       115: iload         5
+       117: bipush        60
+       119: iadd
+       120: iload         6
+       122: bipush        44
+       124: iadd
+       125: iload         8
+       127: iconst_4
+       128: invokevirtual #83                 // Method net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIII)V
+       131: aload_0
+       132: getfield      #62                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+       135: checkcast     #66                 // class net/minecraft/world/inventory/BrewingStandMenu
+       138: invokevirtual #87                 // Method net/minecraft/world/inventory/BrewingStandMenu.getBrewingTicks:()I
+       141: istore        9
+       143: iload         9
+       145: ifle          255
+       148: ldc           #90                 // float 28.0f
+       150: fconst_1
+       151: iload         9
+       153: i2f
+       154: ldc           #95                 // float 400.0f
+       156: fdiv
+       157: fsub
+       158: fmul
+       159: f2i
+       160: istore        10
+       162: iload         10
+       164: ifle          197
+       167: aload_1
+       168: getstatic     #46                 // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+       171: getstatic     #96                 // Field BREW_PROGRESS_SPRITE:Lnet/minecraft/resources/Identifier;
+       174: bipush        9
+       176: bipush        28
+       178: iconst_0
+       179: iconst_0
+       180: iload         5
+       182: bipush        97
+       184: iadd
+       185: iload         6
+       187: bipush        16
+       189: iadd
+       190: bipush        9
+       192: iload         10
+       194: invokevirtual #83                 // Method net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIII)V
+       197: getstatic     #99                 // Field BUBBLELENGTHS:[I
+       200: iload         9
+       202: iconst_2
+       203: idiv
+       204: bipush        7
+       206: irem
+       207: iaload
+       208: istore        10
+       210: iload         10
+       212: ifle          255
+       215: aload_1
+       216: getstatic     #46                 // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+       219: getstatic     #103                // Field BUBBLES_SPRITE:Lnet/minecraft/resources/Identifier;
+       222: bipush        12
+       224: bipush        29
+       226: iconst_0
+       227: bipush        29
+       229: iload         10
+       231: isub
+       232: iload         5
+       234: bipush        63
+       236: iadd
+       237: iload         6
+       239: bipush        14
+       241: iadd
+       242: bipush        29
+       244: iadd
+       245: iload         10
+       247: isub
+       248: bipush        12
+       250: iload         10
+       252: invokevirtual #83                 // Method net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIII)V
+       255: return
+

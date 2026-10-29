@@ -1,0 +1,44 @@
+  private static boolean isBrewable(net.minecraft.world.item.alchemy.PotionBrewing, net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack>);
+    Code:
+         0: aload_1
+         1: iconst_3
+         2: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+         5: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+         8: astore_2
+         9: aload_2
+        10: invokevirtual #148                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+        13: ifeq          18
+        16: iconst_0
+        17: ireturn
+        18: aload_0
+        19: aload_2
+        20: invokevirtual #152                // Method net/minecraft/world/item/alchemy/PotionBrewing.isIngredient:(Lnet/minecraft/world/item/ItemStack;)Z
+        23: ifne          28
+        26: iconst_0
+        27: ireturn
+        28: iconst_0
+        29: istore_3
+        30: iload_3
+        31: iconst_3
+        32: if_icmpge     74
+        35: aload_1
+        36: iload_3
+        37: invokevirtual #48                 // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+        40: checkcast     #14                 // class net/minecraft/world/item/ItemStack
+        43: astore        4
+        45: aload         4
+        47: invokevirtual #148                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+        50: ifeq          56
+        53: goto          68
+        56: aload_0
+        57: aload         4
+        59: aload_2
+        60: invokevirtual #156                // Method net/minecraft/world/item/alchemy/PotionBrewing.hasMix:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+        63: ifeq          68
+        66: iconst_1
+        67: ireturn
+        68: iinc          3, 1
+        71: goto          30
+        74: iconst_0
+        75: ireturn
+
