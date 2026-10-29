@@ -4570,3 +4570,195 @@ fn the_offline_beacon_quickcraft_the_gates_the_one_each_the_outside_wear() {
         "the drop the entity speaks (the pair the whole carried wears)"
     );
 }
+
+/// THE BEACON'S OWN HOVER-TOOLTIP SEAT (the 324 round — the
+/// extractTooltip pass the beacon the AbstractContainerScreen's own
+/// lane INHERITS, the probe scripts/tooltip_324.py the override
+/// absence banks): the hovered seat's own stack the tooltip rows
+/// speak — the payment coin the seat's own id the rows name, the
+/// mirror row the store's stack answers, the borders the isHovering
+/// walk's own -1/+1 growth keeps, the misses the None verdict
+/// answers. The REAL walk the offline door wears.
+#[test]
+fn the_offline_beacon_tooltip_the_hover_the_name_rows_wear() {
+    let gold = mc_registry::item_id_by_name("gold_ingot").unwrap();
+    let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE TIER-1 PYRAMID'S OWN BASE (the iron ring the realistic
+    // open wears — the tooltip test the door alone reads)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.hotbar_slots = app.inventory.hotbar();
+    app.open_beacon_for((c, top, c));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Beacon,
+        "the offline door the walk wears"
+    );
+    // THE GEOMETRY THE RENDER BANKS (the 323 round's own stand-in —
+    // the payment seat + the two mirror row seats the rects keep)
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    app.beacon_panel = panel;
+    let pay = (panel.0 + 136 + 1 + 8, panel.1 + 110 + 1 + 8);
+    let row0 = (panel.0 + 36 + 1 + 8, panel.1 + 137 + 1 + 8);
+    let row1 = (row0.0 + 18, row0.1);
+    app.beacon_slot_rects = vec![
+        (pay.0 - 8, pay.1 - 8, 0),
+        (row0.0 - 8, row0.1 - 8, 1),
+        (row1.0 - 8, row1.1 - 8, 2),
+    ];
+    // THE PAYMENT SEAT'S OWN ROWS (the coin the seat holds — the
+    // hover the center the hasItem pass answers, the shared lane
+    // the display name speaks)
+    app.beacon_payment = (gold, 1);
+    let (id, rows) = app
+        .beacon_item_tooltip_hover(pay.0, pay.1)
+        .expect("the payment hover the rows speak");
+    assert_eq!(id, gold, "the seat's own stack the id answers");
+    assert_eq!(rows.len(), 1, "the plain flag the name row alone wears");
+    let reg = mc_registry::item_name(gold).unwrap();
+    assert_eq!(
+        rows[0].0,
+        item_display_name(reg),
+        "the name the shared lane speaks"
+    );
+    // THE MIRROR ROW'S OWN ANSWER (the diamond the store holds —
+    // the same gates the row serves)
+    app.beacon_mirror[0] = (diamond, 7);
+    let (id, rows) = app
+        .beacon_item_tooltip_hover(row0.0, row0.1)
+        .expect("the mirror hover the rows speak");
+    assert_eq!(id, diamond, "the row's own stack the id answers");
+    assert_eq!(rows.len(), 1, "the name row the plain flag keeps");
+    // THE ISHOVERING BORDERS (the -1/+1 growth the jar walk pins —
+    // the 18x18 outer cell the edge pixels answer, the +18 miss the
+    // gap wears)
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0 - 8 - 1, pay.1)
+            .is_some(),
+        "the left border the -1 admits"
+    );
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0 - 8 + 16, pay.1)
+            .is_some(),
+        "the inner tail the < x + 17 admits"
+    );
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0 - 8 + 17, pay.1)
+            .is_none(),
+        "the x + 17 the band refuses"
+    );
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0 - 8 - 2, pay.1)
+            .is_none(),
+        "the x - 2 the band refuses"
+    );
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1 - 8 - 1)
+            .is_some(),
+        "the top border the -1 admits"
+    );
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1 - 8 - 2)
+            .is_none(),
+        "the y - 2 the band refuses"
+    );
+    // THE EMPTY SPACE (the no-seat walk the None answers)
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0 + 60, pay.1 + 60)
+            .is_none(),
+        "the panel's blank face the None speaks"
+    );
+    // THE WRONG SCREEN (the world view the beacon walk never serves)
+    app.close_beacon(ScreenKind::World);
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1).is_none(),
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE BEACON'S OWN TOOLTIP GATES (the extractTooltip walk's own
+/// walls — the carried non-empty the image-less stack the
+/// showTooltipWithItemInHand FALSE answers, the empty seats the
+/// hasItem gate refuses, the count-0 sentinel the wire's own law
+/// keeps): the rows the walls never wear. The REAL walk the
+/// offline door wears.
+#[test]
+fn the_offline_beacon_tooltip_the_carried_wall_and_the_empty_gates_wear() {
+    let gold = mc_registry::item_id_by_name("gold_ingot").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.hotbar_slots = app.inventory.hotbar();
+    app.open_beacon_for((c, top, c));
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    app.beacon_panel = panel;
+    let pay = (panel.0 + 136 + 1 + 8, panel.1 + 110 + 1 + 8);
+    let row0 = (panel.0 + 36 + 1 + 8, panel.1 + 137 + 1 + 8);
+    app.beacon_slot_rects = vec![(pay.0 - 8, pay.1 - 8, 0), (row0.0 - 8, row0.1 - 8, 1)];
+    // THE SANITY (the coin the seat holds — the empty-carried walk
+    // the rows speak)
+    app.beacon_payment = (gold, 3);
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1).is_some(),
+        "the empty carried the tooltip serves"
+    );
+    // THE CARRIED WALL (the stack the cursor holds — the image-less
+    // walk the FALSE verdict keeps, the tooltip the wall refuses)
+    app.beacon_carried = (gold, 2);
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1).is_none(),
+        "the carried stack the wall speaks"
+    );
+    app.beacon_carried = (0, 0); // the release the wall retires
+                                 // THE EMPTY SEAT (the hasItem gate the untouched payment row
+                                 // refuses — the mirror the zero sentinel keeps)
+    assert!(
+        app.beacon_item_tooltip_hover(row0.0, row0.1).is_none(),
+        "the empty mirror row the None speaks"
+    );
+    // THE COUNT-0 SENTINEL (the wire's own emptiness the hasItem
+    // law keeps — the stack the zero count wears)
+    app.beacon_payment = (gold, 0);
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1).is_none(),
+        "the count-0 the hasItem gate refuses"
+    );
+    // THE RECOVERED SEAT (the coin the count restores — the rows
+    // the walk serves again)
+    app.beacon_payment = (gold, 1);
+    assert!(
+        app.beacon_item_tooltip_hover(pay.0, pay.1).is_some(),
+        "the restored coin the rows serve"
+    );
+}

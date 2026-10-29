@@ -32128,6 +32128,68 @@ impl App {
                 }
             }
         }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the beacon the
+        // subclass the AbstractContainerScreen's own lane INHERITS,
+        // the probe scripts/tooltip_324.py the override absence pins:
+        // the BeaconScreen method table the renderTooltip/extractTooltip
+        // rows never wears): the hovered seat's own rows the shared
+        // item lane serves, the topmost layer the panel and the
+        // carried stack keep under. The headless scenes track no
+        // mouse — the pixel goldens never see this pass.
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some((_, rows)) = self.beacon_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
+            }
+        }
+    }
+
+    /// THE BEACON'S OWN HOVER-TOOLTIP SEAT (the 324 round — the
+    /// extractTooltip pass the beacon the AbstractContainerScreen's
+    /// own lane INHERITS, the probe scripts/tooltip_324.py the
+    /// override absence banks): the hovered seat's own stack the
+    /// SAME gates the shared law keeps — the hoveredSlot null/empty
+    /// the pc 0-17 return serves, the carried wall the pc 27-46
+    /// verdict keeps (the carried non-empty the image-less stack the
+    /// showTooltipWithItemInHand FALSE answers — the tooltip the
+    /// wall refuses), the rows the getTooltipFromContainerItem the
+    /// shared [`Self::item_tooltip_rows`] lane speaks. THE HIT SHAPE
+    /// the isHovering walk pins (the Slot walk the -1/+1 border
+    /// growth keeps — the 26.2 jar the `dx >= x - 1 && dx < x + w + 1`
+    /// pair the pcs 28-78 answers): the mouse the [sx-1, sx+17) x
+    /// [sy-1, sy+17) band the 18x18 outer cell answers — the slot's
+    /// own +1 inset the stored rect keeps. THE SEAT WALK the render
+    /// loop's own no-break law keeps (the LAST matching seat the
+    /// hoveredSlot field's tail wears — the vanilla the break never
+    /// wears); the beacon's 37 seats the disjoint cells the order
+    /// never fights. The (id, rows) the tooltip paints — None the
+    /// gates speak.
+    fn beacon_item_tooltip_hover(
+        &self,
+        mx: i32,
+        my: i32,
+    ) -> Option<(i32, Vec<(String, [f32; 3])>)> {
+        if self.screen != ScreenKind::Beacon {
+            return None; // the beacon's own screen the walk serves
+        }
+        if self.beacon_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let mut hit: Option<usize> = None;
+        for &(sx, sy, slot) in &self.beacon_slot_rects {
+            if mx >= sx - 1 && mx < sx + 17 && my >= sy - 1 && my < sy + 17 {
+                hit = Some(slot as usize); // the no-break walk the LAST match keeps
+            }
+        }
+        let slot = hit?;
+        let (id, count) = if slot == 0 {
+            self.beacon_payment
+        } else {
+            self.beacon_mirror.get(slot - 1).copied().unwrap_or((0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        Some((id, Self::item_tooltip_rows(id, self.advanced_item_tooltips)))
     }
 
     /// THE DIMENSION SWAP (the verdict's own teleport tail — the
