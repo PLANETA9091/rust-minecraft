@@ -5668,3 +5668,204 @@ fn the_offline_chest_highlight_the_paint_the_cell_wear() {
         "the far face the same verdict keeps"
     );
 }
+
+/// THE HOPPER'S OWN HIGHLIGHT SEAT (the 330 round — the same shared
+/// AbstractContainerScreen law the beacon + inventory + table +
+/// furnace + chest rounds bank, the SHARED SEAT the chest's own fn
+/// answers [the Chest gate the hopper screen wears, the rects the
+/// hopper's own render laid the walk reads]): the five-seat row +
+/// the mirror rows the origin answers, the NO-GATE law the 325
+/// round banks (the carried stack the wall never speaks, the empty
+/// cell the highlight answers), the wrong screen the None answers.
+/// The REAL walk the offline door wears — the headless frame the
+/// REAL rects the render lays.
+#[test]
+fn the_offline_hopper_highlight_the_seat_the_no_gates_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the empty hand the door's own lane keeps
+    }
+    app.open_hopper_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the hopper door the Chest shape wears"
+    );
+    assert!(app.chest_window_hopper, "the hopper canvas the flag banks");
+    // THE REAL RECTS THE RENDER BANKS (one headless frame the mouse
+    // never tracks — the render's own walk the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 133) / 2);
+    assert_eq!(
+        app.chest_panel, panel,
+        "the centered panel the canvas keeps"
+    );
+    // THE SEAT LOOKUP (the menu's own numbering the rects speak —
+    // the five-seat row 0..5 then the mirror's 5..41)
+    let seat = |slot: i16| -> (i32, i32) {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE FIVE-SEAT ROW'S OWN ANSWERS (the head the (44, 20) seat the
+    // ctor's Slot loop speaks, the tail the 4th column keys)
+    let (ix, iy) = seat(0);
+    assert_eq!(
+        app.chest_highlight_origin(ix + 8, iy + 8),
+        Some((ix, iy)),
+        "the seat head the origin answers"
+    );
+    let (tx, ty) = seat(4);
+    assert_eq!(
+        app.chest_highlight_origin(tx + 8, ty + 8),
+        Some((tx, ty)),
+        "the seat tail the origin answers"
+    );
+    // THE MIRROR ROWS' OWN ANSWERS (the menu 5 the main mirror's
+    // first cell, the menu 40 the hotbar tail the SAME walk the
+    // clicks share)
+    let (mx, my) = seat(5);
+    assert_eq!(
+        app.chest_highlight_origin(mx + 8, my + 8),
+        Some((mx, my)),
+        "the mirror head the origin answers"
+    );
+    let (hx, hy) = seat(40);
+    assert_eq!(
+        app.chest_highlight_origin(hx + 8, hy + 8),
+        Some((hx, hy)),
+        "the hotbar tail the origin answers"
+    );
+    // THE NO-GATE LAW (the 325 round's own verdict the hopper screen
+    // re-wears — the carried stack the wall NEVER speaks, the EMPTY
+    // cells the plain answer keeps)
+    app.chest_carried = (7, 3);
+    assert_eq!(
+        app.chest_highlight_origin(ix + 8, iy + 8),
+        Some((ix, iy)),
+        "the carried stack the highlight never refuses"
+    );
+    app.chest_carried = (0, 0);
+    // THE CELL'S OWN EDGES (the strict 16x16 the walk answers — the
+    // shared lane the clicks ride the SAME band keeps)
+    assert_eq!(
+        app.chest_highlight_origin(ix + 16, iy + 8),
+        None,
+        "the east edge the walk refuses"
+    );
+    assert_eq!(
+        app.chest_highlight_origin(ix - 1, iy + 8),
+        None,
+        "the west edge the walk refuses"
+    );
+    // THE BLANK FACE (the no-seat walk the None answers)
+    assert_eq!(
+        app.chest_highlight_origin(panel.0 - 20, panel.1 - 20),
+        None,
+        "the outside face the None speaks"
+    );
+    // THE WRONG SCREEN (the world view the highlight never wears)
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(
+        app.chest_highlight_origin(ix + 8, iy + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE HOPPER'S OWN HIGHLIGHT PAINT (the REAL render walk — the
+/// 320x180 headless canvas the hopper screen renders, the same-frame
+/// pair the mouse the only delta wears): the empty seat head the
+/// back-96 + the front-32 the EXACT alpha math answers (the
+/// two-layer order the composite pins), the transparent border ring
+/// the 24x24 sprite's own 4px margin keeps, the no-mouse pass the
+/// paint never serves.
+#[test]
+fn the_offline_hopper_highlight_the_paint_the_cell_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_hopper_for(cell);
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let blend = |dst: u8, alpha: f32| -> u8 {
+        let d = dst as f32 / 255.0;
+        let v = d * (1.0 - alpha) + 1.0 * alpha;
+        ((v.clamp(0.0, 1.0)) * 255.0 + 0.5) as u8
+    };
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_a, &mut a);
+    }
+    // THE REAL GEOMETRY THE RENDER BANKS (the seat head the (44, 20)
+    // seat the ctor's Slot loop speaks — the +1 inset the rects wear)
+    let panel = ((320 - 176) / 2, (180 - 133) / 2);
+    let (ox, oy) = (panel.0 + 44 + 1, panel.1 + 20 + 1);
+    let cx = ox + 8;
+    let cy = oy + 8;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((cx, cy));
+        app.render(&mut fb_b, &mut a);
+    }
+    // THE CELL'S OWN TINT (the empty seat the highlight paints —
+    // the exact two-layer math the sprite alphas answer)
+    let a0 = pixel(&fb_a, cx, cy);
+    let expected = blend(blend(a0, 96.0 / 255.0), 32.0 / 255.0);
+    assert_eq!(
+        pixel(&fb_b, cx, cy),
+        expected,
+        "the two-layer tint the exact math wears (back 96 + front 32)"
+    );
+    assert_ne!(
+        a0, expected,
+        "the tint the paint speaks (the highlight the canvas moves)"
+    );
+    // THE BORDER RING (the 1px inside the hover walk's band the
+    // sprite's own 4px transparent margin keeps — the cell-only
+    // tint the geometry pins)
+    assert_eq!(
+        pixel(&fb_a, ox - 1, cy),
+        pixel(&fb_b, ox - 1, cy),
+        "the border ring the sprite's margin keeps (no paint)"
+    );
+    // THE FAR FACE (the title row's own distance the paint never
+    // wears — the static label band the same verdict keeps)
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 150, panel.1 + 6),
+        pixel(&fb_b, panel.0 + 150, panel.1 + 6),
+        "the far face the same verdict keeps"
+    );
+}

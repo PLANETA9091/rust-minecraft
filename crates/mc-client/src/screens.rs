@@ -30158,6 +30158,36 @@ impl App {
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 39, t, label, false);
         }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the 330 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the beacon + inventory
+        // + table + furnace + chest rounds bank): the hovered seat's
+        // own 24x24 sprite the (slot.x - 4, slot.y - 4) seat blits, the
+        // isHighlightable gate the ONLY wall speaks — NO carried wall,
+        // NO hasItem gate (the 325 round's own law the hopper screen
+        // re-wears), the white alpha-96 the back layer keeps. The
+        // mouse_pos gate the headless scenes track no mouse — the
+        // pixel goldens never see this pass. THE SHARED SEAT the
+        // chest's own fn answers (the Chest gate the hopper screen
+        // wears, the rects the hopper's own render laid the walk
+        // reads — the five-seat row + the mirror rows the SAME walk
+        // the clicks share), the texture-baked canvas the chest's
+        // explicit-chrome reorder never needs (the hopper.png blit
+        // the bg IS — the back layer the labels' AFTER paints).
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.chest_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
         // THE SLOT ICONS (the chest's own draw — the believed rows the
         // five-seat row + the mirror keep)
         for &(sx, sy, slot) in &self.chest_slot_rects {
@@ -30196,6 +30226,22 @@ impl App {
         // THE BUNDLE TOOLTIP (the renderTooltip pass — the topmost
         // layer the panel and the carried stack keep under)
         self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
     }
 
     /// The survival inventory's BASE pass: the frozen world dimmed
