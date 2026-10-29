@@ -1,0 +1,208 @@
+=== net/minecraft/client/renderer/blockentity/EnchantTableRenderer.class
+--- field BOOK_TEXTURE Lnet/minecraft/client/resources/model/sprite/SpriteId; 
+--- field sprites Lnet/minecraft/client/resources/model/sprite/SpriteGetter; 
+--- field bookModel Lnet/minecraft/client/model/object/book/BookModel; 
+--- method <init> (Lnet/minecraft/client/renderer/blockentity/BlockEntityRendererProvider$Context;)V
+       0 aload_0
+       1 invokespecial ('MTH', None, '<init>', '()V')
+       4 aload_0
+       5 aload_1
+       6 invokevirtual ('MTH', None, 'sprites', '()Lnet/minecraft/client/resources/model/sprite/SpriteGetter;')
+       9 putfield ('FLD', None, 'sprites', 'Lnet/minecraft/client/resources/model/sprite/SpriteGetter;')
+      12 aload_0
+      13 new ('CLS', 'net/minecraft/client/model/object/book/BookModel')
+      16 dup
+      17 aload_1
+      18 getstatic ('FLD', None, 'BOOK', 'Lnet/minecraft/client/model/geom/ModelLayerLocation;')
+      21 invokevirtual ('MTH', 'net/minecraft/client/renderer/blockentity/BlockEntityRendererProvider$Context', 'bakeLayer', '(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;')
+      24 invokespecial ('MTH', 'net/minecraft/client/model/object/book/BookModel', '<init>', '(Lnet/minecraft/client/model/geom/ModelPart;)V')
+      27 putfield ('FLD', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'bookModel', 'Lnet/minecraft/client/model/object/book/BookModel;')
+      30 return
+--- method createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/EnchantTableRenderState;
+       0 new ('CLS', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState')
+       3 dup
+       4 invokespecial ('MTH', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', '<init>', '()V')
+       7 areturn
+--- method extractRenderState (Lnet/minecraft/world/level/block/entity/EnchantingTableBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EnchantTableRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+       0 aload_0
+       1 aload_1
+       2 aload_2
+       3 fload_3
+       4 aload 4
+       6 aload 5
+       8 invokespecial ('IFM', None, 'extractRenderState', '(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V')
+      11 aload_2
+      12 fload_3
+      13 aload_1
+      14 getfield ('FLD', None, 'oFlip', 'F')
+      17 aload_1
+      18 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'flip', 'F')
+      21 invokestatic ('MTH', None, 'lerp', '(FFF)F')
+      24 putfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'flip', 'F')
+      27 aload_2
+      28 fload_3
+      29 aload_1
+      30 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'oOpen', 'F')
+      33 aload_1
+      34 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'open', 'F')
+      37 invokestatic ('MTH', None, 'lerp', '(FFF)F')
+      40 putfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'open', 'F')
+      43 aload_2
+      44 aload_1
+      45 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'time', 'I')
+      48 i2f
+      49 fload_3
+      50 fadd
+      51 putfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'time', 'F')
+      54 aload_1
+      55 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'rot', 'F')
+      58 aload_1
+      59 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'oRot', 'F')
+      62 fsub
+      63 fstore 6
+      65 fload 6
+      67 ldc #81 ('FLT', 3.1415927410125732)
+      69 fcmpl
+      70 iflt -> 83
+      73 fload 6
+      75 ldc #82 ('FLT', 6.2831854820251465)
+      77 fsub
+      78 fstore 6
+      80 goto -> 65
+      83 fload 6
+      85 ldc #83 ('FLT', -3.1415927410125732)
+      87 fcmpg
+      88 ifge -> 101
+      91 fload 6
+      93 ldc #82 ('FLT', 6.2831854820251465)
+      95 fadd
+      96 fstore 6
+      98 goto -> 83
+     101 aload_2
+     102 aload_1
+     103 getfield ('FLD', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity', 'oRot', 'F')
+     106 fload 6
+     108 fload_3
+     109 fmul
+     110 fadd
+     111 putfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'yRot', 'F')
+     114 return
+--- method submit (Lnet/minecraft/client/renderer/blockentity/state/EnchantTableRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+       0 aload_2
+       1 invokevirtual ('MTH', None, 'pushPose', '()V')
+       4 aload_2
+       5 ldc #92 ('FLT', 0.5)
+       7 ldc #93 ('FLT', 0.75)
+       9 ldc #92 ('FLT', 0.5)
+      11 invokevirtual ('MTH', 'com/mojang/blaze3d/vertex/PoseStack', 'translate', '(FFF)V')
+      14 aload_2
+      15 fconst_0
+      16 ldc #98 ('FLT', 0.10000000149011612)
+      18 aload_1
+      19 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'time', 'F')
+      22 ldc #98 ('FLT', 0.10000000149011612)
+      24 fmul
+      25 f2d
+      26 invokestatic ('MTH', 'net/minecraft/util/Mth', 'sin', '(D)F')
+      29 ldc #103 ('FLT', 0.009999999776482582)
+      31 fmul
+      32 fadd
+      33 fconst_0
+      34 invokevirtual ('MTH', 'com/mojang/blaze3d/vertex/PoseStack', 'translate', '(FFF)V')
+      37 aload_1
+      38 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'yRot', 'F')
+      41 fstore 5
+      43 aload_2
+      44 getstatic ('FLD', None, 'YP', 'Lcom/mojang/math/Axis;')
+      47 fload 5
+      49 fneg
+      50 invokeinterface
+      55 invokevirtual ('MTH', 'com/mojang/blaze3d/vertex/PoseStack', 'mulPose', '(Lorg/joml/Quaternionfc;)V')
+      58 aload_2
+      59 getstatic ('FLD', 'com/mojang/math/Axis', 'ZP', 'Lcom/mojang/math/Axis;')
+      62 ldc #121 ('FLT', 80.0)
+      64 invokeinterface
+      69 invokevirtual ('MTH', 'com/mojang/blaze3d/vertex/PoseStack', 'mulPose', '(Lorg/joml/Quaternionfc;)V')
+      72 aload_1
+      73 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'flip', 'F')
+      76 ldc #125 ('FLT', 0.25)
+      78 fadd
+      79 invokestatic ('MTH', 'net/minecraft/util/Mth', 'frac', '(F)F')
+      82 ldc #130 ('FLT', 1.600000023841858)
+      84 fmul
+      85 ldc #131 ('FLT', 0.30000001192092896)
+      87 fsub
+      88 fstore 6
+      90 aload_1
+      91 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'flip', 'F')
+      94 ldc #93 ('FLT', 0.75)
+      96 fadd
+      97 invokestatic ('MTH', 'net/minecraft/util/Mth', 'frac', '(F)F')
+     100 ldc #130 ('FLT', 1.600000023841858)
+     102 fmul
+     103 ldc #131 ('FLT', 0.30000001192092896)
+     105 fsub
+     106 fstore 7
+     108 aload_1
+     109 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'time', 'F')
+     112 fload 6
+     114 fconst_0
+     115 fconst_1
+     116 invokestatic ('MTH', 'net/minecraft/util/Mth', 'clamp', '(FFF)F')
+     119 fload 7
+     121 fconst_0
+     122 fconst_1
+     123 invokestatic ('MTH', 'net/minecraft/util/Mth', 'clamp', '(FFF)F')
+     126 aload_1
+     127 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'open', 'F')
+     130 invokestatic ('MTH', None, 'forAnimation', '(FFFF)Lnet/minecraft/client/model/object/book/BookModel$State;')
+     133 astore 8
+     135 aload_3
+     136 aload_0
+     137 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'bookModel', 'Lnet/minecraft/client/model/object/book/BookModel;')
+     140 aload 8
+     142 aload_2
+     143 aload_1
+     144 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'lightCoords', 'I')
+     147 getstatic ('FLD', None, 'NO_OVERLAY', 'I')
+     150 iconst_m1
+     151 getstatic ('FLD', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'BOOK_TEXTURE', 'Lnet/minecraft/client/resources/model/sprite/SpriteId;')
+     154 aload_0
+     155 getfield ('FLD', None, 'sprites', 'Lnet/minecraft/client/resources/model/sprite/SpriteGetter;')
+     158 iconst_0
+     159 aload_1
+     160 getfield ('FLD', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState', 'breakProgress', 'Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;')
+     163 invokeinterface
+     168 aload_2
+     169 invokevirtual ('MTH', 'com/mojang/blaze3d/vertex/PoseStack', 'popPose', '()V')
+     172 return
+--- method submit (Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+       0 aload_0
+       1 aload_1
+       2 checkcast ('CLS', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState')
+       5 aload_2
+       6 aload_3
+       7 aload 4
+       9 invokevirtual ('MTH', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'submit', '(Lnet/minecraft/client/renderer/blockentity/state/EnchantTableRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V')
+      12 return
+--- method extractRenderState (Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+       0 aload_0
+       1 aload_1
+       2 checkcast ('CLS', 'net/minecraft/world/level/block/entity/EnchantingTableBlockEntity')
+       5 aload_2
+       6 checkcast ('CLS', 'net/minecraft/client/renderer/blockentity/state/EnchantTableRenderState')
+       9 fload_3
+      10 aload 4
+      12 aload 5
+      14 invokevirtual ('MTH', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'extractRenderState', '(Lnet/minecraft/world/level/block/entity/EnchantingTableBlockEntity;Lnet/minecraft/client/renderer/blockentity/state/EnchantTableRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V')
+      17 return
+--- method createRenderState ()Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;
+       0 aload_0
+       1 invokevirtual ('MTH', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'createRenderState', '()Lnet/minecraft/client/renderer/blockentity/state/EnchantTableRenderState;')
+       4 areturn
+--- method <clinit> ()V
+       0 getstatic ('FLD', None, 'BLOCK_ENTITIES_MAPPER', 'Lnet/minecraft/client/renderer/SpriteMapper;')
+       3 ldc #187 ('STR', 'enchantment/enchanting_table_book')
+       5 invokevirtual ('MTH', None, 'defaultNamespaceApply', '(Ljava/lang/String;)Lnet/minecraft/client/resources/model/sprite/SpriteId;')
+       8 putstatic ('FLD', 'net/minecraft/client/renderer/blockentity/EnchantTableRenderer', 'BOOK_TEXTURE', 'Lnet/minecraft/client/resources/model/sprite/SpriteId;')
+      11 return

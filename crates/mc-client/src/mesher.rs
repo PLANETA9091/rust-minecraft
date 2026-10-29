@@ -7105,6 +7105,44 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             per_texel_alpha: false,
                         });
                     }
+                    // THE BOOK FLOAT (the autopush-335 round — the
+                    // rest-pose closed book the ENCHANT_BOOK_QUADS bake
+                    // serves: the anchor (0.5, 0.85, 0.5) the R_z(+80)
+                    // tilt wears, the 16 quads the entity law the
+                    // uniform cell light keeps [NO face shade the
+                    // mob-head lane's own verdict wears], the four
+                    // tiles the pool tail's crops serve)
+                    for bq in ENCHANT_BOOK_QUADS.iter() {
+                        let lm = lightmap_combine(
+                            cell_sky,
+                            cell_block,
+                            sky_factor,
+                            sky_tint,
+                            ambient,
+                            block_tint,
+                            night_vision,
+                            world.night_vision_factor,
+                            world.darkness_scale,
+                        );
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        for i in 0..4 {
+                            pts[i] = [
+                                wx as f32 + bq.pts[i][0],
+                                wy as f32 + bq.pts[i][1],
+                                wz as f32 + bq.pts[i][2],
+                            ];
+                            colors[i] = [lm[0], lm[1], lm[2]];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs: bq.uvs,
+                            tile: bq.tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
                     continue;
                 }
                 // THE END GATEWAY'S OWN INVISIBLE LANE (the autopush-310
@@ -9567,6 +9605,245 @@ fn enchant_table_named_tile(tex: &str) -> u16 {
     let stem = tex.strip_prefix("block/").unwrap_or(tex);
     m.get(stem).copied().unwrap_or(atlas::TILE_NONE)
 }
+
+/// THE BOOK FLOAT'S OWN BAKED QUAD (the autopush-335 round — the pts
+/// the BLOCK-LOCAL coords carry [the cell origin the mesher adds],
+/// the uvs the TILE-LOCAL 0..1 the four crop windows keep).
+struct BookQuad {
+    tile: u16,
+    pts: [[f32; 3]; 4],
+    uvs: [[f32; 2]; 4],
+}
+
+/// THE ENCHANTING TABLE'S OWN BOOK FLOAT (the 26.2 jar's
+/// BookModel.createBodyLayer + BookModel.setupAnim +
+/// EnchantTableRenderer.submit + ModelPart$Cube/<Polygon> the probes
+/// scripts/book_float_probe_335.py + book_bake_335.py bank): the
+/// REST pose the fresh-BE zeros speak (time 0, open 0, flip 0, rot 0
+/// — the bookAnimationTick's no-viewer decay the rest pins — the
+/// openness the (sin(0)*0.1+1.25)*0 = 0 the forAnimation walk
+/// answers, the lids' rest angles pi + 0 / -0, the pageFlips
+/// frac(0.25)*1.6-0.3 = 0.1 / frac(0.75)*1.6-0.3 = 0.9 the CLOSED
+/// rest state keeps). The closed book the anchor (0.5, 0.85, 0.5)
+/// [0.75 + 0.1 lift, the sin(0)*0.01 bob the rest zeros] the
+/// R_z(+80deg) tilt wears — the spine-down standing slab the
+/// fore-edge-up lean speaks (the world span y 12.73..20.38 px the
+/// pedestal's 12-px ceiling clears, the block's 16-px top pokes).
+/// The 16 quads the four non-sliver parts' faces speak: the lids'
+/// north/south pair each [the yRot-pi fold the left cover's mirror
+/// carries], the pages' six each [the 5x8x1 slabs the fore-edge
+/// strips keep]; the seam the 0.01-px sliver the sub-pixel raster
+/// never resolves, the flip pages the right_pages slab's z-band
+/// interior the occlusion keeps, the bob/spin/page-flip the
+/// animated BE lane the static block lane never wears. The four
+/// tiles the pool tail's crops serve (lid_left 1070, lid_right
+/// 1071, pages_left 1072, pages_right 1073 — the jar's
+/// entity/enchantment/enchanting_table_book.png the 64x32 master
+/// wears). The entity law the light lane keeps (the mob-head lane's
+/// own verdict — the uniform cell light every face wears, NO face
+/// shade, NO AO the entity pipeline never samples).
+static ENCHANT_BOOK_QUADS: [BookQuad; 16] = [
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_LID_LEFT,
+        pts: [
+            [0.807752, 0.795735, 0.437813],
+            [0.872871, 1.165038, 0.437813],
+            [0.257366, 1.273568, 0.437813],
+            [0.192248, 0.904265, 0.437813],
+        ],
+        uvs: [
+            [0.375313, 0.000312],
+            [0.000312, 0.000312],
+            [0.000312, 0.625313],
+            [0.375313, 0.625313],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_LID_LEFT,
+        pts: [
+            [0.872871, 1.165038, 0.4375],
+            [0.807752, 0.795735, 0.4375],
+            [0.192248, 0.904265, 0.4375],
+            [0.257366, 1.273568, 0.4375],
+        ],
+        uvs: [
+            [0.750625, 0.000312],
+            [0.375625, 0.000312],
+            [0.375625, 0.625313],
+            [0.750625, 0.625313],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_LID_RIGHT,
+        pts: [
+            [0.872871, 1.165038, 0.562187],
+            [0.807752, 0.795735, 0.562187],
+            [0.192248, 0.904265, 0.562187],
+            [0.257366, 1.273568, 0.562187],
+        ],
+        uvs: [
+            [0.375313, 0.000312],
+            [0.000312, 0.000312],
+            [0.000312, 0.625313],
+            [0.375313, 0.625313],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_LID_RIGHT,
+        pts: [
+            [0.807752, 0.795735, 0.5625],
+            [0.872871, 1.165038, 0.5625],
+            [0.257366, 1.273568, 0.5625],
+            [0.192248, 0.904265, 0.5625],
+        ],
+        uvs: [
+            [0.750625, 0.000312],
+            [0.375625, 0.000312],
+            [0.375625, 0.625313],
+            [0.750625, 0.625313],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+        pts: [
+            [0.800467, 1.11434, 0.438125],
+            [0.746202, 0.806588, 0.438125],
+            [0.253798, 0.893412, 0.438125],
+            [0.308063, 1.201164, 0.438125],
+        ],
+        uvs: [[0.375, 0.5], [0.0625, 0.5], [0.0625, 1.0], [0.375, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+        pts: [
+            [0.746202, 0.806588, 0.500625],
+            [0.800467, 1.11434, 0.500625],
+            [0.308063, 1.201164, 0.500625],
+            [0.253798, 0.893412, 0.500625],
+        ],
+        uvs: [[0.75, 0.5], [0.4375, 0.5], [0.4375, 1.0], [0.75, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+        pts: [
+            [0.746202, 0.806588, 0.438125],
+            [0.746202, 0.806588, 0.500625],
+            [0.253798, 0.893412, 0.500625],
+            [0.253798, 0.893412, 0.438125],
+        ],
+        uvs: [[0.0625, 0.5], [0.0, 0.5], [0.0, 1.0], [0.0625, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+        pts: [
+            [0.800467, 1.11434, 0.500625],
+            [0.800467, 1.11434, 0.438125],
+            [0.308063, 1.201164, 0.438125],
+            [0.308063, 1.201164, 0.500625],
+        ],
+        uvs: [[0.4375, 0.5], [0.375, 0.5], [0.375, 1.0], [0.4375, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+        pts: [
+            [0.800467, 1.11434, 0.500625],
+            [0.746202, 0.806588, 0.500625],
+            [0.746202, 0.806588, 0.438125],
+            [0.800467, 1.11434, 0.438125],
+        ],
+        uvs: [
+            [0.375, 0.4375],
+            [0.0625, 0.4375],
+            [0.0625, 0.5],
+            [0.375, 0.5],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+        pts: [
+            [0.308063, 1.201164, 0.438125],
+            [0.253798, 0.893412, 0.438125],
+            [0.253798, 0.893412, 0.500625],
+            [0.308063, 1.201164, 0.500625],
+        ],
+        uvs: [
+            [0.4375, 0.5],
+            [0.375, 0.5],
+            [0.375, 0.4375],
+            [0.4375, 0.4375],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        pts: [
+            [0.800467, 1.11434, 0.499375],
+            [0.746202, 0.806588, 0.499375],
+            [0.253798, 0.893412, 0.499375],
+            [0.308063, 1.201164, 0.499375],
+        ],
+        uvs: [[0.375, 0.5], [0.0625, 0.5], [0.0625, 1.0], [0.375, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        pts: [
+            [0.746202, 0.806588, 0.561875],
+            [0.800467, 1.11434, 0.561875],
+            [0.308063, 1.201164, 0.561875],
+            [0.253798, 0.893412, 0.561875],
+        ],
+        uvs: [[0.75, 0.5], [0.4375, 0.5], [0.4375, 1.0], [0.75, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        pts: [
+            [0.746202, 0.806588, 0.499375],
+            [0.746202, 0.806588, 0.561875],
+            [0.253798, 0.893412, 0.561875],
+            [0.253798, 0.893412, 0.499375],
+        ],
+        uvs: [[0.0625, 0.5], [0.0, 0.5], [0.0, 1.0], [0.0625, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        pts: [
+            [0.800467, 1.11434, 0.561875],
+            [0.800467, 1.11434, 0.499375],
+            [0.308063, 1.201164, 0.499375],
+            [0.308063, 1.201164, 0.561875],
+        ],
+        uvs: [[0.4375, 0.5], [0.375, 0.5], [0.375, 1.0], [0.4375, 1.0]],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        pts: [
+            [0.800467, 1.11434, 0.561875],
+            [0.746202, 0.806588, 0.561875],
+            [0.746202, 0.806588, 0.499375],
+            [0.800467, 1.11434, 0.499375],
+        ],
+        uvs: [
+            [0.375, 0.4375],
+            [0.0625, 0.4375],
+            [0.0625, 0.5],
+            [0.375, 0.5],
+        ],
+    },
+    BookQuad {
+        tile: atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        pts: [
+            [0.308063, 1.201164, 0.499375],
+            [0.253798, 0.893412, 0.499375],
+            [0.253798, 0.893412, 0.561875],
+            [0.308063, 1.201164, 0.561875],
+        ],
+        uvs: [
+            [0.4375, 0.5],
+            [0.375, 0.5],
+            [0.375, 0.4375],
+            [0.4375, 0.4375],
+        ],
+    },
+];
 
 /// THE BED MODELS' OWN CACHED BAKES (the dev-194 round — the sixteen
 /// colors' head/foot pair the derive walk bakes ONCE, the cross-level
@@ -19654,6 +19931,7 @@ mod tests {
                     && p[2] >= 8.0 - 1e-6
                     && p[2] <= 9.0 + 1e-6
             })
+                && quad.tile <= gen_atlas::TILE_ENCHANTING_TABLE_SIDE
         };
         // THE AIR NEIGHBORS' OWN SIX (the fresh cell the six
         // directions the air keeps)
@@ -19738,6 +20016,164 @@ mod tests {
                 (v_min - 4.0 / 16.0).abs() < 1e-6 && (v_max - 1.0).abs() < 1e-6,
                 "the side face the [0.25, 1.0] v-window wears, got [{v_min}, {v_max}]"
             );
+        }
+    }
+
+    #[test]
+    fn the_enchanting_table_the_book_float_the_16_quads_wear() {
+        // THE ENCHANTING TABLE'S OWN BOOK FLOAT (the autopush-335
+        // round — the rest-pose closed book the jar's BookModel +
+        // EnchantTableRenderer.submit the probes bank: the anchor
+        // (0.5, 0.85, 0.5) the R_z(+80deg) tilt wears, the 16 quads
+        // the four non-sliver parts' faces speak, the FOUR tiles the
+        // pool tail's crops serve, the FLOAT the pedestal's 12-px
+        // ceiling the block's 16-px top the lean pokes)
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE BOOK COLUMN'S OWN WINDOW (the quads the y 8..9.5 band
+        // the lean's above-block poke keeps — the pedestal's strict
+        // 9.0 cap the book's 9.27 top exceeds)
+        let in_book = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-6
+                    && p[0] <= 9.0 + 1e-6
+                    && p[1] >= 8.0 - 1e-6
+                    && p[1] <= 9.5 + 1e-6
+                    && p[2] >= 8.0 - 1e-6
+                    && p[2] <= 9.0 + 1e-6
+            }) && quad.pts.iter().any(|p| p[1] > 8.0 + 12.0 / 16.0 + 1e-6)
+        };
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::ENCHANTING_TABLE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        // THE PAIR'S OWN SPLIT (the pedestal the strict in-cell filter
+        // the book's above-9 pokes exclude — the 6 keeps, the book
+        // the 16 speaks)
+        let book: Vec<_> = q.iter().filter(|quad| in_book(quad)).collect();
+        assert_eq!(
+            book.len(),
+            16,
+            "the book float's own 16 quads the four parts bake"
+        );
+        // THE TILE QUARTET'S OWN SPLIT (the lids the 1070/1071 pair
+        // the N/S faces serve [2+2], the pages the 1072/1073 pair the
+        // six faces each keep [6+6])
+        assert_eq!(
+            book.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_ENCHANTING_TABLE_BOOK_LID_LEFT)
+                .count(),
+            2,
+            "the left lid the N/S pair wears"
+        );
+        assert_eq!(
+            book.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_ENCHANTING_TABLE_BOOK_LID_RIGHT)
+                .count(),
+            2,
+            "the right lid the N/S pair keeps"
+        );
+        assert_eq!(
+            book.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT)
+                .count(),
+            6,
+            "the left pages the six faces serve"
+        );
+        assert_eq!(
+            book.iter()
+                .filter(|quad| quad.tile == gen_atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT)
+                .count(),
+            6,
+            "the right pages the six faces keep"
+        );
+        // THE OPAQUE LAW (the book master the alpha {255} map the
+        // decode pins — the cutout lane the glass shell alone wears)
+        for quad in &book {
+            assert!(
+                !quad.translucent && !quad.per_texel_alpha,
+                "the book the opaque law wears"
+            );
+        }
+        // THE FLOAT'S OWN SPAN (the fresh-BE rest the bake pins: the
+        // y 12.73..20.38 px band the ceiling clears the top pokes,
+        // the z 7..9 px the 2-px-thick slab N-S centered, the x
+        // 3.08..13.97 px the lean's in-cell span keeps)
+        let y_min = book
+            .iter()
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MAX, f32::min);
+        let y_max = book
+            .iter()
+            .flat_map(|quad| quad.pts.iter().map(|p| p[1]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            y_min > 8.0 + 12.0 / 16.0 && (y_min - (8.0 + 12.732 / 16.0)).abs() < 1e-3,
+            "the book the pedestal ceiling clears, got {y_min}"
+        );
+        assert!(
+            y_max > 9.0 && (y_max - (8.0 + 20.379 / 16.0)).abs() < 1e-3,
+            "the book the block top pokes, got {y_max}"
+        );
+        let z_min = book
+            .iter()
+            .flat_map(|quad| quad.pts.iter().map(|p| p[2]))
+            .fold(f32::MAX, f32::min);
+        let z_max = book
+            .iter()
+            .flat_map(|quad| quad.pts.iter().map(|p| p[2]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (z_min - (8.0 + 7.0 / 16.0)).abs() < 1e-3 && (z_max - (8.0 + 9.0 / 16.0)).abs() < 1e-3,
+            "the book the 2-px N-S slab wears, got [{z_min}, {z_max}]"
+        );
+        // THE UV WINDOW'S OWN TILE LAW (the lid quads the v 0..10/16
+        // window the crops' top keep, the pages the v 7/16..1.0 band
+        // the (0,3)/(12,3) windows serve — every uv the 0..1 the
+        // tile-local law keeps)
+        for quad in book
+            .iter()
+            .filter(|quad| quad.tile == gen_atlas::TILE_ENCHANTING_TABLE_BOOK_LID_LEFT)
+        {
+            for uv in quad.uvs.iter() {
+                assert!(
+                    uv[0] >= 0.0 && uv[0] <= 1.0 && uv[1] >= 0.0 && uv[1] <= 10.0 / 16.0 + 1e-3,
+                    "the lid quad the crop's top band wears, got {uv:?}"
+                );
+            }
+        }
+        // THE PAGES' OWN AGGREGATE WINDOW (the six faces the [7/16,
+        // 1.0] v-band the (0,3)/(12,3) windows serve — the strips the
+        // narrow v bands the aggregate keeps)
+        for tile_id in [
+            gen_atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_LEFT,
+            gen_atlas::TILE_ENCHANTING_TABLE_BOOK_PAGES_RIGHT,
+        ] {
+            let pages: Vec<_> = book.iter().filter(|quad| quad.tile == tile_id).collect();
+            let v_min = pages
+                .iter()
+                .flat_map(|quad| quad.uvs.iter().map(|uv| uv[1]))
+                .fold(f32::MAX, f32::min);
+            let v_max = pages
+                .iter()
+                .flat_map(|quad| quad.uvs.iter().map(|uv| uv[1]))
+                .fold(f32::MIN, f32::max);
+            assert!(
+                (v_min - 7.0 / 16.0).abs() < 1e-6 && (v_max - 1.0).abs() < 1e-6,
+                "the pages tile the [7/16, 1.0] aggregate v-window wears, got [{v_min}, {v_max}]"
+            );
+        }
+        // THE ENTITY LIGHT'S OWN UNIFORM (the book quad's four colors
+        // the ONE cell light speak — NO face shade the mob-head law
+        // keeps)
+        for quad in &book {
+            let c0 = quad.colors[0];
+            for c in quad.colors.iter().skip(1) {
+                assert!(
+                    (c[0] - c0[0]).abs() < 1e-6
+                        && (c[1] - c0[1]).abs() < 1e-6
+                        && (c[2] - c0[2]).abs() < 1e-6,
+                    "the book the uniform cell light wears"
+                );
+            }
         }
     }
 
