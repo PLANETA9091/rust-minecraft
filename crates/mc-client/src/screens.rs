@@ -7085,6 +7085,19 @@ pub enum ScreenKind {
     /// hopper's own law the wire never wears (the server's own
     /// OpenScreen word owns the wire container).
     Brewing,
+    /// THE ENCHANTING TABLE'S OWN GUI DOOR (the autopush-333 round — the
+    /// 26.2 jar the EnchantmentMenu ctor's bytecode walk banks — the
+    /// scripts/enchant_menu_probe_333.py the constants stream speaks):
+    /// the item the (15, 47) seat, the lapis the (35, 47) seat, the
+    /// standard rows addStandardInventorySlots(8, 84) the 36 mirror
+    /// cells keep [the menu 0..2 the pair + the rows 2..38 the
+    /// numbering banks]. The OFFLINE door the hopper's own law the
+    /// wire never wears (the server's own OpenScreen word owns the
+    /// wire container); the table's own pair the TRANSIENT seats the
+    /// SimpleContainer(2) the removed()'s clearContainer the close
+    /// ride-home speaks — NO per-cell store the chest's map law never
+    /// wears.
+    Enchanting,
     /// THE WORLD OPTIONS' OWN DIAL (javap 26.2 WorldOptionsScreen +
     /// DifficultyButtons — the OptionsScreen's in-world
     /// `options.worldOptions.button` the header row opens): the
@@ -9507,6 +9520,32 @@ pub struct App {
     /// close flush the key takes home — the None the closed screens
     /// keep; the per-cell law the brewing bank speaks).
     pub brewing_open_cell: Option<(i32, i32, i32)>,
+    /// THE ENCHANTING TABLE'S OWN TRANSIENT PAIR (the EnchantmentMenu's
+    /// SimpleContainer(2) the offline canvas projects — the item 0 the
+    /// lapis 1 the menu numbering banks; the (0, 0) stacks the empty
+    /// seats wear, the open the FRESH pair lays [no per-cell store —
+    /// the vanilla menu the table's own BE never keeps], the close
+    /// the pair the ride-home walk returns).
+    pub enchant_slots: Vec<(i32, i32)>,
+    /// THE ENCHANTING TABLE'S OWN MIRROR (the 36 standard rows the
+    /// menu's addStandardInventorySlots(8, 84) places — the main
+    /// 0..26, the hotbar 27..35; the chest's own sync law the
+    /// projection keeps, the REAL inventory the rows speak).
+    pub enchant_mirror: Vec<(i32, i32)>,
+    /// THE ENCHANTING TABLE'S OWN CARRIED (the offline doClick's own
+    /// cursor the pickup/split predictions mutate — the close's
+    /// add-back walk returns it).
+    pub enchant_carried: (i32, i32),
+    /// The enchanting table's slot hit boxes the LAST render laid out:
+    /// (x, y, the MENU's own slot number) — the pair (the item 0 the
+    /// (15, 47) seat the lapis 1 the (35, 47) seat, the 26.2 ctor's
+    /// own literal seats) then the standard rows (2..37), the 16x16
+    /// inner boxes the clicks hit-test against.
+    pub enchant_slot_rects: Vec<(i32, i32, i16)>,
+    /// The enchanting panel's GUI origin the LAST render laid out (the
+    /// furnace's own centered origin — the SAME 176x166 canvas the
+    /// inherited imageWidth/imageHeight keeps).
+    pub enchant_panel: (i32, i32),
     /// THE OPENED CELL'S OWN KIND (the DISPENSER/DROPPER byte the
     /// title lane reads — the BlockEntity's DEFAULT_NAME the
     /// container.* lang row banks; the zero the closed screens keep).
@@ -12466,6 +12505,11 @@ impl App {
             brewing_slot_rects: Vec::new(),
             brewing_panel: (0, 0),
             brewing_open_cell: None,
+            enchant_slots: Vec::new(),
+            enchant_mirror: Vec::new(),
+            enchant_carried: (0, 0),
+            enchant_slot_rects: Vec::new(),
+            enchant_panel: (0, 0),
             dispenser_open_kind: 0,
             dispenser_is_live: false,
             dispenser_live_window: None,
@@ -23147,6 +23191,7 @@ impl App {
             || self.screen == ScreenKind::Chest
             || self.screen == ScreenKind::Dispenser
             || self.screen == ScreenKind::Brewing
+            || self.screen == ScreenKind::Enchanting
             || self.screen == ScreenKind::Crafting
             || self.screen == ScreenKind::Furnace
             || self.screen == ScreenKind::Beacon
@@ -23243,6 +23288,7 @@ impl App {
                     | ScreenKind::Chest
                     | ScreenKind::Dispenser
                     | ScreenKind::Brewing
+                    | ScreenKind::Enchanting
                     | ScreenKind::Furnace
                     | ScreenKind::Crafting
                     | ScreenKind::Creative
@@ -23266,7 +23312,11 @@ impl App {
         // carries no rows at all — the clears are its no-ops.
         if matches!(
             kind,
-            ScreenKind::Chest | ScreenKind::Dispenser | ScreenKind::Brewing | ScreenKind::Inventory
+            ScreenKind::Chest
+                | ScreenKind::Dispenser
+                | ScreenKind::Brewing
+                | ScreenKind::Enchanting
+                | ScreenKind::Inventory
         ) {
             self.bundle_scroll_acc_x = 0.0;
             self.bundle_scroll_acc_y = 0.0;
@@ -23274,6 +23324,7 @@ impl App {
         if kind == ScreenKind::Chest
             || kind == ScreenKind::Dispenser
             || kind == ScreenKind::Brewing
+            || kind == ScreenKind::Enchanting
             || (kind == ScreenKind::Inventory && self.chest_live_window.is_some())
         {
             self.bundle_contents.clear();
@@ -24120,6 +24171,7 @@ impl App {
             ScreenKind::Chest => self.close_chest_container(ScreenKind::World),
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
             ScreenKind::Brewing => self.close_brewing(ScreenKind::World),
+            ScreenKind::Enchanting => self.close_enchanting(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             _ => {}
@@ -27477,6 +27529,130 @@ impl App {
             // analog wears)
             let _ = self.container_fill_sync(pos, None);
             self.attach_wire_voice(pos.0, pos.1, pos.2);
+        }
+        self.container_removed_rode = true; // the removed law rode
+        self.open(back);
+    }
+
+    /// THE ENCHANTING TABLE'S OWN DOOR (javap 26.2 EnchantmentTableBlock
+    /// the openMenu walk the EnchantmentMenu's MenuProvider answer —
+    /// the right-press on the placed enchanting table the OFFLINE
+    /// world answers — the window the table's own 176x166 canvas
+    /// opens, the TRANSIENT pair the SimpleContainer(2) the fresh
+    /// seats lay [the vanilla menu the table's own BE never keeps —
+    /// NO per-cell store the chest's map law never wears, the close
+    /// the pair the ride-home walk returns]).
+    pub fn open_enchanting_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE STALE CELL'S OWN RELEASE FIRST (the chest open walk's
+        // own law the brewing lane wears)
+        self.barrel_lid_released();
+        // the OFFLINE stand-in: the live lane's flag stays down (the
+        // enchanting door the wire session never wears)
+        self.chest_is_live = false;
+        self.chest_mirror.clear();
+        // THE TRANSIENT PAIR (the EnchantmentMenu's own SimpleContainer(2)
+        // the fresh open lays — the item 0 the lapis 1 the menu
+        // numbering banks)
+        self.enchant_slots = vec![(0, 0), (0, 0)];
+        self.enchant_carried = (0, 0);
+        // the player's own rows the REAL inventory projects (the
+        // menu's addStandardInventorySlots(8, 84) the mirror rows the
+        // same projection keeps)
+        self.enchant_mirror_sync_from_inventory();
+        // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
+        // — the enchanting kind the vanilla's own silence arm the
+        // emit call returns)
+        self.container_voice_emit(true);
+        self.open(ScreenKind::Enchanting);
+    }
+
+    /// THE ENCHANTING TABLE'S OWN MIRROR SYNC (the chest's own law — the
+    /// projection the inventory IS: the main rows the items 9..35
+    /// speak, the hotbar row the items 0..8, the fresh rows EVERY
+    /// mutation re-syncs).
+    pub fn enchant_mirror_sync_from_inventory(&mut self) {
+        if self.enchant_mirror.len() != 36 {
+            self.enchant_mirror.resize(36, (0, 0));
+        }
+        for i in 0..27 {
+            self.enchant_mirror[i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.enchant_mirror[27 + i] = self.inventory.items[i];
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE ENCHANTING TABLE'S OWN CLOSE (the vanilla Escape/E on the
+    /// enchanting table's screen — the chest's own close walk the
+    /// carried return speaks, the EnchantmentMenu.removed()'s
+    /// clearContainer the PAIR home returns: the same-item merges, the
+    /// first-empty pass, the full store the remainder drops — the
+    /// close_brewing shape, the NO store flush the table's BE never
+    /// keeps), the screen back to the world.
+    pub fn close_enchanting(&mut self, back: ScreenKind) {
+        // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
+        // placeItemBackInInventory walk — the close_brewing shape)
+        if self.enchant_carried.1 > 0 {
+            let (id, count) = self.enchant_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.enchant_carried = (0, 0);
+        }
+        // THE PAIR'S OWN HOME RIDE (the removed()'s clearContainer walk —
+        // the transient seats the close NEVER banks: each held stack
+        // the same merge/first-empty/drop lane returns)
+        for seat in 0..2usize {
+            let (id, count) = self.enchant_slots[seat];
+            if count <= 0 {
+                continue;
+            }
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.enchant_slots[seat] = (0, 0);
         }
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
@@ -31254,6 +31430,38 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE ENCHANTING TABLE'S OWN HOVER SEAT (the autopush-333 round —
+    /// the same shared law the furnace + chest + hopper + dispenser +
+    /// brewing walks bank): the hovered seat the rects the last render
+    /// laid answer — the strict 16x16 predicate the inner origins the
+    /// +1 inset the Slot.x keeps, the table's pair the mirror rows the
+    /// menu numbering banks. The find the FIRST match the
+    /// non-overlapping cells keep.
+    fn enchant_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.enchant_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE ENCHANTING TABLE'S OWN HIGHLIGHT SEAT (the autopush-333 round
+    /// — the same shared AbstractContainerScreen law the beacon +
+    /// inventory + table + furnace + chest + hopper + dispenser +
+    /// brewing rounds bank, the EnchantmentScreen the plain extension
+    /// the subclass absence banks): the hovered seat's INNER origin the
+    /// enchant_hover_seat walk's own verdict answers — the ONE hover
+    /// walk the clicks and the drops and the drags share. The NO-GATE
+    /// law the 325 round banks: NO carried wall, NO hasItem gate —
+    /// the empty cell the highlight answers. The (ox, oy) the paint
+    /// serves — None the gates speak.
+    fn enchant_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Enchanting {
+            return None; // the enchanting's own screen the walk serves
+        }
+        let (sx, sy, _) = self.enchant_hover_seat(mx, my)?;
+        Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
     /// — the extractBackground then extractRenderState order the draw
     /// keeps: the dimmed world the container convention dims, the
@@ -32670,6 +32878,143 @@ impl App {
         }
     }
 
+    /// THE ENCHANTING TABLE'S OWN RENDER (the vanilla EnchantmentScreen
+    /// over the frozen world — the brewing's own shape the
+    /// texture-blitted base keeps): world underneath, dimmed, the REAL
+    /// `gui/container/enchanting_table.png` background blitted 176x166
+    /// at the centered panel [the extractBackground walk the inherited
+    /// imageWidth/imageHeight the 176x166 standard canvas keeps — the
+    /// PNG's own opaque bbox (0,0)-(175,165) the decode pins, the book
+    /// the texture bakes, the extractBook's animated glyphs the
+    /// offline canvas never draws], the centered title the init walk's
+    /// own formula speaks, the labels the extractLabels walk draws,
+    /// the pair + the mirror icons the believed rows render, the slot
+    /// HIT BOXES the 16x16 inner cells the +1 inset wears — the
+    /// buttons' own render-then-hit pattern, zero pixel surface of its
+    /// own.
+    fn render_enchanting(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.enchant_panel = panel;
+        // THE HIT BOXES (the 26.2 ctor's own literal seats the
+        // bytecode probe banks — scripts/enchant_menu_probe_333.py the
+        // constants stream speaks: the item (15, 47), the lapis
+        // (35, 47), the standard rows 2..38 the
+        // addStandardInventorySlots(8, 84) walk keeps — the 16x16
+        // inner cells the +1 inset wears)
+        self.enchant_slot_rects = [
+            (panel.0 + 15 + 1, panel.1 + 47 + 1, 0i16),
+            (panel.0 + 35 + 1, panel.1 + 47 + 1, 1i16),
+        ]
+        .into_iter()
+        .chain((0..36).map(|i| {
+            let (sx, sy) = chest_mirror_slot(panel, i);
+            (sx + 1, sy + 1, (2 + i) as i16)
+        }))
+        .collect();
+        g.sprite_file_region(
+            a,
+            "gui/container/enchanting_table.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
+        // THE CENTERED TITLE (the init walk's own formula the
+        // DispenserScreen's own override speaks — the kind's own lang
+        // row the opened kind banks)
+        let label = [0.251, 0.251, 0.251];
+        let title_text = tr("container.enchant").unwrap_or("").to_string();
+        if !title_text.is_empty() {
+            let tx = panel.0 + (176 - g.text_width(&title_text)) / 2;
+            g.text(a, tx, panel.1 + 6, &title_text, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the autopush-333 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the family rounds
+        // bank): the hovered seat's own 24x24 sprite the (slot.x - 4,
+        // slot.y - 4) seat blits, the isHighlightable gate the ONLY
+        // wall speaks — NO carried wall, NO hasItem gate, the white
+        // alpha-96 the back layer keeps. The mouse_pos gate the
+        // headless scenes track no mouse — the pixel goldens never see
+        // this pass. THE SHARED SEAT the enchanting's own fn answers,
+        // the texture-baked canvas the chest's explicit-chrome reorder
+        // never needs (the enchanting_table.png blit the bg IS — the
+        // brewing's own law the texture-baked family keeps).
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.enchant_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+        // THE SLOT ICONS (the brewing's own draw — the believed rows
+        // the pair + the mirror keep: the transient pair, the standard
+        // rows the real inventory speaks)
+        for &(sx, sy, slot) in &self.enchant_slot_rects {
+            let slot = slot as usize;
+            let believed = if slot < 2 {
+                self.enchant_slots.get(slot)
+            } else {
+                self.enchant_mirror.get(slot - 2)
+            };
+            let Some(&(id, count)) = believed else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the offline sim's local cursor the chest's own gate
+        // keeps, the headless scenes track no mouse)
+        if self.enchant_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.enchant_carried.0, mx - 8, my - 8);
+                if self.enchant_carried.1 > 1 {
+                    let s = self.enchant_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+    }
+
     /// THE BEACON'S OWN ROUND (the autopush-322 round — the vanilla
     /// BeaconScreen over the frozen world, the 26.2 disasm's own
     /// layout the walk banks — scripts/jar_work/beacon_gui_322.txt
@@ -33592,6 +33937,12 @@ impl App {
             // brewing stand's screen — the chest's own close walk the
             // carried return, the store flush and the fill ride speak)
             self.close_brewing(ScreenKind::World);
+        } else if self.screen == ScreenKind::Enchanting {
+            // THE TRANSIENT PAIR'S OWN CLOSE (the vanilla Escape/E
+            // on the enchanting table's screen — the close walk the
+            // carried + the pair home return, the NO store the table
+            // never keeps)
+            self.close_enchanting(ScreenKind::World);
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
             // furnace's screen — the chest's own close walk the menu
@@ -35116,6 +35467,12 @@ impl App {
             // brewing door never wears)
             return self.brewing_carried;
         }
+        if self.screen == ScreenKind::Enchanting {
+            // THE TRANSIENT PAIR'S OWN LANE CURSOR (the offline sim
+            // the SAME field's own stack holds — the wire lane the
+            // enchanting door never wears)
+            return self.enchant_carried;
+        }
         if self.screen == ScreenKind::Chest {
             return self.chest_carried;
         }
@@ -35410,6 +35767,63 @@ impl App {
             return; // pc 25 — the no-seat frame the paint skips
         };
         let carried = self.brewing_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the Set.add's own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
+    /// THE ENCHANTING DRAG'S OWN ARM (the same mouseClicked pcs 316-378
+    /// base walk the family rounds bank — the enchanting screen the
+    /// SAME AbstractContainerScreen base class wears): the
+    /// carried-NON-EMPTY press the isQuickCrafting start speaks — NO
+    /// slot click, NO packet. The hovered seat AND the outside press
+    /// the arm answers; the press BETWEEN the slots (k == -1) the
+    /// whole arm skips. The OFFLINE sim the drag the local lanes ride
+    /// (the wire lane the brewing's own law never wears).
+    fn qc_arm_enchanting(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if self.enchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.enchant_panel;
+        let on_seat = self.enchant_hover_seat(mx, my).is_some();
+        let outside = panel != (0, 0)
+            && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32;
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
+    /// THE ENCHANTING DRAG'S OWN COLLECT (mouseDragged pcs 23-58 — the
+    /// hovered seat the shouldAddSlotToQuickCraft gates answer): the
+    /// same walk the brewing's paint wears — the carried non-empty,
+    /// the count's own law, the seat's canItemQuickReplace, the plain
+    /// slots' mayPlace the base Slot's iconst_1 pair keeps.
+    fn qc_paint_enchanting(&mut self, mx: i32, my: i32) {
+        let Some((_, _, slot)) = self.enchant_hover_seat(mx, my) else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.enchant_carried;
         if carried.1 <= 0 {
             return; // shouldAdd pc 7-11 — the empty cursor never paints
         }
@@ -35942,6 +36356,57 @@ impl App {
         self.brewing_mirror_sync_from_inventory();
     }
 
+    /// THE ENCHANTING DRAG'S OWN DISTRIBUTION (the same pcs 299-322 walk
+    /// the brewing's offline lane wears — the painted set the
+    /// one-each law serves): the offline door the wire lane never
+    /// wears (the brewing's own law the enchanting door keeps).
+    fn qc_distribute_enchanting_offline(&mut self) {
+        let carried = self.enchant_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < 2 {
+                if menu < self.enchant_slots.len() {
+                    self.enchant_slots[menu] = new;
+                }
+            } else {
+                // THE WRITE-THROUGH (the projection the inventory IS —
+                // the mirror row the inventory cell answers: the main
+                // rows 0..27 the items 9..36 keep, the hotbar 27..36
+                // the items 0..9 speak)
+                let row = menu - 2;
+                let idx = if row < 27 { 9 + row } else { row - 27 };
+                if idx < self.inventory.items.len() {
+                    self.inventory.items[idx] = new;
+                }
+            }
+        }
+        self.enchant_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation re-syncs
+        // — the open's own law the write-through's tail wears)
+        self.enchant_mirror_sync_from_inventory();
+    }
+
     /// THE GHOST'S OWN RECALC (recalculateQuickCraftRemaining — the
     /// painted set's projected leftover the cursor keeps): the type-2
     /// arm the carried's own max speaks (pc 23-39), the split arms the
@@ -36011,6 +36476,16 @@ impl App {
                 self.brewing_slots[menu]
             } else {
                 self.brewing_mirror[menu - 5]
+            };
+        }
+        if self.screen == ScreenKind::Enchanting {
+            // THE TRANSIENT PAIR'S OWN NUMBERING (the pair the table
+            // keeps, the standard rows 2..38 the mirror holds — the
+            // paint seat read the SAME split wears)
+            return if menu < 2 {
+                self.enchant_slots[menu]
+            } else {
+                self.enchant_mirror[menu - 2]
             };
         }
         if self.screen == ScreenKind::Chest {
@@ -36124,6 +36599,12 @@ impl App {
                 // offline door wears, the wire lane the hopper's own
                 // law never wears)
                 self.qc_distribute_brewing_offline();
+            } else if self.screen == ScreenKind::Enchanting {
+                // THE TRANSIENT PAIR'S OWN LANES (the offline sim the
+                // local write-through answer — the dispenser's own
+                // shape the offline door wears, the wire lane the
+                // hopper's own law never wears)
+                self.qc_distribute_enchanting_offline();
             } else if self.screen == ScreenKind::Crafting {
                 // THE TABLE'S OWN LANES (the click walk's own split —
                 // the wire the window-1 belief rides, the offline sim
@@ -37225,6 +37706,19 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Enchanting {
+            // THE TRANSIENT PAIR'S OWN PRESS (the same mouseClicked
+            // walk the brewing's gate shape wears — the carried press
+            // the drag arms, the carried-empty press the PICKUP
+            // dispatch keeps)
+            let held = self.enchant_carried.1 > 0;
+            if held {
+                self.qc_arm_enchanting(mx, my, 0);
+            } else {
+                self.click_enchanting_slot(mx, my, 0);
+            }
+            return;
+        }
         if self.screen == ScreenKind::Chest {
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory round banks — the
@@ -37437,6 +37931,23 @@ impl App {
                 self.qc_arm_brewing(mx, my, 1);
             } else {
                 self.click_brewing_slot(mx, my, 1);
+            }
+            return false;
+        }
+        if self.screen == ScreenKind::Enchanting {
+            // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172
+            // — the armed drag's frames the other button's press
+            // keep silent); the right press the TYPE-1 DRAG ARMS (the
+            // one-each distribution the release serves); the
+            // carried-empty press the SPLIT-PICKUP dispatch keeps.
+            if self.qc_armed {
+                return false;
+            }
+            let held = self.enchant_carried.1 > 0;
+            if held {
+                self.qc_arm_enchanting(mx, my, 1);
+            } else {
+                self.click_enchanting_slot(mx, my, 1);
             }
             return false;
         }
@@ -39305,6 +39816,8 @@ impl App {
                 self.qc_paint_dispenser(mx, my);
             } else if self.screen == ScreenKind::Brewing {
                 self.qc_paint_brewing(mx, my);
+            } else if self.screen == ScreenKind::Enchanting {
+                self.qc_paint_enchanting(mx, my);
             } else if self.screen == ScreenKind::Crafting {
                 self.qc_paint_table(mx, my);
             } else if self.screen == ScreenKind::Furnace {
@@ -43170,6 +43683,18 @@ impl App {
                 };
                 Some((id, count, slot as i32))
             }
+            ScreenKind::Enchanting => {
+                // THE SHARED SEAT (the autopush-333 round — the bundle
+                // lane the same walk rides)
+                let (_, _, slot) = self.enchant_hover_seat(mx, my)?;
+                let s = slot as usize;
+                let (id, count) = if s < 2 {
+                    *self.enchant_slots.get(s).unwrap_or(&(0, 0))
+                } else {
+                    *self.enchant_mirror.get(s - 2).unwrap_or(&(0, 0))
+                };
+                Some((id, count, slot as i32))
+            }
             ScreenKind::Chest => {
                 let (_, _, slot) = self.chest_hover_seat(mx, my)?;
                 let s = slot as usize;
@@ -44412,6 +44937,95 @@ impl App {
         }
         self.brewing_carried = new_carried;
         self.brewing_mirror_sync_from_inventory();
+    }
+
+    /// THE ENCHANTING TABLE'S OWN OUTSIDE THROW (the brewing's own walk
+    /// the enchanting canvas wears — the doClick -999 PICKUP the
+    /// carried's drop serves).
+    fn throw_enchanting_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.enchant_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.enchant_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
+    /// THE ENCHANTING TABLE'S OWN CLICK LANE (the offline sim's own walk
+    /// — the vanilla doClick's local walk the believed stack the
+    /// pickup/split prediction mutates, the carried the local cursor
+    /// keeps, NO echo: the fresh stand-in has no window and no
+    /// session). THE STANDARD ROWS the player's own store wear (the
+    /// menu 2..28 the main grid rides, the menu 29..37 the hotbar —
+    /// the write-through projection the inventory IS).
+    fn click_enchanting_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.enchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((_, _, slot)) = self.enchant_hover_seat(mx, my) else {
+            // THE DROP-OUTSIDE LANE (the brewing's own shape — the
+            // laid-out panel the strict rect compare speaks)
+            if self.enchant_panel != (0, 0)
+                && (mx < self.enchant_panel.0
+                    || my < self.enchant_panel.1
+                    || mx >= self.enchant_panel.0 + 176
+                    || my >= self.enchant_panel.1 + 166)
+            {
+                self.throw_enchanting_carried_outside(button);
+            }
+            return;
+        };
+        let menu = slot as usize;
+        // THE QUICK_MOVE LANE (the shift-click — the vanilla doClick's
+        // own precedence the chest's walk keeps): the combined
+        // 38-slot snapshot the REAL inventory wears (the pair + the
+        // main 27 + the hotbar 9), the multi-slot deltas the pair AND
+        // the items mutate (the menu's own numbering the split
+        // speaks — the menu 2..28 the items 9..35 answer, the menu
+        // 29..37 the items 0..8 keep).
+        if self.shift_down {
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(38);
+            snapshot.extend_from_slice(&self.enchant_slots);
+            snapshot.extend_from_slice(&self.inventory.items[9..36]);
+            snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 2);
+            for (i, pair) in &changed {
+                if *i < 2 {
+                    self.enchant_slots[*i] = *pair;
+                } else if *i < 29 {
+                    self.inventory.items[*i + 7] = *pair;
+                } else {
+                    self.inventory.items[*i - 29] = *pair;
+                }
+            }
+            self.enchant_mirror_sync_from_inventory();
+            return;
+        }
+        // the believed slot value: the pair's 0..2, the REAL
+        // inventory's rows the menu numbering speaks (2..28 the main
+        // grid, 29..37 the hotbar)
+        let believed = if menu < 2 {
+            self.enchant_slots[menu]
+        } else if menu < 29 {
+            self.inventory.items[menu + 7]
+        } else {
+            self.inventory.items[menu - 29]
+        };
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.enchant_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.enchant_carried)
+        };
+        if menu < 2 {
+            self.enchant_slots[menu] = new_slot;
+        } else if menu < 29 {
+            self.inventory.items[menu + 7] = new_slot;
+        } else {
+            self.inventory.items[menu - 29] = new_slot;
+        }
+        self.enchant_carried = new_carried;
+        self.enchant_mirror_sync_from_inventory();
     }
 
     /// THE DISPENSER'S OWN OUTSIDE THROW (the furnace's own walk the
@@ -50804,6 +51418,7 @@ impl App {
             ScreenKind::Chest => self.close_chest_container(back),
             ScreenKind::Dispenser => self.close_dispenser(back),
             ScreenKind::Brewing => self.close_brewing(back),
+            ScreenKind::Enchanting => self.close_enchanting(back),
             ScreenKind::Furnace => self.close_furnace(back),
             ScreenKind::Beacon => self.close_beacon(back),
             ScreenKind::Crafting => self.close_crafting_table(back),
@@ -57194,6 +57809,25 @@ impl App {
             })
         {
             self.open_brewing_for(hit.pos);
+            return true;
+        }
+        // THE ENCHANTING TABLE'S OWN GUI DOOR (javap 26.2
+        // EnchantmentTableBlock.useWithoutItem — the openMenu walk
+        // the table's own MenuProvider answers: the right-press on
+        // the placed enchanting table the OFFLINE world answers —
+        // the transient-pair screen the fresh seats open, the NO
+        // store the vanilla menu the table's own BE never keeps).
+        // The sneaking player the arm SKIPS (the crafting-table's
+        // own gate the vanilla use walk wears). The WIRE session the
+        // local screen never opens (the server's own OpenScreen word
+        // owns the container — the hopper's own law the door keeps).
+        if !self.shift_down
+            && !self.world_is_network
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_enchanting_table(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            })
+        {
+            self.open_enchanting_for(hit.pos);
             return true;
         }
         // THE BEACON'S OWN GUI DOOR (the autopush-322 round — javap 26.2
@@ -64121,6 +64755,7 @@ impl App {
             }
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
             ScreenKind::Brewing => self.close_brewing(ScreenKind::World),
+            ScreenKind::Enchanting => self.close_enchanting(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
@@ -68475,6 +69110,20 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_brewing(&mut g, a, gw, gh);
+            }
+            ScreenKind::Enchanting => {
+                // THE ENCHANTING TABLE'S OWN ROUND (the vanilla
+                // EnchantmentScreen over the frozen world — the
+                // brewing's own shape the texture-blitted base keeps):
+                // world underneath, dimmed, the REAL background
+                // texture, the pair + the mirror icons, the carried
+                // follow — no mannequin (the EnchantmentScreen the
+                // vanilla PiP never renders, the extractBook's
+                // animated glyphs the offline canvas never draws).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_enchanting(&mut g, a, gw, gh);
             }
             ScreenKind::Beacon => {
                 // THE BEACON'S OWN ROUND (the vanilla BeaconScreen over

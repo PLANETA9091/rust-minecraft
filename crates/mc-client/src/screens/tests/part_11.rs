@@ -6426,3 +6426,332 @@ fn the_offline_brewing_the_click_the_round_wear() {
     assert_eq!(app.brewing_slots[0], (8, 3), "the reopen the edit loads");
     assert_eq!(app.brewing_slots[4], (7, 10), "the reopen the fuel loads");
 }
+
+/// THE ENCHANTING TABLE'S OWN DOOR SEAT (the autopush-333 round — the
+/// 26.2 ctor's own literal seats the bytecode probe banks): the
+/// transient-pair walk the origin answers, the item/lapis pair the
+/// (15, 47)/(35, 47) seats the ctor's bipush stream pins, the NO-GATE
+/// law the family banks, the wrong screen the None answers. The REAL
+/// walk the offline door wears — the headless frame the REAL rects
+/// the render lays.
+#[test]
+fn the_offline_enchanting_the_door_the_seats_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ENCHANTING_TABLE);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the empty hand the door's own lane keeps
+    }
+    app.open_enchanting_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Enchanting,
+        "the enchanting door the kind wears"
+    );
+    assert_eq!(app.enchant_slots.len(), 2, "the fresh pair the open lays");
+    assert_eq!(
+        app.enchant_mirror.len(),
+        36,
+        "the mirror rows the sync keeps"
+    );
+    // THE REAL RECTS THE RENDER BANKS (one headless frame the mouse
+    // never tracks — the render's own walk the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    assert_eq!(
+        app.enchant_panel, panel,
+        "the centered panel the canvas keeps"
+    );
+    let seat = |slot: i16| -> (i32, i32) {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE 26.2 CTOR'S OWN PITCH (the bipush stream the probe spoke:
+    // the item (15, 47), the lapis (35, 47) — the +20 x-pitch the
+    // same row wears)
+    let (i0x, i0y) = seat(0);
+    let (l1x, l1y) = seat(1);
+    assert_eq!(
+        (l1x - i0x, l1y - i0y),
+        (20, 0),
+        "the item/lapis pair the ctor pitch banks"
+    );
+    // THE PAIR'S OWN ANSWERS (each seat + the mirror head + the hotbar
+    // tail the origin answers — the ONE walk the clicks share)
+    assert_eq!(
+        app.enchant_highlight_origin(i0x + 8, i0y + 8),
+        Some((i0x, i0y)),
+        "the item seat the origin answers"
+    );
+    assert_eq!(
+        app.enchant_highlight_origin(l1x + 8, l1y + 8),
+        Some((l1x, l1y)),
+        "the lapis seat the origin answers"
+    );
+    let (mx, my) = seat(2);
+    assert_eq!(
+        app.enchant_highlight_origin(mx + 8, my + 8),
+        Some((mx, my)),
+        "the mirror head the origin answers"
+    );
+    let (hx, hy) = seat(37);
+    assert_eq!(
+        app.enchant_highlight_origin(hx + 8, hy + 8),
+        Some((hx, hy)),
+        "the hotbar tail the origin answers"
+    );
+    // THE NO-GATE LAW (the family's own verdict the enchanting screen
+    // re-wears — the carried stack the wall NEVER speaks, the EMPTY
+    // seats the plain answer keeps)
+    app.enchant_carried = (7, 3);
+    assert_eq!(
+        app.enchant_highlight_origin(i0x + 8, i0y + 8),
+        Some((i0x, i0y)),
+        "the carried stack the highlight never refuses"
+    );
+    app.enchant_carried = (0, 0);
+    // THE CELL'S OWN EDGES (the strict 16x16 the walk answers)
+    assert_eq!(
+        app.enchant_highlight_origin(i0x + 16, i0y + 8),
+        None,
+        "the east edge the walk refuses"
+    );
+    assert_eq!(
+        app.enchant_highlight_origin(i0x - 1, i0y + 8),
+        None,
+        "the west edge the walk refuses"
+    );
+    // THE BLANK FACE (the no-seat walk the None answers)
+    assert_eq!(
+        app.enchant_highlight_origin(panel.0 - 20, panel.1 - 20),
+        None,
+        "the outside face the None speaks"
+    );
+    // THE WRONG SCREEN (the world view the highlight never wears)
+    app.close_enchanting(ScreenKind::World);
+    assert_eq!(
+        app.enchant_highlight_origin(i0x + 8, i0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE ENCHANTING TABLE'S OWN HIGHLIGHT PAINT (the REAL render walk —
+/// the 320x180 headless canvas the enchanting screen renders, the
+/// same-frame pair the mouse the only delta wears): the empty lapis
+/// seat the back-96 + the front-32 the EXACT alpha math answers (the
+/// two-layer order the composite pins), the transparent border ring
+/// the 24x24 sprite's own 4px margin keeps, the no-mouse pass the
+/// paint never serves.
+#[test]
+fn the_offline_enchanting_the_paint_the_cell_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ENCHANTING_TABLE);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_enchanting_for(cell);
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let blend = |dst: u8, alpha: f32| -> u8 {
+        let d = dst as f32 / 255.0;
+        let v = d * (1.0 - alpha) + 1.0 * alpha;
+        ((v.clamp(0.0, 1.0)) * 255.0 + 0.5) as u8
+    };
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_a, &mut a);
+    }
+    // THE REAL GEOMETRY THE RENDER BANKS (the lapis seat the (35, 47)
+    // seat the 26.2 ctor's own literal speaks — the +1 inset the
+    // rects wear)
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let (ox, oy) = (panel.0 + 35 + 1, panel.1 + 47 + 1);
+    let cx = ox + 8;
+    let cy = oy + 8;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((cx, cy));
+        app.render(&mut fb_b, &mut a);
+    }
+    // THE CELL'S OWN TINT (the empty seat the highlight paints —
+    // the exact two-layer math the sprite alphas answer)
+    let a0 = pixel(&fb_a, cx, cy);
+    let expected = blend(blend(a0, 96.0 / 255.0), 32.0 / 255.0);
+    assert_eq!(
+        pixel(&fb_b, cx, cy),
+        expected,
+        "the two-layer tint the exact math wears (back 96 + front 32)"
+    );
+    assert_ne!(
+        a0, expected,
+        "the tint the paint speaks (the highlight the canvas moves)"
+    );
+    // THE BORDER RING (the 1px outside the hover walk's band the
+    // sprite's own 4px transparent margin keeps — the cell-only
+    // tint the geometry pins)
+    assert_eq!(
+        pixel(&fb_a, ox - 1, cy),
+        pixel(&fb_b, ox - 1, cy),
+        "the border ring the sprite's margin keeps (no paint)"
+    );
+    // THE FAR FACE (the centered title's own reach the paint never
+    // wears — the static band the point keeps, the centered row the
+    // +150 face the text never spans)
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 150, panel.1 + 6),
+        pixel(&fb_b, panel.0 + 150, panel.1 + 6),
+        "the far face the same verdict keeps"
+    );
+}
+
+/// THE ENCHANTING TABLE'S OWN CLICK ROUND (the offline sim's own walk —
+/// the pickup the mirror banks, the place the lapis seat keeps, the
+/// quick-move the shift lane speaks, the close the TRANSIENT pair the
+/// ride-home walk returns [NO store the vanilla menu never banks],
+/// the reopen the FRESH pair lays): the REAL click walk the offline
+/// door wears.
+#[test]
+fn the_offline_enchanting_the_click_the_round_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ENCHANTING_TABLE);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.inventory.items[9] = (7, 10); // the main grid head the real stack keeps
+    app.open_enchanting_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // rects the render laid the click lanes read)
+    let (m2x, m2y) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (l1x, l1y) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE PICKUP LANE (the mirror head's own click the cursor banks —
+    // the player's own row the REAL inventory wears: the menu 2 the
+    // items 9 answer, the stack the cursor carries)
+    app.click_enchanting_slot(m2x + 8, m2y + 8, 0);
+    assert_eq!(app.enchant_carried, (7, 10), "the pickup the cursor banks");
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the source row the empty wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the lapis seat the untouched empty wears"
+    );
+    // THE PLACE LANE (the lapis seat's own click the pair banks — the
+    // carried the empty wears, the mirror rows the sync re-speaks)
+    app.click_enchanting_slot(l1x + 8, l1y + 8, 0);
+    assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+    assert_eq!(
+        app.enchant_slots[1],
+        (7, 10),
+        "the lapis seat the stack banks"
+    );
+    // THE QUICK-MOVE LANE (the shift-click the mirror main cell the
+    // pair banks — the whole stack the OTHER section moves)
+    app.inventory.items[9] = (8, 3);
+    app.enchant_mirror_sync_from_inventory();
+    app.shift_down = true;
+    app.click_enchanting_slot(m2x + 8, m2y + 8, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.enchant_slots[0],
+        (8, 3),
+        "the quick-move the pair banks"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the source row the empty wears"
+    );
+    // THE CLOSE RIDE-HOME (the TRANSIENT pair the walk returns — the
+    // NO store the vanilla menu never banks, the held stacks the
+    // inventory re-keeps, the seats the empty wear)
+    app.close_enchanting(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
+    let total: i32 = app
+        .inventory
+        .items
+        .iter()
+        .filter(|it| it.0 == 7)
+        .map(|it| it.1)
+        .sum();
+    assert_eq!(total, 10, "the lapis seat's stack the ride home keeps");
+    let total8: i32 = app
+        .inventory
+        .items
+        .iter()
+        .filter(|it| it.0 == 8)
+        .map(|it| it.1)
+        .sum();
+    assert_eq!(total8, 3, "the item seat's stack the ride home keeps");
+    assert!(
+        app.enchant_slots.iter().all(|it| it.1 == 0),
+        "the transient seats the empty wear"
+    );
+    // THE REOPEN (the FRESH pair the open lays — the transient law the
+    // chest's persist law never wears)
+    app.open_enchanting_for(cell);
+    assert_eq!(
+        app.enchant_slots.iter().all(|it| it.1 == 0),
+        true,
+        "the fresh pair the transient law lays"
+    );
+}
