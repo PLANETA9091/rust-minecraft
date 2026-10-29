@@ -9013,3 +9013,576 @@ fn the_brewing_stand_the_kinds_bank_the_disk_wears() {
 fn fb_bytes(fb: &crate::raster::Framebuf) -> &[u8] {
     &fb.color
 }
+
+/// THE WATER-BOTTLE'S OWN FILL (the dev-199 round — javap 26.2
+/// BottleItem.use pcs 152-281 the live disasm the walk banks —
+/// scripts/jar_work/bottle_item_199.txt the evidence serves): the
+/// SOURCE_ONLY POV clip the water source the fill verdict arms, the
+/// `getFluidState(pos).is(FluidTags.WATER)` read the pool cell
+/// answers, the BOTTLE_FILL voice the player's ear the NEUTRAL
+/// 1.0/1.0 pair wears, the `PotionContents.createItemStack(Items.
+/// POTION, Potions.WATER)` the WATER kind mints, the
+/// createFilledResult walk the emptied stack the filled result
+/// REPLACES. The source the fill NEVER drains (the vanilla's own
+/// law — the bucket the only drain the pickup lane speaks).
+#[test]
+fn the_offline_bottle_the_fill_the_water_kind_mints() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let slot = app.selected_hotbar;
+    app.inventory.items[slot] = (crate::world::ITEM_GLASS_BOTTLE, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // the hit cell the fluid source keeps (the pool cell the DOWN
+    // look answers — the stone floor the same column carries)
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c, surface, c, crate::world::WATER);
+        w.set(c, surface - 1, c, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE FILL: the SUCCESS verdict the press consumes
+    assert!(app.on_right_press(0, 0), "the fill the SUCCESS consumes");
+    // THE SLOT'S OWN REPLACE (the emptied stack the filled answers)
+    assert_eq!(
+        app.inventory.items[slot],
+        (crate::world::ITEM_POTION, 1),
+        "the bottle the water potion wears"
+    );
+    // THE KIND'S OWN MINT (the WATER kind the seat banks — the
+    // registry's row 0 the kind wears)
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_WATER,
+        "the WATER kind the seat banks"
+    );
+    // THE SOURCE'S OWN STAY (the vanilla fill the pool never drains
+    // — the bucket the only drain the pickup lane speaks)
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, surface, c),
+        crate::world::WATER,
+        "the source the fill never drains"
+    );
+    // THE VOICE (pc 224-246 — the BOTTLE_FILL the player's ear seats)
+    if sounds_loaded() {
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.bottle.fill @")),
+            "the BOTTLE_FILL voice the fill rode"
+        );
+    }
+}
+
+/// THE FILL'S OWN REFUSALS — javap BottleItem.use the PASS arms the
+/// walk keeps: the LAVA source the `is(FluidTags.WATER)` read the
+/// tag's own refusal wears (pc 218-221 the ifeq the PASS speaks),
+/// the air miss the SOURCE_ONLY clip the None the PASS keeps — the
+/// press never consumes, the stack the same bottle wears, the voice
+/// the walk never speaks.
+#[test]
+fn the_offline_bottle_the_refusals_the_pass_keeps() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let slot = app.selected_hotbar;
+    app.inventory.items[slot] = (crate::world::ITEM_GLASS_BOTTLE, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    // THE LAVA POOL (the source the tag's refusal answers)
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c, surface, c, crate::world::LAVA);
+        w.set(c, surface - 1, c, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        !app.on_right_press(0, 0),
+        "the lava the PASS the press never consumes"
+    );
+    assert_eq!(
+        app.inventory.items[slot],
+        (crate::world::ITEM_GLASS_BOTTLE, 1),
+        "the bottle the refusal keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the seat the refusal never banks"
+    );
+    // THE AIR MISS (the open-sky look the SOURCE_ONLY clip the None
+    // answers — the water pool behind the back the ray never sees)
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in -6..=6 {
+            for dz in -6..=6 {
+                w.set(c + dx, surface, c + dz, crate::world::AIR);
+            }
+        }
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 8.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: std::f32::consts::FRAC_PI_2,
+    });
+    assert!(
+        !app.on_right_press(0, 0),
+        "the miss the PASS the press never consumes"
+    );
+    assert_eq!(
+        app.inventory.items[slot],
+        (crate::world::ITEM_GLASS_BOTTLE, 1),
+        "the bottle the miss keeps"
+    );
+}
+
+/// THE SURVIVING COUNT'S OWN MINT — javap ItemUtils.createFilledResult
+/// pc 52-69 (scripts/jar_work/item_utils_199.txt the evidence serves):
+/// the `consume(1)` the shrink the stack keeps, the filled the
+/// `Inventory.add` the free-slot scan answers, the minted row's kind
+/// seat the WATER banks. The potion the max-stack-1 law the merge
+/// never fits (the remaining-space scan the None verdict keeps).
+#[test]
+fn the_offline_bottle_the_count3_the_free_row_mints() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let slot = app.selected_hotbar;
+    app.inventory.items[slot] = (crate::world::ITEM_GLASS_BOTTLE, 3);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c, surface, c, crate::world::WATER);
+        w.set(c, surface - 1, c, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the fill the SUCCESS consumes");
+    // THE SHRINK (the surviving count the slot keeps)
+    assert_eq!(
+        app.inventory.items[slot],
+        (crate::world::ITEM_GLASS_BOTTLE, 2),
+        "the shrink the bottles wear"
+    );
+    // THE MINT (the first free row the potion answers — the max-1
+    // law the merge never fits)
+    let minted = (0..36)
+        .find(|&i| app.inventory.items[i] == (crate::world::ITEM_POTION, 1))
+        .expect("the minted row the free-slot scan finds");
+    assert_ne!(minted, slot, "the mint the free row wears");
+    assert_eq!(
+        app.items_potion_kinds[minted],
+        crate::brewing_sim::POTION_WATER,
+        "the WATER kind the minted seat banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the bottle row the NONE keeps"
+    );
+}
+
+/// THE CREATIVE ARM'S OWN KEEP — javap createFilledResult pc 6-36:
+/// the `hasInfiniteMaterials` verdict the bottle NOT consumed, the
+/// potion the `inventory.contains` gate the add rides (the potion
+/// row the scan finds the add never speaks, the no-row the free-slot
+/// mint answers). The second press the contains gate the same
+/// verdict keeps.
+#[test]
+fn the_offline_bottle_the_creative_the_bottle_keeps() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.game_mode = GameMode::Creative;
+    let slot = app.selected_hotbar;
+    app.inventory.items[slot] = (crate::world::ITEM_GLASS_BOTTLE, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c, surface, c, crate::world::WATER);
+        w.set(c, surface - 1, c, crate::world::STONE);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    assert!(app.on_right_press(0, 0), "the creative fill consumes");
+    // THE KEEP (the bottle the slot wears)
+    assert_eq!(
+        app.inventory.items[slot],
+        (crate::world::ITEM_GLASS_BOTTLE, 1),
+        "the creative the bottle never consumes"
+    );
+    // THE MINT (the free row the potion answers, the seat banks)
+    let minted = (0..36)
+        .find(|&i| app.inventory.items[i] == (crate::world::ITEM_POTION, 1))
+        .expect("the minted row the add answers");
+    assert_eq!(
+        app.items_potion_kinds[minted],
+        crate::brewing_sim::POTION_WATER,
+        "the WATER kind the minted seat banks"
+    );
+    // THE SECOND PRESS (the contains gate the potion row finds — the
+    // add never speaks, the mint never doubles)
+    assert!(app.on_right_press(0, 0), "the creative fill consumes");
+    let potions = app
+        .inventory
+        .items
+        .iter()
+        .filter(|(id, _)| *id == crate::world::ITEM_POTION)
+        .count();
+    assert_eq!(potions, 1, "the contains gate the mint keeps single");
+}
+
+
+
+/// THE DROPPED KIND'S OWN SEAT (the dev-199 round — the Q-drop the
+/// emptied row the bank clears; the dropped entity the (id, count)
+/// pair the kind never carries — the same honest note the thrown
+/// carried speaks).
+#[test]
+fn the_offline_bottle_the_drop_the_seat_clears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let slot = app.selected_hotbar;
+    app.inventory.items[slot] = (crate::world::ITEM_POTION, 1);
+    app.items_potion_kinds[slot] = crate::brewing_sim::POTION_WATER;
+    app.on_drop_key(true);
+    assert_eq!(
+        app.inventory.items[slot],
+        (0, 0),
+        "the whole drop the row empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the emptied row the bank clears"
+    );
+}
+
+
+/// THE FILL LOOP'S OWN REAL WALK (the dev-199 round's own purpose —
+/// the kinds' own entry lane the brewing loop the real flow wears):
+/// the pool fill the WATER kind mints, the stand's open the seat
+/// pickup the kind the carried rides, the place the seat lays, the
+/// nether wart the AWKWARD transform the 400-tick arc answers — the
+/// SAME flow the real Minecraft's first brew speaks. The close the
+/// picked-up brew the ride home the row's seat banks.
+#[test]
+fn the_offline_bottle_the_fill_the_brew_loop_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let slot = app.selected_hotbar;
+    app.inventory.items[slot] = (crate::world::ITEM_GLASS_BOTTLE, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let stand_cell = (c + 2, surface, c);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c, surface, c, crate::world::WATER);
+        w.set(c, surface - 1, c, crate::world::STONE);
+        w.set(
+            stand_cell.0,
+            stand_cell.1,
+            stand_cell.2,
+            crate::world::BREWING_STAND,
+        );
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE FILL (the mint the kind banks)
+    assert!(app.on_right_press(0, 0), "the fill consumes");
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_WATER,
+        "the filled seat the WATER banks"
+    );
+    // THE STAND'S OWN DOOR (the open the fresh five the walk serves)
+    app.open_brewing_for(stand_cell);
+    // THE SYNTHETIC RECTS (the five + the mirror rows the same
+    // numbering the render lays — the hotbar row the menu 32+ speaks)
+    app.brewing_slot_rects = [(0, 0, 0i16), (20, 0, 1), (40, 0, 2), (60, 0, 3), (80, 0, 4)]
+        .into_iter()
+        .chain((0..36).map(|i| ((i % 9) * 20, 100 + (i / 9) * 20, (5 + i) as i16)))
+        .collect();
+    app.brewing_panel = (0, 0);
+    app.shift_down = false;
+    // THE PICKUP (the hotbar seat menu 32+slot = items[slot] — the
+    // mirror rows the main 27 first speak, the hotbar the 27+index
+    // seat wears; the kind the carried rides)
+    let mirror = 27 + slot as usize;
+    let seat_mx = ((mirror % 9) * 20) as i32;
+    let seat_my = (100 + (mirror / 9) * 20) as i32;
+    app.click_brewing_slot(seat_mx, seat_my, 0);
+    assert_eq!(
+        app.brewing_carried,
+        (crate::world::ITEM_POTION, 1),
+        "the pickup the filled stack rides"
+    );
+    assert_eq!(
+        app.brewing_carried_kind,
+        crate::brewing_sim::POTION_WATER,
+        "the pickup the WATER kind rides"
+    );
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the emptied row the NONE wears"
+    );
+    // THE PLACE (the bottle seat the carried lays — the kind the
+    // seat banks)
+    app.click_brewing_slot(0, 0, 0);
+    assert_eq!(
+        app.brewing_slots[0],
+        (crate::world::ITEM_POTION, 1),
+        "the place the bottle seat wears"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_WATER,
+        "the place the kind seat banks"
+    );
+    // THE RECIPE (the wart + the powder the seats take)
+    let wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+    let powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    app.brewing_slots[3] = (wart, 2);
+    app.brewing_slots[4] = (powder, 1);
+    // THE FULL ARC (the 400 ticks the AWKWARD transform answers)
+    app.update();
+    for _ in 0..400 {
+        app.update();
+    }
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_AWKWARD,
+        "the water bottle the awkward walk transforms"
+    );
+    // THE RIDE HOME (the pick-up + the close the brewed kind the row
+    // banks — the loop's own half the fill round wears)
+    app.brewing_slot_rects = [(0, 0, 0i16), (20, 0, 1), (40, 0, 2), (60, 0, 3), (80, 0, 4)]
+        .into_iter()
+        .chain((0..36).map(|i| ((i % 9) * 20, 100 + (i / 9) * 20, (5 + i) as i16)))
+        .collect();
+    app.click_brewing_slot(0, 0, 0);
+    assert_eq!(
+        app.brewing_carried_kind,
+        crate::brewing_sim::POTION_AWKWARD,
+        "the pickup the brewed kind rides"
+    );
+    app.close_brewing(crate::screens::ScreenKind::World);
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_AWKWARD,
+        "the ride home the row's seat banks"
+    );
+    assert_eq!(
+        app.brewing_carried,
+        (0, 0),
+        "the close the carried home rides"
+    );
+}
+use super::*;
+
+/// THE ROWS' OWN QUICK-MOVE HAND-OVER (the dev-199 round — the kind
+/// the whole move BOTH directions wears): the filled hotbar row the
+/// shift-click the five seat rides (the kind the seat banks), the
+/// kinded five seat the shift-click the row's bank answers — the
+/// source seat the cleared bank hands over, the destination the
+/// gained seat lays.
+#[test]
+fn the_offline_brewing_the_quickmove_the_kind_hands_over() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let stand_cell = (c, surface, c);
+    app.offline_world.as_mut().unwrap().set(
+        stand_cell.0,
+        stand_cell.1,
+        stand_cell.2,
+        crate::world::BREWING_STAND,
+    );
+    let slot = app.selected_hotbar;
+    // THE BANKED ROW (the fill walk the mint banks — the direct lane
+    // the same seat the tests speak)
+    app.inventory.items[slot] = (crate::world::ITEM_POTION, 1);
+    app.items_potion_kinds[slot] = crate::brewing_sim::POTION_WATER;
+    app.open_brewing_for(stand_cell);
+    app.brewing_slot_rects = [(0, 0, 0i16), (20, 0, 1), (40, 0, 2), (60, 0, 3), (80, 0, 4)]
+        .into_iter()
+        .chain((0..36).map(|i| ((i % 9) * 20, 100 + (i / 9) * 20, (5 + i) as i16)))
+        .collect();
+    app.brewing_panel = (0, 0);
+    // THE ROW → FIVE HAND-OVER (the shift-click the potion the seat
+    // rides, the kind the seat banks, the row's bank the NONE wears)
+    app.shift_down = true;
+    let mirror = 27 + slot as usize;
+    let seat_mx = ((mirror % 9) * 20) as i32;
+    let seat_my = (100 + (mirror / 9) * 20) as i32;
+    app.click_brewing_slot(seat_mx, seat_my, 0);
+    assert_eq!(
+        app.brewing_slots[0],
+        (crate::world::ITEM_POTION, 1),
+        "the quick-move the potion the seat rides"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_WATER,
+        "the quick-move the kind the seat banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the source row the cleared bank wears"
+    );
+    // THE FIVE → ROW HAND-OVER (the shift-click back — the kind the
+    // row's bank answers; the mirror scan the FIRST empty the main
+    // grid's own head wears [items 9..36 the rows 5..32 speak] — the
+    // minted row the ride banks)
+    app.click_brewing_slot(0, 0, 0);
+    let home = (0..36)
+        .find(|&i| app.inventory.items[i] == (crate::world::ITEM_POTION, 1))
+        .expect("the ride home the row the scan finds");
+    assert_eq!(
+        app.items_potion_kinds[home],
+        crate::brewing_sim::POTION_WATER,
+        "the ride home the kind the row banks"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the emptied seat the NONE wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[slot],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the original row the absence keeps"
+    );
+}
+use super::*;
+
+/// THE ROWS' OWN DISK BANK (the dev-199 round — the "PotionKinds"
+/// list the player tag stores flat, the round trip the restart
+/// resumes, the elder file the missing row the NONE parse keeps, the
+/// short list the pad fills, the over-long the 36-cap truncates).
+#[test]
+fn the_player_rows_the_potion_kinds_the_disk_wears() {
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let water = crate::brewing_sim::POTION_WATER;
+    let mut sp = SavedPlayer {
+        x: 1.0,
+        y: 2.0,
+        z: 3.0,
+        yaw: 0.0,
+        pitch: 0.0,
+        inventory: crate::drops::Inventory::default(),
+        potion_kinds: [none; 36],
+        selected_hotbar: 0,
+        health: 20.0,
+        food_level: 20,
+        saturation: 5.0,
+        exhaustion: 0.0,
+        tick_timer: 0,
+        xp_level: 0,
+        xp_progress: 0.0,
+        xp_total: 0,
+    };
+    sp.inventory.items[3] = (crate::world::ITEM_POTION, 1);
+    sp.potion_kinds[3] = water;
+    sp.potion_kinds[10] = crate::brewing_sim::POTION_AWKWARD;
+    // THE FILE'S OWN SHAPE (the "player" compound the root wraps —
+    // the tag row the same law the save speaks)
+    let root =
+        mc_protocol::nbt::Nbt::Compound(vec![("player".to_string(), player_row_to_nbt(&sp))]);
+    let parsed = player_state_from_nbt(&root).expect("the row the parse answers");
+    assert_eq!(
+        parsed.potion_kinds[3], water,
+        "the WATER seat the ride wears"
+    );
+    assert_eq!(
+        parsed.potion_kinds[10],
+        crate::brewing_sim::POTION_AWKWARD,
+        "the AWKWARD seat the ride wears"
+    );
+    assert_eq!(
+        parsed.potion_kinds[0], none,
+        "the empty seat the NONE keeps"
+    );
+    assert_eq!(
+        parsed.inventory.items[3],
+        (crate::world::ITEM_POTION, 1),
+        "the potion row the same tag wears"
+    );
+    // THE ELDER FILE (the missing list the NONE parse keeps)
+    let elder_root = {
+        let inner = player_row_to_nbt(&sp);
+        let stripped: Vec<_> = match inner {
+            mc_protocol::nbt::Nbt::Compound(fields) => fields
+                .into_iter()
+                .filter(|(k, _)| k != "PotionKinds")
+                .collect(),
+            _ => unreachable!(),
+        };
+        mc_protocol::nbt::Nbt::Compound(vec![(
+            "player".to_string(),
+            mc_protocol::nbt::Nbt::Compound(stripped),
+        )])
+    };
+    let parsed = player_state_from_nbt(&elder_root).expect("the elder row the parse answers");
+    assert_eq!(
+        parsed.potion_kinds, [none; 36],
+        "the elder file the NONE parse keeps"
+    );
+    // THE SHORT LIST the pad fills + THE OVER-LONG the 36-cap truncates
+    let patched = {
+        let inner = player_row_to_nbt(&sp);
+        let mut player_fields = match inner {
+            mc_protocol::nbt::Nbt::Compound(fields) => fields,
+            _ => unreachable!(),
+        };
+        for (k, v) in player_fields.iter_mut() {
+            if k == "PotionKinds" {
+                *v = mc_protocol::nbt::Nbt::List(
+                    (0..40).map(|i| mc_protocol::nbt::Nbt::Int(i)).collect(),
+                );
+            }
+        }
+        mc_protocol::nbt::Nbt::Compound(vec![(
+            "player".to_string(),
+            mc_protocol::nbt::Nbt::Compound(player_fields),
+        )])
+    };
+    let parsed = player_state_from_nbt(&patched).expect("the patched row the parse answers");
+    assert_eq!(parsed.potion_kinds[35], 35, "the cap the 36 keeps");
+    assert_eq!(
+        parsed.potion_kinds[3], 3,
+        "the over-long list the rows wear"
+    );
+}
+use super::*;

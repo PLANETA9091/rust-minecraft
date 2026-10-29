@@ -1,0 +1,168 @@
+Compiled from "BottleItem.java"
+public class net.minecraft.world.item.BottleItem extends net.minecraft.world.item.Item {
+  public net.minecraft.world.item.BottleItem(net.minecraft.world.item.Item$Properties);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokespecial #1                  // Method net/minecraft/world/item/Item."<init>":(Lnet/minecraft/world/item/Item$Properties;)V
+         5: return
+
+  public net.minecraft.world.InteractionResult use(net.minecraft.world.level.Level, net.minecraft.world.entity.player.Player, net.minecraft.world.InteractionHand);
+    Code:
+         0: aload_1
+         1: ldc           #7                  // class net/minecraft/world/entity/AreaEffectCloud
+         3: aload_2
+         4: invokevirtual #9                  // Method net/minecraft/world/entity/player/Player.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+         7: ldc2_w        #15                 // double 2.0d
+        10: invokevirtual #17                 // Method net/minecraft/world/phys/AABB.inflate:(D)Lnet/minecraft/world/phys/AABB;
+        13: invokedynamic #23,  0             // InvokeDynamic #0:test:()Ljava/util/function/Predicate;
+        18: invokevirtual #27                 // Method net/minecraft/world/level/Level.getEntitiesOfClass:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;
+        21: astore        4
+        23: aload_2
+        24: aload_3
+        25: invokevirtual #33                 // Method net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+        28: astore        5
+        30: aload         4
+        32: invokeinterface #37,  1           // InterfaceMethod java/util/List.isEmpty:()Z
+        37: ifne          152
+        40: aload         4
+        42: iconst_0
+        43: invokeinterface #43,  2           // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+        48: checkcast     #7                  // class net/minecraft/world/entity/AreaEffectCloud
+        51: astore        6
+        53: aload         6
+        55: aload         6
+        57: invokevirtual #47                 // Method net/minecraft/world/entity/AreaEffectCloud.getRadius:()F
+        60: ldc           #51                 // float 0.5f
+        62: fsub
+        63: invokevirtual #52                 // Method net/minecraft/world/entity/AreaEffectCloud.setRadius:(F)V
+        66: aload_1
+        67: aconst_null
+        68: aload_2
+        69: invokevirtual #56                 // Method net/minecraft/world/entity/player/Player.getX:()D
+        72: aload_2
+        73: invokevirtual #60                 // Method net/minecraft/world/entity/player/Player.getY:()D
+        76: aload_2
+        77: invokevirtual #63                 // Method net/minecraft/world/entity/player/Player.getZ:()D
+        80: getstatic     #66                 // Field net/minecraft/sounds/SoundEvents.BOTTLE_FILL_DRAGONBREATH:Lnet/minecraft/sounds/SoundEvent;
+        83: getstatic     #72                 // Field net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+        86: fconst_1
+        87: fconst_1
+        88: invokevirtual #78                 // Method net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+        91: aload_1
+        92: aload_2
+        93: getstatic     #82                 // Field net/minecraft/world/level/gameevent/GameEvent.FLUID_PICKUP:Lnet/minecraft/core/Holder$Reference;
+        96: aload_2
+        97: invokevirtual #88                 // Method net/minecraft/world/entity/player/Player.position:()Lnet/minecraft/world/phys/Vec3;
+       100: invokevirtual #92                 // Method net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/world/phys/Vec3;)V
+       103: aload_2
+       104: instanceof    #96                 // class net/minecraft/server/level/ServerPlayer
+       107: ifeq          128
+       110: aload_2
+       111: checkcast     #96                 // class net/minecraft/server/level/ServerPlayer
+       114: astore        7
+       116: getstatic     #98                 // Field net/minecraft/advancements/triggers/CriteriaTriggers.PLAYER_INTERACTED_WITH_ENTITY:Lnet/minecraft/advancements/triggers/PlayerInteractTrigger;
+       119: aload         7
+       121: aload         5
+       123: aload         6
+       125: invokevirtual #104                // Method net/minecraft/advancements/triggers/PlayerInteractTrigger.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;)V
+       128: getstatic     #110                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+       131: aload_0
+       132: aload         5
+       134: aload_2
+       135: new           #116                // class net/minecraft/world/item/ItemStack
+       138: dup
+       139: getstatic     #118                // Field net/minecraft/world/item/Items.DRAGON_BREATH:Lnet/minecraft/world/item/Item;
+       142: invokespecial #124                // Method net/minecraft/world/item/ItemStack."<init>":(Lnet/minecraft/world/level/ItemLike;)V
+       145: invokevirtual #127                // Method turnBottleIntoItem:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+       148: invokevirtual #133                // Method net/minecraft/world/InteractionResult$Success.heldItemTransformedTo:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/InteractionResult$Success;
+       151: areturn
+       152: aload_1
+       153: aload_2
+       154: getstatic     #139                // Field net/minecraft/world/level/ClipContext$Fluid.SOURCE_ONLY:Lnet/minecraft/world/level/ClipContext$Fluid;
+       157: invokestatic  #145                // Method getPlayerPOVHitResult:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/ClipContext$Fluid;)Lnet/minecraft/world/phys/BlockHitResult;
+       160: astore        6
+       162: aload         6
+       164: invokevirtual #149                // Method net/minecraft/world/phys/BlockHitResult.getType:()Lnet/minecraft/world/phys/HitResult$Type;
+       167: getstatic     #155                // Field net/minecraft/world/phys/HitResult$Type.MISS:Lnet/minecraft/world/phys/HitResult$Type;
+       170: if_acmpne     177
+       173: getstatic     #161                // Field net/minecraft/world/InteractionResult.PASS:Lnet/minecraft/world/InteractionResult$Pass;
+       176: areturn
+       177: aload         6
+       179: invokevirtual #149                // Method net/minecraft/world/phys/BlockHitResult.getType:()Lnet/minecraft/world/phys/HitResult$Type;
+       182: getstatic     #165                // Field net/minecraft/world/phys/HitResult$Type.BLOCK:Lnet/minecraft/world/phys/HitResult$Type;
+       185: if_acmpne     282
+       188: aload         6
+       190: invokevirtual #168                // Method net/minecraft/world/phys/BlockHitResult.getBlockPos:()Lnet/minecraft/core/BlockPos;
+       193: astore        7
+       195: aload_1
+       196: aload_2
+       197: aload         7
+       199: invokevirtual #172                // Method net/minecraft/world/level/Level.mayInteract:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;)Z
+       202: ifne          209
+       205: getstatic     #161                // Field net/minecraft/world/InteractionResult.PASS:Lnet/minecraft/world/InteractionResult$Pass;
+       208: areturn
+       209: aload_1
+       210: aload         7
+       212: invokevirtual #176                // Method net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+       215: getstatic     #180                // Field net/minecraft/tags/FluidTags.WATER:Lnet/minecraft/tags/TagKey;
+       218: invokevirtual #186                // Method net/minecraft/world/level/material/FluidState.is:(Lnet/minecraft/tags/TagKey;)Z
+       221: ifeq          282
+       224: aload_1
+       225: aload_2
+       226: aload_2
+       227: invokevirtual #56                 // Method net/minecraft/world/entity/player/Player.getX:()D
+       230: aload_2
+       231: invokevirtual #60                 // Method net/minecraft/world/entity/player/Player.getY:()D
+       234: aload_2
+       235: invokevirtual #63                 // Method net/minecraft/world/entity/player/Player.getZ:()D
+       238: getstatic     #192                // Field net/minecraft/sounds/SoundEvents.BOTTLE_FILL:Lnet/minecraft/sounds/SoundEvent;
+       241: getstatic     #72                 // Field net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+       244: fconst_1
+       245: fconst_1
+       246: invokevirtual #78                 // Method net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+       249: aload_1
+       250: aload_2
+       251: getstatic     #82                 // Field net/minecraft/world/level/gameevent/GameEvent.FLUID_PICKUP:Lnet/minecraft/core/Holder$Reference;
+       254: aload         7
+       256: invokevirtual #195                // Method net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+       259: getstatic     #110                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+       262: aload_0
+       263: aload         5
+       265: aload_2
+       266: getstatic     #198                // Field net/minecraft/world/item/Items.POTION:Lnet/minecraft/world/item/Item;
+       269: getstatic     #201                // Field net/minecraft/world/item/alchemy/Potions.WATER:Lnet/minecraft/core/Holder;
+       272: invokestatic  #206                // Method net/minecraft/world/item/alchemy/PotionContents.createItemStack:(Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;
+       275: invokevirtual #127                // Method turnBottleIntoItem:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+       278: invokevirtual #133                // Method net/minecraft/world/InteractionResult$Success.heldItemTransformedTo:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/InteractionResult$Success;
+       281: areturn
+       282: getstatic     #161                // Field net/minecraft/world/InteractionResult.PASS:Lnet/minecraft/world/InteractionResult$Pass;
+       285: areturn
+
+  protected net.minecraft.world.item.ItemStack turnBottleIntoItem(net.minecraft.world.item.ItemStack, net.minecraft.world.entity.player.Player, net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_2
+         1: getstatic     #212                // Field net/minecraft/stats/Stats.ITEM_USED:Lnet/minecraft/stats/StatType;
+         4: aload_0
+         5: invokevirtual #218                // Method net/minecraft/stats/StatType.get:(Ljava/lang/Object;)Lnet/minecraft/stats/Stat;
+         8: invokevirtual #223                // Method net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/stats/Stat;)V
+        11: aload_1
+        12: aload_2
+        13: aload_3
+        14: invokestatic  #227                // Method net/minecraft/world/item/ItemUtils.createFilledResult:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+        17: areturn
+
+  private static boolean lambda$use$0(net.minecraft.world.entity.AreaEffectCloud);
+    Code:
+         0: aload_0
+         1: invokevirtual #232                // Method net/minecraft/world/entity/AreaEffectCloud.isAlive:()Z
+         4: ifeq          21
+         7: aload_0
+         8: invokevirtual #235                // Method net/minecraft/world/entity/AreaEffectCloud.getOwner:()Lnet/minecraft/world/entity/LivingEntity;
+        11: instanceof    #239                // class net/minecraft/world/entity/boss/enderdragon/EnderDragon
+        14: ifeq          21
+        17: iconst_1
+        18: goto          22
+        21: iconst_0
+        22: ireturn
+}

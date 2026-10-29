@@ -9634,6 +9634,16 @@ pub struct App {
     /// load answers). The enchanted item's own data the tooltip/glint
     /// rounds read.
     pub inventory_enchants: [Vec<(i32, i32)>; 36],
+    /// THE PLAYER ROWS' OWN POTION-KIND BANK (the dev-199 round — the
+    /// `PotionContents` component the (id, count) pair the rows never
+    /// carry, the side lane the SAME 36-slot numbering keys: 0..9 the
+    /// hotbar, 9..36 the main grid — the fill walk the WATER kind
+    /// mints, the brewing stand's pickup/place/swap the seats ride,
+    /// the disk lane the "PotionKinds" list persists). The -1 the
+    /// [`crate::brewing_sim::POTION_KIND_NONE`] sentinel the absence
+    /// keeps; the accessor's normalization the non-potion rows the
+    /// NONE verdict reads.
+    pub items_potion_kinds: [i32; 36],
     /// THE SPELL WALK'S OWN CLUES (the dev-197 round — the
     /// EnchantmentMenu's enchantClue/levelClue int arrays the
     /// DataSlot.shared lanes network: the row's registry id the
@@ -11357,6 +11367,11 @@ pub struct SavedPlayer {
     /// The gameplay inventory's own 41 stacks (the hotbar 0..8, the
     /// main 9..35, the armor, the offhand).
     pub inventory: crate::drops::Inventory,
+    /// THE ROWS' OWN POTION-KIND BANK (the dev-199 round — the
+    /// "PotionKinds" list the tag stores flat, the 36 rows the same
+    /// numbering the Items list wears; the elder file the missing row
+    /// the NONE parse keeps).
+    pub potion_kinds: [i32; 36],
     /// The active hotbar slot (the HUD selection the reload re-wears).
     pub selected_hotbar: i32,
     /// The health bar (`Health` — the 0..=max clamp the live lane
@@ -11455,6 +11470,15 @@ fn player_row_to_nbt(sp: &SavedPlayer) -> mc_protocol::nbt::Nbt {
             mc_protocol::nbt::Nbt::Int(sp.selected_hotbar),
         ),
         ("Items".to_string(), stacks(&sp.inventory.items)),
+        (
+            "PotionKinds".to_string(),
+            mc_protocol::nbt::Nbt::List(
+                sp.potion_kinds
+                    .iter()
+                    .map(|k| mc_protocol::nbt::Nbt::Int(*k))
+                    .collect(),
+            ),
+        ),
         ("Armor".to_string(), stacks(&sp.inventory.armor)),
         ("Offhand".to_string(), stacks(&sp.inventory.offhand)),
         (
@@ -11523,6 +11547,11 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
     let mut xp_level = 0i32;
     let mut xp_progress = 0.0f32;
     let mut xp_total = 0i32;
+    // THE ROWS' OWN POTION-KIND BANK (the dev-199 round — the
+    // "PotionKinds" list the elder file the missing row the NONE
+    // parse keeps, the short list the pad fills, the over-long the
+    // 36-cap truncates)
+    let mut potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 36];
     let doubles = |v: &mc_protocol::nbt::Nbt| -> Option<Vec<f64>> {
         let mc_protocol::nbt::Nbt::List(xs) = v else {
             return None;
@@ -11559,6 +11588,15 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
                 }
             }
             "Items" => items = stacks_row_from_nbt(v, 36),
+            "PotionKinds" => {
+                if let mc_protocol::nbt::Nbt::List(rows) = v {
+                    for (i, row) in rows.iter().enumerate().take(36) {
+                        if let mc_protocol::nbt::Nbt::Int(k) = row {
+                            potion_kinds[i] = *k;
+                        }
+                    }
+                }
+            }
             "Armor" => armor = stacks_row_from_nbt(v, 4),
             "Offhand" => offhand = stacks_row_from_nbt(v, 1),
             "Health" => {
@@ -11620,6 +11658,7 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
             armor: armor?.try_into().ok()?,
             offhand: offhand?.try_into().ok()?,
         },
+        potion_kinds,
         selected_hotbar: sel?,
         health,
         food_level,
@@ -12766,6 +12805,7 @@ impl App {
             enchant_rng: crate::noise::VanillaRandom::new(0),
             enchant_comps: std::array::from_fn(|_| Vec::new()),
             inventory_enchants: std::array::from_fn(|_| Vec::new()),
+            items_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 36],
             enchant_clues: [-1; 3],
             enchant_level_clues: [-1; 3],
             enchanting_table_pos: None,
@@ -24234,6 +24274,11 @@ impl App {
                                 // law the restore lane wears)
                                 if let Some(sp) = player_state_from_nbt(&root) {
                                     self.inventory = sp.inventory;
+                                    // THE KINDS' OWN RESTORE (the dev-199
+                                    // round — the bank the same tag row the
+                                    // restart resumes, the elder file the
+                                    // NONE parse keeps)
+                                    self.items_potion_kinds = sp.potion_kinds;
                                     self.selected_hotbar = sp.selected_hotbar.clamp(0, 8) as usize;
                                     self.hotbar_slots = self.inventory.hotbar();
                                     let id = self.held_id();
@@ -27865,6 +27910,7 @@ impl App {
         // placeItemBackInInventory walk — the close_furnace shape)
         if self.brewing_carried.1 > 0 {
             let (id, count) = self.brewing_carried;
+            let carried_kind = self.brewing_carried_kind;
             let mut rest = count;
             for it in self.inventory.items.iter_mut() {
                 if rest == 0 {
@@ -27876,22 +27922,28 @@ impl App {
                     rest -= take;
                 }
             }
-            for it in self.inventory.items.iter_mut() {
+            for (idx, it) in self.inventory.items.iter_mut().enumerate() {
                 if rest == 0 {
                     break;
                 }
                 if it.1 <= 0 {
                     *it = (id, rest);
                     rest = 0;
+                    // THE KIND'S OWN RIDE HOME (the dev-199 round — the
+                    // kinded carried the receiving row the seat banks;
+                    // the non-potion carried the NONE seat the same
+                    // value wears)
+                    self.items_potion_kinds[idx] = carried_kind;
                 }
             }
             if rest > 0 {
                 self.spawn_drop_at_player(id, rest);
             }
             self.brewing_carried = (0, 0);
-            // THE CARRIED KIND'S OWN DROP (the inventory wall — the
-            // (id, count) pair the kind never carries, the home ride
-            // the NONE wears)
+            // THE CARRIED KIND'S OWN DROP (the ride home the seat the
+            // rows bank; the dropped remainder the entity the kind
+            // never carries [the same honest note the thrown carried
+            // speaks] — the carried word the NONE wears)
             self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
         }
         // THE STORE'S OWN FLUSH (the chest's own persist law — the
@@ -35405,6 +35457,14 @@ impl App {
         // removeFromSelected's store walk: the whole stack gone or
         // exactly one off (the removeItem(selected, 1) law)
         self.inventory.items[sel] = if whole_stack { (0, 0) } else { (id, count - 1) };
+        // THE DROPPED KIND'S OWN SEAT (the dev-199 round — the emptied
+        // row the bank clears; the dropped entity the (id, count) pair
+        // the kind never carries [the same honest note the thrown
+        // carried speaks], the partial drop the potion the max-1 law
+        // never speaks)
+        if self.inventory.items[sel].1 <= 0 {
+            self.items_potion_kinds[sel] = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
         self.swing.start(); // the handleKeybinds success arm's MAIN_HAND swing
     }
@@ -40483,6 +40543,18 @@ impl App {
             if let Some(consumed) = self.on_right_press_bucket_lane(id) {
                 return consumed;
             }
+            // THE BOTTLE'S OWN FILL WALK (the dev-199 round — javap
+            // BottleItem.use pcs 152-285 the 26.2 jar serves: the
+            // SOURCE_ONLY POV clip the water source the fill verdict
+            // arms, the BOTTLE_FILL voice the player's ear seats, the
+            // createFilledResult walk the WATER kind mints — the kind
+            // seat the rows' own bank rides, the brewing stand's
+            // pickup the loop wears). The None the item lanes'
+            // fall-through keeps (a PASS — the vanilla's own order),
+            // the Some the press's own verdict speaks.
+            if let Some(consumed) = self.on_right_press_bottle_fill_lane(id) {
+                return consumed;
+            }
             // THE EAT LANE FIRST (the vanilla startUseItem's own
             // order — the item's use() speaks: the CONSUMABLE's
             // startConsuming opens the hold; the pull lanes ride
@@ -44747,6 +44819,7 @@ impl App {
                 yaw: b.yaw,
                 pitch: b.pitch,
                 inventory: self.inventory,
+                potion_kinds: self.items_potion_kinds,
                 selected_hotbar: self.selected_hotbar as i32,
                 health: self.health,
                 food_level: self.food_data.food_level(),
@@ -46397,12 +46470,69 @@ impl App {
                     self.inventory.items[*i - 32] = *pair;
                 }
             }
-            // THE QUICK-MOVE'S OWN KIND WALK (the inventory wall — the
-            // five's changed rows the NONE resets wear, the kind the
-            // (id, count) pair the inventory never carries)
+            // THE QUICK-MOVE'S OWN KIND WALK (the dev-199 round — the
+            // kind the whole move the hand-over wears BOTH directions:
+            // the kinded source the cleared seat hands over [the five's
+            // reset the seat's own law keeps, the row's bank the same
+            // verdict answers], the gained dest the seat lays — the
+            // potion the max-stack-1 law the merge never speaks, the
+            // whole stack the one ride serves; the kindless moves the
+            // NONE resets keep — the 339 wall the same verdict wears).
+            // THE READ the pre-move bank the snapshot pairs guard — the
+            // write-back the real stores already spoke, the normalization
+            // the potion-family id test wears.
+            let mut riding_kind: Option<i32> = None;
+            for (i, _) in &changed {
+                let old = snapshot[*i];
+                let old_kind = if *i < 5 {
+                    self.brewing_kinds[*i]
+                } else if *i < 32 {
+                    self.items_potion_kinds[*i + 4]
+                } else {
+                    self.items_potion_kinds[*i - 32]
+                };
+                if old_kind != crate::brewing_sim::POTION_KIND_NONE
+                    && crate::world::brewing_is_potion_kind(old.0)
+                    && old.1 > 0
+                {
+                    riding_kind = Some(old_kind);
+                }
+            }
             for i in 0..5 {
                 if self.brewing_slots[i] != snapshot[i] {
                     self.brewing_kinds[i] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
+            for (i, _) in &changed {
+                if *i >= 5 {
+                    let row = if *i < 32 { *i + 4 } else { *i - 32 };
+                    self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
+            if let Some(kind) = riding_kind {
+                for (i, pair) in &changed {
+                    if *i < 5 {
+                        // THE GAINED SEAT (the empty pre-move the pair
+                        // fills — the kind the ride banks)
+                        if self.brewing_kinds[*i] == crate::brewing_sim::POTION_KIND_NONE
+                            && crate::world::brewing_is_potion_kind(self.brewing_slots[*i].0)
+                            && self.brewing_slots[*i].1 > 0
+                            && pair.1 > 0
+                        {
+                            self.brewing_kinds[*i] = kind;
+                            break;
+                        }
+                    } else {
+                        let row = if *i < 32 { *i + 4 } else { *i - 32 };
+                        if self.items_potion_kinds[row] == crate::brewing_sim::POTION_KIND_NONE
+                            && crate::world::brewing_is_potion_kind(self.inventory.items[row].0)
+                            && self.inventory.items[row].1 > 0
+                            && pair.1 > 0
+                        {
+                            self.items_potion_kinds[row] = kind;
+                            break;
+                        }
+                    }
                 }
             }
             self.brewing_mirror_sync_from_inventory();
@@ -46429,16 +46559,29 @@ impl App {
         // exchange, the merge the emptied carried the NONE wears, the
         // split the kindless remainder the seat's kind keeps; the
         // potion the max-stack-1 law the partial kinded lanes never
-        // speaks).
+        // speaks. THE DEV-199 ROUND the ROWS the same ride wears —
+        // the seat the five keeps, the row the bank answers: the read
+        // the normalization speaks [the stale seat the non-potion rows
+        // never], the pickup the carried banks the row clears, the
+        // place the row lays, the swap the pairs exchange, the merge
+        // the emptied carried the NONE wears — the ride-home lane the
+        // fill loop's own half wears).
+        let row = if menu < 5 {
+            0
+        } else if menu < 32 {
+            menu + 4
+        } else {
+            menu - 32
+        };
         let old_seat_kind = if menu < 5 {
             self.brewing_kinds[menu]
         } else {
-            crate::brewing_sim::POTION_KIND_NONE
+            self.row_potion_kind(row)
         };
         let old_carried_kind = self.brewing_carried_kind;
         let mut new_seat_kind = old_seat_kind;
         let mut new_carried_kind = old_carried_kind;
-        if menu < 5 {
+        {
             let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
             let seat_new = believed.1 <= 0 && new_slot.1 > 0;
             let carried_gone = self.brewing_carried.1 > 0 && new_carried.1 <= 0;
@@ -46459,7 +46602,11 @@ impl App {
                 // carried the NONE wears
                 new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
             }
-            self.brewing_kinds[menu] = new_seat_kind;
+            if menu < 5 {
+                self.brewing_kinds[menu] = new_seat_kind;
+            } else {
+                self.items_potion_kinds[row] = new_seat_kind;
+            }
             self.brewing_carried_kind = new_carried_kind;
         }
         if menu < 5 {
@@ -56698,6 +56845,22 @@ impl App {
             return Some(sel.0);
         }
         self.offline_held
+    }
+
+    /// THE ROW'S OWN KIND READ (the dev-199 round — the bank's
+    /// normalization the accessor speaks: the POTION/SPLASH/LINGERING
+    /// rows the seat answers, the empty and the non-potion rows the
+    /// NONE verdict keeps [the stale seat the id-change rows never
+    /// speak — the bank the same-id mutations only the honest note
+    /// the component round answers]). The brewing stand's click lane
+    /// the read the rides wear.
+    fn row_potion_kind(&self, row: usize) -> i32 {
+        let (id, _) = self.inventory.items[row];
+        if crate::world::brewing_is_potion_kind(id) {
+            self.items_potion_kinds[row]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        }
     }
 
     /// THE HELD WORD (the wire order's own resolution — the item id
@@ -68837,6 +69000,150 @@ impl App {
                 self.hotbar_slots = self.inventory.hotbar();
             }
         }
+    }
+
+    /// THE BOTTLE'S OWN FILL WALK — javap BottleItem.use pcs 152-285
+    /// over the 26.2 jar (scripts/jar_work/bottle_item_199.txt the
+    /// evidence serves): the POV clip with
+    /// `ClipContext.Fluid.SOURCE_ONLY` (the reach the
+    /// getPlayerPOVHitResult's block-interaction 4.5 keeps — the eye
+    /// along the view vector, the fluids the ray stops AT, the solids
+    /// the same lane keeps), the MISS the PASS keeps (pc 162-176 — the
+    /// None the item lanes' fall-through answers), the BLOCK hit the
+    /// `getFluidState(pos).is(FluidTags.WATER)` verdict reads (pc
+    /// 209-221 — the LAVA source the tag's own refusal wears, the
+    /// solid hit the empty fluid the same PASS speaks). THE FILL (pc
+    /// 224-281): `playSound(null, player.getX/Y/Z, BOTTLE_FILL,
+    /// NEUTRAL, 1.0F, 1.0F)` the player's own ear the sound seats,
+    /// `gameEvent(FLUID_PICKUP, blockPos)` the event lane the world's
+    /// vocabulary never banks [the honest skip the round's note
+    /// keeps], then the RESULT — `PotionContents.createItemStack(
+    /// Items.POTION, Potions.WATER)` the WATER kind mints (the kind
+    /// the registry's row 0 wears), `turnBottleIntoItem` →
+    /// `ItemUtils.createFilledResult(stack, player, filled)` the
+    /// inventory law answers (scripts/jar_work/item_utils_199.txt the
+    /// pcs 37-71 walk banks): the creative arm the `hasInfiniteMaterials`
+    /// verdict keeps — the bottle NOT consumed, the potion the
+    /// `inventory.contains` gate the add rides (the contains the
+    /// (id,count) rows the potion-family id scans — the kind the
+    /// model never carries, the honest note the wall keeps); the
+    /// survival arm `consume(1, player)` wears — the emptied stack the
+    /// filled result REPLACES, the surviving count the `Inventory.add`
+    /// free-slot mint answers (the potion the max-stack-1 law the
+    /// merge never fits — the remaining-space scan the None verdict
+    /// keeps), the no-free-row the `player.drop(filled, false)` the
+    /// world serves [the dropped entity the (id,count) pair the kind
+    /// never carries — the same honest note the thrown carried
+    /// speaks]. THE KIND'S OWN RIDE the bank seats the mint answers —
+    /// the minted row's seat the WATER banks, the brewing stand's
+    /// pickup the ride the loop wears. The LIVE session the echo ALONE
+    /// speaks (the bucket lane's own law — the server's use walk the
+    /// verdict owns, the local prediction none); the offline world the
+    /// fill predicts. The kind seat the rows' own bank
+    /// [`Self::items_potion_kinds`] keeps, the disk lane the
+    /// "PotionKinds" list the restart resumes.
+    fn on_right_press_bottle_fill_lane(&mut self, id: i32) -> Option<bool> {
+        // THE CONTENT GATE (the item name's own verdict — the bottle
+        // the only filler)
+        if mc_registry::item_name(id)? != "glass_bottle" {
+            return None;
+        }
+        let cam = self.world_camera();
+        let f = cam.forward();
+        // THE POV CLIP (the SOURCE_ONLY mode — the sources AND the
+        // collision the shared clip stops; the plants the Empty-shape
+        // cells the ray passes)
+        let hit = self.active_world().and_then(|w| {
+            w.clip_fluid_source_only(
+                (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64),
+                (f.x as f64, f.y as f64, f.z as f64),
+                crate::world::BLOCK_INTERACTION_RANGE,
+            )
+        })?;
+        // THE LIVE SESSION (the echo the SUCCESS arc wears — the
+        // server's own fill the use walk answers, the voices the
+        // broadcast lane keeps, the swap the inventory delta serves,
+        // the local prediction none)
+        if self.world_is_network {
+            let (yaw, pitch) = crate::world_view::wire_angles(&cam);
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return Some(true);
+        }
+        // THE WATER VERDICT (pc 209-221 — the hit cell's own fluid the
+        // tag reads; the LAVA source and the solid hit the PASS the
+        // caller's item lanes follow)
+        let (bx, by, bz) = hit.pos;
+        if self.active_world()?.get(bx, by, bz) != crate::world::WATER {
+            return Some(false);
+        }
+        // THE FILL VOICE (pc 224-246 — the player's own position the
+        // sound wears: the ear IS the source, the dist 0 the full gain
+        // keeps, the NEUTRAL source the event row's own law banks)
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let dist = ear_distance(ear, cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let pan = ear_pan(
+            ear,
+            yaw,
+            cam.pos.x as f64,
+            cam.pos.y as f64,
+            cam.pos.z as f64,
+        );
+        self.sounds.play_bottle_fill_voice_at(self.frame, dist, pan);
+        // THE RESULT'S OWN WALK (createFilledResult — the 3-arg
+        // keepOriginal arm the inventory law answers; the mint the
+        // (id, count) pair the kind seat rides)
+        let sel = self.selected_hotbar;
+        let (_, held_count) = self.inventory.items[sel];
+        if self.game_mode == GameMode::Creative {
+            // THE CREATIVE ARM (pc 6-36 — the hasInfiniteMaterials
+            // verdict the bottle keeps, the potion the contains gate
+            // the add rides: the potion-family row the scan finds the
+            // add never speaks, the no-row the free-slot mint answers
+            // [the no-free-row the add's popped false the void keeps —
+            // pc 31 the drop arm never speaks])
+            if !self
+                .inventory
+                .items
+                .iter()
+                .any(|(row_id, _)| crate::world::brewing_is_potion_kind(*row_id))
+            {
+                if let Some(free) = (0..36).find(|&i| self.inventory.items[i].1 <= 0) {
+                    self.inventory.items[free] = (crate::world::ITEM_POTION, 1);
+                    self.items_potion_kinds[free] = crate::brewing_sim::POTION_WATER;
+                }
+            }
+        } else if held_count <= 1 {
+            // THE EMPTIED STACK'S OWN REPLACE (pc 37-51 — the
+            // consume(1) the empty verdict the filled result returns:
+            // the held slot the potion wears, the kind seat the WATER
+            // banks)
+            self.inventory.items[sel] = (crate::world::ITEM_POTION, 1);
+            self.items_potion_kinds[sel] = crate::brewing_sim::POTION_WATER;
+            self.use_consume_kills_pop(sel);
+        } else {
+            // THE SURVIVING COUNT'S OWN MINT (pc 52-69 — the shrink
+            // the stack keeps, the filled the Inventory.add the
+            // free-slot scan answers, the no-free-row the drop the
+            // world serves [the entity the kind never carries])
+            self.inventory.items[sel].1 -= 1;
+            match (0..36).find(|&i| self.inventory.items[i].1 <= 0) {
+                Some(free) => {
+                    self.inventory.items[free] = (crate::world::ITEM_POTION, 1);
+                    self.items_potion_kinds[free] = crate::brewing_sim::POTION_WATER;
+                }
+                None => self.drop_item_entity_aimed(crate::world::ITEM_POTION, 1),
+            }
+            self.use_consume_kills_pop(sel);
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+        Some(true)
     }
 
     /// THE BOAT'S OWN USE WALK — javap BoatItem.use over the 26.2 jar:

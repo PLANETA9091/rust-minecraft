@@ -619,6 +619,33 @@ impl BlockSounds {
         }
     }
 
+    /// THE BOTTLE'S OWN FILL VOICE (the dev-199 round — javap 26.2
+    /// BottleItem.use pcs 224-246 the 26.2 jar serves: `playSound(null,
+    /// player.getX/Y/Z, SoundEvents.BOTTLE_FILL, SoundSource.NEUTRAL,
+    /// 1.0F, 1.0F)` the water-source fill walk speaks — the FIXED
+    /// volume and pitch lane (no randoms, the scoop's own deadpan),
+    /// the sound the PLAYER's own position wears (the ear the source's
+    /// own seat answers — dist 0 the full gain keeps), the file pick
+    /// the weighted law resolves [the sounds.json row the fill1..4
+    /// quartet banks]).
+    pub fn play_bottle_fill_voice_at(&mut self, tick: u64, dist: f64, pan: f32) {
+        let Some(file) = self.pick_file("item.bottle.fill") else {
+            return;
+        };
+        let gain = attenuate(1.0, dist, voice_max_distance(1.0));
+        if pan == 0.0 {
+            self.events.push(format!(
+                "item.bottle.fill @{tick} #{file} v{gain:.6} p{:.6}",
+                1.0
+            ));
+        } else {
+            self.events.push(format!(
+                "item.bottle.fill @{tick} #{file} v{gain:.6} p{:.6} s{pan:+.6}",
+                1.0
+            ));
+        }
+    }
+
     /// The FALL VOICE (javap `LivingEntity.causeFallDamage`'s own
     /// call): `playSound(getFallDamageSound(damage), 1.0F, 1.0F)` —
     /// the FIXED volume and pitch lane (no randoms, the fall's own
