@@ -8801,6 +8801,215 @@ fn the_offline_brewing_the_render_the_progress_sprites_wear() {
     );
 }
 
+/// THE POTION KINDS' OWN SCREEN WALK (the autopush-339 round — the
+/// POTION_CONTENTS kinds the seat bank rides: the kinded water
+/// bottle the nether-wart brew the AWKWARD walk transforms, the
+/// click pickup/place the kind pairs keep, the close/reopen the
+/// bank resumes, the contents-less stack the wall the mix never
+/// transforms).
+#[test]
+fn the_offline_brewing_the_kinds_the_mix_transform_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world.as_mut().unwrap().set(
+        cell.0,
+        cell.1,
+        cell.2,
+        crate::world::BREWING_STAND,
+    );
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+    let powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    let water = crate::brewing_sim::POTION_WATER;
+    let awkward = crate::brewing_sim::POTION_AWKWARD;
+    app.brewing_stores.insert(
+        cell,
+        vec![(potion, 1), (0, 0), (0, 0), (wart, 2), (powder, 1)],
+    );
+    app.brewing_kind_stores.insert(
+        cell,
+        [
+            water,
+            crate::brewing_sim::POTION_KIND_NONE,
+            crate::brewing_sim::POTION_KIND_NONE,
+            crate::brewing_sim::POTION_KIND_NONE,
+            crate::brewing_sim::POTION_KIND_NONE,
+        ],
+    );
+    app.open_brewing_for(cell);
+    assert_eq!(
+        app.brewing_kinds[0], water,
+        "the open the banked kind loads"
+    );
+    // THE FIRST TICK the refill + the start pair.
+    app.update();
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::DATA_BREW_TIME],
+        400,
+        "the kinded stand the start arms"
+    );
+    // THE FULL ARC the 400 ticks the finish speaks.
+    for _ in 0..400 {
+        app.update();
+    }
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the potion row the item keeps"
+    );
+    assert_eq!(
+        app.brewing_kinds[0], awkward,
+        "the water bottle the awkward walk transforms"
+    );
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::INGREDIENT_WORD],
+        wart,
+        "the start word the wart banks"
+    );
+    assert_eq!(
+        app.brewing_slots[3],
+        (wart, 1),
+        "the doBrew the wart spends"
+    );
+    // THE CLOSE the kinds the bank flushes, the REOPEN the resume
+    // wears.
+    app.close_brewing(ScreenKind::World);
+    assert_eq!(
+        app.brewing_kind_stores.get(&cell).map(|k| k[0]),
+        Some(awkward),
+        "the close flush the awkward kind banks"
+    );
+    app.open_brewing_for(cell);
+    assert_eq!(app.brewing_kinds[0], awkward, "the reopen the kind resumes");
+    // THE KIND'S OWN RIDE the clicks wear: the pickup the kind the
+    // carried banks (the seat the NONE wears), the place the carried
+    // kind the seat lays (the same seat the resume answers).
+    app.brewing_slot_rects = vec![(0, 0, 0), (20, 0, 1), (40, 0, 2), (60, 0, 3), (80, 0, 4)];
+    app.brewing_panel = (0, 0);
+    app.shift_down = false;
+    app.click_brewing_slot(0, 0, 0);
+    assert_eq!(
+        app.brewing_carried,
+        (potion, 1),
+        "the pickup the stack rides"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, awkward,
+        "the pickup the kind rides"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the emptied seat the NONE wears"
+    );
+    app.click_brewing_slot(0, 0, 0);
+    assert_eq!(app.brewing_carried, (0, 0), "the place the carried lays");
+    assert_eq!(
+        app.brewing_carried_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the placed carried the NONE wears"
+    );
+    assert_eq!(
+        app.brewing_kinds[0], awkward,
+        "the place the kind resumes the seat"
+    );
+    // THE NO-ROW WALL the brew never rewrites (the awkward + wart
+    // pair the potionMixes table never banks — the brewable gate
+    // the false keeps, the count the abort arm zeroes, the kinds
+    // the rewrite never speaks).
+    app.brewing_data[crate::brewing_sim::DATA_BREW_TIME] = 1;
+    app.update();
+    assert_eq!(
+        app.brewing_kinds[0], awkward,
+        "the row-less stand the kind never rewrites"
+    );
+    assert_eq!(
+        app.brewing_data[crate::brewing_sim::DATA_BREW_TIME],
+        0,
+        "the unbrewable stand the count aborts"
+    );
+}
+
+/// THE BREWING KINDS' OWN DISK BANK (the words' own law the 339
+/// round re-wears — the round trip the five-cell widths keep, the
+/// short list the NONE pad fills [never a kind 0 the water the
+/// absence invents], the over-long list the cap truncates, the
+/// missing list the honest empties keep).
+#[test]
+fn the_brewing_stand_the_kinds_bank_the_disk_wears() {
+    let water = crate::brewing_sim::POTION_WATER;
+    let awkward = crate::brewing_sim::POTION_AWKWARD;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut bank = std::collections::HashMap::new();
+    bank.insert((3, 40, -7), [water, awkward, none, none, none]);
+    bank.insert((-1, 64, 2), [none; 5]);
+    let nbt = mc_protocol::nbt::Nbt::Compound(vec![(
+        "brewing_kinds".to_string(),
+        brewing_kinds_bank_to_nbt(&bank),
+    )]);
+    let parsed = brewing_kinds_from_nbt(&nbt);
+    assert_eq!(parsed.len(), 2, "the two cells the round trip keeps");
+    assert_eq!(
+        parsed.get(&(3, 40, -7)),
+        Some(&[water, awkward, none, none, none])
+    );
+    assert_eq!(parsed.get(&(-1, 64, 2)), Some(&[none; 5]));
+    // THE SHORT LIST the NONE pad fills (the missing seats the kind
+    // absence keeps — never a kind 0 the water potion invents).
+    let short = mc_protocol::nbt::Nbt::Compound(vec![(
+        "brewing_kinds".to_string(),
+        mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(1)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(2)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(3)),
+            (
+                "Kinds".to_string(),
+                mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Int(3)]),
+            ),
+        ])]),
+    )]);
+    let parsed = brewing_kinds_from_nbt(&short);
+    assert_eq!(
+        parsed.get(&(1, 2, 3)),
+        Some(&[awkward, none, none, none, none]),
+        "the short list the NONE pad wears"
+    );
+    // THE OVER-LONG LIST the cap truncates (the corrupt width the
+    // 5-kind law keeps).
+    let long = mc_protocol::nbt::Nbt::Compound(vec![(
+        "brewing_kinds".to_string(),
+        mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(4)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(5)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(6)),
+            (
+                "Kinds".to_string(),
+                mc_protocol::nbt::Nbt::List(vec![
+                    mc_protocol::nbt::Nbt::Int(1),
+                    mc_protocol::nbt::Nbt::Int(2),
+                    mc_protocol::nbt::Nbt::Int(3),
+                    mc_protocol::nbt::Nbt::Int(4),
+                    mc_protocol::nbt::Nbt::Int(5),
+                    mc_protocol::nbt::Nbt::Int(6),
+                ]),
+            ),
+        ])]),
+    )]);
+    let parsed = brewing_kinds_from_nbt(&long);
+    assert_eq!(
+        parsed.get(&(4, 5, 6)),
+        Some(&[1, 2, 3, 4, 5]),
+        "the cap the five keeps"
+    );
+    // THE MISSING LIST the honest empties keep.
+    let none_root = mc_protocol::nbt::Nbt::Compound(vec![]);
+    assert!(brewing_kinds_from_nbt(&none_root).is_empty());
+}
+
 fn fb_bytes(fb: &crate::raster::Framebuf) -> &[u8] {
     &fb.color
 }

@@ -1,0 +1,250 @@
+Compiled from "PotionIds.java"
+public class net.minecraft.world.item.alchemy.PotionIds {
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> WATER;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> MUNDANE;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> THICK;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> AWKWARD;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> NIGHT_VISION;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_NIGHT_VISION;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> INVISIBILITY;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_INVISIBILITY;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LEAPING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_LEAPING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_LEAPING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> FIRE_RESISTANCE;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_FIRE_RESISTANCE;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> SWIFTNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_SWIFTNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_SWIFTNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> SLOWNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_SLOWNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_SLOWNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> TURTLE_MASTER;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_TURTLE_MASTER;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_TURTLE_MASTER;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> WATER_BREATHING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_WATER_BREATHING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> HEALING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_HEALING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> HARMING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_HARMING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> POISON;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_POISON;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_POISON;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> REGENERATION;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_REGENERATION;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_REGENERATION;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRENGTH;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_STRENGTH;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> STRONG_STRENGTH;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> WEAKNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_WEAKNESS;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LUCK;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> SLOW_FALLING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> LONG_SLOW_FALLING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> WIND_CHARGED;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> WEAVING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> OOZING;
+
+  public static final net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> INFESTED;
+
+  public net.minecraft.world.item.alchemy.PotionIds();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  private static net.minecraft.resources.ResourceKey<net.minecraft.world.item.alchemy.Potion> register(java.lang.String);
+    Code:
+         0: getstatic     #7                  // Field net/minecraft/core/registries/Registries.POTION:Lnet/minecraft/resources/ResourceKey;
+         3: aload_0
+         4: invokestatic  #13                 // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+         7: invokestatic  #19                 // Method net/minecraft/resources/ResourceKey.create:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/Identifier;)Lnet/minecraft/resources/ResourceKey;
+        10: areturn
+
+  static {};
+    Code:
+         0: ldc           #25                 // String water
+         2: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+         5: putstatic     #33                 // Field WATER:Lnet/minecraft/resources/ResourceKey;
+         8: ldc           #36                 // String mundane
+        10: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        13: putstatic     #38                 // Field MUNDANE:Lnet/minecraft/resources/ResourceKey;
+        16: ldc           #41                 // String thick
+        18: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        21: putstatic     #43                 // Field THICK:Lnet/minecraft/resources/ResourceKey;
+        24: ldc           #46                 // String awkward
+        26: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        29: putstatic     #48                 // Field AWKWARD:Lnet/minecraft/resources/ResourceKey;
+        32: ldc           #51                 // String night_vision
+        34: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        37: putstatic     #53                 // Field NIGHT_VISION:Lnet/minecraft/resources/ResourceKey;
+        40: ldc           #56                 // String long_night_vision
+        42: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        45: putstatic     #58                 // Field LONG_NIGHT_VISION:Lnet/minecraft/resources/ResourceKey;
+        48: ldc           #61                 // String invisibility
+        50: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        53: putstatic     #63                 // Field INVISIBILITY:Lnet/minecraft/resources/ResourceKey;
+        56: ldc           #66                 // String long_invisibility
+        58: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        61: putstatic     #68                 // Field LONG_INVISIBILITY:Lnet/minecraft/resources/ResourceKey;
+        64: ldc           #71                 // String leaping
+        66: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        69: putstatic     #73                 // Field LEAPING:Lnet/minecraft/resources/ResourceKey;
+        72: ldc           #76                 // String long_leaping
+        74: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        77: putstatic     #78                 // Field LONG_LEAPING:Lnet/minecraft/resources/ResourceKey;
+        80: ldc           #81                 // String strong_leaping
+        82: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        85: putstatic     #83                 // Field STRONG_LEAPING:Lnet/minecraft/resources/ResourceKey;
+        88: ldc           #86                 // String fire_resistance
+        90: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+        93: putstatic     #88                 // Field FIRE_RESISTANCE:Lnet/minecraft/resources/ResourceKey;
+        96: ldc           #91                 // String long_fire_resistance
+        98: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       101: putstatic     #93                 // Field LONG_FIRE_RESISTANCE:Lnet/minecraft/resources/ResourceKey;
+       104: ldc           #96                 // String swiftness
+       106: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       109: putstatic     #98                 // Field SWIFTNESS:Lnet/minecraft/resources/ResourceKey;
+       112: ldc           #101                // String long_swiftness
+       114: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       117: putstatic     #103                // Field LONG_SWIFTNESS:Lnet/minecraft/resources/ResourceKey;
+       120: ldc           #106                // String strong_swiftness
+       122: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       125: putstatic     #108                // Field STRONG_SWIFTNESS:Lnet/minecraft/resources/ResourceKey;
+       128: ldc           #111                // String slowness
+       130: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       133: putstatic     #113                // Field SLOWNESS:Lnet/minecraft/resources/ResourceKey;
+       136: ldc           #116                // String long_slowness
+       138: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       141: putstatic     #118                // Field LONG_SLOWNESS:Lnet/minecraft/resources/ResourceKey;
+       144: ldc           #121                // String strong_slowness
+       146: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       149: putstatic     #123                // Field STRONG_SLOWNESS:Lnet/minecraft/resources/ResourceKey;
+       152: ldc           #126                // String turtle_master
+       154: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       157: putstatic     #128                // Field TURTLE_MASTER:Lnet/minecraft/resources/ResourceKey;
+       160: ldc           #131                // String long_turtle_master
+       162: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       165: putstatic     #133                // Field LONG_TURTLE_MASTER:Lnet/minecraft/resources/ResourceKey;
+       168: ldc           #136                // String strong_turtle_master
+       170: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       173: putstatic     #138                // Field STRONG_TURTLE_MASTER:Lnet/minecraft/resources/ResourceKey;
+       176: ldc           #141                // String water_breathing
+       178: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       181: putstatic     #143                // Field WATER_BREATHING:Lnet/minecraft/resources/ResourceKey;
+       184: ldc           #146                // String long_water_breathing
+       186: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       189: putstatic     #148                // Field LONG_WATER_BREATHING:Lnet/minecraft/resources/ResourceKey;
+       192: ldc           #151                // String healing
+       194: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       197: putstatic     #153                // Field HEALING:Lnet/minecraft/resources/ResourceKey;
+       200: ldc           #156                // String strong_healing
+       202: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       205: putstatic     #158                // Field STRONG_HEALING:Lnet/minecraft/resources/ResourceKey;
+       208: ldc           #161                // String harming
+       210: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       213: putstatic     #163                // Field HARMING:Lnet/minecraft/resources/ResourceKey;
+       216: ldc           #166                // String strong_harming
+       218: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       221: putstatic     #168                // Field STRONG_HARMING:Lnet/minecraft/resources/ResourceKey;
+       224: ldc           #171                // String poison
+       226: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       229: putstatic     #173                // Field POISON:Lnet/minecraft/resources/ResourceKey;
+       232: ldc           #176                // String long_poison
+       234: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       237: putstatic     #178                // Field LONG_POISON:Lnet/minecraft/resources/ResourceKey;
+       240: ldc           #181                // String strong_poison
+       242: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       245: putstatic     #183                // Field STRONG_POISON:Lnet/minecraft/resources/ResourceKey;
+       248: ldc           #186                // String regeneration
+       250: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       253: putstatic     #188                // Field REGENERATION:Lnet/minecraft/resources/ResourceKey;
+       256: ldc           #191                // String long_regeneration
+       258: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       261: putstatic     #193                // Field LONG_REGENERATION:Lnet/minecraft/resources/ResourceKey;
+       264: ldc           #196                // String strong_regeneration
+       266: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       269: putstatic     #198                // Field STRONG_REGENERATION:Lnet/minecraft/resources/ResourceKey;
+       272: ldc           #201                // String strength
+       274: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       277: putstatic     #203                // Field STRENGTH:Lnet/minecraft/resources/ResourceKey;
+       280: ldc           #206                // String long_strength
+       282: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       285: putstatic     #208                // Field LONG_STRENGTH:Lnet/minecraft/resources/ResourceKey;
+       288: ldc           #211                // String strong_strength
+       290: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       293: putstatic     #213                // Field STRONG_STRENGTH:Lnet/minecraft/resources/ResourceKey;
+       296: ldc           #216                // String weakness
+       298: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       301: putstatic     #218                // Field WEAKNESS:Lnet/minecraft/resources/ResourceKey;
+       304: ldc           #221                // String long_weakness
+       306: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       309: putstatic     #223                // Field LONG_WEAKNESS:Lnet/minecraft/resources/ResourceKey;
+       312: ldc           #226                // String luck
+       314: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       317: putstatic     #228                // Field LUCK:Lnet/minecraft/resources/ResourceKey;
+       320: ldc           #231                // String slow_falling
+       322: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       325: putstatic     #233                // Field SLOW_FALLING:Lnet/minecraft/resources/ResourceKey;
+       328: ldc           #236                // String long_slow_falling
+       330: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       333: putstatic     #238                // Field LONG_SLOW_FALLING:Lnet/minecraft/resources/ResourceKey;
+       336: ldc           #241                // String wind_charged
+       338: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       341: putstatic     #243                // Field WIND_CHARGED:Lnet/minecraft/resources/ResourceKey;
+       344: ldc           #246                // String weaving
+       346: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       349: putstatic     #248                // Field WEAVING:Lnet/minecraft/resources/ResourceKey;
+       352: ldc           #251                // String oozing
+       354: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       357: putstatic     #253                // Field OOZING:Lnet/minecraft/resources/ResourceKey;
+       360: ldc_w         #256                // String infested
+       363: invokestatic  #27                 // Method register:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceKey;
+       366: putstatic     #258                // Field INFESTED:Lnet/minecraft/resources/ResourceKey;
+       369: return
+}

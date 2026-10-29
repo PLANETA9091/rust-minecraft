@@ -9540,6 +9540,25 @@ pub struct App {
     /// words the map banks, the disk bank the furnace_words lane
     /// speaks).
     pub brewing_word_stores: std::collections::HashMap<(i32, i32, i32), [i32; 3]>,
+    /// THE BREWING SEATS' OWN POTION KINDS (the autopush-339 round —
+    /// the `POTION_CONTENTS` component the (id, count) pair the
+    /// parallel bank rides: the bottle trio 0..3 the live cells wear
+    /// [the potion/splash/lingering stacks the registry row carry],
+    /// the ingredient/fuel seats the [`POTION_KIND_NONE`] keep; the
+    /// mix walk the kinds transform, the picks the kind-less
+    /// inventory the NONE wall wears).
+    pub brewing_kinds: [i32; 5],
+    /// THE BREWING KINDS' OWN BANK (the words' own law — the per-cell
+    /// kinds the closed stands the world walk wears: the open the
+    /// cell's five LOADS, the close flush the tick-worn kinds the
+    /// map banks, the disk bank the brewing_kinds lane speaks).
+    pub brewing_kind_stores: std::collections::HashMap<(i32, i32, i32), [i32; 5]>,
+    /// THE OFFLINE SIM'S OWN BREWING CARRIED KIND (the carried
+    /// stack's POTION_CONTENTS the within-stand rides bank — the
+    /// pickup/place/swap the kind pairs keep, the inventory rides
+    /// the wall the NONE drops). `POTION_KIND_NONE` while no kinded
+    /// stack rides.
+    pub brewing_carried_kind: i32,
     /// THE OFFLINE SIM'S OWN BREWING STAND (the opened block entity's
     /// cell the right-press door records — the retained lane the
     /// furnace_pos law wears: the close the cell KEEPS, the world
@@ -12240,6 +12259,75 @@ pub fn brewing_words_from_nbt(
     stores
 }
 
+/// THE BREWING KINDS' OWN BANK (the words' own law the 339 round
+/// re-wears: the same file the "brewing_kinds" list wears, each
+/// entry the x/y/z triple + the "Kinds" list of 5 Int compounds the
+/// seat bank's width speaks — the bottle trio the live cells keep,
+/// the ingredient/fuel seats the NONE fill; the BTree order the
+/// deterministic bytes keep, the cap the 5-kind width speaks).
+pub fn brewing_kinds_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), [i32; 5]>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for ((x, y, z), kinds) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            (
+                "Kinds".to_string(),
+                mc_protocol::nbt::Nbt::List(
+                    kinds
+                        .iter()
+                        .map(|&k| mc_protocol::nbt::Nbt::Int(k))
+                        .collect(),
+                ),
+            ),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE BREWING KINDS' OWN PARSE (the tolerant walk the words parse
+/// wears: the missing coordinate the entry skip keeps, the short
+/// list the NONE pad fills — never a kind 0 the water potion the
+/// absence would invent, the over-long list the 5-kind cap
+/// truncates, the missing list the honest NONEs keep).
+pub fn brewing_kinds_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), [i32; 5]> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("brewing_kinds") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        let mut kinds = [crate::brewing_sim::POTION_KIND_NONE; 5];
+        if let Some(mc_protocol::nbt::Nbt::List(items)) =
+            fields.iter().find(|(k, _)| k == "Kinds").map(|(_, v)| v)
+        {
+            for (i, item) in items.iter().enumerate().take(5) {
+                if let Some(k) = item.as_i32() {
+                    kinds[i] = k;
+                }
+            }
+        }
+        stores.insert((x, y, z), kinds);
+    }
+    stores
+}
+
 /// THE FRAME BANK'S OWN WALK (the autopush-136 round — the
 /// "item_frames" list the containers file's fourth bank wears: the
 /// wall frames the RESTART OUTLIVES the same file the chest/furnace
@@ -12663,6 +12751,9 @@ impl App {
             brewing_open_cell: None,
             brewing_data: [0, 0, 0],
             brewing_word_stores: std::collections::HashMap::new(),
+            brewing_kinds: [crate::brewing_sim::POTION_KIND_NONE; 5],
+            brewing_kind_stores: std::collections::HashMap::new(),
+            brewing_carried_kind: crate::brewing_sim::POTION_KIND_NONE,
             brewing_pos: None,
             enchant_slots: Vec::new(),
             enchant_mirror: Vec::new(),
@@ -13401,7 +13492,11 @@ impl App {
             while five.len() < 5 {
                 five.push((0, 0));
             }
-            let finished = crate::brewing_sim::tick(&mut five, &mut self.brewing_data);
+            let finished = crate::brewing_sim::tick(
+                &mut five,
+                &mut self.brewing_data,
+                &mut self.brewing_kinds,
+            );
             self.brewing_slots = five;
             if finished {
                 self.brew_finish_voice(pos);
@@ -13543,9 +13638,14 @@ impl App {
                         five.push((0, 0));
                     }
                     let mut words = *self.brewing_word_stores.entry(cell).or_insert([0i32; 3]);
-                    let finished = crate::brewing_sim::tick(&mut five, &mut words);
+                    let mut kinds = *self
+                        .brewing_kind_stores
+                        .entry(cell)
+                        .or_insert([crate::brewing_sim::POTION_KIND_NONE; 5]);
+                    let finished = crate::brewing_sim::tick(&mut five, &mut words, &mut kinds);
                     self.brewing_stores.insert(cell, five);
                     self.brewing_word_stores.insert(cell, words);
+                    self.brewing_kind_stores.insert(cell, kinds);
                     if finished {
                         self.brew_finish_voice(cell);
                     }
@@ -27709,6 +27809,16 @@ impl App {
         // the SAME stand the retention law the words never clobbers —
         // the furnace words' own open law the lane re-wears)
         self.brewing_data = *self.brewing_word_stores.entry(pos).or_insert([0i32; 3]);
+        // THE KINDS' OWN READ (the 339 round — the banked potion
+        // kinds the fresh branch wears: the fresh cell the NONE
+        // five keeps, the same stand the retention law the kinds
+        // never clobbers — the words' own open law the lane
+        // re-wears)
+        self.brewing_kinds = *self
+            .brewing_kind_stores
+            .entry(pos)
+            .or_insert([crate::brewing_sim::POTION_KIND_NONE; 5]);
+        self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE LIVE LANE'S OWN CELL (the furnace_pos law — the
         // retained walk the close keeps, the mined stand the block
         // check retires)
@@ -27779,6 +27889,10 @@ impl App {
                 self.spawn_drop_at_player(id, rest);
             }
             self.brewing_carried = (0, 0);
+            // THE CARRIED KIND'S OWN DROP (the inventory wall — the
+            // (id, count) pair the kind never carries, the home ride
+            // the NONE wears)
+            self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
         }
         // THE STORE'S OWN FLUSH (the chest's own persist law — the
         // open the brewing_open_cell key banks, the close the edited
@@ -27792,6 +27906,10 @@ impl App {
             // tick-worn brew/fuel state the bank keeps, the reopen
             // the resume wears)
             self.brewing_word_stores.insert(pos, self.brewing_data);
+            // THE KINDS' OWN FLUSH (the words' own law — the tick-worn
+            // potion kinds the bank keeps, the reopen the resume
+            // wears)
+            self.brewing_kind_stores.insert(pos, self.brewing_kinds);
             self.container_stores_file_save();
             // THE FILL'S OWN RIDE HOME (the comparator's container lane
             // the close flush banks — the 309 round's own five the
@@ -44366,6 +44484,11 @@ impl App {
                 // extend law the in-memory entry keeps)
                 self.brewing_word_stores
                     .extend(brewing_words_from_nbt(&root));
+                // THE BREWING KINDS' OWN PARSE (the 339 round — the
+                // same read the potion-kind bank answers, the same
+                // extend law the in-memory entry keeps)
+                self.brewing_kind_stores
+                    .extend(brewing_kinds_from_nbt(&root));
                 // THE ENDER BANK'S OWN PARSE (the autopush-289 round —
                 // the "ender" row the shared store the boot banks:
                 // the missing row the honest empties keep, the present
@@ -44470,6 +44593,14 @@ impl App {
             (
                 "brewing_words".to_string(),
                 brewing_words_bank_to_nbt(&self.brewing_word_stores),
+            ),
+            // THE BREWING KINDS' OWN ROW (the 339 round — the seat
+            // kinds the same file the list wears, the BTree cell
+            // order the deterministic bytes keep, the five the
+            // seat bank's width the disk banks)
+            (
+                "brewing_kinds".to_string(),
+                brewing_kinds_bank_to_nbt(&self.brewing_kind_stores),
             ),
             // THE ENDER BANK'S OWN ROW (the autopush-289 round — the
             // shared per-player inventory the same file the fifth
@@ -46210,6 +46341,13 @@ impl App {
         let dropped = if button == 0 { count } else { 1 };
         self.drop_item_entity_aimed(id, dropped);
         self.brewing_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+        // THE THROWN KIND'S OWN DROP (the 339 round — the item entity
+        // the (id, count) pair the kind never carries, the throw the
+        // NONE wears — the same honest note the enchanting carried
+        // comps speak)
+        if self.brewing_carried.1 <= 0 {
+            self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE BREWING STAND'S OWN CLICK LANE (the offline sim's own walk
@@ -46259,6 +46397,14 @@ impl App {
                     self.inventory.items[*i - 32] = *pair;
                 }
             }
+            // THE QUICK-MOVE'S OWN KIND WALK (the inventory wall — the
+            // five's changed rows the NONE resets wear, the kind the
+            // (id, count) pair the inventory never carries)
+            for i in 0..5 {
+                if self.brewing_slots[i] != snapshot[i] {
+                    self.brewing_kinds[i] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
             self.brewing_mirror_sync_from_inventory();
             return;
         }
@@ -46277,6 +46423,45 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, self.brewing_carried)
         };
+        // THE KIND'S OWN RIDE (the 339 round — the kind the whole-stack
+        // moves keep: the pickup the seat's kind the carried banks, the
+        // place the carried kind the seat lays, the swap the pairs
+        // exchange, the merge the emptied carried the NONE wears, the
+        // split the kindless remainder the seat's kind keeps; the
+        // potion the max-stack-1 law the partial kinded lanes never
+        // speaks).
+        let old_seat_kind = if menu < 5 {
+            self.brewing_kinds[menu]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.brewing_carried_kind;
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        if menu < 5 {
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = self.brewing_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.brewing_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the carried
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if seat_gone && seat_new {
+                // the SWAP — the pairs exchange
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the seat keeps its own kind, the emptied
+                // carried the NONE wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.brewing_kinds[menu] = new_seat_kind;
+            self.brewing_carried_kind = new_carried_kind;
+        }
         if menu < 5 {
             self.brewing_slots[menu] = new_slot;
         } else if menu < 32 {

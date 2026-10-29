@@ -1,0 +1,176 @@
+Compiled from "PotionBrewing.java"
+public class net.minecraft.world.item.alchemy.PotionBrewing$Builder {
+  private final java.util.List<net.minecraft.world.item.crafting.Ingredient> containers;
+
+  private final java.util.List<net.minecraft.world.item.alchemy.PotionBrewing$Mix<net.minecraft.world.item.alchemy.Potion>> potionMixes;
+
+  private final java.util.List<net.minecraft.world.item.alchemy.PotionBrewing$Mix<net.minecraft.world.item.Item>> containerMixes;
+
+  private final net.minecraft.world.flag.FeatureFlagSet enabledFeatures;
+
+  public net.minecraft.world.item.alchemy.PotionBrewing$Builder(net.minecraft.world.flag.FeatureFlagSet);
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: new           #7                  // class java/util/ArrayList
+         8: dup
+         9: invokespecial #9                  // Method java/util/ArrayList."<init>":()V
+        12: putfield      #10                 // Field containers:Ljava/util/List;
+        15: aload_0
+        16: new           #7                  // class java/util/ArrayList
+        19: dup
+        20: invokespecial #9                  // Method java/util/ArrayList."<init>":()V
+        23: putfield      #16                 // Field potionMixes:Ljava/util/List;
+        26: aload_0
+        27: new           #7                  // class java/util/ArrayList
+        30: dup
+        31: invokespecial #9                  // Method java/util/ArrayList."<init>":()V
+        34: putfield      #19                 // Field containerMixes:Ljava/util/List;
+        37: aload_0
+        38: aload_1
+        39: putfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        42: return
+
+  private static void expectPotion(net.minecraft.world.item.Item);
+    Code:
+         0: aload_0
+         1: instanceof    #26                 // class net/minecraft/world/item/PotionItem
+         4: ifne          32
+         7: new           #28                 // class java/lang/IllegalArgumentException
+        10: dup
+        11: getstatic     #30                 // Field net/minecraft/core/registries/BuiltInRegistries.ITEM:Lnet/minecraft/core/DefaultedRegistry;
+        14: aload_0
+        15: invokeinterface #36,  2           // InterfaceMethod net/minecraft/core/DefaultedRegistry.getKey:(Ljava/lang/Object;)Lnet/minecraft/resources/Identifier;
+        20: invokestatic  #42                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+        23: invokedynamic #48,  0             // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+        28: invokespecial #52                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+        31: athrow
+        32: return
+
+  public void addContainerRecipe(net.minecraft.world.item.Item, net.minecraft.world.item.Item, net.minecraft.world.item.Item);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+         5: invokevirtual #55                 // Method net/minecraft/world/item/Item.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+         8: ifeq          33
+        11: aload_2
+        12: aload_0
+        13: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        16: invokevirtual #55                 // Method net/minecraft/world/item/Item.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+        19: ifeq          33
+        22: aload_3
+        23: aload_0
+        24: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        27: invokevirtual #55                 // Method net/minecraft/world/item/Item.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+        30: ifne          34
+        33: return
+        34: aload_1
+        35: invokestatic  #61                 // Method expectPotion:(Lnet/minecraft/world/item/Item;)V
+        38: aload_3
+        39: invokestatic  #61                 // Method expectPotion:(Lnet/minecraft/world/item/Item;)V
+        42: aload_0
+        43: getfield      #19                 // Field containerMixes:Ljava/util/List;
+        46: new           #65                 // class net/minecraft/world/item/alchemy/PotionBrewing$Mix
+        49: dup
+        50: aload_1
+        51: invokevirtual #67                 // Method net/minecraft/world/item/Item.builtInRegistryHolder:()Lnet/minecraft/core/Holder$Reference;
+        54: aload_2
+        55: invokestatic  #71                 // Method net/minecraft/world/item/crafting/Ingredient.of:(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/item/crafting/Ingredient;
+        58: aload_3
+        59: invokevirtual #67                 // Method net/minecraft/world/item/Item.builtInRegistryHolder:()Lnet/minecraft/core/Holder$Reference;
+        62: invokespecial #77                 // Method net/minecraft/world/item/alchemy/PotionBrewing$Mix."<init>":(Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/crafting/Ingredient;Lnet/minecraft/core/Holder;)V
+        65: invokeinterface #80,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+        70: pop
+        71: return
+
+  public void addContainer(net.minecraft.world.item.Item);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+         5: invokevirtual #55                 // Method net/minecraft/world/item/Item.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+         8: ifne          12
+        11: return
+        12: aload_1
+        13: invokestatic  #61                 // Method expectPotion:(Lnet/minecraft/world/item/Item;)V
+        16: aload_0
+        17: getfield      #10                 // Field containers:Ljava/util/List;
+        20: aload_1
+        21: invokestatic  #71                 // Method net/minecraft/world/item/crafting/Ingredient.of:(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/item/crafting/Ingredient;
+        24: invokeinterface #80,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+        29: pop
+        30: return
+
+  public void addMix(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>, net.minecraft.world.item.Item, net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+    Code:
+         0: aload_1
+         1: invokeinterface #86,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+         6: checkcast     #92                 // class net/minecraft/world/item/alchemy/Potion
+         9: aload_0
+        10: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        13: invokevirtual #94                 // Method net/minecraft/world/item/alchemy/Potion.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+        16: ifeq          72
+        19: aload_2
+        20: aload_0
+        21: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        24: invokevirtual #55                 // Method net/minecraft/world/item/Item.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+        27: ifeq          72
+        30: aload_3
+        31: invokeinterface #86,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        36: checkcast     #92                 // class net/minecraft/world/item/alchemy/Potion
+        39: aload_0
+        40: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        43: invokevirtual #94                 // Method net/minecraft/world/item/alchemy/Potion.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+        46: ifeq          72
+        49: aload_0
+        50: getfield      #16                 // Field potionMixes:Ljava/util/List;
+        53: new           #65                 // class net/minecraft/world/item/alchemy/PotionBrewing$Mix
+        56: dup
+        57: aload_1
+        58: aload_2
+        59: invokestatic  #71                 // Method net/minecraft/world/item/crafting/Ingredient.of:(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/item/crafting/Ingredient;
+        62: aload_3
+        63: invokespecial #77                 // Method net/minecraft/world/item/alchemy/PotionBrewing$Mix."<init>":(Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/crafting/Ingredient;Lnet/minecraft/core/Holder;)V
+        66: invokeinterface #80,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+        71: pop
+        72: return
+
+  public void addStartMix(net.minecraft.world.item.Item, net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+    Code:
+         0: aload_2
+         1: invokeinterface #86,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+         6: checkcast     #92                 // class net/minecraft/world/item/alchemy/Potion
+         9: aload_0
+        10: getfield      #22                 // Field enabledFeatures:Lnet/minecraft/world/flag/FeatureFlagSet;
+        13: invokevirtual #94                 // Method net/minecraft/world/item/alchemy/Potion.isEnabled:(Lnet/minecraft/world/flag/FeatureFlagSet;)Z
+        16: ifeq          39
+        19: aload_0
+        20: getstatic     #95                 // Field net/minecraft/world/item/alchemy/Potions.WATER:Lnet/minecraft/core/Holder;
+        23: aload_1
+        24: getstatic     #101                // Field net/minecraft/world/item/alchemy/Potions.MUNDANE:Lnet/minecraft/core/Holder;
+        27: invokevirtual #104                // Method addMix:(Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+        30: aload_0
+        31: getstatic     #108                // Field net/minecraft/world/item/alchemy/Potions.AWKWARD:Lnet/minecraft/core/Holder;
+        34: aload_1
+        35: aload_2
+        36: invokevirtual #104                // Method addMix:(Lnet/minecraft/core/Holder;Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)V
+        39: return
+
+  public net.minecraft.world.item.alchemy.PotionBrewing build();
+    Code:
+         0: new           #111                // class net/minecraft/world/item/alchemy/PotionBrewing
+         3: dup
+         4: aload_0
+         5: getfield      #10                 // Field containers:Ljava/util/List;
+         8: invokestatic  #113                // InterfaceMethod java/util/List.copyOf:(Ljava/util/Collection;)Ljava/util/List;
+        11: aload_0
+        12: getfield      #16                 // Field potionMixes:Ljava/util/List;
+        15: invokestatic  #113                // InterfaceMethod java/util/List.copyOf:(Ljava/util/Collection;)Ljava/util/List;
+        18: aload_0
+        19: getfield      #19                 // Field containerMixes:Ljava/util/List;
+        22: invokestatic  #113                // InterfaceMethod java/util/List.copyOf:(Ljava/util/Collection;)Ljava/util/List;
+        25: invokespecial #117                // Method net/minecraft/world/item/alchemy/PotionBrewing."<init>":(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+        28: areturn
+}

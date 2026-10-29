@@ -6306,14 +6306,33 @@ pub fn brewing_face_order(face: u8) -> &'static [usize] {
 
 /// THE BREWING'S OWN WIRE SEATS (the item ids the generated items.rs
 /// registry order banks — the gates the ids alone speak, the
-/// ingredient set the addVanillaMixes walk re-pins).
-pub const ITEM_BLAZE_POWDER: i32 = 1153;
-pub const ITEM_DRAGON_BREATH: i32 = 1320;
-pub const ITEM_GLASS_BOTTLE: i32 = 1149;
+/// ingredient set the addVanillaMixes walk re-pins; the mix table's
+/// rows the 339 round the consts the const expressions wear).
+pub const ITEM_STONE: i32 = 1;
+pub const ITEM_REDSTONE: i32 = 745;
+pub const ITEM_SLIME_BLOCK: i32 = 752;
+pub const ITEM_TURTLE_HELMET: i32 = 915;
 pub const ITEM_GUNPOWDER: i32 = 978;
-pub const ITEM_LINGERING_POTION: i32 = 1324;
+pub const ITEM_COBWEB: i32 = 228;
+pub const ITEM_GLOWSTONE_DUST: i32 = 1085;
+pub const ITEM_PUFFERFISH: i32 = 1089;
+pub const ITEM_SUGAR: i32 = 1113;
+pub const ITEM_GHAST_TEAR: i32 = 1146;
+pub const ITEM_NETHER_WART: i32 = 1148;
+pub const ITEM_GLASS_BOTTLE: i32 = 1149;
 pub const ITEM_POTION: i32 = 1150;
+pub const ITEM_SPIDER_EYE: i32 = 1151;
+pub const ITEM_FERMENTED_SPIDER_EYE: i32 = 1152;
+pub const ITEM_BLAZE_POWDER: i32 = 1153;
+pub const ITEM_MAGMA_CREAM: i32 = 1154;
+pub const ITEM_GLISTERING_MELON_SLICE: i32 = 1158;
+pub const ITEM_GOLDEN_CARROT: i32 = 1262;
+pub const ITEM_RABBIT_FOOT: i32 = 1282;
+pub const ITEM_BREEZE_ROD: i32 = 1252;
 pub const ITEM_SPLASH_POTION: i32 = 1321;
+pub const ITEM_DRAGON_BREATH: i32 = 1320;
+pub const ITEM_LINGERING_POTION: i32 = 1324;
+pub const ITEM_PHANTOM_MEMBRANE: i32 = 889;
 
 /// THE BREWING'S OWN INGREDIENT SET (javap PotionBrewing.addVanillaMixes
 /// pc 0-690 the 26.2 jar the live disasm answers — the Builder walk
