@@ -8856,8 +8856,9 @@ pub struct App {
     /// "beacons" list the containers file's own lane wears: the x/y/z
     /// triples the BE's own block pos the disk banks, the beam's own
     /// levels + sections the LIVE world's blocks the walk derives —
-    /// the placement walk a later round the set-site hooks the store
-    /// feeds)
+    /// the placement walk the autopush-321 round the set-site hooks
+    /// the store feeds [the placement seat the INSERT speaks, the dig
+    /// pair + the blast clears the REMOVE arms wear])
     pub beacon_stores: std::collections::BTreeSet<(i32, i32, i32)>,
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
@@ -17225,6 +17226,15 @@ impl App {
                         // the same removal law releases, the entry the
                         // walk dies with)
                         self.brewing_store_spilled(pos);
+                        // THE BEACON'S OWN STORE DROP (the autopush-321
+                        // round — the broken beacon's own cell the bank
+                        // retires, the stale row the disk never keeps:
+                        // the dug-out seat the walk the render pass's
+                        // own gate never re-arms)
+                        if broke_kind == crate::world::BEACON {
+                            self.beacon_stores.remove(&pos);
+                            self.container_stores_file_save();
+                        }
                     }
                 }
                 if beat {
@@ -20476,8 +20486,16 @@ impl App {
                 // popResource walk the next block serves). The mutable
                 // borrow the same walk's own scope keeps.
                 if !explosion_cells.is_empty() {
+                    // THE BEACON'S OWN PRE-CLEAR SCAN (the autopush-321
+                    // round — the blast's own cells the PRE-set kinds
+                    // the clear reads: the cratered beacon the bank's
+                    // own retirement the same beat serves)
+                    let mut beacon_blasts: Vec<(i32, i32, i32)> = Vec::new();
                     if let Some(w) = self.offline_world.as_mut() {
                         for (bx, by, bz) in explosion_cells.iter().copied() {
+                            if w.get(bx, by, bz) == crate::world::BEACON {
+                                beacon_blasts.push((bx, by, bz));
+                            }
                             w.set(bx, by, bz, crate::world::AIR);
                         }
                     }
@@ -20523,6 +20541,15 @@ impl App {
                         self.container_store_spilled((bx, by, bz));
                         self.furnace_store_spilled((bx, by, bz));
                         self.brewing_store_spilled((bx, by, bz));
+                    }
+                    // THE BLAST'S OWN BEACON RETIREMENT (the autopush-321
+                    // round — the cratered beacon's own cell the bank
+                    // retires, the disk lane the one save rides)
+                    if !beacon_blasts.is_empty() {
+                        for cell in beacon_blasts.iter().copied() {
+                            self.beacon_stores.remove(&cell);
+                        }
+                        self.container_stores_file_save();
                     }
                     // THE BLAST'S OWN PAIR UPDATE (the probe's own
                     // verdict — pc 187 `iconst_3` the setBlock tail
@@ -21227,6 +21254,15 @@ impl App {
                 // voice the singleplayer broadcast speaks, the reward
                 // half's creative gate rides
                 self.dig_break_effects(kind, pos);
+                // THE BEACON'S OWN STORE DROP (the autopush-321 round
+                // — the instabuild press the same store walk the
+                // survival completion wears: the creative-dug beacon's
+                // own cell the bank retires, the disk lane the save
+                // rides)
+                if kind == crate::world::BEACON {
+                    self.beacon_stores.remove(&pos);
+                    self.container_stores_file_save();
+                }
             }
         }
         // THE UNCONDITIONAL SWING (the vanilla startAttack's own tail:
@@ -57279,6 +57315,18 @@ impl App {
         // after — the collector the live world loan never folded)
         if !placement_pops.is_empty() {
             self.speak_attach_pops(&placement_pops);
+        }
+        // THE BEACON'S OWN PLACEMENT SEAT (the autopush-321 round —
+        // javap BeaconBlockEntity.setBlockState the BE's own pos the
+        // bank wears: the held beacon's own set the store feeds —
+        // the placed cell the beam's own bank seats, the disk lane
+        // the save rides, the dug-out round the removal arms clear).
+        // The OFFLINE lane the set's own branch wears (the networked
+        // placement the server's own BE the word owns — the render
+        // pass the same gate keeps).
+        if block == crate::world::BEACON && !self.world_is_network && self.offline_world.is_some() {
+            self.beacon_stores.insert(cell);
+            self.container_stores_file_save();
         }
         // THE PLACE SOUND: BlockItem.place's own fold — the placed block's
         // SoundType through (v+1)/2, p*0.8. The networked prediction

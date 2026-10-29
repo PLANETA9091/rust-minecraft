@@ -3718,3 +3718,86 @@ fn the_offline_beacon_the_beam_the_pyramid_the_sections_wear() {
     let empty = crate::screens::beacon_cells_from_nbt(&mc_protocol::nbt::Nbt::Compound(vec![]));
     assert!(empty.is_empty(), "the missing list the honest empties keep");
 }
+
+/// THE BEACON'S OWN PLACEMENT WALK (the autopush-321 round — the REAL
+/// walk the hands serve: the held beacon's right-press the store
+/// feeds [the placement seat the INSERT speaks], the creative press
+/// the dug cell retires [the instabreak arm the REMOVE wears], the
+/// blast the pre-clear scan the cratered beacon serves [the same
+/// REMOVE the tick lane answers]). The drive the part_10 placement
+/// wear keeps: the straight-down look the surface click speaks, the
+/// bare world the body-less obstruction law keeps honest.
+#[test]
+fn the_offline_beacon_the_placement_walk_the_store_feeds_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE HELD BEACON'S OWN SEAT (the offline stand-in the held lane
+    // wears — the item/beacon the placeable walk answers, the 804
+    // kind the NAME_OF row banks)
+    app.offline_held_updated(Some("item/beacon"));
+    // THE AIM'S OWN DOWN-LOOK (the floor click the straight-down ray
+    // speaks — the surface cell the placement target wears)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, (top + 4) as f32, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE PLACEMENT'S OWN SEAT (the right-press the block lane
+    // speaks — the placed beacon the store feeds)
+    assert!(app.on_right_press(0, 0), "the beacon's placement consumed");
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, top, c),
+        crate::world::BEACON,
+        "the placed cell the beacon wears"
+    );
+    assert!(
+        app.beacon_stores.contains(&(c, top, c)),
+        "the placement seat the store feeds"
+    );
+    // THE CREATIVE PRESS'S OWN RETIREMENT (the instabreak arm the
+    // same store walk wears — the dug cell the bank retires)
+    app.game_mode = GameMode::Creative;
+    app.on_attack();
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, top, c),
+        crate::world::AIR,
+        "the creative press the cell breaks"
+    );
+    assert!(
+        !app.beacon_stores.contains(&(c, top, c)),
+        "the instabreak arm the store retires"
+    );
+    // THE RE-SEAT'S OWN FEED (the second placement the same seat
+    // wears — the store the fresh cell banks again)
+    assert!(app.on_right_press(0, 0), "the re-seat consumed");
+    assert!(
+        app.beacon_stores.contains(&(c, top, c)),
+        "the re-seat the store feeds again"
+    );
+    // THE BLAST'S OWN RETIREMENT (the pre-clear scan the cratered
+    // beacon serves — the primed shot the same tick the walk
+    // answers, the crater the beacon cell clears)
+    let mut t = crate::mob::PrimedTnt::new(9, c as f64 + 0.5, top as f64 + 2.0, c as f64 + 0.5, 7);
+    t.fuse = 2;
+    app.primed_tnts.push(t);
+    for _ in 0..12 {
+        if app.offline_world.as_ref().unwrap().get(c, top, c) == crate::world::AIR
+            && !app.beacon_stores.contains(&(c, top, c))
+        {
+            break;
+        }
+        app.update();
+    }
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(c, top, c),
+        crate::world::AIR,
+        "the blast the beacon cell clears"
+    );
+    assert!(
+        !app.beacon_stores.contains(&(c, top, c)),
+        "the blast arm the store retires"
+    );
+}
