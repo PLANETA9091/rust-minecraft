@@ -32096,6 +32096,35 @@ impl App {
         // THE SLOT ICONS (the believed rows the payment + the mirror
         // keep: the payment slot the fresh container speaks, the
         // standard rows the real inventory projects)
+        // THE HIGHLIGHT'S OWN BACK LAYER (the extractSlotHighlightBack
+        // walk the render's own order keeps — the back the slots
+        // BEFORE serves, the hoveredSlot.isHighlightable gate the
+        // only wall speaks, the carried stack the highlight NEVER
+        // refuses — the tooltip's own carried wall the highlight
+        // law never wears): the 24x24 sprite the (slot.x - 4,
+        // slot.y - 4) seat blits, the opaque 16x16 center the cell
+        // exactly answers (the border 4px the transparent ring
+        // wears), the white alpha-96 the back layer speaks
+        let highlight_seat = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.beacon_highlight_seat(mx, my));
+        if let Some(seat) = highlight_seat {
+            if let Some(&(sx, sy, _)) = self
+                .beacon_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s as usize == seat)
+            {
+                g.sprite_at_tinted(
+                    a,
+                    "container/slot_highlight_back",
+                    sx - 4,
+                    sy - 4,
+                    24,
+                    24,
+                    [1.0, 1.0, 1.0, 1.0],
+                );
+            }
+        }
         for &(sx, sy, slot) in &self.beacon_slot_rects {
             let slot = slot as usize;
             let believed = if slot == 0 {
@@ -32114,6 +32143,28 @@ impl App {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
                 g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer speaks, the icon the translucent tint the carried
+        // stack the same no-refusal law keeps): the same 24x24 seat
+        // the back layer's walk answers
+        if let Some(seat) = highlight_seat {
+            if let Some(&(sx, sy, _)) = self
+                .beacon_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s as usize == seat)
+            {
+                g.sprite_at_tinted(
+                    a,
+                    "container/slot_highlight_front",
+                    sx - 4,
+                    sy - 4,
+                    24,
+                    24,
+                    [1.0, 1.0, 1.0, 1.0],
+                );
             }
         }
         // THE HELD STACK follows the cursor (the vanilla carried
@@ -32190,6 +32241,37 @@ impl App {
             return None; // the wire's own emptiness sentinel the hasItem law keeps
         }
         Some((id, Self::item_tooltip_rows(id, self.advanced_item_tooltips)))
+    }
+
+    /// THE BEACON'S OWN HIGHLIGHT SEAT (the 325 round — the
+    /// extractSlotHighlightBack/Front walks the render loop's own
+    /// order serves [the back the slots BEFORE, the front AFTER],
+    /// the probe scripts/highlight_325.py the law banks): the
+    /// hovered slot's own seat the highlight paints — the gates the
+    /// TWO walks keep `hoveredSlot != null && isHighlightable()`
+    /// alone (the base Slot's own default TRUE the beacon's slots
+    /// the plain verdict answers): NO carried wall (the tooltip's
+    /// own pc 27-46 the highlight law NEVER wears — the carried
+    /// stack the highlight still paints), NO hasItem gate (the
+    /// EMPTY seat the highlight answers — the vanilla the empty
+    /// cell the white ring shows). THE HIT SHAPE the isHovering
+    /// walk pins (the -1/+1 border growth the 324 round banked):
+    /// the mouse the [sx-1, sx+17) x [sy-1, sy+17) band the 18x18
+    /// outer cell answers. THE SEAT WALK the render loop's own
+    /// no-break law keeps (the LAST matching seat the hoveredSlot
+    /// field's tail wears). The seat number the paint serves —
+    /// None the gates speak.
+    fn beacon_highlight_seat(&self, mx: i32, my: i32) -> Option<usize> {
+        if self.screen != ScreenKind::Beacon {
+            return None; // the beacon's own screen the walk serves
+        }
+        let mut hit: Option<usize> = None;
+        for &(sx, sy, slot) in &self.beacon_slot_rects {
+            if mx >= sx - 1 && mx < sx + 17 && my >= sy - 1 && my < sy + 17 {
+                hit = Some(slot as usize); // the no-break walk the LAST match keeps
+            }
+        }
+        hit
     }
 
     /// THE DIMENSION SWAP (the verdict's own teleport tail — the

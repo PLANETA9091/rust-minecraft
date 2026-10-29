@@ -4762,3 +4762,202 @@ fn the_offline_beacon_tooltip_the_carried_wall_and_the_empty_gates_wear() {
         "the restored coin the rows serve"
     );
 }
+
+/// THE BEACON'S OWN HIGHLIGHT SEAT (the 325 round — the
+/// extractSlotHighlightBack/Front walks the probe
+/// scripts/highlight_325.py banks): the hovered seat the two-layer
+/// walk serves — the EMPTY seat the highlight answers (the
+/// hasItem gate the law never wears), the carried stack the wall
+/// NEVER speaks (the tooltip's own pc 27-46 the highlight law
+/// retires), the borders the isHovering band the -1/+17 pair
+/// keeps, the wrong screen the None answers. The REAL walk the
+/// offline door wears.
+#[test]
+fn the_offline_beacon_highlight_the_seat_the_bands_the_no_gates_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE TIER-1 PYRAMID'S OWN BASE (the iron ring the realistic
+    // open wears — the highlight test the door alone reads)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the empty seats keep
+    }
+    app.hotbar_slots = app.inventory.hotbar();
+    app.open_beacon_for((c, top, c));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Beacon,
+        "the offline door the walk wears"
+    );
+    // THE GEOMETRY THE RENDER BANKS (the 323 round's own stand-in —
+    // the payment seat + the two mirror row seats the rects keep)
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    app.beacon_panel = panel;
+    let pay = (panel.0 + 136 + 1 + 8, panel.1 + 110 + 1 + 8);
+    let row0 = (panel.0 + 36 + 1 + 8, panel.1 + 137 + 1 + 8);
+    let row1 = (row0.0 + 18, row0.1);
+    app.beacon_slot_rects = vec![
+        (pay.0 - 8, pay.1 - 8, 0),
+        (row0.0 - 8, row0.1 - 8, 1),
+        (row1.0 - 8, row1.1 - 8, 2),
+    ];
+    // THE EMPTY SEAT'S OWN ANSWER (the isHighlightable gate the
+    // ONLY wall speaks — the payment + the mirror rows the zero
+    // sentinels keep, the highlight the seats STILL wear)
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0, pay.1),
+        Some(0),
+        "the empty payment the highlight answers"
+    );
+    assert_eq!(
+        app.beacon_highlight_seat(row0.0, row0.1),
+        Some(1),
+        "the empty mirror row the highlight answers"
+    );
+    // THE CARRIED STACK'S OWN NO-WALL (the tooltip's carried wall
+    // the highlight law retires — the held stack the highlight
+    // STILL paints)
+    app.beacon_carried = (7, 3);
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0, pay.1),
+        Some(0),
+        "the carried stack the highlight never refuses"
+    );
+    app.beacon_carried = (0, 0);
+    // THE ISHOVERING BORDERS (the -1/+1 growth the 324 round's own
+    // law keeps — the 18x18 outer cell the edge pixels answer)
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0 - 8 - 1, pay.1),
+        Some(0),
+        "the left border the -1 admits"
+    );
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0 - 8 + 16, pay.1),
+        Some(0),
+        "the inner tail the < x + 17 admits"
+    );
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0 - 8 + 17, pay.1),
+        None,
+        "the x + 17 the band refuses"
+    );
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0, pay.1 - 8 - 2),
+        None,
+        "the y - 2 the band refuses"
+    );
+    // THE BLANK FACE (the no-seat walk the None answers)
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0 + 60, pay.1 + 60),
+        None,
+        "the panel's blank face the None speaks"
+    );
+    // THE WRONG SCREEN (the world view the highlight never wears)
+    app.close_beacon(ScreenKind::World);
+    assert_eq!(
+        app.beacon_highlight_seat(pay.0, pay.1),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE BEACON'S OWN HIGHLIGHT PAINT (the REAL render walk — the
+/// 320x180 headless canvas the beacon screen renders, the two
+/// layers the exact alpha math answers): the empty payment cell
+/// the back alpha-96 + the front alpha-32 pair tints (the hasItem
+/// gate the paint law never wears), the transparent border ring
+/// the 24x24 sprite's own 4px margin keeps (the cell-only tint
+/// the geometry pins), the no-mouse pass the paint never serves.
+#[test]
+fn the_offline_beacon_highlight_the_paint_the_two_layers_the_cell_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the empty seats the paint law reads
+    }
+    app.hotbar_slots = app.inventory.hotbar();
+    app.open_beacon_for((c, top, c));
+    // THE REAL RENDER PAIR (the 320x180 the scale-1 canvas keeps —
+    // the same frame the scramble seed answers, the mouse the only
+    // delta wears)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let blend = |dst: u8, alpha: f32| -> u8 {
+        let d = dst as f32 / 255.0;
+        let v = d * (1.0 - alpha) + 1.0 * alpha;
+        ((v.clamp(0.0, 1.0)) * 255.0 + 0.5) as u8
+    };
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    let mut assets = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets);
+        app.mouse_pos = None;
+        app.render(&mut fb_a, &mut a);
+    }
+    // THE REAL GEOMETRY THE RENDER BANKS (the rects the render walk
+    // itself computes — the 320x180 panel the payment cell answers)
+    let panel = ((320 - 230) / 2, (180 - 219) / 2);
+    let pay = (panel.0 + 136 + 1, panel.1 + 110 + 1);
+    let cx = pay.0 + 8;
+    let cy = pay.1 + 8;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets);
+        app.mouse_pos = Some((cx, cy));
+        app.render(&mut fb_b, &mut a);
+    }
+    // THE CELL'S OWN TINT (the empty seat the highlight paints —
+    // the exact two-layer math the sprite alphas answer: the back
+    // 96/255 then the front 32/255 the white the px walk blends)
+    let a0 = pixel(&fb_a, cx, cy);
+    let expected = blend(blend(a0, 96.0 / 255.0), 32.0 / 255.0);
+    assert_eq!(
+        pixel(&fb_b, cx, cy),
+        expected,
+        "the two-layer tint the exact math wears (back 96 + front 32)"
+    );
+    assert_ne!(
+        a0, expected,
+        "the tint the paint speaks (the highlight the canvas moves)"
+    );
+    // THE BORDER RING (the 1px inside the hit band the sprite's own
+    // 4px transparent margin keeps — the cell-only tint the
+    // geometry pins)
+    assert_eq!(
+        pixel(&fb_a, pay.0 - 1, cy),
+        pixel(&fb_b, pay.0 - 1, cy),
+        "the border ring the sprite's margin keeps (no paint)"
+    );
+    // THE FAR FACE (the panel's own distance the paint never wears)
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 20, panel.1 + 180),
+        pixel(&fb_b, panel.0 + 20, panel.1 + 180),
+        "the far face the same verdict keeps"
+    );
+}
