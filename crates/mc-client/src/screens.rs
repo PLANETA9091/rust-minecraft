@@ -30550,6 +30550,32 @@ impl App {
     /// own truth (the same data the hover walk hits).
     fn render_inventory_slots(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let panel = self.inv_panel;
+        // THE HIGHLIGHT'S OWN BACK LAYER (the 326 round — the
+        // extractSlotHighlightBack walk the shared AbstractContainerScreen
+        // law keeps: the probe scripts/inventory_highlight_326.py the
+        // subclass absence banks — the InventoryScreen the
+        // AbstractRecipeBookScreen the AbstractContainerScreen chain the
+        // Highlight rows never wears, the inherited lane speaks): the
+        // hovered seat's own 24x24 sprite the (slot.x - 4, slot.y - 4)
+        // seat blits, the isHighlightable gate the ONLY wall speaks —
+        // NO carried wall, NO hasItem gate (the 325 round's own law the
+        // survival screen re-wears), the white alpha-96 the back layer
+        // keeps. The mouse_pos gate the headless scenes track no mouse
+        // — the pixel goldens never see this pass.
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.inventory_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
         // the store's own slots: the offline store everywhere, the wire
         // session's rows the live store lane's projection rides (the
         // hotbar row the HUD's own belief, the main rows the window-0
@@ -30717,6 +30743,65 @@ impl App {
         // bundle's contents grid the window-0 rows speak, the topmost
         // layer the panel and the carried stack keep under)
         self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+    }
+
+    /// THE INVENTORY'S OWN HIGHLIGHT SEAT (the 326 round — the
+    /// shared AbstractContainerScreen law the survival screen
+    /// re-wears, the probe scripts/inventory_highlight_326.py the
+    /// subclass absence banks [the InventoryScreen the
+    /// AbstractRecipeBookScreen chain the Highlight rows never
+    /// wears]): the hovered seat's INNER origin (the +1 inset the
+    /// vanilla Slot.x keeps — the 24x24 sprite the (x - 4, y - 4)
+    /// seat blits) the inventory_hover walk's own verdict answers —
+    /// the ONE hover walk the clicks and the tooltip share (the
+    /// vanilla's own single getHoveredSlot law the walk re-keys).
+    /// The NO-GATE law the 325 round banks (the isHighlightable
+    /// default TRUE the plain verdict keeps): NO carried wall, NO
+    /// hasItem gate — the empty seat the highlight answers. The
+    /// (ox, oy) the paint serves — None the gates speak.
+    fn inventory_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Inventory {
+            return None; // the survival inventory's own screen the walk serves
+        }
+        let panel = self.inv_panel;
+        match self.inventory_hover(mx, my)? {
+            InventoryHover::Result => {
+                let (x, y) = craft_slot_origin(panel, 4);
+                Some((x + 1, y + 1))
+            }
+            InventoryHover::Craft(cell) => {
+                let (x, y) = craft_slot_origin(panel, cell);
+                Some((x + 1, y + 1))
+            }
+            InventoryHover::Armor(k) => {
+                let (x, y) = armor_slot_origin(panel, k);
+                Some((x + 1, y + 1))
+            }
+            InventoryHover::Offhand => {
+                let (x, y) = offhand_slot_origin(panel);
+                Some((x + 1, y + 1))
+            }
+            InventoryHover::Store(i) => {
+                let (x, y) = inventory_slot_origin(panel, i);
+                Some((x + 1, y + 1))
+            }
+        }
     }
 
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen

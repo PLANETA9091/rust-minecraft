@@ -1,0 +1,51 @@
+========================================================================
+## net.minecraft.client.gui.screens.inventory.InventoryScreen method table
+Compiled from "InventoryScreen.java"
+public class net.minecraft.client.gui.screens.inventory.InventoryScreen extends net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen<net.minecraft.world.inventory.InventoryMenu> {
+  private float xMouse;
+  private float yMouse;
+  private boolean buttonClicked;
+  private final net.minecraft.client.gui.screens.inventory.EffectsInInventory effects;
+  public net.minecraft.client.gui.screens.inventory.InventoryScreen(net.minecraft.world.entity.player.Player);
+  public void containerTick();
+  protected void init();
+  protected net.minecraft.client.gui.navigation.ScreenPosition getRecipeBookButtonPosition();
+  protected void onRecipeBookButtonClick();
+  protected void extractLabels(net.minecraft.client.gui.GuiGraphicsExtractor, int, int);
+  public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  public boolean showsActiveEffects();
+  protected boolean isBiggerResultSlot();
+  public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  public static void extractEntityInInventoryFollowsMouse(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, int, int, int, float, float, float, net.minecraft.world.entity.LivingEntity);
+  private static net.minecraft.client.renderer.entity.state.EntityRenderState extractRenderState(net.minecraft.world.entity.LivingEntity);
+  public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent);
+}
+
+========================================================================
+## net.minecraft.client.gui.screens.inventory.AbstractInventoryScreen method table
+
+[stderr] Error: class not found: net.minecraft.client.gui.screens.inventory.AbstractInventoryScreenCompiled from "AbstractRecipeBookScreen.java"
+public abstract class net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen<T extends net.minecraft.world.inventory.RecipeBookMenu> extends net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<T> implements net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener {
+  private final net.minecraft.client.gui.screens.recipebook.RecipeBookComponent<?> recipeBookComponent;
+  private boolean widthTooNarrow;
+  public net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen(T, net.minecraft.client.gui.screens.recipebook.RecipeBookComponent<?>, net.minecraft.world.entity.player.Inventory, net.minecraft.network.chat.Component);
+  protected void init();
+  protected abstract net.minecraft.client.gui.navigation.ScreenPosition getRecipeBookButtonPosition();
+  private void initButton();
+  protected void onRecipeBookButtonClick();
+  public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  protected void extractSlots(net.minecraft.client.gui.GuiGraphicsExtractor, int, int);
+  protected boolean isBiggerResultSlot();
+  public boolean charTyped(net.minecraft.client.input.CharacterEvent);
+  public boolean keyPressed(net.minecraft.client.input.KeyEvent);
+  public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent, boolean);
+  public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent, double, double);
+  protected boolean isHovering(int, int, int, int, double, double);
+  protected boolean hasClickedOutside(double, double, int, int);
+  protected void slotClicked(net.minecraft.world.inventory.Slot, int, int, net.minecraft.world.inventory.ContainerInput);
+  public void containerTick();
+  public void recipesUpdated();
+  public void fillGhostRecipe(net.minecraft.world.item.crafting.display.RecipeDisplay);
+  private void lambda$initButton$0(net.minecraft.client.gui.components.Button);
+}
+ABSTRACT-RECIPE-BOOK-SCREEN TABLE APPENDED
