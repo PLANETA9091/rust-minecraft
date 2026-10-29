@@ -1,0 +1,40 @@
+=== net/minecraft/world/level/block/EnchantingTableBlock.class
+--- method <clinit> ()V
+       0 invokedynamic
+       5 invokestatic ('MTH', 'net/minecraft/world/level/block/EnchantingTableBlock', 'simpleCodec', '(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;')
+       8 putstatic ('FLD', None, 'CODEC', 'Lcom/mojang/serialization/MapCodec;')
+      11 bipush -2
+      13 iconst_0
+      14 bipush -2
+      16 iconst_2
+      17 iconst_1
+      18 iconst_2
+      19 invokestatic ('MTH', 'net/minecraft/core/BlockPos', 'betweenClosedStream', '(IIIIII)Ljava/util/stream/Stream;')
+      22 invokedynamic
+      27 invokeinterface
+      32 invokedynamic
+      37 invokeinterface
+      42 invokeinterface
+      47 putstatic ('FLD', 'net/minecraft/world/level/block/EnchantingTableBlock', 'BOOKSHELF_OFFSETS', 'Ljava/util/List;')
+      50 ldc2_w #211 ('DBL', 16.0)
+      53 dconst_0
+      54 ldc2_w #213 ('DBL', 12.0)
+      57 invokestatic ('MTH', None, 'column', '(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;')
+      60 putstatic ('FLD', 'net/minecraft/world/level/block/EnchantingTableBlock', 'SHAPE', 'Lnet/minecraft/world/phys/shapes/VoxelShape;')
+      63 return
+=== net/minecraft/world/level/block/EnchantingTableBlock.class
+--- method lambda$static$0 (Lnet/minecraft/core/BlockPos;)Z
+       0 aload_0
+       1 invokevirtual ('MTH', 'net/minecraft/core/BlockPos', 'getX', '()I')
+       4 invokestatic ('MTH', None, 'abs', '(I)I')
+       7 iconst_2
+       8 if_icmpeq -> 22
+      11 aload_0
+      12 invokevirtual ('MTH', 'net/minecraft/core/BlockPos', 'getZ', '()I')
+      15 invokestatic ('MTH', None, 'abs', '(I)I')
+      18 iconst_2
+      19 if_icmpne -> 26
+      22 iconst_1
+      23 goto -> 27
+      26 iconst_0
+      27 ireturn

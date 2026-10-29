@@ -9546,6 +9546,20 @@ pub struct App {
     /// furnace's own centered origin — the SAME 176x166 canvas the
     /// inherited imageWidth/imageHeight keeps).
     pub enchant_panel: (i32, i32),
+    /// THE SPELL WALK'S OWN POWER (the dev-195 round — the
+    /// EnchantingTableBlock BOOKSHELF_OFFSETS ring the isValidBookShelf
+    /// count answers: the scan the OPEN lays, the fresh counts the
+    /// shelf edits never re-scan [the reopen the re-scan serves]).
+    pub enchanting_power: i32,
+    /// THE SPELL WALK'S OWN COST ROWS (the EnchantmentMenu costs [I]
+    /// the slotsChanged lambda's getEnchantmentCost walk banks — the
+    /// clamp `cost < i+1 -> 0` the lambda's own branch keeps, the
+    /// seed-0 the DataSlot.standalone() default answers).
+    pub enchanting_costs: [i32; 3],
+    /// THE SPELL WALK'S OWN TABLE SEAT (the open's own pos the scan
+    /// reads — the None the closed screens keep, the re-open the
+    /// fresh pos the transient menu's own law lays).
+    pub enchanting_table_pos: Option<(i32, i32, i32)>,
     /// THE OPENED CELL'S OWN KIND (the DISPENSER/DROPPER byte the
     /// title lane reads — the BlockEntity's DEFAULT_NAME the
     /// container.* lang row banks; the zero the closed screens keep).
@@ -12510,6 +12524,9 @@ impl App {
             enchant_carried: (0, 0),
             enchant_slot_rects: Vec::new(),
             enchant_panel: (0, 0),
+            enchanting_power: 0,
+            enchanting_costs: [0, 0, 0],
+            enchanting_table_pos: None,
             dispenser_open_kind: 0,
             dispenser_is_live: false,
             dispenser_live_window: None,
@@ -27534,8 +27551,108 @@ impl App {
         self.open(back);
     }
 
-    /// THE ENCHANTING TABLE'S OWN DOOR (javap 26.2 EnchantmentTableBlock
-    /// the openMenu walk the EnchantmentMenu's MenuProvider answer —
+    /// THE SPELL WALK'S OWN POWER SCAN (the dev-195 round — javap the
+    /// 26.2 jar: `EnchantmentMenu.lambda$slotsChanged$0` pc 19-67 the
+    /// `EnchantingTableBlock.BOOKSHELF_OFFSETS` list the
+    /// `isValidBookShelf(level, pos, offset)` count wears). THE
+    /// OFFSETS the EnchantingTableBlock clinit pc 11-47 banks: the
+    /// `betweenClosedStream(-2, 0, -2, 2, 1, 2)` box the
+    /// `lambda$static$0` filter keeps — `abs(x) == 2 || abs(z) == 2`
+    /// the ring the inner 3x2x3 exclusion answers, y in {0, 1} the
+    /// two layers speak. THE PAIR the isValidBookShelf walk wears:
+    /// the offset cell's state the `#enchantment_power_provider` tag
+    /// ([minecraft:bookshelf] the offline kind's own row the mint
+    /// banks) the provider arm reads, the MIDPOINT cell
+    /// `(x/2, y, z/2)` the integer-division halves the
+    /// `#enchantment_power_transmitter` tag ([#replaceable] the
+    /// offline-reachable set the air + the plant family answers) the
+    /// gap arm reads — the classic air-gap law the shelf rings obey.
+    fn enchant_power_scan(&self, pos: (i32, i32, i32)) -> i32 {
+        let Some(world) = self.active_world() else {
+            return 0;
+        };
+        let mut power = 0i32;
+        for dy in 0i32..2 {
+            for dx in -2i32..=2 {
+                for dz in -2i32..=2 {
+                    // the lambda$static$0 filter: the ring cells alone
+                    if dx.abs() != 2 && dz.abs() != 2 {
+                        continue;
+                    }
+                    let px = pos.0 + dx;
+                    let py = pos.1 + dy;
+                    let pz = pos.2 + dz;
+                    // the provider arm: the #enchantment_power_provider
+                    // tag the bookshelf kind answers
+                    if !crate::world::is_bookshelf(world.get(px, py, pz)) {
+                        continue;
+                    }
+                    // the gap arm: the MIDPOINT (x/2, y, z/2) the
+                    // integer division halves, the #replaceable tag
+                    // the offline air + plant set answers
+                    let gap = world.get(pos.0 + dx / 2, py, pos.2 + dz / 2);
+                    if gap != crate::world::AIR && !crate::world::is_replaceable(gap) {
+                        continue;
+                    }
+                    power += 1;
+                }
+            }
+        }
+        power
+    }
+
+    /// THE SPELL WALK'S OWN COST ROLL (the dev-195 round — javap the
+    /// 26.2 `EnchantmentHelper.getEnchantmentCost` pc 19-89 the exact
+    /// walk: the power the 15 cap the bipush speaks, the base the
+    /// `nextInt(8) + 1 + (power >> 1) + nextInt(power + 1)` roll the
+    /// iadd chain keeps, the slot arms the three splits bank [slot 0
+    /// the `max(base/3, 1)` row, slot 1 the `base*2/3 + 1` row, slot
+    /// 2 the `max(base, power*2)` row]). The ENCHANTABLE gate the
+    /// component's presence answers — the offline item table the
+    /// component rows never carried, the non-empty stack the
+    /// presence arm wears (the empty stack the slotsChanged's own
+    /// isEmpty gate the zero costs already keeps).
+    fn enchant_cost_roll(slot: i32, power: i32, rng: &mut crate::noise::VanillaRandom) -> i32 {
+        let power = power.min(15);
+        let base = rng.next_int(8) + 1 + (power >> 1) + rng.next_int(power + 1);
+        if slot == 0 {
+            (base / 3).max(1)
+        } else if slot == 1 {
+            base * 2 / 3 + 1
+        } else {
+            base.max(power * 2)
+        }
+    }
+
+    /// THE SPELL WALK'S OWN COSTS REFRESH (the EnchantmentMenu
+    /// slotsChanged's own walk the offline open + the seat mutations
+    /// call): the empty item slot the zero costs the vanilla gate
+    /// keeps, the fresh item the three rolls the seed-0
+    /// `DataSlot.standalone()` default answers — the clamp
+    /// `cost < i+1 -> 0` the lambda's own branch the rows' enabled
+    /// verdict banks.
+    fn enchant_costs_refresh(&mut self) {
+        let item = self.enchant_slots.first().copied().unwrap_or((0, 0));
+        let (power, costs) = if item.1 == 0 {
+            (0, [0i32; 3])
+        } else {
+            let pos = self.enchanting_table_pos.unwrap_or((0, 0, 0));
+            let power = self.enchant_power_scan(pos);
+            let mut rng = crate::noise::VanillaRandom::new(0);
+            let mut costs = [0i32; 3];
+            for (i, c) in costs.iter_mut().enumerate() {
+                let mut v = Self::enchant_cost_roll(i as i32, power, &mut rng);
+                if v < i as i32 + 1 {
+                    v = 0;
+                }
+                *c = v;
+            }
+            (power, costs)
+        };
+        self.enchanting_power = power;
+        self.enchanting_costs = costs;
+    }
+
     /// the right-press on the placed enchanting table the OFFLINE
     /// world answers — the window the table's own 176x166 canvas
     /// opens, the TRANSIENT pair the SimpleContainer(2) the fresh
@@ -27556,6 +27673,13 @@ impl App {
         // numbering banks)
         self.enchant_slots = vec![(0, 0), (0, 0)];
         self.enchant_carried = (0, 0);
+        // THE SPELL WALK'S OWN SEAT + COSTS (the dev-195 round — the
+        // pos the scan reads, the empty item the zero costs the
+        // slotsChanged's own isEmpty gate keeps: the fresh open the
+        // fresh scan lays, the reopen the re-scan the transient
+        // menu's own law wears)
+        self.enchanting_table_pos = Some(pos);
+        self.enchant_costs_refresh();
         // the player's own rows the REAL inventory projects (the
         // menu's addStandardInventorySlots(8, 84) the mirror rows the
         // same projection keeps)
@@ -32922,6 +33046,69 @@ impl App {
             panel.0,
             panel.1,
         );
+        // THE SPELL WALK'S OWN COST ROWS (the dev-195 round — javap
+        // the 26.2 EnchantmentScreen.extractBackground pc 106-577 the
+        // exact walk: the three rows the (60, 14 + 19*i) seat the
+        // 108x19 sprite wears [the cost==0 gate the DISABLED frame
+        // alone answers — NO level sprite, NO number], the enabled
+        // row the affordability split keeps [the lapis >= i+1 + the
+        // xp >= cost the creative's infinite-materials arm the
+        // vanilla's own law wears], the frame the hover the
+        // HIGHLIGHTED/PLAIN pair banks, the level sprite the
+        // (61, 15 + 19*i) 16x16 seat the enabled/disabled pair
+        // serves, the number the RIGHT-ALIGNED (166 - width,
+        // 23 + 19*i) seat the font.width walk banks, the colors the
+        // ldc ints speak [the affordable #80ff20 the -8323296 answer,
+        // the short #407f10 the -12550384 answer]). The gibberish
+        // label the EnchantmentNames subsystem the next round keeps
+        // (the vanilla's own lane the offline canvas never draws —
+        // the 335 book-float verdict's own law the glyph lane wears).
+        for (i, cost) in self.enchanting_costs.iter().enumerate() {
+            let rx = panel.0 + 60;
+            let ry = panel.1 + 14 + 19 * i as i32;
+            if *cost == 0 {
+                g.sprite_region(
+                    a,
+                    "container/enchanting_table/enchantment_slot_disabled",
+                    0,
+                    0,
+                    108,
+                    19,
+                    rx,
+                    ry,
+                );
+                continue;
+            }
+            let need_lapis = i + 1;
+            let have_lapis = self.enchant_slots.get(1).map(|s| s.1).unwrap_or(0);
+            let affordable = self.game_mode == GameMode::Creative
+                || (have_lapis >= need_lapis as i32 && self.xp.level >= *cost);
+            let hovered = self
+                .mouse_pos
+                .map(|(mx, my)| mx >= rx && mx < rx + 108 && my >= ry && my < ry + 19)
+                .unwrap_or(false);
+            let (frame, level, num_rgb) = if affordable {
+                let frame = if hovered {
+                    "container/enchanting_table/enchantment_slot_highlighted"
+                } else {
+                    "container/enchanting_table/enchantment_slot"
+                };
+                let level = format!("container/enchanting_table/level_{}", i + 1);
+                (frame, level, [128.0 / 255.0, 1.0, 32.0 / 255.0])
+            } else {
+                let level = format!("container/enchanting_table/level_{}_disabled", i + 1);
+                (
+                    "container/enchanting_table/enchantment_slot_disabled",
+                    level,
+                    [64.0 / 255.0, 127.0 / 255.0, 16.0 / 255.0],
+                )
+            };
+            g.sprite_region(a, frame, 0, 0, 108, 19, rx, ry);
+            g.sprite_region(a, &level, 0, 0, 16, 16, rx + 1, ry + 1);
+            let text = cost.to_string();
+            let nx = panel.0 + 166 - g.text_width(&text) as i32;
+            g.text(a, nx, panel.1 + 23 + 19 * i as i32, &text, num_rgb, false);
+        }
         // THE CENTERED TITLE (the init walk's own formula the
         // DispenserScreen's own override speaks — the kind's own lang
         // row the opened kind banks)
@@ -45000,6 +45187,11 @@ impl App {
                 }
             }
             self.enchant_mirror_sync_from_inventory();
+            // THE SLOTSCHANGED'S OWN WALK (the dev-195 round — the
+            // vanilla menu the container's every change the costs
+            // re-roll answers: the quick-move the pair may move, the
+            // refresh the fresh rolls lay)
+            self.enchant_costs_refresh();
             return;
         }
         // the believed slot value: the pair's 0..2, the REAL
@@ -45026,6 +45218,10 @@ impl App {
         }
         self.enchant_carried = new_carried;
         self.enchant_mirror_sync_from_inventory();
+        // THE SLOTSCHANGED'S OWN WALK (the pickup/place the pair may
+        // move — the costs the fresh rolls the vanilla menu's own
+        // container-change law keeps)
+        self.enchant_costs_refresh();
     }
 
     /// THE DISPENSER'S OWN OUTSIDE THROW (the furnace's own walk the

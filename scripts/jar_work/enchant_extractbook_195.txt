@@ -1,0 +1,51 @@
+=== net/minecraft/client/gui/screens/inventory/EnchantmentScreen.class
+--- method extractBook (Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V
+       0 aload_0
+       1 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+       4 invokevirtual ('MTH', 'net/minecraft/client/Minecraft', 'getDeltaTracker', '()Lnet/minecraft/client/DeltaTracker;')
+       7 iconst_0
+       8 invokeinterface
+      13 fstore 4
+      15 fload 4
+      17 aload_0
+      18 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'oOpen', 'F')
+      21 aload_0
+      22 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+      25 invokestatic ('MTH', None, 'lerp', '(FFF)F')
+      28 fstore 5
+      30 fload 4
+      32 aload_0
+      33 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'oFlip', 'F')
+      36 aload_0
+      37 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+      40 invokestatic ('MTH', None, 'lerp', '(FFF)F')
+      43 fstore 6
+      45 iload_2
+      46 bipush 14
+      48 iadd
+      49 istore 7
+      51 iload_3
+      52 bipush 14
+      54 iadd
+      55 istore 8
+      57 iload 7
+      59 bipush 38
+      61 iadd
+      62 istore 9
+      64 iload 8
+      66 bipush 31
+      68 iadd
+      69 istore 10
+      71 aload_1
+      72 aload_0
+      73 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'bookModel', 'Lnet/minecraft/client/model/object/book/BookModel;')
+      76 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_BOOK_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+      79 ldc_w #283 ('FLT', 40.0)
+      82 fload 5
+      84 fload 6
+      86 iload 7
+      88 iload 8
+      90 iload 9
+      92 iload 10
+      94 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'book', '(Lnet/minecraft/client/model/object/book/BookModel;Lnet/minecraft/resources/Identifier;FFFIIII)V')
+      97 return

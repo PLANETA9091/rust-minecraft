@@ -336,6 +336,24 @@ impl GuiAssets {
             }
             return self.sprites.get(name);
         }
+        // THE ENCHANTING ROWS' OWN LANE (the dev-195 round — the
+        // `container/enchanting_table/{enchantment_slot,
+        // enchantment_slot_disabled, enchantment_slot_highlighted,
+        // level_1..3, level_1..3_disabled}` sprites the
+        // EnchantmentScreen clinit's ldc rows name, the dynamic walk
+        // the beacon lane's own shape wears: the `gui/sprites/`
+        // prefix the cache root joins, the leak the bounded
+        // nine-name set keeps)
+        if name.starts_with("container/enchanting_table/") && !name.contains("..") {
+            if !self.sprites.contains_key(name) {
+                let path = self.root.join(format!("gui/sprites/{name}.png"));
+                let bytes = std::fs::read(path).ok()?;
+                let s = Sprite::decode(&bytes).ok()?;
+                let key: &'static str = Box::leak(name.to_string().into_boxed_str());
+                self.sprites.insert(key, s);
+            }
+            return self.sprites.get(name);
+        }
         if !name.starts_with("mob_effect/") || name.contains("..") {
             return None; // the atlas's own source list: mob_effect only
         }

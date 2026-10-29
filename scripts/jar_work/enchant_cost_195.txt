@@ -1,0 +1,59 @@
+=== net/minecraft/world/item/enchantment/EnchantmentHelper.class
+--- method getEnchantmentCost (Lnet/minecraft/util/RandomSource;IILnet/minecraft/world/item/ItemStack;)I
+       0 aload_3
+       1 getstatic ('FLD', 'net/minecraft/core/component/DataComponents', 'ENCHANTABLE', 'Lnet/minecraft/core/component/DataComponentType;')
+       4 invokevirtual ('MTH', None, 'get', '(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;')
+       7 checkcast ('CLS', 'net/minecraft/world/item/enchantment/Enchantable')
+      10 astore 4
+      12 aload 4
+      14 ifnonnull
+      15 nop
+      16 iconst_2
+      17 iconst_0
+      18 ireturn
+      19 iload_2
+      20 bipush 15
+      22 if_icmple -> 28
+      25 bipush 15
+      27 istore_2
+      28 aload_0
+      29 bipush 8
+      31 invokeinterface
+      36 iconst_1
+      37 iadd
+      38 iload_2
+      39 iconst_1
+      40 ishr
+      41 iadd
+      42 aload_0
+      43 iload_2
+      44 iconst_1
+      45 iadd
+      46 invokeinterface
+      51 iadd
+      52 istore 5
+      54 iload_1
+      55 ifne -> 67
+      58 iload 5
+      60 iconst_3
+      61 idiv
+      62 iconst_1
+      63 invokestatic ('MTH', None, 'max', '(II)I')
+      66 ireturn
+      67 iload_1
+      68 iconst_1
+      69 if_icmpne -> 81
+      72 iload 5
+      74 iconst_2
+      75 imul
+      76 iconst_3
+      77 idiv
+      78 iconst_1
+      79 iadd
+      80 ireturn
+      81 iload 5
+      83 iload_2
+      84 iconst_2
+      85 imul
+      86 invokestatic ('MTH', None, 'max', '(II)I')
+      89 ireturn

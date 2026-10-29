@@ -1,0 +1,879 @@
+=== net/minecraft/client/gui/screens/inventory/EnchantmentScreen.class
+--- field ENABLED_LEVEL_SPRITES [Lnet/minecraft/resources/Identifier; 
+--- field DISABLED_LEVEL_SPRITES [Lnet/minecraft/resources/Identifier; 
+--- field ENCHANTMENT_SLOT_DISABLED_SPRITE Lnet/minecraft/resources/Identifier; 
+--- field ENCHANTMENT_SLOT_HIGHLIGHTED_SPRITE Lnet/minecraft/resources/Identifier; 
+--- field ENCHANTMENT_SLOT_SPRITE Lnet/minecraft/resources/Identifier; 
+--- field ENCHANTING_TABLE_LOCATION Lnet/minecraft/resources/Identifier; 
+--- field ENCHANTING_BOOK_LOCATION Lnet/minecraft/resources/Identifier; 
+--- field random Lnet/minecraft/util/RandomSource; 
+--- field bookModel Lnet/minecraft/client/model/object/book/BookModel; 
+--- field flip F 
+--- field oFlip F 
+--- field flipT F 
+--- field flipA F 
+--- field open F 
+--- field oOpen F 
+--- field last Lnet/minecraft/world/item/ItemStack; 
+--- method <init> (Lnet/minecraft/world/inventory/EnchantmentMenu;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;)V
+       0 aload_0
+       1 aload_1
+       2 aload_2
+       3 aload_3
+       4 invokespecial ('MTH', None, '<init>', '(Lnet/minecraft/world/inventory/AbstractContainerMenu;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;)V')
+       7 aload_0
+       8 invokestatic ('IFM', None, 'create', '()Lnet/minecraft/util/RandomSource;')
+      11 putfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      14 aload_0
+      15 getstatic ('FLD', None, 'EMPTY', 'Lnet/minecraft/world/item/ItemStack;')
+      18 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'last', 'Lnet/minecraft/world/item/ItemStack;')
+      21 return
+--- method init ()V
+       0 aload_0
+       1 invokespecial ('MTH', 'net/minecraft/client/gui/screens/inventory/AbstractContainerScreen', 'init', '()V')
+       4 aload_0
+       5 new ('CLS', 'net/minecraft/client/model/object/book/BookModel')
+       8 dup
+       9 aload_0
+      10 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+      13 invokevirtual ('MTH', None, 'getEntityModels', '()Lnet/minecraft/client/model/geom/EntityModelSet;')
+      16 getstatic ('FLD', None, 'BOOK', 'Lnet/minecraft/client/model/geom/ModelLayerLocation;')
+      19 invokevirtual ('MTH', None, 'bakeLayer', '(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;')
+      22 invokespecial ('MTH', 'net/minecraft/client/model/object/book/BookModel', '<init>', '(Lnet/minecraft/client/model/geom/ModelPart;)V')
+      25 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'bookModel', 'Lnet/minecraft/client/model/object/book/BookModel;')
+      28 return
+--- method containerTick ()V
+       0 aload_0
+       1 invokespecial ('MTH', 'net/minecraft/client/gui/screens/inventory/AbstractContainerScreen', 'containerTick', '()V')
+       4 aload_0
+       5 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+       8 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+      11 aload_0
+      12 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+      15 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+      18 getfield ('FLD', None, 'tickCount', 'I')
+      21 putfield ('FLD', 'net/minecraft/client/player/LocalPlayer', 'experienceDisplayStartTick', 'I')
+      24 aload_0
+      25 invokevirtual ('MTH', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'tickBook', '()V')
+      28 return
+--- method mouseClicked (Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+       0 aload_0
+       1 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'width', 'I')
+       4 aload_0
+       5 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'imageWidth', 'I')
+       8 isub
+       9 iconst_2
+      10 idiv
+      11 istore_3
+      12 aload_0
+      13 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'height', 'I')
+      16 aload_0
+      17 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'imageHeight', 'I')
+      20 isub
+      21 iconst_2
+      22 idiv
+      23 istore 4
+      25 iconst_0
+      26 istore 5
+      28 iload 5
+      30 iconst_3
+      31 if_icmpge -> 149
+      34 aload_1
+      35 invokevirtual ('MTH', None, 'x', '()D')
+      38 iload_3
+      39 bipush 60
+      41 iadd
+      42 i2d
+      43 dsub
+      44 dstore 6
+      46 aload_1
+      47 invokevirtual ('MTH', 'net/minecraft/client/input/MouseButtonEvent', 'y', '()D')
+      50 iload 4
+      52 bipush 14
+      54 iadd
+      55 bipush 19
+      57 iload 5
+      59 imul
+      60 iadd
+      61 i2d
+      62 dsub
+      63 dstore 8
+      65 dload 6
+      67 dconst_0
+      68 dcmpl
+      69 iflt -> 143
+      72 dload 8
+      74 dconst_0
+      75 dcmpl
+      76 iflt -> 143
+      79 dload 6
+      81 ldc2_w #103 ('DBL', 108.0)
+      84 dcmpg
+      85 ifge -> 143
+      88 dload 8
+      90 ldc2_w #105 ('DBL', 19.0)
+      93 dcmpg
+      94 ifge -> 143
+      97 aload_0
+      98 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+     101 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+     104 aload_0
+     105 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+     108 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+     111 iload 5
+     113 invokevirtual ('MTH', 'net/minecraft/world/inventory/EnchantmentMenu', 'clickMenuButton', '(Lnet/minecraft/world/entity/player/Player;I)Z')
+     116 ifeq -> 143
+     119 aload_0
+     120 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+     123 getfield ('FLD', 'net/minecraft/client/Minecraft', 'gameMode', 'Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;')
+     126 aload_0
+     127 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+     130 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+     133 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'containerId', 'I')
+     136 iload 5
+     138 invokevirtual ('MTH', None, 'handleInventoryButtonClick', '(II)V')
+     141 iconst_1
+     142 ireturn
+     143 iinc 5 by 423
+     145 aconst_null
+     146 goto -> 28
+     149 aload_0
+     150 aload_1
+     151 iload_2
+     152 invokespecial ('MTH', 'net/minecraft/client/gui/screens/inventory/AbstractContainerScreen', 'mouseClicked', '(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z')
+     155 ireturn
+--- method extractBackground (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+       0 aload_0
+       1 aload_1
+       2 iload_2
+       3 iload_3
+       4 fload 4
+       6 invokespecial ('MTH', 'net/minecraft/client/gui/screens/inventory/AbstractContainerScreen', 'extractBackground', '(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V')
+       9 aload_0
+      10 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'width', 'I')
+      13 aload_0
+      14 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'imageWidth', 'I')
+      17 isub
+      18 iconst_2
+      19 idiv
+      20 istore 5
+      22 aload_0
+      23 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'height', 'I')
+      26 aload_0
+      27 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'imageHeight', 'I')
+      30 isub
+      31 iconst_2
+      32 idiv
+      33 istore 6
+      35 aload_1
+      36 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+      39 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_TABLE_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+      42 iload 5
+      44 iload 6
+      46 fconst_0
+      47 fconst_0
+      48 aload_0
+      49 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'imageWidth', 'I')
+      52 aload_0
+      53 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'imageHeight', 'I')
+      56 sipush 256
+      59 sipush 256
+      62 invokevirtual ('MTH', None, 'blit', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V')
+      65 aload_0
+      66 aload_1
+      67 iload 5
+      69 iload 6
+      71 invokevirtual ('MTH', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'extractBook', '(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V')
+      74 invokestatic ('MTH', None, 'getInstance', '()Lnet/minecraft/client/gui/screens/inventory/EnchantmentNames;')
+      77 aload_0
+      78 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+      81 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+      84 invokevirtual ('MTH', 'net/minecraft/world/inventory/EnchantmentMenu', 'getEnchantmentSeed', '()I')
+      87 i2l
+      88 invokevirtual ('MTH', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'initSeed', '(J)V')
+      91 aload_0
+      92 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+      95 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+      98 invokevirtual ('MTH', 'net/minecraft/world/inventory/EnchantmentMenu', 'getGoldCount', '()I')
+     101 istore 7
+     103 iconst_0
+     104 istore 8
+     106 iload 8
+     108 iconst_3
+     109 if_icmpge -> 583
+     112 iload 5
+     114 bipush 60
+     116 iadd
+     117 istore 9
+     119 iload 9
+     121 bipush 20
+     123 iadd
+     124 istore 10
+     126 aload_0
+     127 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+     130 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+     133 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'costs', '[I')
+     136 iload 8
+     138 iaload
+     139 istore 11
+     141 iload 11
+     143 ifne -> 176
+     146 aload_1
+     147 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+     150 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_DISABLED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+     153 iload 9
+     155 iload 6
+     157 bipush 14
+     159 iadd
+     160 bipush 19
+     162 iload 8
+     164 imul
+     165 iadd
+     166 bipush 108
+     168 bipush 19
+     170 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'blitSprite', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V')
+     173 goto -> 577
+     176 iload 11
+     178 invokedynamic
+     183 astore 12
+     185 bipush 86
+     187 aload_0
+     188 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     191 aload 12
+     193 invokevirtual ('MTH', None, 'width', '(Ljava/lang/String;)I')
+     196 isub
+     197 istore 13
+     199 invokestatic ('MTH', None, 'getInstance', '()Lnet/minecraft/client/gui/screens/inventory/EnchantmentNames;')
+     202 aload_0
+     203 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     206 iload 13
+     208 invokevirtual ('MTH', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'getRandomName', '(Lnet/minecraft/client/gui/Font;I)Lnet/minecraft/network/chat/FormattedText;')
+     211 astore 14
+     213 ldc #203 ('INT', -9937334)
+     215 istore 15
+     217 iload 7
+     219 iload 8
+     221 iconst_1
+     222 iadd
+     223 if_icmplt -> 241
+     226 aload_0
+     227 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+     230 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+     233 getfield ('FLD', 'net/minecraft/client/player/LocalPlayer', 'experienceLevel', 'I')
+     236 iload 11
+     238 if_icmpge -> 356
+     241 aload_0
+     242 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+     245 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+     248 invokevirtual ('MTH', 'net/minecraft/client/player/LocalPlayer', 'hasInfiniteMaterials', '()Z')
+     251 ifne -> 356
+     254 aload_1
+     255 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+     258 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_DISABLED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+     261 iload 9
+     263 iload 6
+     265 bipush 14
+     267 iadd
+     268 bipush 19
+     270 iload 8
+     272 imul
+     273 iadd
+     274 bipush 108
+     276 bipush 19
+     278 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'blitSprite', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V')
+     281 aload_1
+     282 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+     285 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'DISABLED_LEVEL_SPRITES', '[Lnet/minecraft/resources/Identifier;')
+     288 iload 8
+     290 aaload
+     291 iload 9
+     293 iconst_1
+     294 iadd
+     295 iload 6
+     297 bipush 15
+     299 iadd
+     300 bipush 19
+     302 iload 8
+     304 imul
+     305 iadd
+     306 bipush 16
+     308 bipush 16
+     310 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'blitSprite', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V')
+     313 aload_1
+     314 aload_0
+     315 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     318 aload 14
+     320 iload 10
+     322 iload 6
+     324 bipush 16
+     326 iadd
+     327 bipush 19
+     329 iload 8
+     331 imul
+     332 iadd
+     333 iload 13
+     335 iload 15
+     337 ldc #215 ('INT', 16711422)
+     339 iand
+     340 iconst_1
+     341 ishr
+     342 invokestatic ('MTH', None, 'opaque', '(I)I')
+     345 iconst_0
+     346 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'textWithWordWrap', '(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/FormattedText;IIIIZ)V')
+     349 ldc #226 ('INT', -12550384)
+     351 istore 15
+     353 goto -> 536
+     356 iload_2
+     357 iload 5
+     359 bipush 60
+     361 iadd
+     362 isub
+     363 istore 16
+     365 iload_3
+     366 iload 6
+     368 bipush 14
+     370 iadd
+     371 bipush 19
+     373 iload 8
+     375 imul
+     376 iadd
+     377 isub
+     378 istore 17
+     380 iload 16
+     382 iflt -> 445
+     385 iload 17
+     387 iflt -> 445
+     390 iload 16
+     392 bipush 108
+     394 if_icmpge -> 445
+     397 iload 17
+     399 bipush 19
+     401 if_icmpge -> 445
+     404 aload_1
+     405 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+     408 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_HIGHLIGHTED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+     411 iload 9
+     413 iload 6
+     415 bipush 14
+     417 iadd
+     418 bipush 19
+     420 iload 8
+     422 imul
+     423 iadd
+     424 bipush 108
+     426 bipush 19
+     428 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'blitSprite', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V')
+     431 aload_1
+     432 getstatic ('FLD', None, 'POINTING_HAND', 'Lcom/mojang/blaze3d/platform/cursor/CursorType;')
+     435 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'requestCursor', '(Lcom/mojang/blaze3d/platform/cursor/CursorType;)V')
+     438 bipush -128
+     440 istore 15
+     442 goto -> 472
+     445 aload_1
+     446 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+     449 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+     452 iload 9
+     454 iload 6
+     456 bipush 14
+     458 iadd
+     459 bipush 19
+     461 iload 8
+     463 imul
+     464 iadd
+     465 bipush 108
+     467 bipush 19
+     469 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'blitSprite', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V')
+     472 aload_1
+     473 getstatic ('FLD', None, 'GUI_TEXTURED', 'Lcom/mojang/blaze3d/pipeline/RenderPipeline;')
+     476 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENABLED_LEVEL_SPRITES', '[Lnet/minecraft/resources/Identifier;')
+     479 iload 8
+     481 aaload
+     482 iload 9
+     484 iconst_1
+     485 iadd
+     486 iload 6
+     488 bipush 15
+     490 iadd
+     491 bipush 19
+     493 iload 8
+     495 imul
+     496 iadd
+     497 bipush 16
+     499 bipush 16
+     501 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'blitSprite', '(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V')
+     504 aload_1
+     505 aload_0
+     506 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     509 aload 14
+     511 iload 10
+     513 iload 6
+     515 bipush 16
+     517 iadd
+     518 bipush 19
+     520 iload 8
+     522 imul
+     523 iadd
+     524 iload 13
+     526 iload 15
+     528 iconst_0
+     529 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'textWithWordWrap', '(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/FormattedText;IIIIZ)V')
+     532 ldc #246 ('INT', -8323296)
+     534 istore 15
+     536 aload_1
+     537 aload_0
+     538 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     541 aload 12
+     543 iload 10
+     545 bipush 86
+     547 iadd
+     548 aload_0
+     549 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     552 aload 12
+     554 invokevirtual ('MTH', None, 'width', '(Ljava/lang/String;)I')
+     557 isub
+     558 iload 6
+     560 bipush 16
+     562 iadd
+     563 bipush 19
+     565 iload 8
+     567 imul
+     568 iadd
+     569 bipush 7
+     571 iadd
+     572 iload 15
+     574 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'text', '(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V')
+     577 iinc 8 by 423
+     579 aconst_null
+     580 goto -> 106
+     583 return
+--- method extractBook (Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V
+       0 aload_0
+       1 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+       4 invokevirtual ('MTH', 'net/minecraft/client/Minecraft', 'getDeltaTracker', '()Lnet/minecraft/client/DeltaTracker;')
+       7 iconst_0
+       8 invokeinterface
+      13 fstore 4
+      15 fload 4
+      17 aload_0
+      18 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'oOpen', 'F')
+      21 aload_0
+      22 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+      25 invokestatic ('MTH', None, 'lerp', '(FFF)F')
+      28 fstore 5
+      30 fload 4
+      32 aload_0
+      33 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'oFlip', 'F')
+      36 aload_0
+      37 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+      40 invokestatic ('MTH', None, 'lerp', '(FFF)F')
+      43 fstore 6
+      45 iload_2
+      46 bipush 14
+      48 iadd
+      49 istore 7
+      51 iload_3
+      52 bipush 14
+      54 iadd
+      55 istore 8
+      57 iload 7
+      59 bipush 38
+      61 iadd
+      62 istore 9
+      64 iload 8
+      66 bipush 31
+      68 iadd
+      69 istore 10
+      71 aload_1
+      72 aload_0
+      73 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'bookModel', 'Lnet/minecraft/client/model/object/book/BookModel;')
+      76 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_BOOK_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+      79 ldc_w #283 ('FLT', 40.0)
+      82 fload 5
+      84 fload 6
+      86 iload 7
+      88 iload 8
+      90 iload 9
+      92 iload 10
+      94 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'book', '(Lnet/minecraft/client/model/object/book/BookModel;Lnet/minecraft/resources/Identifier;FFFIIII)V')
+      97 return
+--- method extractRenderState (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+       0 aload_0
+       1 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+       4 invokevirtual ('MTH', 'net/minecraft/client/Minecraft', 'getDeltaTracker', '()Lnet/minecraft/client/DeltaTracker;')
+       7 iconst_0
+       8 invokeinterface
+      13 fstore 5
+      15 aload_0
+      16 aload_1
+      17 iload_2
+      18 iload_3
+      19 fload 5
+      21 invokespecial ('MTH', 'net/minecraft/client/gui/screens/inventory/AbstractContainerScreen', 'extractRenderState', '(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V')
+      24 aload_0
+      25 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+      28 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+      31 invokevirtual ('MTH', 'net/minecraft/client/player/LocalPlayer', 'hasInfiniteMaterials', '()Z')
+      34 istore 6
+      36 aload_0
+      37 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+      40 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+      43 invokevirtual ('MTH', 'net/minecraft/world/inventory/EnchantmentMenu', 'getGoldCount', '()I')
+      46 istore 7
+      48 iconst_0
+      49 istore 8
+      51 iload 8
+      53 iconst_3
+      54 if_icmpge -> 439
+      57 aload_0
+      58 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+      61 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+      64 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'costs', '[I')
+      67 iload 8
+      69 iaload
+      70 istore 9
+      72 aload_0
+      73 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+      76 getfield ('FLD', 'net/minecraft/client/Minecraft', 'level', 'Lnet/minecraft/client/multiplayer/ClientLevel;')
+      79 invokevirtual ('MTH', None, 'registryAccess', '()Lnet/minecraft/core/RegistryAccess;')
+      82 getstatic ('FLD', None, 'ENCHANTMENT', 'Lnet/minecraft/resources/ResourceKey;')
+      85 invokeinterface
+      90 aload_0
+      91 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+      94 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+      97 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'enchantClue', '[I')
+     100 iload 8
+     102 iaload
+     103 invokeinterface
+     108 astore 10
+     110 aload 10
+     112 invokevirtual ('MTH', None, 'isEmpty', '()Z')
+     115 ifeq -> 121
+     118 goto -> 433
+     121 aload_0
+     122 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+     125 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+     128 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'levelClue', '[I')
+     131 iload 8
+     133 iaload
+     134 istore 11
+     136 iload 8
+     138 iconst_1
+     139 iadd
+     140 istore 12
+     142 aload_0
+     143 bipush 60
+     145 bipush 14
+     147 bipush 19
+     149 iload 8
+     151 imul
+     152 iadd
+     153 bipush 108
+     155 bipush 17
+     157 iload_2
+     158 i2d
+     159 iload_3
+     160 i2d
+     161 invokevirtual ('MTH', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'isHovering', '(IIIIDD)Z')
+     164 ifeq -> 433
+     167 iload 9
+     169 ifle -> 433
+     172 iload 11
+     174 iflt -> 433
+     177 invokestatic ('MTH', None, 'newArrayList', '()Ljava/util/ArrayList;')
+     180 astore 13
+     182 aload 13
+     184 ldc_w #340 ('STR', 'container.enchant.clue')
+     187 iconst_1
+     188 anewarray ('CLS', 'java/lang/Object')
+     191 dup
+     192 iconst_0
+     193 aload 10
+     195 invokevirtual ('MTH', 'java/util/Optional', 'get', '()Ljava/lang/Object;')
+     198 checkcast ('CLS', 'net/minecraft/core/Holder')
+     201 iload 11
+     203 invokestatic ('MTH', None, 'getFullname', '(Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/Component;')
+     206 astore_3
+     207 invokestatic ('IFM', None, 'translatable', '(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;')
+     210 getstatic ('FLD', None, 'WHITE', 'Lnet/minecraft/ChatFormatting;')
+     213 invokevirtual ('MTH', None, 'withStyle', '(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;')
+     216 invokeinterface
+     221 pop
+     222 iload 6
+     224 ifne -> 418
+     227 aload 13
+     229 getstatic ('FLD', None, 'EMPTY', 'Lnet/minecraft/network/chat/Component;')
+     232 invokeinterface
+     237 pop
+     238 aload_0
+     239 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'minecraft', 'Lnet/minecraft/client/Minecraft;')
+     242 getfield ('FLD', 'net/minecraft/client/Minecraft', 'player', 'Lnet/minecraft/client/player/LocalPlayer;')
+     245 getfield ('FLD', 'net/minecraft/client/player/LocalPlayer', 'experienceLevel', 'I')
+     248 iload 9
+     250 if_icmpge -> 299
+     253 aload 13
+     255 ldc_w #384 ('STR', 'container.enchant.level.requirement')
+     258 iconst_1
+     259 anewarray ('CLS', 'java/lang/Object')
+     262 dup
+     263 iconst_0
+     264 aload_0
+     265 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+     268 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+     271 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'costs', '[I')
+     274 iload 8
+     276 iaload
+     277 invokestatic ('MTH', None, 'valueOf', '(I)Ljava/lang/Integer;')
+     280 astore_3
+     281 invokestatic ('IFM', None, 'translatable', '(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;')
+     284 getstatic ('FLD', 'net/minecraft/ChatFormatting', 'RED', 'Lnet/minecraft/ChatFormatting;')
+     287 invokevirtual ('MTH', None, 'withStyle', '(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;')
+     290 invokeinterface
+     295 pop
+     296 goto -> 418
+     299 iload 12
+     301 iconst_1
+     302 if_icmpne -> 316
+     305 ldc_w #395 ('STR', 'container.enchant.lapis.one')
+     308 invokestatic ('IFM', 'net/minecraft/network/chat/Component', 'translatable', '(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;')
+     311 astore 14
+     313 goto -> 336
+     316 ldc_w #400 ('STR', 'container.enchant.lapis.many')
+     319 iconst_1
+     320 anewarray ('CLS', 'java/lang/Object')
+     323 dup
+     324 iconst_0
+     325 iload 12
+     327 invokestatic ('MTH', None, 'valueOf', '(I)Ljava/lang/Integer;')
+     330 astore_3
+     331 invokestatic ('IFM', None, 'translatable', '(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;')
+     334 astore 14
+     336 aload 13
+     338 aload 14
+     340 iload 7
+     342 iload 12
+     344 if_icmplt -> 353
+     347 getstatic ('FLD', 'net/minecraft/ChatFormatting', 'GRAY', 'Lnet/minecraft/ChatFormatting;')
+     350 goto -> 356
+     353 getstatic ('FLD', 'net/minecraft/ChatFormatting', 'RED', 'Lnet/minecraft/ChatFormatting;')
+     356 invokevirtual ('MTH', None, 'withStyle', '(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;')
+     359 invokeinterface
+     364 pop
+     365 iload 12
+     367 iconst_1
+     368 if_icmpne -> 382
+     371 ldc_w #405 ('STR', 'container.enchant.level.one')
+     374 invokestatic ('IFM', 'net/minecraft/network/chat/Component', 'translatable', '(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;')
+     377 astore 15
+     379 goto -> 402
+     382 ldc_w #407 ('STR', 'container.enchant.level.many')
+     385 iconst_1
+     386 anewarray ('CLS', 'java/lang/Object')
+     389 dup
+     390 iconst_0
+     391 iload 12
+     393 invokestatic ('MTH', None, 'valueOf', '(I)Ljava/lang/Integer;')
+     396 astore_3
+     397 invokestatic ('IFM', None, 'translatable', '(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;')
+     400 astore 15
+     402 aload 13
+     404 aload 15
+     406 getstatic ('FLD', 'net/minecraft/ChatFormatting', 'GRAY', 'Lnet/minecraft/ChatFormatting;')
+     409 invokevirtual ('MTH', None, 'withStyle', '(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;')
+     412 invokeinterface
+     417 pop
+     418 aload_1
+     419 aload_0
+     420 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'font', 'Lnet/minecraft/client/gui/Font;')
+     423 aload 13
+     425 iload_2
+     426 iload_3
+     427 invokevirtual ('MTH', 'net/minecraft/client/gui/GuiGraphicsExtractor', 'setComponentTooltipForNextFrame', '(Lnet/minecraft/client/gui/Font;Ljava/util/List;II)V')
+     430 goto -> 439
+     433 iinc 8 by 423
+     435 aconst_null
+     436 goto -> 51
+     439 return
+--- method tickBook ()V
+       0 aload_0
+       1 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+       4 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+       7 iconst_0
+       8 invokevirtual ('MTH', 'net/minecraft/world/inventory/EnchantmentMenu', 'getSlot', '(I)Lnet/minecraft/world/inventory/Slot;')
+      11 invokevirtual ('MTH', None, 'getItem', '()Lnet/minecraft/world/item/ItemStack;')
+      14 astore_1
+      15 aload_1
+      16 aload_0
+      17 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'last', 'Lnet/minecraft/world/item/ItemStack;')
+      20 invokestatic ('MTH', 'net/minecraft/world/item/ItemStack', 'matches', '(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z')
+      23 ifne -> 90
+      26 aload_0
+      27 aload_1
+      28 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'last', 'Lnet/minecraft/world/item/ItemStack;')
+      31 aload_0
+      32 dup
+      33 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipT', 'F')
+      36 aload_0
+      37 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      40 iconst_4
+      41 invokeinterface
+      46 aload_0
+      47 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      50 iconst_4
+      51 invokeinterface
+      56 isub
+      57 i2f
+      58 fadd
+      59 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipT', 'F')
+      62 aload_0
+      63 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+      66 aload_0
+      67 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipT', 'F')
+      70 fconst_1
+      71 fadd
+      72 fcmpg
+      73 ifgt -> 90
+      76 aload_0
+      77 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+      80 aload_0
+      81 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipT', 'F')
+      84 fconst_1
+      85 fsub
+      86 fcmpl
+      87 ifge -> 31
+      90 aload_0
+      91 aload_0
+      92 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+      95 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'oFlip', 'F')
+      98 aload_0
+      99 aload_0
+     100 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     103 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'oOpen', 'F')
+     106 iconst_0
+     107 istore_2
+     108 iconst_0
+     109 istore_3
+     110 iload_3
+     111 iconst_3
+     112 if_icmpge -> 141
+     115 aload_0
+     116 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'menu', 'Lnet/minecraft/world/inventory/AbstractContainerMenu;')
+     119 checkcast ('CLS', 'net/minecraft/world/inventory/EnchantmentMenu')
+     122 getfield ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'costs', '[I')
+     125 iload_3
+     126 iaload
+     127 ifeq -> 135
+     130 iconst_1
+     131 istore_2
+     132 goto -> 141
+     135 iinc 3 by 423
+     137 aconst_null
+     138 goto -> 110
+     141 iload_2
+     142 ifeq -> 160
+     145 aload_0
+     146 dup
+     147 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     150 ldc_w #433 ('FLT', 0.20000000298023224)
+     153 fadd
+     154 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     157 goto -> 172
+     160 aload_0
+     161 dup
+     162 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     165 ldc_w #433 ('FLT', 0.20000000298023224)
+     168 fsub
+     169 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     172 aload_0
+     173 aload_0
+     174 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     177 fconst_0
+     178 fconst_1
+     179 invokestatic ('MTH', 'net/minecraft/util/Mth', 'clamp', '(FFF)F')
+     182 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'open', 'F')
+     185 aload_0
+     186 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipT', 'F')
+     189 aload_0
+     190 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+     193 fsub
+     194 ldc_w #437 ('FLT', 0.4000000059604645)
+     197 fmul
+     198 fstore_3
+     199 ldc_w #433 ('FLT', 0.20000000298023224)
+     202 fstore 4
+     204 fload_3
+     205 ldc_w #438 ('FLT', -0.20000000298023224)
+     208 ldc_w #433 ('FLT', 0.20000000298023224)
+     211 invokestatic ('MTH', 'net/minecraft/util/Mth', 'clamp', '(FFF)F')
+     214 fstore_3
+     215 aload_0
+     216 dup
+     217 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipA', 'F')
+     220 fload_3
+     221 aload_0
+     222 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipA', 'F')
+     225 fsub
+     226 ldc_w #442 ('FLT', 0.8999999761581421)
+     229 fmul
+     230 fadd
+     231 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipA', 'F')
+     234 aload_0
+     235 dup
+     236 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+     239 aload_0
+     240 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flipA', 'F')
+     243 fadd
+     244 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'flip', 'F')
+     247 return
+--- method <clinit> ()V
+       0 iconst_3
+       1 anewarray ('CLS', 'net/minecraft/resources/Identifier')
+       4 dup
+       5 iconst_0
+       6 ldc_w #445 ('STR', 'container/enchanting_table/level_1')
+       9 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      12 astore_3
+      13 dup
+      14 iconst_1
+      15 ldc_w #451 ('STR', 'container/enchanting_table/level_2')
+      18 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      21 astore_3
+      22 dup
+      23 iconst_2
+      24 ldc_w #453 ('STR', 'container/enchanting_table/level_3')
+      27 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      30 astore_3
+      31 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENABLED_LEVEL_SPRITES', '[Lnet/minecraft/resources/Identifier;')
+      34 iconst_3
+      35 anewarray ('CLS', 'net/minecraft/resources/Identifier')
+      38 dup
+      39 iconst_0
+      40 ldc_w #455 ('STR', 'container/enchanting_table/level_1_disabled')
+      43 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      46 astore_3
+      47 dup
+      48 iconst_1
+      49 ldc_w #457 ('STR', 'container/enchanting_table/level_2_disabled')
+      52 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      55 astore_3
+      56 dup
+      57 iconst_2
+      58 ldc_w #459 ('STR', 'container/enchanting_table/level_3_disabled')
+      61 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      64 astore_3
+      65 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'DISABLED_LEVEL_SPRITES', '[Lnet/minecraft/resources/Identifier;')
+      68 ldc_w #461 ('STR', 'container/enchanting_table/enchantment_slot_disabled')
+      71 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      74 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_DISABLED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+      77 ldc_w #463 ('STR', 'container/enchanting_table/enchantment_slot_highlighted')
+      80 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      83 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_HIGHLIGHTED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+      86 ldc_w #465 ('STR', 'container/enchanting_table/enchantment_slot')
+      89 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      92 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+      95 ldc_w #467 ('STR', 'textures/gui/container/enchanting_table.png')
+      98 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+     101 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_TABLE_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+     104 ldc_w #469 ('STR', 'textures/entity/enchantment/enchanting_table_book.png')
+     107 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+     110 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_BOOK_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+     113 return

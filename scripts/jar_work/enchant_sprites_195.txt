@@ -1,0 +1,54 @@
+=== net/minecraft/client/gui/screens/inventory/EnchantmentScreen.class
+--- method <clinit> ()V
+       0 iconst_3
+       1 anewarray ('CLS', 'net/minecraft/resources/Identifier')
+       4 dup
+       5 iconst_0
+       6 ldc_w #445 ('STR', 'container/enchanting_table/level_1')
+       9 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      12 astore_3
+      13 dup
+      14 iconst_1
+      15 ldc_w #451 ('STR', 'container/enchanting_table/level_2')
+      18 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      21 astore_3
+      22 dup
+      23 iconst_2
+      24 ldc_w #453 ('STR', 'container/enchanting_table/level_3')
+      27 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      30 astore_3
+      31 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENABLED_LEVEL_SPRITES', '[Lnet/minecraft/resources/Identifier;')
+      34 iconst_3
+      35 anewarray ('CLS', 'net/minecraft/resources/Identifier')
+      38 dup
+      39 iconst_0
+      40 ldc_w #455 ('STR', 'container/enchanting_table/level_1_disabled')
+      43 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      46 astore_3
+      47 dup
+      48 iconst_1
+      49 ldc_w #457 ('STR', 'container/enchanting_table/level_2_disabled')
+      52 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      55 astore_3
+      56 dup
+      57 iconst_2
+      58 ldc_w #459 ('STR', 'container/enchanting_table/level_3_disabled')
+      61 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      64 astore_3
+      65 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'DISABLED_LEVEL_SPRITES', '[Lnet/minecraft/resources/Identifier;')
+      68 ldc_w #461 ('STR', 'container/enchanting_table/enchantment_slot_disabled')
+      71 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      74 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_DISABLED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+      77 ldc_w #463 ('STR', 'container/enchanting_table/enchantment_slot_highlighted')
+      80 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      83 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_HIGHLIGHTED_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+      86 ldc_w #465 ('STR', 'container/enchanting_table/enchantment_slot')
+      89 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+      92 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTMENT_SLOT_SPRITE', 'Lnet/minecraft/resources/Identifier;')
+      95 ldc_w #467 ('STR', 'textures/gui/container/enchanting_table.png')
+      98 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+     101 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_TABLE_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+     104 ldc_w #469 ('STR', 'textures/entity/enchantment/enchanting_table_book.png')
+     107 invokestatic ('MTH', 'net/minecraft/resources/Identifier', 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+     110 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentScreen', 'ENCHANTING_BOOK_LOCATION', 'Lnet/minecraft/resources/Identifier;')
+     113 return

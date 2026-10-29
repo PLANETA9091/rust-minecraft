@@ -6755,3 +6755,343 @@ fn the_offline_enchanting_the_click_the_round_wear() {
         "the fresh pair the transient law lays"
     );
 }
+
+#[test]
+fn the_enchanting_table_the_power_scan_the_ring_wears() {
+    // THE SPELL WALK'S OWN RING (the dev-195 round — the
+    // EnchantingTableBlock clinit's betweenClosedStream(-2,0,-2, 2,1,2)
+    // box the lambda$static$0 abs==2 filter keeps, the
+    // isValidBookShelf pair the provider/transmitter tags the
+    // midpoint (x/2, y, z/2) gap answers)
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let t = (c, surface, c);
+    // THE FLAT RING'S OWN STAGE (the terrain the region's own AIR
+    // clear silences — the scan the constructed ring alone reads)
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface - 1..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(t.0, t.1, t.2, crate::world::ENCHANTING_TABLE);
+    // THE EMPTY RING (the fresh world the zero keeps)
+    assert_eq!(
+        app.enchant_power_scan(t),
+        0,
+        "the empty ring the zero power keeps"
+    );
+    // THE SINGLE SHELF (the (2,0,0) offset the provider arm counts —
+    // the (1,0,0) midpoint the air gap the transmitter serves)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 2, t.1, t.2, crate::world::BOOKSHELF);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        1,
+        "the single shelf the gap serves"
+    );
+    // THE SOLID GAP'S OWN REFUSAL (the transmitter arm the stone cell
+    // the provider's own count refuses — the classic air-gap law)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 1, t.1, t.2, crate::world::STONE);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        0,
+        "the solid gap the transmitter refuses"
+    );
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 1, t.1, t.2, crate::world::AIR);
+    // THE PLANT'S OWN ARM (the #replaceable tag the offline plant
+    // family answers — the grass cell the gap the count keeps)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 1, t.1, t.2, crate::world::SHORT_GRASS);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        1,
+        "the plant gap the replaceable arm keeps"
+    );
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 1, t.1, t.2, crate::world::AIR);
+    // THE SECOND LAYER (the (2,1,0) offset the y=1 layer speaks — the
+    // stack the two shelves the count answers)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 2, t.1 + 1, t.2, crate::world::BOOKSHELF);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        2,
+        "the stacked shelves the two layers speak"
+    );
+    // THE INNER 3x3'S OWN EXCLUSION (the lambda$static$0 filter the
+    // |x|==2 || |z|==2 ring alone scans as PROVIDERS — the inner
+    // shelf the count never adds [the 2 stays 2-as-providers], yet
+    // its cell the (1,0,0) MIDPOINT GAP the (2,0,0) shelf wears
+    // blocks — the vanilla law the count 2 -> 1 the gap-blocking
+    // speaks, the provider set the inner cell the +1 never speaks)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 1, t.1, t.2, crate::world::BOOKSHELF);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        1,
+        "the inner shelf the gap it blocks, the provider count it never adds"
+    );
+    // THE CLEAR'S OWN RESTORE (the inner shelf the AIR returns — the
+    // stacked pair the 2 the fresh gap serves)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 1, t.1, t.2, crate::world::AIR);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        2,
+        "the cleared gap the stacked pair restores"
+    );
+    // THE CORNER'S OWN MIDPOINT (the (2,0,2) offset the (1,0,1) gap
+    // the integer division halves — the diagonal shelf the corner
+    // arm counts)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(t.0 + 2, t.1, t.2 + 2, crate::world::BOOKSHELF);
+    assert_eq!(
+        app.enchant_power_scan(t),
+        3,
+        "the corner shelf the diagonal gap serves"
+    );
+}
+
+#[test]
+fn the_enchanting_table_the_cost_roll_the_formula_wears() {
+    // THE SPELL WALK'S OWN ROLL (the dev-195 round — javap the 26.2
+    // EnchantmentHelper.getEnchantmentCost pc 19-89 the exact walk:
+    // the 15 cap the bipush speaks, the base the
+    // nextInt(8) + 1 + (power >> 1) + nextInt(power + 1) roll keeps,
+    // the slot arms the three splits bank, the clamp the cost < i+1
+    // zero the lambda's own branch wears)
+    let roll_row = |power: i32| -> [i32; 3] {
+        let mut rng = crate::noise::VanillaRandom::new(0);
+        let mut costs = [0i32; 3];
+        for (i, c) in costs.iter_mut().enumerate() {
+            let mut v = App::enchant_cost_roll(i as i32, power, &mut rng);
+            if v < i as i32 + 1 {
+                v = 0;
+            }
+            *c = v;
+        }
+        costs
+    };
+    // THE SEED-0 LAWS (the python LCG twin the hand walk banks — the
+    // ONE continuous rng the vanilla lambda's own walk keeps: the
+    // power-0 bases 6/2/6 the rows [2, 2, 6] speak, the power-15
+    // bases 25/4/26 the cap the rows answer)
+    assert_eq!(
+        roll_row(0),
+        [2, 2, 6],
+        "the empty ring the weak enchants wear"
+    );
+    assert_eq!(
+        roll_row(15),
+        [8, 13, 30],
+        "the full ring the strong enchants wear"
+    );
+    // THE CAP'S OWN RING (the power 32 the 15 cap the scan's own
+    // overflow never speaks — the roll the capped power alone reads)
+    assert_eq!(
+        roll_row(32),
+        roll_row(15),
+        "the overflow power the cap folds"
+    );
+    // THE REFRESH'S OWN GATES (the empty item slot the zero costs the
+    // slotsChanged's own isEmpty gate keeps — the powered world the
+    // gate alone answers)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+    app.enchanting_table_pos = Some((0, 0, 0));
+    app.enchant_costs_refresh();
+    assert_eq!(
+        app.enchanting_costs,
+        [0, 0, 0],
+        "the empty item the zero costs keep"
+    );
+    assert_eq!(app.enchanting_power, 0, "the gate the power zero keeps");
+    // THE ITEM'S OWN ROLL (the non-empty stack the presence arm the
+    // three rolls the fresh open lays)
+    app.enchant_slots[0] = (7, 1);
+    app.enchant_costs_refresh();
+    assert_eq!(
+        app.enchanting_costs,
+        [2, 2, 6],
+        "the item seat the seed-0 roll wears"
+    );
+}
+
+#[test]
+fn the_enchanting_table_the_rows_the_frame_and_number_wear() {
+    // THE SPELL WALK'S OWN ROWS (the dev-195 round — the
+    // extractBackground walk the offline canvas wears: the cost==0
+    // gate the DISABLED frame alone answers, the enabled row the
+    // frame + the level sprite + the right-aligned green number the
+    // (166 - width, 23 + 19*i) seat banks)
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    w.set(c + 2, surface, c, crate::world::BOOKSHELF);
+    // THE POWER-0 PAIR'S OWN DISABLED LANE (the empty item the zero
+    // costs keep — the three rows the disabled frame alone draws)
+    app.open_enchanting_for(cell);
+    assert_eq!(app.enchanting_costs, [0, 0, 0], "the empty pair the gate");
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let rgb = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> [u8; 3] {
+        let o = ((y as usize) * fb.w + x as usize) * 3;
+        [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+    };
+    let near = |p: [u8; 3], r: u8, g: u8, b: u8| -> bool {
+        (p[0] as i32 - r as i32).abs() <= 4
+            && (p[1] as i32 - g as i32).abs() <= 4
+            && (p[2] as i32 - b as i32).abs() <= 4
+    };
+    // THE DISABLED FRAME'S OWN CORNER (the (0,0) pixel the decode
+    // pins — the (33,29,23) master the row's border speaks)
+    let f0 = rgb(&fb, panel.0 + 60, panel.1 + 14);
+    assert!(
+        near(f0, 33, 29, 23),
+        "the disabled frame the row-0 corner wears, got {f0:?}"
+    );
+    // THE LEVEL SEAT'S OWN ABSENCE (the cost==0 gate the level sprite
+    // never draws — the (0,0) transparent cell the bg through speaks)
+    let lv = rgb(&fb, panel.0 + 61, panel.1 + 15);
+    assert!(
+        !near(lv, 245, 255, 143),
+        "the level seat the cost-0 gate keeps empty, got {lv:?}"
+    );
+    // THE ITEM'S OWN ROLL (the place the refresh the rolls lay — the
+    // costs the seed-0 law wears; the survival xp 0 the rows the
+    // UNAFFORDABLE lane keeps — the disabled frames + the dark
+    // numbers the vanilla's own level gate speaks)
+    app.enchant_slots[0] = (7, 1);
+    app.enchant_costs_refresh();
+    assert_eq!(
+        app.enchanting_costs,
+        [2, 2, 6],
+        "the one-shelf roll the seed-0 law wears"
+    );
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE LEVEL-SHORT LANE (the vanilla's own gate the xp-0 survival
+    // keeps: the disabled frame + the disabled level sprite + the
+    // dark number the row speaks)
+    let f1 = rgb(&fb, panel.0 + 60, panel.1 + 14);
+    assert!(
+        near(f1, 33, 29, 23),
+        "the xp-short row the disabled frame wears, got {f1:?}"
+    );
+    let lv_short = rgb(&fb, panel.0 + 61 + 12, panel.1 + 15 + 3);
+    assert!(
+        near(lv_short, 71, 53, 47),
+        "the disabled level sprite the glyph seat wears, got {lv_short:?}"
+    );
+    let dark_seat = |fb: &crate::raster::Framebuf, row_y: i32, digit: &str| -> bool {
+        let nx = panel.0 + 166 - crate::gui::font_text_width(digit) as i32;
+        for dy in 0..8 {
+            for dx in -1..8 {
+                let p = rgb(fb, nx + dx, row_y + dy);
+                if near(p, 64, 127, 16) {
+                    return true;
+                }
+            }
+        }
+        false
+    };
+    assert!(
+        dark_seat(&fb, panel.1 + 23, "2"),
+        "the xp-short number the dark seat wears"
+    );
+    // THE LEVEL'S OWN LIFT (the xp 30 + the lapis stack the rows the
+    // affordable lane wears — the vanilla's own double gate the
+    // lapis >= i+1 AND the xp >= cost keeps, the frames the enabled
+    // master + the level sprite + the green number speak)
+    app.xp.level = 30;
+    app.enchant_slots[1] = (7, 3);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE ENABLED FRAME'S OWN CORNER (the (224,202,159) master the
+    // affordable row's border speaks)
+    let f1 = rgb(&fb, panel.0 + 60, panel.1 + 14);
+    assert!(
+        near(f1, 224, 202, 159),
+        "the affordable row the enabled frame wears, got {f1:?}"
+    );
+    // THE LEVEL SPRITE'S OWN GLYPH (the (6,3) pixel the decode pins —
+    // the level_1 master the row's sprite seat speaks)
+    let lv = rgb(&fb, panel.0 + 61 + 6, panel.1 + 15 + 3);
+    assert!(
+        near(lv, 245, 255, 143),
+        "the level sprite the glyph seat wears, got {lv:?}"
+    );
+    // THE NUMBER'S OWN SEAT (the right-aligned (166 - width,
+    // 23 + 19*i) the font walk banks — the green #80ff20 the
+    // affordable color speaks; the glyph window the inked-cell scan
+    // the exact top-left column the font's own advance never pins)
+    let green_seat = |fb: &crate::raster::Framebuf, row_y: i32, digit: &str| -> bool {
+        let nx = panel.0 + 166 - crate::gui::font_text_width(digit) as i32;
+        for dy in 0..8 {
+            for dx in -1..8 {
+                let p = rgb(fb, nx + dx, row_y + dy);
+                if near(p, 128, 255, 32) {
+                    return true;
+                }
+            }
+        }
+        false
+    };
+    assert!(
+        green_seat(&fb, panel.1 + 23, "2"),
+        "the affordable number the green seat wears"
+    );
+}

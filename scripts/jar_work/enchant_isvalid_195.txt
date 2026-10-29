@@ -1,0 +1,31 @@
+=== net/minecraft/world/level/block/EnchantingTableBlock.class
+--- method isValidBookShelf (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Z
+       0 aload_0
+       1 aload_1
+       2 aload_2
+       3 invokevirtual ('MTH', None, 'offset', '(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;')
+       6 invokevirtual ('MTH', None, 'getBlockState', '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;')
+       9 getstatic ('FLD', None, 'ENCHANTMENT_POWER_PROVIDER', 'Lnet/minecraft/tags/TagKey;')
+      12 invokevirtual ('MTH', None, 'is', '(Lnet/minecraft/tags/TagKey;)Z')
+      15 ifeq -> 55
+      18 aload_0
+      19 aload_1
+      20 aload_2
+      21 invokevirtual ('MTH', 'net/minecraft/core/BlockPos', 'getX', '()I')
+      24 iconst_2
+      25 idiv
+      26 aload_2
+      27 invokevirtual ('MTH', 'net/minecraft/core/BlockPos', 'getY', '()I')
+      30 aload_2
+      31 invokevirtual ('MTH', 'net/minecraft/core/BlockPos', 'getZ', '()I')
+      34 iconst_2
+      35 idiv
+      36 invokevirtual ('MTH', 'net/minecraft/core/BlockPos', 'offset', '(III)Lnet/minecraft/core/BlockPos;')
+      39 invokevirtual ('MTH', None, 'getBlockState', '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;')
+      42 getstatic ('FLD', 'net/minecraft/tags/BlockTags', 'ENCHANTMENT_POWER_TRANSMITTER', 'Lnet/minecraft/tags/TagKey;')
+      45 invokevirtual ('MTH', None, 'is', '(Lnet/minecraft/tags/TagKey;)Z')
+      48 ifeq -> 55
+      51 iconst_1
+      52 goto -> 56
+      55 iconst_0
+      56 ireturn

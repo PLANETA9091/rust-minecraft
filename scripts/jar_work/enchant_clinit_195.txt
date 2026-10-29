@@ -1,0 +1,6 @@
+=== net/minecraft/world/inventory/EnchantmentMenu.class
+--- method <clinit> ()V
+       0 ldc_w #442 ('STR', 'container/slot/lapis_lazuli')
+       3 invokestatic ('MTH', None, 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+       6 putstatic ('FLD', 'net/minecraft/world/inventory/EnchantmentMenu', 'EMPTY_SLOT_LAPIS_LAZULI', 'Lnet/minecraft/resources/Identifier;')
+       9 return
