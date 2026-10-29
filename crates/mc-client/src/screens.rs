@@ -31015,6 +31015,41 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE DISPENSER'S OWN HOVER SEAT (the 331 round — the same shared
+    /// law the furnace + chest walks bank): the hovered seat the rects
+    /// the last render laid answer — the strict 16x16 predicate the
+    /// inner origins the +1 inset the Slot.x keeps, the 3x3 grid the
+    /// mirror rows the menu numbering banks. The find the FIRST match
+    /// the non-overlapping cells keep.
+    fn dispenser_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.dispenser_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE DISPENSER'S OWN HIGHLIGHT SEAT (the 331 round — the same
+    /// shared AbstractContainerScreen law the beacon + inventory +
+    /// table + furnace + chest + hopper rounds bank, the DispenserScreen
+    /// the plain extension the subclass absence banks [the
+    /// DispenserScreen the AbstractContainerScreen chain the Highlight
+    /// rows never wears — the 326 probe's own family verdict the same
+    /// plain extension keeps]): the hovered seat's INNER origin the
+    /// dispenser_hover_seat walk's own verdict answers — the ONE hover
+    /// walk the clicks and the drops and the drags share (the vanilla's
+    /// own single getHoveredSlot law the walk re-keys). The NO-GATE law
+    /// the 325 round banks (the isHighlightable default TRUE the plain
+    /// verdict keeps): NO carried wall, NO hasItem gate — the empty
+    /// cell the highlight answers. The (ox, oy) the paint serves —
+    /// None the gates speak.
+    fn dispenser_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Dispenser {
+            return None; // the dispenser's own screen the walk serves
+        }
+        let (sx, sy, _) = self.dispenser_hover_seat(mx, my)?;
+        Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
     /// — the extractBackground then extractRenderState order the draw
     /// keeps: the dimmed world the container convention dims, the
@@ -32207,6 +32242,37 @@ impl App {
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
         }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the 331 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the beacon + inventory
+        // + table + furnace + chest + hopper rounds bank): the hovered
+        // seat's own 24x24 sprite the (slot.x - 4, slot.y - 4) seat
+        // blits, the isHighlightable gate the ONLY wall speaks — NO
+        // carried wall, NO hasItem gate (the 325 round's own law the
+        // dispenser screen re-wears), the white alpha-96 the back layer
+        // keeps. The mouse_pos gate the headless scenes track no mouse —
+        // the pixel goldens never see this pass. THE SHARED SEAT the
+        // dispenser's own fn answers (the Dispenser gate the walk keys,
+        // the rects the dispenser's own render laid the walk reads —
+        // the 3x3 grid + the mirror rows the SAME walk the clicks
+        // share), the texture-baked canvas the chest's explicit-chrome
+        // reorder never needs (the dispenser.png blit the bg IS — the
+        // back layer the labels' AFTER paints, the hopper's own law the
+        // texture-baked family keeps).
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.dispenser_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
         // THE SLOT ICONS (the furnace's own draw — the believed rows
         // the grid + the mirror keep: the store's projection, the
         // standard rows the real inventory speaks)
@@ -32244,6 +32310,22 @@ impl App {
             }
         }
         self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
     }
 
     /// THE BEACON'S OWN ROUND (the autopush-322 round — the vanilla
@@ -34881,10 +34963,10 @@ impl App {
             return; // no render spoke yet — no geometry to hit
         }
         let panel = self.dispenser_panel;
-        let on_seat = self
-            .dispenser_slot_rects
-            .iter()
-            .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+        // THE SHARED SEAT (the 331 round — the one hover walk the
+        // arm the paints the releases re-key, the inline any the
+        // shared walk retires)
+        let on_seat = self.dispenser_hover_seat(mx, my).is_some();
         // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
         // the canvas chrome the panel origin frames, the 166 the 3x3's
         // own height speaks): the render never spoken the outside test
@@ -34909,11 +34991,9 @@ impl App {
     /// canItemQuickReplace, the plain slots' mayPlace the base Slot's
     /// iconst_1 pair keeps.
     fn qc_paint_dispenser(&mut self, mx: i32, my: i32) {
-        let Some(&(_, _, slot)) = self
-            .dispenser_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        // THE SHARED SEAT (the 331 round — the inline find the walk
+        // retires, the strict band the SAME predicate keeps)
+        let Some((_, _, slot)) = self.dispenser_hover_seat(mx, my) else {
             return; // pc 25 — the no-seat frame the paint skips
         };
         let carried = self.dispenser_carried;
@@ -35686,10 +35766,9 @@ impl App {
             // belief rides, the offline sim the local lanes — the
             // place-back the offline stores speak), the outside the
             // -999 drop serves, the between the -1 no-op keeps.
-            let on_seat = self
-                .dispenser_slot_rects
-                .iter()
-                .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            // THE SHARED SEAT (the 331 round — the one hover walk the
+            // deferred place re-keys, the inline any the walk retires)
+            let on_seat = self.dispenser_hover_seat(mx, my).is_some();
             let panel = self.dispenser_panel;
             let outside = panel != (0, 0)
                 && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
@@ -42560,10 +42639,9 @@ impl App {
     fn hovered_container(&self, mx: i32, my: i32) -> Option<(i32, i32, i32)> {
         match self.screen {
             ScreenKind::Dispenser => {
-                let &(_, _, slot) = self
-                    .dispenser_slot_rects
-                    .iter()
-                    .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)?;
+                // THE SHARED SEAT (the 331 round — the inline find the
+                // walk retires, the bundle lane the same walk rides)
+                let (_, _, slot) = self.dispenser_hover_seat(mx, my)?;
                 let s = slot as usize;
                 let (id, count) = if s < 9 {
                     *self.dispenser_slots.get(s).unwrap_or(&(0, 0))
@@ -43593,11 +43671,9 @@ impl App {
             let Some(sink) = self.live_clicks.as_ref() else {
                 return; // no live session — the command dies on the frame thread
             };
-            let Some(&(_, _, slot)) = self
-                .dispenser_slot_rects
-                .iter()
-                .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-            else {
+            // THE SHARED SEAT (the 331 round — the inline find the
+            // walk retires, the live click lane the same walk rides)
+            let Some((_, _, slot)) = self.dispenser_hover_seat(mx, my) else {
                 return; // the press landed between the slots — no click
             };
             let menu = slot as usize;
@@ -43663,11 +43739,9 @@ impl App {
         if self.dispenser_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
         }
-        let Some(&(_, _, slot)) = self
-            .dispenser_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        // THE SHARED SEAT (the 331 round — the inline find the walk
+        // retires, the offline click lane the same walk rides)
+        let Some((_, _, slot)) = self.dispenser_hover_seat(mx, my) else {
             // THE DROP-OUTSIDE LANE (the furnace's own shape — the
             // laid-out panel the strict rect compare speaks)
             if self.dispenser_panel != (0, 0)
