@@ -1,0 +1,212 @@
+
+#### net/minecraft/client/gui/screens/inventory/AbstractContainerScreen needle='recalculateQuickCraftRemaining'
+
+=== recalculateQuickCraftRemaining()V max_stack=4 max_locals=8 ===
+      0: aload_0 
+      1: getfield #1.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      4: invokevirtual #169.getCarried:()Lnet/minecraft/world/item/ItemStack;
+      7: astore_1 
+      8: aload_1 
+      9: invokevirtual #23.isEmpty:()Z
+     12: ifne start+22
+     15: aload_0 
+     16: getfield #1.isQuickCrafting:Z
+     19: ifne start+23
+     22: return 
+     23: aload_0 
+     24: getfield #1.quickCraftingType:I
+     27: iconst_2 
+     28: if_icmpne start+40
+     31: aload_0 
+     32: aload_1 
+     33: invokevirtual #23.getMaxStackSize:()I
+     36: putfield #1.quickCraftingRemainder:I
+     39: return 
+     40: aload_0 
+     41: aload_1 
+     42: invokevirtual #23.getCount:()I
+     45: putfield #1.quickCraftingRemainder:I
+     48: aload_0 
+     49: getfield #1.quickCraftSlots:Ljava/util/Set;
+     52: invokeinterface #182.iterator:()Ljava/util/Iterator;
+     57: astore_2 
+     58: aload_2 
+     59: invokeinterface #228.hasNext:()Z
+     64: ifeq start+160
+     67: aload_2 
+     68: invokeinterface #228.next:()Ljava/lang/Object;
+     73: checkcast net/minecraft/world/inventory/Slot
+     76: astore_3 
+     77: aload_3 
+     78: invokevirtual #236.getItem:()Lnet/minecraft/world/item/ItemStack;
+     81: astore 4
+     83: aload 4
+     85: invokevirtual #23.isEmpty:()Z
+     88: ifeq start+95
+     91: iconst_0 
+     92: goto start+100
+     95: aload 4
+     97: invokevirtual #23.getCount:()I
+    100: istore 5
+    102: aload_1 
+    103: invokevirtual #23.getMaxStackSize:()I
+    106: aload_3 
+    107: aload_1 
+    108: invokevirtual #236.getMaxStackSize:(Lnet/minecraft/world/item/ItemStack;)I
+    111: invokestatic #385.min:(II)I
+    114: istore 6
+    116: aload_0 
+    117: getfield #1.quickCraftSlots:Ljava/util/Set;
+    120: invokeinterface #182.size:()I
+    125: aload_0 
+    126: getfield #1.quickCraftingType:I
+    129: aload_1 
+    130: invokestatic #169.getQuickCraftPlaceCount:(IILnet/minecraft/world/item/ItemStack;)I
+    133: iload 5
+    135: iadd 
+    136: iload 6
+    138: invokestatic #385.min:(II)I
+    141: istore 7
+    143: aload_0 
+    144: dup 
+    145: getfield #1.quickCraftingRemainder:I
+    148: iload 7
+    150: iload 5
+    152: isub 
+    153: isub 
+    154: putfield #1.quickCraftingRemainder:I
+    157: goto start+58
+    160: return 
+
+
+#### net/minecraft/client/gui/screens/inventory/AbstractContainerScreen needle='shouldAddSlotToQuickCraft'
+
+=== shouldAddSlotToQuickCraft(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;)Z max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: getfield #1.isQuickCrafting:Z
+      4: ifeq start+70
+      7: aload_2 
+      8: invokevirtual #23.isEmpty:()Z
+     11: ifne start+70
+     14: aload_2 
+     15: invokevirtual #23.getCount:()I
+     18: aload_0 
+     19: getfield #1.quickCraftSlots:Ljava/util/Set;
+     22: invokeinterface #182.size:()I
+     27: if_icmpgt start+38
+     30: aload_0 
+     31: getfield #1.quickCraftingType:I
+     34: iconst_2 
+     35: if_icmpne start+70
+     38: aload_1 
+     39: aload_2 
+     40: iconst_1 
+     41: invokestatic #169.canItemQuickReplace:(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;Z)Z
+     44: ifeq start+70
+     47: aload_1 
+     48: aload_2 
+     49: invokevirtual #236.mayPlace:(Lnet/minecraft/world/item/ItemStack;)Z
+     52: ifeq start+70
+     55: aload_0 
+     56: getfield #1.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     59: aload_1 
+     60: invokevirtual #169.canDragTo:(Lnet/minecraft/world/inventory/Slot;)Z
+     63: ifeq start+70
+     66: iconst_1 
+     67: goto start+71
+     70: iconst_0 
+     71: ireturn 
+
+
+#### net/minecraft/client/gui/screens/inventory/AbstractContainerScreen needle='quickCraftToSlots'
+
+=== quickCraftToSlots()V max_stack=5 max_locals=3 ===
+      0: aload_0 
+      1: aconst_null 
+      2: sipush -999
+      5: iconst_0 
+      6: aload_0 
+      7: getfield #1.quickCraftingType:I
+     10: invokestatic #169.getQuickcraftMask:(II)I
+     13: getstatic #490.QUICK_CRAFT:Lnet/minecraft/world/inventory/ContainerInput;
+     16: invokevirtual #1.slotClicked:(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+     19: aload_0 
+     20: getfield #1.quickCraftSlots:Ljava/util/Set;
+     23: invokeinterface #182.iterator:()Ljava/util/Iterator;
+     28: astore_1 
+     29: aload_1 
+     30: invokeinterface #228.hasNext:()Z
+     35: ifeq start+71
+     38: aload_1 
+     39: invokeinterface #228.next:()Ljava/lang/Object;
+     44: checkcast net/minecraft/world/inventory/Slot
+     47: astore_2 
+     48: aload_0 
+     49: aload_2 
+     50: aload_2 
+     51: getfield #236.index:I
+     54: iconst_1 
+     55: aload_0 
+     56: getfield #1.quickCraftingType:I
+     59: invokestatic #169.getQuickcraftMask:(II)I
+     62: getstatic #490.QUICK_CRAFT:Lnet/minecraft/world/inventory/ContainerInput;
+     65: invokevirtual #1.slotClicked:(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+     68: goto start+29
+     71: aload_0 
+     72: aconst_null 
+     73: sipush -999
+     76: iconst_2 
+     77: aload_0 
+     78: getfield #1.quickCraftingType:I
+     81: invokestatic #169.getQuickcraftMask:(II)I
+     84: getstatic #490.QUICK_CRAFT:Lnet/minecraft/world/inventory/ContainerInput;
+     87: invokevirtual #1.slotClicked:(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+     90: return 
+
+
+#### net/minecraft/client/gui/screens/inventory/AbstractContainerScreen needle='mouseDragged'
+
+=== mouseDragged(Lnet/minecraft/client/input/MouseButtonEvent;DD)Z max_stack=6 max_locals=8 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #468.x:()D
+      5: aload_1 
+      6: invokevirtual #468.y:()D
+      9: invokevirtual #1.getHoveredSlot:(DD)Lnet/minecraft/world/inventory/Slot;
+     12: astore 6
+     14: aload_0 
+     15: getfield #1.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     18: invokevirtual #169.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     21: astore 7
+     23: aload 6
+     25: ifnull start+59
+     28: aload_0 
+     29: aload 6
+     31: aload 7
+     33: invokevirtual #1.shouldAddSlotToQuickCraft:(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;)Z
+     36: ifeq start+59
+     39: aload_0 
+     40: getfield #1.quickCraftSlots:Ljava/util/Set;
+     43: aload 6
+     45: invokeinterface #182.add:(Ljava/lang/Object;)Z
+     50: ifeq start+59
+     53: aload_0 
+     54: invokevirtual #1.recalculateQuickCraftRemaining:()V
+     57: iconst_1 
+     58: ireturn 
+     59: aload 6
+     61: ifnonnull start+86
+     64: aload_0 
+     65: getfield #1.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     68: invokevirtual #169.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     71: invokevirtual #23.isEmpty:()Z
+     74: ifeq start+86
+     77: aload_0 
+     78: aload_1 
+     79: dload_2 
+     80: dload 4
+     82: invokespecial #8.mouseDragged:(Lnet/minecraft/client/input/MouseButtonEvent;DD)Z
+     85: ireturn 
+     86: iconst_1 
+     87: ireturn 
+

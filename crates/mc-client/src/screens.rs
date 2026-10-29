@@ -27415,15 +27415,13 @@ impl App {
     }
 
     /// THE BEACON'S OWN SCREEN CLICK (the autopush-322 round — the
-    /// BeaconScreen's widget dispatch the menu slots PRECEDE: the
-    /// power buttons the BeaconPowerButton.onPress walk serves, the
-    /// upgrade seat the inherited isPrimary=false arm wears, the
-    /// confirm/cancel pair the BeaconConfirmButton/CancelButton
-    /// onPress walks speak, then the menu's own slots the doClick
-    /// PICKUP walk answers — the payment slot the mayPlace +
-    /// getMaxStackSize laws keep, the standard rows the generic
-    /// predictor mirrors).
-    fn beacon_screen_click(&mut self, mx: i32, my: i32, button: i8) {
+    /// THE WIDGET DISPATCH'S OWN SEAT (the BeaconScreen.mouseClicked's
+    /// super walk the buttons serve BEFORE the menu slots — the
+    /// autopush-323 round the carried press's own QUICKCRAFT arm the
+    /// same precedence keeps: the power/upgrade/confirm/cancel seats
+    /// the press answers, the consumed verdict the true return speaks,
+    /// the slot walk the drag arm serves).
+    fn beacon_widget_press(&mut self, mx: i32, my: i32) -> bool {
         // THE POWER SEATS' OWN WALK (the widget dispatch the slots
         // precede — the 22x22 rects the render's own hit boxes keep)
         let power_hit = self
@@ -27433,7 +27431,7 @@ impl App {
             .map(|&(_, _, effect, is_primary)| (effect, is_primary));
         if let Some((effect, is_primary)) = power_hit {
             self.beacon_power_press(effect, is_primary);
-            return;
+            return true;
         }
         // THE UPGRADE SEAT'S OWN PRESS (the BeaconUpgradePowerButton
         // the inherited onPress wears — the effect the setEffect
@@ -27446,7 +27444,7 @@ impl App {
                 if self.beacon_secondary != self.beacon_primary {
                     self.beacon_secondary = self.beacon_primary;
                 }
-                return;
+                return true;
             }
         }
         // THE CONFIRM'S OWN SEAT (javap BeaconConfirmButton.onPress pc
@@ -27459,13 +27457,31 @@ impl App {
             if active {
                 self.beacon_confirm_press();
             }
-            return;
+            return true;
         }
         // THE CANCEL'S OWN SEAT (javap BeaconCancelButton.onPress pc
         // 0-13 — the closeContainer the whole walk speaks)
         let (cx, cy) = self.beacon_cancel_rect;
         if cx != 0 && mx >= cx && mx < cx + 22 && my >= cy && my < cy + 22 {
             self.close_beacon(ScreenKind::World);
+            return true;
+        }
+        false
+    }
+
+    /// BeaconScreen's widget dispatch the menu slots PRECEDE: the
+    /// power buttons the BeaconPowerButton.onPress walk serves, the
+    /// upgrade seat the inherited isPrimary=false arm wears, the
+    /// confirm/cancel pair the BeaconConfirmButton/CancelButton
+    /// onPress walks speak, then the menu's own slots the doClick
+    /// PICKUP walk answers — the payment slot the mayPlace +
+    /// getMaxStackSize laws keep, the standard rows the generic
+    /// predictor mirrors).
+    fn beacon_screen_click(&mut self, mx: i32, my: i32, button: i8) {
+        // THE WIDGET DISPATCH'S OWN PRECEDENCE (the super.mouseClicked
+        // law the buttons serve — the consumed seat the true return
+        // speaks, the slot walk the press never reaches)
+        if self.beacon_widget_press(mx, my) {
             return;
         }
         // THE SLOTS' OWN WALK (the menu's doClick the hit test the
@@ -34186,6 +34202,13 @@ impl App {
             }
             return self.furnace_carried;
         }
+        if self.screen == ScreenKind::Beacon {
+            // THE BEACON'S OWN LANE CURSOR (the autopush-323 round —
+            // the drag the offline window alone wears: the door the
+            // offline world answers, the local cursor stack the
+            // click walk's own belief keeps)
+            return self.beacon_carried;
+        }
         if self.world_is_network {
             self.live_inv_carried
         } else {
@@ -34610,6 +34633,87 @@ impl App {
         self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
     }
 
+    /// THE BEACON DRAG'S OWN ARM (the autopush-323 round — the same
+    /// mouseClicked pcs 316-378 base walk the Inventory + chest +
+    /// table + furnace rounds bank: the carried-NON-EMPTY press the
+    /// isQuickCrafting start speaks — NO slot click, NO packet, the
+    /// placement and the distribution BOTH the release's own lanes
+    /// serve). The hovered seat AND the outside press the arm answers
+    /// (the k == -999 press the same pc 316 walk enters — the classic
+    /// outside-drop the release's PICKUP -999 lane serves); the press
+    /// BETWEEN the slots (k == -1) the whole arm skips. The drag the
+    /// OFFLINE window alone wears (the beacon door the offline world
+    /// answers — no live-window gate the family arms keep). The
+    /// button's own type (mouseClicked pcs 338-377): the left press
+    /// the type-0 drag arms (pc 338-347), the right press the type-1
+    /// drag arms (pc 353-363) — the one-each distribution the
+    /// release's own lane serves.
+    fn qc_arm_beacon(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if self.beacon_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.beacon_panel;
+        let on_seat = self
+            .beacon_slot_rects
+            .iter()
+            .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+        // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
+        // the 230x219 chrome the panel origin frames)
+        let outside = mx < panel.0 || my < panel.1 || mx >= panel.0 + 230 || my >= panel.1 + 219;
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32; // the button's own type (pc 338-347 the left, pc 353-363 the right)
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
+    /// THE BEACON DRAG'S OWN COLLECT (the same mouseDragged pcs 0-58
+    /// the Inventory + chest + table + furnace paints answer — the
+    /// beacon's own hover the rects speak): shouldAdd pc 0-71 the
+    /// gates wear — the arm, the carried non-empty, the count's own
+    /// `> painted || type 2` law, the seat's canItemQuickReplace (the
+    /// EMPTY seat or the same item), the mayPlace — the PAYMENT seat's
+    /// own tag verdict the paint re-keys (the BEACON_PAYMENT_ITEMS
+    /// tag the PaymentSlot's override keeps — the non-payment carried
+    /// the seat never paints), the standard rows the base Slot's
+    /// plain TRUE keeps, the canDragTo the base menu's iconst_1
+    /// keeps (the BeaconMenu no override the probe banks).
+    fn qc_paint_beacon(&mut self, mx: i32, my: i32) {
+        let Some(&(_, _, slot)) = self
+            .beacon_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.beacon_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        if !beacon_qc_seat_may_place(menu, carried.0) {
+            return; // shouldAdd pc 47-52 — the payment seat's own tag verdict
+        }
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
     /// THE CHEST DRAG'S OWN WIRE DISTRIBUTION (the offline walk's twin
     /// over the LIVE chest belief — the free fn
     /// [`wire_chest_quickcraft_distribute`] the disjoint field borrows
@@ -34831,6 +34935,16 @@ impl App {
         for &menu in &self.qc_slots {
             let (seat_id, seat_count) = self.qc_seat_stack(menu);
             let _ = seat_id;
+            // THE PER-SEAT CAP (the recalc's own pc 102-114 walk the
+            // client disasm banks — the min the ITEM's own max and the
+            // SLOT's getMaxStackSize(carried) wears: the beacon's
+            // payment seat the iconst_1 override speaks, the plain
+            // seats the item law keeps)
+            let seat_cap = if self.screen == ScreenKind::Beacon && menu == 0 {
+                cap.min(1)
+            } else {
+                cap
+            };
             // getQuickCraftPlaceCount — the type-0 floor split, the
             // type-1's own ONE per seat the ghost keeps
             let place_count = if self.qc_type == 1 {
@@ -34838,7 +34952,7 @@ impl App {
             } else {
                 carried.1 / painted as i32
             };
-            let place = std::cmp::min(place_count + seat_count, cap);
+            let place = std::cmp::min(place_count + seat_count, seat_cap);
             remainder -= place - seat_count;
         }
         self.qc_remainder = remainder;
@@ -34874,6 +34988,16 @@ impl App {
             // 2, the store rows 3..38 the write-through projection
             // keeps; the wire sync the window's own array answers)
             return self.furnace_slots.get(menu).copied().unwrap_or((0, 0));
+        }
+        if self.screen == ScreenKind::Beacon {
+            // THE BEACON'S OWN NUMBERING (the autopush-323 round — the
+            // payment slot 0 the ctor's own (136,110) seat keeps, the
+            // standard rows 1..36 the addStandardInventorySlots(36,
+            // 137) mirror the open walk projects)
+            if menu == 0 {
+                return self.beacon_payment;
+            }
+            return self.beacon_mirror.get(menu - 1).copied().unwrap_or((0, 0));
         }
         if self.screen == ScreenKind::Crafting {
             // THE TABLE'S OWN NUMBERING (the window-1 projection the
@@ -34973,6 +35097,14 @@ impl App {
                 } else {
                     self.qc_distribute_furnace_offline();
                 }
+            } else if self.screen == ScreenKind::Beacon {
+                // THE BEACON'S OWN LANE (the autopush-323 round — the
+                // drag the offline window alone wears: the door the
+                // offline world answers, the distribution the local
+                // write-through serves — the payment seat the max-1
+                // cap keeps, the standard rows the mirror + the
+                // inventory write-through speak)
+                self.qc_distribute_beacon_offline();
             } else if self.world_is_network {
                 self.qc_distribute_wire();
             } else {
@@ -35255,6 +35387,30 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Beacon {
+            // THE BEACON'S OWN DEFERRED PLACE (the autopush-323 round
+            // — the same pc 325-449 walk the beacon geometry answers,
+            // the drag the offline window wears): the seat the click
+            // walk's own PICKUP serves (the armed button the release
+            // wears — the right drag's deferred place the place-ONE
+            // speaks), the outside the -999 drop serves (the whole
+            // carried the PRIMARY drops, the ONE the right wears — the
+            // throw walk the entity spawn keeps), the between the -1
+            // no-op keeps. THE WIDGET SEATS the release never serves
+            // (the buttons the press alone answers — the
+            // super.mouseReleased law the family keeps).
+            let on_seat = self
+                .beacon_slot_rects
+                .iter()
+                .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            let panel = self.beacon_panel;
+            let outside = panel != (0, 0)
+                && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 230 || my >= panel.1 + 219);
+            if on_seat || outside {
+                self.beacon_screen_click(mx, my, self.qc_button as i8);
+            }
+            return;
+        }
         let panel = self.inv_panel;
         let on_seat = self.inventory_hover(mx, my).is_some();
         let outside = mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166;
@@ -35521,6 +35677,68 @@ impl App {
             }
         }
         self.furnace_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE BEACON'S OFFLINE DISTRIBUTION (the autopush-323 round —
+    /// the doClick QUICK_CRAFT status-2 arm pcs 298-534 over the
+    /// offline model, the drag the offline window alone wears): the
+    /// same place math the family keeps, the seats the beacon's own
+    /// numbering answers (the payment slot 0 the ctor's seat keeps,
+    /// the standard rows 1..36 the mirror + the write-through
+    /// projection speak), the PAYMENT seat's own max-1 the per-seat
+    /// cap wears (pc 450-465 — the min the ITEM's own max and the
+    /// SLOT's getMaxStackSize(carried) the PaymentSlot's iconst_1
+    /// override speaks), the HUD row the store's own sync follows.
+    fn qc_distribute_beacon_offline(&mut self) {
+        let carried = self.beacon_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if !beacon_qc_seat_may_place(menu, carried.0) {
+                continue; // pc 384-391 — the payment seat's own tag law
+            }
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let item_cap = crate::world_view::item_max_stack(carried.0);
+            // THE PER-SEAT CAP (pc 450-465 — the min the ITEM's own
+            // max and the SLOT's getMaxStackSize wears: the payment
+            // seat the iconst_1 cap speaks, the standard rows the
+            // item law keeps [the default 64 the container max])
+            let cap = if menu == 0 { item_cap.min(1) } else { item_cap };
+            // getQuickCraftPlaceCount — the type-0 floor split, the
+            // type-1's own ONE per seat the ghost keeps
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu == 0 {
+                self.beacon_payment = new;
+            } else {
+                let idx = menu - 1;
+                let inv_idx = if idx < 27 { 9 + idx } else { idx - 27 };
+                if let Some(cell) = self.beacon_mirror.get_mut(idx) {
+                    *cell = new;
+                }
+                if let Some(item) = self.inventory.items.get_mut(inv_idx) {
+                    *item = new;
+                }
+            }
+        }
+        self.beacon_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
         self.hotbar_slots = self.inventory.hotbar();
     }
 

@@ -1,0 +1,186 @@
+
+#### net/minecraft/world/inventory/AbstractContainerMenu (cp 20011) needle='quickcraft'
+
+#### net/minecraft/world/inventory/AbstractContainerMenu (cp 20011) needle='QuickCraft'
+
+=== resetQuickCraft()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: iconst_0 
+      2: putfield #16.quickcraftStatus:I
+      5: aload_0 
+      6: getfield #16.quickcraftSlots:Ljava/util/Set;
+      9: invokeinterface #446.clear:()V
+     14: return 
+
+
+=== getQuickCraftPlaceCount(IILnet/minecraft/world/item/ItemStack;)I max_stack=2 max_locals=3 ===
+      0: iload_1 
+      1: tableswitch default=start+53 0->start+28 1->start+42 2->start+46
+     28: aload_2 
+     29: invokevirtual #35.getCount:()I
+     32: i2f 
+     33: iload_0 
+     34: i2f 
+     35: fdiv 
+     36: invokestatic #695.floor:(F)I
+     39: goto start+57
+     42: iconst_1 
+     43: goto start+57
+     46: aload_2 
+     47: invokevirtual #35.getMaxStackSize:()I
+     50: goto start+57
+     53: aload_2 
+     54: invokevirtual #35.getCount:()I
+     57: ireturn 
+
+
+#### net/minecraft/world/inventory/AbstractContainerMenu (cp 20011) needle='canItemQuickReplace'
+
+=== canItemQuickReplace(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;Z)Z max_stack=2 max_locals=4 ===
+      0: aload_0 
+      1: ifnull start+11
+      4: aload_0 
+      5: invokevirtual #86.hasItem:()Z
+      8: ifne start+15
+     11: iconst_1 
+     12: goto start+16
+     15: iconst_0 
+     16: istore_3 
+     17: iload_3 
+     18: ifne start+65
+     21: aload_1 
+     22: aload_0 
+     23: invokevirtual #86.getItem:()Lnet/minecraft/world/item/ItemStack;
+     26: invokestatic #35.isSameItemSameComponents:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+     29: ifeq start+65
+     32: aload_0 
+     33: invokevirtual #86.getItem:()Lnet/minecraft/world/item/ItemStack;
+     36: invokevirtual #35.getCount:()I
+     39: iload_2 
+     40: ifeq start+47
+     43: iconst_0 
+     44: goto start+51
+     47: aload_1 
+     48: invokevirtual #35.getCount:()I
+     51: iadd 
+     52: aload_1 
+     53: invokevirtual #35.getMaxStackSize:()I
+     56: if_icmpgt start+63
+     59: iconst_1 
+     60: goto start+64
+     63: iconst_0 
+     64: ireturn 
+     65: iload_3 
+     66: ireturn 
+
+
+#### net/minecraft/world/inventory/AbstractContainerMenu (cp 20011) needle='clicked'
+
+=== clicked(IILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V max_stack=5 max_locals=8 ===
+      0: aload_0 
+      1: iload_1 
+      2: iload_2 
+      3: aload_3 
+      4: aload 4
+      6: invokevirtual #16.doClick:(IILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V
+      9: goto start+129
+     12: astore 5
+     14: aload 5
+     16: ldc_w #369
+     19: invokestatic #372.forThrowable:(Ljava/lang/Throwable;Ljava/lang/String;)Lnet/minecraft/CrashReport;
+     22: astore 6
+     24: aload 6
+     26: ldc_w #377
+     29: invokevirtual #372.addCategory:(Ljava/lang/String;)Lnet/minecraft/CrashReportCategory;
+     32: astore 7
+     34: aload 7
+     36: ldc_w #383
+     39: aload_0 
+     40: invokedynamic #385
+     45: invokevirtual #390.setDetail:(Ljava/lang/String;Lnet/minecraft/CrashReportDetail;)Lnet/minecraft/CrashReportCategory;
+     48: pop 
+     49: aload 7
+     51: ldc_w #395
+     54: aload_0 
+     55: invokedynamic #397
+     60: invokevirtual #390.setDetail:(Ljava/lang/String;Lnet/minecraft/CrashReportDetail;)Lnet/minecraft/CrashReportCategory;
+     63: pop 
+     64: aload 7
+     66: ldc_w #398
+     69: aload_0 
+     70: getfield #16.slots:Lnet/minecraft/core/NonNullList;
+     73: invokevirtual #10.size:()I
+     76: invokestatic #1.valueOf:(I)Ljava/lang/Integer;
+     79: invokevirtual #390.setDetail:(Ljava/lang/String;Ljava/lang/Object;)Lnet/minecraft/CrashReportCategory;
+     82: pop 
+     83: aload 7
+     85: ldc_w #403
+     88: iload_1 
+     89: invokestatic #1.valueOf:(I)Ljava/lang/Integer;
+     92: invokevirtual #390.setDetail:(Ljava/lang/String;Ljava/lang/Object;)Lnet/minecraft/CrashReportCategory;
+     95: pop 
+     96: aload 7
+     98: ldc_w #405
+    101: iload_2 
+    102: invokestatic #1.valueOf:(I)Ljava/lang/Integer;
+    105: invokevirtual #390.setDetail:(Ljava/lang/String;Ljava/lang/Object;)Lnet/minecraft/CrashReportCategory;
+    108: pop 
+    109: aload 7
+    111: ldc_w #407
+    114: aload_3 
+    115: invokevirtual #390.setDetail:(Ljava/lang/String;Ljava/lang/Object;)Lnet/minecraft/CrashReportCategory;
+    118: pop 
+    119: new net/minecraft/ReportedException
+    122: dup 
+    123: aload 6
+    125: invokespecial #409.<init>:(Lnet/minecraft/CrashReport;)V
+    128: athrow 
+    129: return 
+
+
+=== lambda$clicked$1()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokevirtual #4.getClass:()Ljava/lang/Class;
+      4: invokevirtual #757.getCanonicalName:()Ljava/lang/String;
+      7: areturn 
+
+
+=== lambda$clicked$0()Ljava/lang/String; max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: getfield #16.menuType:Lnet/minecraft/world/inventory/MenuType;
+      4: ifnull start+25
+      7: getstatic #763.MENU:Lnet/minecraft/core/Registry;
+     10: aload_0 
+     11: getfield #16.menuType:Lnet/minecraft/world/inventory/MenuType;
+     14: invokeinterface #769.getKey:(Ljava/lang/Object;)Lnet/minecraft/resources/Identifier;
+     19: invokevirtual #775.toString:()Ljava/lang/String;
+     22: goto start+28
+     25: ldc_w #779
+     28: areturn 
+
+
+#### net/minecraft/world/inventory/BeaconMenu$PaymentSlot (cp 790) needle=''
+
+=== <init>(Lnet/minecraft/world/Container;III)V max_stack=5 max_locals=5 ===
+      0: aload_0 
+      1: aload_1 
+      2: iload_2 
+      3: iload_3 
+      4: iload 4
+      6: invokespecial #2.<init>:(Lnet/minecraft/world/Container;III)V
+      9: return 
+
+
+=== mayPlace(Lnet/minecraft/world/item/ItemStack;)Z max_stack=2 max_locals=2 ===
+      0: aload_1 
+      1: getstatic #8.BEACON_PAYMENT_ITEMS:Lnet/minecraft/tags/TagKey;
+      4: invokevirtual #14.is:(Lnet/minecraft/tags/TagKey;)Z
+      7: ireturn 
+
+
+=== getMaxStackSize()I max_stack=1 max_locals=1 ===
+      0: iconst_1 
+      1: ireturn 
+
+
+#### net/minecraft/world/inventory/BeaconMenu (cp 6196) needle='canDragTo'
