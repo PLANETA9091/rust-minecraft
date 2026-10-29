@@ -23101,7 +23101,11 @@ impl App {
             || self.screen == ScreenKind::Dispenser
             || self.screen == ScreenKind::Crafting
             || self.screen == ScreenKind::Furnace
+            || self.screen == ScreenKind::Beacon
         {
+            // the BEACON screen the same base walk wears (the
+            // autopush-323 round — the beacon's own lanes the
+            // distribution and the deferred place answer)
             if spread_fired {
                 // pc 243's goto 452 — the consumed release the arm's
                 // own tail still clears (the drag dies with the spread)
@@ -36204,15 +36208,24 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Beacon {
-            // THE BEACON'S OWN PRESS (the autopush-322 round — the
-            // widget dispatch the menu slots precede: the power
-            // buttons the BeaconPowerButton.onPress walk serves, the
-            // confirm/cancel pair the own onPress walks speak, the
-            // payment + the standard rows the doClick PICKUP walk
-            // answers). THE QUICKCRAFT DRAG the follow-up keeps (the
-            // beacon's slot set the drag lanes the later round banks
-            // — the carried press the direct PICKUP walk serves).
-            self.beacon_screen_click(mx, my, 0);
+            // THE WIDGET DISPATCH'S OWN PRECEDENCE (the super.mouseClicked
+            // law the buttons serve FIRST — the consumed seat the true
+            // return speaks, the drag arm the press never reaches)
+            if self.beacon_widget_press(mx, my) {
+                return;
+            }
+            // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
+            // 316-378 base walk the Inventory + chest + table +
+            // furnace rounds bank — the autopush-323 round the
+            // carried-NON-EMPTY press the isQuickCrafting start
+            // speaks: NO slot click, NO packet); the carried-empty
+            // press the PICKUP dispatch keeps.
+            let held = self.beacon_carried.1 > 0;
+            if held {
+                self.qc_arm_beacon(mx, my, 0);
+            } else {
+                self.beacon_screen_click(mx, my, 0);
+            }
             return;
         }
         if self.screen == ScreenKind::Inventory {
@@ -36457,14 +36470,33 @@ impl App {
             return false;
         }
         if self.screen == ScreenKind::Beacon {
-            // THE BEACON'S OWN RIGHT PRESS (the autopush-322 round —
-            // the widget dispatch the menu slots precede: the power
-            // buttons the same walk both buttons serve, the payment +
-            // the standard rows the doClick PICKUP walk answers [the
-            // button-1 byte the split-pickup place-ONE speaks]). THE
-            // QUICKCRAFT DRAG the follow-up keeps (the direct PICKUP
-            // walk the press serves).
-            self.beacon_screen_click(mx, my, 1);
+            // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
+            // the `isQuickCrafting` verdict the press walk never
+            // re-enters: the armed drag's frames the other button's
+            // press keep silent)
+            if self.qc_armed {
+                return false;
+            }
+            // THE WIDGET DISPATCH'S OWN PRECEDENCE (the super.mouseClicked
+            // law the buttons serve FIRST — the consumed seat the true
+            // return speaks, the drag arm the press never reaches)
+            if self.beacon_widget_press(mx, my) {
+                return false;
+            }
+            // THE RIGHT PRESS'S OWN ARM (mouseClicked pcs 316-377 —
+            // the carried-NON-EMPTY press the isQuickCrafting start
+            // speaks for BOTH buttons, the type the button's own
+            // verdict keys: the right press the type-1 drag arms, pc
+            // 353-363 — NO slot click, NO packet, the one-each
+            // distribution the release serves); the carried-empty
+            // press the secondary dispatch keeps (the split-pickup
+            // the press lane answers)
+            let held = self.beacon_carried.1 > 0;
+            if held {
+                self.qc_arm_beacon(mx, my, 1);
+            } else {
+                self.beacon_screen_click(mx, my, 1);
+            }
             return false;
         }
         if self.screen == ScreenKind::Creative {
@@ -37837,8 +37869,11 @@ impl App {
                 || self.screen == ScreenKind::Chest
                 || self.screen == ScreenKind::Dispenser
                 || self.screen == ScreenKind::Crafting
-                || self.screen == ScreenKind::Furnace)
+                || self.screen == ScreenKind::Furnace
+                || self.screen == ScreenKind::Beacon)
         {
+            // the BEACON screen the same base walk wears (the
+            // autopush-323 round — the mismatch the drag aborts)
             self.qc_armed = false;
             self.qc_slots.clear();
             return;
@@ -37853,8 +37888,12 @@ impl App {
                 || self.screen == ScreenKind::Chest
                 || self.screen == ScreenKind::Dispenser
                 || self.screen == ScreenKind::Crafting
-                || self.screen == ScreenKind::Furnace)
+                || self.screen == ScreenKind::Furnace
+                || self.screen == ScreenKind::Beacon)
         {
+            // the BEACON screen the same base walk wears (the
+            // autopush-323 round — the type-1 drag the beacon's own
+            // distribution rides)
             self.qc_release(1);
             return;
         }
@@ -38205,6 +38244,12 @@ impl App {
                 self.qc_paint_table(mx, my);
             } else if self.screen == ScreenKind::Furnace {
                 self.qc_paint_furnace(mx, my);
+            } else if self.screen == ScreenKind::Beacon {
+                // THE BEACON'S OWN HOVER (the autopush-323 round — the
+                // same shouldAdd gates the payment seat's own tag
+                // verdict re-keys, the standard rows the base Slot's
+                // plain TRUE keeps)
+                self.qc_paint_beacon(mx, my);
             }
         }
     }
@@ -78660,6 +78705,22 @@ fn wire_quickcraft_distribute(
             carried: *carried,
         },
     ));
+}
+
+/// THE BEACON DRAG'S OWN SEAT VERDICT (the autopush-323 round — the
+/// shouldAdd's own mayPlace pair the drag's paint + the distribution's
+/// skip both wear): the PAYMENT seat (menu 0) the PaymentSlot's own
+/// override keeps — the `stack.is(BEACON_PAYMENT_ITEMS)` tag verdict
+/// the world law's own five-coin table answers; the standard rows
+/// (1..36) the base Slot's plain TRUE keeps (the BeaconMenu no
+/// override the probe banks — the addStandardInventorySlots mirror
+/// the generic seats wear).
+fn beacon_qc_seat_may_place(menu: usize, item: i32) -> bool {
+    if menu == 0 {
+        crate::world::is_beacon_payment_item(item)
+    } else {
+        true
+    }
 }
 
 /// THE CHEST DRAG'S OWN WIRE DISTRIBUTION (the same doClick QUICK_CRAFT

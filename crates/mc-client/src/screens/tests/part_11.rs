@@ -3932,7 +3932,12 @@ fn the_offline_beacon_the_gui_door_the_powers_the_payment_wear() {
         (0, 0),
         "the write-through the inventory wears"
     );
+    // THE DRAG'S OWN RIDE (the 323 round the carried press the arm
+    // speaks, the pay seat the paint keeps, the release the max-1
+    // distribution serves — the same cap verdict the click walk wore)
     app.on_press(pay.0, pay.1);
+    app.on_mouse_move(pay.0 + 1, pay.1);
+    app.on_left_release();
     assert_eq!(
         app.beacon_payment,
         (diamond, 1),
@@ -3949,9 +3954,16 @@ fn the_offline_beacon_the_gui_door_the_powers_the_payment_wear() {
     let stone_seat = (panel.0 + 36 + 2 * 18 + 1 + 8, panel.1 + 137 + 1 + 8);
     app.beacon_slot_rects
         .push((stone_seat.0 - 8, stone_seat.1 - 8, 3));
+    // THE DRAG'S OWN SWAP (the carried press the arm wears, the
+    // stone seat the paint refusal keeps, the release the deferred
+    // PICKUP the swap walk serves)
     app.on_press(stone_seat.0, stone_seat.1);
+    app.on_mouse_move(stone_seat.0 + 1, stone_seat.1);
+    app.on_left_release();
     assert_eq!(app.beacon_carried, (1, 4), "the swap the stone carries");
     app.on_press(pay.0, pay.1);
+    app.on_mouse_move(pay.0 + 1, pay.1);
+    app.on_left_release();
     assert_eq!(
         app.beacon_payment,
         (diamond, 1),
@@ -3998,6 +4010,11 @@ fn the_offline_beacon_the_gui_door_the_powers_the_payment_wear() {
         "the fresh mirror the remainder carries"
     );
     app.on_press(pay.0, pay.1);
+    // THE DRAG'S OWN VALID RIDE (the carried press the arm wears —
+    // the pay seat the paint keeps, the release the max-1 the
+    // distribution serves)
+    app.on_mouse_move(pay.0 + 1, pay.1);
+    app.on_left_release();
     assert_eq!(app.beacon_payment, (diamond, 1), "the coin the slot takes");
     app.beacon_power_press(speed, true);
     assert_eq!(
@@ -4038,7 +4055,12 @@ fn the_offline_beacon_the_gui_door_the_powers_the_payment_wear() {
         (coin_rect.0, coin_rect.1, coin_slot),
     ];
     app.on_press(coin_rect.0 + 8, coin_rect.1 + 8);
+    // THE DRAG'S OWN FRESH RIDE (the carried press the arm wears —
+    // the pay seat the paint keeps, the release the max-1 the
+    // distribution serves)
     app.on_press(pay.0, pay.1);
+    app.on_mouse_move(pay.0 + 1, pay.1);
+    app.on_left_release();
     assert_eq!(
         app.beacon_payment,
         (diamond, 1),
@@ -4256,4 +4278,295 @@ fn beacon_coin_seat(app: &App, panel: (i32, i32), diamond: i32) -> ((i32, i32), 
     let sx = panel.0 + 36 + col * 18 + 1;
     let sy = panel.1 + 137 + row * 18 + if row == 3 { 4 } else { 0 } + 1;
     ((sx, sy), (idx + 1) as i16)
+}
+
+/// THE OFFLINE BEACON DRAG'S OWN PAINT AND SPLIT (the autopush-323
+/// round — the quickcraft walk the offline window the family's own
+/// gate shape wears): the carried press the drag arms (no place, no
+/// packet), the motion the paint speaks (the press seat the first
+/// motion paints, the payment coin the tag verdict admits), the
+/// recalc's ghost the floor split keeps, the release the
+/// distribution serves — the PAYMENT seat the ICONST_1 cap speaks
+/// (the ONE coin the max place wears), the mirror rows the floor
+/// tenth wears, the write-through the inventory answers, the HUD row
+/// the sync follows, the remainder the cursor keeps.
+#[test]
+fn the_offline_beacon_quickcraft_drag_the_paint_the_payment_cap_wear() {
+    let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE TIER-1 PYRAMID'S OWN BASE (the iron ring the realistic
+    // open wears — the drag test the door alone reads)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the split reads
+    }
+    app.hotbar_slots = app.inventory.hotbar();
+    app.open_beacon_for((c, top, c));
+    assert_eq!(app.screen, ScreenKind::Beacon);
+    assert!(
+        !app.world_is_network,
+        "the offline door the drag lane wears"
+    );
+    // THE GEOMETRY THE RENDER BANKS (the 322 round's own stand-in —
+    // the payment seat + the two mirror row seats the rects keep)
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    app.beacon_panel = panel;
+    let pay = (panel.0 + 136 + 1 + 8, panel.1 + 110 + 1 + 8);
+    let row0 = (panel.0 + 36 + 1 + 8, panel.1 + 137 + 1 + 8);
+    let row1 = (row0.0 + 18, row0.1);
+    app.beacon_slot_rects = vec![
+        (pay.0 - 8, pay.1 - 8, 0),
+        (row0.0 - 8, row0.1 - 8, 1),
+        (row1.0 - 8, row1.1 - 8, 2),
+    ];
+    // THE ARM: the carried press the state sets — NO place (the
+    // mirror rows stay EMPTY), no painted seat yet (the arm the
+    // silent start keeps)
+    app.beacon_carried = (diamond, 5);
+    app.on_press(row0.0, row0.1);
+    assert!(app.qc_armed, "the carried press the arm speaks");
+    assert_eq!(app.qc_type, 0, "the left button's own type");
+    assert_eq!(app.qc_button, 0, "the left button remembered");
+    assert!(app.qc_slots.is_empty(), "the press paints nothing");
+    assert_eq!(app.beacon_mirror[0], (0, 0), "the press NO place speaks");
+    // THE PAINT: the press seat the first motion paints (the +1
+    // jiggle the same rect the moved gate answers), the payment
+    // coin the tag verdict admits — the diamond the PaymentSlot's
+    // own mayPlace passes
+    app.on_mouse_move(row0.0 + 1, row0.1);
+    assert_eq!(app.qc_slots, vec![1], "the press seat the motion paints");
+    assert_eq!(
+        app.qc_remainder, 0,
+        "the one-seat projection the count empties"
+    );
+    app.on_mouse_move(row1.0 + 1, row1.1);
+    assert_eq!(
+        app.qc_slots,
+        vec![1, 2],
+        "the second seat the motion paints"
+    );
+    assert_eq!(app.qc_remainder, 1, "the floor(5/2) the ghost keeps");
+    app.on_mouse_move(pay.0, pay.1);
+    assert_eq!(
+        app.qc_slots,
+        vec![1, 2, 0],
+        "the payment coin the tag paints"
+    );
+    assert_eq!(app.qc_remainder, 2, "the floor(5/3) the ghost keeps");
+    // THE RELEASE: the distribution — the PAYMENT seat the ICONST_1
+    // cap speaks (the floor(5/3) the min(1) folds), the mirror rows
+    // the floor tenth wears, the write-through the inventory
+    // answers, the remainder the cursor keeps
+    app.on_left_release();
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the payment seat's own max-1 cap"
+    );
+    assert_eq!(app.beacon_mirror[0], (diamond, 1), "the first row's tenth");
+    assert_eq!(app.beacon_mirror[1], (diamond, 1), "the second row's tenth");
+    assert_eq!(
+        app.inventory.items[9],
+        (diamond, 1),
+        "the write-through the inventory wears"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (diamond, 1),
+        "the second write-through speaks"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 2),
+        "the remainder rides the cursor"
+    );
+    assert!(!app.qc_armed, "the release the arm always clears");
+    assert!(app.qc_slots.is_empty(), "the painted set the tail clears");
+    assert_eq!(
+        app.hotbar_slots,
+        app.inventory.hotbar(),
+        "the HUD row the sync follows"
+    );
+}
+
+/// THE BEACON DRAG'S OWN GATES AND THE ONE-EACH (the shouldAdd gates
+/// the paint answers — the payment-only drag the ICONST_1 ghost the
+/// recalc names, the non-payment carried the pay seat the tag
+/// refusal speaks, the between-slots press the arm skips, the right
+/// drag the type-1 one-each serves, the outside press the arm wears
+/// — the release the -999 drop the whole carried speaks).
+#[test]
+fn the_offline_beacon_quickcraft_the_gates_the_one_each_the_outside_wear() {
+    let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in (c - 1)..=(c + 1) {
+            for dz in (c - 1)..=(c + 1) {
+                world.set(dx, top - 1, dz, crate::world::IRON_BLOCK);
+            }
+        }
+        world.set(c, top, c, crate::world::BEACON);
+    }
+    app.beacon_stores.insert((c, top, c));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.hotbar_slots = app.inventory.hotbar();
+    app.open_beacon_for((c, top, c));
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    app.beacon_panel = panel;
+    let pay = (panel.0 + 136 + 1 + 8, panel.1 + 110 + 1 + 8);
+    let row0 = (panel.0 + 36 + 1 + 8, panel.1 + 137 + 1 + 8);
+    let row1 = (row0.0 + 18, row0.1);
+    app.beacon_slot_rects = vec![
+        (pay.0 - 8, pay.1 - 8, 0),
+        (row0.0 - 8, row0.1 - 8, 1),
+        (row1.0 - 8, row1.1 - 8, 2),
+    ];
+    // THE PAYMENT-ONLY GHOST: the single painted seat the ICONST_1
+    // cap the recalc names — the floor(5/1) the min(1) folds, the
+    // release the ONE coin places, the four the cursor keeps
+    app.beacon_carried = (diamond, 5);
+    app.on_press(pay.0, pay.1);
+    assert!(app.qc_armed, "the pay seat's press the arm speaks");
+    app.on_mouse_move(pay.0 + 1, pay.1);
+    assert_eq!(app.qc_slots, vec![0], "the payment seat alone paints");
+    assert_eq!(app.qc_remainder, 4, "the ICONST_1 cap the ghost keeps");
+    app.on_left_release();
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the one coin the cap places"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 4),
+        "the four the cursor keeps"
+    );
+    assert_eq!(
+        app.beacon_mirror[0],
+        (0, 0),
+        "the mirror rows the drag never wears"
+    );
+    // THE NON-PAYMENT'S OWN REFUSAL: the dirt carried the pay seat
+    // never paints (the tag verdict the paint re-keys), the mirror
+    // row the plain TRUE paints — the release the row fills
+    app.beacon_payment = (0, 0);
+    app.beacon_carried = (dirt, 3);
+    app.on_press(pay.0, pay.1);
+    assert!(app.qc_armed, "the carried press the arm speaks");
+    app.on_mouse_move(pay.0 + 1, pay.1);
+    assert!(
+        app.qc_slots.is_empty(),
+        "the non-payment the pay seat refuses"
+    );
+    app.on_mouse_move(row0.0, row0.1);
+    assert_eq!(app.qc_slots, vec![1], "the plain row the dirt paints");
+    app.on_left_release();
+    assert_eq!(
+        app.beacon_mirror[0],
+        (dirt, 3),
+        "the row the whole split wears"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (0, 0),
+        "the exact split the cursor empties"
+    );
+    // THE BETWEEN-SLOTS PRESS: the k == -1 the arm skips (the press
+    // between the seats the drag never starts)
+    app.beacon_carried = (diamond, 5);
+    app.on_press(panel.0 + 225, panel.1 + 60);
+    assert!(!app.qc_armed, "the between press the arm skips");
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 5),
+        "the skipped press the carried keeps"
+    );
+    // THE RIGHT ONE-EACH: the type-1 drag the three seats paint —
+    // the release the ONE per seat speaks (the pay seat the cap the
+    // same ONE wears), the pair the cursor keeps
+    app.beacon_mirror[0] = (0, 0);
+    app.beacon_mirror[1] = (0, 0);
+    app.inventory.items[9] = (0, 0);
+    app.inventory.items[10] = (0, 0);
+    app.hotbar_slots = app.inventory.hotbar();
+    app.on_right_press(row0.0, row0.1);
+    assert!(app.qc_armed, "the right press the arm speaks");
+    assert_eq!(app.qc_type, 1, "the right button's own type");
+    app.on_mouse_move(row0.0 + 1, row0.1);
+    app.on_mouse_move(row1.0 + 1, row1.1);
+    app.on_mouse_move(pay.0, pay.1);
+    assert_eq!(
+        app.qc_slots,
+        vec![1, 2, 0],
+        "the three seats the motion paints"
+    );
+    assert_eq!(app.qc_remainder, 2, "the one-each the ghost keeps");
+    app.on_right_release();
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the right drag's ONE the cap wears"
+    );
+    assert_eq!(
+        app.beacon_mirror[0],
+        (diamond, 1),
+        "the one-each the row wears"
+    );
+    assert_eq!(
+        app.beacon_mirror[1],
+        (diamond, 1),
+        "the second one-each speaks"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (diamond, 2),
+        "the pair the cursor keeps"
+    );
+    // THE OUTSIDE DROP: the -999 press the arm wears (the outside
+    // rect the strict compare keeps), the motion paints nothing —
+    // the release the -999 PICKUP the whole carried drops (the BODY
+    // the eye the throw's aimed lane reads — the headless menus the
+    // silent guard keeps)
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 2.5,
+        top as f64 + 1.0,
+        c as f64 + 2.5,
+        0.0,
+        0.0,
+    ));
+    app.on_press(panel.0 - 10, panel.1 - 10);
+    assert!(app.qc_armed, "the outside press the arm wears");
+    app.on_mouse_move(panel.0 - 12, panel.1 - 12);
+    assert!(app.qc_slots.is_empty(), "the outside motion paints nothing");
+    app.on_left_release();
+    assert_eq!(
+        app.beacon_carried,
+        (0, 0),
+        "the whole carried the drop wears"
+    );
+    assert!(
+        app.drops.iter().any(|d| d.item == diamond && d.count == 2),
+        "the drop the entity speaks (the pair the whole carried wears)"
+    );
 }
