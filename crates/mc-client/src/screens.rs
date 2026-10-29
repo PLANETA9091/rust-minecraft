@@ -8846,6 +8846,19 @@ pub struct App {
     /// sha1 gate verifies, `None` = the beam's quads stay unseen, the
     /// honesty the failed-overlay lanes keep)
     pub gateway_beam_tex: Option<(u32, u32, Vec<u8>)>,
+    /// THE BEACON BEAM'S OWN TEXTURE (the autopush-320 round — the
+    /// `entity/beacon/beacon_beam.png` master the BeaconRenderer's
+    /// BEAM_LOCATION the beacon's own submit wears, the 16x16 palette
+    /// the vertical streaks the v-scroll folds; the lazy load the sha1
+    /// gate verifies, `None` = the beam's quads stay unseen)
+    pub beacon_beam_tex: Option<(u32, u32, Vec<u8>)>,
+    /// THE BEACON CELLS' OWN BANK (the autopush-320 round — the
+    /// "beacons" list the containers file's own lane wears: the x/y/z
+    /// triples the BE's own block pos the disk banks, the beam's own
+    /// levels + sections the LIVE world's blocks the walk derives —
+    /// the placement walk a later round the set-site hooks the store
+    /// feeds)
+    pub beacon_stores: std::collections::BTreeSet<(i32, i32, i32)>,
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
     /// draws, the cold cow the ColdCowModel's coat, the warm cow the
@@ -11684,6 +11697,54 @@ pub fn gateway_stores_from_nbt(
     stores
 }
 
+/// THE BEACON BANK'S OWN WALK (the autopush-320 round — the
+/// "beacons" list the containers file's own lane wears: each entry
+/// the x/y/z triple the BE's own block pos the disk banks, the
+/// BTree cell order the deterministic bytes keep — the beam's own
+/// levels + sections the live world the walk derives, the bank the
+/// cells alone carries).
+pub fn beacon_bank_to_nbt(
+    stores: &std::collections::BTreeSet<(i32, i32, i32)>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for &(x, y, z) in stores.iter() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(z)),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE BEACON BANK'S OWN PARSE (the tolerant walk the gateway parse
+/// wears: the missing coordinate the entry skip keeps, the missing
+/// list the honest empties keep).
+pub fn beacon_cells_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::BTreeSet<(i32, i32, i32)> {
+    let mut cells = std::collections::BTreeSet::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("beacons") else {
+        return cells;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        cells.insert((x, y, z));
+    }
+    cells
+}
+
 /// THE BED SPAWN'S OWN BANK (the autopush-312 round — the banked
 /// respawn point the containers file's own lane wears: the anchor
 /// triple + the angle pair the RespawnData fields the vanilla
@@ -12129,6 +12190,8 @@ impl App {
             end_portal_sky: None,
             end_portal_noise: None,
             gateway_beam_tex: None,
+            beacon_beam_tex: None,
+            beacon_stores: std::collections::BTreeSet::new(),
             chicken_warm_model: None,
             baby_chicken_cold_model: None,
             baby_chicken_warm_model: None,
@@ -40255,6 +40318,11 @@ impl App {
                 // answers: the missing list the honest empties keep,
                 // the extend law the in-memory entry never clobbers)
                 self.gateway_stores.extend(gateway_stores_from_nbt(&root));
+                // THE BEACON BANK'S OWN PARSE (the autopush-320 round —
+                // the same read the cell bank answers: the missing list
+                // the honest empties keep, the extend law the in-memory
+                // entry never clobbers)
+                self.beacon_stores.extend(beacon_cells_from_nbt(&root));
                 // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
@@ -40344,6 +40412,14 @@ impl App {
             (
                 "end_gateways".to_string(),
                 gateway_bank_to_nbt(&self.gateway_stores),
+            ),
+            // THE BEACON BANK'S OWN ROW (the autopush-320 round — the
+            // beacons the same file the list wears, the BTree cell
+            // order the deterministic bytes keep, the triple the BE's
+            // own block pos the disk banks)
+            (
+                "beacons".to_string(),
+                beacon_bank_to_nbt(&self.beacon_stores),
             ),
             (
                 "furnace_words".to_string(),
@@ -66411,6 +66487,13 @@ impl App {
         // the vanilla's own entity-layer order the opaque terrain the
         // beam tests against)
         self.render_gateway_beams(fb, &ctx);
+        // THE BEACON BEAM'S OWN PASS (the autopush-320 round — the BE
+        // renderer's own beam lane the terrain pass never draws: the
+        // prism quads the store's own cells the sections law folds,
+        // the translucent halo the alpha-32 blend over the terrain
+        // wears — the vanilla's own entity-layer order the gateway
+        // pair's precedent keeps)
+        self.render_beacon_beams(fb, &ctx);
         // THE DROP LANE's entities (the vanilla LevelRenderer's entity
         // pass: after the terrain, before the clouds) — the item
         // entities bob and spin at their world positions
@@ -70604,6 +70687,114 @@ impl App {
         // THE TEXEL'S OWN PICK (the REPEAT wrap the negative/large v
         // the modulo fold answers, the 16x16 the palette decode the
         // RGBA stride keeps)
+        let pick = |u: f32, v: f32| -> [u8; 4] {
+            let (uw, uh) = (bw as usize, bh as usize);
+            let uu = (u.rem_euclid(1.0) * bw as f32) as usize % uw;
+            let vv = (v.rem_euclid(1.0) * bh as f32) as usize % uh;
+            let o = (vv * uw + uu) * 4;
+            [tex[o], tex[o + 1], tex[o + 2], tex[o + 3]]
+        };
+        fb.draw_translucent_sampled_quads_alphas(
+            ctx.proj.mul(&ctx.view),
+            &quads,
+            &alphas,
+            &mut |_t, u, v| Some(pick(u, v)),
+        );
+    }
+
+    /// THE BEACON BEAM'S OWN PASS (the autopush-320 round — the
+    /// BeaconRenderer's submit the sections law the render walk
+    /// serves: the pyramid's levels the visibility gate answers, the
+    /// full-column ladder the steady state the budgeted walk banks,
+    /// the per-section segments the y cursor the 2048 tail wears, the
+    /// two prisms the shared submitBeaconBeam machinery the tint +
+    /// alpha lanes carry; the vanilla's own entity-layer order the
+    /// gateway pair's precedent keeps)
+    fn render_beacon_beams(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        if self.world_is_network || self.beacon_stores.is_empty() {
+            return;
+        }
+        // THE BEAM TEXTURE'S OWN LOAD (the lazy lane the gateway pair
+        // keeps — the sha1 gate the cache's bytes verify, `None` the
+        // unseen beam the failed-overlay honesty keeps)
+        if self.beacon_beam_tex.is_none() {
+            let jar = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+            let path = jar
+                .join("entity/beacon/beacon_beam.png")
+                .to_string_lossy()
+                .into_owned();
+            self.beacon_beam_tex =
+                Self::load_end_portal_texture(&path, "2a0e344c143f3939b238e18dc5752a4b6e202585");
+        }
+        let Some((bw, bh, tex)) = self.beacon_beam_tex.clone() else {
+            return;
+        };
+        let Some(world) = &self.offline_world else {
+            return;
+        };
+        let game_time = self.clock_total as i64;
+        let partial = self.partial_tick;
+        let anim = crate::world::beacon_beam_animation_time(game_time, partial);
+        let cam = self.world_camera();
+        let max_y = crate::world::CHUNK_Y as i32 - 1;
+        let mut quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut alphas: Vec<f32> = Vec::new();
+        for &cell in self.beacon_stores.iter() {
+            // THE SEAT'S OWN GATE (the store's stale cell the live
+            // world refuses — the dug-out beacon the beam retires)
+            if world.get(cell.0, cell.1, cell.2) != crate::world::BEACON {
+                continue;
+            }
+            // THE PYRAMID'S OWN LEVELS (the tag's five base kinds the
+            // seats wear — the levels-0 gate the beam retires)
+            let levels = crate::world::beacon_levels(world, cell.0, cell.1, cell.2, |k| {
+                crate::world::is_beacon_base(k)
+            });
+            // THE LADDER'S OWN WALK (the full column the render's
+            // steady state wears — the budgeted core the column count
+            // the every-cell check serves)
+            let budget = (max_y - cell.1 + 1).max(1) as usize;
+            let sections = crate::world::beacon_beam_sections_budgeted(
+                world,
+                cell.0,
+                cell.1,
+                cell.2,
+                max_y,
+                |k| crate::world::is_beacon(k),
+                budget,
+            );
+            let shown = crate::world::beacon_get_beam_sections(levels, &sections);
+            if shown.is_empty() {
+                continue;
+            }
+            // THE RADIUS SCALE (the camera-vs-center horizontal the
+            // extract law wears — the no-spyglass lane the scoping
+            // arm the client never seats)
+            let dx = f64::from(cam.pos.x) - (f64::from(cell.0) + 0.5);
+            let dz = f64::from(cam.pos.z) - (f64::from(cell.2) + 0.5);
+            let horizontal = ((dx * dx + dz * dz).sqrt()) as f32;
+            let radius = crate::world::beacon_beam_radius_scale(horizontal, false);
+            for (color, q) in crate::world::beacon_beam_segments(cell, &shown, radius, anim) {
+                let tint = [
+                    ((color >> 16) & 0xFF) as f32 / 255.0,
+                    ((color >> 8) & 0xFF) as f32 / 255.0,
+                    (color & 0xFF) as f32 / 255.0,
+                ];
+                quads.push(crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "beacon_beam",
+                    tint,
+                });
+                alphas.push(q.alpha);
+            }
+        }
+        if quads.is_empty() {
+            return;
+        }
+        // THE TEXEL'S OWN PICK (the REPEAT wrap the negative/large v
+        // the modulo fold answers, the 16x16 the palette decode the
+        // RGBA stride keeps — the gateway pair's own walk)
         let pick = |u: f32, v: f32| -> [u8; 4] {
             let (uw, uh) = (bw as usize, bh as usize);
             let uu = (u.rem_euclid(1.0) * bw as f32) as usize % uw;

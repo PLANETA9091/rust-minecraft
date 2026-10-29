@@ -5662,10 +5662,34 @@ pub fn beacon_beam_sections(
     height_y: i32,
     is_beacon: impl Fn(u16) -> bool,
 ) -> Vec<BeaconBeamSection> {
+    beacon_beam_sections_budgeted(
+        world,
+        x,
+        beacon_y,
+        z,
+        height_y,
+        is_beacon,
+        BEACON_BLOCKS_CHECK_PER_TICK,
+    )
+}
+
+/// THE BUDGETED LADDER CORE (the same walk the tick budget the
+/// parameter wears — the render pass the full-column budget the
+/// steady-state ladder answers, the tick walk the 10-cell budget the
+/// BE's own BLOCKS_CHECK_PER_TICK keeps).
+pub fn beacon_beam_sections_budgeted(
+    world: &World,
+    x: i32,
+    beacon_y: i32,
+    z: i32,
+    height_y: i32,
+    is_beacon: impl Fn(u16) -> bool,
+    budget: usize,
+) -> Vec<BeaconBeamSection> {
     let mut sections: Vec<BeaconBeamSection> = Vec::new();
     let mut cursor_y = beacon_y;
-    let mut budget = 0usize;
-    while budget < BEACON_BLOCKS_CHECK_PER_TICK && cursor_y <= height_y {
+    let mut used = 0usize;
+    while used < budget && cursor_y <= height_y {
         let kind = world.get(x, cursor_y, z);
         if let Some(diffuse) = beacon_beam_color_at(kind, &is_beacon) {
             if sections.len() <= 1 {
@@ -5696,7 +5720,7 @@ pub fn beacon_beam_sections(
             break;
         }
         cursor_y += 1;
-        budget += 1;
+        used += 1;
     }
     sections
 }
@@ -5759,6 +5783,168 @@ pub fn beacon_render_section_height(index: usize, len: usize, height: i32) -> i3
     } else {
         height
     }
+}
+
+/// THE BEAM'S OWN ANIMATION TIME (javap BeaconRenderer.extract pc
+/// 12-23 the 26.2 jar — the `floorMod(gameTime, 40) + partial` fold
+/// the gateway's own extract law shares, the level-null arm the 0.0
+/// the quiet lane answers; scripts/beacon_beam_consts_320.py +
+/// beacon_beam_lambdas_320.py the walks bank, rc=0).
+pub fn beacon_beam_animation_time(game_time: i64, partial: f32) -> f32 {
+    game_time.rem_euclid(40) as f32 + partial
+}
+
+/// THE BEAM RADIUS'S OWN SCOPE LAW (javap extract pc 88-115 — the
+/// scoping arm the 1.0 the spyglass keeps, the else arm the
+/// `max(1.0F, horizontal / 96.0F)` the ldc #107 Float 96.0 divisor
+/// the CP probe banks, the horizontal the camera-vs-center
+/// horizontalDistance the pc 63-77 walk wears).
+pub const BEACON_BEAM_SCOPE_DIVISOR: f32 = 96.0;
+
+pub fn beacon_beam_radius_scale(horizontal: f32, scoping: bool) -> f32 {
+    if scoping {
+        1.0
+    } else {
+        1.0f32.max(horizontal / BEACON_BEAM_SCOPE_DIVISOR)
+    }
+}
+
+/// THE BEAM'S OWN V-FOLD (javap submitBeaconBeam 15-arg pc 22-55 —
+/// the renderHeight-positive arm the NEGATE keeps [the beacon's own
+/// segments the renderHeight > 0 the arm wears, f = −animationTime],
+/// the frac the `Mth.frac(f · 0.2F − (float)Mth.floor(f · 0.1F))`
+/// body the ldc #139 0.2 + the ldc #155 0.1 factors speak — the
+/// gateway's own frac law the scale-vs-anim arg the same shape
+/// keeps).
+pub fn beacon_beam_frac(animation_time: f32) -> f32 {
+    let f = -animation_time;
+    let raw = f * 0.2f32 - (f * 0.1f32).floor();
+    raw - raw.floor()
+}
+
+/// THE BEAM PRISM'S OWN FACTORS (the CP probe the ldc rows bank —
+/// the CORE the 0.2 · radiusScale radius the #139 factor scales +
+/// the 0.5 v-span factor the #183 row keeps, the HALO the 0.25 ·
+/// radiusScale radius the #140 factor wears).
+pub const BEACON_BEAM_CORE_RADIUS_FACTOR: f32 = 0.2;
+pub const BEACON_BEAM_HALO_RADIUS_FACTOR: f32 = 0.25;
+pub const BEACON_BEAM_CORE_V_FACTOR: f32 = 0.5;
+
+/// THE BEACON BEAM'S OWN SEGMENT PRISMS (javap submitBeaconBeam
+/// 15-arg pc 1002-285 the SHARED machinery the gateway prism law
+/// wears — the CORE the rotated diamond ring the
+/// `rotationDegrees(animationTime · 2.25 − 45.0)` pose spins [the
+/// lambda$0 walk the (0, r), (r, 0), (0, −r), (−r, 0) corners the
+/// renderPart's A→B→D→C ring bakes], the OPAQUE the section color
+/// straight the lambda$0 passes, the v-span the
+/// renderHeight · (0.5 / r_core) fold the pc 124-138 walk keeps;
+/// the HALO the STATIC axis-aligned (±0.25 · radiusScale) square the
+/// lambda$1's ARGB.color(32, color) vertex wrap wears, the v-span
+/// the plain renderHeight fold keeps; the v bot the `−1.0 + frac`
+/// base the ldc #182 row speaks, the u the a-side 1.0 / b-side 0.0
+/// window the renderQuad law shares).
+pub fn beacon_beam_prism_quads(
+    beacon: (i32, i32, i32),
+    y_bot: i32,
+    y_top: i32,
+    radius_scale: f32,
+    animation_time: f32,
+) -> Vec<GatewayBeamQuad> {
+    let mut out = Vec::with_capacity(8);
+    if y_top <= y_bot || radius_scale <= 0.0 {
+        return out;
+    }
+    let frac = beacon_beam_frac(animation_time);
+    let v_bot = -1.0f32 + frac;
+    let (cx, cz) = (beacon.0 as f32 + 0.5, beacon.2 as f32 + 0.5);
+    let y_bot = y_bot as f32;
+    let y_top = y_top as f32;
+    let span = y_top - y_bot;
+
+    // THE CORE'S OWN PRISM (the rotated diamond — the pose fold the
+    // JOML rotationY law carries: x' = x·cosθ + z·sinθ,
+    // z' = −x·sinθ + z·cosθ)
+    let r_core = BEACON_BEAM_CORE_RADIUS_FACTOR * radius_scale;
+    let theta = (animation_time * 2.25 - 45.0).to_radians() as f64;
+    let (s, c) = theta.sin_cos();
+    let rot = |x: f32, z: f32| -> (f32, f32) {
+        (
+            (f64::from(x) * c + f64::from(z) * s) as f32,
+            (-f64::from(x) * s + f64::from(z) * c) as f32,
+        )
+    };
+    let core_span = span * (BEACON_BEAM_CORE_V_FACTOR / r_core);
+    let core_ring = [
+        rot(0.0, r_core),
+        rot(r_core, 0.0),
+        rot(0.0, -r_core),
+        rot(-r_core, 0.0),
+    ];
+    gateway_beam_push_prism(
+        &mut out,
+        cx,
+        cz,
+        y_bot,
+        y_top,
+        &core_ring,
+        v_bot,
+        v_bot + core_span,
+        1.0,
+    );
+
+    // THE HALO'S OWN PRISM (the static square — the un-rotated ring
+    // the axis-aligned corners keep, the alpha-32 the vertex color
+    // wears)
+    let r_halo = BEACON_BEAM_HALO_RADIUS_FACTOR * radius_scale;
+    let halo_span = span;
+    let halo_ring = [
+        (-r_halo, -r_halo),
+        (r_halo, -r_halo),
+        (r_halo, r_halo),
+        (-r_halo, r_halo),
+    ];
+    gateway_beam_push_prism(
+        &mut out,
+        cx,
+        cz,
+        y_bot,
+        y_top,
+        &halo_ring,
+        v_bot,
+        v_bot + halo_span,
+        32.0 / 255.0,
+    );
+
+    out
+}
+
+/// THE BEAM SEGMENTS' OWN WALK (javap BeaconRenderer.submit pc 0-99 —
+/// the y cursor the 0 seed the BE-local base wears, the per-section
+/// renderHeight the last-section 2048 law keeps
+/// [beacon_render_section_height], the cursor the section.height the
+/// real heights the accumulate serves; the pair the section color +
+/// the prism quads the tint lane carries).
+pub fn beacon_beam_segments(
+    beacon: (i32, i32, i32),
+    sections: &[BeaconBeamSection],
+    radius_scale: f32,
+    animation_time: f32,
+) -> Vec<(u32, GatewayBeamQuad)> {
+    let mut out: Vec<(u32, GatewayBeamQuad)> = Vec::new();
+    if sections.is_empty() {
+        return out;
+    }
+    let mut y = beacon.1; // the BE-local 0 the beacon block's own y
+    for (i, s) in sections.iter().enumerate() {
+        let rh = beacon_render_section_height(i, sections.len(), s.height);
+        if rh > 0 {
+            for q in beacon_beam_prism_quads(beacon, y, y + rh, radius_scale, animation_time) {
+                out.push((s.color, q));
+            }
+        }
+        y += s.height;
+    }
+    out
 }
 
 /// THE CHORUS WALK'S OWN SAFE SEAT (javap LivingEntity.randomTeleport
@@ -35569,6 +35755,210 @@ mod tests {
             None,
             "the stone the None verdict the non-glass arm serves"
         );
+    }
+
+    #[test]
+    fn the_beacon_the_beam_the_segments_the_render_laws_wear() {
+        // THE ANIMATION'S OWN TIME (the floorMod-40 + the partial the
+        // extract fold wears — the gateway's own law the same shape
+        // keeps)
+        assert_eq!(beacon_beam_animation_time(85, 0.25), 5.25);
+        assert_eq!(beacon_beam_animation_time(40, 0.0), 0.0);
+        assert_eq!(beacon_beam_animation_time(39, 0.5), 39.5);
+
+        // THE RADIUS'S OWN SCOPE LAW (the scoping arm the 1.0 keeps,
+        // the else arm the max(1.0, horizontal / 96.0) the ldc #107
+        // divisor answers)
+        assert_eq!(beacon_beam_radius_scale(480.0, true), 1.0);
+        assert_eq!(beacon_beam_radius_scale(480.0, false), 5.0);
+        assert_eq!(beacon_beam_radius_scale(96.0, false), 1.0);
+        assert_eq!(beacon_beam_radius_scale(10.0, false), 1.0);
+        assert_eq!(beacon_beam_radius_scale(240.0, false), 2.5);
+
+        // THE V-FOLD'S OWN SCROLL (the NEGATE arm the f = −anim wears,
+        // the frac the 0.2 / 0.1 factor pair the CP probe banks: anim
+        // 0 the zero fold answers, anim 7 the −0.4 the +1 wrap wears,
+        // anim 10 the whole period the zero answers)
+        assert_eq!(beacon_beam_frac(0.0), 0.0);
+        assert!(
+            (beacon_beam_frac(7.0) - 0.6).abs() < 1e-6,
+            "{:?}",
+            beacon_beam_frac(7.0)
+        );
+        assert_eq!(beacon_beam_frac(5.0), 0.0);
+        assert_eq!(beacon_beam_frac(10.0), 0.0);
+        for a in [0.0f32, 3.5, 7.0, 12.25, 39.5] {
+            let f = beacon_beam_frac(a);
+            assert!(
+                (0.0..1.0).contains(&f),
+                "the frac the unit span keeps ({a} -> {f})"
+            );
+        }
+
+        // THE SEGMENTS' OWN WALK (the single WHITE section the
+        // glassless ladder wears — the 2048 tail the only segment the
+        // render height keeps, the y cursor the BE-local 0 the
+        // beacon's own y wears; anim 20 the theta-0 pose the un-
+        // rotated ring the exact radii the assert wears)
+        let beacon = (10i32, 30i32, 12i32);
+        let white = vec![BeaconBeamSection {
+            color: 0xF9_FFFE,
+            height: 9,
+        }];
+        let segs = beacon_beam_segments(beacon, &white, 1.0, 20.0);
+        assert_eq!(segs.len(), 8, "the two prisms the 8 quads wear");
+        for (color, q) in &segs {
+            assert_eq!(*color, 0xF9_FFFE, "the WHITE the pair carries");
+            let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+            assert!(
+                ys.iter()
+                    .all(|&y| (y - 30.0).abs() < 1e-4 || (y - 2078.0).abs() < 1e-4),
+                "the segment the 30..2078 span wears ({ys:?})"
+            );
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let center = 10.5f32;
+            let max_dx = xs.iter().fold(0.0f32, |m, &x| m.max((x - center).abs()));
+            let alpha_is_core = q.alpha > 0.99;
+            let r_expect = if alpha_is_core {
+                BEACON_BEAM_CORE_RADIUS_FACTOR
+            } else {
+                BEACON_BEAM_HALO_RADIUS_FACTOR
+            };
+            assert!(
+                (max_dx - r_expect).abs() < 1e-4,
+                "the ring the {r_expect} radius wears (max_dx {max_dx})"
+            );
+        }
+        assert!(
+            segs.iter().any(|(_, q)| q.alpha > 0.99) && segs.iter().any(|(_, q)| q.alpha < 0.2),
+            "the alpha pair the core 1.0 + the halo 32/255 wears"
+        );
+
+        // THE LADDER'S OWN SEGMENTS (the red glass the fresh section
+        // wears — the y cursor the real heights the accumulate keeps,
+        // the LAST section the 2048 tail the render height answers)
+        let ladder = vec![
+            BeaconBeamSection {
+                color: 0xB0_2E_26,
+                height: 3,
+            },
+            BeaconBeamSection {
+                color: 0xF9_FFFE,
+                height: 5,
+            },
+        ];
+        let segs = beacon_beam_segments(beacon, &ladder, 2.0, 0.0);
+        assert_eq!(segs.len(), 16, "the two sections the 16 quads wear");
+        let mut cursor = 30i32;
+        for (section, half) in ladder.iter().zip(segs.chunks(8)) {
+            let rh = if section.color == 0xF9_FFFE {
+                BEACON_BEAM_MAX_RENDER
+            } else {
+                section.height
+            };
+            for (color, q) in half {
+                assert_eq!(*color, section.color, "the section color the pair carries");
+                let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+                let (lo, hi) = (cursor as f32, (cursor + rh) as f32);
+                assert!(
+                    ys.iter()
+                        .all(|&y| (y - lo).abs() < 1e-4 || (y - hi).abs() < 1e-4),
+                    "the segment the {lo}..{hi} span wears ({ys:?})"
+                );
+            }
+            cursor += section.height;
+        }
+        assert_eq!(cursor, 38, "the cursor the real heights accumulates");
+
+        // THE EMPTY GATE (the sections the walk never seeds the empty
+        // answer keeps)
+        assert!(beacon_beam_segments(beacon, &[], 1.0, 0.0).is_empty());
+
+        // THE PRISM'S OWN RADIUS LADDER (the radiusScale the factors
+        // scale — the far camera the 96 divisor the wider beam wears,
+        // anim 20 the theta-0 pose the exact radius keeps)
+        let segs = beacon_beam_segments(beacon, &white, 4.0, 20.0);
+        let max_dx = segs
+            .iter()
+            .filter(|(_, q)| q.alpha > 0.99)
+            .flat_map(|(_, q)| q.pts.iter().map(|p| p[0]))
+            .fold(0.0f32, |m, x| m.max((x - 10.5).abs()));
+        assert!(
+            (max_dx - 0.8).abs() < 1e-4,
+            "the 0.2 · 4 the core radius wears ({max_dx})"
+        );
+
+        // THE BUDGETED LADDER'S OWN TALL COLUMN (the render walk the
+        // full budget the steady state wears — the BEACON root the
+        // walk's own cell seeds, the 14-cell red column the ladder
+        // grows, the tick budget the truncation answers, the full
+        // budget the every-cell walk serves)
+        let mut w = World::new(2, 7);
+        let (bx, by, bz) = (5i32, 20i32, 6i32);
+        w.set(bx, by, bz, BEACON);
+        for i in 1..=14 {
+            w.set(bx, by + i, bz, RED_STAINED_GLASS);
+        }
+        let tick_ladder = beacon_beam_sections(&w, bx, by, bz, by + 40, |k| k == BEACON);
+        let full_ladder =
+            beacon_beam_sections_budgeted(&w, bx, by, bz, by + 15, |k| k == BEACON, 64);
+        assert_eq!(
+            tick_ladder.len(),
+            2,
+            "the WHITE root + the red the tick walk seeds"
+        );
+        assert_eq!(
+            tick_ladder[0].color, 0xF9_FFFE,
+            "the beacon's own cell the WHITE root wears"
+        );
+        assert_eq!(tick_ladder[0].height, 1, "the root the height-1 seed keeps");
+        assert_eq!(
+            tick_ladder[1].color, 0xB0_2E_26,
+            "the red the fresh section wears"
+        );
+        assert_eq!(
+            tick_ladder[1].height, 9,
+            "the 10-cell budget the tick walk truncates"
+        );
+        assert_eq!(full_ladder.len(), 2, "the same ladder the full walk grows");
+        assert_eq!(
+            full_ladder[1].height, 15,
+            "the 14 glass + the air above the top the height wears"
+        );
+        // THE MIXED LADDER (the red the blue caps the AVERAGE CHAIN
+        // the mix arm wears — the different-color arm the new Section
+        // (average(last, color)) pushes, the next same-color cell the
+        // AVERAGE the compare wears [never equal — every blue cell
+        // pushes the next average, the red->blue gradient the beam
+        // renders], the air the last average the transparent-grow
+        // serves; the blue rung the DYE_DIFFUSE[11] the table row
+        // keeps)
+        for i in 5..=14 {
+            w.set(bx, by + i, bz, BLUE_STAINED_GLASS);
+        }
+        let mixed = beacon_beam_sections_budgeted(&w, bx, by, bz, by + 15, |k| k == BEACON, 64);
+        assert_eq!(
+            mixed.len(),
+            12,
+            "the root + the red + the ten averages the ladder wears"
+        );
+        assert_eq!(mixed[1].color, 0xB0_2E_26, "the red rung keeps");
+        assert_eq!(mixed[1].height, 4, "the red rung the four cells grows");
+        assert_eq!(
+            mixed[2].color,
+            argb_average(0xB0_2E_26, DYE_DIFFUSE[11]),
+            "the mix arm the first average wears"
+        );
+        assert_eq!(mixed[2].height, 1, "the average rung the fresh seed keeps");
+        let mut chain = argb_average(0xB0_2E_26, DYE_DIFFUSE[11]);
+        for _ in 0..9 {
+            chain = argb_average(chain, DYE_DIFFUSE[11]);
+        }
+        assert_eq!(
+            mixed[11].color, chain,
+            "the chain the averages converge wears"
+        );
+        assert_eq!(mixed[11].height, 2, "the air the last average grows");
     }
 
     #[test]

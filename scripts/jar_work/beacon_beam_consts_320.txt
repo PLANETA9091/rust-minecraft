@@ -1,0 +1,41 @@
+## net/minecraft/client/renderer/blockentity/BeaconRenderer — cp entries 9661
+  #9 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState :: <init>:()V
+  #16 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: extract:(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;FLnet/minecraft/world/phys/Vec3;)V
+  #40 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState :: animationTime:F
+  #46 Ref net/minecraft/world/level/block/entity/BeaconBeamOwner :: getBeamSections:()Ljava/util/List;
+  #69 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState :: sections:Ljava/util/List;
+  #73 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState :: blockPos:Lnet/minecraft/core/BlockPos;
+  #107 Float 96.0
+  #112 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState :: beamRadiusScale:F
+  #125 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section :: height:()I
+  #128 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section :: color:()I
+  #131 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: submitBeaconBeam:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;FFIII)V
+  #135 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: BEAM_LOCATION:Lnet/minecraft/resources/Identifier;
+  #139 Float 0.20000000298023224
+  #140 Float 0.25
+  #141 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: submitBeaconBeam:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/resources/Identifier;FFIIIFF)V
+  #155 Float 0.10000000149011612
+  #172 Float 2.25
+  #173 Float 45.0
+  #182 Float -1.0
+  #183 Float 0.5
+  #184 Ref net/minecraft/client/renderer/rendertype/RenderTypes :: beaconBeam:(Lnet/minecraft/resources/Identifier;Z)Lnet/minecraft/client/renderer/rendertype/RenderType;
+  #194 Ref net/minecraft/client/renderer/SubmitNodeCollector :: submitCustomGeometry:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V
+  #206 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: renderQuad:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFF)V
+  #210 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: addVertex:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V
+  #238 Integer 15728880
+  #262 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: getViewDistance:()I
+  #269 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: submit:(Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+  #273 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: extractRenderState:(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+  #276 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: createRenderState:()Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState;
+  #285 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: renderPart:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIFFFFFFFFFFFF)V
+  #289 Ref net/minecraft/world/level/block/entity/BeaconBeamOwner$Section :: getColor:()I
+  #294 Ref net/minecraft/world/level/block/entity/BeaconBeamOwner$Section :: getHeight:()I
+  #297 Ref net/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section :: <init>:(II)V
+  #300 String 'textures/entity/beacon/beacon_beam.png'
+  #310 Integer 2048
+  #402 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: lambda$extract$0:(Lnet/minecraft/world/level/block/entity/BeaconBeamOwner$Section;)Lnet/minecraft/client/renderer/blockentity/state/BeaconRenderState$Section;
+  #408 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: lambda$submitBeaconBeam$0:(IIIFFFFFFLcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
+  #411 Ref net/minecraft/client/renderer/blockentity/BeaconRenderer :: lambda$submitBeaconBeam$1:(IIIFFFFFFFFFFLcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
+
+## done

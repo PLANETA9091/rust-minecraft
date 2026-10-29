@@ -3512,3 +3512,209 @@ fn the_offline_anchor_the_mesh_the_charge_ladder_the_glow_wears() {
         "the charge voice the ladder's presses bank"
     );
 }
+
+/// THE BEACON'S OWN BEAM (the autopush-320 round — the
+/// BeaconRenderer's submit the sections law the render pass wears:
+/// the pyramid's levels the visibility gate answers, the full-column
+/// ladder the steady state the budgeted walk banks, the per-section
+/// segments the y cursor the 2048 tail wears, the store the bank
+/// lane the containers file wears, the stale cell the live world's
+/// own gate refuses).
+#[test]
+fn the_offline_beacon_the_beam_the_pyramid_the_sections_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let py = app.spawn_y + 10;
+    let (bx, bz) = (24i32, 24i32);
+    let by = py + 2;
+    // THE AIR PLATFORM (the stone plate the sites the test builds —
+    // the terrain the interference never wears)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -8..=8 {
+            for dz in -8..=8 {
+                world.set(bx + dx, py - 1, bz + dz, crate::world::STONE);
+            }
+        }
+        // THE PYRAMID'S OWN TIERS (the tag's five base kinds the
+        // seats wear — the tier-1 the (2·1+1)^2 square at by-1, the
+        // tier-2 the (2·2+1)^2 square at by-2, the iron the ladder's
+        // own first rung the 319 seat banks)
+        for dx in -1..=1 {
+            for dz in -1..=1 {
+                world.set(bx + dx, by - 1, bz + dz, crate::world::IRON_BLOCK);
+            }
+        }
+        for dx in -2..=2 {
+            for dz in -2..=2 {
+                world.set(bx + dx, by - 2, bz + dz, crate::world::IRON_BLOCK);
+            }
+        }
+        // THE BEACON'S OWN SEAT (the 804 tail seat the kind lane
+        // wears)
+        world.set(bx, by, bz, crate::world::BEACON);
+    }
+    // THE STORE'S OWN BANK (the containers lane the cells the disk
+    // banks — the boot parse the same set the load wears)
+    app.beacon_stores.insert((bx, by, bz));
+
+    // THE LEVELS' OWN LADDER (javap updateBase the tier scan the
+    // 318 law wears — the complete pair the levels-2 answers)
+    let world = app.offline_world.as_ref().unwrap();
+    let levels =
+        crate::world::beacon_levels(world, bx, by, bz, |k| crate::world::is_beacon_base(k));
+    assert_eq!(levels, 2, "the complete pair the levels-2 wears");
+
+    // THE LADDER'S OWN WALK (the full column the render's steady
+    // state wears — the beacon's own cell the WHITE root seeds, the
+    // air the transparent-grow arm the column grows)
+    let max_y = crate::world::CHUNK_Y as i32 - 1;
+    let sections = crate::world::beacon_beam_sections_budgeted(
+        world,
+        bx,
+        by,
+        bz,
+        max_y,
+        |k| crate::world::is_beacon(k),
+        (max_y - by + 1).max(1) as usize,
+    );
+    assert_eq!(sections.len(), 1, "the WHITE root the single section wears");
+    assert_eq!(sections[0].color, 0xF9_FFFE, "the WHITE the root wears");
+    assert_eq!(
+        sections[0].height,
+        max_y - by + 1,
+        "the air the root the column grows"
+    );
+
+    // THE VISIBILITY GATE (javap getBeamSections the levels==0 gate
+    // the empty answer keeps — the leveled beacon the sections serve)
+    let shown = crate::world::beacon_get_beam_sections(levels, &sections);
+    assert_eq!(shown.len(), 1, "the leveled beacon the sections serve");
+
+    // THE SEGMENTS' OWN WALK (the single section the 2048 tail the
+    // render height wears — the y cursor the BE-local 0 the beacon's
+    // own y wears, the two prisms the 8 quads the pair carries)
+    let segs = crate::world::beacon_beam_segments((bx, by, bz), &shown, 1.0, 20.0);
+    assert_eq!(segs.len(), 8, "the two prisms the 8 quads wear");
+    for (color, q) in &segs {
+        assert_eq!(*color, 0xF9_FFFE, "the WHITE the pair carries");
+        let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+        assert!(
+            ys.iter().all(|&y| (y - f64::from(by) as f32).abs() < 1e-4
+                || (y - (f64::from(by) as f32 + 2048.0)).abs() < 1e-4),
+            "the segment the by..by+2048 span wears ({ys:?})"
+        );
+    }
+
+    // THE RED FILTER'S OWN LADDER (the stained glass the fresh
+    // section wears — the two segments the y cursor the real heights
+    // the accumulate keeps, the 2048 tail the LAST section wears)
+    {
+        let mut world = app.offline_world.as_mut().unwrap();
+        world.set(bx, by + 1, bz, crate::world::RED_STAINED_GLASS);
+    }
+    let world = app.offline_world.as_ref().unwrap();
+    let sections = crate::world::beacon_beam_sections_budgeted(
+        world,
+        bx,
+        by,
+        bz,
+        max_y,
+        |k| crate::world::is_beacon(k),
+        (max_y - by + 1).max(1) as usize,
+    );
+    assert_eq!(sections.len(), 2, "the red the fresh section mints");
+    assert_eq!(sections[0].color, 0xF9_FFFE, "the WHITE the root keeps");
+    assert_eq!(sections[0].height, 1, "the root the height-1 seed keeps");
+    assert_eq!(
+        sections[1].color, 0xB0_2E_26,
+        "the red the fresh section wears"
+    );
+    assert_eq!(
+        sections[1].height,
+        max_y - by,
+        "the red the column grows — the air the transparent arm serves"
+    );
+    let segs = crate::world::beacon_beam_segments((bx, by, bz), &sections, 1.0, 20.0);
+    assert_eq!(segs.len(), 16, "the two sections the 16 quads wear");
+    for (color, q) in segs.iter().take(8) {
+        assert_eq!(*color, 0xF9_FFFE, "the first segment the WHITE wears");
+        let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+        assert!(
+            ys.iter().all(|&y| (y - f64::from(by) as f32).abs() < 1e-4
+                || (y - (f64::from(by) as f32 + 1.0)).abs() < 1e-4),
+            "the first segment the by..by+1 span wears ({ys:?})"
+        );
+    }
+    for (color, q) in segs.iter().skip(8) {
+        assert_eq!(*color, 0xB0_2E_26, "the second segment the red wears");
+        let ys: Vec<f32> = q.pts.iter().map(|p| p[1]).collect();
+        assert!(
+            ys.iter()
+                .all(|&y| (y - (f64::from(by) as f32 + 1.0)).abs() < 1e-4
+                    || (y - (f64::from(by) as f32 + 1.0 + 2048.0)).abs() < 1e-4),
+            "the second segment the 2048 tail wears ({ys:?})"
+        );
+    }
+
+    // THE RADIUS'S OWN SCOPE (the camera near the beacon the
+    // horizontal the 96 divisor the 1.0 floor keeps)
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(bx as f32 + 0.5, (by + 6) as f32, bz as f32 + 30.5),
+        yaw: std::f32::consts::PI,
+        pitch: 0.0,
+    });
+    let cam = app.world_camera();
+    let dx = f64::from(cam.pos.x) - (f64::from(bx) + 0.5);
+    let dz = f64::from(cam.pos.z) - (f64::from(bz) + 0.5);
+    let horizontal = ((dx * dx + dz * dz).sqrt()) as f32;
+    assert!(
+        (horizontal - 30.0).abs() < 0.5,
+        "the staged seat the horizontal wears ({horizontal})"
+    );
+    assert_eq!(
+        crate::world::beacon_beam_radius_scale(horizontal, false),
+        1.0,
+        "the near camera the 1.0 floor keeps"
+    );
+
+    // THE STALE CELL'S OWN GATE (the dug-out beacon the live world
+    // refuses — the seat gate the pass wears, the walk the air cell
+    // the clear+stop arm serves)
+    {
+        let mut world = app.offline_world.as_mut().unwrap();
+        world.set(bx, by, bz, crate::world::AIR);
+    }
+    let world = app.offline_world.as_ref().unwrap();
+    assert_ne!(
+        world.get(bx, by, bz),
+        crate::world::BEACON,
+        "the dug-out beacon the seat gate refuses"
+    );
+    let sections = crate::world::beacon_beam_sections_budgeted(
+        world,
+        bx,
+        by,
+        bz,
+        max_y,
+        |k| crate::world::is_beacon(k),
+        (max_y - by + 1).max(1) as usize,
+    );
+    assert!(
+        sections.is_empty(),
+        "the air cell the walk the clear+stop arm serves"
+    );
+
+    // THE BANK'S OWN ROUND TRIP (the containers lane the cells the
+    // disk banks — the parse the same set the boot wears, the
+    // missing list the honest empties keep)
+    let banked = crate::screens::beacon_bank_to_nbt(&app.beacon_stores);
+    let root = mc_protocol::nbt::Nbt::Compound(vec![("beacons".to_string(), banked)]);
+    let parsed = crate::screens::beacon_cells_from_nbt(&root);
+    assert_eq!(
+        parsed, app.beacon_stores,
+        "the round trip the same set wears"
+    );
+    let empty = crate::screens::beacon_cells_from_nbt(&mc_protocol::nbt::Nbt::Compound(vec![]));
+    assert!(empty.is_empty(), "the missing list the honest empties keep");
+}
