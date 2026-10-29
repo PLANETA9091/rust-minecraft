@@ -30841,6 +30841,44 @@ impl App {
         Some((x + 1, y + 1))
     }
 
+    /// THE FURNACE'S OWN HOVER SEAT (the 328 round — the vanilla's
+    /// own single getHoveredSlot law the furnace lane finally wears:
+    /// the ONE pure walk the clicks and the drops and the swaps and
+    /// the drags and the highlight ALL share — the nine inline finds
+    /// the same strict 16x16 predicate wore the walk retires). The
+    /// rects the last render laid (the inner origins the +1 inset
+    /// the Slot.x keeps) the find answers — the LAST walk the beacon
+    /// law wears... the furnace the FIRST match keeps (the rects the
+    /// render's own non-overlapping cells speak, the order the
+    /// menu's own numbering banks).
+    fn furnace_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.furnace_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE FURNACE'S OWN HIGHLIGHT SEAT (the 328 round — the same
+    /// shared AbstractContainerScreen law the beacon + inventory +
+    /// table rounds bank, the FurnaceScreen the plain extension the
+    /// subclass absence banks [the AbstractFurnaceScreen chain the
+    /// Highlight rows never wears — the 326 probe's own verdict the
+    /// same family keeps]): the hovered seat's INNER origin the
+    /// furnace_hover_seat walk's own verdict answers — the ONE hover
+    /// walk the clicks and the drops and the drags share (the
+    /// vanilla's own single getHoveredSlot law the walk re-keys).
+    /// The NO-GATE law the 325 round banks (the isHighlightable
+    /// default TRUE the plain verdict keeps): NO carried wall, NO
+    /// hasItem gate — the empty seat the highlight answers. The
+    /// (ox, oy) the paint serves — None the gates speak.
+    fn furnace_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Furnace {
+            return None; // the furnace's own screen the walk serves
+        }
+        let (sx, sy, _) = self.furnace_hover_seat(mx, my)?;
+        Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
     /// — the extractBackground then extractRenderState order the draw
     /// keeps: the dimmed world the container convention dims, the
@@ -31870,6 +31908,29 @@ impl App {
                 panel.1 + 34,
             );
         }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the 328 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the beacon + inventory
+        // + table rounds bank): the hovered seat's own 24x24 sprite the
+        // (slot.x - 4, slot.y - 4) seat blits, the isHighlightable gate
+        // the ONLY wall speaks — NO carried wall, NO hasItem gate (the
+        // 325 round's own law the furnace screen re-wears), the white
+        // alpha-96 the back layer keeps. The mouse_pos gate the headless
+        // scenes track no mouse — the pixel goldens never see this pass.
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.furnace_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
         // THE SLOT ICONS (the chest's own draw — the believed rows the
         // two lanes keep: the live store's projection, the fresh
         // stand-in's zeros the offline world answers)
@@ -31917,6 +31978,22 @@ impl App {
             }
         }
         self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
     }
 
     /// THE DISPENSER'S OWN RENDER (javap 26.2 DispenserScreen — the
@@ -33762,11 +33839,7 @@ impl App {
         let Some((mx, my)) = self.mouse_pos else {
             return; // no cursor — no hoveredSlot (the null gate's shape)
         };
-        let Some(&(_, _, slot)) = self
-            .furnace_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return; // the press landed between the slots — the null hover
         };
         let slot = slot as usize;
@@ -33815,11 +33888,7 @@ impl App {
         let Some((mx, my)) = self.mouse_pos else {
             return; // no cursor — no hoveredSlot (the null gate's shape)
         };
-        let Some(&(_, _, slot)) = self
-            .furnace_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return; // the press landed between the slots — the null hover
         };
         let Some((window_id, state_id)) = self.furnace_live_window else {
@@ -33884,11 +33953,7 @@ impl App {
         let Some((mx, my)) = self.mouse_pos else {
             return false; // no cursor — no hoveredSlot (the null gate's shape)
         };
-        let Some(&(_, _, slot)) = self
-            .furnace_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return false; // the press landed between the slots — the null hover
         };
         let Some((window_id, state_id)) = self.furnace_live_window else {
@@ -34885,10 +34950,7 @@ impl App {
             return; // the stand-in: no window, no drag
         }
         let panel = self.furnace_panel;
-        let on_seat = self
-            .furnace_slot_rects
-            .iter()
-            .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+        let on_seat = self.furnace_hover_seat(mx, my).is_some();
         // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
         // the 176x166 chrome the panel origin frames)
         let outside = mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166;
@@ -34913,11 +34975,7 @@ impl App {
     /// refuses, the store rows the plain TRUE keeps), the canDragTo
     /// the base menu's iconst_1 keeps.
     fn qc_paint_furnace(&mut self, mx: i32, my: i32) {
-        let Some(&(_, _, slot)) = self
-            .furnace_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return; // pc 25 — the no-seat frame the paint skips
         };
         let carried = self.qc_carried();
@@ -35636,10 +35694,7 @@ impl App {
             // belief rides, the offline sim the local lanes), the
             // outside the -999 drop serves, the between the -1 no-op
             // keeps.
-            let on_seat = self
-                .furnace_slot_rects
-                .iter()
-                .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            let on_seat = self.furnace_hover_seat(mx, my).is_some();
             let panel = self.furnace_panel;
             let outside =
                 mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166;
@@ -43706,11 +43761,7 @@ impl App {
         // cell (the take-alone verdict the pickup-from-empty-cursor
         // walk answers — the carried the gate needs).
         if !self.furnace_is_live {
-            let Some(&(_, _, slot)) = self
-                .furnace_slot_rects
-                .iter()
-                .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-            else {
+            let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
                 // THE DROP-OUTSIDE LANE (the 26.2 mouseClicked's own
                 // walk — the crafting table's own shape, the laid-out
                 // panel the strict rect compare speaks)
@@ -43799,11 +43850,7 @@ impl App {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
         };
-        let Some(&(_, _, slot)) = self
-            .furnace_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return; // the press landed between the slots — no click
         };
         let believed = self
@@ -44007,11 +44054,7 @@ impl App {
         if self.furnace_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
         }
-        let Some(&(_, _, slot)) = self
-            .furnace_slot_rects
-            .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
-        else {
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return; // the press landed between the slots — the null hover
         };
         if !self.furnace_is_live {
