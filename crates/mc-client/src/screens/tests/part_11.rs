@@ -6070,3 +6070,359 @@ fn the_offline_dispenser_highlight_the_paint_the_cell_wear() {
         "the far face the same verdict keeps"
     );
 }
+
+/// THE BREWING STAND'S OWN DOOR SEAT (the autopush-332 round — the 26.2
+/// ctor's own literal seats the bytecode probe banks): the five-seat
+/// walk the origin answers, the DIPPED middle bottle the +7 pitch
+/// the 26.2 re-layout pins, the NO-GATE law the family banks, the
+/// wrong screen the None answers. The REAL walk the offline door
+/// wears — the headless frame the REAL rects the render lays.
+#[test]
+fn the_offline_brewing_the_door_the_five_seats_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the empty hand the door's own lane keeps
+    }
+    app.open_brewing_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Brewing,
+        "the brewing door the kind wears"
+    );
+    assert_eq!(app.brewing_slots.len(), 5, "the fresh five the open banks");
+    assert_eq!(
+        app.brewing_mirror.len(),
+        36,
+        "the mirror rows the sync keeps"
+    );
+    // THE REAL RECTS THE RENDER BANKS (one headless frame the mouse
+    // never tracks — the render's own walk the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    assert_eq!(
+        app.brewing_panel, panel,
+        "the centered panel the canvas keeps"
+    );
+    let seat = |slot: i16| -> (i32, i32) {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE 26.2 RE-LAYOUT'S OWN PITCH (the ctor's literal adds the
+    // probe spoke: the bottles 23px apart, the MIDDLE bottle the +7
+    // dip wears, the fuel the far-left seat keeps)
+    let (b0x, b0y) = seat(0);
+    let (b1x, b1y) = seat(1);
+    let (b2x, b2y) = seat(2);
+    assert_eq!(
+        (b1x - b0x, b1y - b0y),
+        (23, 7),
+        "the dipped middle bottle the 26.2 pitch banks"
+    );
+    assert_eq!(
+        (b2x - b1x, b2y - b1y),
+        (23, -7),
+        "the third bottle the rise answers"
+    );
+    let (g3x, g3y) = seat(3);
+    let (g4x, g4y) = seat(4);
+    assert_eq!(
+        (g3x - b1x, g3y - (b1y - 7)),
+        (0, -34),
+        "the ingredient the top-center seat keeps"
+    );
+    assert_eq!(
+        (g4x - b0x, g4y - b0y),
+        (-39, -34),
+        "the fuel the far-left seat keeps"
+    );
+    // THE FIVE-SEAT'S OWN ANSWERS (each stand cell + the mirror rows
+    // the origin answers — the ONE walk the clicks share)
+    let seat_origin = |slot: i16| -> (i32, i32) {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    assert_eq!(
+        app.brewing_highlight_origin(seat_origin(0).0 + 8, seat_origin(0).1 + 8),
+        Some(seat_origin(0)),
+        "the bottle head the origin answers"
+    );
+    assert_eq!(
+        app.brewing_highlight_origin(seat_origin(1).0 + 8, seat_origin(1).1 + 8),
+        Some(seat_origin(1)),
+        "the dipped bottle the origin answers"
+    );
+    assert_eq!(
+        app.brewing_highlight_origin(seat_origin(2).0 + 8, seat_origin(2).1 + 8),
+        Some(seat_origin(2)),
+        "the bottle tail the origin answers"
+    );
+    assert_eq!(
+        app.brewing_highlight_origin(seat_origin(3).0 + 8, seat_origin(3).1 + 8),
+        Some(seat_origin(3)),
+        "the ingredient the origin answers"
+    );
+    assert_eq!(
+        app.brewing_highlight_origin(seat_origin(4).0 + 8, seat_origin(4).1 + 8),
+        Some(seat_origin(4)),
+        "the fuel the origin answers"
+    );
+    let (mx, my) = seat(5);
+    assert_eq!(
+        app.brewing_highlight_origin(mx + 8, my + 8),
+        Some((mx, my)),
+        "the mirror head the origin answers"
+    );
+    let (hx, hy) = seat(40);
+    assert_eq!(
+        app.brewing_highlight_origin(hx + 8, hy + 8),
+        Some((hx, hy)),
+        "the hotbar tail the origin answers"
+    );
+    // THE NO-GATE LAW (the family's own verdict the brewing screen
+    // re-wears — the carried stack the wall NEVER speaks, the EMPTY
+    // cells the plain answer keeps)
+    app.brewing_carried = (7, 3);
+    assert_eq!(
+        app.brewing_highlight_origin(b0x + 8, b0y + 8),
+        Some((b0x, b0y)),
+        "the carried stack the highlight never refuses"
+    );
+    app.brewing_carried = (0, 0);
+    // THE CELL'S OWN EDGES (the strict 16x16 the walk answers)
+    assert_eq!(
+        app.brewing_highlight_origin(b0x + 16, b0y + 8),
+        None,
+        "the east edge the walk refuses"
+    );
+    assert_eq!(
+        app.brewing_highlight_origin(b0x - 1, b0y + 8),
+        None,
+        "the west edge the walk refuses"
+    );
+    // THE BLANK FACE (the no-seat walk the None answers)
+    assert_eq!(
+        app.brewing_highlight_origin(panel.0 - 20, panel.1 - 20),
+        None,
+        "the outside face the None speaks"
+    );
+    // THE WRONG SCREEN (the world view the highlight never wears)
+    app.close_brewing(ScreenKind::World);
+    assert_eq!(
+        app.brewing_highlight_origin(b0x + 8, b0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE BREWING STAND'S OWN HIGHLIGHT PAINT (the REAL render walk —
+/// the 320x180 headless canvas the brewing screen renders, the
+/// same-frame pair the mouse the only delta wears): the empty fuel
+/// seat the back-96 + the front-32 the EXACT alpha math answers (the
+/// two-layer order the composite pins), the transparent border ring
+/// the 24x24 sprite's own 4px margin keeps, the no-mouse pass the
+/// paint never serves.
+#[test]
+fn the_offline_brewing_the_paint_the_cell_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_brewing_for(cell);
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let blend = |dst: u8, alpha: f32| -> u8 {
+        let d = dst as f32 / 255.0;
+        let v = d * (1.0 - alpha) + 1.0 * alpha;
+        ((v.clamp(0.0, 1.0)) * 255.0 + 0.5) as u8
+    };
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_a, &mut a);
+    }
+    // THE REAL GEOMETRY THE RENDER BANKS (the fuel seat the (17, 17)
+    // seat the 26.2 ctor's own literal speaks — the +1 inset the
+    // rects wear)
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let (ox, oy) = (panel.0 + 17 + 1, panel.1 + 17 + 1);
+    let cx = ox + 8;
+    let cy = oy + 8;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((cx, cy));
+        app.render(&mut fb_b, &mut a);
+    }
+    // THE CELL'S OWN TINT (the empty seat the highlight paints —
+    // the exact two-layer math the sprite alphas answer)
+    let a0 = pixel(&fb_a, cx, cy);
+    let expected = blend(blend(a0, 96.0 / 255.0), 32.0 / 255.0);
+    assert_eq!(
+        pixel(&fb_b, cx, cy),
+        expected,
+        "the two-layer tint the exact math wears (back 96 + front 32)"
+    );
+    assert_ne!(
+        a0, expected,
+        "the tint the paint speaks (the highlight the canvas moves)"
+    );
+    // THE BORDER RING (the 1px inside the hover walk's band the
+    // sprite's own 4px transparent margin keeps — the cell-only
+    // tint the geometry pins)
+    assert_eq!(
+        pixel(&fb_a, ox - 1, cy),
+        pixel(&fb_b, ox - 1, cy),
+        "the border ring the sprite's margin keeps (no paint)"
+    );
+    // THE FAR FACE (the centered title's own reach the paint never
+    // wears — the static band the point keeps, the centered row the
+    // +150 face the text never spans)
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 150, panel.1 + 6),
+        pixel(&fb_b, panel.0 + 150, panel.1 + 6),
+        "the far face the same verdict keeps"
+    );
+}
+
+/// THE BREWING STAND'S OWN CLICK ROUND (the offline sim's own walk —
+/// the pickup the five banks, the place-back the cursor returns, the
+/// quick-move the shift lane speaks, the close flush the edited five
+/// the store banks): the REAL click walk the offline door wears.
+#[test]
+fn the_offline_brewing_the_click_the_round_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.inventory.items[0] = (7, 10); // the hotbar head the real stack keeps
+    app.open_brewing_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // rects the render laid the click lanes read)
+    let (h32x, h32y) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 32)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (fx, fy) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE PICKUP LANE (the hotbar head's own click the cursor banks —
+    // the player's own row the REAL inventory wears: the menu 32 the
+    // items 0 answer, the stack the cursor carries)
+    app.click_brewing_slot(h32x + 8, h32y + 8, 0);
+    assert_eq!(app.brewing_carried, (7, 10), "the pickup the cursor banks");
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the source row the empty wears"
+    );
+    assert_eq!(
+        app.brewing_slots[4],
+        (0, 0),
+        "the fuel cell the untouched empty wears"
+    );
+    // THE PLACE-BACK (the fuel seat's own click the five banks — the
+    // carried the empty wears, the mirror rows the sync re-speaks)
+    app.click_brewing_slot(fx + 8, fy + 8, 0);
+    assert_eq!(
+        app.brewing_carried,
+        (0, 0),
+        "the place-back the cursor clears"
+    );
+    assert_eq!(
+        app.brewing_slots[4],
+        (7, 10),
+        "the fuel cell the stack banks"
+    );
+    // THE QUICK-MOVE LANE (the shift-click the mirror main cell the
+    // five banks — the whole stack the OTHER section moves)
+    app.inventory.items[9] = (8, 3);
+    app.brewing_mirror_sync_from_inventory();
+    let (sx5, sy5) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 5)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.shift_down = true;
+    app.click_brewing_slot(sx5 + 8, sy5 + 8, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.brewing_slots[0],
+        (8, 3),
+        "the quick-move the five banks"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the source row the empty wears"
+    );
+    // THE CLOSE FLUSH (the edited five the store banks — the reopen
+    // the stored stacks load)
+    app.close_brewing(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
+    let store = app.brewing_stores.get(&cell).unwrap();
+    assert_eq!(store[0], (8, 3), "the flushed five the edit banks");
+    assert_eq!(store[4], (7, 10), "the flushed five the fuel banks");
+    // THE REOPEN (the stored stacks the projection loads — the
+    // persistence the same map speaks)
+    app.open_brewing_for(cell);
+    assert_eq!(app.brewing_slots[0], (8, 3), "the reopen the edit loads");
+    assert_eq!(app.brewing_slots[4], (7, 10), "the reopen the fuel loads");
+}

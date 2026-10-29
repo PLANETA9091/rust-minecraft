@@ -7074,6 +7074,17 @@ pub enum ScreenKind {
     /// lane (the GENERIC_3x3 menu type the OpenScreen word routes)
     /// the chest's own live shape rides later.
     Dispenser,
+    /// THE BREWING STAND'S OWN GUI DOOR (the autopush-332 round — the 26.2
+    /// jar the BrewingStandMenu ctor's bytecode walk banks — the
+    /// scripts/brewing_menu_probe_331.py the constants stream speaks):
+    /// the bottles the (56, 51)/(79, 58)/(102, 51) seats the ctor's
+    /// literal adds wear [the MIDDLE bottle the +7 dip the 26.2
+    /// re-layout banks], the ingredient the (79, 17) seat, the fuel
+    /// the (17, 17) seat, the standard rows addStandardInventorySlots
+    /// (8, 84) the 36 mirror cells keep. The OFFLINE door the
+    /// hopper's own law the wire never wears (the server's own
+    /// OpenScreen word owns the wire container).
+    Brewing,
     /// THE WORLD OPTIONS' OWN DIAL (javap 26.2 WorldOptionsScreen +
     /// DifficultyButtons — the OptionsScreen's in-world
     /// `options.worldOptions.button` the header row opens): the
@@ -9466,6 +9477,36 @@ pub struct App {
     /// close flush the key takes home — the None the closed screens
     /// keep; the per-cell law the chest lane speaks).
     pub dispenser_open_cell: Option<(i32, i32, i32)>,
+    /// THE BREWING STAND'S OWN BELIEVED FIVE (the offline canvas the
+    /// brewing_stores entry projects — the same law the dispenser
+    /// nine speaks: the open the cell's five LOADS, the clicks mutate
+    /// the projection, the close flush the edited rows the map banks).
+    /// The (0, 0) stacks the empty slots wear; the seats the vanilla
+    /// ctor's own numbering banks (the bottles 0..3, the ingredient
+    /// 3, the fuel 4).
+    pub brewing_slots: Vec<(i32, i32)>,
+    /// THE BREWING STAND'S OWN MIRROR (the 36 standard rows the
+    /// menu's addStandardInventorySlots(8, 84) places — the main
+    /// 0..26, the hotbar 27..35; the chest's own sync law the
+    /// projection keeps, the REAL inventory the rows speak).
+    pub brewing_mirror: Vec<(i32, i32)>,
+    /// THE BREWING STAND'S OWN CARRIED (the offline doClick's own
+    /// cursor the pickup/split predictions mutate — the close's
+    /// add-back walk returns it).
+    pub brewing_carried: (i32, i32),
+    /// The brewing stand's slot hit boxes the LAST render laid out:
+    /// (x, y, the MENU's own slot number) — the stand's five (the
+    /// bottles 0..3 the ingredient 3 the fuel 4, the 26.2 ctor's own
+    /// literal seats) then the standard rows (5..40), the 16x16 inner
+    /// boxes the clicks hit-test against.
+    pub brewing_slot_rects: Vec<(i32, i32, i16)>,
+    /// The brewing panel's GUI origin the LAST render laid out (the
+    /// furnace's own centered origin — the same 176x166 canvas).
+    pub brewing_panel: (i32, i32),
+    /// THE OPEN BREWING STAND'S OWN CELL (the open the key banks, the
+    /// close flush the key takes home — the None the closed screens
+    /// keep; the per-cell law the brewing bank speaks).
+    pub brewing_open_cell: Option<(i32, i32, i32)>,
     /// THE OPENED CELL'S OWN KIND (the DISPENSER/DROPPER byte the
     /// title lane reads — the BlockEntity's DEFAULT_NAME the
     /// container.* lang row banks; the zero the closed screens keep).
@@ -12419,6 +12460,12 @@ impl App {
             dispenser_slot_rects: Vec::new(),
             dispenser_panel: (0, 0),
             dispenser_open_cell: None,
+            brewing_slots: Vec::new(),
+            brewing_mirror: Vec::new(),
+            brewing_carried: (0, 0),
+            brewing_slot_rects: Vec::new(),
+            brewing_panel: (0, 0),
+            brewing_open_cell: None,
             dispenser_open_kind: 0,
             dispenser_is_live: false,
             dispenser_live_window: None,
@@ -23099,6 +23146,7 @@ impl App {
         if self.screen == ScreenKind::Inventory
             || self.screen == ScreenKind::Chest
             || self.screen == ScreenKind::Dispenser
+            || self.screen == ScreenKind::Brewing
             || self.screen == ScreenKind::Crafting
             || self.screen == ScreenKind::Furnace
             || self.screen == ScreenKind::Beacon
@@ -23194,6 +23242,7 @@ impl App {
                 ScreenKind::Inventory
                     | ScreenKind::Chest
                     | ScreenKind::Dispenser
+                    | ScreenKind::Brewing
                     | ScreenKind::Furnace
                     | ScreenKind::Crafting
                     | ScreenKind::Creative
@@ -23217,13 +23266,14 @@ impl App {
         // carries no rows at all — the clears are its no-ops.
         if matches!(
             kind,
-            ScreenKind::Chest | ScreenKind::Dispenser | ScreenKind::Inventory
+            ScreenKind::Chest | ScreenKind::Dispenser | ScreenKind::Brewing | ScreenKind::Inventory
         ) {
             self.bundle_scroll_acc_x = 0.0;
             self.bundle_scroll_acc_y = 0.0;
         }
         if kind == ScreenKind::Chest
             || kind == ScreenKind::Dispenser
+            || kind == ScreenKind::Brewing
             || (kind == ScreenKind::Inventory && self.chest_live_window.is_some())
         {
             self.bundle_contents.clear();
@@ -24069,6 +24119,7 @@ impl App {
             ScreenKind::Crafting => self.close_crafting_table(ScreenKind::World),
             ScreenKind::Chest => self.close_chest_container(ScreenKind::World),
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
+            ScreenKind::Brewing => self.close_brewing(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             _ => {}
@@ -27306,6 +27357,127 @@ impl App {
             self.attach_wire_voice(pos.0, pos.1, pos.2);
         }
         self.dispenser_open_kind = 0;
+        self.container_removed_rode = true; // the removed law rode
+        self.open(back);
+    }
+
+    /// THE BREWING STAND'S OWN DOOR (javap 26.2 BrewingStandBlock the
+    /// openMenu walk the BrewingStandBlockEntity.createMenu answer —
+    /// the right-press on the placed brewing stand the OFFLINE world
+    /// answers — the window the stand's own 176x166 canvas opens, the
+    /// cell's own five-slot store the brewing_stores map keeps [the
+    /// hopper feed + the comparator the SAME map the 309 round banks]).
+    /// The vanilla brewing stand the OPEN-counter voice never wears.
+    /// The sneaking player the arm SKIPS (the crafting-table's own
+    /// gate the vanilla use walk wears). The WIRE session the local
+    /// screen never opens (the server's own OpenScreen word owns the
+    /// container — the hopper's own law the offline door keeps).
+    pub fn open_brewing_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE DISK BANK'S OWN LAZY LOAD (the chest's own law — the
+        // first store access the once-flag's parse answers)
+        self.container_stores_load_once();
+        // THE STALE CELL'S OWN RELEASE FIRST (the chest open walk's
+        // own law the brewing lane wears)
+        self.barrel_lid_released();
+        // the OFFLINE stand-in: the live lane's flag stays down (the
+        // brewing door the wire session never wears)
+        self.chest_is_live = false;
+        self.chest_mirror.clear();
+        // THE CELL'S OWN STORE (the RandomizableContainer contents the
+        // map key keeps — the first open the fresh five-slot row
+        // inserts, the reopen the stored stacks load; the
+        // BrewingStandMenu's own checkContainerSize(container, 5) the
+        // width the BE's withSize(5) answers)
+        let store = self
+            .brewing_stores
+            .entry(pos)
+            .or_insert_with(|| vec![(0i32, 0i32); 5]);
+        self.brewing_slots = store.clone();
+        self.brewing_open_cell = Some(pos);
+        self.brewing_carried = (0, 0);
+        // the player's own rows the REAL inventory projects (the
+        // menu's addStandardInventorySlots(8, 84) the mirror rows the
+        // same projection keeps)
+        self.brewing_mirror_sync_from_inventory();
+        // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
+        // — the brewing kind the vanilla's own silence arm the emit
+        // call returns)
+        self.container_voice_emit(true);
+        self.open(ScreenKind::Brewing);
+    }
+
+    /// THE BREWING STAND'S OWN MIRROR SYNC (the chest's own law — the
+    /// projection the inventory IS: the main rows the items 9..35
+    /// speak, the hotbar row the items 0..8, the fresh rows EVERY
+    /// mutation re-syncs).
+    pub fn brewing_mirror_sync_from_inventory(&mut self) {
+        if self.brewing_mirror.len() != 36 {
+            self.brewing_mirror.resize(36, (0, 0));
+        }
+        for i in 0..27 {
+            self.brewing_mirror[i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.brewing_mirror[27 + i] = self.inventory.items[i];
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE BREWING STAND'S OWN CLOSE (the vanilla Escape/E on the
+    /// brewing stand's screen — the chest's own close walk the carried
+    /// return, the store flush and the fill ride speak): the carried
+    /// stack the add walk home returns (the same-item merges, the
+    /// first-empty pass, the full store the remainder drops — the
+    /// close_furnace shape), the edited five the per-cell store rides
+    /// home to (the hopper feed the SAME map consumes), the analog
+    /// fill the comparator's back read re-banks, the wire voice the
+    /// cell+six re-consult answers, the screen back to the world.
+    pub fn close_brewing(&mut self, back: ScreenKind) {
+        // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
+        // placeItemBackInInventory walk — the close_furnace shape)
+        if self.brewing_carried.1 > 0 {
+            let (id, count) = self.brewing_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.brewing_carried = (0, 0);
+        }
+        // THE STORE'S OWN FLUSH (the chest's own persist law — the
+        // open the brewing_open_cell key banks, the close the edited
+        // five the map entry rides home to, the disk write the same
+        // lane banks)
+        self.container_stores_load_once();
+        if let Some(pos) = self.brewing_open_cell.take() {
+            let five: Vec<(i32, i32)> = self.brewing_slots.iter().copied().collect();
+            self.brewing_stores.insert(pos, five);
+            self.container_stores_file_save();
+            // THE FILL'S OWN RIDE HOME (the comparator's container lane
+            // the close flush banks — the 309 round's own five the
+            // analog wears)
+            let _ = self.container_fill_sync(pos, None);
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
+        }
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
@@ -31050,6 +31222,38 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE BREWING STAND'S OWN HOVER SEAT (the autopush-332 round — the
+    /// same shared law the furnace + chest + dispenser walks bank):
+    /// the hovered seat the rects the last render laid answer — the
+    /// strict 16x16 predicate the inner origins the +1 inset the
+    /// Slot.x keeps, the stand's five the mirror rows the menu
+    /// numbering banks. The find the FIRST match the non-overlapping
+    /// cells keep.
+    fn brewing_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.brewing_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE BREWING STAND'S OWN HIGHLIGHT SEAT (the autopush-332 round —
+    /// the same shared AbstractContainerScreen law the beacon +
+    /// inventory + table + furnace + chest + hopper + dispenser
+    /// rounds bank, the BrewingStandScreen the plain extension the
+    /// subclass absence banks): the hovered seat's INNER origin the
+    /// brewing_hover_seat walk's own verdict answers — the ONE hover
+    /// walk the clicks and the drops and the drags share. The NO-GATE
+    /// law the 325 round banks: NO carried wall, NO hasItem gate —
+    /// the empty cell the highlight answers. The (ox, oy) the paint
+    /// serves — None the gates speak.
+    fn brewing_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Brewing {
+            return None; // the brewing's own screen the walk serves
+        }
+        let (sx, sy, _) = self.brewing_hover_seat(mx, my)?;
+        Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
     /// — the extractBackground then extractRenderState order the draw
     /// keeps: the dimmed world the container convention dims, the
@@ -32328,6 +32532,144 @@ impl App {
         }
     }
 
+    /// THE BREWING STAND'S OWN RENDER (the vanilla BrewingStandScreen
+    /// over the frozen world — the dispenser's own shape the
+    /// texture-blitted base keeps): world underneath, dimmed, the
+    /// REAL `gui/container/brewing_stand.png` background blitted
+    /// 176x166 at the centered panel, the centered title the init
+    /// walk's own formula speaks, the labels the extractLabels walk
+    /// draws, the stand's five + the mirror icons the believed rows
+    /// render, the idle arrows the no-chemistry canvas never draws
+    /// (the brew walk the NEXT's own round keeps), and the slot HIT
+    /// BOXES the 16x16 inner cells the +1 inset wears — the buttons'
+    /// own render-then-hit pattern, zero pixel surface of its own.
+    fn render_brewing(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.brewing_panel = panel;
+        // THE HIT BOXES (the 26.2 ctor's own literal seats the
+        // bytecode probe banks — scripts/brewing_menu_probe_331.py the
+        // constants stream speaks: the bottles (56, 51)/(79, 58)/
+        // (102, 51) [the MIDDLE bottle the +7 dip the 26.2 re-layout
+        // wears], the ingredient (79, 17), the fuel (17, 17), the
+        // standard rows 5..40 the addStandardInventorySlots(8, 84)
+        // walk keeps — the 16x16 inner cells the +1 inset wears)
+        self.brewing_slot_rects = [
+            (panel.0 + 56 + 1, panel.1 + 51 + 1, 0i16),
+            (panel.0 + 79 + 1, panel.1 + 58 + 1, 1i16),
+            (panel.0 + 102 + 1, panel.1 + 51 + 1, 2i16),
+            (panel.0 + 79 + 1, panel.1 + 17 + 1, 3i16),
+            (panel.0 + 17 + 1, panel.1 + 17 + 1, 4i16),
+        ]
+        .into_iter()
+        .chain((0..36).map(|i| {
+            let (sx, sy) = chest_mirror_slot(panel, i);
+            (sx + 1, sy + 1, (5 + i) as i16)
+        }))
+        .collect();
+        g.sprite_file_region(
+            a,
+            "gui/container/brewing_stand.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
+        // THE CENTERED TITLE (the init walk's own formula the
+        // DispenserScreen's own override speaks — the kind's own lang
+        // row the opened kind banks)
+        let label = [0.251, 0.251, 0.251];
+        let title_text = tr("container.brewing").unwrap_or("").to_string();
+        if !title_text.is_empty() {
+            let tx = panel.0 + (176 - g.text_width(&title_text)) / 2;
+            g.text(a, tx, panel.1 + 6, &title_text, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the autopush-332 round — the
+        // extractSlotHighlightBack walk the slots BEFORE serves, the
+        // same shared AbstractContainerScreen law the family rounds
+        // bank): the hovered seat's own 24x24 sprite the (slot.x - 4,
+        // slot.y - 4) seat blits, the isHighlightable gate the ONLY
+        // wall speaks — NO carried wall, NO hasItem gate, the white
+        // alpha-96 the back layer keeps. The mouse_pos gate the
+        // headless scenes track no mouse — the pixel goldens never see
+        // this pass. THE SHARED SEAT the brewing's own fn answers, the
+        // texture-baked canvas the chest's explicit-chrome reorder
+        // never needs (the brewing_stand.png blit the bg IS — the
+        // hopper's own law the texture-baked family keeps).
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.brewing_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+        // THE SLOT ICONS (the dispenser's own draw — the believed rows
+        // the stand's five + the mirror keep: the store's projection,
+        // the standard rows the real inventory speaks)
+        for &(sx, sy, slot) in &self.brewing_slot_rects {
+            let slot = slot as usize;
+            let believed = if slot < 5 {
+                self.brewing_slots.get(slot)
+            } else {
+                self.brewing_mirror.get(slot - 5)
+            };
+            let Some(&(id, count)) = believed else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the offline sim's local cursor the chest's own gate
+        // keeps, the headless scenes track no mouse)
+        if self.brewing_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.brewing_carried.0, mx - 8, my - 8);
+                if self.brewing_carried.1 > 1 {
+                    let s = self.brewing_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the white alpha-32 the front
+        // layer keeps, the same no-gate law the back layer wears, the
+        // icon the translucent tint the tooltip the topmost layer
+        // never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+    }
+
     /// THE BEACON'S OWN ROUND (the autopush-322 round — the vanilla
     /// BeaconScreen over the frozen world, the 26.2 disasm's own
     /// layout the walk banks — scripts/jar_work/beacon_gui_322.txt
@@ -33245,6 +33587,11 @@ impl App {
             // dispenser's screen — the chest's own close walk the
             // carried return, the store flush and the fill ride speak)
             self.close_dispenser(ScreenKind::World);
+        } else if self.screen == ScreenKind::Brewing {
+            // THE FIVE-SEAT'S OWN CLOSE (the vanilla Escape/E on the
+            // brewing stand's screen — the chest's own close walk the
+            // carried return, the store flush and the fill ride speak)
+            self.close_brewing(ScreenKind::World);
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
             // furnace's screen — the chest's own close walk the menu
@@ -34763,6 +35110,12 @@ impl App {
             // arms)
             return self.dispenser_carried;
         }
+        if self.screen == ScreenKind::Brewing {
+            // THE FIVE-SEAT'S OWN LANE CURSOR (the offline sim the
+            // SAME field's own stack holds — the wire lane the
+            // brewing door never wears)
+            return self.brewing_carried;
+        }
         if self.screen == ScreenKind::Chest {
             return self.chest_carried;
         }
@@ -35013,6 +35366,63 @@ impl App {
         // no refusal the walk wears
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
+    /// THE BREWING DRAG'S OWN ARM (the same mouseClicked pcs 316-378
+    /// base walk the family rounds bank — the brewing screen the SAME
+    /// AbstractContainerScreen base class wears): the carried-NON-EMPTY
+    /// press the isQuickCrafting start speaks — NO slot click, NO
+    /// packet. The hovered seat AND the outside press the arm answers;
+    /// the press BETWEEN the slots (k == -1) the whole arm skips. The
+    /// OFFLINE sim the drag the local lanes ride (the wire lane the
+    /// hopper's own law never wears).
+    fn qc_arm_brewing(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if self.brewing_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.brewing_panel;
+        let on_seat = self.brewing_hover_seat(mx, my).is_some();
+        let outside = panel != (0, 0)
+            && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32;
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
+    /// THE BREWING DRAG'S OWN COLLECT (mouseDragged pcs 23-58 — the
+    /// hovered seat the shouldAddSlotToQuickCraft gates answer): the
+    /// same walk the dispenser's paint wears — the carried non-empty,
+    /// the count's own law, the seat's canItemQuickReplace, the plain
+    /// slots' mayPlace the base Slot's iconst_1 pair keeps.
+    fn qc_paint_brewing(&mut self, mx: i32, my: i32) {
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.brewing_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the Set.add's own false the recalc never feeds
         }
         self.qc_slots.push(menu);
         self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
@@ -35481,6 +35891,57 @@ impl App {
         self.hotbar_slots = self.inventory.hotbar();
     }
 
+    /// THE BREWING DRAG'S OWN DISTRIBUTION (the same pcs 299-322 walk
+    /// the dispenser's offline lane wears — the painted set the
+    /// one-each law serves): the offline door the wire lane never
+    /// wears (the hopper's own law the brewing door keeps).
+    fn qc_distribute_brewing_offline(&mut self) {
+        let carried = self.brewing_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < 5 {
+                if menu < self.brewing_slots.len() {
+                    self.brewing_slots[menu] = new;
+                }
+            } else {
+                // THE WRITE-THROUGH (the projection the inventory IS —
+                // the mirror row the inventory cell answers: the main
+                // rows 0..27 the items 9..36 keep, the hotbar 27..36
+                // the items 0..9 speak)
+                let row = menu - 5;
+                let idx = if row < 27 { 9 + row } else { row - 27 };
+                if idx < self.inventory.items.len() {
+                    self.inventory.items[idx] = new;
+                }
+            }
+        }
+        self.brewing_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation re-syncs
+        // — the open's own law the write-through's tail wears)
+        self.brewing_mirror_sync_from_inventory();
+    }
+
     /// THE GHOST'S OWN RECALC (recalculateQuickCraftRemaining — the
     /// painted set's projected leftover the cursor keeps): the type-2
     /// arm the carried's own max speaks (pc 23-39), the split arms the
@@ -35540,6 +36001,16 @@ impl App {
                 self.dispenser_slots[menu]
             } else {
                 self.dispenser_mirror[menu - 9]
+            };
+        }
+        if self.screen == ScreenKind::Brewing {
+            // THE FIVE-SEAT'S OWN NUMBERING (the five the stand keeps,
+            // the standard rows 5..41 the mirror holds — the paint
+            // seat read the SAME split wears)
+            return if menu < 5 {
+                self.brewing_slots[menu]
+            } else {
+                self.brewing_mirror[menu - 5]
             };
         }
         if self.screen == ScreenKind::Chest {
@@ -35647,6 +36118,12 @@ impl App {
                 } else {
                     self.qc_distribute_dispenser_offline();
                 }
+            } else if self.screen == ScreenKind::Brewing {
+                // THE FIVE-SEAT'S OWN LANES (the offline sim the local
+                // write-through answer — the dispenser's own shape the
+                // offline door wears, the wire lane the hopper's own
+                // law never wears)
+                self.qc_distribute_brewing_offline();
             } else if self.screen == ScreenKind::Crafting {
                 // THE TABLE'S OWN LANES (the click walk's own split —
                 // the wire the window-1 belief rides, the offline sim
@@ -36736,6 +37213,18 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Brewing {
+            // THE FIVE-SEAT'S OWN PRESS (the same mouseClicked walk the
+            // dispenser's gate shape wears — the carried press the drag
+            // arms, the carried-empty press the PICKUP dispatch keeps)
+            let held = self.brewing_carried.1 > 0;
+            if held {
+                self.qc_arm_brewing(mx, my, 0);
+            } else {
+                self.click_brewing_slot(mx, my, 0);
+            }
+            return;
+        }
         if self.screen == ScreenKind::Chest {
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory round banks — the
@@ -36931,6 +37420,23 @@ impl App {
                 self.qc_arm_dispenser(mx, my, 1);
             } else {
                 self.click_dispenser_slot(mx, my, 1);
+            }
+            return false;
+        }
+        if self.screen == ScreenKind::Brewing {
+            // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
+            // the armed drag's frames the other button's press keep
+            // silent); the right press the TYPE-1 DRAG ARMS (the
+            // one-each distribution the release serves); the
+            // carried-empty press the SPLIT-PICKUP dispatch keeps.
+            if self.qc_armed {
+                return false;
+            }
+            let held = self.brewing_carried.1 > 0;
+            if held {
+                self.qc_arm_brewing(mx, my, 1);
+            } else {
+                self.click_brewing_slot(mx, my, 1);
             }
             return false;
         }
@@ -38797,6 +39303,8 @@ impl App {
                 self.qc_paint_chest(mx, my);
             } else if self.screen == ScreenKind::Dispenser {
                 self.qc_paint_dispenser(mx, my);
+            } else if self.screen == ScreenKind::Brewing {
+                self.qc_paint_brewing(mx, my);
             } else if self.screen == ScreenKind::Crafting {
                 self.qc_paint_table(mx, my);
             } else if self.screen == ScreenKind::Furnace {
@@ -42650,6 +43158,18 @@ impl App {
                 };
                 Some((id, count, slot as i32))
             }
+            ScreenKind::Brewing => {
+                // THE SHARED SEAT (the autopush-332 round — the bundle lane
+                // the same walk rides)
+                let (_, _, slot) = self.brewing_hover_seat(mx, my)?;
+                let s = slot as usize;
+                let (id, count) = if s < 5 {
+                    *self.brewing_slots.get(s).unwrap_or(&(0, 0))
+                } else {
+                    *self.brewing_mirror.get(s - 5).unwrap_or(&(0, 0))
+                };
+                Some((id, count, slot as i32))
+            }
             ScreenKind::Chest => {
                 let (_, _, slot) = self.chest_hover_seat(mx, my)?;
                 let s = slot as usize;
@@ -43803,6 +44323,95 @@ impl App {
         }
         self.dispenser_carried = new_carried;
         self.dispenser_mirror_sync_from_inventory();
+    }
+
+    /// THE BREWING STAND'S OWN OUTSIDE THROW (the furnace's own walk
+    /// the brewing canvas wears — the doClick -999 PICKUP the
+    /// carried's drop serves).
+    fn throw_brewing_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.brewing_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.brewing_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
+    /// THE BREWING STAND'S OWN CLICK LANE (the offline sim's own walk
+    /// — the vanilla doClick's local walk the believed stack the
+    /// pickup/split prediction mutates, the carried the local cursor
+    /// keeps, NO echo: the fresh stand-in has no window and no
+    /// session). THE STANDARD ROWS the player's own store wear (the
+    /// menu 5..31 the main grid rides, the menu 32..40 the hotbar —
+    /// the write-through projection the inventory IS).
+    fn click_brewing_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.brewing_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            // THE DROP-OUTSIDE LANE (the furnace's own shape — the
+            // laid-out panel the strict rect compare speaks)
+            if self.brewing_panel != (0, 0)
+                && (mx < self.brewing_panel.0
+                    || my < self.brewing_panel.1
+                    || mx >= self.brewing_panel.0 + 176
+                    || my >= self.brewing_panel.1 + 166)
+            {
+                self.throw_brewing_carried_outside(button);
+            }
+            return;
+        };
+        let menu = slot as usize;
+        // THE QUICK_MOVE LANE (the shift-click — the vanilla doClick's
+        // own precedence the chest's walk keeps): the combined
+        // 41-slot snapshot the REAL inventory wears (the five + the
+        // main 27 + the hotbar 9), the multi-slot deltas the five AND
+        // the items mutate (the menu's own numbering the split
+        // speaks — the menu 5..31 the items 9..35 answer, the menu
+        // 32..40 the items 0..8 keep).
+        if self.shift_down {
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(41);
+            snapshot.extend_from_slice(&self.brewing_slots);
+            snapshot.extend_from_slice(&self.inventory.items[9..36]);
+            snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 5);
+            for (i, pair) in &changed {
+                if *i < 5 {
+                    self.brewing_slots[*i] = *pair;
+                } else if *i < 32 {
+                    self.inventory.items[*i + 4] = *pair;
+                } else {
+                    self.inventory.items[*i - 32] = *pair;
+                }
+            }
+            self.brewing_mirror_sync_from_inventory();
+            return;
+        }
+        // the believed slot value: the five's 0..5, the REAL
+        // inventory's rows the menu numbering speaks (5..31 the main
+        // grid, 32..40 the hotbar)
+        let believed = if menu < 5 {
+            self.brewing_slots[menu]
+        } else if menu < 32 {
+            self.inventory.items[menu + 4]
+        } else {
+            self.inventory.items[menu - 32]
+        };
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.brewing_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.brewing_carried)
+        };
+        if menu < 5 {
+            self.brewing_slots[menu] = new_slot;
+        } else if menu < 32 {
+            self.inventory.items[menu + 4] = new_slot;
+        } else {
+            self.inventory.items[menu - 32] = new_slot;
+        }
+        self.brewing_carried = new_carried;
+        self.brewing_mirror_sync_from_inventory();
     }
 
     /// THE DISPENSER'S OWN OUTSIDE THROW (the furnace's own walk the
@@ -50194,6 +50803,7 @@ impl App {
             ScreenKind::Inventory => self.close_inventory(back),
             ScreenKind::Chest => self.close_chest_container(back),
             ScreenKind::Dispenser => self.close_dispenser(back),
+            ScreenKind::Brewing => self.close_brewing(back),
             ScreenKind::Furnace => self.close_furnace(back),
             ScreenKind::Beacon => self.close_beacon(back),
             ScreenKind::Crafting => self.close_crafting_table(back),
@@ -56564,6 +57174,26 @@ impl App {
             })
         {
             self.open_dispenser_for(hit.pos);
+            return true;
+        }
+        // THE BREWING STAND'S OWN GUI DOOR (javap 26.2 BrewingStandBlock.
+        // useWithoutItem — the openMenu walk the BE's own MenuProvider
+        // answers, the awardStat(INSPECT_BREWINGSTAND) the SUCCESS
+        // verdict carries: the right-press on the placed brewing stand
+        // the OFFLINE world answers — the five-seat screen the fresh
+        // stand-in opens, the cell's own five the brewing_stores bank
+        // keeps [the hopper feed + the comparator the SAME map speak]).
+        // The sneaking player the arm SKIPS (the crafting-table's own
+        // gate the vanilla use walk wears). The WIRE session the local
+        // screen never opens (the server's own OpenScreen word owns
+        // the container — the hopper's own law the door keeps).
+        if !self.shift_down
+            && !self.world_is_network
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_brewing_stand(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            })
+        {
+            self.open_brewing_for(hit.pos);
             return true;
         }
         // THE BEACON'S OWN GUI DOOR (the autopush-322 round — javap 26.2
@@ -63490,6 +64120,7 @@ impl App {
                 self.close_chest_container(ScreenKind::World);
             }
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
+            ScreenKind::Brewing => self.close_brewing(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
@@ -67831,6 +68462,19 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_dispenser(&mut g, a, gw, gh);
+            }
+            ScreenKind::Brewing => {
+                // THE BREWING STAND'S OWN ROUND (the vanilla
+                // BrewingStandScreen over the frozen world — the
+                // dispenser's own shape the texture-blitted base
+                // keeps): world underneath, dimmed, the REAL
+                // background texture, the five + the mirror icons, the
+                // carried follow — no mannequin (the BrewingStandScreen
+                // the vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_brewing(&mut g, a, gw, gh);
             }
             ScreenKind::Beacon => {
                 // THE BEACON'S OWN ROUND (the vanilla BeaconScreen over
