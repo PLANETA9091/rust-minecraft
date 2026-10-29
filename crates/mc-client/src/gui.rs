@@ -257,6 +257,42 @@ pub(crate) fn font_text_width(s: &str) -> i32 {
     w
 }
 
+/// THE SGA GLYPH WIDTHS' OWN MEASURE (the dev-336 round — the alt
+/// font's `font/ascii_sga.png` sheet the per-cell inked bbox the
+/// vanilla provider trim law measures: the 8x8 cells the (col*8,
+/// row*8) grid keeps, the (left, width) pair the inked columns'
+/// extremes bank, the empty cells the zero width the space's own
+/// advance answers). The OnceLock the load-once law keeps — the
+/// sheet the static cache the same shape the font.bin's own measured
+/// lane wears.
+fn sga_widths(a: &mut GuiAssets) -> &'static [(u8, u8)] {
+    static WIDTHS: std::sync::OnceLock<Vec<(u8, u8)>> = std::sync::OnceLock::new();
+    WIDTHS.get_or_init(|| {
+        let mut widths: Vec<(u8, u8)> = vec![(0, 0); 96];
+        let Some(sheet) = a.sprite_file("font/ascii_sga.png").cloned() else {
+            return widths;
+        };
+        for ch in 32usize..128 {
+            let cx = ((ch % 16) * 8) as u32;
+            let cy = ((ch / 16) * 8) as u32;
+            let mut min_col = 8u8;
+            let mut max_col = 0u8;
+            for dy in 0..8u32 {
+                for dx in 0..8u32 {
+                    if sheet.sample(cx + dx, cy + dy)[3] > 0.0 {
+                        min_col = min_col.min(dx as u8);
+                        max_col = max_col.max(dx as u8 + 1);
+                    }
+                }
+            }
+            if min_col < max_col {
+                widths[ch - 32] = (min_col, max_col - min_col);
+            }
+        }
+        widths
+    })
+}
+
 impl Sprite {
     pub fn decode(bytes: &[u8]) -> anyhow::Result<Self> {
         let (w, h, rgba) = decode_png_rgba(bytes)?;
@@ -760,6 +796,73 @@ impl<'a> Gui<'a> {
         font_text_width(s)
     }
 
+    /// THE SGA TEXT'S OWN WIDTH (the dev-336 round — the alt font's
+    /// measured advance the label walk reads: the inked width + 1 the
+    /// trim law keeps, the space the default 4 the include/space
+    /// provider answers).
+    pub fn sga_text_width(&mut self, a: &mut GuiAssets, s: &str) -> i32 {
+        let widths = sga_widths(a);
+        let mut w = 0i32;
+        for ch in s.chars() {
+            if ch == ' ' {
+                w += 4;
+                continue;
+            }
+            let b = ch as usize;
+            if !(32..128).contains(&b) {
+                w += 4;
+                continue;
+            }
+            w += widths[b - 32].1 as i32 + 1;
+        }
+        w
+    }
+
+    /// THE SGA TEXT'S OWN DRAW (the dev-336 round — the alt font's
+    /// glyph cells the label lane renders: the `font/ascii_sga.png`
+    /// sheet the 8x8 cells the (col*8, row*8) grid keeps, the inked
+    /// bbox the trim law banks, the glyph the (ascent - gh) top the
+    /// vanilla renderChar math wears [the ascent 7 the alt.json
+    /// speaks, the gh 8 the full-height SGA symbols keep], the color
+    /// the ink the multiply keeps).
+    pub fn draw_sga_text(&mut self, a: &mut GuiAssets, x: i32, y: i32, s: &str, color: [f32; 3]) {
+        let widths = sga_widths(a);
+        let Some(sheet) = a.sprite_file("font/ascii_sga.png").cloned() else {
+            return;
+        };
+        let mut cx = x;
+        for ch in s.chars() {
+            if ch == ' ' {
+                cx += 4;
+                continue;
+            }
+            let b = ch as usize;
+            if !(32..128).contains(&b) {
+                cx += 4;
+                continue;
+            }
+            let (left, gw) = widths[b - 32];
+            if gw == 0 {
+                cx += 4;
+                continue;
+            }
+            let sx = ((b % 16) * 8 + left as usize) as u32;
+            let sy = ((b / 16) * 8) as u32;
+            for dy in 0..8u32 {
+                for dx in 0..gw as u32 {
+                    let c = sheet.sample(sx + dx, sy + dy);
+                    if c[3] > 0.0 {
+                        self.px(
+                            cx + dx as i32,
+                            y - 1 + dy as i32,
+                            [color[0] * c[0], color[1] * c[1], color[2] * c[2], c[3]],
+                        );
+                    }
+                }
+            }
+            cx += gw as i32 + 1;
+        }
+    }
     /// Draw text with `§` color codes; when `shadow`, first draw a darkened
     /// copy at (+1,+1) exactly like the original renderer.
     pub fn text(

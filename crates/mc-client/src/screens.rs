@@ -27624,6 +27624,92 @@ impl App {
         }
     }
 
+    /// THE SPELL WALK'S OWN LABEL ROLL (the dev-336 round — javap the
+    /// 26.2 EnchantmentNames.getRandomName pc 0-93 the exact walk: the
+    /// count the `nextInt(2) + 3` roll the iconst pair speaks [the 3
+    /// or 4 words the joined " " separators keep], the picks the
+    /// words[nextInt(62)] the RandomSource.getRandom helper's own
+    /// `array[random.nextInt(array.length)]` body answers, the
+    /// headByWidth trim the caller's own width the render side
+    /// serves). The WORDS the clinit's own 62-entry list banks (the
+    /// famous klaatu/cthulhu/fhtagn rows the vanilla literal stream
+    /// keeps).
+    fn enchant_label_roll(rng: &mut crate::noise::VanillaRandom) -> String {
+        const WORDS: [&str; 62] = [
+            "the",
+            "elder",
+            "scrolls",
+            "klaatu",
+            "berata",
+            "niktu",
+            "xyzzy",
+            "bless",
+            "curse",
+            "light",
+            "darkness",
+            "fire",
+            "air",
+            "earth",
+            "water",
+            "hot",
+            "dry",
+            "cold",
+            "wet",
+            "ignite",
+            "snuff",
+            "embiggen",
+            "twist",
+            "shorten",
+            "stretch",
+            "fiddle",
+            "destroy",
+            "imbue",
+            "galvanize",
+            "enchant",
+            "free",
+            "limited",
+            "range",
+            "of",
+            "towards",
+            "inside",
+            "sphere",
+            "cube",
+            "self",
+            "other",
+            "ball",
+            "mental",
+            "physical",
+            "grow",
+            "shrink",
+            "demon",
+            "elemental",
+            "spirit",
+            "animal",
+            "creature",
+            "beast",
+            "humanoid",
+            "undead",
+            "fresh",
+            "stale",
+            "phnglui",
+            "mglwnafh",
+            "cthulhu",
+            "rlyeh",
+            "wgahnagl",
+            "fhtagn",
+            "baguette",
+        ];
+        let count = rng.next_int(2) as usize + 3;
+        let mut label = String::new();
+        for (i, _) in (0..count).enumerate() {
+            if i != 0 {
+                label.push(' ');
+            }
+            label.push_str(WORDS[rng.next_int(62) as usize]);
+        }
+        label
+    }
+
     /// THE SPELL WALK'S OWN COSTS REFRESH (the EnchantmentMenu
     /// slotsChanged's own walk the offline open + the seat mutations
     /// call): the empty item slot the zero costs the vanilla gate
@@ -33059,10 +33145,13 @@ impl App {
         // serves, the number the RIGHT-ALIGNED (166 - width,
         // 23 + 19*i) seat the font.width walk banks, the colors the
         // ldc ints speak [the affordable #80ff20 the -8323296 answer,
-        // the short #407f10 the -12550384 answer]). The gibberish
-        // label the EnchantmentNames subsystem the next round keeps
-        // (the vanilla's own lane the offline canvas never draws —
-        // the 335 book-float verdict's own law the glyph lane wears).
+        // the short #407f10 the -12550384 answer]). THE GIBBERISH
+        // LABEL'S OWN SEED (the dev-336 round — the extractBackground
+        // bc 81-88 the initSeed(getEnchantmentSeed()) PER-FRAME
+        // re-seed the vanilla anti-flicker law keeps: the same seed-0
+        // the costs walk wears, the three rows' labels the CONTINUOUS
+        // stream the row order consumes)
+        let mut label_rng = crate::noise::VanillaRandom::new(0);
         for (i, cost) in self.enchanting_costs.iter().enumerate() {
             let rx = panel.0 + 60;
             let ry = panel.1 + 14 + 19 * i as i32;
@@ -33105,6 +33194,45 @@ impl App {
             };
             g.sprite_region(a, frame, 0, 0, 108, 19, rx, ry);
             g.sprite_region(a, &level, 0, 0, 16, 16, rx + 1, ry + 1);
+            // THE GIBBERISH LABEL'S OWN LANE (the dev-336 round — the
+            // extractBackground bc 199-211 the getRandomName walk the
+            // every enabled row calls [the affordability the roll
+            // never gates], the (80, 16 + 19*i) seat the 86-minus-
+            // number-width the trim keeps, the colors the branches
+            // speak [the affordable #685e4a the -9937334 answer, the
+            // hovered white the -128's own rgb keeps — the 0x80 alpha
+            // the byte's own lane the offline opaque draw answers,
+            // the xp-short #342f25 the (color & 0xfefefe) >> 1 dim
+            // the classic halve law wears])
+            let mut label = Self::enchant_label_roll(&mut label_rng);
+            let max_w = 86 - crate::gui::font_text_width(&cost.to_string());
+            while !label.is_empty() && g.sga_text_width(a, &label) > max_w {
+                label.pop();
+            }
+            let label_rgb = if affordable {
+                if hovered {
+                    [1.0, 1.0, 1.0]
+                } else {
+                    [
+                        0x68 as f32 / 255.0,
+                        0x5e as f32 / 255.0,
+                        0x4a as f32 / 255.0,
+                    ]
+                }
+            } else {
+                [
+                    0x34 as f32 / 255.0,
+                    0x2f as f32 / 255.0,
+                    0x25 as f32 / 255.0,
+                ]
+            };
+            g.draw_sga_text(
+                a,
+                panel.0 + 80,
+                panel.1 + 16 + 19 * i as i32,
+                &label,
+                label_rgb,
+            );
             let text = cost.to_string();
             let nx = panel.0 + 166 - g.text_width(&text) as i32;
             g.text(a, nx, panel.1 + 23 + 19 * i as i32, &text, num_rgb, false);

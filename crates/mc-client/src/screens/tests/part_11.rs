@@ -7095,3 +7095,115 @@ fn the_enchanting_table_the_rows_the_frame_and_number_wear() {
         "the affordable number the green seat wears"
     );
 }
+
+#[test]
+fn the_enchanting_table_the_labels_the_sga_glyphs_wear() {
+    // THE SPELL WALK'S OWN GIBBERISH LABEL (the dev-336 round — the
+    // EnchantmentNames.getRandomName walk the SGA alt-font lane
+    // renders: the seed-0 rolls the per-frame re-seed keeps, the
+    // (80, 16 + 19*i) seat the 86-minus-number-width trim banks, the
+    // colors the branches speak)
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let w = app.offline_world.as_mut().unwrap();
+    for y in surface..=surface + 2 {
+        for x in c - 3..=c + 3 {
+            for z in c - 3..=c + 3 {
+                w.set(x, y, z, crate::world::AIR);
+            }
+        }
+    }
+    w.set(c, surface, c, crate::world::ENCHANTING_TABLE);
+    w.set(c + 2, surface, c, crate::world::BOOKSHELF);
+    // THE DOOR'S OWN OPEN (the empty pair the cost-0 gate keeps — the
+    // labels the silence the gate speaks)
+    app.open_enchanting_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let rgb = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> [u8; 3] {
+        let o = ((y as usize) * fb.w + x as usize) * 3;
+        [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+    };
+    let has_rgb = |fb: &crate::raster::Framebuf, x0: i32, y0: i32, target: [u8; 3]| -> bool {
+        for dy in 0..9 {
+            for dx in 0..60 {
+                let p = rgb(fb, x0 + dx, y0 + dy);
+                if (p[0] as i32 - target[0] as i32).abs() <= 6
+                    && (p[1] as i32 - target[1] as i32).abs() <= 6
+                    && (p[2] as i32 - target[2] as i32).abs() <= 6
+                {
+                    return true;
+                }
+            }
+        }
+        false
+    };
+    // THE COST-0 GATE'S OWN SILENCE (the empty pair the labels never
+    // draws — the label seat the bg through speaks)
+    assert!(
+        !has_rgb(&fb, panel.0 + 80, panel.1 + 15, [0x68, 0x5e, 0x4a]),
+        "the cost-0 row the label seat keeps silent"
+    );
+    assert!(
+        !has_rgb(&fb, panel.0 + 80, panel.1 + 15, [0x34, 0x2f, 0x25]),
+        "the cost-0 row the dim ink never wears"
+    );
+    // THE XP-SHORT LANE'S OWN DIM (the unaffordable rows the
+    // (color & 0xfefefe) >> 1 halve the classic law wears — the
+    // #342f25 the label ink speaks)
+    app.enchant_slots[0] = (7, 1);
+    app.enchant_costs_refresh();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    assert!(
+        has_rgb(&fb, panel.0 + 80, panel.1 + 15, [0x34, 0x2f, 0x25]),
+        "the xp-short row the dim label ink wears"
+    );
+    // THE AFFORDABLE LANE'S OWN COLOR (the brown-gray #685e4a the
+    // -9937334 the enabled rows speak — the hovered white the mouse
+    // the headless law never rides)
+    app.xp.level = 30;
+    app.enchant_slots[1] = (7, 3);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    assert!(
+        has_rgb(&fb, panel.0 + 80, panel.1 + 15, [0x68, 0x5e, 0x4a]),
+        "the affordable row the label ink wears"
+    );
+    // THE ROLL'S OWN DETERMINISM (the seed-0 strings the python LCG
+    // twin banks — the ONE continuous stream the three rows consume)
+    let mut rng = crate::noise::VanillaRandom::new(0);
+    assert_eq!(
+        App::enchant_label_roll(&mut rng),
+        "scrolls humanoid fire earth",
+        "the row-0 roll the seed-0 law wears"
+    );
+    assert_eq!(
+        App::enchant_label_roll(&mut rng),
+        "elder niktu bless",
+        "the row-1 roll the stream keeps"
+    );
+    assert_eq!(
+        App::enchant_label_roll(&mut rng),
+        "cold spirit imbue curse",
+        "the row-2 roll the stream keeps"
+    );
+}

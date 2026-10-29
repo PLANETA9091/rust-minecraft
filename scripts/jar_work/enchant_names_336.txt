@@ -1,0 +1,391 @@
+=== net/minecraft/client/gui/screens/inventory/EnchantmentNames.class
+--- field ALT_FONT Lnet/minecraft/network/chat/FontDescription; 
+--- field ROOT_STYLE Lnet/minecraft/network/chat/Style; 
+--- field INSTANCE Lnet/minecraft/client/gui/screens/inventory/EnchantmentNames; 
+--- field random Lnet/minecraft/util/RandomSource; 
+--- field words [Ljava/lang/String; 
+--- method <init> ()V
+       0 aload_0
+       1 invokespecial ('MTH', None, '<init>', '()V')
+       4 aload_0
+       5 invokestatic ('IFM', None, 'create', '()Lnet/minecraft/util/RandomSource;')
+       8 putfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      11 aload_0
+      12 bipush 62
+      14 anewarray ('CLS', 'java/lang/String')
+      17 dup
+      18 iconst_0
+      19 ldc #21 ('STR', 'the')
+      21 astore_3
+      22 dup
+      23 iconst_1
+      24 ldc #23 ('STR', 'elder')
+      26 astore_3
+      27 dup
+      28 iconst_2
+      29 ldc #25 ('STR', 'scrolls')
+      31 astore_3
+      32 dup
+      33 iconst_3
+      34 ldc #27 ('STR', 'klaatu')
+      36 astore_3
+      37 dup
+      38 iconst_4
+      39 ldc #29 ('STR', 'berata')
+      41 astore_3
+      42 dup
+      43 iconst_5
+      44 ldc #31 ('STR', 'niktu')
+      46 astore_3
+      47 dup
+      48 bipush 6
+      50 ldc #33 ('STR', 'xyzzy')
+      52 astore_3
+      53 dup
+      54 bipush 7
+      56 ldc #35 ('STR', 'bless')
+      58 astore_3
+      59 dup
+      60 bipush 8
+      62 ldc #37 ('STR', 'curse')
+      64 astore_3
+      65 dup
+      66 bipush 9
+      68 ldc #39 ('STR', 'light')
+      70 astore_3
+      71 dup
+      72 bipush 10
+      74 ldc #41 ('STR', 'darkness')
+      76 astore_3
+      77 dup
+      78 bipush 11
+      80 ldc #43 ('STR', 'fire')
+      82 astore_3
+      83 dup
+      84 bipush 12
+      86 ldc #45 ('STR', 'air')
+      88 astore_3
+      89 dup
+      90 bipush 13
+      92 ldc #47 ('STR', 'earth')
+      94 astore_3
+      95 dup
+      96 bipush 14
+      98 ldc #49 ('STR', 'water')
+     100 astore_3
+     101 dup
+     102 bipush 15
+     104 ldc #51 ('STR', 'hot')
+     106 astore_3
+     107 dup
+     108 bipush 16
+     110 ldc #53 ('STR', 'dry')
+     112 astore_3
+     113 dup
+     114 bipush 17
+     116 ldc #55 ('STR', 'cold')
+     118 astore_3
+     119 dup
+     120 bipush 18
+     122 ldc #57 ('STR', 'wet')
+     124 astore_3
+     125 dup
+     126 bipush 19
+     128 ldc #59 ('STR', 'ignite')
+     130 astore_3
+     131 dup
+     132 bipush 20
+     134 ldc #61 ('STR', 'snuff')
+     136 astore_3
+     137 dup
+     138 bipush 21
+     140 ldc #63 ('STR', 'embiggen')
+     142 astore_3
+     143 dup
+     144 bipush 22
+     146 ldc #65 ('STR', 'twist')
+     148 astore_3
+     149 dup
+     150 bipush 23
+     152 ldc #67 ('STR', 'shorten')
+     154 astore_3
+     155 dup
+     156 bipush 24
+     158 ldc #69 ('STR', 'stretch')
+     160 astore_3
+     161 dup
+     162 bipush 25
+     164 ldc #71 ('STR', 'fiddle')
+     166 astore_3
+     167 dup
+     168 bipush 26
+     170 ldc #73 ('STR', 'destroy')
+     172 astore_3
+     173 dup
+     174 bipush 27
+     176 ldc #75 ('STR', 'imbue')
+     178 astore_3
+     179 dup
+     180 bipush 28
+     182 ldc #77 ('STR', 'galvanize')
+     184 astore_3
+     185 dup
+     186 bipush 29
+     188 ldc #79 ('STR', 'enchant')
+     190 astore_3
+     191 dup
+     192 bipush 30
+     194 ldc #81 ('STR', 'free')
+     196 astore_3
+     197 dup
+     198 bipush 31
+     200 ldc #83 ('STR', 'limited')
+     202 astore_3
+     203 dup
+     204 bipush 32
+     206 ldc #85 ('STR', 'range')
+     208 astore_3
+     209 dup
+     210 bipush 33
+     212 ldc #87 ('STR', 'of')
+     214 astore_3
+     215 dup
+     216 bipush 34
+     218 ldc #89 ('STR', 'towards')
+     220 astore_3
+     221 dup
+     222 bipush 35
+     224 ldc #91 ('STR', 'inside')
+     226 astore_3
+     227 dup
+     228 bipush 36
+     230 ldc #93 ('STR', 'sphere')
+     232 astore_3
+     233 dup
+     234 bipush 37
+     236 ldc #95 ('STR', 'cube')
+     238 astore_3
+     239 dup
+     240 bipush 38
+     242 ldc #97 ('STR', 'self')
+     244 astore_3
+     245 dup
+     246 bipush 39
+     248 ldc #99 ('STR', 'other')
+     250 astore_3
+     251 dup
+     252 bipush 40
+     254 ldc #101 ('STR', 'ball')
+     256 astore_3
+     257 dup
+     258 bipush 41
+     260 ldc #103 ('STR', 'mental')
+     262 astore_3
+     263 dup
+     264 bipush 42
+     266 ldc #105 ('STR', 'physical')
+     268 astore_3
+     269 dup
+     270 bipush 43
+     272 ldc #107 ('STR', 'grow')
+     274 astore_3
+     275 dup
+     276 bipush 44
+     278 ldc #109 ('STR', 'shrink')
+     280 astore_3
+     281 dup
+     282 bipush 45
+     284 ldc #111 ('STR', 'demon')
+     286 astore_3
+     287 dup
+     288 bipush 46
+     290 ldc #113 ('STR', 'elemental')
+     292 astore_3
+     293 dup
+     294 bipush 47
+     296 ldc #115 ('STR', 'spirit')
+     298 astore_3
+     299 dup
+     300 bipush 48
+     302 ldc #117 ('STR', 'animal')
+     304 astore_3
+     305 dup
+     306 bipush 49
+     308 ldc #119 ('STR', 'creature')
+     310 astore_3
+     311 dup
+     312 bipush 50
+     314 ldc #121 ('STR', 'beast')
+     316 astore_3
+     317 dup
+     318 bipush 51
+     320 ldc #123 ('STR', 'humanoid')
+     322 astore_3
+     323 dup
+     324 bipush 52
+     326 ldc #125 ('STR', 'undead')
+     328 astore_3
+     329 dup
+     330 bipush 53
+     332 ldc #127 ('STR', 'fresh')
+     334 astore_3
+     335 dup
+     336 bipush 54
+     338 ldc #129 ('STR', 'stale')
+     340 astore_3
+     341 dup
+     342 bipush 55
+     344 ldc #131 ('STR', 'phnglui')
+     346 astore_3
+     347 dup
+     348 bipush 56
+     350 ldc #133 ('STR', 'mglwnafh')
+     352 astore_3
+     353 dup
+     354 bipush 57
+     356 ldc #135 ('STR', 'cthulhu')
+     358 astore_3
+     359 dup
+     360 bipush 58
+     362 ldc #137 ('STR', 'rlyeh')
+     364 astore_3
+     365 dup
+     366 bipush 59
+     368 ldc #139 ('STR', 'wgahnagl')
+     370 astore_3
+     371 dup
+     372 bipush 60
+     374 ldc #141 ('STR', 'fhtagn')
+     376 astore_3
+     377 dup
+     378 bipush 61
+     380 ldc #143 ('STR', 'baguette')
+     382 astore_3
+     383 putfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'words', '[Ljava/lang/String;')
+     386 return
+--- method getInstance ()Lnet/minecraft/client/gui/screens/inventory/EnchantmentNames;
+       0 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'INSTANCE', 'Lnet/minecraft/client/gui/screens/inventory/EnchantmentNames;')
+       3 areturn
+--- method getRandomName (Lnet/minecraft/client/gui/Font;I)Lnet/minecraft/network/chat/FormattedText;
+       0 new ('CLS', 'java/lang/StringBuilder')
+       3 dup
+       4 invokespecial ('MTH', 'java/lang/StringBuilder', '<init>', '()V')
+       7 astore_3
+       8 aload_0
+       9 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      12 iconst_2
+      13 invokeinterface
+      18 iconst_3
+      19 iadd
+      20 istore 4
+      22 iconst_0
+      23 istore 5
+      25 iload 5
+      27 iload 4
+      29 if_icmpge -> 69
+      32 iload 5
+      34 ifeq -> 44
+      37 aload_3
+      38 ldc #160 ('STR', ' ')
+      40 invokevirtual ('MTH', 'java/lang/StringBuilder', 'append', '(Ljava/lang/String;)Ljava/lang/StringBuilder;')
+      43 pop
+      44 aload_3
+      45 aload_0
+      46 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'words', '[Ljava/lang/String;')
+      49 aload_0
+      50 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      53 invokestatic ('MTH', None, 'getRandom', '([Ljava/lang/Object;Lnet/minecraft/util/RandomSource;)Ljava/lang/Object;')
+      56 checkcast ('CLS', 'java/lang/String')
+      59 invokevirtual ('MTH', 'java/lang/StringBuilder', 'append', '(Ljava/lang/String;)Ljava/lang/StringBuilder;')
+      62 pop
+      63 iinc 5 by 423
+      65 aconst_null
+      66 goto -> 25
+      69 aload_1
+      70 invokevirtual ('MTH', None, 'getSplitter', '()Lnet/minecraft/client/StringSplitter;')
+      73 aload_3
+      74 invokevirtual ('MTH', 'java/lang/StringBuilder', 'toString', '()Ljava/lang/String;')
+      77 invokestatic ('IFM', None, 'literal', '(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;')
+      80 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'ROOT_STYLE', 'Lnet/minecraft/network/chat/Style;')
+      83 invokevirtual ('MTH', None, 'withStyle', '(Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/MutableComponent;')
+      86 iload_2
+      87 getstatic ('FLD', None, 'EMPTY', 'Lnet/minecraft/network/chat/Style;')
+      90 invokevirtual ('MTH', None, 'headByWidth', '(Lnet/minecraft/network/chat/FormattedText;ILnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/FormattedText;')
+      93 areturn
+--- method initSeed (J)V
+       0 aload_0
+       1 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+       4 lload_1
+       5 invokeinterface
+      10 return
+--- method <clinit> ()V
+       0 new ('CLS', 'net/minecraft/network/chat/FontDescription$Resource')
+       3 dup
+       4 ldc #215 ('STR', 'alt')
+       6 invokestatic ('MTH', None, 'withDefaultNamespace', '(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;')
+       9 invokespecial ('MTH', 'net/minecraft/network/chat/FontDescription$Resource', '<init>', '(Lnet/minecraft/resources/Identifier;)V')
+      12 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'ALT_FONT', 'Lnet/minecraft/network/chat/FontDescription;')
+      15 getstatic ('FLD', None, 'EMPTY', 'Lnet/minecraft/network/chat/Style;')
+      18 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'ALT_FONT', 'Lnet/minecraft/network/chat/FontDescription;')
+      21 invokevirtual ('MTH', 'net/minecraft/network/chat/Style', 'withFont', '(Lnet/minecraft/network/chat/FontDescription;)Lnet/minecraft/network/chat/Style;')
+      24 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'ROOT_STYLE', 'Lnet/minecraft/network/chat/Style;')
+      27 new ('CLS', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames')
+      30 dup
+      31 invokespecial ('MTH', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', '<init>', '()V')
+      34 putstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'INSTANCE', 'Lnet/minecraft/client/gui/screens/inventory/EnchantmentNames;')
+      37 return
+=== net/minecraft/client/gui/screens/inventory/EnchantmentNames.class
+--- method getRandomName (Lnet/minecraft/client/gui/Font;I)Lnet/minecraft/network/chat/FormattedText;
+       0 new ('CLS', 'java/lang/StringBuilder')
+       3 dup
+       4 invokespecial ('MTH', 'java/lang/StringBuilder', '<init>', '()V')
+       7 astore_3
+       8 aload_0
+       9 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      12 iconst_2
+      13 invokeinterface
+      18 iconst_3
+      19 iadd
+      20 istore 4
+      22 iconst_0
+      23 istore 5
+      25 iload 5
+      27 iload 4
+      29 if_icmpge -> 69
+      32 iload 5
+      34 ifeq -> 44
+      37 aload_3
+      38 ldc #160 ('STR', ' ')
+      40 invokevirtual ('MTH', 'java/lang/StringBuilder', 'append', '(Ljava/lang/String;)Ljava/lang/StringBuilder;')
+      43 pop
+      44 aload_3
+      45 aload_0
+      46 getfield ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'words', '[Ljava/lang/String;')
+      49 aload_0
+      50 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+      53 invokestatic ('MTH', None, 'getRandom', '([Ljava/lang/Object;Lnet/minecraft/util/RandomSource;)Ljava/lang/Object;')
+      56 checkcast ('CLS', 'java/lang/String')
+      59 invokevirtual ('MTH', 'java/lang/StringBuilder', 'append', '(Ljava/lang/String;)Ljava/lang/StringBuilder;')
+      62 pop
+      63 iinc 5 by 423
+      65 aconst_null
+      66 goto -> 25
+      69 aload_1
+      70 invokevirtual ('MTH', None, 'getSplitter', '()Lnet/minecraft/client/StringSplitter;')
+      73 aload_3
+      74 invokevirtual ('MTH', 'java/lang/StringBuilder', 'toString', '()Ljava/lang/String;')
+      77 invokestatic ('IFM', None, 'literal', '(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;')
+      80 getstatic ('FLD', 'net/minecraft/client/gui/screens/inventory/EnchantmentNames', 'ROOT_STYLE', 'Lnet/minecraft/network/chat/Style;')
+      83 invokevirtual ('MTH', None, 'withStyle', '(Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/MutableComponent;')
+      86 iload_2
+      87 getstatic ('FLD', None, 'EMPTY', 'Lnet/minecraft/network/chat/Style;')
+      90 invokevirtual ('MTH', None, 'headByWidth', '(Lnet/minecraft/network/chat/FormattedText;ILnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/FormattedText;')
+      93 areturn
+=== net/minecraft/client/gui/screens/inventory/EnchantmentNames.class
+--- method initSeed (J)V
+       0 aload_0
+       1 getfield ('FLD', None, 'random', 'Lnet/minecraft/util/RandomSource;')
+       4 lload_1
+       5 invokeinterface
+      10 return
+=== net/minecraft/util/RandomSource.class
