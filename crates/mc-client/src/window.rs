@@ -178,6 +178,7 @@ fn run_join(
                 (i32, i32),
                 crate::world_model::HotbarPopFlash,
                 [i32; crate::world_view::INVENTORY_MENU_SLOTS],
+                i32,
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
@@ -1197,6 +1198,11 @@ fn run_join(
                                         // patch's POTION_CONTENTS feeds (the
                                         // menu id the seat the remap wears)
                                         upd.inventory_potion_kinds,
+                                        // the cursor's own kind rides beside
+                                        // them — the carriedItem the patch
+                                        // the carried render's bank feeds
+                                        // (the 344 round the same lane wears)
+                                        upd.inventory_carried_potion_kind,
                                         // the ping chart's own snapshot rides
                                         // with them — the RTT ring the net
                                         // worker's pong lane logs (idx 0 the
@@ -1854,6 +1860,7 @@ pub fn run_gui_app(
                 (i32, i32),
                 crate::world_model::HotbarPopFlash,
                 [i32; crate::world_view::INVENTORY_MENU_SLOTS],
+                i32,
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
@@ -3828,6 +3835,7 @@ pub fn run_gui_app(
                     inv_carried,
                     inv_pop_flash,
                     inv_potion_kinds,
+                    inv_carried_potion_kind,
                     ping_samples,
                     bw_samples,
                     tick_samples,
@@ -4328,6 +4336,11 @@ pub fn run_gui_app(
                     // (the hotbar row the menu ids 36..45 the bank's
                     // 0..8 wear, the main grid the identity)
                     app.live_potion_kinds_updated(inv_potion_kinds);
+                    // THE CARRIED CURSOR'S OWN KIND SEAT beside the
+                    // store's kinds — the carriedItem the patch the
+                    // carried render's bank re-banks (the wire's truth
+                    // the wholesale overwrite wears)
+                    app.live_carried_potion_kind_updated(inv_carried_potion_kind);
                     // the pop-time lane's own words beside the store's —
                     // the packet-time verdicts the single-slot sync spoke
                     // (the serial edge the HUD's pop re-arms on, the bulk

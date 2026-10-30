@@ -10270,3 +10270,44 @@ fn the_live_potion_kinds_remap_the_bank_the_store_wears() {
         "the offline world the lane's gate refuses"
     );
 }
+
+/// THE CARRIED CURSOR'S OWN KIND SEAT (the autopush-344 round — the
+/// Set Content packet's carriedItem the patch the cursor's own
+/// extraction the carried render consults): the wire's kind the
+/// wholesale overwrite banks (the re-bank the newest word wins), the
+/// kindless cursor the NONE keeps — and the OFFLINE world the wire
+/// never feeds (the lane's own precondition the gate keeps, the local
+/// truth the bank retains).
+#[test]
+fn the_live_carried_potion_kind_bank_the_lane_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    // the wire's kind: the carried potion the strong swiftness seat
+    // answers (the bootstrap row the projection's own test wears)
+    app.live_carried_potion_kind_updated(crate::brewing_sim::POTION_STRONG_SWIFTNESS);
+    assert_eq!(
+        app.live_carried_potion_kind,
+        crate::brewing_sim::POTION_STRONG_SWIFTNESS,
+        "the carried potion the wire's kind banks"
+    );
+    // the kindless cursor: the plain stack the wire re-speaks — the
+    // wholesale overwrite the NONE re-banks
+    app.live_carried_potion_kind_updated(crate::brewing_sim::POTION_KIND_NONE);
+    assert_eq!(
+        app.live_carried_potion_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the kindless cursor the overwrite re-banks"
+    );
+    // THE OFFLINE GATE (the lane's own precondition): the offline
+    // world the wire never feeds — the bank the local truth keeps
+    let mut offline = App::new(3);
+    offline.enter_world();
+    offline.live_carried_potion_kind_updated(crate::brewing_sim::POTION_STRONG_SWIFTNESS);
+    assert_eq!(
+        offline.live_carried_potion_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the offline world the lane's gate refuses"
+    );
+}

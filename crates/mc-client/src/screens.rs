@@ -8405,6 +8405,16 @@ pub struct App {
     /// prediction walks mutate (the offline world's `inv_carried`
     /// stays the offline truth — the two lanes never mix).
     pub live_inv_carried: (i32, i32),
+    /// THE CARRIED CURSOR'S OWN KIND BANK (the autopush-344 round —
+    /// the Set Content packet's carriedItem the patch the cursor's
+    /// own extraction the carried render consults): the carried
+    /// stack's potion holder id the kind-table id the wire's truth
+    /// banks, the NONE the kindless cursor keeps. The wholesale
+    /// overwrite the refresh re-banks (the 343 kinds' own law the
+    /// cursor's own seat wears — the prediction's seat the next
+    /// refresh re-answers), the offline world the bank never feeds
+    /// (the live lane's own precondition the store's truth keeps).
+    pub live_carried_potion_kind: i32,
     /// THE WORLD CLOCK'S OWN ACCUMULATED TIME (the 26.2 `WorldClock`
     /// walk — javap `ServerClockManager` the clock's own `time` the
     /// manager accumulates, the shared tick counter the clock NO
@@ -12585,6 +12595,7 @@ impl App {
             live_inv_slots: [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
             live_inv_state_id: 0,
             live_inv_carried: (0, 0),
+            live_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             clock_total: 0,
             clock_paused: false,
             clock_rate: 1.0,
@@ -32202,9 +32213,17 @@ impl App {
             g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
         }
         // THE HELD STACK follows the cursor (the vanilla carried render
-        // — the chest live lane's own treatment, the offline carried
-        // the LOCAL store's own state)
-        if self.inv_carried.1 > 0 {
+        // — the table live lane's own treatment the wire cursor rides,
+        // the offline carried the LOCAL store's own state; the 344
+        // round the survival screen's own lane pick wears — the wire
+        // cursor the belief's projection `live_inv_carried` carries,
+        // the offline `inv_carried` the same field keeps)
+        let carried = if self.world_is_network {
+            self.live_inv_carried
+        } else {
+            self.inv_carried
+        };
+        if carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
                 // the drag's own ghost (the extractCarriedItem walk): the
                 // 2+-seat arm the remainder projection wears, the drained
@@ -32213,9 +32232,26 @@ impl App {
                     self.qc_armed,
                     self.qc_slots.len(),
                     self.qc_remainder,
-                    self.inv_carried.1,
+                    carried.1,
                 ) {
-                    draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                    // THE KIND'S OWN CARRIED TINT (the autopush-344
+                    // round — the wire bank's kind the carried potion's
+                    // liquid the SAME law the store rows wear, the id
+                    // gate the stale seat never paints; the OFFLINE
+                    // carried the 339 wall's own plain draw keeps — the
+                    // (id, count) model the component never carries)
+                    let carried_kind = if self.world_is_network
+                        && crate::world::brewing_is_potion_kind(carried.0)
+                    {
+                        self.live_carried_potion_kind
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                        draw_item_icon_kind(g, carried.0, carried_kind, mx - 8, my - 8);
+                    } else {
+                        draw_item_icon(g, carried.0, mx - 8, my - 8);
+                    }
                     if painted > 1 {
                         let s = painted.to_string();
                         let tw = g.text_width(&s);
@@ -71305,6 +71341,22 @@ impl App {
         }
         self.items_potion_kinds[0..9].copy_from_slice(&kinds[36..45]);
         self.items_potion_kinds[9..36].copy_from_slice(&kinds[9..36]);
+    }
+
+    /// THE CARRIED CURSOR'S OWN KIND SEAT (the autopush-344 round —
+    /// the Set Content packet's carriedItem the patch the cursor's
+    /// own extraction the carried render consults): the wire's truth
+    /// the wholesale overwrite re-banks (the SAME law
+    /// [`Self::live_potion_kinds_updated`]'s kinds walk wears — the
+    /// prediction's seat the next refresh re-answers, the carried
+    /// stack the server's own click echo re-speaks). The live lane's
+    /// own precondition — the offline world the wire never feeds (the
+    /// lane's only feeder is the network pump).
+    pub fn live_carried_potion_kind_updated(&mut self, kind: i32) {
+        if !self.world_is_network {
+            return; // the live lane's own precondition — the offline store is the truth
+        }
+        self.live_carried_potion_kind = kind;
     }
 
     /// The live session ended (a server kick or a transport error) while

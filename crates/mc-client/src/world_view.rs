@@ -498,6 +498,17 @@ pub struct SnapshotView {
     /// the store's own numbering into the seats (the hotbar row the
     /// 36..45 ids the bank's 0..8 wear, the main grid the identity).
     pub inventory_potion_kinds: [i32; INVENTORY_MENU_SLOTS],
+    /// The window-0 store's OWN carried cursor's kind (the
+    /// autopush-344 round — the Set Content packet's carriedItem the
+    /// patch the same walk reads): the carried stack's potion holder
+    /// id the kind-table id the decode banks (the 343 kinds' own
+    /// extraction the cursor's own seat wears), the NONE the kindless
+    /// cursor keeps (the absent component the patch's silence is, the
+    /// EMPTY optional the same NONE the false byte speaks). The App's
+    /// live cursor bank the carried render consults — the wire's truth
+    /// the wholesale overwrite re-banks, the prediction's seat the
+    /// next refresh re-answers.
+    pub inventory_carried_potion_kind: i32,
     /// THE GAME-MODE ECHO'S OWN WORD (the model's banked CHANGE_
     /// GAME_MODEL id — the server's own answer the game-event arm
     /// keeps): `None` until the echo speaks (the join snapshot
@@ -3679,6 +3690,7 @@ fn live_inventory_view(
     (i32, i32),
     crate::world_model::HotbarPopFlash,
     [i32; INVENTORY_MENU_SLOTS],
+    i32,
 ) {
     // THE KINDS' OWN EXTRACTION beside the slots — the same walk the
     // pairs wear (the menu id the index IS): the patch's
@@ -3700,6 +3712,11 @@ fn live_inventory_view(
     // Set Content's last word held)
     let state_id = inv.state_id;
     let carried = (inv.carried.item_id, inv.carried.count);
+    // THE CARRIED CURSOR'S OWN KIND EXTRACTION (the autopush-344
+    // round — the carriedItem the SAME walk the slots wear): the
+    // patch's potion_contents seat the cursor's kind answers, the
+    // NONE the kindless cursor keeps
+    let carried_potion_kind = potion_kind_of(&inv.carried);
     (
         slots,
         bundles,
@@ -3707,6 +3724,7 @@ fn live_inventory_view(
         carried,
         inv.pop_flash.clone(),
         potion_kinds,
+        carried_potion_kind,
     )
 }
 
@@ -4027,6 +4045,7 @@ pub fn materialize_snapshot_view(
         inventory_carried,
         inventory_pop_flash,
         inventory_potion_kinds,
+        inventory_carried_potion_kind,
     ) = live_inventory_view(&model);
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
@@ -4085,6 +4104,10 @@ pub fn materialize_snapshot_view(
         // spoke the patch's own kind answers (the join's own state:
         // the NONE array until the store speaks)
         inventory_potion_kinds,
+        // the cursor's own kind rides beside them — the carriedItem
+        // the patch the same walk reads (the join's own state: the
+        // NONE the empty cursor keeps)
+        inventory_carried_potion_kind,
         // the join snapshot carries no mode echo — the CHANGE_GAME_
         // MODEL packets are the only source (the login word the login
         // phase's own lane banks)
@@ -5246,6 +5269,7 @@ impl LiveView {
             inventory_carried,
             inventory_pop_flash,
             inventory_potion_kinds,
+            inventory_carried_potion_kind,
         ) = live_inventory_view(&self.model);
         // the arrows' sync mailbox's own projection (the words in wire
         // order — the worker's drain empties the mailbox after the
@@ -5311,6 +5335,10 @@ impl LiveView {
                 // the SAME projection wears (the store's truth the
                 // inventory's own lane keeps)
                 inventory_potion_kinds,
+                // the cursor's own kind rides beside them — the
+                // pose-less arm the same walk wears (the carriedItem
+                // the patch the cursor's own seat answers)
+                inventory_carried_potion_kind,
                 health: health_view(&self.model),
                 mobs,
                 // the boats' belief rides the pose-less arm too — the
@@ -5600,6 +5628,10 @@ impl LiveView {
             // wire spoke the patch's own kind answers, every refresh
             // exactly like the slots do
             inventory_potion_kinds,
+            // the cursor's own kind rides beside them — the carriedItem
+            // the patch the same walk reads, every refresh exactly like
+            // the kinds do
+            inventory_carried_potion_kind,
             // the mode echo rides every refresh — the server's answer
             // the session's own truth (the idempotent re-bank the
             // installer's own acmp keeps silent)
@@ -8968,6 +9000,110 @@ mod tests {
             view.inventory_potion_kinds[40],
             crate::brewing_sim::POTION_KIND_NONE,
             "the never-spoken tail the NONE keeps"
+        );
+    }
+
+    #[test]
+    fn the_carried_cursor_potion_kind_rides_the_view() {
+        // the autopush-344 round — the Set Content packet's carriedItem
+        // the patch the SAME walk the slots wear: the kinded carried
+        // stack the cursor's own kind answers, the plain carried the
+        // NONE the absent component keeps, the EMPTY-optional potion
+        // (the false byte the potion field speaks) the same NONE
+        // keeps, and the EMPTY cursor the NONE the silence keeps
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
+        let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+        let potion_patch = |potion_id: Option<i32>| mc_protocol::play::ComponentPatch {
+            added: vec![(
+                mc_protocol::play::data_component_types::POTION_CONTENTS,
+                mc_protocol::play::ComponentValue::PotionContents(
+                    mc_protocol::play::PotionContents {
+                        potion: potion_id,
+                        custom_color: None,
+                        custom_effects: Vec::new(),
+                        custom_name: None,
+                    },
+                ),
+            )],
+            removed: Vec::new(),
+        };
+        let stack = |count, item_id, patch| mc_protocol::play::ItemStack {
+            count,
+            item_id,
+            patch,
+        };
+        // the carried cursor the STRONG SWIFTNESS seat rides (kind 15
+        // the bootstrap row the slots' own test wears), the slots all
+        // plain — the cursor the only kinded seat the walk reads
+        let mut items = vec![stack(0, 0, Default::default()); 9];
+        items.push(stack(7, 745, Default::default()));
+        while items.len() < 46 {
+            items.push(stack(0, 0, Default::default()));
+        }
+        live.apply(PlayEvent::ContainerFilled(
+            mc_protocol::play::ContainerContent {
+                container_id: crate::world_model::INVENTORY_WINDOW_ID,
+                state_id: 3,
+                items,
+                carried_item: stack(1, potion, potion_patch(Some(15))),
+            },
+        ));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.inventory_carried,
+            (potion, 1),
+            "the carried pair the projection keys"
+        );
+        assert_eq!(
+            view.inventory_carried_potion_kind, 15,
+            "the carried potion the patch's own kind answers"
+        );
+        // the kindless carried: the plain stack the cursor holds — the
+        // absent component the NONE keeps
+        live.apply(PlayEvent::ContainerFilled(
+            mc_protocol::play::ContainerContent {
+                container_id: crate::world_model::INVENTORY_WINDOW_ID,
+                state_id: 4,
+                items: vec![stack(7, 745, Default::default()); 46],
+                carried_item: stack(3, 745, Default::default()),
+            },
+        ));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.inventory_carried_potion_kind,
+            crate::brewing_sim::POTION_KIND_NONE,
+            "the plain carried the absent component the NONE keeps"
+        );
+        // the EMPTY-optional potion: the false byte the potion field
+        // speaks — the same NONE the optional's own silence keeps
+        live.apply(PlayEvent::ContainerFilled(
+            mc_protocol::play::ContainerContent {
+                container_id: crate::world_model::INVENTORY_WINDOW_ID,
+                state_id: 5,
+                items: vec![stack(7, 745, Default::default()); 46],
+                carried_item: stack(1, potion, potion_patch(None)),
+            },
+        ));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.inventory_carried_potion_kind,
+            crate::brewing_sim::POTION_KIND_NONE,
+            "the EMPTY optional the false byte the same NONE keeps"
+        );
+        // the EMPTY cursor: the silence the NONE keeps
+        live.apply(PlayEvent::ContainerFilled(
+            mc_protocol::play::ContainerContent {
+                container_id: crate::world_model::INVENTORY_WINDOW_ID,
+                state_id: 6,
+                items: vec![stack(7, 745, Default::default()); 46],
+                carried_item: stack(0, 0, Default::default()),
+            },
+        ));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.inventory_carried_potion_kind,
+            crate::brewing_sim::POTION_KIND_NONE,
+            "the empty cursor the silence keeps"
         );
     }
 
