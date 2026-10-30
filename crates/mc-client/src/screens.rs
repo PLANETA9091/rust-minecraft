@@ -29407,6 +29407,51 @@ impl App {
             .copied()
     }
 
+    /// THE ANVIL'S OWN HOVER-TOOLTIP SEAT (the 351 round — the beacon
+    /// lane's own shape the anvil's canvas wears): the hovered seat's
+    /// own stack the SAME gates the shared law keeps — the hoveredSlot
+    /// null/empty the pc 0-17 return serves, the carried wall the
+    /// pc 27-46 verdict keeps (the anvil_carried the wall's own stack
+    /// answers), the rows the shared [`Self::item_tooltip_rows_kind`]
+    /// lane speaks — the seat's own ENCHANT store the dev-202 walk
+    /// banks the tooltip lines ride, the custom-name lane the first
+    /// row re-keys (the §o italic the styled hover name wears). The
+    /// trio + the mirror the belief rows the hovered_container walk
+    /// banks, the potion kind the store never carries the NONE keeps.
+    fn anvil_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Anvil {
+            return None; // the anvil's own screen the walk serves
+        }
+        if self.anvil_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.anvil_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let (id, count) = if s < 2 {
+            *self.anvil_slots.get(s).unwrap_or(&(0, 0))
+        } else if s == 2 {
+            self.anvil_result
+        } else {
+            *self.anvil_mirror.get(s - 3).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let ench = self.anvil_seat_enchants(s);
+        let mut rows = Self::item_tooltip_rows_kind(
+            id,
+            crate::brewing_sim::POTION_KIND_NONE,
+            self.advanced_item_tooltips,
+            &ench,
+        );
+        if let Some(name) = self.anvil_seat_name(s) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
     /// THE ANVIL'S OWN HIGHLIGHT SEAT (the same shared
     /// AbstractContainerScreen law the family rounds bank — the
     /// hovered seat's INNER origin the anvil_hover_seat walk answers,
@@ -35975,6 +36020,16 @@ impl App {
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
+            }
+        }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the 351 round
+        // the anvil's own canvas wears: the hovered seat's rows the
+        // shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.anvil_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
             }
         }
         self.render_bundle_tooltip(g, a);
@@ -47712,6 +47767,16 @@ impl App {
         Self::item_tooltip_rows_enchanted(id, advanced, &[])
     }
 
+    /// THE CUSTOM-NAME ROW'S OWN ITALIC (the 351 round — the styled
+    /// hover name the CustomName component carries: the anvil's own
+    /// rename the ITALIC style the component wears, the legacy `§o`
+    /// prefix the StyleState's italic shift answers — the draw the
+    /// glyph skew serves, the width the code-skip law keeps, the
+    /// WHITE the base color the style-less name shares).
+    fn custom_name_row(name: &str) -> (String, [f32; 3]) {
+        (format!("\u{a7}o{name}"), WHITE)
+    }
+
     /// THE KINDED TOOLTIP ROWS (the autopush-340 round — the potion
     /// rows the POTION_CONTENTS kind the name row answers: the kinded
     /// seat the display name swaps [the `getName` walk the base-name
@@ -48179,10 +48244,23 @@ impl App {
                 .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
             _ => crate::brewing_sim::POTION_KIND_NONE,
         };
-        Some((
-            id,
-            Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench),
-        ))
+        // THE CUSTOM-NAME LANE'S OWN RIDE (the 351 round — the dev-202
+        // store the hovered seat's first row re-keys: the renamed
+        // stack the §o italic the styled hover name wears, the store
+        // rows + the offhand's 36 the lane answers, the armor/craft
+        // rows the store never carries the plain name keeps)
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
+        let custom = match hover {
+            InventoryHover::Store(i) => self.items_custom_names.get(i).cloned().flatten(),
+            InventoryHover::Offhand => self.items_custom_names.get(36).cloned().flatten(),
+            _ => None,
+        };
+        if let Some(name) = custom {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some((id, rows))
     }
 
     /// THE ITEM TOOLTIP'S OWN RENDER (the extractTooltip pass — the
@@ -80619,6 +80697,14 @@ impl App {
             crate::brewing_sim::POTION_KIND_NONE
         };
         let name = self.held_item_display_name_kind(id, kind);
+        // THE CUSTOM-NAME LANE'S OWN RIDE (the 351 round — the pcs
+        // 44-64 italic branch the dev-202 store the honest absence
+        // retires: the renamed stack the §o word the hover name
+        // wears, the hotbar row the store's own seat answers)
+        let name = self.items_custom_names[self.selected_hotbar]
+            .clone()
+            .map(|custom| format!("\u{a7}o{custom}"))
+            .unwrap_or(name);
         let current = (id, name);
         if self.held_name_last.as_ref() != Some(&current) {
             self.held_name_timer = HELD_NAME_POP_TICKS;
@@ -80635,9 +80721,10 @@ impl App {
     /// ().color()` the withStyle keeps — the `TextColor.fromLegacyFormat`
     /// ints the 26.2 palette carries: white 0xFFFFFF / yellow 0xFFFF55
     /// / aqua 0x55FFFF / light_purple 0xFF55FF); the CUSTOM_NAME
-    /// italic the component branch speaks (pcs 44-64) — the client's
-    /// stacks carry no custom names, the branch the honest absence
-    /// keeps; the x the centered `(guiWidth - textWidth) / 2` walk
+    /// italic the component branch speaks (pcs 44-64) — the dev-202
+    /// store the branch's honest absence retired (the 351 round the
+    /// tick lane the §o word wears); the x the centered
+    /// `(guiWidth - textWidth) / 2` walk
     /// (pcs 74-82), the y the `guiHeight - 59` store (pcs 84-91) the
     /// `!canHurtPlayer()` +14 shift lifts (pcs 93-106 — the
     /// isSurvival fold the audited lane speaks, the creative frame

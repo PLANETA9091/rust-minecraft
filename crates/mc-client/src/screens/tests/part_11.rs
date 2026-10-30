@@ -11496,3 +11496,275 @@ fn the_anvil_wire_route_the_menu_type8_wear() {
         "the live close the screen keeps"
     );
 }
+
+/// THE ANVIL'S OWN TOOLTIP SEAT (the 351 round — the extractTooltip
+/// pass the anvil's own canvas wears): the hovered seat's rows the
+/// shared lane speaks, the custom-name lane the first row re-keys
+/// (the §o italic the styled hover name wears — the trio + the
+/// mirror the store's own seats answer), the seat's own ENCHANT
+/// store the lines ride, the carried wall + the empty seat + the
+/// closed door the None verdicts keep. The REAL walk the offline
+/// door wears — the headless frame the REAL rects the render lays.
+#[test]
+fn the_anvil_tooltip_the_seats_the_italic_wears() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_anvil_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the anvil door the kind wears"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE RENAMED INPUT'S OWN ROW (the §o italic the styled hover
+    // name wears — the seat lane the first row re-keys)
+    app.anvil_slots[0] = (sword, 1);
+    app.anvil_names[0] = Some("Doom Bringer".to_string());
+    let (i0x, i0y) = seat(0);
+    let rows = app
+        .anvil_item_tooltip_hover(i0x + 8, i0y + 8)
+        .expect("the renamed input the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oDoom Bringer",
+        "the custom name the italic prefix wears"
+    );
+    // THE PLAIN STACK'S OWN NAME (the lane's None the shared lane
+    // keeps — the hover name the display walk answers)
+    app.anvil_names[0] = None;
+    let rows = app
+        .anvil_item_tooltip_hover(i0x + 8, i0y + 8)
+        .expect("the plain input the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the plain name the shared lane speaks"
+    );
+    // THE SEAT'S OWN ENCHANT STORE RIDES (the dev-202 walk the lines
+    // wear — the sharpness III the name row answers)
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap();
+    app.anvil_enchants[0] = vec![(sharp as i32, 3)];
+    let rows = app
+        .anvil_item_tooltip_hover(i0x + 8, i0y + 8)
+        .expect("the enchanted input the rows speak");
+    assert_eq!(rows.len(), 2, "the name + the line the store wears");
+    assert_eq!(rows[1].0, "Sharpness III", "the store line the walk speaks");
+    app.anvil_enchants[0].clear();
+    // THE RESULT SEAT'S OWN LANE (the createResult's product the
+    // walk banks — the copy name the result seat answers)
+    app.anvil_result = (sword, 1);
+    app.anvil_names[2] = Some("Forged Blade".to_string());
+    let (rx, ry) = seat(2);
+    let rows = app
+        .anvil_item_tooltip_hover(rx + 8, ry + 8)
+        .expect("the result seat the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oForged Blade",
+        "the result's copy name the italic wears"
+    );
+    app.anvil_result = (0, 0);
+    app.anvil_names[2] = None;
+    // THE MIRROR'S OWN POSITIONAL RIDE (the dev-202 map the store
+    // row answers — the mirror head the inventory's item 9 the lane
+    // keeps)
+    app.anvil_mirror[0] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = seat(3);
+    let rows = app
+        .anvil_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .anvil_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE CARRIED WALL (the pc 27-46 verdict the anvil's own stack
+    // answers)
+    app.anvil_carried = (1, 1);
+    assert_eq!(
+        app.anvil_item_tooltip_hover(i0x + 8, i0y + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.anvil_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps)
+    let (e1x, e1y) = seat(1);
+    assert_eq!(
+        app.anvil_item_tooltip_hover(e1x + 8, e1y + 8),
+        None,
+        "the empty seat the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_anvil(ScreenKind::World);
+    assert_eq!(
+        app.anvil_item_tooltip_hover(i0x + 8, i0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE INVENTORY TOOLTIP'S OWN LANE RIDE (the 351 round — the dev-202
+/// store the hovered seat's first row re-keys): the renamed store row
+/// the §o italic the styled hover name wears, the offhand's 36 the
+/// same lane answers, the armor row the store never carries the plain
+/// name keeps, the carried wall + the empty seat the None verdicts
+/// keep.
+#[test]
+fn the_inventory_tooltip_the_custom_lane_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let shield = mc_registry::item_id_by_name("shield").unwrap();
+    let boots = mc_registry::item_id_by_name("iron_boots").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE RENAMED STORE ROW (the §o italic the lane's own answer)
+    app.inventory.items[10] = (dirt, 1);
+    app.items_custom_names[10] = Some("Named Block".to_string());
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 10);
+    let (id, rows) = app
+        .item_tooltip_hover(ox + 8, oy + 8)
+        .expect("the renamed row the rows speak");
+    assert_eq!(id, dirt, "the seat's own stack the id answers");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Block",
+        "the custom name the italic prefix wears"
+    );
+    // THE CLEARED LANE (the plain name the shared lane keeps)
+    app.items_custom_names[10] = None;
+    let (_, rows) = app
+        .item_tooltip_hover(ox + 8, oy + 8)
+        .expect("the plain row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the plain name the lane's None keeps"
+    );
+    // THE OFFHAND'S OWN SEAT (the bank's 36 the hovered shield cell
+    // answers — the 346 seat the lane keeps)
+    app.inventory.offhand[0] = (shield, 1);
+    app.items_custom_names[36] = Some("Warded Shield".to_string());
+    let (ox2, oy2) = offhand_slot_origin(app.inv_panel);
+    let (_, rows) = app
+        .item_tooltip_hover(ox2 + 8, oy2 + 8)
+        .expect("the offhand seat the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oWarded Shield",
+        "the offhand's 36 the lane answers"
+    );
+    app.items_custom_names[36] = None;
+    // THE ARMOR ROW'S OWN WALL (the store the lane never carries —
+    // the plain name the honest silence keeps)
+    app.inventory.armor[3] = (boots, 1);
+    let (ax, ay) = armor_slot_origin(app.inv_panel, 3);
+    let (_, rows) = app
+        .item_tooltip_hover(ax + 8, ay + 8)
+        .expect("the armor row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(boots).unwrap()),
+        "the armor row the plain name keeps"
+    );
+    // THE CARRIED WALL (the image-less false answer the pc 27-46
+    // keeps)
+    app.inv_carried = (dirt, 1);
+    assert_eq!(
+        app.item_tooltip_hover(ox + 8, oy + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.inv_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps — the row
+    // the test's own walk empties first)
+    app.inventory.items[10] = (0, 0);
+    assert_eq!(
+        app.item_tooltip_hover(ox + 8, oy + 8),
+        None,
+        "the empty row the gate refuses"
+    );
+}
+
+/// THE HELD NAME'S OWN LANE RIDE (the 351 round — the pcs 44-64
+/// italic branch the dev-202 store the honest absence retires): the
+/// renamed hotbar seat the §o word the popup stores, the change arm
+/// the re-arm the timer answers, the quiet tick the decay keeps, the
+/// cleared lane the plain name the change re-arms.
+#[test]
+fn the_held_name_the_custom_lane_the_italic_wears() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let mut row = [(0, 0); 9];
+    row[0] = (sword, 1);
+    app.live_hotbar_updated(row);
+    // THE RENAMED SEAT'S OWN POP (the lane's Some the §o word the
+    // tick stores — the styled hover name the legacy prefix carries)
+    app.items_custom_names[0] = Some("Doom Bringer".to_string());
+    app.update();
+    assert_eq!(
+        app.held_name_timer, HELD_NAME_POP_TICKS,
+        "the change the pop arms"
+    );
+    assert_eq!(
+        app.held_name_last,
+        Some((sword, "\u{a7}oDoom Bringer".to_string())),
+        "the custom name the italic word wears"
+    );
+    // THE SAME-NAME QUIET TICK (the equal word the decay keeps)
+    app.update();
+    assert_eq!(
+        app.held_name_timer,
+        HELD_NAME_POP_TICKS - 1,
+        "the quiet tick the decay rides"
+    );
+    // THE CLEARED LANE (the plain name the change re-arms — the
+    // lane's None the shared lane keeps)
+    app.items_custom_names[0] = None;
+    app.update();
+    assert_eq!(
+        app.held_name_timer, HELD_NAME_POP_TICKS,
+        "the plain word the change re-arms"
+    );
+    assert_eq!(
+        app.held_name_last,
+        Some((sword, app.held_item_display_name(sword))),
+        "the plain name the cleared lane keeps"
+    );
+}

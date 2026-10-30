@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""autopush-350 — THE FMT REGION WALK (the 323 record's own law the round
-wears): the whole-file rustfmt the ORIGINAL text the formatted stdout
-the diff answers — the MY-REGIONS verdict the marker ranges keep (no
-hunk may touch the round's own edits), the pre-existing static noise
-the HEAD law confirms the non-mine hunks the honest inventory banks.
+"""autopush-351 — THE FMT REGION WALK (the 323 record's own law the
+round wears): the whole-file rustfmt the ORIGINAL text the formatted
+stdout the diff answers — the MY-REGIONS verdict the marker ranges
+keep (no hunk may touch the round's own edits), the pre-existing
+static noise the HEAD law confirms the non-mine hunks the honest
+inventory banks.
 
 Exit 0 iff every marker range is fmt-clean (no diff hunk overlaps).
 """
@@ -14,32 +15,30 @@ import sys
 
 RUSTFMT = os.path.expanduser("~/.cargo/bin/rustfmt")
 
-CONST_HEAD = (
-    "/// THE DEBUG PROFILE'S OWN DATA VERSION (javap 26.2 the"
-)
-CONST_TAIL = "pub const DEBUG_PROFILE_DATA_VERSION: i64 = 4649;"
-LOAD_HEAD = (
-    '        // THE VERSION ROW\'S OWN READ (the wrapCodec decode pc 0-56 —'
-)
-LOAD_TAIL = '        match root.get("profile") {'
-SAVE_HEAD = (
-    '        // THE WRAPPED ENCODE\'S OWN VERSION ROW (the DataFixTypes'
-)
-SAVE_TAIL = '        if let Ok(text) = serde_json::to_string(&root) {'
+# the screens.rs regions (the doc-head anchors the round's own edits
+# keep — each block the 351 round's own doc words wear)
+SCREENS = [
+    # the custom-name row helper (the item_tooltip_rows block the
+    # helper the tail keeps)
+    ("    fn item_tooltip_rows(id: i32, advanced: bool)", "    /// THE KINDED TOOLTIP ROWS"),
+    # the inventory lane ride (the item_tooltip_hover tail)
+    ("        // THE CUSTOM-NAME LANE'S OWN RIDE (the 351 round", "    /// THE ITEM TOOLTIP'S OWN RENDER"),
+    # the anvil hover-tooltip seat (the hover-seat block the tail keeps)
+    ("    /// THE ANVIL'S OWN HOVER SEAT (the enchanting's own shape", "    /// THE ANVIL'S OWN HIGHLIGHT SEAT"),
+    # the render call site (the item tooltip the bundle lane keeps)
+    ("        // THE ITEM TOOLTIP (the extractTooltip pass — the 351 round", "    /// THE BEACON'S OWN ROUND"),
+    # the tick lane ride (the held-name tick the custom lane re-keys)
+    ("    pub fn tick_held_name(&mut self)", "    /// THE HELD ITEM NAME (javap `Hud.extractSelectedItemName`"),
+    # the held-name doc re-key (the honest-absence retirement)
+    ("    /// THE HELD ITEM NAME (javap `Hud.extractSelectedItemName`", "    fn render_held_item_name(&mut self"),
+]
+PART11 = [
+    ("THE ANVIL'S OWN TOOLTIP SEAT (the 351 round", None),
+]
 
 REGIONS = {
-    "crates/mc-client/src/screens.rs": [
-        # the wrapped encode's version-row stamp
-        (SAVE_HEAD, SAVE_TAIL),
-        # the wrapped decode's version read + newer-throw + identity note
-        (LOAD_HEAD, LOAD_TAIL),
-        # the const's doc + declaration
-        (CONST_HEAD, CONST_TAIL),
-    ],
-    "crates/mc-client/src/screens/tests/part_4.rs": [
-        # the whole new datafixer round-trip test
-        ("THE DEBUG PROFILE'S OWN DATAFIXER ROUND (javap 26.2 the", None),
-    ],
+    "crates/mc-client/src/screens.rs": SCREENS,
+    "crates/mc-client/src/screens/tests/part_11.rs": PART11,
 }
 
 
