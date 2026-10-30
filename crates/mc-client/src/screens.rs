@@ -45909,6 +45909,11 @@ impl App {
             // order wears), the pop the tail the re-lay serves.
             let tail = if advanced { rows.pop() } else { None };
             rows.extend(Self::potion_kind_effect_rows(kind));
+            // THE ATTRIBUTE ROWS (the dev-200 round — the walk's own
+            // tail the pairs the collect wears, the whenDrank block the
+            // effect rows AFTER the loop serves — the same pop/tail
+            // region the rows ride)
+            rows.extend(Self::potion_kind_attribute_rows(kind));
             if let Some(t) = tail {
                 rows.push(t);
             }
@@ -45941,8 +45946,9 @@ impl App {
     /// BLUE the same enum ctor wears]), the EMPTY rows the NO_EFFECT
     /// row the static init pc 22-34 answers [translatable("effect.
     /// none") the GRAY]. The attribute-modifier rows the walk's own
-    /// tail keeps — the whenDrank lane the NEXT list answers [the
-    /// honest wall].
+    /// tail keeps — the whenDrank lane the dev-200 round answers (the
+    /// [`Self::potion_kind_attribute_rows`] walk the pairs the collect
+    /// wears).
     fn potion_kind_effect_rows(kind: i32) -> Vec<(String, [f32; 3])> {
         use crate::brewing_sim::{
             MOB_EFFECT_CATEGORIES, POTION_KIND_DURATIONS, POTION_KIND_EFFECTS,
@@ -46001,6 +46007,140 @@ impl App {
                 [0.3333, 0.3333, 1.0] // the BLUE the other arms wear
             };
             out.push((line, ink));
+        }
+        out
+    }
+
+    /// THE POTION KIND'S OWN ATTRIBUTE ROWS (javap 26.2 PotionContents.
+    /// addPotionTooltip pcs 166-455 — the walk's own tail the dev-200
+    /// round serves): the pairs the `createModifiers(amp, biConsumer)`
+    /// collect wears [pc 65-74 — the forEach the Template.create(amp)
+    /// the amount*(amp+1) law answers, MobEffect$AttributeTemplate
+    /// create pcs 8-17: the base the double the (amp+1) int the dmul],
+    /// the block the pairs' own emptiness gates [pc 166-173 — the
+    /// EMPTY slice the no-rows silence keeps]: the blank line the
+    /// CommonComponents.EMPTY serves [pc 176-180], the header the
+    /// `potion.whenDrank` tr the DARK_PURPLE ink wears [pc 185-198 —
+    /// the en_us row "When Applied:" the lang table answers], each row
+    /// the operation's own scale the format serves [pc 251-294 — the
+    /// ADD_MULTIPLIED_BASE/TOTAL the x100 lane keeps, the ADD_VALUE
+    /// the raw amount wears]: the amount>0 the `attribute.modifier.
+    /// plus.<op>` tr the BLUE ink wears [pc 294-369], the amount<0 the
+    /// `attribute.modifier.take.<op>` tr the NEGATED amount the RED
+    /// ink wears [pc 372-450 — the -1.0 dmul the abs the display
+    /// keeps], the amount-0 rows the both gates' own silence keeps;
+    /// the format the ATTRIBUTE_MODIFIER_FORMAT DecimalFormat("#.##",
+    /// Locale.ROOT) law answers [ItemAttributeModifiers <clinit> pc
+    /// 66-81], the attribute name the `attribute.name.<short>`
+    /// description id the Attributes ctor string serves [the
+    /// ATTRIBUTE_NAMES table the en_us rows pair]. The templates the
+    /// TranslatableContents decompose law answers: the %s the arg
+    /// serves, the %% the literal percent the escape keeps [the
+    /// plus.1/2 the take.1/2 rows the "+%s%% %s" shape wear].
+    fn potion_kind_attribute_rows(kind: i32) -> Vec<(String, [f32; 3])> {
+        use crate::brewing_sim::{
+            ATTRIBUTE_NAMES, MOB_EFFECT_ATTRIBUTE_MODIFIERS, POTION_KIND_EFFECTS,
+        };
+        if kind < 0 || kind as usize >= POTION_KIND_EFFECTS.len() {
+            return Vec::new();
+        }
+        // THE PAIR COLLECT (pc 65-74 — the createModifiers walk the
+        // amount*(amp+1) the Template.create law scales)
+        let mut pairs: Vec<(&str, i32, f64)> = Vec::new();
+        for &(effect, amp) in POTION_KIND_EFFECTS[kind as usize] {
+            let Some(&(_, mods)) = MOB_EFFECT_ATTRIBUTE_MODIFIERS
+                .iter()
+                .find(|(n, _)| *n == effect)
+            else {
+                continue;
+            };
+            for &(attr, op, base) in mods {
+                pairs.push((attr, op, base * (amp as f64 + 1.0)));
+            }
+        }
+        if pairs.is_empty() {
+            return Vec::new();
+        }
+        // THE BLOCK HEAD (pc 176-198 — the EMPTY line the whenDrank
+        // header the DARK_PURPLE ink wears)
+        let dark_purple = [0.6667, 0.0, 0.6667]; // the 0xAA00AA the ChatFormatting serves
+        let mut out = vec![
+            (String::new(), WHITE),
+            (
+                tr("potion.whenDrank")
+                    .unwrap_or("When Applied:")
+                    .to_string(),
+                dark_purple,
+            ),
+        ];
+        for (attr, op, amount) in pairs {
+            // THE SCALE (pc 251-294 — the MULTIPLIED the x100 lane)
+            let scaled = if op == 1 || op == 2 {
+                amount * 100.0
+            } else {
+                amount
+            };
+            let name = ATTRIBUTE_NAMES
+                .iter()
+                .find(|(n, _)| *n == attr)
+                .map(|&(_, d)| d)
+                .unwrap_or(attr);
+            if amount > 0.0 {
+                let key = format!("attribute.modifier.plus.{op}");
+                let tpl = tr(&key).unwrap_or(if op == 0 { "+%s %s" } else { "+%s%% %s" });
+                let line = Self::tr_fill(tpl, &[&Self::format_attr_amount(scaled), name]);
+                out.push((line, [0.3333, 0.3333, 1.0])); // the BLUE the positive arm keeps
+            } else if amount < 0.0 {
+                let key = format!("attribute.modifier.take.{op}");
+                let tpl = tr(&key).unwrap_or(if op == 0 { "-%s %s" } else { "-%s%% %s" });
+                let line = Self::tr_fill(tpl, &[&Self::format_attr_amount(-scaled), name]);
+                out.push((line, [1.0, 0.3333, 0.3333])); // the RED the negative arm wears
+            }
+        }
+        out
+    }
+
+    /// THE ATTRIBUTE-MODIFIER AMOUNT FORMAT (javap 26.2
+    /// ItemAttributeModifiers.<clinit> pc 66-81 — the DecimalFormat
+    /// ("#.##", Locale.ROOT) law: the 2 frac digits the HALF_EVEN
+    /// rounding wears, the trailing zeros the pattern never serves,
+    /// the integer part the one digit the sub-unity rows keep).
+    fn format_attr_amount(v: f64) -> String {
+        let mut s = format!("{v:.2}");
+        if s.ends_with("00") {
+            s.truncate(s.len() - 3);
+        } else if s.ends_with('0') {
+            s.truncate(s.len() - 1);
+        }
+        s
+    }
+
+    /// THE TRANSLATABLE'S OWN DECOMPOSE (the TranslatableContents walk
+    /// — the %s the next arg serves, the %% the literal percent the
+    /// escape keeps, the bare % the walk's own pass keeps).
+    fn tr_fill(tpl: &str, args: &[&str]) -> String {
+        let mut out = String::with_capacity(tpl.len() + 16);
+        let mut chars = tpl.chars().peekable();
+        let mut arg_i = 0usize;
+        while let Some(c) = chars.next() {
+            if c == '%' {
+                match chars.peek() {
+                    Some('%') => {
+                        out.push('%');
+                        chars.next();
+                    }
+                    Some('s') => {
+                        if let Some(a) = args.get(arg_i) {
+                            out.push_str(a);
+                        }
+                        arg_i += 1;
+                        chars.next();
+                    }
+                    _ => out.push('%'),
+                }
+            } else {
+                out.push(c);
+            }
         }
         out
     }

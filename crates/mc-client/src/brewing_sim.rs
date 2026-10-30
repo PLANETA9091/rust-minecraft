@@ -1426,3 +1426,48 @@ pub const POTION_KIND_DURATIONS: [&[i32]; 46] = [
 ];
 
 // ===== end autopush-341 tables =====
+
+// ===== dev-200 tables (scripts/gen_potion_attrs_200.py appends —
+// never edits existing lines) =====
+
+/// THE EFFECT'S OWN ATTRIBUTE-MODIFIER ROWS (javap 26.2 MobEffects.
+/// <clinit> — the `addAttributeModifier(attr, id, amount, operation)`
+/// calls the (effect, [(attr short, op id, amount)]) rows wear; the
+/// amount the ldc2_w double the float-promoted value serves [the
+/// (double)(float) widening the JVM's ldc wears], the dconst_1 rows
+/// the 1.0 the pc pairing answers. The display the Template.create
+/// walk the amount*(amp+1) law scales [MobEffect$AttributeTemplate
+/// create pcs 8-17], the 0-amount rows the walk's own silence keeps.
+pub const MOB_EFFECT_ATTRIBUTE_MODIFIERS: &[(&str, &[(&str, i32, f64)])] = &[
+    ("speed", &[("movement_speed", 2, 0.20000000298023224)]),
+    ("slowness", &[("movement_speed", 2, -0.15000000596046448)]),
+    ("haste", &[("attack_speed", 2, 0.10000000149011612)]),
+    (
+        "mining_fatigue",
+        &[("attack_speed", 2, -0.10000000149011612)],
+    ),
+    ("strength", &[("attack_damage", 0, 3.0)]),
+    ("jump_boost", &[("safe_fall_distance", 0, 1.0)]),
+    ("invisibility", &[("waypoint_transmit_range", 2, -1.0)]),
+    ("weakness", &[("attack_damage", 0, -4.0)]),
+    ("health_boost", &[("max_health", 0, 4.0)]),
+    ("absorption", &[("max_absorption", 0, 4.0)]),
+    ("luck", &[("luck", 0, 1.0)]),
+    ("unluck", &[("luck", 0, -1.0)]),
+];
+
+/// THE ATTRIBUTE'S OWN DISPLAY NAMES (javap 26.2 Attributes.<clinit>
+/// — the `attribute.name.<short>` description-id strings the
+/// RangedAttribute ctor wears, the en_us table's own rows the
+/// display answers; the generic.* aliases the same 8 the table
+/// carries, the getDescriptionId the short keys serve).
+pub const ATTRIBUTE_NAMES: &[(&str, &str)] = &[
+    ("movement_speed", "Speed"),
+    ("attack_speed", "Attack Speed"),
+    ("attack_damage", "Attack Damage"),
+    ("safe_fall_distance", "Safe Fall Distance"),
+    ("waypoint_transmit_range", "Waypoint Transmit Range"),
+    ("max_health", "Max Health"),
+    ("max_absorption", "Max Absorption"),
+    ("luck", "Luck"),
+];

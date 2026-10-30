@@ -1,0 +1,78 @@
+Compiled from "MobEffect.java"
+final class net.minecraft.world.effect.MobEffect$AttributeTemplate extends java.lang.Record {
+  private final net.minecraft.resources.Identifier id;
+
+  private final double amount;
+
+  private final net.minecraft.world.entity.ai.attributes.AttributeModifier$Operation operation;
+
+  private net.minecraft.world.effect.MobEffect$AttributeTemplate(net.minecraft.resources.Identifier, double, net.minecraft.world.entity.ai.attributes.AttributeModifier$Operation);
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Record."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: putfield      #7                  // Field id:Lnet/minecraft/resources/Identifier;
+         9: aload_0
+        10: dload_2
+        11: putfield      #13                 // Field amount:D
+        14: aload_0
+        15: aload         4
+        17: putfield      #17                 // Field operation:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+        20: return
+
+  public net.minecraft.world.entity.ai.attributes.AttributeModifier create(int);
+    Code:
+         0: new           #21                 // class net/minecraft/world/entity/ai/attributes/AttributeModifier
+         3: dup
+         4: aload_0
+         5: getfield      #7                  // Field id:Lnet/minecraft/resources/Identifier;
+         8: aload_0
+         9: getfield      #13                 // Field amount:D
+        12: iload_1
+        13: iconst_1
+        14: iadd
+        15: i2d
+        16: dmul
+        17: aload_0
+        18: getfield      #17                 // Field operation:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+        21: invokespecial #23                 // Method net/minecraft/world/entity/ai/attributes/AttributeModifier."<init>":(Lnet/minecraft/resources/Identifier;DLnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;)V
+        24: areturn
+
+  public final java.lang.String toString();
+    Code:
+         0: aload_0
+         1: invokedynamic #26,  0             // InvokeDynamic #0:toString:(Lnet/minecraft/world/effect/MobEffect$AttributeTemplate;)Ljava/lang/String;
+         6: areturn
+
+  public final int hashCode();
+    Code:
+         0: aload_0
+         1: invokedynamic #30,  0             // InvokeDynamic #0:hashCode:(Lnet/minecraft/world/effect/MobEffect$AttributeTemplate;)I
+         6: ireturn
+
+  public final boolean equals(java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #34,  0             // InvokeDynamic #0:equals:(Lnet/minecraft/world/effect/MobEffect$AttributeTemplate;Ljava/lang/Object;)Z
+         7: ireturn
+
+  public net.minecraft.resources.Identifier id();
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field id:Lnet/minecraft/resources/Identifier;
+         4: areturn
+
+  public double amount();
+    Code:
+         0: aload_0
+         1: getfield      #13                 // Field amount:D
+         4: dreturn
+
+  public net.minecraft.world.entity.ai.attributes.AttributeModifier$Operation operation();
+    Code:
+         0: aload_0
+         1: getfield      #17                 // Field operation:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+         4: areturn
+}

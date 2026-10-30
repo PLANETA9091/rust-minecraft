@@ -9965,7 +9965,10 @@ fn the_potion_kinds_the_effect_lines_the_jar_wears() {
     assert!(App::potion_kind_effect_rows(-1).is_empty());
     assert!(App::potion_kind_effect_rows(999).is_empty());
     // THE TOOLTIP'S OWN ORDER (the name the effect rows the advanced
-    // id row the AFTER lane wears — the pop the tail the re-lay)
+    // id row the AFTER lane wears — the pop the tail the re-lay; the
+    // attribute block the dev-200 round the effect rows AFTER serves
+    // — the turtle's slowness the pair the collect wears, the
+    // whenDrank block the walk's own tail keeps)
     let potion_id = mc_registry::item_id_by_name("potion").expect("the potion id");
     let rows = App::item_tooltip_rows_kind(
         potion_id,
@@ -9973,12 +9976,249 @@ fn the_potion_kinds_the_effect_lines_the_jar_wears() {
         true,
         &[],
     );
-    assert_eq!(rows.len(), 4);
+    assert_eq!(
+        rows.len(),
+        7,
+        "the name the two effect rows the attribute block the id row the walk wears"
+    );
     assert_eq!(rows[0].0, "Potion of the Turtle Master");
     assert_eq!(rows[1].0, "Slowness IV (00:20)");
     assert_eq!(rows[2].0, "Resistance III (00:20)");
     assert_eq!(
-        rows[3].0, "minecraft:potion",
-        "the id row the effect rows AFTER the walk wears"
+        rows[3].0, "",
+        "the blank line the CommonComponents.EMPTY the block head wears"
+    );
+    assert_eq!(rows[4].0, "When Applied:", "the whenDrank header speaks");
+    assert_eq!(
+        rows[5].0, "-60% Speed",
+        "the turtle slowness the amp-3 x4 fold pairs"
+    );
+    assert_eq!(
+        rows[6].0, "minecraft:potion",
+        "the id row the attribute block AFTER the walk wears"
+    );
+}
+
+/// THE POTION KIND'S OWN ATTRIBUTE ROWS (the dev-200 round — the
+/// addPotionTooltip walk's own tail the pairs the collect wears: the
+/// createModifiers the amount*(amp+1) law, the whenDrank block the
+/// blank line the header the DARK_PURPLE keeps, the plus/take rows
+/// the x100 scale the DecimalFormat("#.##") fold, the ink the BLUE
+/// the RED the operation's own sign answers).
+#[test]
+fn the_potion_kinds_the_attribute_rows_the_jar_wears() {
+    // THE TABLES' OWN SHAPES (the 12 registrations the bootstrap
+    // wears, the 8 names the walk's own rows the display serves)
+    assert_eq!(
+        crate::brewing_sim::MOB_EFFECT_ATTRIBUTE_MODIFIERS.len(),
+        12,
+        "the 12 addAttributeModifier rows the clinit pairs"
+    );
+    assert_eq!(crate::brewing_sim::ATTRIBUTE_NAMES.len(), 8);
+    // THE REGISTRATION SPOTS (the (attr, op, amount) triples the
+    // ldc2_w doubles the float-promoted values wear, the dconst_1
+    // rows the 1.0 the pc pairing answers)
+    let mods = |n: &str| {
+        crate::brewing_sim::MOB_EFFECT_ATTRIBUTE_MODIFIERS
+            .iter()
+            .find(|(e, _)| *e == n)
+            .map(|(_, m)| *m)
+            .unwrap_or(&[])
+    };
+    assert_eq!(
+        mods("speed"),
+        &[("movement_speed", 2, 0.20000000298023224)],
+        "the +20% movement-speed lane the MULTIPLIED_TOTAL op-2 wears"
+    );
+    assert_eq!(
+        mods("slowness"),
+        &[("movement_speed", 2, -0.15000000596046448)]
+    );
+    assert_eq!(mods("haste"), &[("attack_speed", 2, 0.10000000149011612)]);
+    assert_eq!(
+        mods("mining_fatigue"),
+        &[("attack_speed", 2, -0.10000000149011612)]
+    );
+    assert_eq!(mods("strength"), &[("attack_damage", 0, 3.0)]);
+    assert_eq!(mods("jump_boost"), &[("safe_fall_distance", 0, 1.0)]);
+    assert_eq!(
+        mods("invisibility"),
+        &[("waypoint_transmit_range", 2, -1.0)],
+        "the waypoint hide the -1.0 the MULTIPLIED_TOTAL wears"
+    );
+    assert_eq!(mods("weakness"), &[("attack_damage", 0, -4.0)]);
+    assert_eq!(mods("health_boost"), &[("max_health", 0, 4.0)]);
+    assert_eq!(mods("absorption"), &[("max_absorption", 0, 4.0)]);
+    assert_eq!(mods("luck"), &[("luck", 0, 1.0)]);
+    assert_eq!(mods("unluck"), &[("luck", 0, -1.0)]);
+    // THE MODIFIER-FREE EFFECTS (the night_vision the regeneration
+    // rows the walk's own silence keeps — the find the miss the
+    // empty slice answers)
+    assert!(mods("night_vision").is_empty());
+    assert!(mods("resistance").is_empty());
+    assert!(mods("fire_resistance").is_empty());
+    // THE NAME SPOTS (the description-id tails the lang rows pair)
+    let name = |n: &str| {
+        crate::brewing_sim::ATTRIBUTE_NAMES
+            .iter()
+            .find(|(s, _)| *s == n)
+            .unwrap()
+            .1
+    };
+    assert_eq!(name("movement_speed"), "Speed");
+    assert_eq!(name("attack_speed"), "Attack Speed");
+    assert_eq!(name("attack_damage"), "Attack Damage");
+    assert_eq!(name("safe_fall_distance"), "Safe Fall Distance");
+    assert_eq!(name("waypoint_transmit_range"), "Waypoint Transmit Range");
+    assert_eq!(name("max_health"), "Max Health");
+    assert_eq!(name("max_absorption"), "Max Absorption");
+    assert_eq!(name("luck"), "Luck");
+    // THE FORMAT LAW (the DecimalFormat("#.##") fold — the trailing
+    // zeros the pattern never serves, the sub-unity rows the 0 keeps)
+    assert_eq!(App::format_attr_amount(20.000000298023224), "20");
+    assert_eq!(App::format_attr_amount(15.000000596046448), "15");
+    assert_eq!(App::format_attr_amount(60.00000238418579), "60");
+    assert_eq!(App::format_attr_amount(90.00000357627869), "90");
+    assert_eq!(App::format_attr_amount(100.0), "100");
+    assert_eq!(App::format_attr_amount(3.0), "3");
+    assert_eq!(App::format_attr_amount(4.0), "4");
+    assert_eq!(App::format_attr_amount(1.0), "1");
+    assert_eq!(App::format_attr_amount(0.2), "0.2");
+    assert_eq!(App::format_attr_amount(0.25), "0.25");
+    // THE WALK'S OWN ROWS (the base x (amp+1) the Template.create
+    // law scales, the x100 the MULTIPLIED lane folds, the sign the
+    // plus/take arms the ink answers)
+    let blue = [0.3333, 0.3333, 1.0];
+    let red = [1.0, 0.3333, 0.3333];
+    let purple = [0.6667, 0.0, 0.6667];
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_SWIFTNESS);
+    assert_eq!(
+        rows.len(),
+        3,
+        "the blank the header the one row the pair collect wears"
+    );
+    assert_eq!(rows[0].0, "", "the blank line the block head wears");
+    assert_eq!(rows[0].1, WHITE);
+    assert_eq!(rows[1].0, "When Applied:");
+    assert_eq!(rows[1].1, purple, "the DARK_PURPLE header ink wears");
+    assert_eq!(
+        rows[2].0, "+20% Speed",
+        "the base 0.2 the x100 the %% fold pairs"
+    );
+    assert_eq!(rows[2].1, blue);
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_STRONG_SWIFTNESS);
+    assert_eq!(
+        rows[2].0, "+40% Speed",
+        "the amp-1 the x2 fold the walk wears"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_SLOWNESS);
+    assert_eq!(
+        rows[2].0, "-15% Speed",
+        "the negative the take arm the abs fold pairs"
+    );
+    assert_eq!(rows[2].1, red, "the take rows the RED ink wears");
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_STRONG_SLOWNESS);
+    assert_eq!(rows[2].0, "-60% Speed", "the amp-3 the x4 fold pairs");
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_LEAPING);
+    assert_eq!(
+        rows[2].0, "+1 Safe Fall Distance",
+        "the ADD_VALUE the raw lane keeps"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_STRONG_LEAPING);
+    assert_eq!(
+        rows[2].0, "+2 Safe Fall Distance",
+        "the amp-1 the x2 the ADD_VALUE pairs"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_STRENGTH);
+    assert_eq!(
+        rows[2].0, "+3 Attack Damage",
+        "the plus.0 the no-percent shape wears"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_STRONG_STRENGTH);
+    assert_eq!(
+        rows[2].0, "+6 Attack Damage",
+        "the amp-1 the strength x2 pairs"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_WEAKNESS);
+    assert_eq!(
+        rows[2].0, "-4 Attack Damage",
+        "the weakness the take.0 pairs"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_TURTLE_MASTER);
+    assert_eq!(
+        rows.len(),
+        3,
+        "the head pair the ONE row the resistance's own silence keeps"
+    );
+    assert_eq!(
+        rows[2].0, "-60% Speed",
+        "the slowness amp-3 the x4 fold the resistance never speaks"
+    );
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_STRONG_TURTLE_MASTER);
+    assert_eq!(rows[2].0, "-90% Speed", "the amp-5 the x6 fold pairs");
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_LUCK);
+    assert_eq!(rows[2].0, "+1 Luck", "the dconst_1 base the 1.0 pairs");
+    let rows = App::potion_kind_attribute_rows(crate::brewing_sim::POTION_INVISIBILITY);
+    assert_eq!(
+        rows[2].0, "-100% Waypoint Transmit Range",
+        "the -1.0 x100 the waypoint row wears"
+    );
+    // THE MODIFIER-FREE KINDS (the night_vision the water rows the
+    // empty vec the pairs' own gate keeps)
+    assert!(App::potion_kind_attribute_rows(crate::brewing_sim::POTION_NIGHT_VISION).is_empty());
+    assert!(App::potion_kind_attribute_rows(crate::brewing_sim::POTION_WATER).is_empty());
+    // THE BOUNDS (the unknown kind the empty vec keeps)
+    assert!(App::potion_kind_attribute_rows(-1).is_empty());
+    assert!(App::potion_kind_attribute_rows(999).is_empty());
+    // THE TRANSLATABLE'S OWN DECOMPOSE (the %s the arg the %% the
+    // literal percent the escape keeps)
+    assert_eq!(App::tr_fill("+%s%% %s", &["20", "Speed"]), "+20% Speed");
+    assert_eq!(
+        App::tr_fill("+%s %s", &["3", "Attack Damage"]),
+        "+3 Attack Damage"
+    );
+    assert_eq!(App::tr_fill("no args here", &[]), "no args here");
+    // THE KIND TABLE'S OWN REACH (the health_boost the absorption
+    // rows the registry registers — the 46 potion kinds the table
+    // serves NEVER carry them [the vanilla potions the walk banks —
+    // the golden apple's own lanes the other seats keep], the kind
+    // lane the modifier rows the speed/slowness/leaping/strength/
+    // weakness/turtle/luck/invisibility seats wear, the haste the
+    // mining_fatigue the unluck rows no potion kind carries)
+    let carried: Vec<&str> = (0..46i32)
+        .filter_map(|k| {
+            let rows = App::potion_kind_attribute_rows(k);
+            if rows.is_empty() {
+                None
+            } else {
+                Some(crate::brewing_sim::POTION_KIND_BASE_NAMES[k as usize])
+            }
+        })
+        .collect();
+    assert_eq!(
+        carried,
+        vec![
+            "invisibility",
+            "invisibility",
+            "leaping",
+            "leaping",
+            "leaping",
+            "swiftness",
+            "swiftness",
+            "swiftness",
+            "slowness",
+            "slowness",
+            "slowness",
+            "turtle_master",
+            "turtle_master",
+            "turtle_master",
+            "strength",
+            "strength",
+            "strength",
+            "weakness",
+            "weakness",
+            "luck",
+        ],
+        "the 20 kind seats the pairs the collect wears — the haste/mining_fatigue/unluck/health_boost/absorption rows no potion kind carries"
     );
 }

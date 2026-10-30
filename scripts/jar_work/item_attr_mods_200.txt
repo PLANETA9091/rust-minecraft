@@ -1,0 +1,276 @@
+Compiled from "ItemAttributeModifiers.java"
+public final class net.minecraft.world.item.component.ItemAttributeModifiers extends java.lang.Record {
+  private final java.util.List<net.minecraft.world.item.component.ItemAttributeModifiers$Entry> modifiers;
+
+  public static final net.minecraft.world.item.component.ItemAttributeModifiers EMPTY;
+
+  public static final com.mojang.serialization.Codec<net.minecraft.world.item.component.ItemAttributeModifiers> CODEC;
+
+  public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.world.item.component.ItemAttributeModifiers> STREAM_CODEC;
+
+  public static final java.text.DecimalFormat ATTRIBUTE_MODIFIER_FORMAT;
+
+  public net.minecraft.world.item.component.ItemAttributeModifiers(java.util.List<net.minecraft.world.item.component.ItemAttributeModifiers$Entry>);
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Record."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: putfield      #7                  // Field modifiers:Ljava/util/List;
+         9: return
+
+  public static net.minecraft.world.item.component.ItemAttributeModifiers$Builder builder();
+    Code:
+         0: new           #13                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Builder
+         3: dup
+         4: invokespecial #15                 // Method net/minecraft/world/item/component/ItemAttributeModifiers$Builder."<init>":()V
+         7: areturn
+
+  public net.minecraft.world.item.component.ItemAttributeModifiers withModifierAdded(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier, net.minecraft.world.entity.EquipmentSlotGroup);
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field modifiers:Ljava/util/List;
+         4: invokeinterface #16,  1           // InterfaceMethod java/util/List.size:()I
+         9: iconst_1
+        10: iadd
+        11: invokestatic  #22                 // Method com/google/common/collect/ImmutableList.builderWithExpectedSize:(I)Lcom/google/common/collect/ImmutableList$Builder;
+        14: astore        4
+        16: aload_0
+        17: getfield      #7                  // Field modifiers:Ljava/util/List;
+        20: invokeinterface #28,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        25: astore        5
+        27: aload         5
+        29: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        34: ifeq          73
+        37: aload         5
+        39: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        44: checkcast     #42                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Entry
+        47: astore        6
+        49: aload         6
+        51: aload_1
+        52: aload_2
+        53: invokevirtual #44                 // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.id:()Lnet/minecraft/resources/Identifier;
+        56: invokevirtual #50                 // Method net/minecraft/world/item/component/ItemAttributeModifiers$Entry.matches:(Lnet/minecraft/core/Holder;Lnet/minecraft/resources/Identifier;)Z
+        59: ifne          70
+        62: aload         4
+        64: aload         6
+        66: invokevirtual #54                 // Method com/google/common/collect/ImmutableList$Builder.add:(Ljava/lang/Object;)Lcom/google/common/collect/ImmutableList$Builder;
+        69: pop
+        70: goto          27
+        73: aload         4
+        75: new           #42                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Entry
+        78: dup
+        79: aload_1
+        80: aload_2
+        81: aload_3
+        82: invokespecial #60                 // Method net/minecraft/world/item/component/ItemAttributeModifiers$Entry."<init>":(Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;Lnet/minecraft/world/entity/EquipmentSlotGroup;)V
+        85: invokevirtual #54                 // Method com/google/common/collect/ImmutableList$Builder.add:(Ljava/lang/Object;)Lcom/google/common/collect/ImmutableList$Builder;
+        88: pop
+        89: new           #8                  // class net/minecraft/world/item/component/ItemAttributeModifiers
+        92: dup
+        93: aload         4
+        95: invokevirtual #63                 // Method com/google/common/collect/ImmutableList$Builder.build:()Lcom/google/common/collect/ImmutableList;
+        98: invokespecial #67                 // Method "<init>":(Ljava/util/List;)V
+       101: areturn
+
+  public void forEach(net.minecraft.world.entity.EquipmentSlotGroup, org.apache.commons.lang3.function.TriConsumer<net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier, net.minecraft.world.item.component.ItemAttributeModifiers$Display>);
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field modifiers:Ljava/util/List;
+         4: invokeinterface #28,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_3
+        10: aload_3
+        11: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          66
+        19: aload_3
+        20: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #42                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Entry
+        28: astore        4
+        30: aload         4
+        32: getfield      #70                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.slot:Lnet/minecraft/world/entity/EquipmentSlotGroup;
+        35: aload_1
+        36: invokevirtual #74                 // Method net/minecraft/world/entity/EquipmentSlotGroup.equals:(Ljava/lang/Object;)Z
+        39: ifeq          63
+        42: aload_2
+        43: aload         4
+        45: getfield      #80                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.attribute:Lnet/minecraft/core/Holder;
+        48: aload         4
+        50: getfield      #84                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.modifier:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+        53: aload         4
+        55: getfield      #88                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.display:Lnet/minecraft/world/item/component/ItemAttributeModifiers$Display;
+        58: invokeinterface #92,  4           // InterfaceMethod org/apache/commons/lang3/function/TriConsumer.accept:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+        63: goto          10
+        66: return
+
+  public void forEach(net.minecraft.world.entity.EquipmentSlotGroup, java.util.function.BiConsumer<net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier>);
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field modifiers:Ljava/util/List;
+         4: invokeinterface #28,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_3
+        10: aload_3
+        11: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          61
+        19: aload_3
+        20: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #42                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Entry
+        28: astore        4
+        30: aload         4
+        32: getfield      #70                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.slot:Lnet/minecraft/world/entity/EquipmentSlotGroup;
+        35: aload_1
+        36: invokevirtual #74                 // Method net/minecraft/world/entity/EquipmentSlotGroup.equals:(Ljava/lang/Object;)Z
+        39: ifeq          58
+        42: aload_2
+        43: aload         4
+        45: getfield      #80                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.attribute:Lnet/minecraft/core/Holder;
+        48: aload         4
+        50: getfield      #84                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.modifier:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+        53: invokeinterface #98,  3           // InterfaceMethod java/util/function/BiConsumer.accept:(Ljava/lang/Object;Ljava/lang/Object;)V
+        58: goto          10
+        61: return
+
+  public void forEach(net.minecraft.world.entity.EquipmentSlot, java.util.function.BiConsumer<net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier>);
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field modifiers:Ljava/util/List;
+         4: invokeinterface #28,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_3
+        10: aload_3
+        11: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          61
+        19: aload_3
+        20: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #42                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Entry
+        28: astore        4
+        30: aload         4
+        32: getfield      #70                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.slot:Lnet/minecraft/world/entity/EquipmentSlotGroup;
+        35: aload_1
+        36: invokevirtual #103                // Method net/minecraft/world/entity/EquipmentSlotGroup.test:(Lnet/minecraft/world/entity/EquipmentSlot;)Z
+        39: ifeq          58
+        42: aload_2
+        43: aload         4
+        45: getfield      #80                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.attribute:Lnet/minecraft/core/Holder;
+        48: aload         4
+        50: getfield      #84                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.modifier:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+        53: invokeinterface #98,  3           // InterfaceMethod java/util/function/BiConsumer.accept:(Ljava/lang/Object;Ljava/lang/Object;)V
+        58: goto          10
+        61: return
+
+  public double compute(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, double, net.minecraft.world.entity.EquipmentSlot);
+    Code:
+         0: dload_2
+         1: dstore        5
+         3: aload_0
+         4: getfield      #7                  // Field modifiers:Ljava/util/List;
+         7: invokeinterface #28,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        12: astore        7
+        14: aload         7
+        16: invokeinterface #32,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        21: ifeq          149
+        24: aload         7
+        26: invokeinterface #38,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        31: checkcast     #42                 // class net/minecraft/world/item/component/ItemAttributeModifiers$Entry
+        34: astore        8
+        36: aload         8
+        38: getfield      #70                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.slot:Lnet/minecraft/world/entity/EquipmentSlotGroup;
+        41: aload         4
+        43: invokevirtual #103                // Method net/minecraft/world/entity/EquipmentSlotGroup.test:(Lnet/minecraft/world/entity/EquipmentSlot;)Z
+        46: ifne          52
+        49: goto          14
+        52: aload         8
+        54: getfield      #80                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.attribute:Lnet/minecraft/core/Holder;
+        57: aload_1
+        58: if_acmpeq     64
+        61: goto          14
+        64: aload         8
+        66: getfield      #84                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.modifier:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+        69: invokevirtual #107                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.amount:()D
+        72: dstore        9
+        74: dload         5
+        76: getstatic     #111                // Field net/minecraft/world/item/component/ItemAttributeModifiers$1.$SwitchMap$net$minecraft$world$entity$ai$attributes$AttributeModifier$Operation:[I
+        79: aload         8
+        81: getfield      #84                 // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.modifier:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+        84: invokevirtual #117                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+        87: invokevirtual #121                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.ordinal:()I
+        90: iaload
+        91: tableswitch   { // 1 to 3
+                       1: 126
+                       2: 131
+                       3: 138
+                 default: 116
+            }
+       116: new           #126                // class java/lang/MatchException
+       119: dup
+       120: aconst_null
+       121: aconst_null
+       122: invokespecial #128                // Method java/lang/MatchException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+       125: athrow
+       126: dload         9
+       128: goto          143
+       131: dload         9
+       133: dload_2
+       134: dmul
+       135: goto          143
+       138: dload         9
+       140: dload         5
+       142: dmul
+       143: dadd
+       144: dstore        5
+       146: goto          14
+       149: dload         5
+       151: dreturn
+
+  public final java.lang.String toString();
+    Code:
+         0: aload_0
+         1: invokedynamic #131,  0            // InvokeDynamic #0:toString:(Lnet/minecraft/world/item/component/ItemAttributeModifiers;)Ljava/lang/String;
+         6: areturn
+
+  public final int hashCode();
+    Code:
+         0: aload_0
+         1: invokedynamic #135,  0            // InvokeDynamic #0:hashCode:(Lnet/minecraft/world/item/component/ItemAttributeModifiers;)I
+         6: ireturn
+
+  public final boolean equals(java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #139,  0            // InvokeDynamic #0:equals:(Lnet/minecraft/world/item/component/ItemAttributeModifiers;Ljava/lang/Object;)Z
+         7: ireturn
+
+  public java.util.List<net.minecraft.world.item.component.ItemAttributeModifiers$Entry> modifiers();
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field modifiers:Ljava/util/List;
+         4: areturn
+
+  static {};
+    Code:
+         0: new           #8                  // class net/minecraft/world/item/component/ItemAttributeModifiers
+         3: dup
+         4: invokestatic  #142                // InterfaceMethod java/util/List.of:()Ljava/util/List;
+         7: invokespecial #67                 // Method "<init>":(Ljava/util/List;)V
+        10: putstatic     #146                // Field EMPTY:Lnet/minecraft/world/item/component/ItemAttributeModifiers;
+        13: getstatic     #150                // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.CODEC:Lcom/mojang/serialization/Codec;
+        16: invokeinterface #154,  1          // InterfaceMethod com/mojang/serialization/Codec.listOf:()Lcom/mojang/serialization/Codec;
+        21: invokedynamic #160,  0            // InvokeDynamic #1:apply:()Ljava/util/function/Function;
+        26: invokedynamic #164,  0            // InvokeDynamic #2:apply:()Ljava/util/function/Function;
+        31: invokeinterface #165,  3          // InterfaceMethod com/mojang/serialization/Codec.xmap:(Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+        36: putstatic     #169                // Field CODEC:Lcom/mojang/serialization/Codec;
+        39: getstatic     #170                // Field net/minecraft/world/item/component/ItemAttributeModifiers$Entry.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+        42: invokestatic  #174                // InterfaceMethod net/minecraft/network/codec/ByteBufCodecs.list:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+        45: invokeinterface #180,  2          // InterfaceMethod net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+        50: invokedynamic #164,  0            // InvokeDynamic #2:apply:()Ljava/util/function/Function;
+        55: invokedynamic #160,  0            // InvokeDynamic #1:apply:()Ljava/util/function/Function;
+        60: invokestatic  #185                // InterfaceMethod net/minecraft/network/codec/StreamCodec.composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+        63: putstatic     #189                // Field STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+        66: new           #190                // class java/text/DecimalFormat
+        69: dup
+        70: ldc           #192                // String #.##
+        72: getstatic     #194                // Field java/util/Locale.ROOT:Ljava/util/Locale;
+        75: invokestatic  #200                // Method java/text/DecimalFormatSymbols.getInstance:(Ljava/util/Locale;)Ljava/text/DecimalFormatSymbols;
+        78: invokespecial #206                // Method java/text/DecimalFormat."<init>":(Ljava/lang/String;Ljava/text/DecimalFormatSymbols;)V
+        81: putstatic     #209                // Field ATTRIBUTE_MODIFIER_FORMAT:Ljava/text/DecimalFormat;
+        84: return
+}
