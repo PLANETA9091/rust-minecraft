@@ -9343,6 +9343,27 @@ pub struct App {
     /// carries). The render's own id gate the stale word never
     /// paints.
     pub chest_carried_potion_kind: i32,
+    /// THE CONTAINER ROWS' OWN KIND BANK (the autopush-363 round — the
+    /// dev-204 law the stored rows the world's own parallel map answers:
+    /// the placed potion the row's word the bank keeps, the close the
+    /// words the per-cell entries ride home to, the reopen the same
+    /// words load — the stale silence the kindless (id, count) store
+    /// wore the bank retires). The map the
+    /// [`Self::container_stores`] own shape wears (the same cell key,
+    /// the parallel kinds row the store's own slot order keeps), the
+    /// ender the shared jar's own row the map never keys, the composed
+    /// `chest_row_potion_kinds` the open projection the walk + render
+    /// read. The render's own id gate the stale word never paints.
+    pub container_stores_potion_kinds: std::collections::HashMap<(i32, i32, i32), Vec<i32>>,
+    /// THE ENDER JAR'S OWN KIND ROW (the shared store's parallel — the
+    /// every-cell binding the one kinds row wears, the flush the words
+    /// the jar banks, the reopen the same words the every cell loads).
+    pub ender_chest_store_potion_kinds: Vec<i32>,
+    /// THE OPEN GRID'S OWN KIND ROW (the composed projection the
+    /// chest_slots' own shape wears — the double the partner+opened
+    /// halves the same order compose, the walk's row lane the words
+    /// read/write, the flush the halves split back).
+    pub chest_row_potion_kinds: Vec<i32>,
     /// THE BARREL LID'S OWN CELL (the dev-65 round — the opened
     /// barrel the OPEN bit the open_chest_for walk sets, the close
     /// walk the bit the barrel_lid_released release clears; the None
@@ -12938,6 +12959,9 @@ impl App {
             chest_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             chest_open_cell: None,
             container_stores: std::collections::HashMap::new(),
+            container_stores_potion_kinds: std::collections::HashMap::new(),
+            ender_chest_store_potion_kinds: vec![crate::brewing_sim::POTION_KIND_NONE; 27],
+            chest_row_potion_kinds: Vec::new(),
             container_stores_file: None,
             offline_world_file: None,
             offline_save_cooldown: 0,
@@ -24688,6 +24712,9 @@ impl App {
             slots[i] = (id, count);
         }
         self.chest_slots = slots;
+        // the row bank's fresh pair (the deterministic scene the NONE
+        // rows wear — the golden's own stacks the kindless ids keep)
+        self.chest_row_potion_kinds = vec![crate::brewing_sim::POTION_KIND_NONE; 27];
         // the offline scene carries no cursor stack (the deterministic
         // scene the golden pins — a live session's held stack never
         // leaks into it)
@@ -27710,6 +27737,20 @@ impl App {
         }
     }
 
+    /// THE ROW BANK'S OWN CELL LOAD (the kinds map the store's own
+    /// parallel wears — the entry the same cell key the store keeps,
+    /// the missing entry the fresh NONE row inserts, the length the
+    /// store's own shape the resize answers).
+    fn container_row_kinds_load(&mut self, pos: (i32, i32, i32), len: usize) -> Vec<i32> {
+        let mut kinds = self
+            .container_stores_potion_kinds
+            .entry(pos)
+            .or_insert_with(|| vec![crate::brewing_sim::POTION_KIND_NONE; len])
+            .clone();
+        kinds.resize(len, crate::brewing_sim::POTION_KIND_NONE);
+        kinds
+    }
+
     pub fn open_chest_for(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
         // THE DISK BANK'S OWN LAZY LOAD (the dev-68 round — the first
@@ -27800,6 +27841,25 @@ impl App {
             self.chest_slots = grid;
             self.container_open_cell_b = Some(ppos);
         }
+        // THE ROW BANK'S OWN COMPOSE (the autopush-363 round — the
+        // kinds map the store's own parallel wears: the open the
+        // words load, the stale silence the kindless store wore the
+        // bank retires). THE ENDER the shared jar's own row the map
+        // never keys, the double the partner+opened halves the SAME
+        // acceptDouble order compose, the length the grid's own shape
+        // the resize answers.
+        let mut kinds = if is_ender {
+            self.ender_chest_store_potion_kinds.clone()
+        } else {
+            self.container_row_kinds_load(pos, 27)
+        };
+        if let Some(ppos) = partner {
+            let mut both = self.container_row_kinds_load(ppos, 27);
+            both.extend(kinds); // the acceptDouble(neighbor, _) order
+            kinds = both;
+        }
+        kinds.resize(self.chest_slots.len(), crate::brewing_sim::POTION_KIND_NONE);
+        self.chest_row_potion_kinds = kinds;
         self.chest_carried = (0, 0);
         // the fresh-open pair (the stale word the chest door retires)
         self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
@@ -28019,7 +28079,11 @@ impl App {
             .or_insert_with(|| vec![(0i32, 0i32); 27]);
         self.container_open_cell = Some(pos);
         self.container_open_cell_b = None;
+        let store_len = store.len();
         self.chest_slots = store.clone();
+        // THE ROW BANK'S OWN COMPOSE (the chest's own law the shulker's
+        // rows wear — the open the words load)
+        self.chest_row_potion_kinds = self.container_row_kinds_load(pos, store_len);
         self.chest_carried = (0, 0);
         // the fresh-open pair (the stale word the chest door retires)
         self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
@@ -28103,7 +28167,11 @@ impl App {
             .or_insert_with(|| vec![(0i32, 0i32); 5]);
         self.container_open_cell = Some(pos);
         self.container_open_cell_b = None;
+        let store_len = store.len();
         self.chest_slots = store.clone();
+        // THE ROW BANK'S OWN COMPOSE (the chest's own law the hopper's
+        // five rows wear — the open the words load)
+        self.chest_row_potion_kinds = self.container_row_kinds_load(pos, store_len);
         self.chest_carried = (0, 0);
         // the fresh-open pair (the stale word the chest door retires)
         self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
@@ -30780,10 +30848,38 @@ impl App {
                     self.chest_slots.iter().skip(27).take(27).copied().collect();
                 self.container_stores.insert(ppos, partner_half);
                 self.container_stores.insert(pos, opened_half);
+                // THE KINDS' OWN SPLIT (the 363 round — the bank the
+                // same halves the words ride home to: the partner's
+                // rows the partner cell banks, the opened cell's the
+                // opened cell keeps)
+                let partner_kinds: Vec<i32> = self
+                    .chest_row_potion_kinds
+                    .iter()
+                    .take(27)
+                    .copied()
+                    .collect();
+                let opened_kinds: Vec<i32> = self
+                    .chest_row_potion_kinds
+                    .iter()
+                    .skip(27)
+                    .take(27)
+                    .copied()
+                    .collect();
+                self.container_stores_potion_kinds
+                    .insert(ppos, partner_kinds);
+                self.container_stores_potion_kinds.insert(pos, opened_kinds);
             } else if was_ender {
                 self.ender_chest_store = self.chest_slots.clone();
+                // THE JAR'S OWN WORDS (the shared row the flush banks —
+                // the reopen the every cell the same words loads)
+                self.ender_chest_store_potion_kinds = self.chest_row_potion_kinds.clone();
             } else {
                 self.container_stores.insert(pos, self.chest_slots.clone());
+                // THE ROW BANK'S OWN RIDE HOME (the 363 round — the
+                // edited rows the words the map entry banks, the
+                // reopen the same words loads)
+                self.container_stores_potion_kinds
+                    .insert(pos, self.chest_row_potion_kinds.clone());
             }
             // THE DISK BANK'S OWN RIDE HOME (the dev-68 round — the
             // close walk's edit the file write banks: the restart the
@@ -31177,6 +31273,9 @@ impl App {
         // keeps: the stocked chest's death the floor the items wear)
         self.container_stores_load_once();
         let store = self.container_stores.remove(&pos);
+        // THE KINDS' OWN DEATH RIDE (the 363 round — the bank the same
+        // cell the entry drops: the words the store's own fate wears)
+        self.container_stores_potion_kinds.remove(&pos);
         // THE FILL'S OWN DEATH RIDE (the comparator's container lane
         // the dig serves — the broken cell the air the entry the map
         // drops, the double's survivor the own-half law the re-sync
@@ -31254,6 +31353,10 @@ impl App {
             self.container_open_cell_b = None;
             if self.chest_slots.len() > 27 {
                 self.chest_slots = self.chest_slots[27..].to_vec();
+            }
+            // the demoted grid's own kinds the same truncation keeps
+            if self.chest_row_potion_kinds.len() > 27 {
+                self.chest_row_potion_kinds = self.chest_row_potion_kinds[27..].to_vec();
             }
         }
         // THE DISK BANK'S OWN DEATH RIDE (the dev-68 round — the
@@ -33121,7 +33224,12 @@ impl App {
                 continue; // the wire's own emptiness sentinel
             }
             let (sx, sy) = chest_container_slot((px, py), i);
-            draw_item_icon(g, *id, sx + 1, sy + 1);
+            // THE ROW BANK'S OWN TINT (the 340 law the stored rows
+            // re-wear — the kinded stack the row's word the liquid
+            // lane colors, the kindless row the NONE draw the same
+            // pixels the plain icon wears)
+            let kind = self.chest_row_potion_kind(i);
+            draw_item_icon_kind(g, *id, kind, sx + 1, sy + 1);
             if *count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -49550,6 +49658,17 @@ impl App {
         // the multi-slot deltas the grid AND the items mutate.
         if self.shift_down {
             let n = self.chest_slots.len();
+            let src_menu = slot as usize;
+            // THE QUICK-MOVE'S OWN KIND READ (the source row's word the
+            // ride banks — the grid row the bank's normalized read
+            // answers, the player rows the same law keeps)
+            let src_kind = if src_menu < n {
+                self.chest_row_potion_kind(src_menu)
+            } else if src_menu < n + 27 {
+                self.row_potion_kind(9 + src_menu - n)
+            } else {
+                self.row_potion_kind(src_menu - n - 27)
+            };
             let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(n + 36);
             snapshot.extend_from_slice(&self.chest_slots);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
@@ -49565,6 +49684,50 @@ impl App {
                 }
             }
             self.chest_mirror_sync_from_inventory();
+            // THE QUICK-MOVE'S OWN KIND RIDE (the bank the transfer lane
+            // wears — the moved potion the source's word the
+            // destinations bank, the drained source the NONE retires,
+            // the remainder the word keeps, the kindless stacks the
+            // silence keeps)
+            if src_kind != crate::brewing_sim::POTION_KIND_NONE {
+                for (i, pair) in &changed {
+                    if *i == src_menu {
+                        continue; // the source's own word the tail settles
+                    }
+                    if pair.1 <= 0 || !crate::world::brewing_is_potion_kind(pair.0) {
+                        continue; // the kindless rows the silence keeps
+                    }
+                    if *i < n {
+                        if *i < self.chest_row_potion_kinds.len() {
+                            self.chest_row_potion_kinds[*i] = src_kind;
+                        }
+                    } else if *i < n + 27 {
+                        self.items_potion_kinds[9 + *i - n] = src_kind;
+                    } else {
+                        self.items_potion_kinds[*i - n - 27] = src_kind;
+                    }
+                }
+                // the source's own word: the remainder the word keeps,
+                // the drain the NONE retires
+                if let Some(&(si, spair)) = changed.first() {
+                    if si == src_menu {
+                        let keep = if spair.1 > 0 {
+                            src_kind
+                        } else {
+                            crate::brewing_sim::POTION_KIND_NONE
+                        };
+                        if si < n {
+                            if si < self.chest_row_potion_kinds.len() {
+                                self.chest_row_potion_kinds[si] = keep;
+                            }
+                        } else if si < n + 27 {
+                            self.items_potion_kinds[9 + si - n] = keep;
+                        } else {
+                            self.items_potion_kinds[si - n - 27] = keep;
+                        }
+                    }
+                }
+            }
             // THE TRANSFER'S OWN LIVE FILL RIDE (the autopush-295
             // round — the CHEST-SIDE delta the ride answers: the
             // inventory-side rows the fill never banks [the vanilla
@@ -49597,10 +49760,10 @@ impl App {
         // store rows speak: the pickup the seat's kind the word banks,
         // the place the word the seat lays, the model's own swap the
         // pairs exchange, the merge the emptied carried the NONE word
-        // wears; the chest rows the kindless model the NONE word keeps
-        // — the (id, count) store the word never carried, the pickup
-        // the honest silence the stale seat never lends, the place
-        // into a chest row the word retires)
+        // wears; the chest rows the ROW BANK the 363 round answers —
+        // the placed potion the row's word the bank keeps, the pickup
+        // the banked word the carried lends, the normalized read the
+        // stale word the non-potion rows never lends)
         let inv_row = menu >= n;
         let mapped = if inv_row {
             if menu < n + 27 {
@@ -49611,10 +49774,14 @@ impl App {
         } else {
             0
         };
+        if self.chest_row_potion_kinds.len() != n {
+            self.chest_row_potion_kinds
+                .resize(n, crate::brewing_sim::POTION_KIND_NONE);
+        }
         let old_seat_kind = if inv_row {
             self.row_potion_kind(mapped)
         } else {
-            crate::brewing_sim::POTION_KIND_NONE
+            self.chest_row_potion_kind(menu)
         };
         let old_carried_kind = self.chest_carried_potion_kind;
         let mut new_seat_kind = old_seat_kind;
@@ -49625,14 +49792,14 @@ impl App {
             let carried_gone = self.chest_carried.1 > 0 && new_carried.1 <= 0;
             let carried_new = self.chest_carried.1 <= 0 && new_carried.1 > 0;
             if seat_gone && carried_new {
-                // the PICKUP — the kind rides to the word (the chest
-                // row the honest NONE lends)
+                // the PICKUP — the kind rides to the word (the row
+                // bank the seat's own word lends)
                 new_carried_kind = old_seat_kind;
                 new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
             } else if carried_gone && seat_new {
-                // the PLACE — the kind rides to the seat (the
-                // inventory row the seat banks, the chest row the word
-                // retires — the kindless store the silence wears)
+                // the PLACE — the kind rides to the seat (the row bank
+                // the word keeps — the potion's own identity the store
+                // ride survives)
                 new_seat_kind = old_carried_kind;
                 new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
             } else if believed.1 > 0 && new_slot.1 > 0 && believed.0 != new_slot.0 {
@@ -49647,6 +49814,8 @@ impl App {
             }
             if inv_row {
                 self.items_potion_kinds[mapped] = new_seat_kind;
+            } else if menu < self.chest_row_potion_kinds.len() {
+                self.chest_row_potion_kinds[menu] = new_seat_kind;
             }
             self.chest_carried_potion_kind = new_carried_kind;
         }
@@ -60409,6 +60578,21 @@ impl App {
             self.items_potion_kinds[row]
         } else {
             crate::brewing_sim::POTION_KIND_NONE
+        }
+    }
+
+    /// THE ROW BANK'S OWN READ (the autopush-363 round — the same
+    /// normalized law the player rows wear the stored rows answer: the
+    /// potion stack the bank's word lends, the non-potion row the
+    /// honest NONE keeps, the stale word the id gate never lends).
+    fn chest_row_potion_kind(&self, row: usize) -> i32 {
+        match self.chest_slots.get(row) {
+            Some(&(id, _)) if crate::world::brewing_is_potion_kind(id) => self
+                .chest_row_potion_kinds
+                .get(row)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            _ => crate::brewing_sim::POTION_KIND_NONE,
         }
     }
 
@@ -74354,6 +74538,9 @@ impl App {
                     mirror[i] = (id, count);
                 }
                 self.chest_slots = grid;
+                // the live lane's own rows the honest NONE wall keeps
+                // (the wire the kind word never carries)
+                self.chest_row_potion_kinds = vec![crate::brewing_sim::POTION_KIND_NONE; grid_len];
                 self.chest_mirror = mirror;
                 self.chest_is_live = true;
                 // the shulker's kind row the wire window never wears

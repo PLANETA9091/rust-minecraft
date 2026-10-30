@@ -14048,9 +14048,9 @@ fn the_chest_carried_the_word_wears() {
         app.items_potion_kinds[25], none,
         "the dirt seat the NONE word wears"
     );
-    // THE CHEST ROW'S OWN HONEST WALL (the place into the kindless
-    // store the word retires, the pickup the silence the stale seat
-    // never lends)
+    // THE CHEST ROW'S OWN BANK (the 363 round — the place the row's
+    // word the bank keeps, the pickup the banked word the carried
+    // lends)
     let (cx, cy) = chest_seat(&mut app, 3); // the chest's own grid the menu 3 wears
     app.click_chest_slot(cx, cy, 0);
     assert_eq!(
@@ -14060,7 +14060,11 @@ fn the_chest_carried_the_word_wears() {
     );
     assert_eq!(
         app.chest_carried_potion_kind, none,
-        "the chest row the word retires"
+        "the placed carried the NONE word wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], kind,
+        "the chest row the word banks"
     );
     let (cx2, cy2) = chest_seat(&mut app, 3);
     app.click_chest_slot(cx2, cy2, 0);
@@ -14070,8 +14074,8 @@ fn the_chest_carried_the_word_wears() {
         "the chest pickup the carried banks"
     );
     assert_eq!(
-        app.chest_carried_potion_kind, none,
-        "the chest row the NONE word lends"
+        app.chest_carried_potion_kind, kind,
+        "the chest row the banked word lends"
     );
     // THE CARRIED THE CHEST ROW HOLDS BACK (the same-id pair the
     // predict's own no-op keeps — the 360 record's wall the re-arm
@@ -14792,4 +14796,203 @@ fn the_dispenser_carried_the_word_wears() {
         app.dispenser_carried_potion_kind, none,
         "the close the word retires"
     );
+}
+
+/// THE CHEST ROWS' OWN KIND BANK (the autopush-363 round — the dev-204
+/// law the stored rows the world's own parallel map answers: the place
+/// the row's word the bank keeps, the reopen the same words load [the
+/// stale silence the kindless store wore the bank retires], the pickup
+/// the banked word the carried lends, the model's own swap the pairs
+/// through the row exchange, the quick-move the source's word the
+/// destinations bank [the drained source the NONE retires], the render
+/// the row's word the liquid lane colors, the flush the words the
+/// per-cell entries ride home to).
+#[test]
+fn the_chest_rows_the_word_bank_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let kind2 = 5;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(363);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    app.open_chest_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the chest door the walk wears"
+    );
+    assert!(
+        app.chest_row_potion_kinds.iter().all(|&k| k == none),
+        "the fresh open the rows the NONE bank wears"
+    );
+    // THE PLACE'S OWN BANK (the kinded carried the row's word keeps —
+    // the carried the NONE word wears)
+    app.inventory.items[18] = (potion, 1); // the menu 36 the main grid wears
+    app.items_potion_kinds[18] = kind;
+    let (ox, oy) = chest_seat(&mut app, 36);
+    app.click_chest_slot(ox, oy, 0);
+    let (px, py) = chest_seat(&mut app, 3); // the chest's own grid the menu 3 wears
+    app.click_chest_slot(px, py, 0);
+    assert_eq!(
+        app.chest_slots[3],
+        (potion, 1),
+        "the chest row the stack lays"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], kind,
+        "the placed row the word banks"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the placed carried the NONE word wears"
+    );
+    // THE RENDER'S OWN ROW TINT (the row's word the liquid lane colors
+    // — the headless pair the only delta the row's own icon wears, the
+    // far face the tint never wears)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let assets_root = assets_root();
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_a, &mut a);
+    }
+    app.chest_row_potion_kinds[3] = none;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_b, &mut a);
+    }
+    app.chest_row_potion_kinds[3] = kind; // the pair's own state restores
+    let mut diff = 0usize;
+    for y in 0..180i32 {
+        for x in 0..320i32 {
+            if pixel(&fb_a, x, y) != pixel(&fb_b, x, y) {
+                diff += 1;
+            }
+        }
+    }
+    assert!(diff > 0, "the kinded row the tint lane re-colors");
+    assert_eq!(
+        pixel(&fb_a, 20, 160),
+        pixel(&fb_b, 20, 160),
+        "the far face the tint never wears"
+    );
+    // THE REOPEN'S OWN BANK (the close the words the map entry rides
+    // home to, the open the same words load — the stale silence the
+    // kindless store wore the bank retires)
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the close the world returns");
+    app.open_chest_for(cell);
+    assert_eq!(
+        app.chest_row_potion_kinds[3], kind,
+        "the reopen the banked word loads"
+    );
+    // THE PICKUP'S OWN RIDE (the banked word the carried lends, the
+    // row the NONE bank wears)
+    let (qx, qy) = chest_seat(&mut app, 3);
+    app.click_chest_slot(qx, qy, 0);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the pickup the carried banks"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind,
+        "the banked row the word lends"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], none,
+        "the emptied row the NONE bank wears"
+    );
+    // THE MODEL'S OWN SWAP (the dirt carried the kinded row exchanges
+    // — the pairs through the row the words exchange)
+    let (sx, sy) = chest_seat(&mut app, 5);
+    app.click_chest_slot(sx, sy, 0); // the re-place the row 5 banks
+    assert_eq!(
+        app.chest_row_potion_kinds[5], kind,
+        "the re-placed row the word banks"
+    );
+    app.inventory.items[30] = (dirt, 5); // the menu 48 the main grid wears
+    let (dx, dy) = chest_seat(&mut app, 48);
+    app.click_chest_slot(dx, dy, 0);
+    let (wx, wy) = chest_seat(&mut app, 5);
+    app.click_chest_slot(wx, wy, 0);
+    assert_eq!(
+        app.chest_slots[5],
+        (dirt, 5),
+        "the swap the row the dirt lays"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[5], none,
+        "the dirt row the NONE bank wears"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the swap the carried the potion keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind,
+        "the swapped carried the word banks"
+    );
+    // THE QUICK-MOVE'S OWN RIDE (the inventory source the row's word
+    // the bank lands — the drained source the NONE retires)
+    app.throw_chest_carried_outside(0); // the carried the throw drops
+    app.inventory.items[20] = (potion, 1); // the menu 38 the main grid wears
+    app.items_potion_kinds[20] = kind2;
+    app.shift_down = true;
+    let (mx2, my2) = chest_seat(&mut app, 38);
+    app.click_chest_slot(mx2, my2, 0);
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the quick-move the row the stack lands"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], kind2,
+        "the quick-move the row's word banks"
+    );
+    assert_eq!(
+        app.inventory.items[20],
+        (0, 0),
+        "the drained source the stack retires"
+    );
+    assert_eq!(
+        app.items_potion_kinds[20], none,
+        "the drained source the NONE word wears"
+    );
+    // THE RIDE BACK (the row source the player row's word banks — the
+    // hotbar row the rev order lands)
+    let (bx, by) = chest_seat(&mut app, 0);
+    app.click_chest_slot(bx, by, 0);
+    assert_eq!(app.chest_slots[0], (0, 0), "the ride back the row empties");
+    assert_eq!(
+        app.inventory.items[8],
+        (potion, 1),
+        "the ride back the hotbar row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], kind2,
+        "the ride back the word banks"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], none,
+        "the emptied row the NONE bank wears"
+    );
+    app.shift_down = false;
 }
