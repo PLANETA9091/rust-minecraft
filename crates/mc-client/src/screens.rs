@@ -25834,6 +25834,19 @@ impl App {
                         *cell = (0, 0);
                     }
                     self.craft_result = (0, 0);
+                    // THE KIND'S OWN SEAT CLEAR (the autopush-349 round —
+                    // the emptied rows the bank the dev-201 walk's own
+                    // law answers: the whole-clear the store rows' 36
+                    // seats + the offhand's [`OFFHAND_KIND_SEAT`] the
+                    // stale kind the later potion never wears; the armor
+                    // rows the kind never carries the bank the seats
+                    // never mint, the craft cells the wall the 343 law
+                    // keeps)
+                    for k in self.items_potion_kinds.iter_mut().take(36) {
+                        *k = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                    self.items_potion_kinds[OFFHAND_KIND_SEAT] =
+                        crate::brewing_sim::POTION_KIND_NONE;
                     self.hotbar_slots = self.inventory.hotbar();
                 } else {
                     // THE CARRIED DESTROYS (pc 238-251 —
@@ -26760,9 +26773,25 @@ impl App {
                 };
                 match slot {
                     CreativeWrapSlot::Armor(k) => self.inventory.armor[k] = new,
-                    CreativeWrapSlot::Offhand => self.inventory.offhand[0] = new,
+                    CreativeWrapSlot::Offhand => {
+                        self.inventory.offhand[0] = new;
+                        // THE KIND'S OWN SEAT CLEAR (the autopush-349
+                        // round — the emptied shield cell the bank's
+                        // [`OFFHAND_KIND_SEAT`] the dev-201 walk's own
+                        // law the inventory screen's own Q re-wears)
+                        if new.1 <= 0 {
+                            self.items_potion_kinds[OFFHAND_KIND_SEAT] =
+                                crate::brewing_sim::POTION_KIND_NONE;
+                        }
+                    }
                     CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
                         self.inventory.items[i] = new;
+                        // THE KIND'S OWN SEAT CLEAR (the autopush-349
+                        // round — the emptied row the bank the dev-201
+                        // walk's own law the store seat answers)
+                        if new.1 <= 0 {
+                            self.items_potion_kinds[i] = crate::brewing_sim::POTION_KIND_NONE;
+                        }
                         // the remainder the broadcast walk re-syncs — the
                         // HUD hotbar row the every-mutation law syncs
                         self.hotbar_slots = self.inventory.hotbar();
@@ -26812,6 +26841,12 @@ impl App {
             let left = count - taken;
             let new = if left > 0 { (id, left) } else { (0, 0) };
             self.inventory.items[s] = new;
+            // THE KIND'S OWN SEAT CLEAR (the autopush-349 round — the
+            // emptied row the bank the dev-201 walk's own law the
+            // store seat answers)
+            if new.1 <= 0 {
+                self.items_potion_kinds[s] = crate::brewing_sim::POTION_KIND_NONE;
+            }
             self.hotbar_slots = self.inventory.hotbar();
             // THE STORE ROW'S OWN WORD PAIR (the default arm's net law
             // — the doClick THROW's ItemDrop word the taken stack

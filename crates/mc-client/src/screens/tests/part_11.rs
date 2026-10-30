@@ -10992,3 +10992,96 @@ fn the_picker_wrap_kind_the_bank_the_seats_rewear() {
         "the palette row the no-component law keeps kindless"
     );
 }
+
+/// THE PICKER'S OWN STALE SEAT CLEAR (the autopush-349 round — the
+/// creative Q's THROW arms + the bin's whole-clear the bank the
+/// dev-201 walk's own law the inventory screen's own Q re-wears): the
+/// emptied wrap row the bank clears, the partial the banked kind
+/// keeps [the <= 0 gate], the emptied shield cell the bank's
+/// [`OFFHAND_KIND_SEAT`] clears, the bottom store row the same law
+/// the seat's own index answers, the bin's whole-clear the store
+/// rows' 36 seats + the offhand seat the NONE wears — the stale kind
+/// the later potion never wears.
+#[test]
+fn the_picker_qthrow_the_stale_seats_the_bank_clears() {
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(262);
+    app.enter_world();
+    app.game_mode = GameMode::Creative;
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Creative, "the creative arm opens");
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    app.creative_panel = (100, 50);
+    // THE WRAP MAIN ROW (the whole take the seat empties + the bank
+    // clears; the partial the banked kind keeps)
+    app.inventory.items[12] = (potion, 2);
+    app.items_potion_kinds[12] = kind_a;
+    let (wx, wy) = (100 + 9 + 3 * 18 + 8, 50 + 54 + 8); // main-12's own rect
+    app.mouse_pos = Some((wx, wy));
+    app.on_creative_drop_key(false);
+    assert_eq!(
+        app.inventory.items[12],
+        (potion, 1),
+        "the one off the seat keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], kind_a,
+        "the partial the banked kind keeps"
+    );
+    app.on_creative_drop_key(true);
+    assert_eq!(app.inventory.items[12], (0, 0), "the whole take empties");
+    assert_eq!(
+        app.items_potion_kinds[12], none,
+        "the emptied seat the bank clears"
+    );
+    // THE WRAP OFFHAND (the emptied shield cell the bank's 36 clears)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    app.mouse_pos = Some((100 + 35 + 8, 50 + 20 + 8)); // the offhand's own rect
+    app.on_creative_drop_key(true);
+    assert_eq!(app.inventory.offhand[0], (0, 0), "the throw empties");
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the emptied offhand the bank clears"
+    );
+    // THE BOTTOM STORE ROW (the non-Inventory tab the same law the
+    // seat's own index answers)
+    app.select_creative_tab(0);
+    app.inventory.items[4] = (potion, 1);
+    app.items_potion_kinds[4] = kind_a;
+    app.mouse_pos = Some((100 + 9 + 4 * 18 + 8, 50 + 112 + 8)); // the bottom row's rect
+    app.on_creative_drop_key(true);
+    assert_eq!(app.inventory.items[4], (0, 0), "the throw empties");
+    assert_eq!(
+        app.items_potion_kinds[4], none,
+        "the emptied bottom row the bank clears"
+    );
+    // THE BIN'S WHOLE-CLEAR (the shift press the store rows' 36 seats
+    // + the offhand seat the NONE wears — the stale kinds the whole
+    // clear never leaves)
+    app.select_creative_tab(inv_tab);
+    app.items_potion_kinds[7] = kind_a;
+    app.items_potion_kinds[20] = kind_a;
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    app.mouse_pos = Some((100 + 173 + 8, 50 + 112 + 8)); // the bin's own rect
+    app.shift_down = true;
+    app.click_creative(100 + 173 + 8, 50 + 112 + 8, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.items_potion_kinds[7], none,
+        "the hotbar seat the clear wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[20], none,
+        "the main seat the clear wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the offhand seat the clear wears"
+    );
+}
