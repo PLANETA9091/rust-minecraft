@@ -2595,6 +2595,18 @@ pub enum ContainerCommand {
     /// slots, the server's slot echo the wholesale replace answers),
     /// the wire the packet alone rides.
     SwapOffhand,
+    /// THE WORLD Q-DROP's wire half (the vanilla handleKeybinds's
+    /// keyDrop lane — the ServerboundPlayerActionPacket's
+    /// DROP_ITEM / DROP_ALL_ITEMS action the wholeStack boolean keys,
+    /// BlockPos.ZERO / Direction.DOWN, the 3-arg ctor's sequence 0).
+    /// The local take the SAME belief the removeFromSelected law
+    /// speaks (the prediction's own truth — the sub-echo window the
+    /// wholesale refresh re-banks), the drop entity the server's own
+    /// Add Entity lane answers (the client-side spawn the prediction
+    /// never duplicates).
+    DropKey {
+        whole_stack: bool,
+    },
     /// THE STAB's wire half (the vanilla startAttack's piercing branch —
     /// the ServerboundPlayerActionPacket's STAB action at BlockPos.ZERO /
     /// Direction.DOWN, the 3-arg ctor's sequence 0). The PIERCING_WEAPON

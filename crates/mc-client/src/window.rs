@@ -687,6 +687,19 @@ fn run_join(
                             view.model.swap_offhand();
                             session.swap_offhand()
                         }
+                        crate::world_view::ContainerCommand::DropKey { whole_stack } => {
+                            // THE WORLD Q-DROP (the vanilla handleKeybinds's
+                            // keyDrop echo — the LocalPlayer.drop's send): the
+                            // 3-arg ctor's packet the sequence-0 walk rides
+                            // (the DROP_ITEM / DROP_ALL_ITEMS action the
+                            // wholeStack boolean keys, BlockPos.ZERO /
+                            // Direction.DOWN) — the monotonic counter the dig
+                            // arc's startPrediction keeps the drop never rides,
+                            // the belief's own take the frame thread's
+                            // prediction spoke (the store's slot echo the
+                            // wholesale replace answers)
+                            session.player_action(if whole_stack { 3 } else { 4 }, (0, 0, 0), 0, 0)
+                        }
                         crate::world_view::ContainerCommand::Stab => {
                             // THE STAB (the vanilla startAttack's piercing
                             // branch echo): the PIERCING_WEAPON stack's left

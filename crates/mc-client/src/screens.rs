@@ -35556,12 +35556,26 @@ impl App {
     /// LivingEntity.drop(stack, dropAround=false, includeThrower=true):
     /// the AIMED look throw ([`Self::drop_item_entity_aimed`], the
     /// createItemStackToDrop bytecode's else arm). The wire sessions
-    /// refuse honestly (the store the server owns — the DROP_ITEM
-    /// action packet lane rides later).
+    /// the [`Self::on_drop_key_wire`] walk answers (the belief the
+    /// SAME removeFromSelected law wears, the packet the 3-arg ctor
+    /// speaks — the store the server's echo re-answers). THE
+    /// SPECTATOR GATE the bytecode pc 437 speaks (`isSpectator()Z` the
+    /// drop call's conjunct): the spectator's key the drop never
+    /// reads, the swing the refusal never fires.
     pub fn on_drop_key(&mut self, whole_stack: bool) {
+        // THE SPECTATOR GATE (the jar lane's own isSpectator conjunct —
+        // the pc 437 the handleKeybinds walk speaks, the swap lane's
+        // own gate the same keybinds band wears)
+        if self.game_mode == GameMode::Spectator {
+            return;
+        }
         if self.world_is_network {
-            return; // the wire's store the server owns — the drop action
-                    // packet the server answers rides later
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // removeFromSelected walk answers, the packet the 3-arg
+            // ctor's lane speaks — the offline store NOT the truth
+            // there.
+            self.on_drop_key_wire(whole_stack);
+            return;
         }
         if self.screen != ScreenKind::World || self.dead || self.paused {
             return; // the handleKeybinds gate — the overlay/screen pair
@@ -35587,6 +35601,67 @@ impl App {
         }
         self.hotbar_slots = self.inventory.hotbar();
         self.swing.start(); // the handleKeybinds success arm's MAIN_HAND swing
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// handleKeybinds gate chain, the LIVE belief's selected seat the
+    /// removeFromSelected law answers): the gates the offline walk
+    /// keeps (the screen/death/pause pair the keybinds never pass),
+    /// the EMPTY seat the silence (the drop-false law the removeFrom
+    /// speaks), the SINK-LESS session the honest refusal (no lane —
+    /// the belief the walk never touches without its own packet), the
+    /// take the PREDICTION speaks (the whole stack gone or exactly
+    /// one off — the sub-echo window the belief's own truth, the
+    /// wholesale refresh the next re-bank answers [the 343 law]), the
+    /// HUD row's belief the every-mutation law syncs (the hotbar's
+    /// menu ids 36..45 the inventory window-0's own projection wears),
+    /// the emptied seat the bank clears (the dev-199 walk's own law —
+    /// the partial drop the banked kind keeps), the hand's reload the
+    /// id change speaks (the swap lane's own walk), the MAIN_HAND
+    /// swing the success arm fires (the non-empty removal the drop's
+    /// true verdict wears) — and the packet the 3-arg ctor speaks
+    /// (DROP_ITEM / DROP_ALL_ITEMS at BlockPos.ZERO / Direction.DOWN,
+    /// the sequence 0 the swap lane's law keeps — the monotonic
+    /// counter the dig arc's startPrediction the drop never rides).
+    /// The drop ENTITY the server's own Add Entity lane answers (the
+    /// client-side spawn the prediction never duplicates — the same
+    /// law the inventory screen's THROW arm wears).
+    fn on_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::World || self.dead || self.paused {
+            return; // the handleKeybinds gate — the twin the offline walk keeps
+        }
+        let sel = 36 + self.selected_hotbar;
+        let (id, count) = self.live_inv_slots[sel];
+        if count <= 0 {
+            return; // removeFromSelected's EMPTY law — drop false, silence
+        }
+        if self.live_clicks.is_none() {
+            return; // sink-less session — the command dies on the frame thread
+        }
+        // THE TAKE (the prediction's own truth — the removeFromSelected
+        // law the offline walk wears: the whole stack gone or exactly
+        // one off)
+        self.live_inv_slots[sel] = if whole_stack { (0, 0) } else { (id, count - 1) };
+        // THE HUD ROW'S BELIEF (the every-mutation law — the hotbar's
+        // menu ids the window-0 projection's own 36..45 wears)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&self.live_inv_slots[36..45]);
+        self.hotbar_slots = row;
+        // THE KIND'S OWN SEAT CLEAR (the dev-199 walk's own law — the
+        // emptied seat the bank clears, the partial drop the banked
+        // kind keeps)
+        if self.live_inv_slots[sel].1 <= 0 {
+            self.items_potion_kinds[self.selected_hotbar] = crate::brewing_sim::POTION_KIND_NONE;
+        }
+        // THE HAND'S RELOAD (the id change the reload key speaks — the
+        // swap lane's own walk; the emptied seat the None the unload
+        // answers)
+        let held = Some(self.live_inv_slots[sel]);
+        self.live_held_updated(held);
+        self.swing.start(); // the handleKeybinds success arm's MAIN_HAND swing
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::DropKey { whole_stack });
+        }
     }
 
     /// THE MIDDLE-CLICK PICK (the 26.2 `Minecraft.pickBlockOrEntity`'s

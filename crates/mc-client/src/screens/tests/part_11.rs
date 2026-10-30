@@ -10820,3 +10820,91 @@ fn the_qdrop_ride_the_seats_the_bank_clears() {
         "the craft region the wall the bank keeps"
     );
 }
+
+/// THE WORLD Q-DROP'S OWN WIRE RIDE (the autopush-347 round — the
+/// dev-201 refusal's own answer the handleKeybinds keyDrop lane
+/// re-walks): the wire session's Q the LocalPlayer.drop walk speaks —
+/// the belief's selected seat the removeFromSelected law wears (the
+/// ONE off the remainder keeps, the whole take the seat empties),
+/// the HUD row's belief the every-mutation law syncs, the emptied
+/// seat the bank clears [the dev-199 walk's own law the partial the
+/// banked kind keeps], the MAIN_HAND swing the success arm fires,
+/// the 3-arg ctor's packet the sequence-0 lane rides — the drop
+/// entity the server's own Add Entity lane answers (the client-side
+/// spawn the prediction never duplicates), the SINK-LESS session the
+/// honest refusal (the belief the walk never touches without its own
+/// packet).
+#[test]
+fn the_world_qdrop_ride_the_wire_the_prediction_wears() {
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    // THE WIRE LANE (the belief + the bank the prediction's own truth
+    // wears — the wholesale refresh the next re-bank answers)
+    let mut live = App::new(3);
+    live.open(ScreenKind::Connect);
+    live.net_world = Some(air_net_world(2, 0));
+    live.enter_network_world(None, Skybox::Overworld, None, None);
+    let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    live.attach_live_clicks(tx);
+    live.live_inv_slots[36] = (potion, 3);
+    live.items_potion_kinds[0] = kind_a;
+    // THE PLAIN Q (the ONE off the seat keeps — the drop the belief
+    // speaks, the entity the server's own lane answers)
+    live.on_drop_key(false);
+    assert_eq!(
+        live.live_inv_slots[36],
+        (potion, 2),
+        "the one off the belief wears"
+    );
+    assert_eq!(
+        live.items_potion_kinds[0], kind_a,
+        "the remainder the banked kind keeps"
+    );
+    assert_eq!(
+        live.hotbar_slots[0],
+        (potion, 2),
+        "the HUD row's belief syncs"
+    );
+    assert!(live.swing.swinging, "the success arm the MAIN_HAND fires");
+    match rx.try_recv().expect("the DROP packet rode") {
+        crate::world_view::ContainerCommand::DropKey { whole_stack } => {
+            assert!(!whole_stack, "the plain Q the ONE speaks");
+        }
+        other => panic!("expected the drop key, got {other:?}"),
+    }
+    // THE WHOLE TAKE (the Ctrl the seat empties — the bank the clear
+    // answers, the held the unload wears)
+    live.on_drop_key(true);
+    assert_eq!(live.live_inv_slots[36], (0, 0), "the whole take empties");
+    assert_eq!(
+        live.items_potion_kinds[0], none,
+        "the emptied seat the bank clears"
+    );
+    assert_eq!(live.hotbar_slots[0], (0, 0), "the HUD row the clear wears");
+    assert_eq!(live.live_held, None, "the emptied hand the unload wears");
+    match rx.try_recv().expect("the DROP-ALL packet rode") {
+        crate::world_view::ContainerCommand::DropKey { whole_stack } => {
+            assert!(whole_stack, "the Ctrl the WHOLE speaks");
+        }
+        other => panic!("expected the drop key, got {other:?}"),
+    }
+    // THE EMPTY SEAT (the silence — the removeFromSelected EMPTY law
+    // the drop-false verdict keeps)
+    live.on_drop_key(false);
+    assert!(rx.try_recv().is_err(), "the empty seat the silence keeps");
+    // THE SINK-LESS SESSION (the honest refusal — the belief the walk
+    // never touches without its own packet)
+    let mut bare = App::new(3);
+    bare.open(ScreenKind::Connect);
+    bare.net_world = Some(air_net_world(2, 0));
+    bare.enter_network_world(None, Skybox::Overworld, None, None);
+    bare.live_inv_slots[37] = (potion, 5);
+    bare.selected_hotbar = 1;
+    bare.on_drop_key(false);
+    assert_eq!(
+        bare.live_inv_slots[37],
+        (potion, 5),
+        "the sink-less belief the walk keeps whole"
+    );
+}

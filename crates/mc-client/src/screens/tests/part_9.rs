@@ -6139,9 +6139,11 @@ fn the_empty_selected_slot_q_is_silence() {
 
 /// THE Q KEY'S OWN GATE (the handleKeybinds overlay==null &&
 /// screen==null law): the keybinds the OPEN SCREEN never passes —
-/// the inventory-open Q is silence — and the wire session refuses
-/// honestly (the store the server owns, the DROP_ITEM action packet
-/// lane the follow-up names).
+/// the inventory-open Q is silence — and the wire session's EMPTY
+/// belief the silence keeps (the removeFromSelected EMPTY law the
+/// wire ride speaks — the live seat the store-less walk never
+/// touches, the DROP_ITEM action packet the world Q-drop's wire lane
+/// rides).
 #[test]
 fn the_q_key_refuses_the_screens_and_the_wire() {
     let mut app = App::new(3);
@@ -6163,7 +6165,9 @@ fn the_q_key_refuses_the_screens_and_the_wire() {
     app.paused = true;
     app.on_drop_key(false);
     assert_eq!(app.drops.len(), drops_before, "the pause freeze holds");
-    // the WIRE session — the store the server owns
+    // the WIRE session — the EMPTY belief the silence keeps (the
+    // live seat the offline-entered walk never populated — the
+    // removeFromSelected EMPTY law the wire ride keeps honest)
     app.paused = false;
     app.world_is_network = true;
     app.on_drop_key(false);
