@@ -9585,4 +9585,275 @@ fn the_player_rows_the_potion_kinds_the_disk_wears() {
         "the over-long list the rows wear"
     );
 }
-use super::*;
+
+/// THE POTION KIND'S OWN TINT TABLES (the autopush-340 round — the
+/// GENERATED tables the jar's own bytecode banks: the MobEffects
+/// bootstrap the 40 `(name, color)` rows the ctor's ldc int wears,
+/// the Potions bootstrap the 46 base names the strip law answers
+/// [the long_/strong_ registry rows the BASE name the ctor arg wears
+/// — pc 95/133 both "night_vision"], the effect rows the `(Holder, I)`
+/// the amp-0 default and the `(Holder, II)` the explicit second int
+/// wear). THE BLEND the `getColorOr` walk serves — the
+/// `(amplifier + 1)`-weighted channels the divisor answers, the
+/// empty rows the 0x385DC6 default keep, the single-effect rows the
+/// effect's own color return REGARDLESS of the amplifier [the k·c/k
+/// fold the weight division speaks].
+#[test]
+fn the_potion_kinds_the_tint_tables_the_jar_wears() {
+    use crate::brewing_sim as bs;
+    // THE TABLE SHAPE (the 40 colors, the 46 rows, the strip law)
+    assert_eq!(bs::MOB_EFFECT_COLORS.len(), 40);
+    assert_eq!(bs::POTION_KIND_BASE_NAMES.len(), 46);
+    assert_eq!(bs::POTION_KIND_EFFECTS.len(), 46);
+    for (i, reg) in bs::POTION_KIND_NAMES.iter().enumerate() {
+        let strip = reg
+            .strip_prefix("long_")
+            .or_else(|| reg.strip_prefix("strong_"))
+            .unwrap_or(reg);
+        assert_eq!(
+            bs::POTION_KIND_BASE_NAMES[i],
+            strip,
+            "the row {i} the registry {reg} the strip keeps"
+        );
+    }
+    // THE COLOR SPOTS (the jar's own ldc ints — 3402751 the speed
+    // green, 12779366 the night_vision lime, 16253176-... the instant
+    // health's red the HealOrHarmMobEffect ctor wears)
+    let color = |name: &str| {
+        bs::MOB_EFFECT_COLORS
+            .iter()
+            .find(|(n, _)| *n == name)
+            .map(|(_, c)| *c)
+            .unwrap()
+    };
+    assert_eq!(color("speed"), 0x33EBFF);
+    assert_eq!(color("night_vision"), 0xC2FF66);
+    assert_eq!(color("instant_health"), 0xF82423);
+    assert_eq!(color("slowness"), 0x8BAFE0);
+    assert_eq!(color("resistance"), 0x9146F0);
+    // THE EFFECT ROWS (the jar's own pairs — turtle_master the TWO
+    // effects the iconst_2 array wears [slowness IV + resistance III],
+    // the strong row the amps 5/3 the same walk wears, the healing
+    // rows the instant_health the amp 0/1 pair keeps)
+    assert!(bs::POTION_KIND_EFFECTS[bs::POTION_WATER as usize].is_empty());
+    assert!(bs::POTION_KIND_EFFECTS[bs::POTION_MUNDANE as usize].is_empty());
+    assert!(bs::POTION_KIND_EFFECTS[bs::POTION_THICK as usize].is_empty());
+    assert!(bs::POTION_KIND_EFFECTS[bs::POTION_AWKWARD as usize].is_empty());
+    assert_eq!(
+        bs::POTION_KIND_EFFECTS[bs::POTION_TURTLE_MASTER as usize],
+        &[("slowness", 3), ("resistance", 2)]
+    );
+    assert_eq!(
+        bs::POTION_KIND_EFFECTS[bs::POTION_STRONG_TURTLE_MASTER as usize],
+        &[("slowness", 5), ("resistance", 3)]
+    );
+    assert_eq!(
+        bs::POTION_KIND_EFFECTS[bs::POTION_STRONG_HEALING as usize],
+        &[("instant_health", 1)]
+    );
+    // THE BLEND PINS (the walk's own integer answers — the empty rows
+    // the 0x385DC6 default keep, the single-effect rows the effect's
+    // own color return [the k·c/k fold], the turtle master the
+    // weighted pair the divisor blends: slowness k4 + resistance k3,
+    // r = (4·0x8B + 3·0x91)/7 = 0x8D, g = (4·0xAF + 3·0x46)/7 = 0x82,
+    // b = (4·0xE0 + 3·0xF0)/7 = 0xE6)
+    let def = bs::POTION_DEFAULT_COLOR;
+    assert_eq!(def, 0x385DC6);
+    assert_eq!(bs::potion_kind_liquid_color(bs::POTION_WATER), def);
+    assert_eq!(bs::potion_kind_liquid_color(bs::POTION_MUNDANE), def);
+    assert_eq!(bs::potion_kind_liquid_color(bs::POTION_THICK), def);
+    assert_eq!(bs::potion_kind_liquid_color(bs::POTION_AWKWARD), def);
+    assert_eq!(
+        bs::potion_kind_liquid_color(-2),
+        def,
+        "the unknown the default keeps"
+    );
+    assert_eq!(
+        bs::potion_kind_liquid_color(bs::POTION_NIGHT_VISION),
+        0xC2FF66
+    );
+    assert_eq!(
+        bs::potion_kind_liquid_color(bs::POTION_LONG_NIGHT_VISION),
+        0xC2FF66,
+        "the long row the SAME base name the same color wears"
+    );
+    assert_eq!(
+        bs::potion_kind_liquid_color(bs::POTION_STRONG_HEALING),
+        0xF82423,
+        "the amp-1 row the k·c/k fold the same color answers"
+    );
+    assert_eq!(
+        bs::potion_kind_liquid_color(bs::POTION_TURTLE_MASTER),
+        0x8D82E6
+    );
+    assert_eq!(
+        bs::potion_kind_liquid_color(bs::POTION_STRONG_TURTLE_MASTER),
+        0x8D85E6
+    );
+    assert_eq!(bs::potion_kind_liquid_color(bs::POTION_LUCK), 0x59C106);
+    assert_eq!(
+        bs::potion_kind_liquid_color(bs::POTION_STRONG_HARMING),
+        0xA9656A
+    );
+    // THE BASE NAME TAIL (the strip law the accessor answers, the
+    // unknown the "empty" lane the orElse walk keeps)
+    assert_eq!(bs::potion_kind_base_name(bs::POTION_WATER), "water");
+    assert_eq!(
+        bs::potion_kind_base_name(bs::POTION_LONG_NIGHT_VISION),
+        "night_vision"
+    );
+    assert_eq!(bs::potion_kind_base_name(bs::POTION_LUCK), "luck");
+    assert_eq!(bs::potion_kind_base_name(-1), "empty");
+}
+
+/// THE POTION KIND'S OWN DISPLAY NAME (the `getName` walk the lang
+/// lane serves — the base-name strip the `item.minecraft.potion.
+/// effect.<base>` key pairs [the 26.2 table's own 26 keys the strip
+/// explains], the kindless/plain rows the item's own key keeps). THE
+/// LANES: the held flash's kinded name re-arms the change arm [the
+/// kind swap the SAME id the name still changes], the tooltip's
+/// kinded rows the name row swaps the enchant/advanced rows keep.
+#[test]
+fn the_potion_kinds_the_display_names_the_strip_wears() {
+    let app = App::new(3);
+    let potion_id = mc_registry::item_id_by_name("potion").expect("the potion id");
+    // THE KINDED NAMES (the lang rows the strip pairs)
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_WATER),
+        "Water Bottle"
+    );
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_LONG_NIGHT_VISION),
+        "Potion of Night Vision",
+        "the long row the BASE name the same display wears"
+    );
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_STRONG_HEALING),
+        "Potion of Healing"
+    );
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_LUCK),
+        "Potion of Luck"
+    );
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_WIND_CHARGED),
+        "Potion of Wind Charging"
+    );
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_AWKWARD),
+        "Awkward Potion"
+    );
+    // THE KINDLESS ROWS (the NONE the plain item name keeps, the
+    // non-potion id the item's own lane keeps)
+    assert_eq!(
+        app.held_item_display_name_kind(potion_id, crate::brewing_sim::POTION_KIND_NONE),
+        "Potion"
+    );
+    let stone_id = mc_registry::item_id_by_name("stone").unwrap_or(1);
+    assert_eq!(
+        app.held_item_display_name_kind(stone_id, crate::brewing_sim::POTION_NIGHT_VISION),
+        "Stone",
+        "the non-potion id the kind never speaks"
+    );
+    // THE TOOLTIP ROWS (the kinded seat the name row swaps — the
+    // plain rows the parent walk keeps; the advanced id row the tail
+    // wears)
+    let plain = App::item_tooltip_rows(potion_id, false);
+    assert_eq!(plain.len(), 1);
+    assert_eq!(plain[0].0, "Potion");
+    let kinded = App::item_tooltip_rows_kind(
+        potion_id,
+        crate::brewing_sim::POTION_LONG_NIGHT_VISION,
+        false,
+        &[],
+    );
+    assert_eq!(kinded.len(), 1);
+    assert_eq!(kinded[0].0, "Potion of Night Vision");
+    assert_eq!(kinded[0].1, WHITE);
+    let kinded_advanced =
+        App::item_tooltip_rows_kind(potion_id, crate::brewing_sim::POTION_WATER, true, &[]);
+    assert_eq!(kinded_advanced.len(), 2);
+    assert_eq!(kinded_advanced[0].0, "Water Bottle");
+    assert_eq!(kinded_advanced[1].0, "minecraft:potion");
+    // THE ENCHANT ROWS KEEP (the potion rows the glint override the
+    // component never carries — the append the parent walk wears; the
+    // name row the kind swaps, the rows the kind never drops)
+    let enched = App::item_tooltip_rows_kind(
+        potion_id,
+        crate::brewing_sim::POTION_WATER,
+        false,
+        &[(0, 1)],
+    );
+    assert!(enched.len() >= 2, "the ench rows the walk appends");
+    assert_eq!(enched[0].0, "Water Bottle");
+}
+
+/// THE POTION KIND'S OWN TINT WIRING (the autopush-340 round — the
+/// `minecraft:potion` tint type the json def wears, the kindless NONE
+/// the json's own default answers, the kinded rows the blend serves;
+/// THE HOTBAR TICK the kind lane re-arms — the kind swap the SAME id
+/// the name still changes, the change arm the vanilla law keeps).
+#[test]
+fn the_potion_kinds_the_icon_tint_the_wiring_wears() {
+    // THE JSON LANES (the item_models def the real rows speak)
+    let potion_json = "{\"default\":-13083194,\"type\":\"minecraft:potion\"}";
+    let none = icon_tint_kind(&[potion_json], crate::brewing_sim::POTION_KIND_NONE);
+    assert_eq!(none, crate::tint::unpack(0x385DC6));
+    let nv = icon_tint_kind(&[potion_json], crate::brewing_sim::POTION_NIGHT_VISION);
+    assert_eq!(nv, crate::tint::unpack(0xC2FF66));
+    // THE KINDLESS WRAPPER the same default keeps (the world lanes'
+    // call shape)
+    assert_eq!(icon_tint(&[potion_json]), none);
+    // THE OTHER TYPES UNAFFECTED (the constant row the parent walk
+    // keeps, the potion arm the FIRST recognized type returns)
+    let mixed = icon_tint_kind(
+        &[
+            "{\"value\":16711680,\"type\":\"minecraft:constant\"}",
+            potion_json,
+        ],
+        crate::brewing_sim::POTION_NIGHT_VISION,
+    );
+    assert_eq!(mixed, crate::tint::unpack(0xFF0000));
+    // THE REAL DEF (the registry's own potion model the tint json the
+    // overlay layer wears — the wiring the 3D path serves)
+    let potion_id = mc_registry::item_id_by_name("potion").expect("the potion id");
+    let layers = mc_registry::display::item_gui_quads_broken(potion_id, false)
+        .expect("the potion quads")
+        .expect("the bake");
+    assert!(
+        layers
+            .iter()
+            .any(|(_, _, tints)| tints.iter().any(|t| t.contains("minecraft:potion"))),
+        "the potion model the tint json the layer wears"
+    );
+    // THE HELD NAME TICK (the kind lane the change arm serves — the
+    // SAME potion id the kind swap re-arms)
+    let mut app = App::new(3);
+    app.hotbar_slots[0] = (potion_id, 1);
+    app.items_potion_kinds[0] = crate::brewing_sim::POTION_WATER;
+    app.selected_hotbar = 0;
+    app.tick_held_name();
+    assert_eq!(
+        app.held_name_last.as_ref().unwrap().1,
+        "Water Bottle",
+        "the water kind the fill lane's own name wears"
+    );
+    app.items_potion_kinds[0] = crate::brewing_sim::POTION_LONG_NIGHT_VISION;
+    app.tick_held_name();
+    assert_eq!(
+        app.held_name_last.as_ref().unwrap().1,
+        "Potion of Night Vision",
+        "the kind swap the SAME id the name still changes"
+    );
+    // THE ID GATE (the non-potion row the stale seat never speaks)
+    let stone_id = mc_registry::item_id_by_name("stone").unwrap_or(1);
+    app.hotbar_slots[1] = (stone_id, 1);
+    app.items_potion_kinds[1] = crate::brewing_sim::POTION_WATER;
+    app.selected_hotbar = 1;
+    app.tick_held_name();
+    assert_eq!(
+        app.held_name_last.as_ref().unwrap().1,
+        "Stone",
+        "the stale seat the id gate the NONE keeps"
+    );
+}

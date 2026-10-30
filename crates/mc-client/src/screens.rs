@@ -32074,8 +32074,18 @@ impl App {
                     .get(i)
                     .map(|s| !s.is_empty())
                     .unwrap_or(false);
+            // THE KIND'S OWN TINT RIDE (the autopush-340 round — the
+            // 36-row bank the potion rows the liquid overlay answers,
+            // the id gate the stale seat never paints)
+            let kind = if crate::world::brewing_is_potion_kind(id) {
+                self.items_potion_kinds[i]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
             if enchanted {
                 draw_item_icon_enchanted(g, a, id, sx + 1, sy + 1, self.frame_millis);
+            } else if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
             } else {
                 draw_item_icon(g, id, sx + 1, sy + 1);
             }
@@ -33923,7 +33933,26 @@ impl App {
             if count <= 0 {
                 continue; // the wire's own emptiness sentinel
             }
-            draw_item_icon(g, id, sx, sy);
+            // THE KIND'S OWN SEAT (the autopush-340 round — the stand's
+            // five the brewing_kinds bank reads, the mirror rows the
+            // menu-numbering map the click walk keeps [5..31 the main
+            // rows +4, 32..40 the hotbar -32], the potion-family id
+            // gate the stale seat never paints)
+            let kind = if crate::world::brewing_is_potion_kind(id) {
+                if slot < 5 {
+                    self.brewing_kinds[slot]
+                } else {
+                    let row = if slot < 32 { slot + 4 } else { slot - 32 };
+                    self.items_potion_kinds[row]
+                }
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx, sy);
+            } else {
+                draw_item_icon(g, id, sx, sy);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -33935,7 +33964,18 @@ impl App {
         // keeps, the headless scenes track no mouse)
         if self.brewing_carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.brewing_carried.0, mx - 8, my - 8);
+                // THE CARRIED'S OWN KIND RIDE (the autopush-340 round —
+                // the within-stand carried the kind bank the ride wears)
+                let ckind = if crate::world::brewing_is_potion_kind(self.brewing_carried.0) {
+                    self.brewing_carried_kind
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                if ckind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, self.brewing_carried.0, ckind, mx - 8, my - 8);
+                } else {
+                    draw_item_icon(g, self.brewing_carried.0, mx - 8, my - 8);
+                }
                 if self.brewing_carried.1 > 1 {
                     let s = self.brewing_carried.1.to_string();
                     let tw = g.text_width(&s);
@@ -45841,6 +45881,47 @@ impl App {
         Self::item_tooltip_rows_enchanted(id, advanced, &[])
     }
 
+    /// THE KINDED TOOLTIP ROWS (the autopush-340 round — the potion
+    /// rows the POTION_CONTENTS kind the name row answers: the kinded
+    /// seat the display name swaps [the `getName` walk the base-name
+    /// strip the lang key pairs], the kindless/plain rows the parent
+    /// walk keeps. The enchant rows the potion rows never carry — the
+    /// append the same silence keeps, the advanced id row the tail
+    /// wears).
+    fn item_tooltip_rows_kind(
+        id: i32,
+        kind: i32,
+        advanced: bool,
+        ench: &[(i32, i32)],
+    ) -> Vec<(String, [f32; 3])> {
+        let mut rows = Self::item_tooltip_rows_enchanted(id, advanced, ench);
+        if kind != crate::brewing_sim::POTION_KIND_NONE
+            && crate::world::brewing_is_potion_kind(id)
+            && !rows.is_empty()
+        {
+            rows[0] = (Self::potion_kind_display_name(kind), WHITE);
+        }
+        rows
+    }
+
+    /// THE POTION KIND'S OWN DISPLAY NAME (javap 26.2 PotionContents.
+    /// getName pcs 0-32 — the customName the absent lane, the potion's
+    /// `name` field the makeConcat `prefix + name` walk wears
+    /// [lambda$getName$0/1 the holder's `Potion.name()` the base name
+    /// answers], the `Component.translatable` the lang key serves. The
+    /// PREFIX the `item.minecraft.potion.effect.` lane pairs — the
+    /// potion items' own descriptionId + ".effect." the caller pairs;
+    /// the base names the strip law keeps [the long_/strong_ registry
+    /// rows the BASE name the ctor arg wears — pc 95/133 both
+    /// "night_vision", the 26.2 lang table's own 26 keys the same
+    /// shape explains]). The MISS the key ITSELF the getOrDefault law
+    /// keeps.
+    fn potion_kind_display_name(kind: i32) -> String {
+        let base = crate::brewing_sim::potion_kind_base_name(kind);
+        let key = format!("item.minecraft.potion.effect.{base}");
+        tr(&key).unwrap_or(&key).to_string()
+    }
+
     /// THE ENCHANTED STACK'S OWN TOOLTIP ROWS (the dev-198 round — the
     /// addDetailsToTooltip walk the component lane rides: the name row
     /// first, the ENCHANTMENTS component the `ItemEnchantments.
@@ -46007,9 +46088,22 @@ impl App {
         if self.inv_carried.1 > 0 {
             return None; // the carried wall (the image-less false answer)
         }
+        // THE POTION KIND'S OWN NAME RIDE (the autopush-340 round — the
+        // hovered store row the seat bank's kind the display name
+        // answers, the other seats the NONE keeps [the craft/armor/
+        // offhand rows the kind bank never carries — the honest wall
+        // the component round answers])
+        let kind = match hover {
+            InventoryHover::Store(i) if crate::world::brewing_is_potion_kind(id) => self
+                .items_potion_kinds
+                .get(i)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            _ => crate::brewing_sim::POTION_KIND_NONE,
+        };
         Some((
             id,
-            Self::item_tooltip_rows_enchanted(id, self.advanced_item_tooltips, &ench),
+            Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench),
         ))
     }
 
@@ -46074,42 +46168,55 @@ impl App {
         mx: i32,
         my: i32,
     ) -> Option<(i32, Vec<(String, [f32; 3])>)> {
-        let ((id, count), ench) =
-            if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
-                // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
-                match self.creative_wrap_cell(mx, my)? {
-                    CreativeWrapSlot::Armor(k) => (self.inventory.armor[k], Vec::new()),
-                    CreativeWrapSlot::Offhand => (self.inventory.offhand[0], Vec::new()),
-                    // THE STORE SEATS (the main/hotbar rows the REAL
-                    // inventory keeps — the enchanted stacks the store's
-                    // own rows answer, the ride-home numbering the keys)
-                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
-                        let store = self.inventory_enchants.get(i).cloned().unwrap_or_default();
-                        (self.inventory.items[i], store)
-                    }
-                    CreativeWrapSlot::Bin => return None, // the hasItem false
+        let ((id, count), ench, creative_kind_row) = if CREATIVE_TABS[self.creative_tab].kind
+            == CreativeTabKind::Inventory
+        {
+            // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
+            match self.creative_wrap_cell(mx, my)? {
+                CreativeWrapSlot::Armor(k) => (self.inventory.armor[k], Vec::new(), usize::MAX),
+                CreativeWrapSlot::Offhand => (self.inventory.offhand[0], Vec::new(), usize::MAX),
+                // THE STORE SEATS (the main/hotbar rows the REAL
+                // inventory keeps — the enchanted stacks the store's
+                // own rows answer, the ride-home numbering the keys)
+                CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                    let store = self.inventory_enchants.get(i).cloned().unwrap_or_default();
+                    (self.inventory.items[i], store, i)
                 }
-            } else if let Some(cell) = self.creative_palette_cell(mx, my) {
-                (self.creative_palette[cell], Vec::new())
-            } else if let Some(slot) = self.creative_store_cell(mx, my) {
-                let store = self
-                    .inventory_enchants
-                    .get(slot)
-                    .cloned()
-                    .unwrap_or_default();
-                (self.inventory.items[slot], store)
-            } else {
-                return None; // the seats' outside the walk refuses
-            };
+                CreativeWrapSlot::Bin => return None, // the hasItem false
+            }
+        } else if let Some(cell) = self.creative_palette_cell(mx, my) {
+            (self.creative_palette[cell], Vec::new(), usize::MAX)
+        } else if let Some(slot) = self.creative_store_cell(mx, my) {
+            let store = self
+                .inventory_enchants
+                .get(slot)
+                .cloned()
+                .unwrap_or_default();
+            (self.inventory.items[slot], store, slot)
+        } else {
+            return None; // the seats' outside the walk refuses
+        };
         if count <= 0 {
             return None; // the hasItem() gate
         }
         if self.inv_carried.1 > 0 {
             return None; // the carried wall (the image-less false answer)
         }
+        // THE POTION KIND'S OWN NAME RIDE (the autopush-340 round — the
+        // creative seats the same bank the display name answers, the
+        // palette rows the kindless NONE keeps — the picker's own
+        // stacks the no-component law wears)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            self.items_potion_kinds
+                .get(creative_kind_row)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
         Some((
             id,
-            Self::item_tooltip_rows_enchanted(id, self.advanced_item_tooltips, &ench),
+            Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench),
         ))
     }
 
@@ -78251,6 +78358,19 @@ impl App {
     /// registry name falls back to, the unresolvable id the empty
     /// string keeps — the draw the empty width never arms).
     fn held_item_display_name(&self, id: i32) -> String {
+        self.held_item_display_name_kind(id, crate::brewing_sim::POTION_KIND_NONE)
+    }
+
+    /// THE KINDED HELD NAME (the autopush-340 round — the potion rows
+    /// the kind the display name the `getName` walk answers: the
+    /// base-name strip the lang key pairs [`Self::potion_kind_display
+    /// _name`], the kindless/plain rows the item's own key lanes the
+    /// parent walk keeps)
+    fn held_item_display_name_kind(&self, id: i32, kind: i32) -> String {
+        if kind != crate::brewing_sim::POTION_KIND_NONE && crate::world::brewing_is_potion_kind(id)
+        {
+            return Self::potion_kind_display_name(kind);
+        }
         let Some(name) = mc_registry::item_name(id) else {
             return String::new();
         };
@@ -78285,7 +78405,12 @@ impl App {
             self.held_name_last = None;
             return;
         }
-        let name = self.held_item_display_name(id);
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            self.items_potion_kinds[self.selected_hotbar]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let name = self.held_item_display_name_kind(id, kind);
         let current = (id, name);
         if self.held_name_last.as_ref() != Some(&current) {
             self.held_name_timer = HELD_NAME_POP_TICKS;
@@ -78497,12 +78622,23 @@ impl App {
                         .get(i)
                         .map(|s| !s.is_empty())
                         .unwrap_or(false);
+                // THE KIND'S OWN TINT RIDE (the autopush-340 round — the
+                // potion rows the seat bank's kind the liquid overlay
+                // answers, the non-potion rows the id gate the NONE
+                // keeps [the stale seat the id-change rows never paint])
+                let kind = if crate::world::brewing_is_potion_kind(id) {
+                    self.items_potion_kinds[i]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
                 let f = self.hotbar_pop[i] as f32 - self.partial_tick;
                 if f > 0.0 {
                     let pop_g = 1.0 + f / 5.0;
-                    draw_item_icon_pop(g, id, ix, iy, pop_g);
+                    draw_item_icon_pop_kind(g, id, kind, ix, iy, pop_g);
                 } else if enchanted {
                     draw_item_icon_enchanted(g, a, id, ix, iy, self.frame_millis);
+                } else if kind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, id, kind, ix, iy);
                 } else {
                     draw_item_icon(g, id, ix, iy);
                 }
@@ -85572,12 +85708,39 @@ pub(crate) fn firework_rocket_point(
 /// layer, the constant value verbatim (0xRRGGBB int or [r,g,b] floats),
 /// the grass/foliage tints at the vanilla's own no-level climate
 /// (0.5, 1.0) through the audited colormap. Untinted layers = white.
+/// The KINDLESS wrapper (the lanes the stack's own kind never carries
+/// speak — the world entities, the drops, the hand quads).
 fn icon_tint(tints: &[&str]) -> [f32; 3] {
+    icon_tint_kind(tints, crate::brewing_sim::POTION_KIND_NONE)
+}
+
+/// THE KINDED TINT (the autopush-340 round — the `minecraft:potion`
+/// tint type the item model jsons wear [item_models.rs the potion/
+/// splash_potion/lingering_potion/tipped_arrow rows the
+/// `{"default":-13083194,"type":"minecraft:potion"}` defs keep], the
+/// stack's own POTION_CONTENTS kind the blend law answers: the kinded
+/// rows the `getColorOr` walk [`Self::potion_kind_liquid_color` via
+/// brewing_sim] serves, the kindless NONE the json's own `default`
+/// field answers — the same -13083194 the getColorOr ldc wears, the
+/// water blue 0x385DC6 the RGB lane keeps). The other types the
+/// parent walk re-wears verbatim.
+fn icon_tint_kind(tints: &[&str], kind: i32) -> [f32; 3] {
     for t in tints {
         let Ok(v) = serde_json::from_str::<serde_json::Value>(t) else {
             continue;
         };
         match v.get("type").and_then(|t| t.as_str()) {
+            Some("minecraft:potion") => {
+                let rgb = if kind >= 0 {
+                    crate::brewing_sim::potion_kind_liquid_color(kind)
+                } else {
+                    v.get("default")
+                        .and_then(|d| d.as_i64())
+                        .map(|d| (d as u32) & 0xFFFFFF)
+                        .unwrap_or(crate::brewing_sim::POTION_DEFAULT_COLOR)
+                };
+                return crate::tint::unpack(rgb);
+            }
             Some("minecraft:constant") => {
                 let rgb = match v.get("value") {
                     Some(serde_json::Value::Number(n)) => n.as_u64().unwrap_or(0xFFFFFF) as u32,
@@ -85627,6 +85790,7 @@ fn draw_item_icon_3d_broken(
     x: i32,
     y: i32,
     pop_g: f32,
+    kind: i32,
 ) -> bool {
     let Some(Ok(layers)) = mc_registry::display::item_gui_quads_broken(item_id, broken) else {
         return false;
@@ -85690,10 +85854,10 @@ fn draw_item_icon_3d_broken(
         .map(|(q, shaded, tints)| {
             let tint = if *shaded {
                 let sh = shade_for_direction(q);
-                let t = icon_tint(tints);
+                let t = icon_tint_kind(tints, kind);
                 [t[0] * sh, t[1] * sh, t[2] * sh]
             } else {
-                icon_tint(tints)
+                icon_tint_kind(tints, kind)
             };
             crate::raster::SampledQuad {
                 pts: q.vertices,
@@ -85751,6 +85915,19 @@ fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
     draw_item_icon_broken(g, item_id, false, x, y)
 }
 
+/// THE KINDED ICON (the autopush-340 round — the potion-family stacks
+/// the POTION_CONTENTS kind the seat banks carry: the overlay layer
+/// the kind's own liquid color the blend walk answers, the kindless
+/// NONE the model's default blue the json law keeps. The quad path the
+/// draw serves, the flat fallback the unkinded composite keeps — the
+/// honest wall the atlas tile never re-tints).
+fn draw_item_icon_kind(g: &mut Gui, item_id: i32, kind: i32, x: i32, y: i32) {
+    if draw_item_icon_3d_broken(g, item_id, false, x, y, 1.0, kind) {
+        return;
+    }
+    draw_item_icon_broken(g, item_id, false, x, y)
+}
+
 /// THE FLOATING CARRIED'S OWN GHOST COUNT (javap 26.2
 /// AbstractContainerScreen.extractCarriedItem pcs 0-101 — the cursor
 /// stack the drag's own projection wears): the unarmed cursor (or the
@@ -85783,7 +85960,21 @@ fn floating_ghost_count(armed: bool, seats: usize, remainder: i32, count: i32) -
 /// flat fallback inverse-maps), and the count's own text the pose
 /// NEVER rides (pc 134-146 the caller's own outside draw keeps).
 fn draw_item_icon_pop(g: &mut Gui, item_id: i32, x: i32, y: i32, pop_g: f32) {
-    if draw_item_icon_3d_broken(g, item_id, false, x, y, pop_g) {
+    draw_item_icon_pop_kind(
+        g,
+        item_id,
+        crate::brewing_sim::POTION_KIND_NONE,
+        x,
+        y,
+        pop_g,
+    )
+}
+
+/// THE KINDED POP (the autopush-340 round — the pop pose's own draw
+/// the kind the tint lane carries, the fresh potion pick the same
+/// liquid color the settled frames wear)
+fn draw_item_icon_pop_kind(g: &mut Gui, item_id: i32, kind: i32, x: i32, y: i32, pop_g: f32) {
+    if draw_item_icon_3d_broken(g, item_id, false, x, y, pop_g, kind) {
         return;
     }
     draw_item_icon_flat_pop(g, item_id, x, y, pop_g)
@@ -85850,7 +86041,15 @@ fn draw_item_icon_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: i32
     // drawToSlot law (the slot-center translate, the scale(s, -s, s)
     // y-flip, the ortho depth). The flat blit below stays as the
     // defensive fallback for ids the quad path refuses.
-    if draw_item_icon_3d_broken(g, item_id, broken, x, y, 1.0) {
+    if draw_item_icon_3d_broken(
+        g,
+        item_id,
+        broken,
+        x,
+        y,
+        1.0,
+        crate::brewing_sim::POTION_KIND_NONE,
+    ) {
         return;
     }
     let Some((rgba, w, h)) = mc_registry::item_icon(item_id) else {
