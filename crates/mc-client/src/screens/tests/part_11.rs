@@ -12976,3 +12976,214 @@ fn the_creative_hotbar_tab_the_pages_wear() {
         "the scrolled seat the absolute index names"
     );
 }
+
+/// THE SURVIVAL STORE'S OWN CURSOR WORD (the dev-204 round — the
+/// offline `inv_carried` the kind seat the brewing stand's own
+/// `brewing_carried_kind` word re-wears): the pickup the seat's kind
+/// the word banks, the place the word the seat lays, the model's own
+/// swap the pairs exchange, the throw the word the entity never
+/// carries clears, the close the ride-home row the seat banks, the
+/// fresh-open pair the stale word retires, the offhand's 36TH seat
+/// the same law the ride answers, the stale non-potion seat the
+/// normalized read cleans.
+#[test]
+fn the_survival_store_the_cursor_word_rides() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let kind2 = 5;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE PICKUP ARM (the seat's kind the word banks, the emptied seat
+    // the NONE word wears)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind;
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+    app.click_inventory_slot(ox + 8, oy + 8, 0);
+    assert_eq!(app.inv_carried, (potion, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the kinded pickup the word banks"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the seat the pickup empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the emptied seat the NONE word wears"
+    );
+    // THE PLACE ARM (the word the new seat lays)
+    let (px, py) = inventory_slot_origin(app.inv_panel, 12);
+    app.click_inventory_slot(px + 8, py + 8, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the place the carried empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the placed carried the NONE word wears"
+    );
+    assert_eq!(
+        app.inventory.items[12],
+        (potion, 1),
+        "the new seat the stack lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], kind,
+        "the new seat the kind lays"
+    );
+    // THE RE-PICKUP (the seat's kind the word re-banks — the carried
+    // the swap's own fuel keeps)
+    let (qx, qy) = inventory_slot_origin(app.inv_panel, 12);
+    app.click_inventory_slot(qx + 8, qy + 8, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the re-pickup the word banks"
+    );
+    // THE MODEL'S OWN SWAP (the kinded carried the dirt seat exchanges
+    // — the kind the pairs ride, the word the dirt's NONE keeps)
+    app.inventory.items[13] = (dirt, 1);
+    let (sx, sy) = inventory_slot_origin(app.inv_panel, 13);
+    app.click_inventory_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.inventory.items[13],
+        (potion, 1),
+        "the swap the seat the potion lays"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 1),
+        "the swap the carried the dirt keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the swapped carried the dirt's NONE word wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[13], kind,
+        "the swapped seat the kind keeps"
+    );
+    // THE THROW'S OWN WORD (the kinded carried the whole throw clears)
+    app.inventory.items[13] = (0, 0);
+    app.items_potion_kinds[13] = none;
+    app.inventory.items[15] = (potion, 1);
+    app.items_potion_kinds[15] = kind;
+    let (tx, ty) = inventory_slot_origin(app.inv_panel, 15);
+    app.click_inventory_slot(tx + 8, ty + 8, 0);
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the dirt swap the carried rides"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the re-pickup the word banks"
+    );
+    app.throw_carried_outside(0);
+    assert_eq!(app.inv_carried, (0, 0), "the throw the carried drops");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the thrown kind the word clears"
+    );
+    // THE RIDE HOME (the close the receiving empty row the seat banks)
+    app.inventory.items[15] = (potion, 1);
+    app.items_potion_kinds[15] = kind;
+    let (rx, ry) = inventory_slot_origin(app.inv_panel, 15);
+    app.click_inventory_slot(rx + 8, ry + 8, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the ride's pickup the word banks"
+    );
+    app.close_inventory(ScreenKind::World);
+    assert_eq!(app.inv_carried, (0, 0), "the close the carried returns");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the returned carried the NONE word wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the ride home the row lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], kind,
+        "the receiving row the kind banks"
+    );
+    // THE FRESH-OPEN PAIR (the stale word the open retires)
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    app.open_inventory();
+    assert_eq!(app.inv_carried, (0, 0), "the fresh open the carried clears");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the fresh open the word retires"
+    );
+    // THE OFFHAND'S OWN RIDE (the 36TH seat the same law answers)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind2;
+    let (ox2, oy2) = offhand_slot_origin(app.inv_panel);
+    app.click_inventory_slot(ox2 + 8, oy2 + 8, 0);
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the offhand pickup the carried banks"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, kind2,
+        "the offhand's kind the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the emptied offhand seat the NONE word wears"
+    );
+    let (hx, hy) = offhand_slot_origin(app.inv_panel);
+    app.click_inventory_slot(hx + 8, hy + 8, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the placed back the word clears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind2,
+        "the offhand seat the kind lays"
+    );
+    // THE STALE SEAT'S OWN CLEANSE (the normalized read the non-potion
+    // rows never keeps)
+    app.inventory.items[20] = (dirt, 5);
+    app.items_potion_kinds[20] = kind;
+    let (dx, dy) = inventory_slot_origin(app.inv_panel, 20);
+    app.click_inventory_slot(dx + 8, dy + 8, 0);
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 5),
+        "the dirt pickup the carried banks"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the non-potion pickup the NONE word wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[20], none,
+        "the stale seat the read cleans"
+    );
+    // THE MERGE'S OWN WORD (the emptied carried the NONE wears, the
+    // seat its own kind keeps)
+    app.inventory.items[21] = (dirt, 10);
+    let (mx2, my2) = inventory_slot_origin(app.inv_panel, 21);
+    app.click_inventory_slot(mx2 + 8, my2 + 8, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the merged carried the NONE word wears"
+    );
+    assert_eq!(
+        app.inventory.items[21],
+        (dirt, 15),
+        "the merge the seat grows"
+    );
+}
