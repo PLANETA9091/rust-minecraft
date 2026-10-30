@@ -13687,3 +13687,208 @@ fn the_creative_wrap_the_cursor_word_rides() {
         "the far face the tint never wears"
     );
 }
+
+/// THE BREWING SWAP ARM'S OWN RETROFIT (the autopush-360 round — the
+/// 359 NEXT list's own candidate the 339 round's dead predicate pair
+/// [seat_gone && seat_new] the contradiction the arm never spoke: the
+/// real swap the left-press the different-item predict answers, the
+/// dev-204 law the survival store's walk wears — the (id, count)
+/// pairs the different-item exchange keeps, the kind the pairs
+/// exchange; the same-id pair the predict's own no-op the kindless
+/// model's honest wall retires).
+#[test]
+fn the_brewing_swap_the_pairs_exchange_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_NIGHT_VISION;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the walk reads
+    }
+    app.open_brewing_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE FIVE-SEAT'S OWN EXCHANGE (the kinded bottle seat the dirt
+    // carried swaps — the word the potion's own kind rides home)
+    app.brewing_slots[0] = (potion, 1);
+    app.brewing_kinds[0] = kind_a;
+    app.brewing_carried = (dirt, 1);
+    app.brewing_carried_kind = none;
+    let (sx, sy) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.click_brewing_slot(sx, sy, 0);
+    assert_eq!(
+        app.brewing_slots[0],
+        (dirt, 1),
+        "the swap the seat the dirt lays"
+    );
+    assert_eq!(
+        app.brewing_kinds[0], none,
+        "the dirt seat the NONE word wears"
+    );
+    assert_eq!(
+        app.brewing_carried,
+        (potion, 1),
+        "the swap the carried the potion keeps"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, kind_a,
+        "the swapped carried the seat's own kind banks"
+    );
+    // THE ROW'S OWN EXCHANGE (the kinded store row the dirt carried
+    // swaps — the same predicate the row seat answers)
+    app.brewing_carried = (dirt, 1);
+    app.brewing_carried_kind = none;
+    app.inventory.items[14] = (potion, 1); // the menu 10 the items 14 keeps
+    app.items_potion_kinds[14] = kind_c;
+    let (rx, ry) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 10)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.click_brewing_slot(rx, ry, 0);
+    assert_eq!(
+        app.inventory.items[14],
+        (dirt, 1),
+        "the row swap the seat the dirt lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the dirt row the NONE word wears"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, kind_c,
+        "the row's own kind the cursor banks"
+    );
+    // THE REVERSE EXCHANGE (the kinded carried the dirt row swaps —
+    // the word the carried's own kind lays)
+    app.inventory.items[15] = (dirt, 1); // the menu 11 the items 15 keeps
+    app.items_potion_kinds[15] = none;
+    let (rx2, ry2) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 11)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.click_brewing_slot(rx2, ry2, 0);
+    assert_eq!(
+        app.inventory.items[15],
+        (potion, 1),
+        "the reverse swap the seat the potion lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[15], kind_c,
+        "the carried's own kind the seat banks"
+    );
+    assert_eq!(
+        app.brewing_carried,
+        (dirt, 1),
+        "the reverse swap the carried the dirt keeps"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, none,
+        "the dirt carried the NONE word wears"
+    );
+    // THE SAME-ID PAIR'S OWN WALL (the (id, count) model the kind
+    // never carries — the same-id pair the predict's own no-op keeps,
+    // the words the silence wears)
+    app.brewing_slots[1] = (potion, 1);
+    app.brewing_kinds[1] = kind_a;
+    app.brewing_carried = (potion, 1);
+    app.brewing_carried_kind = kind_c;
+    let (sx2, sy2) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.click_brewing_slot(sx2, sy2, 0);
+    assert_eq!(
+        app.brewing_slots[1],
+        (potion, 1),
+        "the same-id pair the no-op keeps"
+    );
+    assert_eq!(
+        app.brewing_kinds[1], kind_a,
+        "the seat's own word the wall keeps"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, kind_c,
+        "the carried's own word the wall keeps"
+    );
+    // THE PICKUP ARM'S OWN REWEAR (the plain pickup the same walk
+    // keeps — the retrofit the other arms never moves)
+    app.brewing_carried = (0, 0);
+    app.brewing_carried_kind = none;
+    app.inventory.items[16] = (potion, 1); // the menu 12 the items 16 keeps
+    app.items_potion_kinds[16] = kind_a;
+    let (px, py) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 12)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.click_brewing_slot(px, py, 0);
+    assert_eq!(
+        app.brewing_carried,
+        (potion, 1),
+        "the pickup the carried banks"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, kind_a,
+        "the pickup the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[16], none,
+        "the emptied row the NONE word wears"
+    );
+    // THE MERGE ARM'S OWN REWEAR (the same-item carried the seat
+    // grows — the emptied carried the NONE word wears)
+    app.brewing_carried = (dirt, 5);
+    app.brewing_carried_kind = none;
+    app.inventory.items[17] = (dirt, 10); // the menu 13 the items 17 keeps
+    let (mx2, my2) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 13)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.click_brewing_slot(mx2, my2, 0);
+    assert_eq!(
+        app.inventory.items[17],
+        (dirt, 15),
+        "the merge the seat grows"
+    );
+    assert_eq!(app.brewing_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.brewing_carried_kind, none,
+        "the merged carried the NONE word wears"
+    );
+}

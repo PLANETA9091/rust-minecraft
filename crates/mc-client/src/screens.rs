@@ -49773,8 +49773,15 @@ impl App {
                 // the PLACE — the kind rides to the seat
                 new_seat_kind = old_carried_kind;
                 new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
-            } else if seat_gone && seat_new {
-                // the SWAP — the pairs exchange
+            } else if believed.1 > 0 && new_slot.1 > 0 && believed.0 != new_slot.0 {
+                // the MODEL'S OWN SWAP (the 339 round's dead predicate
+                // pair [seat_gone && seat_new] the contradiction the
+                // arm never spoke — the real swap the left-press the
+                // different-item predict answers, the dev-204 law the
+                // survival store's walk wears: the (id, count) pairs
+                // the different-item exchange keeps, the kind the
+                // pairs exchange; the same-id pair the predict's own
+                // no-op the kindless model's honest wall retires)
                 std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
             } else if carried_gone {
                 // the MERGE — the seat keeps its own kind, the emptied
