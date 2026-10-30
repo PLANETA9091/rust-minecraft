@@ -11768,3 +11768,128 @@ fn the_held_name_the_custom_lane_the_italic_wears() {
         "the plain name the cleared lane keeps"
     );
 }
+
+/// THE ENCHANTING SCREEN'S OWN TOOLTIP SEAT (the 352 round — the 351
+/// law the enchanting's own canvas re-wears): the hovered seat's rows
+/// the shared lane speaks, the seat's own ENCHANT store the
+/// enchant_comps numbering rides (the sharpness III the line wears),
+/// the mirror rows the custom-name lane positionally re-keys (the
+/// transient pair the plain name the honest lane keeps), the carried
+/// wall + the empty seat + the closed door the None verdicts keep.
+/// The REAL walk the offline door wears — the headless frame the
+/// REAL rects the render lays.
+#[test]
+fn the_enchant_tooltip_the_seats_the_stores_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ENCHANTING_TABLE);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_enchanting_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Enchanting,
+        "the table door the kind wears"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE ENCHANTED ITEM SEAT'S OWN ROW (the store the lines ride —
+    // the sharpness III the name row answers)
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap();
+    app.enchant_slots[0] = (sword, 1);
+    app.enchant_comps[0] = vec![(sharp as i32, 3)];
+    let (i0x, i0y) = seat(0);
+    let rows = app
+        .enchant_item_tooltip_hover(i0x + 8, i0y + 8)
+        .expect("the enchanted item the rows speak");
+    assert_eq!(rows.len(), 2, "the name + the line the store wears");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the pair seat the plain name keeps"
+    );
+    assert_eq!(rows[1].0, "Sharpness III", "the store line the walk speaks");
+    // THE LAPIS SEAT'S OWN PLAIN ROW (the transient pair the store
+    // never names — the shared lane the display name answers)
+    app.enchant_slots[1] = (lapis, 3);
+    let (i1x, i1y) = seat(1);
+    let rows = app
+        .enchant_item_tooltip_hover(i1x + 8, i1y + 8)
+        .expect("the lapis seat the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(lapis).unwrap()),
+        "the plain lapis the shared lane speaks"
+    );
+    // THE MIRROR'S OWN POSITIONAL RIDE (the dev-202 map the store row
+    // answers — the mirror head the inventory's item 9 the lane keeps)
+    app.enchant_mirror[0] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = seat(2);
+    let rows = app
+        .enchant_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .enchant_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE CARRIED WALL (the pc 27-46 verdict the enchanting's own
+    // stack answers)
+    app.enchant_carried = (1, 1);
+    assert_eq!(
+        app.enchant_item_tooltip_hover(i0x + 8, i0y + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.enchant_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps — the lapis
+    // cleared the store the plain walk refuses)
+    app.enchant_slots[1] = (0, 0);
+    assert_eq!(
+        app.enchant_item_tooltip_hover(i1x + 8, i1y + 8),
+        None,
+        "the empty seat the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_enchanting(ScreenKind::World);
+    assert_eq!(
+        app.enchant_item_tooltip_hover(i0x + 8, i0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}

@@ -33838,6 +33838,49 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE ENCHANTING SCREEN'S OWN TOOLTIP SEAT (the 352 round — the
+    /// 351 law the enchanting's own canvas re-wears: the hovered
+    /// seat's rows the shared lane speaks, the seat's own ENCHANT
+    /// store the enchant_comps numbering rides, the mirror rows the
+    /// custom-name lane positionally re-keys [the transient pair the
+    /// name store never carries — the plain name the honest lane
+    /// keeps], the carried wall + the empty seat + the closed door
+    /// the None verdicts keep. The headless scenes track no mouse —
+    /// the pixel goldens never see this pass.)
+    fn enchant_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Enchanting {
+            return None; // the enchanting's own screen the walk serves
+        }
+        if self.enchant_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.enchant_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let (id, count) = if s < 2 {
+            *self.enchant_slots.get(s).unwrap_or(&(0, 0))
+        } else {
+            *self.enchant_mirror.get(s - 2).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let ench = self.enchant_comps.get(s).cloned().unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(
+            id,
+            crate::brewing_sim::POTION_KIND_NONE,
+            self.advanced_item_tooltips,
+            &ench,
+        );
+        if let Some(name) =
+            Self::enchant_menu_to_inventory(s).and_then(|i| self.items_custom_names[i].clone())
+        {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
     /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
     /// — the extractBackground then extractRenderState order the draw
     /// keeps: the dimmed world the container convention dims, the
@@ -35635,6 +35678,16 @@ impl App {
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
+            }
+        }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the 352 round
+        // the enchanting's own canvas wears: the hovered seat's rows
+        // the shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.enchant_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
             }
         }
         self.render_bundle_tooltip(g, a);
