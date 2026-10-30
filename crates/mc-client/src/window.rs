@@ -687,6 +687,17 @@ fn run_join(
                             view.model.swap_offhand();
                             session.swap_offhand()
                         }
+                        crate::world_view::ContainerCommand::RenameItem { name } => {
+                            // THE ANVIL'S RENAME WORD (the vanilla
+                            // onNameChanged's echo): the packet the UTF
+                            // string rides (the generated id table's
+                            // SB_RENAME_ITEM = 48 the varint wears) —
+                            // the store-half speaks NOTHING (the
+                            // server's own recompute the result seat
+                            // answers, the slot echo the wholesale
+                            // replace re-banks)
+                            session.rename_item(&name)
+                        }
                         crate::world_view::ContainerCommand::DropKey { whole_stack } => {
                             // THE WORLD Q-DROP (the vanilla handleKeybinds's
                             // keyDrop echo — the LocalPlayer.drop's send): the
@@ -1991,6 +2002,12 @@ pub fn run_gui_app(
             else if app.screen == crate::screens::ScreenKind::EditServer {
                 app.on_editserver_char(c);
             }
+            // THE ANVIL'S OWN CHARS (the charTyped lane the focused
+            // name box answers — the open screen the rename walk
+            // serves, the other screens the gate never passes)
+            else if app.screen == crate::screens::ScreenKind::Anvil {
+                app.on_anvil_char(c);
+            }
             // THE CREATIVE SEARCH'S OWN CHARS (the charTyped lane the
             // focused search box answers — the open chat the drain's
             // arm keeps, the closed chat + the picker's search
@@ -2101,6 +2118,10 @@ pub fn run_gui_app(
                 // keyPressed arm the same lane serves — the form's pair the
                 // internal gates the screen state alone keeps)
                 app.on_editserver_backspace();
+                // THE ANVIL'S OWN BACKSPACE (the EditBox's own keyPressed
+                // arm the same lane serves — the name box the screen
+                // state alone keeps)
+                app.on_anvil_backspace();
             }
         }
         // THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen

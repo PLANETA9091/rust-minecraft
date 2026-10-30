@@ -11085,3 +11085,414 @@ fn the_picker_qthrow_the_stale_seats_the_bank_clears() {
         "the offhand seat the clear wears"
     );
 }
+
+/// THE ANVIL'S OWN DOOR SEAT (the dev-202 round — the 26.2
+/// createInputSlotDefinitions stream the bytecode dump banks —
+/// scripts/jar_work/anvil_menu_202.txt the seats speak): the
+/// transient-trio walk the origin answers, the input/result trio the
+/// (27, 47)/(76, 47)/(134, 47) seats the ctor's stream pins, the
+/// mirror rows the standard numbering keys, the NO-GATE law the
+/// family banks. The REAL walk the offline door wears — the headless
+/// frame the REAL rects the render lays.
+#[test]
+fn the_offline_anvil_the_door_the_trio_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    // THE DOOR'S OWN KIND GATE (the is_anvil verdict the mint's own
+    // row answers)
+    assert!(
+        crate::world::is_anvil(crate::world::ANVIL),
+        "the anvil kind the helper answers"
+    );
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the empty hand the door's own lane keeps
+    }
+    app.open_anvil_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the anvil door the kind wears"
+    );
+    assert_eq!(app.anvil_slots, [(0, 0); 2], "the fresh trio the open lays");
+    assert_eq!(app.anvil_result, (0, 0), "the result the fresh zero keeps");
+    assert_eq!(app.anvil_mirror.len(), 36, "the mirror rows the sync keeps");
+    assert!(
+        app.anvil_name.is_empty() && app.anvil_cost == 0,
+        "the field's fresh word the open lays"
+    );
+    // THE MIRROR'S OWN PROJECTION (the inventory IS — the main rows
+    // the items 9..35 speak, the hotbar row the items 0..8)
+    app.inventory.items[9] = (15, 2);
+    app.inventory.items[3] = (7, 5);
+    app.anvil_mirror_sync_from_inventory();
+    assert_eq!(
+        app.anvil_mirror[0],
+        (15, 2),
+        "the main head the items 9 answers"
+    );
+    assert_eq!(
+        app.anvil_mirror[30],
+        (7, 5),
+        "the hotbar row the items 3 answer"
+    );
+    app.inventory.items[9] = (0, 0);
+    app.inventory.items[3] = (0, 0);
+    // THE REAL RECTS THE RENDER BANKS (one headless frame — the
+    // render's own walk the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    assert_eq!(
+        app.anvil_panel, panel,
+        "the centered panel the canvas keeps"
+    );
+    let seat = |slot: i16| -> (i32, i32) {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE 26.2 STREAM'S OWN SEATS (the createInputSlotDefinitions
+    // banks: input1 (27, 47), input2 (76, 47) — the +49 x-pitch the
+    // same row wears, the result (134, 47) the +58 keeps)
+    let (i0x, i0y) = seat(0);
+    let (i1x, i1y) = seat(1);
+    let (rx, ry) = seat(2);
+    assert_eq!(
+        (i1x - i0x, i1y - i0y),
+        (49, 0),
+        "the input pair the ctor pitch banks"
+    );
+    assert_eq!(
+        (rx - i0x, ry - i0y),
+        (107, 0),
+        "the result seat the ctor pitch banks"
+    );
+    // THE SEATS' OWN ANSWERS (each seat + the mirror head + the hotbar
+    // tail the origin answers — the ONE walk the clicks share)
+    assert_eq!(
+        app.anvil_highlight_origin(i0x + 8, i0y + 8),
+        Some((i0x, i0y)),
+        "the input1 seat the origin answers"
+    );
+    assert_eq!(
+        app.anvil_highlight_origin(rx + 8, ry + 8),
+        Some((rx, ry)),
+        "the result seat the origin answers"
+    );
+    let (mx, my) = seat(3);
+    assert_eq!(
+        app.anvil_highlight_origin(mx + 8, my + 8),
+        Some((mx, my)),
+        "the mirror head the origin answers"
+    );
+    let (hx, hy) = seat(38);
+    assert_eq!(
+        app.anvil_highlight_origin(hx + 8, hy + 8),
+        Some((hx, hy)),
+        "the hotbar tail the origin answers"
+    );
+    // THE NO-GATE LAW (the family's own verdict — the carried stack
+    // the wall NEVER speaks)
+    app.anvil_carried = (7, 3);
+    assert_eq!(
+        app.anvil_highlight_origin(i0x + 8, i0y + 8),
+        Some((i0x, i0y)),
+        "the carried stack the highlight never refuses"
+    );
+    app.anvil_carried = (0, 0);
+    // THE CELL'S OWN EDGES (the strict 16x16 the walk answers)
+    assert_eq!(
+        app.anvil_highlight_origin(i0x + 16, i0y + 8),
+        None,
+        "the east edge the walk refuses"
+    );
+    assert_eq!(
+        app.anvil_highlight_origin(i0x - 1, i0y + 8),
+        None,
+        "the west edge the walk refuses"
+    );
+    // THE WRONG SCREEN (the world view the highlight never wears)
+    app.close_anvil(ScreenKind::World);
+    assert_eq!(
+        app.anvil_highlight_origin(i0x + 8, i0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE ANVIL'S OWN WALK (the dev-202 round — the createResult law the
+/// fixed-alignment dump banks — scripts/jar_work/anvil_walk_202.txt
+/// the honest arm serves): the rename arm the +1 the custom-set /
+/// blank-remove laws wear, the equal word the no-op keeps, the
+/// no-action walk the EMPTY/0 verdict answers, the incompatible pair
+/// the same verdict keeps, the combine arm the anvil_cost levels sum,
+/// the PURE-RENAME 39 cap + the 40 TOO-EXPENSIVE gate the result
+/// empties, the REPAIR-COST bump the take's doubled law rides, the
+/// TAKE the inputs consume + the xp charges + the onlyRenaming arm
+/// the second item keeps.
+#[test]
+fn the_anvil_walk_the_rename_the_costs_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE IRON SWORD'S OWN ID (the registry order the names speak)
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE RENAME WALK (the plain stack + the typed word — the result
+    // the +1 cost wears, the custom name the seat lane answers)
+    app.anvil_slots[0] = (sword, 1);
+    app.on_anvil_name_changed("Doom Bringer");
+    assert_eq!(app.anvil_cost, 1, "the rename the +1 cost wears");
+    assert_eq!(app.anvil_result, (sword, 1), "the copy the result keeps");
+    assert_eq!(
+        app.anvil_names[2].as_deref(),
+        Some("Doom Bringer"),
+        "the typed word the result seat banks"
+    );
+    assert!(app.anvil_only_renaming, "the pure rename the flag wears");
+    // THE EQUAL WORD'S OWN NO-OP (the field's word the hover-name
+    // equal the reset arm wears — the empty string the plain stack's
+    // own law keeps: the no cost, the EMPTY result)
+    app.on_anvil_name_changed("Doom Bringer");
+    assert_eq!(
+        app.anvil_cost, 1,
+        "the equal word the walk never re-charges"
+    );
+    app.anvil_name.clear();
+    app.anvil_create_result();
+    assert_eq!(app.anvil_cost, 0, "the blank word the no-action keeps");
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the no-action walk the EMPTY wears"
+    );
+    // THE CUSTOM-NAME REMOVE ARM (the named seat + the blank word —
+    // the +1 the flag wears, the result the plain copy answers; the
+    // lane's own edit the slotsChanged recompute answers)
+    app.anvil_names[0] = Some("Doom Bringer".to_string());
+    app.anvil_name.clear();
+    app.anvil_create_result();
+    assert_eq!(app.anvil_cost, 1, "the remove arm the +1 wears");
+    assert_eq!(
+        app.anvil_names[2], None,
+        "the blank word the remove arm answers"
+    );
+    app.anvil_names[0] = None;
+    // THE INCOMPATIBLE PAIR (the sword + the dirt — the undamaged
+    // stacks the material arm's EMPTY verdict the same answer wears)
+    app.anvil_slots[1] = (dirt, 1);
+    app.anvil_create_result();
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the incompatible pair the EMPTY wears"
+    );
+    assert_eq!(app.anvil_cost, 0, "the incompatible pair the 0 cost keeps");
+    // THE COMBINE ARM (the enchanted book + the sword — the stored
+    // pair the merge laws answer, the cost the anvilCost*level sum
+    // wears; sharpness' own row the anvil_cost 1 speaks, the level 3
+    // the new_level 3 the +3 cost banks)
+    let sharp = mc_registry::generated::enchantments::enchantment_index("sharpness").unwrap();
+    let book = mc_registry::item_id_by_name("enchanted_book").unwrap();
+    app.anvil_slots[1] = (book, 1);
+    app.anvil_enchants[1] = vec![(sharp as i32, 3)];
+    app.anvil_create_result();
+    assert_eq!(app.anvil_result, (sword, 1), "the combine the copy keeps");
+    assert_eq!(
+        app.anvil_cost, 3,
+        "the combine the anvilCost*level sum wears"
+    );
+    assert_eq!(
+        app.anvil_enchants[2],
+        vec![(sharp as i32, 3)],
+        "the stored pair the result store wears"
+    );
+    assert!(
+        !app.anvil_only_renaming,
+        "the combine the pure-rename flag never wears"
+    );
+    // THE TAKE WALK (the result the carried hands, the input 1 the
+    // ALWAYS-clear arm empties, the xp the cost charges, the repair
+    // bump the fresh-entry law doubles)
+    app.xp.level = 30;
+    app.anvil_take_result();
+    assert_eq!(
+        app.anvil_carried,
+        (sword, 1),
+        "the result the carried hands"
+    );
+    assert_eq!(
+        app.anvil_names[39].as_deref(),
+        None,
+        "the unnamed carry the None keeps"
+    );
+    assert_eq!(
+        app.anvil_enchants[39],
+        vec![(sharp as i32, 3)],
+        "the store the carried hands"
+    );
+    assert_eq!(app.anvil_slots, [(0, 0); 2], "the inputs the take consumes");
+    assert_eq!(app.xp.level, 27, "the xp the cost charges");
+    assert_eq!(app.anvil_cost, 0, "the cost the zero reset wears");
+    // THE RIDE-HOME (the enchanted carry the merge lane never rides —
+    // the first-empty placement the lanes answer)
+    app.close_anvil(ScreenKind::World);
+    let store_idx = app
+        .inventory
+        .items
+        .iter()
+        .position(|&s| s == (sword, 1))
+        .expect("the carried stack the first-empty seat wears");
+    assert_eq!(
+        app.inventory_enchants[store_idx],
+        vec![(sharp as i32, 3)],
+        "the store the ride-home banks"
+    );
+    // THE PURE-RENAME 39 CAP (the repair-cost-heavy rename the cap arm
+    // answers — the 41 the 39 re-write wears, the result the SHOWS
+    // keeps: the may-pickup verdict the xp gate alone refuses)
+    app.anvil_slots[0] = (sword, 1);
+    app.anvil_slots[1] = (0, 0);
+    app.anvil_repair_costs[0] = 40;
+    app.anvil_repair_costs[1] = 0;
+    app.anvil_name.clear();
+    app.on_anvil_name_changed("Renamed");
+    assert_eq!(app.anvil_cost, 39, "the cap the pure rename re-writes");
+    assert!(app.anvil_only_renaming, "the cap arm the flag wears");
+    assert_eq!(
+        app.anvil_result,
+        (sword, 1),
+        "the capped walk the result shows"
+    );
+    // THE 40 GATE (the combine's own l + j the cap never wears — the
+    // >= 40 cost the survival arm the EMPTY result keeps, the
+    // no-rename walk the j the combine alone speaks)
+    app.anvil_slots[0] = (sword, 1);
+    app.anvil_slots[1] = (book, 1);
+    app.anvil_enchants[1] = vec![(sharp as i32, 3)];
+    app.anvil_repair_costs[0] = 40;
+    app.anvil_repair_costs[1] = 0;
+    app.anvil_name.clear();
+    app.anvil_create_result();
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the too-expensive walk the EMPTY wears"
+    );
+    assert_eq!(app.anvil_cost, 43, "the assembly the l + j word keeps");
+}
+
+/// THE ANVIL'S OWN WIRE LANE (the dev-202 round — the menu type 8 the
+/// OpenScreen word routes, the honest drop the round retires): the
+/// window's slots the projection feeds, the title the decode lane
+/// owns, the identity the clicks echo against, the prediction-free
+/// echo the click emits, the rename the packet command carries.
+#[test]
+fn the_anvil_wire_route_the_menu_type8_wear() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let mut app = App::new(3);
+    app.enter_world();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    // THE ROUTE'S OWN FEED (the live_container_updated lane — the
+    // window-2 the menu type 8 the projection answers)
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut nbt = Vec::new();
+    mc_protocol::nbt::write_network_nbt(
+        &mc_protocol::nbt::Nbt::Compound(vec![(
+            "text".to_string(),
+            mc_protocol::nbt::Nbt::String("Villager's Anvil".to_string()),
+        )]),
+        &mut nbt,
+    );
+    app.live_container_updated(Some(LiveContainer {
+        id: 2,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: vec![(sword, 1), (0, 0), (sword, 1)],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: nbt,
+    }));
+    assert_eq!(app.screen, ScreenKind::Anvil, "the route the anvil opens");
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.anvil_live_window,
+        Some((2, 7)),
+        "the window identity the clicks echo against"
+    );
+    assert_eq!(
+        app.anvil_slots[0],
+        (sword, 1),
+        "the input seat the feed answers"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (sword, 1),
+        "the result seat the feed answers"
+    );
+    assert_eq!(
+        app.anvil_mirror.len(),
+        36,
+        "the mirror rows the padded shape keeps"
+    );
+    assert_eq!(
+        app.live_anvil_title.as_deref(),
+        Some("Villager's Anvil"),
+        "the window name the decode lane owns"
+    );
+    // THE PREDICTION-FREE ECHO (the plain click the empty delta list
+    // rides — the server's own corrections the container lane re-banks)
+    app.screen = ScreenKind::Anvil;
+    app.anvil_slot_rects = vec![(0, 0, 0)];
+    app.anvil_panel = (-176, -166); // the whole screen the seat alone covers
+    app.shift_down = false;
+    app.click_anvil_slot(4, 4, 0);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 2, "the window id the echo wears");
+            assert_eq!(click.state_id, 7, "the state id the echo wears");
+            assert_eq!(click.slot, 0, "the input seat the echo speaks");
+            assert_eq!(click.button, 0, "the left press the echo carries");
+            assert!(
+                matches!(click.input, crate::world_view::ContainerInput::Pickup),
+                "the pickup mode the plain press wears"
+            );
+            assert!(click.changed.is_empty(), "the prediction-free lane rides");
+        }
+        other => panic!("the click the echo speaks, not {other:?}"),
+    }
+    // THE RENAME'S OWN PACKET (the live window the responder the
+    // command carries — the setItemName verdict TRUE the send answers)
+    app.anvil_slots[0] = (sword, 1);
+    app.on_anvil_name_changed("Renamed");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::RenameItem { name } => {
+            assert_eq!(name, "Renamed", "the typed word the command carries");
+        }
+        other => panic!("the rename the command speaks, not {other:?}"),
+    }
+    // THE HONEST DROP RETIRED (the route the chest lane never swallows)
+    app.live_container_updated(None);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the live close the screen keeps"
+    );
+}

@@ -2309,6 +2309,16 @@ pub const MENU_TYPE_CHEST: i32 = 2;
 /// DispenserScreen alone wears).
 pub const MENU_TYPE_GENERIC_3X3: i32 = 6;
 
+/// `MenuType`'s anvil — the AnvilMenu's registry id (the SAME clinit
+/// order speaks: generic_3x3 6, crafter_3x3 7, ANVIL lands at 8 — the
+/// dev-202 round's javap walk the AnvilMenu ctor's
+/// `getstatic MenuType.ANVIL` putstatic chain keeps; the menu's own
+/// shape the ItemCombinerMenu ctor banks — the input pair + the result
+/// THREE slots (0/1 the (27, 47)/(76, 47) seats the
+/// createInputSlotDefinitions stream speaks, the result 2 the (134,
+/// 47) seat) + the standard 36, the cost DataSlot the word rides).
+pub const MENU_TYPE_ANVIL: i32 = 8;
+
 /// `MenuType`'s crafting — the CraftingMenu's registry id (the SAME
 /// clinit order speaks: generic_9x6 5, generic_3x3 6, crafter_3x3 7,
 /// anvil 8, beacon 9, blast_furnace 10, brewing_stand 11, CRAFTING
@@ -10662,9 +10672,9 @@ mod tests {
         assert_eq!(m.break_events.len(), 3);
         assert_eq!(m.break_events[2].sound_name, None);
         assert_eq!(m.break_events[2].burst_kind, None);
-        // the UNBANKED kind (the anvil's range head the palette never
-        // banks): the sound the honest ride keeps, the burst the tile's
-        // own absence refuses
+        // the MINTED KIND (the dev-202 round — the anvil kind the
+        // palette banks NOW: the burst the tile's own row answers, the
+        // sound the honest ride keeps)
         assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
             effect: mc_protocol::DESTROY_BLOCK_EFFECT,
             x: 4,
@@ -10677,12 +10687,35 @@ mod tests {
         assert_eq!(m.break_events[3].sound_name, Some("anvil"));
         assert_eq!(
             m.break_events[3].burst_kind,
+            Some(crate::world::ANVIL),
+            "the minted kind the burst now banks"
+        );
+        // the UNBANKED kind (the chipped anvil's range head the palette
+        // never banks — the mint the ONE kind alone wears): the sound
+        // the honest ride keeps, the burst the tile's own absence
+        // refuses
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: 14,
+            y: 15,
+            z: 16,
+            data: 11199,
+            global: false,
+        })));
+        assert_eq!(m.break_events.len(), 5);
+        assert_eq!(
+            m.break_events[4].sound_name,
+            Some("chipped_anvil"),
+            "the chipped row the sound's own name speaks"
+        );
+        assert_eq!(
+            m.break_events[4].burst_kind,
             None,
             "the unbanked kind the burst never finds"
         );
         // the drain ships the whole mailbox exactly once
         let drained = m.drain_break_events();
-        assert_eq!(drained.len(), 4, "the drain ships the whole mailbox");
+        assert_eq!(drained.len(), 5, "the drain ships the whole mailbox");
         assert!(m.break_events.is_empty(), "the mailbox spent");
         assert!(m.drain_break_events().is_empty(), "the drained silence ships nothing");
         // the Respawn recreates the level: the mailbox dies with it

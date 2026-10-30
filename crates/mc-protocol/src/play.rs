@@ -140,6 +140,7 @@ pub mod serverbound {
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION, SB_ATTACK as ATTACK,
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE,
+        SB_RENAME_ITEM as RENAME_ITEM,
         SB_PING_REQUEST as PING_REQUEST, SB_PONG as PONG,
         SB_MOVE_PLAYER_POS as MOVE_PLAYER_POS, SB_MOVE_PLAYER_POS_ROT as MOVE_PLAYER_POS_ROT,
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
@@ -7911,6 +7912,22 @@ pub fn encode_container_close(container_id: i32) -> Vec<u8> {
     p
 }
 
+/// The anvil's rename word (serverbound play 0x30 — the generated id
+/// table's SB_RENAME_ITEM = 48, `minecraft:rename_item`): the name
+/// string the UTF lane writes (the varint length + the bytes — the
+/// same string codec the chat lanes share). THE WALK (javap 26.2
+/// AnvilScreen.onNameChanged — scripts/jar_work/anvil_screen_202.txt
+/// pcs 57-92): the setItemName verdict TRUE the packet send answers —
+/// the typed word the field's responder speaks, the identity reset
+/// (the hover-name equal the empty string wears) the SAME packet
+/// carries.
+pub fn encode_rename_item(name: &str) -> Vec<u8> {
+    let mut p = Vec::with_capacity(5 + name.len());
+    write_varint(&mut p, serverbound::RENAME_ITEM);
+    write_string(&mut p, name);
+    p
+}
+
 /// The player's own hotbar selection — the serverbound Set Carried
 /// Item packet (the generated id table's SB_SET_CARRIED_ITEM = 53,
 /// `minecraft:set_carried_item`). THE WIRE (the checked-in
@@ -11639,6 +11656,16 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_container_close(container_id))
             .context("send container close")
+    }
+
+    /// The anvil's rename word (the vanilla onNameChanged's echo — the
+    /// [`encode_rename_item`] wire law speaks; the setItemName verdict
+    /// TRUE the send answers, the empty-string reset the same packet
+    /// carries).
+    pub fn rename_item(&mut self, name: &str) -> Result<()> {
+        self.conn
+            .send_packet(&encode_rename_item(name))
+            .context("send rename item")
     }
 
     /// The player's OWN hotbar selection (the vanilla keyPress's
@@ -17358,6 +17385,21 @@ mod tests {
         );
         // the close: the window id alone
         assert_eq!(encode_container_close(2), vec![0x13, 0x02]);
+    }
+
+    /// The anvil's rename word — the generated id table's SB_RENAME_ITEM
+    /// = 48 the varint rides, the name the UTF lane writes (the varint
+    /// length + the bytes; the empty string the identity reset wears).
+    #[test]
+    fn the_rename_item_wire_the_utf_word_wears() {
+        let p = encode_rename_item("");
+        assert_eq!(p, vec![48, 0], "the empty reset: the id + the zero length");
+        let p = encode_rename_item("Sword");
+        assert_eq!(
+            p,
+            vec![48, 5, b'S', b'w', b'o', b'r', b'd'],
+            "the typed word: the id + the length + the bytes"
+        );
     }
 
     /// The bundle selection's serverbound lane — the

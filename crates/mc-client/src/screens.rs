@@ -7098,6 +7098,40 @@ pub enum ScreenKind {
     /// ride-home speaks — NO per-cell store the chest's map law never
     /// wears.
     Enchanting,
+    /// THE ANVIL'S OWN REPAIR WALK (the dev-202 round — javap 26.2
+    /// AnvilMenu + ItemCombinerMenu + AnvilScreen the fixed-alignment
+    /// disassembler's dump the walk banks — scripts/jar_work/
+    /// anvil_menu_202.txt + anvil_icm_202.txt + anvil_screen_202.txt +
+    /// anvil_ics_202.txt + anvil_walk_202.txt serve): the right-press
+    /// on the placed anvil the OFFLINE world answers — the window the
+    /// REAL `textures/gui/container/anvil.png` canvas opens (the
+    /// ItemCombinerScreen's menuResource blit the 176x166 panel keeps),
+    /// the menu's own seats the createInputSlotDefinitions stream
+    /// places (input1 (27, 47) / input2 (76, 47) / result (134, 47) +
+    /// the standard rows addStandardInventorySlots(8, 84) the 36
+    /// mirror cells), the TRANSIENT pair the SimpleContainer(2) the
+    /// fresh open lays (NO per-cell store — the close the pair the
+    /// ride-home walk returns), the rename field the EditBox walk
+    /// serves (leftPos+62 / topPos+24, 103x12, the MAX_NAME_LENGTH 50
+    /// cap the setMaxLength speaks), the cost row the extractLabels
+    /// law renders (the green -8323296 the affordable keeps, the red
+    /// -40864 the too-expensive/cannot-pickup arms, the 0x4F000000
+    /// band the fill speaks), the error icon the extractErrorIcon
+    /// gate draws. THE WALK the createResult law banks: the
+    /// incompatible pair the EMPTY/0 verdict answers, the combine
+    /// arm the enchant stores' anvil_cost levels sum (the `j +=
+    /// anvilCost * newLevel` walk the bytecode pc 682-711 keeps), the
+    /// rename arm the +1 the blank-remove/custom-set laws wear, the
+    /// cost assembly the `clamp(l + j, 0, MAX)` the tail speaks, the
+    /// PURE-RENAME 39 cap (the cost >= 40 the onlyRenaming arm
+    /// re-writes) and the 40 TOO-EXPENSIVE gate the result empties,
+    /// the REPAIR-COST bump the take's `min(rc*2 + 1, MAX)` law rides.
+    /// The WIRE lane rides the server's OpenScreen word (the menu
+    /// type id 8 the live_container_updated lane routes — the
+    /// honest drop the round retires; the rename the
+    /// ServerboundRenameItemPacket the live window sends, the clicks
+    /// the chest's lane shares speak).
+    Anvil,
     /// THE WORLD OPTIONS' OWN DIAL (javap 26.2 WorldOptionsScreen +
     /// DifficultyButtons — the OptionsScreen's in-world
     /// `options.worldOptions.button` the header row opens): the
@@ -9668,6 +9702,99 @@ pub struct App {
     /// the absence keeps; the accessor's normalization the non-potion
     /// rows the NONE verdict reads.
     pub items_potion_kinds: [i32; 37],
+    /// THE ANVIL'S OWN TRANSIENT TRIO (the dev-202 round — the
+    /// ItemCombinerMenu's SimpleContainer(2) + the ResultContainer the
+    /// offline canvas projects: the input 0 the input 1 the menu
+    /// numbering banks, the result the createResult walk computes, the
+    /// (0, 0) stacks the empty seats wear; the open the FRESH trio
+    /// lays [no per-cell store — the vanilla menu the anvil's own
+    /// block never keeps], the close the pair the ride-home walk
+    /// returns, the result the compute's own product the close never
+    /// banks).
+    pub anvil_slots: [(i32, i32); 2],
+    /// THE ANVIL'S OWN RESULT SEAT (the ResultContainer's slot 0 the
+    /// walk's own verdict wears — the take the carried hands).
+    pub anvil_result: (i32, i32),
+    /// THE ANVIL'S OWN MIRROR (the 36 standard rows the menu's
+    /// addStandardInventorySlots(8, 84) places — the main 0..26, the
+    /// hotbar 27..35; the enchanting's own sync law the projection
+    /// keeps, the REAL inventory the rows speak).
+    pub anvil_mirror: Vec<(i32, i32)>,
+    /// THE ANVIL'S OWN CARRIED (the offline doClick's own cursor the
+    /// pickup/split predictions mutate — the close's add-back walk
+    /// returns it).
+    pub anvil_carried: (i32, i32),
+    /// The anvil's slot hit boxes the LAST render laid out: (x, y, the
+    /// MENU's own slot number) — the trio (the inputs 0/1 the
+    /// (27, 47)/(76, 47) seats the result 2 the (134, 47) seat, the
+    /// createInputSlotDefinitions stream speaks) then the standard
+    /// rows (3..38), the 16x16 inner boxes the clicks hit-test
+    /// against.
+    pub anvil_slot_rects: Vec<(i32, i32, i16)>,
+    /// The anvil panel's GUI origin the LAST render laid out (the
+    /// furnace's own centered origin — the SAME 176x166 canvas the
+    /// ItemCombinerScreen's inherited imageWidth/imageHeight keeps).
+    pub anvil_panel: (i32, i32),
+    /// THE RENAME FIELD'S OWN WORD (the AnvilScreen's EditBox the
+    /// responder echoes — the MAX_NAME_LENGTH 50 the setMaxLength cap
+    /// keeps, the setItemName law the typed word consumes, the empty
+    /// string the blank arm wears).
+    pub anvil_name: String,
+    /// THE COST WORD (the AnvilMenu's cost DataSlot the broadcast
+    /// rides — the createResult walk's own verdict, the extractLabels
+    /// row the >0 gate renders).
+    pub anvil_cost: i32,
+    /// THE PURE-RENAME FLAG (the menu's own onlyRenaming field — the
+    /// flag == cost walk the 39-cap + the onTake's keep-second arm
+    /// answer).
+    pub anvil_only_renaming: bool,
+    /// THE TAKE'S OWN MATERIAL COUNT (the menu's
+    /// repairItemCountCost field — the onTake's shrink arm consumes;
+    /// the undamaged stacks the 0 the sim's law keeps).
+    pub anvil_repair_item_count: i32,
+    /// THE ANVIL'S OWN CUSTOM-NAME LANE (the `minecraft:custom_name`
+    /// component the (id, count) pair never carries — the side lane
+    /// the SAME menu numbering keys: 0/1 the input seats, 2 the
+    /// result, 3..38 the mirror rows, 39 the carried cursor; the
+    /// rename walk the seats write, the moves the hand-over/swap/
+    /// split-copy laws ride, the ride-home the INVENTORY lane answers).
+    pub anvil_names: [Option<String>; 40],
+    /// THE ANVIL'S OWN REPAIR-COST LANE (the `minecraft:repair_cost`
+    /// component the fresh-entry zero wears — the createResult walk's
+    /// bump the result seat writes, the take the carried hands, the
+    /// moves the same laws ride; the inventory-side persistence the
+    /// NEXT round's own walk banks — the ride-home the lane's seat
+    /// values the fresh-entry zeros keep).
+    pub anvil_repair_costs: [i32; 40],
+    /// THE INVENTORY'S OWN CUSTOM-NAME LANE (the ride-home lane — the
+    /// close walk the renamed stacks the SAME inventory numbering
+    /// keys: 0..9 the hotbar, 9..36 the main grid, 36 the offhand
+    /// seat; the anvil's mirror rows the write-through answers, the
+    /// reopen the mirror load serves, the tooltip/name lanes the NEXT
+    /// round's own walk re-keys).
+    pub items_custom_names: [Option<String>; 37],
+    /// THE ANVIL'S OWN ENCHANTMENT STORE (the dev-196 pattern — the
+    /// `minecraft:enchantments` component the side lane the SAME menu
+    /// numbering keys: 0/1 the input seats, 2 the result, 3..38 the
+    /// mirror rows, 39 the carried cursor; the rows the (registry
+    /// index, level) pairs wear — the combine walk the pair the
+    /// merge/upgrade laws answers, the moves the hand-over rides, the
+    /// ride-home the inventory_enchants lane answers).
+    pub anvil_enchants: [Vec<(i32, i32)>; 40],
+    /// The anvil's live flag (the menu type 8 window the projection
+    /// feeds — the chest's own law): `false` = the offline stand-in,
+    /// the clicks and the close echo stay local acts.
+    pub anvil_is_live: bool,
+    /// The anvil window's identity the clicks echo against: (window
+    /// id, stateId) — the chest's own lane keeps.
+    pub anvil_live_window: Option<(i32, i32)>,
+    /// THE WINDOW'S OWN NAME (the OpenScreen Component the decode
+    /// round owns — the custom name the anvil rows speak; the None
+    /// the container.repair default banks).
+    pub live_anvil_title: Option<String>,
+    /// The anvil's open pos (the offline door's own cell — the
+    /// enchanting's own pos lane keeps).
+    pub anvil_pos: Option<(i32, i32, i32)>,
     /// THE SPELL WALK'S OWN CLUES (the dev-197 round — the
     /// EnchantmentMenu's enchantClue/levelClue int arrays the
     /// DataSlot.shared lanes network: the row's registry id the
@@ -12822,6 +12949,24 @@ impl App {
             brewing_carried_kind: crate::brewing_sim::POTION_KIND_NONE,
             brewing_pos: None,
             enchant_slots: Vec::new(),
+            anvil_slots: [(0, 0); 2],
+            anvil_result: (0, 0),
+            anvil_mirror: Vec::new(),
+            anvil_carried: (0, 0),
+            anvil_slot_rects: Vec::new(),
+            anvil_panel: (0, 0),
+            anvil_name: String::new(),
+            anvil_cost: 0,
+            anvil_only_renaming: false,
+            anvil_repair_item_count: 0,
+            anvil_names: std::array::from_fn(|_| None),
+            anvil_repair_costs: [0; 40],
+            items_custom_names: std::array::from_fn(|_| None),
+            anvil_enchants: std::array::from_fn(|_| Vec::new()),
+            anvil_is_live: false,
+            anvil_live_window: None,
+            live_anvil_title: None,
+            anvil_pos: None,
             enchant_mirror: Vec::new(),
             enchant_carried: (0, 0),
             enchant_slot_rects: Vec::new(),
@@ -23614,6 +23759,7 @@ impl App {
             || self.screen == ScreenKind::Dispenser
             || self.screen == ScreenKind::Brewing
             || self.screen == ScreenKind::Enchanting
+            || self.screen == ScreenKind::Anvil
             || self.screen == ScreenKind::Crafting
             || self.screen == ScreenKind::Furnace
             || self.screen == ScreenKind::Beacon
@@ -23711,6 +23857,7 @@ impl App {
                     | ScreenKind::Dispenser
                     | ScreenKind::Brewing
                     | ScreenKind::Enchanting
+                    | ScreenKind::Anvil
                     | ScreenKind::Furnace
                     | ScreenKind::Crafting
                     | ScreenKind::Creative
@@ -23738,6 +23885,7 @@ impl App {
                 | ScreenKind::Dispenser
                 | ScreenKind::Brewing
                 | ScreenKind::Enchanting
+                | ScreenKind::Anvil
                 | ScreenKind::Inventory
         ) {
             self.bundle_scroll_acc_x = 0.0;
@@ -23747,6 +23895,7 @@ impl App {
             || kind == ScreenKind::Dispenser
             || kind == ScreenKind::Brewing
             || kind == ScreenKind::Enchanting
+            || kind == ScreenKind::Anvil
             || (kind == ScreenKind::Inventory && self.chest_live_window.is_some())
         {
             self.bundle_contents.clear();
@@ -24599,6 +24748,7 @@ impl App {
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
             ScreenKind::Brewing => self.close_brewing(ScreenKind::World),
             ScreenKind::Enchanting => self.close_enchanting(ScreenKind::World),
+            ScreenKind::Anvil => self.close_anvil(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             _ => {}
@@ -28740,6 +28890,1018 @@ impl App {
     }
 
     /// THE BEACON'S OWN OFFLINE OPEN (the autopush-322 round — javap
+    /// THE ANVIL'S OWN MIRROR SYNC (the enchanting's own law — the
+    /// projection the inventory IS: the main rows the items 9..35
+    /// speak, the hotbar row the items 0..8, the fresh rows EVERY
+    /// mutation re-syncs).
+    pub fn anvil_mirror_sync_from_inventory(&mut self) {
+        if self.anvil_mirror.len() != 36 {
+            self.anvil_mirror.resize(36, (0, 0));
+        }
+        for i in 0..27 {
+            self.anvil_mirror[i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.anvil_mirror[27 + i] = self.inventory.items[i];
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE ANVIL'S OWN MENU-TO-INVENTORY SEAT (the standard rows' own
+    /// map — the menu 3..29 the main grid answers [the items 9..35
+    /// the +6 shift keeps], the 30..38 the hotbar row the -30 shift
+    /// speaks; the trio 0..2 the None the transient seats wear).
+    fn anvil_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (3..30).contains(&menu) {
+            Some(menu + 6)
+        } else if (30..39).contains(&menu) {
+            Some(menu - 30)
+        } else {
+            None
+        }
+    }
+
+    /// THE ANVIL'S OWN SEAT NAME (the custom-name lane the seat's own
+    /// store answers — the trio + the carried the menu lane keeps, the
+    /// mirror rows the INVENTORY lane the positional map speaks; the
+    /// None the plain stack keeps).
+    fn anvil_seat_name(&self, menu: usize) -> Option<String> {
+        match menu {
+            0 | 1 | 2 | 39 => self.anvil_names[menu].clone(),
+            m => Self::anvil_menu_to_inventory(m).and_then(|i| self.items_custom_names[i].clone()),
+        }
+    }
+
+    /// THE ANVIL'S OWN SEAT ENCHANT STORE (the same split the name
+    /// lane keeps — the trio + the carried the menu lane answers, the
+    /// mirror rows the inventory_enchants the positional map speaks).
+    fn anvil_seat_enchants(&self, menu: usize) -> Vec<(i32, i32)> {
+        match menu {
+            0 | 1 | 2 | 39 => self.anvil_enchants[menu].clone(),
+            m => Self::anvil_menu_to_inventory(m)
+                .map(|i| self.inventory_enchants[i].clone())
+                .unwrap_or_default(),
+        }
+    }
+
+    /// THE ANVIL'S OWN SEAT REPAIR COST (the same split — the trio +
+    /// the carried the menu lane answers, the mirror rows the fresh
+    /// zeros the inventory-side absence keeps).
+    fn anvil_seat_repair_cost(&self, menu: usize) -> i32 {
+        match menu {
+            0 | 1 | 2 | 39 => self.anvil_repair_costs[menu],
+            _ => 0,
+        }
+    }
+
+    /// THE ANVIL'S OWN OFFLINE OPEN (javap 26.2 AnvilBlock
+    /// useWithoutItem the openMenu walk the door speaks + AnvilMenu
+    /// ctor the disasm banks — scripts/jar_work/anvil_menu_202.txt the
+    /// dump serves): the screen the fresh state opens over the
+    /// standing world — the TRANSIENT TRIO the SimpleContainer(2) +
+    /// the ResultContainer the fresh seats lay [NO per-cell store —
+    /// the vanilla menu the anvil's own block never keeps], the
+    /// rename field's EMPTY word, the cost the fresh zero wears, the
+    /// mirror rows the REAL inventory projects, the lanes the
+    /// inventory stores load, the carried the fresh-empty open keeps.
+    pub fn open_anvil_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE STALE CELL'S OWN RELEASE FIRST (the chest open walk's
+        // own law the brewing lane wears)
+        self.barrel_lid_released();
+        // the OFFLINE stand-in: the live lane's flag stays down (the
+        // anvil door the wire session never opens — the server's own
+        // OpenScreen word the live lane routes)
+        self.anvil_is_live = false;
+        self.anvil_live_window = None;
+        // THE TRANSIENT TRIO (the ItemCombinerMenu's own SimpleContainer(2)
+        // the fresh open lays — the input 0 the input 1 the menu
+        // numbering banks, the result the walk computes)
+        self.anvil_slots = [(0, 0); 2];
+        self.anvil_result = (0, 0);
+        self.anvil_carried = (0, 0);
+        // THE RENAME FIELD'S OWN FRESH WORD (the AnvilScreen's EditBox
+        // the setValue("") ctor speaks)
+        self.anvil_name.clear();
+        self.anvil_cost = 0;
+        self.anvil_only_renaming = false;
+        self.anvil_repair_item_count = 0;
+        self.anvil_pos = Some(pos);
+        // THE SEAT LANES' OWN FRESH LAY (the trio + the carried the
+        // fresh-empty stores keep — the mirror rows the inventory
+        // lanes answer, the fresh loads follow)
+        for seat in 0..40usize {
+            self.anvil_names[seat] = None;
+            self.anvil_repair_costs[seat] = 0;
+            self.anvil_enchants[seat].clear();
+        }
+        self.anvil_mirror_sync_from_inventory();
+        // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
+        // — the anvil kind the vanilla's own silence arm the emit call
+        // returns)
+        self.container_voice_emit(true);
+        self.open(ScreenKind::Anvil);
+    }
+
+    /// THE ANVIL'S OWN CLOSE (javap 26.2 ItemCombinerMenu.removed +
+    /// AnvilMenu the removed() walks the disasm banks — the
+    /// super.removed the carried's placeItemBackInInventory speaks,
+    /// the lambda$removed$0 the inputSlots' clearContainer the PAIR
+    /// home returns [the same-item merges, the first-empty pass, the
+    /// full store the remainder drops], the result the compute's own
+    /// product the close never banks, the name/cost words the fresh
+    /// open re-lays): the screen back to the world.
+    pub fn close_anvil(&mut self, back: ScreenKind) {
+        // THE MIRROR LANES' OWN STORE RIDE FIRST (the write-through
+        // projection the rows already keep — the SAME numbering the
+        // stores ride: the seat's names the inventory cell answers,
+        // the enchant stores the inventory_enchants keys)
+        for menu in 3..39usize {
+            if let Some(idx) = Self::anvil_menu_to_inventory(menu) {
+                self.items_custom_names[idx] = self.items_custom_names[idx].clone();
+                self.inventory_enchants[idx] = self.inventory_enchants[idx].clone();
+            }
+        }
+        // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
+        // placeItemBackInInventory walk — the close_enchanting shape)
+        let (cid, ccount) = self.anvil_carried;
+        if ccount > 0 {
+            self.anvil_ride_home(cid, ccount, 39);
+        }
+        self.anvil_carried = (0, 0);
+        // THE PAIR'S OWN HOME RIDE (the removed()'s clearContainer walk —
+        // the transient seats the close NEVER banks)
+        for seat in 0..2usize {
+            let (id, count) = self.anvil_slots[seat];
+            if count <= 0 {
+                continue;
+            }
+            self.anvil_ride_home(id, count, seat);
+            self.anvil_slots[seat] = (0, 0);
+        }
+        // THE RESULT'S OWN DEATH (the compute's own product the window
+        // never keeps — the fresh open the walk re-computes)
+        self.anvil_result = (0, 0);
+        self.anvil_names[2] = None;
+        self.anvil_repair_costs[2] = 0;
+        self.anvil_enchants[2].clear();
+        // THE FIELD'S OWN WORDS (the fresh open re-lays)
+        self.anvil_name.clear();
+        self.anvil_cost = 0;
+        self.anvil_only_renaming = false;
+        self.anvil_repair_item_count = 0;
+        self.anvil_is_live = false;
+        self.anvil_live_window = None;
+        self.live_anvil_title = None;
+        self.anvil_pos = None;
+        self.container_removed_rode = true; // the removed law rode
+        self.open(back);
+    }
+
+    /// THE ANVIL'S OWN RIDE-HOME SEAT (the clearContainer walk — the
+    /// same-item merges, the first-empty pass, the full store the
+    /// remainder drops; the named/enchanted stack the merge lane
+    /// never rides [the vanilla components the stack identity
+    /// carries], the first-empty placement the lanes answer).
+    fn anvil_ride_home(&mut self, id: i32, count: i32, seat: usize) {
+        let named = self.anvil_names[seat].clone();
+        let enchanted = !self.anvil_enchants[seat].is_empty();
+        let mut rest = count;
+        if named.is_none() && !enchanted {
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+        }
+        for idx in 0..self.inventory.items.len() {
+            if rest == 0 {
+                break;
+            }
+            if self.inventory.items[idx].1 <= 0 {
+                self.inventory.items[idx] = (id, rest);
+                self.items_custom_names[idx] = named.clone();
+                self.inventory_enchants[idx] = self.anvil_enchants[seat].clone();
+                rest = 0;
+            }
+        }
+        if rest > 0 {
+            self.spawn_drop_at_player(id, rest);
+        }
+        self.anvil_names[seat] = None;
+        self.anvil_repair_costs[seat] = 0;
+        self.anvil_enchants[seat].clear();
+    }
+
+    /// THE COST WALK (javap 26.2 AnvilMenu.createResult pc 0-1077 the
+    /// fixed-alignment dump banks — scripts/jar_work/anvil_walk_202.txt
+    /// the honest law serves): the EMPTY gate [pc 31-64 — the
+    /// canStoreEnchantments conjunct the every-stack default component
+    /// keeps, the sim's non-empty stacks all carry], the
+    /// MATERIAL/INCOMPATIBLE arms [pc 143-335 — the undamaged stacks
+    /// the damage-0 law wears: the material arm's repair
+    /// `min(0, max/4) = 0` the EMPTY/0 verdict answers, the verdict
+    /// the incompatible arm the same keeps; the enchanted pair the
+    /// stored-enchantments gate the incompatible wall never wears],
+    /// the COMBINE walk [pc 434-725 — the stored (registry, level)
+    /// pairs the merge/upgrade laws answer: the equal levels the +1
+    /// speaks, the max the Math.max keeps, the max_level cap the
+    /// def row wears, the acceptance the supported-family +
+    /// enchanted-book + infinite-materials arms keep, the exclusive
+    /// sets the are_compatible law refuses, the cost the `j +=
+    /// anvilCost * newLevel` the pc 682-711 walk banks, the stack
+    /// sacrifice the `j = 40` the pc 712-722 penalty keeps, the
+    /// all-incompatible walk the EMPTY/0 verdict pc 726-755 answers],
+    /// the RENAME walk [pc 756-845 — the blank word the custom-name
+    /// removal arm answers (+1, the onlyRenaming flag), the changed
+    /// word the literal-set arm (+1, the flag), the equal word the
+    /// no-op keeps], the COST ASSEMBLY [pc 846-874 — the `j <= 0`
+    /// walk the zero keeps, the clamp(l + j, 0, MAX) the tail wears],
+    /// the no-cost walk the EMPTY result [pc 877-885], the
+    /// PURE-RENAME 39 CAP [pc 886-920 — the flag == j arm the
+    /// onlyRenaming field writes, the >= 40 cost the 39 re-write],
+    /// the TOO-EXPENSIVE GATE [pc 923-950 — the >= 40 cost the
+    /// infinite-materials arm alone exceeds, the result the EMPTY
+    /// keeps], the REPAIR-COST BUMP [pc 950-1062 — the max pair the
+    /// bump keeps, the pure rename the bump never rides, the
+    /// `min(rc*2 + 1, MAX)` the calculateIncreasedRepairCost law
+    /// banks].
+    pub fn anvil_create_result(&mut self) {
+        use mc_registry::generated::enchantments as ench;
+        self.anvil_only_renaming = false;
+        self.anvil_repair_item_count = 0;
+        let item1 = self.anvil_slots[0];
+        // pc 31-64 — the EMPTY gate
+        if item1.1 <= 0 {
+            self.anvil_result = (0, 0);
+            self.anvil_names[2] = None;
+            self.anvil_repair_costs[2] = 0;
+            self.anvil_enchants[2].clear();
+            self.anvil_cost = 0;
+            return;
+        }
+        let item2 = self.anvil_slots[1];
+        // the copy's own lanes (the item1's components the copy
+        // carries — the (id, count) pair never rides them, the side
+        // lanes the copy's own rows keep)
+        let mut copy_name = self.anvil_names[0].clone();
+        let mut copy_ench = self.anvil_enchants[0].clone();
+        // pc 97-137 — the totalRepairCost l = rc1 + rc2
+        let l = self.anvil_seat_repair_cost(0) as i64 + self.anvil_seat_repair_cost(1) as i64;
+        let mut j: i64 = 0;
+        let mut rename_flag = false;
+        if item2.1 > 0 {
+            let has_stored = !self.anvil_seat_enchants(1).is_empty();
+            let same_item = item1.0 == item2.0;
+            // pc 143-335 — the MATERIAL/INCOMPATIBLE arms (the
+            // undamaged stacks the damage-0 law wears: the material
+            // arm's repair the 0 the EMPTY/0 verdict answers, the
+            // verdict the incompatible arm the same keeps)
+            if !has_stored && !same_item {
+                self.anvil_result = (0, 0);
+                self.anvil_names[2] = None;
+                self.anvil_repair_costs[2] = 0;
+                self.anvil_enchants[2].clear();
+                self.anvil_cost = 0;
+                return;
+            }
+            if has_stored {
+                // pc 434-725 — the COMBINE walk
+                let item1_name = Self::enchant_item_name(item1.0);
+                let book = item1_name == "enchanted_book" || item1_name == "book";
+                let mut any_incompatible = false;
+                let mut applied = false;
+                let pairs = self.anvil_seat_enchants(1);
+                for (idx, level) in pairs {
+                    if idx as usize >= ench::ENCHANTMENTS.len() {
+                        continue; // the store's own bounds the honest skip keeps
+                    }
+                    let def = ench::ENCHANTMENTS[idx as usize];
+                    let cur = copy_ench
+                        .iter()
+                        .find(|(e, _)| *e == idx)
+                        .map(|&(_, lv)| lv)
+                        .unwrap_or(0);
+                    let mut new_level = if cur == level {
+                        level + 1
+                    } else {
+                        level.max(cur)
+                    };
+                    let mut can_use = book
+                        || self.game_mode.instabuild()
+                        || ench::enchantment_accepts_item(def.name, item1_name);
+                    for (e2, _) in copy_ench.iter() {
+                        if *e2 != idx && !ench::are_compatible(idx as usize, *e2 as usize) {
+                            can_use = false; // pc 610-639 — the exclusive refusal
+                        }
+                    }
+                    if !can_use {
+                        any_incompatible = true;
+                        continue;
+                    }
+                    applied = true;
+                    new_level = new_level.min(def.max_level); // pc 656-679
+                    if let Some(slot) = copy_ench.iter_mut().find(|(e, _)| *e == idx) {
+                        slot.1 = new_level;
+                    } else {
+                        copy_ench.push((idx, new_level));
+                    }
+                    j += i64::from(def.anvil_cost) * i64::from(new_level); // pc 682-711
+                    if item1.1 > 1 {
+                        j = 40; // pc 712-722 — the stack-sacrifice penalty
+                    }
+                }
+                // pc 726-755 — the all-incompatible walk
+                if any_incompatible && !applied {
+                    self.anvil_result = (0, 0);
+                    self.anvil_names[2] = None;
+                    self.anvil_repair_costs[2] = 0;
+                    self.anvil_enchants[2].clear();
+                    self.anvil_cost = 0;
+                    return;
+                }
+            }
+        }
+        // pc 756-845 — the RENAME walk
+        let word = self.anvil_name.clone();
+        let hover = self.anvil_names[0]
+            .clone()
+            .unwrap_or_else(|| item_display_name(Self::enchant_item_name(item1.0)));
+        if word.trim().is_empty() {
+            if self.anvil_names[0].is_some() {
+                rename_flag = true;
+                j += 1;
+                copy_name = None; // pc 783-800 — the remove arm
+            }
+        } else if word != hover {
+            rename_flag = true;
+            j += 1;
+            copy_name = Some(word); // pc 822-845 — the set arm
+        }
+        // pc 846-874 — the COST ASSEMBLY
+        let cost = if j <= 0 {
+            0
+        } else {
+            (l + j).clamp(0, i64::from(i32::MAX)) as i32
+        };
+        self.anvil_cost = cost;
+        // pc 877-885 — the no-cost walk the EMPTY result wears
+        let mut non_empty = j > 0;
+        // pc 886-920 — the PURE-RENAME 39 CAP
+        if rename_flag && j == 1 {
+            if self.anvil_cost >= 40 {
+                self.anvil_cost = 39;
+            }
+            self.anvil_only_renaming = true;
+        }
+        // pc 923-950 — the TOO-EXPENSIVE GATE
+        if self.anvil_cost >= 40 && !self.game_mode.instabuild() {
+            non_empty = false;
+        }
+        if !non_empty {
+            self.anvil_result = (0, 0);
+            self.anvil_names[2] = None;
+            self.anvil_repair_costs[2] = 0;
+            self.anvil_enchants[2].clear();
+            return;
+        }
+        // pc 950-1062 — the REPAIR-COST BUMP (the pure rename the bump
+        // never rides, the `min(rc*2 + 1, MAX)` the law banks)
+        let mut rc = self
+            .anvil_seat_repair_cost(0)
+            .max(self.anvil_seat_repair_cost(1));
+        if !(rename_flag && j == 1) {
+            rc = rc.saturating_mul(2).saturating_add(1);
+        }
+        self.anvil_repair_costs[2] = rc;
+        self.anvil_names[2] = copy_name;
+        self.anvil_enchants[2] = copy_ench;
+        self.anvil_result = item1; // the copy's own (id, count)
+    }
+
+    /// THE NAME'S OWN LAW (javap 26.2 AnvilMenu.setItemName pc 0-83 —
+    /// the validate walk the filterText strip + the MAX_NAME_LENGTH 50
+    /// cap wears [the overflow the null verdict the caller's silence
+    /// keeps], the equal word the false early-out keeps, the slot-2
+    /// item the component arm answers [the blank the remove, the word
+    /// the literal set], the createResult the tail calls).
+    pub fn anvil_set_item_name(&mut self, raw: &str) -> bool {
+        // THE VALIDATE WALK (the format codes' strip the honest
+        // answer, the 50 cap the overflow refuses)
+        let s: String = raw
+            .chars()
+            .filter(|c| *c >= ' ' && *c != '\u{7f}')
+            .collect();
+        if s.chars().count() > 50 {
+            return false; // the null verdict
+        }
+        if s == self.anvil_name {
+            return false; // the equal word
+        }
+        self.anvil_name = s;
+        self.anvil_create_result();
+        true
+    }
+
+    /// THE RESPONDER'S OWN WALK (javap 26.2 AnvilScreen.onNameChanged
+    /// pc 0-92 — the no-item gate the typed word never consumes, the
+    /// identity reset the plain stack's own hover-name equal wears
+    /// [the empty string the same packet carries], the setItemName
+    /// verdict TRUE the wire word sends).
+    pub fn on_anvil_name_changed(&mut self, word: &str) {
+        if self.anvil_slots[0].1 <= 0 {
+            return; // the no-item gate
+        }
+        let mut s = word.to_string();
+        if self.anvil_names[0].is_none()
+            && s == item_display_name(Self::enchant_item_name(self.anvil_slots[0].0))
+        {
+            s = String::new(); // the identity reset
+        }
+        let changed = self.anvil_set_item_name(&s);
+        if changed && self.anvil_is_live {
+            // the wire's own word (the live window the packet sends —
+            // the setItemName verdict the send answers; the sink the
+            // frame thread's own lane keeps)
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::RenameItem {
+                    name: self.anvil_name.clone(),
+                });
+            }
+        }
+    }
+
+    /// THE TAKE'S OWN VERDICT (javap 26.2 AnvilMenu.mayPickup pc 0-37 —
+    /// the infinite-materials arm the cost>0 alone answers, the
+    /// survival arm the xp-level gate keeps).
+    fn anvil_may_pickup(&self) -> bool {
+        if self.anvil_result.1 <= 0 {
+            return false;
+        }
+        if self.game_mode.instabuild() {
+            return self.anvil_cost > 0;
+        }
+        self.xp.level >= self.anvil_cost && self.anvil_cost > 0
+    }
+
+    /// THE TAKE'S OWN WALK (javap 26.2 AnvilMenu.onTake pc 0-213 — the
+    /// xp charge the infinite arm skips, the repair-item-count shrink
+    /// arm the material repair speaks [the sim's undamaged stacks the
+    /// 0 keeps], the !onlyRenaming arm the whole second item clears,
+    /// the input 1 the ALWAYS-clear arm empties, the cost the zero
+    /// reset wears, the result the carried hands, the fresh compute
+    /// the broadcastChanges walk answers).
+    fn anvil_take_result(&mut self) {
+        if self.game_mode.instabuild() {
+            // the infinite arm the xp never charges
+        } else {
+            self.xp.level = (self.xp.level - self.anvil_cost).max(0);
+        }
+        if self.anvil_repair_item_count > 0 {
+            let (id, count) = self.anvil_slots[1];
+            if count > self.anvil_repair_item_count {
+                self.anvil_slots[1] = (id, count - self.anvil_repair_item_count);
+            } else {
+                self.anvil_slots[1] = (0, 0);
+                self.anvil_names[1] = None;
+                self.anvil_repair_costs[1] = 0;
+                self.anvil_enchants[1].clear();
+            }
+        } else if !self.anvil_only_renaming {
+            self.anvil_slots[1] = (0, 0);
+            self.anvil_names[1] = None;
+            self.anvil_repair_costs[1] = 0;
+            self.anvil_enchants[1].clear();
+        }
+        self.anvil_cost = 0;
+        // THE RESULT'S OWN HAND (the carried the result answers — the
+        // lanes the seat hands over)
+        self.anvil_carried = self.anvil_result;
+        self.anvil_names[39] = self.anvil_names[2].clone();
+        self.anvil_repair_costs[39] = self.anvil_repair_costs[2];
+        self.anvil_enchants[39] = self.anvil_enchants[2].clone();
+        self.anvil_result = (0, 0);
+        self.anvil_names[2] = None;
+        self.anvil_repair_costs[2] = 0;
+        self.anvil_enchants[2].clear();
+        // pc 185-193 — the input 1 the ALWAYS-clear arm
+        self.anvil_slots[0] = (0, 0);
+        self.anvil_names[0] = None;
+        self.anvil_repair_costs[0] = 0;
+        self.anvil_enchants[0].clear();
+        // the fresh compute (the broadcastChanges walk)
+        self.anvil_create_result();
+    }
+
+    /// THE ANVIL'S OWN HOVER SEAT (the enchanting's own shape — the
+    /// laid-out rects the 16x16 inner boxes answer).
+    fn anvil_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.anvil_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE ANVIL'S OWN HIGHLIGHT SEAT (the same shared
+    /// AbstractContainerScreen law the family rounds bank — the
+    /// hovered seat's INNER origin the anvil_hover_seat walk answers,
+    /// the NO-GATE law the 325 round keeps).
+    fn anvil_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Anvil {
+            return None; // the anvil's own screen the walk serves
+        }
+        let (sx, sy, _) = self.anvil_hover_seat(mx, my)?;
+        Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
+    /// THE ANVIL'S OWN THROW LANE (the doClick -999 walk — the
+    /// carried the cursor's outside press drops, the button the
+    /// whole/one split answers; the named store the emptied cursor
+    /// clears).
+    fn throw_anvil_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.anvil_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.anvil_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+        if self.anvil_carried.1 <= 0 {
+            self.anvil_names[39] = None;
+            self.anvil_repair_costs[39] = 0;
+            self.anvil_enchants[39].clear();
+        }
+    }
+
+    /// THE ANVIL'S OWN CLICK LANE (the offline sim's own walk — the
+    /// vanilla doClick's local walk the believed stack the
+    /// pickup/split prediction mutates, the carried the local cursor
+    /// keeps, NO echo: the fresh stand-in has no window and no
+    /// session). THE LIVE WINDOW the prediction-free echoes wear (the
+    /// ContainerClick's own doc law — the empty delta list with the
+    /// empty cursor the server's authoritative corrections re-bank).
+    /// THE STANDARD ROWS the player's own store wear (the menu 3..29
+    /// the main grid rides, the menu 30..38 the hotbar — the
+    /// write-through projection the inventory IS).
+    fn click_anvil_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.anvil_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            // THE DROP-OUTSIDE LANE (the brewing's own shape — the
+            // laid-out panel the strict rect compare speaks)
+            if self.anvil_panel != (0, 0)
+                && (mx < self.anvil_panel.0
+                    || my < self.anvil_panel.1
+                    || mx >= self.anvil_panel.0 + 176
+                    || my >= self.anvil_panel.1 + 166)
+            {
+                self.throw_anvil_carried_outside(button);
+            }
+            return;
+        };
+        let menu = slot as usize;
+        // THE LIVE WINDOW'S OWN ECHOES (the prediction-free lane — the
+        // empty delta list with the believed cursor the packet rides,
+        // the server's own corrections the container lane re-banks;
+        // the offline sim the local predictions answer)
+        if self.anvil_is_live {
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, state_id)) = self.anvil_live_window else {
+                return; // no window — the belief never armed
+            };
+            let input = if self.shift_down {
+                crate::world_view::ContainerInput::QuickMove
+            } else {
+                crate::world_view::ContainerInput::Pickup
+            };
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button,
+                    input,
+                    changed: Vec::new(),
+                    carried: self.anvil_carried,
+                },
+            ));
+            return;
+        }
+        // THE RESULT SEAT'S OWN TAKE (the menu 2 — the doClick's
+        // PICKUP arm the mayPickup verdict gates: the EMPTY cursor the
+        // take answers, the held cursor the no-op keeps [the result's
+        // own mayPlace-false walk]; the SHIFT press rides the
+        // quick-move walk — the result the inventory's first-empty
+        // placement answers, the take's consumption the same laws
+        // serve)
+        if menu == 2 {
+            if self.shift_down {
+                if self.anvil_may_pickup() {
+                    // the quick-move walk (the result the inventory
+                    // placement answers, the take's own laws the same
+                    // walk serves)
+                    let (id, count) = self.anvil_result;
+                    let named = self.anvil_names[2].clone();
+                    let enchanted = !self.anvil_enchants[2].is_empty();
+                    let mut rest = count;
+                    if named.is_none() && !enchanted {
+                        for it in self.inventory.items.iter_mut() {
+                            if rest == 0 {
+                                break;
+                            }
+                            if it.1 > 0
+                                && it.0 == id
+                                && it.1 < crate::world_view::item_max_stack(id)
+                            {
+                                let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                                it.1 += take;
+                                rest -= take;
+                            }
+                        }
+                    }
+                    for idx in 0..self.inventory.items.len() {
+                        if rest == 0 {
+                            break;
+                        }
+                        if self.inventory.items[idx].1 <= 0 {
+                            self.inventory.items[idx] = (id, rest);
+                            self.items_custom_names[idx] = named.clone();
+                            self.inventory_enchants[idx] = self.anvil_enchants[2].clone();
+                            rest = 0;
+                        }
+                    }
+                    // the leftover the walk drops (the placeItemBackIn
+                    // inventory's drop arm — the result's own remainder)
+                    if rest > 0 {
+                        self.spawn_drop_at_player(id, rest);
+                    }
+                    self.anvil_take_result();
+                    self.anvil_mirror_sync_from_inventory();
+                }
+                return;
+            }
+            if self.anvil_carried.1 > 0 {
+                return; // the held cursor the no-op keeps
+            }
+            if self.anvil_may_pickup() {
+                self.anvil_take_result();
+                self.anvil_mirror_sync_from_inventory();
+            }
+            return;
+        }
+        // THE QUICK_MOVE LANE (the shift-click — the vanilla doClick's
+        // own precedence the chest's walk keeps): the combined
+        // 39-slot snapshot the REAL inventory wears (the pair + the
+        // main 27 + the hotbar 9), the multi-slot deltas the pair AND
+        // the items mutate (the menu's own numbering the split
+        // speaks — the menu 3..29 the items 9..35 answer, the menu
+        // 30..38 the items 0..8 keep)
+        if self.shift_down {
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(39);
+            snapshot.extend_from_slice(&self.anvil_slots);
+            snapshot.push(self.anvil_result);
+            snapshot.extend_from_slice(&self.inventory.items[9..36]);
+            snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 3);
+            for (i, pair) in &changed {
+                if *i < 2 {
+                    self.anvil_slots[*i] = *pair;
+                } else if *i < 29 {
+                    self.inventory.items[*i + 6] = *pair;
+                } else {
+                    self.inventory.items[*i - 29] = *pair;
+                }
+            }
+            // THE LANES' OWN QUICK-MOVE RIDE (the whole move the
+            // hand-over answers — the source seat's lanes the FIRST
+            // destination seat takes, the count-1 law the enchanted
+            // stack's own ride wears)
+            let src_name = self.anvil_seat_name(menu);
+            let src_ench = self.anvil_seat_enchants(menu);
+            let src_named_or_ench = src_name.is_some() || !src_ench.is_empty();
+            if src_named_or_ench {
+                let src_id = snapshot[menu].0;
+                let mut moved = false;
+                for (i, pair) in &changed {
+                    let jj = *i as usize;
+                    if jj != menu && pair.0 == src_id && pair.1 > 0 {
+                        self.anvil_lanes_put(jj, src_name.clone(), src_ench.clone());
+                        moved = true;
+                        break;
+                    }
+                }
+                if moved {
+                    self.anvil_lanes_clear(menu);
+                }
+            }
+            self.anvil_mirror_sync_from_inventory();
+            self.anvil_create_result();
+            return;
+        }
+        // the believed slot value: the trio's 0..3, the REAL
+        // inventory's rows the menu numbering speaks (3..29 the main
+        // grid, 30..38 the hotbar)
+        let believed = if menu < 2 {
+            self.anvil_slots[menu]
+        } else if menu == 2 {
+            self.anvil_result
+        } else if menu < 29 {
+            self.inventory.items[menu + 6]
+        } else {
+            self.inventory.items[menu - 30]
+        };
+        let old_car = self.anvil_carried;
+        // THE LANE IDENTITY LAW (the named/enchanted pair the same-id
+        // merge never rides — the vanilla components the stack
+        // identity carries, the merge the canItemQuickReplace refusal
+        // wears)
+        let seat_named = self.anvil_seat_name(menu).is_some();
+        let seat_ench = !self.anvil_seat_enchants(menu).is_empty();
+        let car_named = self.anvil_names[39].is_some();
+        let car_ench = !self.anvil_enchants[39].is_empty();
+        let (new_slot, new_carried) = if button == 0 {
+            if (seat_named || seat_ench || car_named || car_ench)
+                && believed.1 > 0
+                && old_car.1 > 0
+                && believed.0 == old_car.0
+            {
+                (old_car, believed) // the swap the merge refusal wears
+            } else {
+                crate::world_view::predict_pickup(believed, old_car)
+            }
+        } else if (seat_named || seat_ench || car_named || car_ench)
+            && believed.1 > 0
+            && old_car.1 > 0
+            && believed.0 == old_car.0
+        {
+            (believed, old_car) // the no-op the refusal keeps
+        } else {
+            crate::world_view::predict_pickup_right(believed, old_car)
+        };
+        // THE SEAT'S OWN WRITE (the believed row the mutation answers)
+        if menu < 2 {
+            self.anvil_slots[menu] = new_slot;
+        } else if menu < 29 {
+            self.inventory.items[menu + 6] = new_slot;
+        } else {
+            self.inventory.items[menu - 30] = new_slot;
+        }
+        self.anvil_carried = new_carried;
+        // THE LANES' OWN RIDE (the whole move the hand-over answers,
+        // the swap the exchange keeps, the split the COPY law the
+        // vanilla components wear, the emptied seat the cleared lanes
+        // keep)
+        self.anvil_lanes_ride(menu, believed, new_slot, old_car, new_carried);
+        self.anvil_mirror_sync_from_inventory();
+        self.anvil_create_result();
+    }
+
+    /// THE LANES' OWN SEAT HAND (the move's own law — the whole move
+    /// the hand-over answers, the swap the exchange keeps, the split
+    /// the copy keeps, the emptied seat the cleared lanes keep; the
+    /// mirror rows the INVENTORY lanes the positional map answers).
+    fn anvil_lanes_ride(
+        &mut self,
+        menu: usize,
+        old_slot: (i32, i32),
+        new_slot: (i32, i32),
+        old_car: (i32, i32),
+        new_car: (i32, i32),
+    ) {
+        let old_name = self.anvil_seat_name(menu);
+        let old_ench = self.anvil_seat_enchants(menu);
+        let old_cost = self.anvil_seat_repair_cost(menu);
+        let seat_emptied = old_slot.1 > 0 && new_slot.1 <= 0;
+        let seat_gained = old_slot.1 <= 0 && new_slot.1 > 0;
+        let seat_swapped = old_slot.1 > 0 && new_slot.1 > 0 && old_slot != new_slot;
+        let carried_emptied = old_car.1 > 0 && new_car.1 <= 0;
+        let carried_gained = old_car.1 <= 0 && new_car.1 > 0;
+        let whole_moved = seat_emptied && carried_gained; // the pickup
+        let whole_returned = seat_gained && carried_emptied; // the place
+        let whole_swapped = seat_swapped && old_car.1 > 0 && new_car.1 > 0;
+        if whole_moved {
+            let n = self.anvil_names[39].clone();
+            let e = self.anvil_enchants[39].clone();
+            let c = self.anvil_repair_costs[39];
+            self.anvil_lanes_clear_carried();
+            self.anvil_lanes_put(menu, n, e);
+            if matches!(menu, 0 | 1 | 2) {
+                self.anvil_repair_costs[menu] = c;
+            }
+        } else if whole_returned {
+            self.anvil_lanes_put_carried(old_name, old_ench);
+            self.anvil_repair_costs[39] = old_cost;
+            self.anvil_lanes_clear(menu);
+        } else if whole_swapped {
+            let car_name = self.anvil_names[39].clone();
+            let car_ench = self.anvil_enchants[39].clone();
+            let car_cost = self.anvil_repair_costs[39];
+            self.anvil_lanes_put_carried(old_name, old_ench);
+            self.anvil_repair_costs[39] = old_cost;
+            self.anvil_lanes_put(menu, car_name, car_ench);
+            self.anvil_repair_costs[menu] = car_cost;
+        } else {
+            // the split arm (the right press's one-item take) — the
+            // stack's own components the SPLIT copy keeps (the source
+            // the plain rows the lane-less keep)
+            if seat_emptied {
+                self.anvil_lanes_clear(menu);
+            }
+            if carried_emptied {
+                self.anvil_lanes_clear_carried();
+            }
+        }
+    }
+
+    fn anvil_lanes_put(&mut self, menu: usize, name: Option<String>, ench: Vec<(i32, i32)>) {
+        match menu {
+            0 | 1 | 2 | 39 => {
+                self.anvil_names[menu] = name;
+                self.anvil_enchants[menu] = ench;
+            }
+            m => {
+                if let Some(idx) = Self::anvil_menu_to_inventory(m) {
+                    self.items_custom_names[idx] = name;
+                    self.inventory_enchants[idx] = ench;
+                }
+            }
+        }
+    }
+
+    fn anvil_lanes_put_carried(&mut self, name: Option<String>, ench: Vec<(i32, i32)>) {
+        self.anvil_names[39] = name;
+        self.anvil_enchants[39] = ench;
+    }
+
+    fn anvil_lanes_clear(&mut self, menu: usize) {
+        self.anvil_lanes_put(menu, None, Vec::new());
+        if matches!(menu, 0 | 1 | 2 | 39) {
+            self.anvil_repair_costs[menu] = 0;
+        }
+    }
+
+    fn anvil_lanes_clear_carried(&mut self) {
+        self.anvil_names[39] = None;
+        self.anvil_repair_costs[39] = 0;
+        self.anvil_enchants[39].clear();
+    }
+
+    /// THE ANVIL DRAG'S OWN ARM (the same mouseClicked pcs 316-378
+    /// base walk the family rounds bank — the carried-NON-EMPTY press
+    /// the isQuickCrafting start speaks, NO slot click): the hovered
+    /// seat AND the outside press the arm answers, the press BETWEEN
+    /// the slots the whole arm skips. The drag the OFFLINE window
+    /// alone wears (the live window the wire arm the prediction-free
+    /// echo keeps).
+    fn qc_arm_anvil(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if self.anvil_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        if self.anvil_is_live {
+            return; // the live window the prediction-free echo keeps
+        }
+        let panel = self.anvil_panel;
+        let on_seat = self.anvil_hover_seat(mx, my).is_some();
+        let outside = panel != (0, 0)
+            && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32;
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
+    /// THE ANVIL DRAG'S OWN COLLECT (mouseDragged pcs 23-58 — the
+    /// hovered seat the shouldAddSlotToQuickCraft gates answer): the
+    /// carried non-empty, the count's own law, the seat's
+    /// canItemQuickReplace, the RESULT seat's mayPlace-false the
+    /// paint refuses, the input pair + the plain rows the base
+    /// Slot's iconst_1 keeps.
+    fn qc_paint_anvil(&mut self, mx: i32, my: i32) {
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.anvil_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        if menu == 2 {
+            return; // the result's own mayPlace-false the paint refuses
+        }
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the Set.add's own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
+    /// THE ANVIL DRAG'S OWN DISTRIBUTION (mouseReleased pcs 307-517 —
+    /// the painted seats the one-each/type-2 laws answer): the
+    /// trio's 0..2 the transient pair writes, the standard rows 3..38
+    /// the inventory cells the write-through answers, the carried the
+    /// net keeps, the fresh compute the walk's tail wears.
+    fn qc_distribute_anvil_offline(&mut self) {
+        let carried = self.anvil_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < 2 {
+                self.anvil_slots[menu] = new;
+            } else {
+                // THE WRITE-THROUGH (the projection the inventory IS —
+                // the mirror row the inventory cell answers: the main
+                // rows 3..29 the items 9..35 keep, the hotbar 30..38
+                // the items 0..8 speak)
+                if let Some(idx) = Self::anvil_menu_to_inventory(menu) {
+                    self.inventory.items[idx] = new;
+                }
+            }
+        }
+        self.anvil_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        if self.anvil_carried.1 <= 0 {
+            self.anvil_lanes_clear_carried();
+        }
+        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
+        // re-syncs — the open's own law the write-through's tail
+        // wears) + the fresh compute (the slotsChanged walk)
+        self.anvil_mirror_sync_from_inventory();
+        self.anvil_create_result();
+    }
+
+    /// THE ANVIL FIELD'S OWN CHARS (the charTyped lane the focused box
+    /// answers — the open screen the EditBox arm serves, the
+    /// MAX_NAME_LENGTH 50 cap the honest bound keeps, the tail-append
+    /// the caret-less walk wears [the caret walk the NEXT round's own
+    /// line banks], the responder the typed word consumes).
+    pub fn on_anvil_char(&mut self, c: char) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        if self.anvil_name.chars().count() < 50 {
+            let mut w = self.anvil_name.clone();
+            w.push(c);
+            self.on_anvil_name_changed(&w);
+        }
+    }
+
+    /// THE ANVIL FIELD'S OWN BACKSPACE (the EditBox.keyPressed's 259
+    /// arm the focused box answers — the LAST char the tail pops, the
+    /// empty word the no-op keeps, the responder the word consumes).
+    pub fn on_anvil_backspace(&mut self) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        if self.anvil_name.pop().is_some() {
+            let w = self.anvil_name.clone();
+            self.on_anvil_name_changed(&w);
+        }
+    }
+
+
+
+
     /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door
     /// speaks + BeaconMenu ctor the disasm banks: the PaymentSlot the
     /// (136, 110) pos wears, the 3-word beaconData the addDataSlots
@@ -34587,6 +35749,251 @@ impl App {
         }
     }
 
+    /// THE ANVIL'S OWN ROUND (the dev-202 round — the vanilla
+    /// AnvilScreen over the frozen world — the enchanting's own shape
+    /// the texture-blitted base keeps, the ItemCombinerScreen's
+    /// menuResource blit the 176x166 canvas wears): the REAL
+    /// `gui/container/anvil.png` background blitted at the centered
+    /// panel, the title the ctor's titleLabelX 60 seat keeps (the
+    /// container.repair lang row), the text-field sprite the
+    /// extractBackground law draws (the enabled/disabled pair the
+    /// slot-0 hasItem gate keys, the (59, 20) 110x16 seat), the
+    /// field's word the white ink renders (the EditBox's own
+    /// (x, y + (h-8)/2) law the borderless walk keeps), the cost row
+    /// the extractLabels law draws (the >0 gate the band fill 0x4F
+    /// speaks, the green -8323296 the affordable keeps, the red
+    /// -40864 the too-expensive/cannot-pickup arms, the right-aligned
+    /// x the imageWidth-8-width-2 law banks, the y 69 seat), the
+    /// error icon the extractErrorIcon gate draws (the input-present
+    /// + result-empty verdict the (99, 45) 28x21 seat answers), the
+    /// trio + the mirror icons, the carried follow, the highlight
+    /// pair — no mannequin (the ItemCombinerScreen the vanilla PiP
+    /// never renders).
+    fn render_anvil(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.anvil_panel = panel;
+        // THE HIT BOXES (the 26.2 createInputSlotDefinitions stream the
+        // bytecode probe banks — scripts/jar_work/anvil_menu_202.txt the
+        // seat stream speaks: the input1 (27, 47), the input2 (76, 47),
+        // the result (134, 47), the standard rows 3..38 the
+        // addStandardInventorySlots(8, 84) walk keeps — the 16x16
+        // inner cells the +1 inset wears)
+        self.anvil_slot_rects = [
+            (panel.0 + 27 + 1, panel.1 + 47 + 1, 0i16),
+            (panel.0 + 76 + 1, panel.1 + 47 + 1, 1i16),
+            (panel.0 + 134 + 1, panel.1 + 47 + 1, 2i16),
+        ]
+        .into_iter()
+        .chain((0..36).map(|i| {
+            let (sx, sy) = chest_mirror_slot(panel, i);
+            (sx + 1, sy + 1, (3 + i) as i16)
+        }))
+        .collect();
+        g.sprite_file_region(
+            a,
+            "gui/container/anvil.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
+        // THE TEXT FIELD'S OWN SPRITE (the extractBackground law — the
+        // slot-0 hasItem gate the enabled/disabled pair keys, the
+        // (59, 20) 110x16 seat the blit walk speaks)
+        let field_sprite = if self.anvil_slots[0].1 > 0 {
+            "container/anvil/text_field"
+        } else {
+            "container/anvil/text_field_disabled"
+        };
+        g.sprite_region(a, field_sprite, 0, 0, 110, 16, panel.0 + 59, panel.1 + 20);
+        // THE FIELD'S OWN WORD (the white ink the setTextColor(-1)
+        // keeps, the y+2 seat the (h-8)/2 vertical-center law banks —
+        // the borderless box the +4 inset never wears)
+        if !self.anvil_name.is_empty() {
+            let word: String = self
+                .anvil_name
+                .chars()
+                .rev()
+                .take(24)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect();
+            let shown = if word.len() != self.anvil_name.len() {
+                format!(">{word}")
+            } else {
+                word
+            };
+            g.text(
+                a,
+                panel.0 + 62,
+                panel.1 + 26,
+                &shown,
+                [1.0, 1.0, 1.0],
+                false,
+            );
+        }
+        // THE TITLE + THE INVENTORY LABEL (the extractLabels walk —
+        // the title the ctor's titleLabelX 60 seat keeps, the
+        // 0x404040 ink the label lane wears)
+        let label = [0.251, 0.251, 0.251];
+        let title_text = self
+            .live_anvil_title
+            .clone()
+            .or_else(|| tr("container.repair").map(|s| s.to_string()))
+            .unwrap_or_default();
+        if !title_text.is_empty() {
+            g.text(a, panel.0 + 60, panel.1 + 6, &title_text, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE HIGHLIGHT'S OWN BACK LAYER (the same shared
+        // AbstractContainerScreen law the family rounds bank — the
+        // mouse_pos gate the headless scenes track no mouse)
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.anvil_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+        // THE SLOT ICONS (the believed rows the trio + the mirror
+        // keep: the transient trio, the standard rows the real
+        // inventory speaks)
+        for &(sx, sy, slot) in &self.anvil_slot_rects {
+            let slot = slot as usize;
+            let believed = if slot < 2 {
+                self.anvil_slots.get(slot).copied()
+            } else if slot == 2 {
+                Some(self.anvil_result)
+            } else {
+                self.anvil_mirror.get(slot - 3).copied()
+            };
+            let Some((id, count)) = believed else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the emptiness sentinel
+            }
+            let enchanted = !self.anvil_seat_enchants(slot).is_empty();
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx, sy, self.frame_millis);
+            } else {
+                draw_item_icon(g, id, sx, sy);
+            }
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE COST ROW (the extractLabels law — the >0 gate the band
+        // speaks, the text the right-aligned (imageWidth - 8 - width
+        // - 2, 69) seat wears, the fill (x-2, 67, imageWidth-8, 79)
+        // the 0x4F000000 band keeps, the green the affordable arm
+        // banks, the red the too-expensive + cannot-pickup arms wear)
+        let cost = self.anvil_cost;
+        if cost > 0 {
+            let green = [128.0 / 255.0, 1.0, 32.0 / 255.0];
+            let red = [1.0, 32.0 / 255.0, 32.0 / 255.0];
+            let mut ink = green;
+            let mut text = if cost >= 40 && !self.game_mode.instabuild() {
+                tr("container.repair.expensive")
+                    .unwrap_or("Too Expensive!")
+                    .to_string()
+            } else if self.anvil_result.1 <= 0 {
+                String::new() // the result-empty arm the text never wears
+            } else {
+                let row = tr("container.repair.cost").unwrap_or("Enchantment Cost: %1$s");
+                if !self.anvil_may_pickup() {
+                    ink = red;
+                }
+                row.replace("%1$s", &cost.to_string())
+                    .replace("%s", &cost.to_string())
+            };
+            if cost >= 40 && !self.game_mode.instabuild() {
+                ink = red;
+            }
+            if !text.is_empty() {
+                let x = 176 - 8 - g.text_width(&text) as i32 - 2;
+                g.fill(
+                    panel.0 + x - 2,
+                    panel.1 + 67,
+                    panel.0 + 176 - 8,
+                    panel.1 + 79,
+                    [0.0, 0.0, 0.0, 0x4F as f32 / 255.0],
+                );
+                g.text(a, panel.0 + x, panel.1 + 69, &text, ink, false);
+            }
+            let _ = &mut text;
+        }
+        // THE ERROR ICON (the extractErrorIcon law — the input-present
+        // + result-empty verdict the (99, 45) 28x21 seat answers)
+        if (self.anvil_slots[0].1 > 0 || self.anvil_slots[1].1 > 0) && self.anvil_result.1 <= 0 {
+            g.sprite_region(
+                a,
+                "container/anvil/error",
+                0,
+                0,
+                28,
+                21,
+                panel.0 + 99,
+                panel.1 + 45,
+            );
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the offline sim's local cursor the chest's own gate
+        // keeps, the headless scenes track no mouse)
+        if self.anvil_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                let enchanted = !self.anvil_enchants[39].is_empty();
+                if enchanted {
+                    draw_item_icon_enchanted(
+                        g,
+                        a,
+                        self.anvil_carried.0,
+                        mx - 8,
+                        my - 8,
+                        self.frame_millis,
+                    );
+                } else {
+                    draw_item_icon(g, self.anvil_carried.0, mx - 8, my - 8);
+                }
+                if self.anvil_carried.1 > 1 {
+                    let s = self.anvil_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+        // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
+        // walk the slots AFTER serves — the icon the translucent tint
+        // the tooltip the topmost layer never under-runs)
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_front",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+    }
+
     /// THE BEACON'S OWN ROUND (the autopush-322 round — the vanilla
     /// BeaconScreen over the frozen world, the 26.2 disasm's own
     /// layout the walk banks — scripts/jar_work/beacon_gui_322.txt
@@ -35515,6 +36922,13 @@ impl App {
             // carried + the pair home return, the NO store the table
             // never keeps)
             self.close_enchanting(ScreenKind::World);
+        } else if self.screen == ScreenKind::Anvil {
+            // THE REPAIR WALK'S OWN CLOSE (the vanilla Escape/E on the
+            // anvil's screen — the keyPressed law the Escape arm speaks
+            // FIRST: the closeContainer walk the carried + the pair
+            // home return, the NO store the anvil's own block never
+            // keeps)
+            self.close_anvil(ScreenKind::World);
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
             // furnace's screen — the chest's own close walk the menu
@@ -37153,6 +38567,12 @@ impl App {
             // enchanting door never wears)
             return self.enchant_carried;
         }
+        if self.screen == ScreenKind::Anvil {
+            // THE REPAIR WALK'S OWN LANE CURSOR (the offline sim the
+            // SAME field's own stack holds — the live window the
+            // chest's own lane mirrors)
+            return self.anvil_carried;
+        }
         if self.screen == ScreenKind::Chest {
             return self.chest_carried;
         }
@@ -38181,6 +39601,18 @@ impl App {
                 self.enchant_mirror[menu - 2]
             };
         }
+        if self.screen == ScreenKind::Anvil {
+            // THE REPAIR WALK'S OWN NUMBERING (the trio the anvil
+            // keeps, the standard rows 3..38 the mirror holds — the
+            // paint seat read the SAME split wears)
+            return if menu < 2 {
+                self.anvil_slots[menu]
+            } else if menu == 2 {
+                self.anvil_result
+            } else {
+                self.anvil_mirror[menu - 3]
+            };
+        }
         if self.screen == ScreenKind::Chest {
             let n = self.chest_slots.len();
             return if menu < n {
@@ -38298,6 +39730,12 @@ impl App {
                 // shape the offline door wears, the wire lane the
                 // hopper's own law never wears)
                 self.qc_distribute_enchanting_offline();
+            } else if self.screen == ScreenKind::Anvil {
+                // THE REPAIR WALK'S OWN LANES (the offline sim the
+                // local write-through answer — the enchanting's own
+                // shape the offline door wears, the live window the
+                // wire arm the honest walk never wears)
+                self.qc_distribute_anvil_offline();
             } else if self.screen == ScreenKind::Crafting {
                 // THE TABLE'S OWN LANES (the click walk's own split —
                 // the wire the window-1 belief rides, the offline sim
@@ -39436,6 +40874,21 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Anvil {
+            // THE REPAIR WALK'S OWN PRESS (the same mouseClicked walk
+            // the enchanting's gate shape wears — the carried press
+            // the drag arms, the carried-empty press the PICKUP
+            // dispatch keeps; the rename field the panel's own box —
+            // the field's press the caret lane the round's walk
+            // never needs [the tail-append law the field keeps])
+            let held = self.anvil_carried.1 > 0;
+            if held {
+                self.qc_arm_anvil(mx, my, 0);
+            } else {
+                self.click_anvil_slot(mx, my, 0);
+            }
+            return;
+        }
         if self.screen == ScreenKind::Chest {
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory round banks — the
@@ -39665,6 +41118,23 @@ impl App {
                 self.qc_arm_enchanting(mx, my, 1);
             } else {
                 self.click_enchanting_slot(mx, my, 1);
+            }
+            return false;
+        }
+        if self.screen == ScreenKind::Anvil {
+            // THE IN-FLIGHT DRAG'S OWN GATE (the same pc 168-172 walk
+            // the enchanting's shape wears); the right press the
+            // TYPE-1 DRAG ARMS (the one-each distribution the release
+            // serves); the carried-empty press the SPLIT-PICKUP
+            // dispatch keeps.
+            if self.qc_armed {
+                return false;
+            }
+            let held = self.anvil_carried.1 > 0;
+            if held {
+                self.qc_arm_anvil(mx, my, 1);
+            } else {
+                self.click_anvil_slot(mx, my, 1);
             }
             return false;
         }
@@ -41547,6 +43017,8 @@ impl App {
                 self.qc_paint_brewing(mx, my);
             } else if self.screen == ScreenKind::Enchanting {
                 self.qc_paint_enchanting(mx, my);
+            } else if self.screen == ScreenKind::Anvil {
+                self.qc_paint_anvil(mx, my);
             } else if self.screen == ScreenKind::Crafting {
                 self.qc_paint_table(mx, my);
             } else if self.screen == ScreenKind::Furnace {
@@ -45512,6 +46984,20 @@ impl App {
                     *self.enchant_slots.get(s).unwrap_or(&(0, 0))
                 } else {
                     *self.enchant_mirror.get(s - 2).unwrap_or(&(0, 0))
+                };
+                Some((id, count, slot as i32))
+            }
+            ScreenKind::Anvil => {
+                // THE SHARED SEAT (the dev-202 round — the bundle lane
+                // the same walk rides, the trio the split speaks)
+                let (_, _, slot) = self.anvil_hover_seat(mx, my)?;
+                let s = slot as usize;
+                let (id, count) = if s < 2 {
+                    *self.anvil_slots.get(s).unwrap_or(&(0, 0))
+                } else if s == 2 {
+                    self.anvil_result
+                } else {
+                    *self.anvil_mirror.get(s - 3).unwrap_or(&(0, 0))
                 };
                 Some((id, count, slot as i32))
             }
@@ -53924,6 +55410,7 @@ impl App {
             ScreenKind::Dispenser => self.close_dispenser(back),
             ScreenKind::Brewing => self.close_brewing(back),
             ScreenKind::Enchanting => self.close_enchanting(back),
+            ScreenKind::Anvil => self.close_anvil(back),
             ScreenKind::Furnace => self.close_furnace(back),
             ScreenKind::Beacon => self.close_beacon(back),
             ScreenKind::Crafting => self.close_crafting_table(back),
@@ -60349,6 +61836,27 @@ impl App {
             })
         {
             self.open_enchanting_for(hit.pos);
+            return true;
+        }
+        // THE ANVIL'S OWN GUI DOOR (the dev-202 round — javap 26.2
+        // AnvilBlock.useWithoutItem the openMenu walk the AnvilMenu the
+        // MenuProvider answers [the isValidBlock #anvil tag the
+        // stillValid lane keeps — the anvil/chipped/damaged trio the
+        // tag rows speak], the awardStat(INTERACT_WITH_ANVIL) the walk
+        // carries: the right-press on the placed anvil the OFFLINE
+        // world answers — the transient-trio screen the fresh seats
+        // open, the NO store the vanilla menu the block never keeps).
+        // The sneaking player the arm SKIPS (the crafting-table's own
+        // gate the vanilla use walk wears). The WIRE session the local
+        // screen never opens (the server's own OpenScreen word owns the
+        // container — the menu type 8 lane the projection feeds).
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_anvil(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            self.open_anvil_for(hit.pos);
             return true;
         }
         // THE BEACON'S OWN GUI DOOR (the autopush-322 round — javap 26.2
@@ -67277,6 +68785,7 @@ impl App {
             ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
             ScreenKind::Brewing => self.close_brewing(ScreenKind::World),
             ScreenKind::Enchanting => self.close_enchanting(ScreenKind::World),
+            ScreenKind::Anvil => self.close_anvil(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
@@ -71420,6 +72929,47 @@ impl App {
                     self.bundle_scroll_acc_y = 0.0;
                     return;
                 }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_ANVIL {
+                    // THE ANVIL'S OWN WIRE LANE (the dev-202 round — the
+                    // menu type 8 the server's OpenScreen word speaks,
+                    // the honest drop the round retires): the menu's own
+                    // numbering — the inputs 0/1 the (27, 47)/(76, 47)
+                    // seats the createInputSlotDefinitions stream
+                    // speaks, the result 2 the (134, 47) seat, the
+                    // standard rows 3..38 — padded to the layout's full
+                    // shape, the wire's own (0, 0) emptiness riding
+                    // verbatim. THE WALK the server owns (the result
+                    // seat the wire's own rows answer — the client's
+                    // compute the live lane never rides, the rename the
+                    // packet sends, the echoes the prediction-free lane
+                    // keeps).
+                    self.anvil_is_live = true;
+                    self.anvil_slots = [
+                        *c.slots.first().unwrap_or(&(0, 0)),
+                        *c.slots.get(1).unwrap_or(&(0, 0)),
+                    ];
+                    self.anvil_result = *c.slots.get(2).unwrap_or(&(0, 0));
+                    self.anvil_mirror.clear();
+                    for i in 0..36 {
+                        self.anvil_mirror
+                            .push(*c.slots.get(3 + i).unwrap_or(&(0, 0)));
+                    }
+                    // THE WINDOW'S OWN NAME (the decode lane's ride —
+                    // the custom name the anvil rows speak; the None
+                    // the container.repair default banks)
+                    self.live_anvil_title = decode_container_title(&c.title_nbt);
+                    // the window's identity rides in: the clicks echo
+                    // against THIS id and revision (the stateId lane)
+                    self.anvil_live_window = Some((c.id, c.state_id));
+                    // the AUTHORITATIVE carried lands too (the chest's
+                    // wholesale replacement speaks)
+                    self.anvil_carried = c.carried;
+                    self.anvil_pos = None;
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Anvil);
+                    }
+                    return;
+                }
                 if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
                     return; // not the wired menu — the honest drop
                 }
@@ -71833,6 +73383,19 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_enchanting(&mut g, a, gw, gh);
+            }
+            ScreenKind::Anvil => {
+                // THE ANVIL'S OWN ROUND (the vanilla AnvilScreen over
+                // the frozen world — the enchanting's own shape the
+                // texture-blitted base keeps): world underneath,
+                // dimmed, the REAL 176x166 background, the trio + the
+                // mirror icons, the rename field's word, the cost row,
+                // the carried follow — no mannequin (the
+                // ItemCombinerScreen the vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_anvil(&mut g, a, gw, gh);
             }
             ScreenKind::Beacon => {
                 // THE BEACON'S OWN ROUND (the vanilla BeaconScreen over

@@ -2595,6 +2595,18 @@ pub enum ContainerCommand {
     /// slots, the server's slot echo the wholesale replace answers),
     /// the wire the packet alone rides.
     SwapOffhand,
+    /// THE ANVIL'S OWN RENAME WORD (the dev-202 round — the vanilla
+    /// AnvilScreen.onNameChanged's wire half — the
+    /// ServerboundRenameItemPacket the setItemName verdict TRUE sends,
+    /// the typed word the UTF string carries, the identity reset the
+    /// empty string wears). The worker the packet alone speaks (the
+    /// server's own recompute the result seat answers — the client's
+    /// belief the wire's slot echo re-banks).
+    RenameItem {
+        /// The typed word (the MAX_NAME_LENGTH 50 cap the field's own
+        /// gate keeps, the blank string the remove arm wears).
+        name: String,
+    },
     /// THE WORLD Q-DROP's wire half (the vanilla handleKeybinds's
     /// keyDrop lane — the ServerboundPlayerActionPacket's
     /// DROP_ITEM / DROP_ALL_ITEMS action the wholeStack boolean keys,
