@@ -31576,6 +31576,44 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, self.inv_carried)
         };
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 round's law the
+        // table's own store rows re-wear — the SAME four arms the
+        // survival screen's walk speaks: the pickup the seat's kind
+        // the word banks, the place the word the seat lays, the
+        // model's own swap the pairs exchange, the merge the emptied
+        // carried the NONE word wears; the stale seat the normalized
+        // read the non-potion rows never keeps)
+        let old_seat_kind = self.row_potion_kind(store);
+        let old_carried_kind = self.inv_carried_potion_kind;
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = self.inv_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.inv_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if believed.1 > 0 && new_slot.1 > 0 && believed.0 != new_slot.0 {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the vanilla
+                // setCarried walk the components ride, the kind the
+                // pairs exchange)
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the seat keeps its own kind, the emptied
+                // carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.items_potion_kinds[store] = new_seat_kind;
+            self.inv_carried_potion_kind = new_carried_kind;
+        }
         self.inventory.items[store] = new_slot;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
@@ -35093,7 +35131,24 @@ impl App {
                     self.qc_remainder,
                     carried.1,
                 ) {
-                    draw_item_icon(g, carried.0, mx - 8, my - 8);
+                    // THE KIND'S OWN CARRIED TINT (the dev-204 law the
+                    // table's own canvas re-wears — the offline arm the
+                    // word reads, the store ride's kind the cursor ghost
+                    // answers; the wire lane the plain draw the live
+                    // window's own [the table carried no kind word the
+                    // syncs bank] honest wall keeps)
+                    let carried_kind = if self.world_is_network
+                        || !crate::world::brewing_is_potion_kind(carried.0)
+                    {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    } else {
+                        self.inv_carried_potion_kind
+                    };
+                    if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                        draw_item_icon_kind(g, carried.0, carried_kind, mx - 8, my - 8);
+                    } else {
+                        draw_item_icon(g, carried.0, mx - 8, my - 8);
+                    }
                     if painted > 1 {
                         let s = painted.to_string();
                         let tw = g.text_width(&s);

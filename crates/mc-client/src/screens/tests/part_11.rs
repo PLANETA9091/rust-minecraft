@@ -13187,3 +13187,248 @@ fn the_survival_store_the_cursor_word_rides() {
         "the merge the seat grows"
     );
 }
+
+/// THE TABLE'S OWN STORE RIDE (the autopush-358 round — the dev-204
+/// law the click_table_slot walk's own store rows re-wear, the SAME
+/// four arms the survival screen speaks: the pickup the seat's kind
+/// the word banks, the place the word the seat lays, the model's own
+/// swap the pairs exchange, the merge the emptied carried the NONE
+/// word wears, the stale seat the normalized read the non-potion
+/// rows never keeps; the hotbar tail the same law answers, the
+/// table's own canvas the offline ghost the word's own tint wears —
+/// the wire lane the plain draw the honest wall keeps).
+#[test]
+fn the_table_store_the_cursor_word_rides() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let kind2 = 5;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // THE FRESH-OPEN PAIR (the stale word the table door retires)
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    app.open_crafting_table();
+    assert_eq!(app.inv_carried, (0, 0), "the fresh open the carried clears");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the fresh open the word retires"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::Crafting,
+        "the table door the walk wears"
+    );
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears
+    // — the headless mouse-less frame the panel lays)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.table_panel;
+    let store_seat = |i: usize| -> (i32, i32) {
+        let (x, y) = inventory_slot_origin(panel, i);
+        (x + 8, y + 8)
+    };
+    // THE PICKUP ARM (the seat's kind the word banks, the emptied seat
+    // the NONE word wears)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind;
+    let (ox, oy) = store_seat(9);
+    app.click_table_slot(ox, oy, 0);
+    assert_eq!(app.inv_carried, (potion, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the kinded pickup the word banks"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the seat the pickup empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the emptied seat the NONE word wears"
+    );
+    // THE PLACE ARM (the word the new seat lays)
+    let (px, py) = store_seat(12);
+    app.click_table_slot(px, py, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the place the carried empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the placed carried the NONE word wears"
+    );
+    assert_eq!(
+        app.inventory.items[12],
+        (potion, 1),
+        "the new seat the stack lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], kind,
+        "the new seat the kind lays"
+    );
+    // THE RE-PICKUP (the seat's kind the word re-banks)
+    let (qx, qy) = store_seat(12);
+    app.click_table_slot(qx, qy, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the re-pickup the word banks"
+    );
+    // THE MODEL'S OWN SWAP (the kinded carried the dirt seat exchanges
+    // — the kind the pairs ride, the word the dirt's NONE keeps)
+    app.inventory.items[13] = (dirt, 1);
+    let (sx, sy) = store_seat(13);
+    app.click_table_slot(sx, sy, 0);
+    assert_eq!(
+        app.inventory.items[13],
+        (potion, 1),
+        "the swap the seat the potion lays"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 1),
+        "the swap the carried the dirt keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the swapped carried the dirt's NONE word wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[13], kind,
+        "the swapped seat the kind keeps"
+    );
+    // THE REVERSE EXCHANGE (the dirt carried the kinded seat swaps —
+    // the pairs re-bank, the word the potion's own kind rides home)
+    app.inventory.items[15] = (potion, 1);
+    app.items_potion_kinds[15] = kind;
+    let (rx, ry) = store_seat(15);
+    app.click_table_slot(rx, ry, 0);
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the reverse swap the carried the potion keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the reverse swap the word re-banks"
+    );
+    assert_eq!(
+        app.inventory.items[15],
+        (dirt, 1),
+        "the reverse swap the seat the dirt lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[15], none,
+        "the dirt seat the NONE word wears"
+    );
+    // THE THROW'S OWN WORD (the kinded carried the whole throw clears
+    // — the table's own outside lane the shared walk re-wears)
+    app.throw_carried_outside(0);
+    assert_eq!(app.inv_carried, (0, 0), "the throw the carried drops");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the thrown kind the word clears"
+    );
+    // THE STALE SEAT'S OWN CLEANSE (the normalized read the non-potion
+    // rows never keeps)
+    app.inventory.items[20] = (dirt, 5);
+    app.items_potion_kinds[20] = kind;
+    let (dx, dy) = store_seat(20);
+    app.click_table_slot(dx, dy, 0);
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 5),
+        "the dirt pickup the carried banks"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the non-potion pickup the NONE word wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[20], none,
+        "the stale seat the read cleans"
+    );
+    // THE MERGE'S OWN WORD (the emptied carried the NONE wears, the
+    // seat its own kind keeps)
+    app.inventory.items[21] = (dirt, 10);
+    let (mx2, my2) = store_seat(21);
+    app.click_table_slot(mx2, my2, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the merged carried the NONE word wears"
+    );
+    assert_eq!(
+        app.inventory.items[21],
+        (dirt, 15),
+        "the merge the seat grows"
+    );
+    // THE HOTBAR TAIL'S OWN RIDE (the store 0..8 rows the same law
+    // answers — the menu 37+i numbering the walk's own map keeps)
+    app.inventory.items[5] = (potion, 1);
+    app.items_potion_kinds[5] = kind2;
+    let (hx, hy) = store_seat(5);
+    app.click_table_slot(hx, hy, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind2,
+        "the hotbar pickup the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[5], none,
+        "the hotbar seat the NONE word wears"
+    );
+    app.click_table_slot(hx, hy, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the hotbar place the word clears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[5], kind2,
+        "the hotbar seat the kind lays"
+    );
+    // THE GHOST'S OWN TINT (the offline arm the word reads — the same
+    // carried the word swap the liquid re-colors, the wire lane the
+    // plain draw the honest wall keeps; the headless pair the only
+    // delta the ghost's own 16x16 wears)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    let (gx, gy) = store_seat(30); // the empty seat the ghost overpaints
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((gx, gy));
+        app.render(&mut fb_a, &mut a);
+    }
+    app.inv_carried_potion_kind = none;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((gx, gy));
+        app.render(&mut fb_b, &mut a);
+    }
+    let mut diff = 0usize;
+    for dy in 0..16i32 {
+        for dx in 0..16i32 {
+            if pixel(&fb_a, gx - 8 + dx, gy - 8 + dy) != pixel(&fb_b, gx - 8 + dx, gy - 8 + dy) {
+                diff += 1;
+            }
+        }
+    }
+    assert!(diff > 0, "the kinded ghost the tint lane re-colors");
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 20, panel.1 + 60),
+        pixel(&fb_b, panel.0 + 20, panel.1 + 60),
+        "the far face the tint never wears"
+    );
+}
