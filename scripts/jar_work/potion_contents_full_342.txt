@@ -1,0 +1,2346 @@
+Classfile jar:file:///home/z/my-project/rust-minecraft/.mc2rs/classpath/client.jar!/net/minecraft/world/item/alchemy/PotionContents.class
+  Last modified Feb 1, 1980; size 22761 bytes
+  SHA-256 checksum e220fa3d1a363579b68dc6b261c4ea56ab392b34081062ef4ea36c9d5048539f
+  Compiled from "PotionContents.java"
+public final class net.minecraft.world.item.alchemy.PotionContents extends java.lang.Record implements net.minecraft.world.item.component.ConsumableListener,net.minecraft.world.item.component.TooltipProvider
+  minor version: 0
+  major version: 69
+  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER
+  this_class: #8                          // net/minecraft/world/item/alchemy/PotionContents
+  super_class: #2                         // java/lang/Record
+  interfaces: 2, fields: 10, methods: 31, attributes: 4
+Constant pool:
+    #1 = Methodref          #2.#3         // java/lang/Record."<init>":()V
+    #2 = Class              #4            // java/lang/Record
+    #3 = NameAndType        #5:#6         // "<init>":()V
+    #4 = Utf8               java/lang/Record
+    #5 = Utf8               <init>
+    #6 = Utf8               ()V
+    #7 = Fieldref           #8.#9         // net/minecraft/world/item/alchemy/PotionContents.potion:Ljava/util/Optional;
+    #8 = Class              #10           // net/minecraft/world/item/alchemy/PotionContents
+    #9 = NameAndType        #11:#12       // potion:Ljava/util/Optional;
+   #10 = Utf8               net/minecraft/world/item/alchemy/PotionContents
+   #11 = Utf8               potion
+   #12 = Utf8               Ljava/util/Optional;
+   #13 = Fieldref           #8.#14        // net/minecraft/world/item/alchemy/PotionContents.customColor:Ljava/util/Optional;
+   #14 = NameAndType        #15:#12       // customColor:Ljava/util/Optional;
+   #15 = Utf8               customColor
+   #16 = Fieldref           #8.#17        // net/minecraft/world/item/alchemy/PotionContents.customEffects:Ljava/util/List;
+   #17 = NameAndType        #18:#19       // customEffects:Ljava/util/List;
+   #18 = Utf8               customEffects
+   #19 = Utf8               Ljava/util/List;
+   #20 = Fieldref           #8.#21        // net/minecraft/world/item/alchemy/PotionContents.customName:Ljava/util/Optional;
+   #21 = NameAndType        #22:#12       // customName:Ljava/util/Optional;
+   #22 = Utf8               customName
+   #23 = Methodref          #24.#25       // java/util/Optional.of:(Ljava/lang/Object;)Ljava/util/Optional;
+   #24 = Class              #26           // java/util/Optional
+   #25 = NameAndType        #27:#28       // of:(Ljava/lang/Object;)Ljava/util/Optional;
+   #26 = Utf8               java/util/Optional
+   #27 = Utf8               of
+   #28 = Utf8               (Ljava/lang/Object;)Ljava/util/Optional;
+   #29 = Methodref          #24.#30       // java/util/Optional.empty:()Ljava/util/Optional;
+   #30 = NameAndType        #31:#32       // empty:()Ljava/util/Optional;
+   #31 = Utf8               empty
+   #32 = Utf8               ()Ljava/util/Optional;
+   #33 = InterfaceMethodref #34.#35       // java/util/List.of:()Ljava/util/List;
+   #34 = Class              #36           // java/util/List
+   #35 = NameAndType        #27:#37       // of:()Ljava/util/List;
+   #36 = Utf8               java/util/List
+   #37 = Utf8               ()Ljava/util/List;
+   #38 = Methodref          #8.#39        // net/minecraft/world/item/alchemy/PotionContents."<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+   #39 = NameAndType        #5:#40        // "<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+   #40 = Utf8               (Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+   #41 = Class              #42           // net/minecraft/world/item/ItemStack
+   #42 = Utf8               net/minecraft/world/item/ItemStack
+   #43 = Methodref          #41.#44       // net/minecraft/world/item/ItemStack."<init>":(Lnet/minecraft/world/level/ItemLike;)V
+   #44 = NameAndType        #5:#45        // "<init>":(Lnet/minecraft/world/level/ItemLike;)V
+   #45 = Utf8               (Lnet/minecraft/world/level/ItemLike;)V
+   #46 = Fieldref           #47.#48       // net/minecraft/core/component/DataComponents.POTION_CONTENTS:Lnet/minecraft/core/component/DataComponentType;
+   #47 = Class              #49           // net/minecraft/core/component/DataComponents
+   #48 = NameAndType        #50:#51       // POTION_CONTENTS:Lnet/minecraft/core/component/DataComponentType;
+   #49 = Utf8               net/minecraft/core/component/DataComponents
+   #50 = Utf8               POTION_CONTENTS
+   #51 = Utf8               Lnet/minecraft/core/component/DataComponentType;
+   #52 = Methodref          #8.#53        // net/minecraft/world/item/alchemy/PotionContents."<init>":(Lnet/minecraft/core/Holder;)V
+   #53 = NameAndType        #5:#54        // "<init>":(Lnet/minecraft/core/Holder;)V
+   #54 = Utf8               (Lnet/minecraft/core/Holder;)V
+   #55 = Methodref          #41.#56       // net/minecraft/world/item/ItemStack.set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+   #56 = NameAndType        #57:#58       // set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+   #57 = Utf8               set
+   #58 = Utf8               (Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+   #59 = Methodref          #24.#60       // java/util/Optional.isPresent:()Z
+   #60 = NameAndType        #61:#62       // isPresent:()Z
+   #61 = Utf8               isPresent
+   #62 = Utf8               ()Z
+   #63 = Methodref          #24.#64       // java/util/Optional.get:()Ljava/lang/Object;
+   #64 = NameAndType        #65:#66       // get:()Ljava/lang/Object;
+   #65 = Utf8               get
+   #66 = Utf8               ()Ljava/lang/Object;
+   #67 = Class              #68           // net/minecraft/core/Holder
+   #68 = Utf8               net/minecraft/core/Holder
+   #69 = InterfaceMethodref #67.#70       // net/minecraft/core/Holder.is:(Lnet/minecraft/core/Holder;)Z
+   #70 = NameAndType        #71:#72       // is:(Lnet/minecraft/core/Holder;)Z
+   #71 = Utf8               is
+   #72 = Utf8               (Lnet/minecraft/core/Holder;)Z
+   #73 = InterfaceMethodref #34.#74       // java/util/List.isEmpty:()Z
+   #74 = NameAndType        #75:#62       // isEmpty:()Z
+   #75 = Utf8               isEmpty
+   #76 = Methodref          #24.#74       // java/util/Optional.isEmpty:()Z
+   #77 = InterfaceMethodref #67.#78       // net/minecraft/core/Holder.value:()Ljava/lang/Object;
+   #78 = NameAndType        #79:#66       // value:()Ljava/lang/Object;
+   #79 = Utf8               value
+   #80 = Class              #81           // net/minecraft/world/item/alchemy/Potion
+   #81 = Utf8               net/minecraft/world/item/alchemy/Potion
+   #82 = Methodref          #80.#83       // net/minecraft/world/item/alchemy/Potion.getEffects:()Ljava/util/List;
+   #83 = NameAndType        #84:#37       // getEffects:()Ljava/util/List;
+   #84 = Utf8               getEffects
+   #85 = Methodref          #86.#87       // com/google/common/collect/Iterables.concat:(Ljava/lang/Iterable;Ljava/lang/Iterable;)Ljava/lang/Iterable;
+   #86 = Class              #88           // com/google/common/collect/Iterables
+   #87 = NameAndType        #89:#90       // concat:(Ljava/lang/Iterable;Ljava/lang/Iterable;)Ljava/lang/Iterable;
+   #88 = Utf8               com/google/common/collect/Iterables
+   #89 = Utf8               concat
+   #90 = Utf8               (Ljava/lang/Iterable;Ljava/lang/Iterable;)Ljava/lang/Iterable;
+   #91 = InterfaceMethodref #34.#92       // java/util/List.iterator:()Ljava/util/Iterator;
+   #92 = NameAndType        #93:#94       // iterator:()Ljava/util/Iterator;
+   #93 = Utf8               iterator
+   #94 = Utf8               ()Ljava/util/Iterator;
+   #95 = InterfaceMethodref #96.#97       // java/util/Iterator.hasNext:()Z
+   #96 = Class              #98           // java/util/Iterator
+   #97 = NameAndType        #99:#62       // hasNext:()Z
+   #98 = Utf8               java/util/Iterator
+   #99 = Utf8               hasNext
+  #100 = InterfaceMethodref #96.#101      // java/util/Iterator.next:()Ljava/lang/Object;
+  #101 = NameAndType        #102:#66      // next:()Ljava/lang/Object;
+  #102 = Utf8               next
+  #103 = Class              #104          // net/minecraft/world/effect/MobEffectInstance
+  #104 = Utf8               net/minecraft/world/effect/MobEffectInstance
+  #105 = Methodref          #103.#106     // net/minecraft/world/effect/MobEffectInstance.withScaledDuration:(F)Lnet/minecraft/world/effect/MobEffectInstance;
+  #106 = NameAndType        #107:#108     // withScaledDuration:(F)Lnet/minecraft/world/effect/MobEffectInstance;
+  #107 = Utf8               withScaledDuration
+  #108 = Utf8               (F)Lnet/minecraft/world/effect/MobEffectInstance;
+  #109 = InterfaceMethodref #110.#111     // java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+  #110 = Class              #112          // java/util/function/Consumer
+  #111 = NameAndType        #113:#114     // accept:(Ljava/lang/Object;)V
+  #112 = Utf8               java/util/function/Consumer
+  #113 = Utf8               accept
+  #114 = Utf8               (Ljava/lang/Object;)V
+  #115 = Methodref          #116.#117     // net/minecraft/util/Util.copyAndAdd:(Ljava/util/List;Ljava/lang/Object;)Ljava/util/List;
+  #116 = Class              #118          // net/minecraft/util/Util
+  #117 = NameAndType        #119:#120     // copyAndAdd:(Ljava/util/List;Ljava/lang/Object;)Ljava/util/List;
+  #118 = Utf8               net/minecraft/util/Util
+  #119 = Utf8               copyAndAdd
+  #120 = Utf8               (Ljava/util/List;Ljava/lang/Object;)Ljava/util/List;
+  #121 = Integer            -13083194
+  #122 = Methodref          #8.#123       // net/minecraft/world/item/alchemy/PotionContents.getColorOr:(I)I
+  #123 = NameAndType        #124:#125     // getColorOr:(I)I
+  #124 = Utf8               getColorOr
+  #125 = Utf8               (I)I
+  #126 = Class              #127          // java/lang/Integer
+  #127 = Utf8               java/lang/Integer
+  #128 = Methodref          #126.#129     // java/lang/Integer.intValue:()I
+  #129 = NameAndType        #130:#131     // intValue:()I
+  #130 = Utf8               intValue
+  #131 = Utf8               ()I
+  #132 = Methodref          #8.#133       // net/minecraft/world/item/alchemy/PotionContents.getAllEffects:()Ljava/lang/Iterable;
+  #133 = NameAndType        #134:#135     // getAllEffects:()Ljava/lang/Iterable;
+  #134 = Utf8               getAllEffects
+  #135 = Utf8               ()Ljava/lang/Iterable;
+  #136 = Methodref          #8.#137       // net/minecraft/world/item/alchemy/PotionContents.getColorOptional:(Ljava/lang/Iterable;)Ljava/util/OptionalInt;
+  #137 = NameAndType        #138:#139     // getColorOptional:(Ljava/lang/Iterable;)Ljava/util/OptionalInt;
+  #138 = Utf8               getColorOptional
+  #139 = Utf8               (Ljava/lang/Iterable;)Ljava/util/OptionalInt;
+  #140 = Methodref          #141.#142     // java/util/OptionalInt.orElse:(I)I
+  #141 = Class              #143          // java/util/OptionalInt
+  #142 = NameAndType        #144:#125     // orElse:(I)I
+  #143 = Utf8               java/util/OptionalInt
+  #144 = Utf8               orElse
+  #145 = InvokeDynamic      #0:#146       // #0:get:(Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/function/Supplier;
+  #146 = NameAndType        #65:#147      // get:(Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/function/Supplier;
+  #147 = Utf8               (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/function/Supplier;
+  #148 = Methodref          #24.#149      // java/util/Optional.or:(Ljava/util/function/Supplier;)Ljava/util/Optional;
+  #149 = NameAndType        #150:#151     // or:(Ljava/util/function/Supplier;)Ljava/util/Optional;
+  #150 = Utf8               or
+  #151 = Utf8               (Ljava/util/function/Supplier;)Ljava/util/Optional;
+  #152 = String             #31           // empty
+  #153 = Methodref          #24.#154      // java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+  #154 = NameAndType        #144:#155     // orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+  #155 = Utf8               (Ljava/lang/Object;)Ljava/lang/Object;
+  #156 = Class              #157          // java/lang/String
+  #157 = Utf8               java/lang/String
+  #158 = InvokeDynamic      #1:#159       // #1:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  #159 = NameAndType        #160:#161     // makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  #160 = Utf8               makeConcatWithConstants
+  #161 = Utf8               (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  #162 = InterfaceMethodref #163.#164     // net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+  #163 = Class              #165          // net/minecraft/network/chat/Component
+  #164 = NameAndType        #166:#167     // translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+  #165 = Utf8               net/minecraft/network/chat/Component
+  #166 = Utf8               translatable
+  #167 = Utf8               (Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+  #168 = InterfaceMethodref #169.#92      // java/lang/Iterable.iterator:()Ljava/util/Iterator;
+  #169 = Class              #170          // java/lang/Iterable
+  #170 = Utf8               java/lang/Iterable
+  #171 = Methodref          #103.#172     // net/minecraft/world/effect/MobEffectInstance.isVisible:()Z
+  #172 = NameAndType        #173:#62      // isVisible:()Z
+  #173 = Utf8               isVisible
+  #174 = Methodref          #103.#175     // net/minecraft/world/effect/MobEffectInstance.getEffect:()Lnet/minecraft/core/Holder;
+  #175 = NameAndType        #176:#177     // getEffect:()Lnet/minecraft/core/Holder;
+  #176 = Utf8               getEffect
+  #177 = Utf8               ()Lnet/minecraft/core/Holder;
+  #178 = Class              #179          // net/minecraft/world/effect/MobEffect
+  #179 = Utf8               net/minecraft/world/effect/MobEffect
+  #180 = Methodref          #178.#181     // net/minecraft/world/effect/MobEffect.getColor:()I
+  #181 = NameAndType        #182:#131     // getColor:()I
+  #182 = Utf8               getColor
+  #183 = Methodref          #103.#184     // net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+  #184 = NameAndType        #185:#131     // getAmplifier:()I
+  #185 = Utf8               getAmplifier
+  #186 = Methodref          #187.#188     // net/minecraft/util/ARGB.red:(I)I
+  #187 = Class              #189          // net/minecraft/util/ARGB
+  #188 = NameAndType        #190:#125     // red:(I)I
+  #189 = Utf8               net/minecraft/util/ARGB
+  #190 = Utf8               red
+  #191 = Methodref          #187.#192     // net/minecraft/util/ARGB.green:(I)I
+  #192 = NameAndType        #193:#125     // green:(I)I
+  #193 = Utf8               green
+  #194 = Methodref          #187.#195     // net/minecraft/util/ARGB.blue:(I)I
+  #195 = NameAndType        #196:#125     // blue:(I)I
+  #196 = Utf8               blue
+  #197 = Methodref          #141.#198     // java/util/OptionalInt.empty:()Ljava/util/OptionalInt;
+  #198 = NameAndType        #31:#199      // empty:()Ljava/util/OptionalInt;
+  #199 = Utf8               ()Ljava/util/OptionalInt;
+  #200 = Methodref          #187.#201     // net/minecraft/util/ARGB.color:(III)I
+  #201 = NameAndType        #202:#203     // color:(III)I
+  #202 = Utf8               color
+  #203 = Utf8               (III)I
+  #204 = Methodref          #141.#205     // java/util/OptionalInt.of:(I)Ljava/util/OptionalInt;
+  #205 = NameAndType        #27:#206      // of:(I)Ljava/util/OptionalInt;
+  #206 = Utf8               (I)Ljava/util/OptionalInt;
+  #207 = InvokeDynamic      #2:#208       // #2:apply:()Lcom/google/common/base/Function;
+  #208 = NameAndType        #209:#210     // apply:()Lcom/google/common/base/Function;
+  #209 = Utf8               apply
+  #210 = Utf8               ()Lcom/google/common/base/Function;
+  #211 = Methodref          #212.#213     // com/google/common/collect/Lists.transform:(Ljava/util/List;Lcom/google/common/base/Function;)Ljava/util/List;
+  #212 = Class              #214          // com/google/common/collect/Lists
+  #213 = NameAndType        #215:#216     // transform:(Ljava/util/List;Lcom/google/common/base/Function;)Ljava/util/List;
+  #214 = Utf8               com/google/common/collect/Lists
+  #215 = Utf8               transform
+  #216 = Utf8               (Ljava/util/List;Lcom/google/common/base/Function;)Ljava/util/List;
+  #217 = Methodref          #218.#219     // net/minecraft/world/entity/LivingEntity.level:()Lnet/minecraft/world/level/Level;
+  #218 = Class              #220          // net/minecraft/world/entity/LivingEntity
+  #219 = NameAndType        #221:#222     // level:()Lnet/minecraft/world/level/Level;
+  #220 = Utf8               net/minecraft/world/entity/LivingEntity
+  #221 = Utf8               level
+  #222 = Utf8               ()Lnet/minecraft/world/level/Level;
+  #223 = Class              #224          // net/minecraft/server/level/ServerLevel
+  #224 = Utf8               net/minecraft/server/level/ServerLevel
+  #225 = Class              #226          // net/minecraft/world/entity/player/Player
+  #226 = Utf8               net/minecraft/world/entity/player/Player
+  #227 = InvokeDynamic      #3:#228       // #3:accept:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/function/Consumer;
+  #228 = NameAndType        #113:#229     // accept:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/function/Consumer;
+  #229 = Utf8               (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/function/Consumer;
+  #230 = Methodref          #8.#231       // net/minecraft/world/item/alchemy/PotionContents.forEachEffect:(Ljava/util/function/Consumer;F)V
+  #231 = NameAndType        #232:#233     // forEachEffect:(Ljava/util/function/Consumer;F)V
+  #232 = Utf8               forEachEffect
+  #233 = Utf8               (Ljava/util/function/Consumer;F)V
+  #234 = Methodref          #212.#235     // com/google/common/collect/Lists.newArrayList:()Ljava/util/ArrayList;
+  #235 = NameAndType        #236:#237     // newArrayList:()Ljava/util/ArrayList;
+  #236 = Utf8               newArrayList
+  #237 = Utf8               ()Ljava/util/ArrayList;
+  #238 = InvokeDynamic      #4:#239       // #4:accept:(Ljava/util/List;)Ljava/util/function/BiConsumer;
+  #239 = NameAndType        #113:#240     // accept:(Ljava/util/List;)Ljava/util/function/BiConsumer;
+  #240 = Utf8               (Ljava/util/List;)Ljava/util/function/BiConsumer;
+  #241 = Methodref          #178.#242     // net/minecraft/world/effect/MobEffect.createModifiers:(ILjava/util/function/BiConsumer;)V
+  #242 = NameAndType        #243:#244     // createModifiers:(ILjava/util/function/BiConsumer;)V
+  #243 = Utf8               createModifiers
+  #244 = Utf8               (ILjava/util/function/BiConsumer;)V
+  #245 = Methodref          #8.#246       // net/minecraft/world/item/alchemy/PotionContents.getPotionDescription:(Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/MutableComponent;
+  #246 = NameAndType        #247:#248     // getPotionDescription:(Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/MutableComponent;
+  #247 = Utf8               getPotionDescription
+  #248 = Utf8               (Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/MutableComponent;
+  #249 = Class              #250          // net/minecraft/SharedConstants
+  #250 = Utf8               net/minecraft/SharedConstants
+  #251 = Methodref          #103.#252     // net/minecraft/world/effect/MobEffectInstance.endsWithin:(I)Z
+  #252 = NameAndType        #253:#254     // endsWithin:(I)Z
+  #253 = Utf8               endsWithin
+  #254 = Utf8               (I)Z
+  #255 = String             #256          // potion.withDuration
+  #256 = Utf8               potion.withDuration
+  #257 = Class              #258          // java/lang/Object
+  #258 = Utf8               java/lang/Object
+  #259 = Methodref          #260.#261     // net/minecraft/world/effect/MobEffectUtil.formatDuration:(Lnet/minecraft/world/effect/MobEffectInstance;FF)Lnet/minecraft/network/chat/Component;
+  #260 = Class              #262          // net/minecraft/world/effect/MobEffectUtil
+  #261 = NameAndType        #263:#264     // formatDuration:(Lnet/minecraft/world/effect/MobEffectInstance;FF)Lnet/minecraft/network/chat/Component;
+  #262 = Utf8               net/minecraft/world/effect/MobEffectUtil
+  #263 = Utf8               formatDuration
+  #264 = Utf8               (Lnet/minecraft/world/effect/MobEffectInstance;FF)Lnet/minecraft/network/chat/Component;
+  #265 = InterfaceMethodref #163.#266     // net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  #266 = NameAndType        #166:#267     // translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  #267 = Utf8               (Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+  #268 = Methodref          #178.#269     // net/minecraft/world/effect/MobEffect.getCategory:()Lnet/minecraft/world/effect/MobEffectCategory;
+  #269 = NameAndType        #270:#271     // getCategory:()Lnet/minecraft/world/effect/MobEffectCategory;
+  #270 = Utf8               getCategory
+  #271 = Utf8               ()Lnet/minecraft/world/effect/MobEffectCategory;
+  #272 = Methodref          #273.#274     // net/minecraft/world/effect/MobEffectCategory.getTooltipFormatting:()Lnet/minecraft/ChatFormatting;
+  #273 = Class              #275          // net/minecraft/world/effect/MobEffectCategory
+  #274 = NameAndType        #276:#277     // getTooltipFormatting:()Lnet/minecraft/ChatFormatting;
+  #275 = Utf8               net/minecraft/world/effect/MobEffectCategory
+  #276 = Utf8               getTooltipFormatting
+  #277 = Utf8               ()Lnet/minecraft/ChatFormatting;
+  #278 = Methodref          #279.#280     // net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+  #279 = Class              #281          // net/minecraft/network/chat/MutableComponent
+  #280 = NameAndType        #282:#283     // withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+  #281 = Utf8               net/minecraft/network/chat/MutableComponent
+  #282 = Utf8               withStyle
+  #283 = Utf8               (Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+  #284 = Fieldref           #8.#285       // net/minecraft/world/item/alchemy/PotionContents.NO_EFFECT:Lnet/minecraft/network/chat/Component;
+  #285 = NameAndType        #286:#287     // NO_EFFECT:Lnet/minecraft/network/chat/Component;
+  #286 = Utf8               NO_EFFECT
+  #287 = Utf8               Lnet/minecraft/network/chat/Component;
+  #288 = Fieldref           #289.#290     // net/minecraft/network/chat/CommonComponents.EMPTY:Lnet/minecraft/network/chat/Component;
+  #289 = Class              #291          // net/minecraft/network/chat/CommonComponents
+  #290 = NameAndType        #292:#287     // EMPTY:Lnet/minecraft/network/chat/Component;
+  #291 = Utf8               net/minecraft/network/chat/CommonComponents
+  #292 = Utf8               EMPTY
+  #293 = String             #294          // potion.whenDrank
+  #294 = Utf8               potion.whenDrank
+  #295 = Fieldref           #296.#297     // net/minecraft/ChatFormatting.DARK_PURPLE:Lnet/minecraft/ChatFormatting;
+  #296 = Class              #298          // net/minecraft/ChatFormatting
+  #297 = NameAndType        #299:#300     // DARK_PURPLE:Lnet/minecraft/ChatFormatting;
+  #298 = Utf8               net/minecraft/ChatFormatting
+  #299 = Utf8               DARK_PURPLE
+  #300 = Utf8               Lnet/minecraft/ChatFormatting;
+  #301 = Class              #302          // com/mojang/datafixers/util/Pair
+  #302 = Utf8               com/mojang/datafixers/util/Pair
+  #303 = Methodref          #301.#304     // com/mojang/datafixers/util/Pair.getSecond:()Ljava/lang/Object;
+  #304 = NameAndType        #305:#66      // getSecond:()Ljava/lang/Object;
+  #305 = Utf8               getSecond
+  #306 = Class              #307          // net/minecraft/world/entity/ai/attributes/AttributeModifier
+  #307 = Utf8               net/minecraft/world/entity/ai/attributes/AttributeModifier
+  #308 = Methodref          #306.#309     // net/minecraft/world/entity/ai/attributes/AttributeModifier.amount:()D
+  #309 = NameAndType        #310:#311     // amount:()D
+  #310 = Utf8               amount
+  #311 = Utf8               ()D
+  #312 = Methodref          #306.#313     // net/minecraft/world/entity/ai/attributes/AttributeModifier.operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #313 = NameAndType        #314:#315     // operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #314 = Utf8               operation
+  #315 = Utf8               ()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #316 = Fieldref           #317.#318     // net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.ADD_MULTIPLIED_BASE:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #317 = Class              #319          // net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation
+  #318 = NameAndType        #320:#321     // ADD_MULTIPLIED_BASE:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #319 = Utf8               net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation
+  #320 = Utf8               ADD_MULTIPLIED_BASE
+  #321 = Utf8               Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #322 = Fieldref           #317.#323     // net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.ADD_MULTIPLIED_TOTAL:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #323 = NameAndType        #324:#321     // ADD_MULTIPLIED_TOTAL:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+  #324 = Utf8               ADD_MULTIPLIED_TOTAL
+  #325 = Double             100.0d
+  #327 = Methodref          #317.#328     // net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.id:()I
+  #328 = NameAndType        #329:#131     // id:()I
+  #329 = Utf8               id
+  #330 = InvokeDynamic      #5:#331       // #5:makeConcatWithConstants:(I)Ljava/lang/String;
+  #331 = NameAndType        #160:#332     // makeConcatWithConstants:(I)Ljava/lang/String;
+  #332 = Utf8               (I)Ljava/lang/String;
+  #333 = Fieldref           #334.#335     // net/minecraft/world/item/component/ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT:Ljava/text/DecimalFormat;
+  #334 = Class              #336          // net/minecraft/world/item/component/ItemAttributeModifiers
+  #335 = NameAndType        #337:#338     // ATTRIBUTE_MODIFIER_FORMAT:Ljava/text/DecimalFormat;
+  #336 = Utf8               net/minecraft/world/item/component/ItemAttributeModifiers
+  #337 = Utf8               ATTRIBUTE_MODIFIER_FORMAT
+  #338 = Utf8               Ljava/text/DecimalFormat;
+  #339 = Methodref          #340.#341     // java/text/DecimalFormat.format:(D)Ljava/lang/String;
+  #340 = Class              #342          // java/text/DecimalFormat
+  #341 = NameAndType        #343:#344     // format:(D)Ljava/lang/String;
+  #342 = Utf8               java/text/DecimalFormat
+  #343 = Utf8               format
+  #344 = Utf8               (D)Ljava/lang/String;
+  #345 = Methodref          #301.#346     // com/mojang/datafixers/util/Pair.getFirst:()Ljava/lang/Object;
+  #346 = NameAndType        #347:#66      // getFirst:()Ljava/lang/Object;
+  #347 = Utf8               getFirst
+  #348 = Class              #349          // net/minecraft/world/entity/ai/attributes/Attribute
+  #349 = Utf8               net/minecraft/world/entity/ai/attributes/Attribute
+  #350 = Methodref          #348.#351     // net/minecraft/world/entity/ai/attributes/Attribute.getDescriptionId:()Ljava/lang/String;
+  #351 = NameAndType        #352:#353     // getDescriptionId:()Ljava/lang/String;
+  #352 = Utf8               getDescriptionId
+  #353 = Utf8               ()Ljava/lang/String;
+  #354 = Fieldref           #296.#355     // net/minecraft/ChatFormatting.BLUE:Lnet/minecraft/ChatFormatting;
+  #355 = NameAndType        #356:#300     // BLUE:Lnet/minecraft/ChatFormatting;
+  #356 = Utf8               BLUE
+  #357 = Double             -1.0d
+  #359 = InvokeDynamic      #6:#331       // #6:makeConcatWithConstants:(I)Ljava/lang/String;
+  #360 = Fieldref           #296.#361     // net/minecraft/ChatFormatting.RED:Lnet/minecraft/ChatFormatting;
+  #361 = NameAndType        #362:#300     // RED:Lnet/minecraft/ChatFormatting;
+  #362 = Utf8               RED
+  #363 = Methodref          #178.#351     // net/minecraft/world/effect/MobEffect.getDescriptionId:()Ljava/lang/String;
+  #364 = String             #365          // potion.withAmplifier
+  #365 = Utf8               potion.withAmplifier
+  #366 = InvokeDynamic      #7:#331       // #7:makeConcatWithConstants:(I)Ljava/lang/String;
+  #367 = Fieldref           #47.#368      // net/minecraft/core/component/DataComponents.POTION_DURATION_SCALE:Lnet/minecraft/core/component/DataComponentType;
+  #368 = NameAndType        #369:#51      // POTION_DURATION_SCALE:Lnet/minecraft/core/component/DataComponentType;
+  #369 = Utf8               POTION_DURATION_SCALE
+  #370 = Methodref          #371.#372     // java/lang/Float.valueOf:(F)Ljava/lang/Float;
+  #371 = Class              #373          // java/lang/Float
+  #372 = NameAndType        #374:#375     // valueOf:(F)Ljava/lang/Float;
+  #373 = Utf8               java/lang/Float
+  #374 = Utf8               valueOf
+  #375 = Utf8               (F)Ljava/lang/Float;
+  #376 = Methodref          #41.#377      // net/minecraft/world/item/ItemStack.getOrDefault:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+  #377 = NameAndType        #378:#58      // getOrDefault:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+  #378 = Utf8               getOrDefault
+  #379 = Methodref          #371.#380     // java/lang/Float.floatValue:()F
+  #380 = NameAndType        #381:#382     // floatValue:()F
+  #381 = Utf8               floatValue
+  #382 = Utf8               ()F
+  #383 = Methodref          #8.#384       // net/minecraft/world/item/alchemy/PotionContents.applyToLivingEntity:(Lnet/minecraft/world/entity/LivingEntity;F)V
+  #384 = NameAndType        #385:#386     // applyToLivingEntity:(Lnet/minecraft/world/entity/LivingEntity;F)V
+  #385 = Utf8               applyToLivingEntity
+  #386 = Utf8               (Lnet/minecraft/world/entity/LivingEntity;F)V
+  #387 = InterfaceMethodref #388.#377     // net/minecraft/core/component/DataComponentGetter.getOrDefault:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+  #388 = Class              #389          // net/minecraft/core/component/DataComponentGetter
+  #389 = Utf8               net/minecraft/core/component/DataComponentGetter
+  #390 = InterfaceMethodref #391.#392     // net/minecraft/world/item/Item$TooltipContext.tickRate:()F
+  #391 = Class              #393          // net/minecraft/world/item/Item$TooltipContext
+  #392 = NameAndType        #394:#382     // tickRate:()F
+  #393 = Utf8               net/minecraft/world/item/Item$TooltipContext
+  #394 = Utf8               tickRate
+  #395 = Methodref          #8.#396       // net/minecraft/world/item/alchemy/PotionContents.addPotionTooltip:(Ljava/lang/Iterable;Ljava/util/function/Consumer;FF)V
+  #396 = NameAndType        #397:#398     // addPotionTooltip:(Ljava/lang/Iterable;Ljava/util/function/Consumer;FF)V
+  #397 = Utf8               addPotionTooltip
+  #398 = Utf8               (Ljava/lang/Iterable;Ljava/util/function/Consumer;FF)V
+  #399 = InvokeDynamic      #8:#400       // #8:toString:(Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/lang/String;
+  #400 = NameAndType        #401:#402     // toString:(Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/lang/String;
+  #401 = Utf8               toString
+  #402 = Utf8               (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/lang/String;
+  #403 = InvokeDynamic      #8:#404       // #8:hashCode:(Lnet/minecraft/world/item/alchemy/PotionContents;)I
+  #404 = NameAndType        #405:#406     // hashCode:(Lnet/minecraft/world/item/alchemy/PotionContents;)I
+  #405 = Utf8               hashCode
+  #406 = Utf8               (Lnet/minecraft/world/item/alchemy/PotionContents;)I
+  #407 = InvokeDynamic      #8:#408       // #8:equals:(Lnet/minecraft/world/item/alchemy/PotionContents;Ljava/lang/Object;)Z
+  #408 = NameAndType        #409:#410     // equals:(Lnet/minecraft/world/item/alchemy/PotionContents;Ljava/lang/Object;)Z
+  #409 = Utf8               equals
+  #410 = Utf8               (Lnet/minecraft/world/item/alchemy/PotionContents;Ljava/lang/Object;)Z
+  #411 = Methodref          #301.#412     // com/mojang/datafixers/util/Pair."<init>":(Ljava/lang/Object;Ljava/lang/Object;)V
+  #412 = NameAndType        #5:#413       // "<init>":(Ljava/lang/Object;Ljava/lang/Object;)V
+  #413 = Utf8               (Ljava/lang/Object;Ljava/lang/Object;)V
+  #414 = InterfaceMethodref #34.#415      // java/util/List.add:(Ljava/lang/Object;)Z
+  #415 = NameAndType        #416:#417     // add:(Ljava/lang/Object;)Z
+  #416 = Utf8               add
+  #417 = Utf8               (Ljava/lang/Object;)Z
+  #418 = Methodref          #178.#419     // net/minecraft/world/effect/MobEffect.isInstantaneous:()Z
+  #419 = NameAndType        #420:#62      // isInstantaneous:()Z
+  #420 = Utf8               isInstantaneous
+  #421 = Methodref          #178.#422     // net/minecraft/world/effect/MobEffect.applyInstantaneousEffect:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/LivingEntity;ID)V
+  #422 = NameAndType        #423:#424     // applyInstantaneousEffect:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/LivingEntity;ID)V
+  #423 = Utf8               applyInstantaneousEffect
+  #424 = Utf8               (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/LivingEntity;ID)V
+  #425 = Methodref          #218.#426     // net/minecraft/world/entity/LivingEntity.addEffect:(Lnet/minecraft/world/effect/MobEffectInstance;)Z
+  #426 = NameAndType        #427:#428     // addEffect:(Lnet/minecraft/world/effect/MobEffectInstance;)Z
+  #427 = Utf8               addEffect
+  #428 = Utf8               (Lnet/minecraft/world/effect/MobEffectInstance;)Z
+  #429 = InvokeDynamic      #9:#430       // #9:apply:()Ljava/util/function/Function;
+  #430 = NameAndType        #209:#431     // apply:()Ljava/util/function/Function;
+  #431 = Utf8               ()Ljava/util/function/Function;
+  #432 = Methodref          #24.#433      // java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+  #433 = NameAndType        #434:#435     // map:(Ljava/util/function/Function;)Ljava/util/Optional;
+  #434 = Utf8               map
+  #435 = Utf8               (Ljava/util/function/Function;)Ljava/util/Optional;
+  #436 = Methodref          #80.#437      // net/minecraft/world/item/alchemy/Potion.name:()Ljava/lang/String;
+  #437 = NameAndType        #438:#353     // name:()Ljava/lang/String;
+  #438 = Utf8               name
+  #439 = Fieldref           #80.#440      // net/minecraft/world/item/alchemy/Potion.CODEC:Lcom/mojang/serialization/Codec;
+  #440 = NameAndType        #441:#442     // CODEC:Lcom/mojang/serialization/Codec;
+  #441 = Utf8               CODEC
+  #442 = Utf8               Lcom/mojang/serialization/Codec;
+  #443 = String             #11           // potion
+  #444 = InterfaceMethodref #445.#446     // com/mojang/serialization/Codec.optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+  #445 = Class              #447          // com/mojang/serialization/Codec
+  #446 = NameAndType        #448:#449     // optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+  #447 = Utf8               com/mojang/serialization/Codec
+  #448 = Utf8               optionalFieldOf
+  #449 = Utf8               (Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+  #450 = InvokeDynamic      #10:#430      // #10:apply:()Ljava/util/function/Function;
+  #451 = Methodref          #452.#453     // com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+  #452 = Class              #454          // com/mojang/serialization/MapCodec
+  #453 = NameAndType        #455:#456     // forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+  #454 = Utf8               com/mojang/serialization/MapCodec
+  #455 = Utf8               forGetter
+  #456 = Utf8               (Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+  #457 = Fieldref           #445.#458     // com/mojang/serialization/Codec.INT:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+  #458 = NameAndType        #459:#460     // INT:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+  #459 = Utf8               INT
+  #460 = Utf8               Lcom/mojang/serialization/codecs/PrimitiveCodec;
+  #461 = String             #462          // custom_color
+  #462 = Utf8               custom_color
+  #463 = InterfaceMethodref #464.#446     // com/mojang/serialization/codecs/PrimitiveCodec.optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+  #464 = Class              #465          // com/mojang/serialization/codecs/PrimitiveCodec
+  #465 = Utf8               com/mojang/serialization/codecs/PrimitiveCodec
+  #466 = InvokeDynamic      #11:#430      // #11:apply:()Ljava/util/function/Function;
+  #467 = Fieldref           #103.#440     // net/minecraft/world/effect/MobEffectInstance.CODEC:Lcom/mojang/serialization/Codec;
+  #468 = InterfaceMethodref #445.#469     // com/mojang/serialization/Codec.listOf:()Lcom/mojang/serialization/Codec;
+  #469 = NameAndType        #470:#471     // listOf:()Lcom/mojang/serialization/Codec;
+  #470 = Utf8               listOf
+  #471 = Utf8               ()Lcom/mojang/serialization/Codec;
+  #472 = String             #473          // custom_effects
+  #473 = Utf8               custom_effects
+  #474 = InterfaceMethodref #445.#475     // com/mojang/serialization/Codec.optionalFieldOf:(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;
+  #475 = NameAndType        #448:#476     // optionalFieldOf:(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;
+  #476 = Utf8               (Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;
+  #477 = InvokeDynamic      #12:#430      // #12:apply:()Ljava/util/function/Function;
+  #478 = Fieldref           #445.#479     // com/mojang/serialization/Codec.STRING:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+  #479 = NameAndType        #480:#460     // STRING:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+  #480 = Utf8               STRING
+  #481 = String             #482          // custom_name
+  #482 = Utf8               custom_name
+  #483 = InvokeDynamic      #13:#430      // #13:apply:()Ljava/util/function/Function;
+  #484 = Methodref          #485.#486     // com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P4;
+  #485 = Class              #487          // com/mojang/serialization/codecs/RecordCodecBuilder$Instance
+  #486 = NameAndType        #488:#489     // group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P4;
+  #487 = Utf8               com/mojang/serialization/codecs/RecordCodecBuilder$Instance
+  #488 = Utf8               group
+  #489 = Utf8               (Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P4;
+  #490 = InvokeDynamic      #14:#491      // #14:apply:()Lcom/mojang/datafixers/util/Function4;
+  #491 = NameAndType        #209:#492     // apply:()Lcom/mojang/datafixers/util/Function4;
+  #492 = Utf8               ()Lcom/mojang/datafixers/util/Function4;
+  #493 = Methodref          #494.#495     // com/mojang/datafixers/Products$P4.apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function4;)Lcom/mojang/datafixers/kinds/App;
+  #494 = Class              #496          // com/mojang/datafixers/Products$P4
+  #495 = NameAndType        #209:#497     // apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function4;)Lcom/mojang/datafixers/kinds/App;
+  #496 = Utf8               com/mojang/datafixers/Products$P4
+  #497 = Utf8               (Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function4;)Lcom/mojang/datafixers/kinds/App;
+  #498 = Fieldref           #8.#499       // net/minecraft/world/item/alchemy/PotionContents.EMPTY:Lnet/minecraft/world/item/alchemy/PotionContents;
+  #499 = NameAndType        #292:#500     // EMPTY:Lnet/minecraft/world/item/alchemy/PotionContents;
+  #500 = Utf8               Lnet/minecraft/world/item/alchemy/PotionContents;
+  #501 = String             #502          // effect.none
+  #502 = Utf8               effect.none
+  #503 = Fieldref           #296.#504     // net/minecraft/ChatFormatting.GRAY:Lnet/minecraft/ChatFormatting;
+  #504 = NameAndType        #505:#300     // GRAY:Lnet/minecraft/ChatFormatting;
+  #505 = Utf8               GRAY
+  #506 = InvokeDynamic      #15:#430      // #15:apply:()Ljava/util/function/Function;
+  #507 = Methodref          #508.#509     // com/mojang/serialization/codecs/RecordCodecBuilder.create:(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  #508 = Class              #510          // com/mojang/serialization/codecs/RecordCodecBuilder
+  #509 = NameAndType        #511:#512     // create:(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  #510 = Utf8               com/mojang/serialization/codecs/RecordCodecBuilder
+  #511 = Utf8               create
+  #512 = Utf8               (Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  #513 = Fieldref           #8.#514       // net/minecraft/world/item/alchemy/PotionContents.FULL_CODEC:Lcom/mojang/serialization/Codec;
+  #514 = NameAndType        #515:#442     // FULL_CODEC:Lcom/mojang/serialization/Codec;
+  #515 = Utf8               FULL_CODEC
+  #516 = InvokeDynamic      #16:#430      // #16:apply:()Ljava/util/function/Function;
+  #517 = InterfaceMethodref #445.#518     // com/mojang/serialization/Codec.withAlternative:(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  #518 = NameAndType        #519:#520     // withAlternative:(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  #519 = Utf8               withAlternative
+  #520 = Utf8               (Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+  #521 = Fieldref           #8.#440       // net/minecraft/world/item/alchemy/PotionContents.CODEC:Lcom/mojang/serialization/Codec;
+  #522 = Fieldref           #80.#523      // net/minecraft/world/item/alchemy/Potion.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+  #523 = NameAndType        #524:#525     // STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+  #524 = Utf8               STREAM_CODEC
+  #525 = Utf8               Lnet/minecraft/network/codec/StreamCodec;
+  #526 = InvokeDynamic      #17:#527      // #17:apply:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+  #527 = NameAndType        #209:#528     // apply:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+  #528 = Utf8               ()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+  #529 = InterfaceMethodref #530.#531     // net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+  #530 = Class              #532          // net/minecraft/network/codec/StreamCodec
+  #531 = NameAndType        #209:#533     // apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+  #532 = Utf8               net/minecraft/network/codec/StreamCodec
+  #533 = Utf8               (Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+  #534 = Fieldref           #535.#536     // net/minecraft/network/codec/ByteBufCodecs.INT:Lnet/minecraft/network/codec/StreamCodec;
+  #535 = Class              #537          // net/minecraft/network/codec/ByteBufCodecs
+  #536 = NameAndType        #459:#525     // INT:Lnet/minecraft/network/codec/StreamCodec;
+  #537 = Utf8               net/minecraft/network/codec/ByteBufCodecs
+  #538 = Fieldref           #103.#523     // net/minecraft/world/effect/MobEffectInstance.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+  #539 = InterfaceMethodref #535.#540     // net/minecraft/network/codec/ByteBufCodecs.list:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+  #540 = NameAndType        #541:#528     // list:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+  #541 = Utf8               list
+  #542 = Fieldref           #535.#543     // net/minecraft/network/codec/ByteBufCodecs.STRING_UTF8:Lnet/minecraft/network/codec/StreamCodec;
+  #543 = NameAndType        #544:#525     // STRING_UTF8:Lnet/minecraft/network/codec/StreamCodec;
+  #544 = Utf8               STRING_UTF8
+  #545 = InterfaceMethodref #530.#546     // net/minecraft/network/codec/StreamCodec.composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;)Lnet/minecraft/network/codec/StreamCodec;
+  #546 = NameAndType        #547:#548     // composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;)Lnet/minecraft/network/codec/StreamCodec;
+  #547 = Utf8               composite
+  #548 = Utf8               (Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;)Lnet/minecraft/network/codec/StreamCodec;
+  #549 = Fieldref           #8.#523       // net/minecraft/world/item/alchemy/PotionContents.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+  #550 = Class              #551          // net/minecraft/world/item/component/ConsumableListener
+  #551 = Utf8               net/minecraft/world/item/component/ConsumableListener
+  #552 = Class              #553          // net/minecraft/world/item/component/TooltipProvider
+  #553 = Utf8               net/minecraft/world/item/component/TooltipProvider
+  #554 = Utf8               Signature
+  #555 = Utf8               Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;
+  #556 = Utf8               Ljava/util/Optional<Ljava/lang/Integer;>;
+  #557 = Utf8               Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;
+  #558 = Utf8               Ljava/util/Optional<Ljava/lang/String;>;
+  #559 = Utf8               BASE_POTION_COLOR
+  #560 = Utf8               I
+  #561 = Utf8               ConstantValue
+  #562 = Utf8               Lcom/mojang/serialization/Codec<Lnet/minecraft/world/item/alchemy/PotionContents;>;
+  #563 = Utf8               Lnet/minecraft/network/codec/StreamCodec<Lnet/minecraft/network/RegistryFriendlyByteBuf;Lnet/minecraft/world/item/alchemy/PotionContents;>;
+  #564 = Utf8               Code
+  #565 = Utf8               LineNumberTable
+  #566 = Utf8               LocalVariableTable
+  #567 = Utf8               this
+  #568 = Utf8               Lnet/minecraft/core/Holder;
+  #569 = Utf8               LocalVariableTypeTable
+  #570 = Utf8               Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;
+  #571 = Utf8               MethodParameters
+  #572 = Utf8               (Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)V
+  #573 = Utf8               (Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;Ljava/util/Optional<Ljava/lang/Integer;>;Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;Ljava/util/Optional<Ljava/lang/String;>;)V
+  #574 = Utf8               createItemStack
+  #575 = Utf8               (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;
+  #576 = Utf8               item
+  #577 = Utf8               Lnet/minecraft/world/item/Item;
+  #578 = Utf8               itemStack
+  #579 = Utf8               Lnet/minecraft/world/item/ItemStack;
+  #580 = Utf8               (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)Lnet/minecraft/world/item/ItemStack;
+  #581 = Utf8               StackMapTable
+  #582 = Utf8               (Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)Z
+  #583 = Utf8               ()Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;
+  #584 = Utf8               effect
+  #585 = Utf8               Lnet/minecraft/world/effect/MobEffectInstance;
+  #586 = Utf8               consumer
+  #587 = Utf8               Ljava/util/function/Consumer;
+  #588 = Utf8               durationScale
+  #589 = Utf8               F
+  #590 = Utf8               Ljava/util/function/Consumer<Lnet/minecraft/world/effect/MobEffectInstance;>;
+  #591 = Utf8               (Ljava/util/function/Consumer<Lnet/minecraft/world/effect/MobEffectInstance;>;F)V
+  #592 = Utf8               withPotion
+  #593 = Utf8               (Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  #594 = Utf8               (Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  #595 = Utf8               withEffectAdded
+  #596 = Utf8               (Lnet/minecraft/world/effect/MobEffectInstance;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  #597 = Utf8               defaultColor
+  #598 = Utf8               getName
+  #599 = Utf8               (Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
+  #600 = Utf8               prefix
+  #601 = Utf8               Ljava/lang/String;
+  #602 = Utf8               suffix
+  #603 = Utf8               amplifier
+  #604 = Utf8               effects
+  #605 = Utf8               Ljava/lang/Iterable;
+  #606 = Utf8               totalWeight
+  #607 = Utf8               Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;
+  #608 = Utf8               (Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;)Ljava/util/OptionalInt;
+  #609 = Utf8               hasEffects
+  #610 = Utf8               ()Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;
+  #611 = Utf8               serverLevel
+  #612 = Utf8               Lnet/minecraft/server/level/ServerLevel;
+  #613 = Utf8               playerEntity
+  #614 = Utf8               Lnet/minecraft/world/entity/player/Player;
+  #615 = Utf8               entity
+  #616 = Utf8               Lnet/minecraft/world/entity/LivingEntity;
+  #617 = Utf8               player
+  #618 = Utf8               mobEffect
+  #619 = Utf8               line
+  #620 = Utf8               Lnet/minecraft/network/chat/MutableComponent;
+  #621 = Utf8               displayAmount
+  #622 = Utf8               D
+  #623 = Utf8               modifier
+  #624 = Utf8               Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+  #625 = Utf8               entry
+  #626 = Utf8               Lcom/mojang/datafixers/util/Pair;
+  #627 = Utf8               lines
+  #628 = Utf8               tickrate
+  #629 = Utf8               modifiers
+  #630 = Utf8               noEffects
+  #631 = Utf8               Z
+  #632 = Utf8               Lnet/minecraft/core/Holder<Lnet/minecraft/world/effect/MobEffect;>;
+  #633 = Utf8               Lcom/mojang/datafixers/util/Pair<Lnet/minecraft/core/Holder<Lnet/minecraft/world/entity/ai/attributes/Attribute;>;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;>;
+  #634 = Utf8               Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;
+  #635 = Utf8               Ljava/util/List<Lcom/mojang/datafixers/util/Pair<Lnet/minecraft/core/Holder<Lnet/minecraft/world/entity/ai/attributes/Attribute;>;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;>;>;
+  #636 = Utf8               (Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;FF)V
+  #637 = Utf8               (Lnet/minecraft/core/Holder<Lnet/minecraft/world/effect/MobEffect;>;I)Lnet/minecraft/network/chat/MutableComponent;
+  #638 = Utf8               onConsume
+  #639 = Utf8               (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/component/Consumable;)V
+  #640 = Utf8               Lnet/minecraft/world/level/Level;
+  #641 = Utf8               user
+  #642 = Utf8               stack
+  #643 = Utf8               consumable
+  #644 = Utf8               Lnet/minecraft/world/item/component/Consumable;
+  #645 = Utf8               addToTooltip
+  #646 = Utf8               (Lnet/minecraft/world/item/Item$TooltipContext;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;Lnet/minecraft/core/component/DataComponentGetter;)V
+  #647 = Utf8               context
+  #648 = Utf8               Lnet/minecraft/world/item/Item$TooltipContext;
+  #649 = Utf8               flag
+  #650 = Utf8               Lnet/minecraft/world/item/TooltipFlag;
+  #651 = Utf8               components
+  #652 = Utf8               Lnet/minecraft/core/component/DataComponentGetter;
+  #653 = Utf8               (Lnet/minecraft/world/item/Item$TooltipContext;Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;Lnet/minecraft/world/item/TooltipFlag;Lnet/minecraft/core/component/DataComponentGetter;)V
+  #654 = Utf8               o
+  #655 = Utf8               Ljava/lang/Object;
+  #656 = Utf8               ()Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;
+  #657 = Utf8               ()Ljava/util/Optional<Ljava/lang/Integer;>;
+  #658 = Utf8               ()Ljava/util/Optional<Ljava/lang/String;>;
+  #659 = Utf8               lambda$addPotionTooltip$0
+  #660 = Utf8               (Ljava/util/List;Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  #661 = Utf8               attribute
+  #662 = Utf8               lambda$applyToLivingEntity$0
+  #663 = Utf8               (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #664 = Utf8               lambda$getName$0
+  #665 = Utf8               lambda$getName$1
+  #666 = Utf8               (Lnet/minecraft/core/Holder;)Ljava/lang/String;
+  #667 = Utf8               p
+  #668 = Utf8               lambda$static$0
+  #669 = Utf8               (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  #670 = Utf8               i
+  #671 = Utf8               Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;
+  #672 = Utf8               <clinit>
+  #673 = Utf8               SourceFile
+  #674 = Utf8               PotionContents.java
+  #675 = Utf8               Record
+  #676 = Utf8               BootstrapMethods
+  #677 = MethodType         #66           //  ()Ljava/lang/Object;
+  #678 = MethodHandle       5:#679        // REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.lambda$getName$0:()Ljava/util/Optional;
+  #679 = Methodref          #8.#680       // net/minecraft/world/item/alchemy/PotionContents.lambda$getName$0:()Ljava/util/Optional;
+  #680 = NameAndType        #664:#32      // lambda$getName$0:()Ljava/util/Optional;
+  #681 = MethodType         #32           //  ()Ljava/util/Optional;
+  #682 = String             #683          // \u0001\u0001
+  #683 = Utf8               \u0001\u0001
+  #684 = MethodType         #155          //  (Ljava/lang/Object;)Ljava/lang/Object;
+  #685 = MethodHandle       8:#686        // REF_newInvokeSpecial net/minecraft/world/effect/MobEffectInstance."<init>":(Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #686 = Methodref          #103.#687     // net/minecraft/world/effect/MobEffectInstance."<init>":(Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #687 = NameAndType        #5:#688       // "<init>":(Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #688 = Utf8               (Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #689 = MethodType         #690          //  (Lnet/minecraft/world/effect/MobEffectInstance;)Lnet/minecraft/world/effect/MobEffectInstance;
+  #690 = Utf8               (Lnet/minecraft/world/effect/MobEffectInstance;)Lnet/minecraft/world/effect/MobEffectInstance;
+  #691 = MethodType         #114          //  (Ljava/lang/Object;)V
+  #692 = MethodHandle       6:#693        // REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$applyToLivingEntity$0:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #693 = Methodref          #8.#694       // net/minecraft/world/item/alchemy/PotionContents.lambda$applyToLivingEntity$0:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #694 = NameAndType        #662:#663     // lambda$applyToLivingEntity$0:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #695 = MethodType         #688          //  (Lnet/minecraft/world/effect/MobEffectInstance;)V
+  #696 = MethodType         #413          //  (Ljava/lang/Object;Ljava/lang/Object;)V
+  #697 = MethodHandle       6:#698        // REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$addPotionTooltip$0:(Ljava/util/List;Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  #698 = Methodref          #8.#699       // net/minecraft/world/item/alchemy/PotionContents.lambda$addPotionTooltip$0:(Ljava/util/List;Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  #699 = NameAndType        #659:#660     // lambda$addPotionTooltip$0:(Ljava/util/List;Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  #700 = MethodType         #701          //  (Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  #701 = Utf8               (Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  #702 = String             #703          // attribute.modifier.plus.\u0001
+  #703 = Utf8               attribute.modifier.plus.\u0001
+  #704 = String             #705          // attribute.modifier.take.\u0001
+  #705 = Utf8               attribute.modifier.take.\u0001
+  #706 = String             #707          // potion.potency.\u0001
+  #707 = Utf8               potion.potency.\u0001
+  #708 = String             #709          // potion;customColor;customEffects;customName
+  #709 = Utf8               potion;customColor;customEffects;customName
+  #710 = MethodHandle       1:#7          // REF_getField net/minecraft/world/item/alchemy/PotionContents.potion:Ljava/util/Optional;
+  #711 = MethodHandle       1:#13         // REF_getField net/minecraft/world/item/alchemy/PotionContents.customColor:Ljava/util/Optional;
+  #712 = MethodHandle       1:#16         // REF_getField net/minecraft/world/item/alchemy/PotionContents.customEffects:Ljava/util/List;
+  #713 = MethodHandle       1:#20         // REF_getField net/minecraft/world/item/alchemy/PotionContents.customName:Ljava/util/Optional;
+  #714 = MethodHandle       6:#715        // REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$getName$1:(Lnet/minecraft/core/Holder;)Ljava/lang/String;
+  #715 = Methodref          #8.#716       // net/minecraft/world/item/alchemy/PotionContents.lambda$getName$1:(Lnet/minecraft/core/Holder;)Ljava/lang/String;
+  #716 = NameAndType        #665:#666     // lambda$getName$1:(Lnet/minecraft/core/Holder;)Ljava/lang/String;
+  #717 = MethodType         #666          //  (Lnet/minecraft/core/Holder;)Ljava/lang/String;
+  #718 = MethodHandle       5:#719        // REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.potion:()Ljava/util/Optional;
+  #719 = Methodref          #8.#720       // net/minecraft/world/item/alchemy/PotionContents.potion:()Ljava/util/Optional;
+  #720 = NameAndType        #11:#32       // potion:()Ljava/util/Optional;
+  #721 = MethodType         #722          //  (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/Optional;
+  #722 = Utf8               (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/Optional;
+  #723 = MethodHandle       5:#724        // REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.customColor:()Ljava/util/Optional;
+  #724 = Methodref          #8.#725       // net/minecraft/world/item/alchemy/PotionContents.customColor:()Ljava/util/Optional;
+  #725 = NameAndType        #15:#32       // customColor:()Ljava/util/Optional;
+  #726 = MethodHandle       5:#727        // REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.customEffects:()Ljava/util/List;
+  #727 = Methodref          #8.#728       // net/minecraft/world/item/alchemy/PotionContents.customEffects:()Ljava/util/List;
+  #728 = NameAndType        #18:#37       // customEffects:()Ljava/util/List;
+  #729 = MethodType         #730          //  (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/List;
+  #730 = Utf8               (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/List;
+  #731 = MethodHandle       5:#732        // REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.customName:()Ljava/util/Optional;
+  #732 = Methodref          #8.#733       // net/minecraft/world/item/alchemy/PotionContents.customName:()Ljava/util/Optional;
+  #733 = NameAndType        #22:#32       // customName:()Ljava/util/Optional;
+  #734 = MethodType         #735          //  (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  #735 = Utf8               (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  #736 = MethodHandle       8:#38         // REF_newInvokeSpecial net/minecraft/world/item/alchemy/PotionContents."<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+  #737 = MethodType         #738          //  (Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  #738 = Utf8               (Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  #739 = MethodHandle       6:#740        // REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$static$0:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  #740 = Methodref          #8.#741       // net/minecraft/world/item/alchemy/PotionContents.lambda$static$0:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  #741 = NameAndType        #668:#669     // lambda$static$0:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  #742 = MethodType         #669          //  (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  #743 = MethodHandle       8:#52         // REF_newInvokeSpecial net/minecraft/world/item/alchemy/PotionContents."<init>":(Lnet/minecraft/core/Holder;)V
+  #744 = MethodType         #593          //  (Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  #745 = MethodType         #746          //  (Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+  #746 = Utf8               (Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+  #747 = MethodHandle       6:#748        // REF_invokeStatic net/minecraft/network/codec/ByteBufCodecs.optional:(Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+  #748 = InterfaceMethodref #535.#749     // net/minecraft/network/codec/ByteBufCodecs.optional:(Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+  #749 = NameAndType        #750:#746     // optional:(Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+  #750 = Utf8               optional
+  #751 = MethodHandle       6:#752        // REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #752 = Methodref          #753.#754     // java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #753 = Class              #755          // java/lang/invoke/LambdaMetafactory
+  #754 = NameAndType        #756:#757     // metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #755 = Utf8               java/lang/invoke/LambdaMetafactory
+  #756 = Utf8               metafactory
+  #757 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #758 = MethodHandle       6:#759        // REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #759 = Methodref          #760.#761     // java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #760 = Class              #762          // java/lang/invoke/StringConcatFactory
+  #761 = NameAndType        #160:#763     // makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #762 = Utf8               java/lang/invoke/StringConcatFactory
+  #763 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #764 = MethodHandle       6:#765        // REF_invokeStatic java/lang/runtime/ObjectMethods.bootstrap:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;
+  #765 = Methodref          #766.#767     // java/lang/runtime/ObjectMethods.bootstrap:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;
+  #766 = Class              #768          // java/lang/runtime/ObjectMethods
+  #767 = NameAndType        #769:#770     // bootstrap:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;
+  #768 = Utf8               java/lang/runtime/ObjectMethods
+  #769 = Utf8               bootstrap
+  #770 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;
+  #771 = Utf8               InnerClasses
+  #772 = Utf8               Operation
+  #773 = Class              #774          // net/minecraft/world/item/Item
+  #774 = Utf8               net/minecraft/world/item/Item
+  #775 = Utf8               TooltipContext
+  #776 = Utf8               Instance
+  #777 = Class              #778          // com/mojang/datafixers/Products
+  #778 = Utf8               com/mojang/datafixers/Products
+  #779 = Utf8               P4
+  #780 = Class              #781          // net/minecraft/network/codec/StreamCodec$CodecOperation
+  #781 = Utf8               net/minecraft/network/codec/StreamCodec$CodecOperation
+  #782 = Utf8               CodecOperation
+  #783 = Class              #784          // java/lang/invoke/MethodHandles$Lookup
+  #784 = Utf8               java/lang/invoke/MethodHandles$Lookup
+  #785 = Class              #786          // java/lang/invoke/MethodHandles
+  #786 = Utf8               java/lang/invoke/MethodHandles
+  #787 = Utf8               Lookup
+{
+  private final java.util.Optional<net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>> potion;
+    descriptor: Ljava/util/Optional;
+    flags: (0x0012) ACC_PRIVATE, ACC_FINAL
+    Signature: #555                         // Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;
+
+  private final java.util.Optional<java.lang.Integer> customColor;
+    descriptor: Ljava/util/Optional;
+    flags: (0x0012) ACC_PRIVATE, ACC_FINAL
+    Signature: #556                         // Ljava/util/Optional<Ljava/lang/Integer;>;
+
+  private final java.util.List<net.minecraft.world.effect.MobEffectInstance> customEffects;
+    descriptor: Ljava/util/List;
+    flags: (0x0012) ACC_PRIVATE, ACC_FINAL
+    Signature: #557                         // Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;
+
+  private final java.util.Optional<java.lang.String> customName;
+    descriptor: Ljava/util/Optional;
+    flags: (0x0012) ACC_PRIVATE, ACC_FINAL
+    Signature: #558                         // Ljava/util/Optional<Ljava/lang/String;>;
+
+  public static final net.minecraft.world.item.alchemy.PotionContents EMPTY;
+    descriptor: Lnet/minecraft/world/item/alchemy/PotionContents;
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+
+  private static final net.minecraft.network.chat.Component NO_EFFECT;
+    descriptor: Lnet/minecraft/network/chat/Component;
+    flags: (0x001a) ACC_PRIVATE, ACC_STATIC, ACC_FINAL
+
+  public static final int BASE_POTION_COLOR;
+    descriptor: I
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int -13083194
+
+  private static final com.mojang.serialization.Codec<net.minecraft.world.item.alchemy.PotionContents> FULL_CODEC;
+    descriptor: Lcom/mojang/serialization/Codec;
+    flags: (0x001a) ACC_PRIVATE, ACC_STATIC, ACC_FINAL
+    Signature: #562                         // Lcom/mojang/serialization/Codec<Lnet/minecraft/world/item/alchemy/PotionContents;>;
+
+  public static final com.mojang.serialization.Codec<net.minecraft.world.item.alchemy.PotionContents> CODEC;
+    descriptor: Lcom/mojang/serialization/Codec;
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    Signature: #562                         // Lcom/mojang/serialization/Codec<Lnet/minecraft/world/item/alchemy/PotionContents;>;
+
+  public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.world.item.alchemy.PotionContents> STREAM_CODEC;
+    descriptor: Lnet/minecraft/network/codec/StreamCodec;
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    Signature: #563                         // Lnet/minecraft/network/codec/StreamCodec<Lnet/minecraft/network/RegistryFriendlyByteBuf;Lnet/minecraft/world/item/alchemy/PotionContents;>;
+
+  public net.minecraft.world.item.alchemy.PotionContents(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+    descriptor: (Lnet/minecraft/core/Holder;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=5, locals=2, args_size=2
+         0: aload_0
+         1: aload_1
+         2: invokestatic  #23                 // Method java/util/Optional.of:(Ljava/lang/Object;)Ljava/util/Optional;
+         5: invokestatic  #29                 // Method java/util/Optional.empty:()Ljava/util/Optional;
+         8: invokestatic  #33                 // InterfaceMethod java/util/List.of:()Ljava/util/List;
+        11: invokestatic  #29                 // Method java/util/Optional.empty:()Ljava/util/Optional;
+        14: invokespecial #38                 // Method "<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+        17: return
+      LineNumberTable:
+        line 77: 0
+        line 78: 17
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      18     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      18     1 potion   Lnet/minecraft/core/Holder;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      18     1 potion   Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;
+    MethodParameters:
+      Name                           Flags
+      potion                         final
+    Signature: #572                         // (Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)V
+
+  public net.minecraft.world.item.alchemy.PotionContents(java.util.Optional<net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>>, java.util.Optional<java.lang.Integer>, java.util.List<net.minecraft.world.effect.MobEffectInstance>, java.util.Optional<java.lang.String>);
+    descriptor: (Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=5, args_size=5
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Record."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: putfield      #7                  // Field potion:Ljava/util/Optional;
+         9: aload_0
+        10: aload_2
+        11: putfield      #13                 // Field customColor:Ljava/util/Optional;
+        14: aload_0
+        15: aload_3
+        16: putfield      #16                 // Field customEffects:Ljava/util/List;
+        19: aload_0
+        20: aload         4
+        22: putfield      #20                 // Field customName:Ljava/util/Optional;
+        25: return
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      26     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      26     1 potion   Ljava/util/Optional;
+            0      26     2 customColor   Ljava/util/Optional;
+            0      26     3 customEffects   Ljava/util/List;
+            0      26     4 customName   Ljava/util/Optional;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      26     1 potion   Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;
+            0      26     2 customColor   Ljava/util/Optional<Ljava/lang/Integer;>;
+            0      26     3 customEffects   Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;
+            0      26     4 customName   Ljava/util/Optional<Ljava/lang/String;>;
+    MethodParameters:
+      Name                           Flags
+      potion
+      customColor
+      customEffects
+      customName
+    Signature: #573                         // (Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;Ljava/util/Optional<Ljava/lang/Integer;>;Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;Ljava/util/Optional<Ljava/lang/String;>;)V
+
+  public static net.minecraft.world.item.ItemStack createItemStack(net.minecraft.world.item.Item, net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+    descriptor: (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=5, locals=3, args_size=2
+         0: new           #41                 // class net/minecraft/world/item/ItemStack
+         3: dup
+         4: aload_0
+         5: invokespecial #43                 // Method net/minecraft/world/item/ItemStack."<init>":(Lnet/minecraft/world/level/ItemLike;)V
+         8: astore_2
+         9: aload_2
+        10: getstatic     #46                 // Field net/minecraft/core/component/DataComponents.POTION_CONTENTS:Lnet/minecraft/core/component/DataComponentType;
+        13: new           #8                  // class net/minecraft/world/item/alchemy/PotionContents
+        16: dup
+        17: aload_1
+        18: invokespecial #52                 // Method "<init>":(Lnet/minecraft/core/Holder;)V
+        21: invokevirtual #55                 // Method net/minecraft/world/item/ItemStack.set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+        24: pop
+        25: aload_2
+        26: areturn
+      LineNumberTable:
+        line 81: 0
+        line 82: 9
+        line 83: 25
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      27     0  item   Lnet/minecraft/world/item/Item;
+            0      27     1 potion   Lnet/minecraft/core/Holder;
+            9      18     2 itemStack   Lnet/minecraft/world/item/ItemStack;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      27     1 potion   Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;
+    MethodParameters:
+      Name                           Flags
+      item                           final
+      potion                         final
+    Signature: #580                         // (Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)Lnet/minecraft/world/item/ItemStack;
+
+  public boolean is(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+    descriptor: (Lnet/minecraft/core/Holder;)Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #7                  // Field potion:Ljava/util/Optional;
+         4: invokevirtual #59                 // Method java/util/Optional.isPresent:()Z
+         7: ifeq          45
+        10: aload_0
+        11: getfield      #7                  // Field potion:Ljava/util/Optional;
+        14: invokevirtual #63                 // Method java/util/Optional.get:()Ljava/lang/Object;
+        17: checkcast     #67                 // class net/minecraft/core/Holder
+        20: aload_1
+        21: invokeinterface #69,  2           // InterfaceMethod net/minecraft/core/Holder.is:(Lnet/minecraft/core/Holder;)Z
+        26: ifeq          45
+        29: aload_0
+        30: getfield      #16                 // Field customEffects:Ljava/util/List;
+        33: invokeinterface #73,  1           // InterfaceMethod java/util/List.isEmpty:()Z
+        38: ifeq          45
+        41: iconst_1
+        42: goto          46
+        45: iconst_0
+        46: ireturn
+      LineNumberTable:
+        line 87: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      47     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      47     1 potion   Lnet/minecraft/core/Holder;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      47     1 potion   Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;
+      StackMapTable: number_of_entries = 2
+        frame_type = 45 /* same */
+        frame_type = 64 /* same_locals_1_stack_item */
+          stack = [ int ]
+    MethodParameters:
+      Name                           Flags
+      potion                         final
+    Signature: #582                         // (Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)Z
+
+  public java.lang.Iterable<net.minecraft.world.effect.MobEffectInstance> getAllEffects();
+    descriptor: ()Ljava/lang/Iterable;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #7                  // Field potion:Ljava/util/Optional;
+         4: invokevirtual #76                 // Method java/util/Optional.isEmpty:()Z
+         7: ifeq          15
+        10: aload_0
+        11: getfield      #16                 // Field customEffects:Ljava/util/List;
+        14: areturn
+        15: aload_0
+        16: getfield      #16                 // Field customEffects:Ljava/util/List;
+        19: invokeinterface #73,  1           // InterfaceMethod java/util/List.isEmpty:()Z
+        24: ifeq          49
+        27: aload_0
+        28: getfield      #7                  // Field potion:Ljava/util/Optional;
+        31: invokevirtual #63                 // Method java/util/Optional.get:()Ljava/lang/Object;
+        34: checkcast     #67                 // class net/minecraft/core/Holder
+        37: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        42: checkcast     #80                 // class net/minecraft/world/item/alchemy/Potion
+        45: invokevirtual #82                 // Method net/minecraft/world/item/alchemy/Potion.getEffects:()Ljava/util/List;
+        48: areturn
+        49: aload_0
+        50: getfield      #7                  // Field potion:Ljava/util/Optional;
+        53: invokevirtual #63                 // Method java/util/Optional.get:()Ljava/lang/Object;
+        56: checkcast     #67                 // class net/minecraft/core/Holder
+        59: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        64: checkcast     #80                 // class net/minecraft/world/item/alchemy/Potion
+        67: invokevirtual #82                 // Method net/minecraft/world/item/alchemy/Potion.getEffects:()Ljava/util/List;
+        70: aload_0
+        71: getfield      #16                 // Field customEffects:Ljava/util/List;
+        74: invokestatic  #85                 // Method com/google/common/collect/Iterables.concat:(Ljava/lang/Iterable;Ljava/lang/Iterable;)Ljava/lang/Iterable;
+        77: areturn
+      LineNumberTable:
+        line 91: 0
+        line 92: 10
+        line 94: 15
+        line 95: 27
+        line 97: 49
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      78     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+      StackMapTable: number_of_entries = 2
+        frame_type = 15 /* same */
+        frame_type = 33 /* same */
+    Signature: #583                         // ()Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;
+
+  public void forEachEffect(java.util.function.Consumer<net.minecraft.world.effect.MobEffectInstance>, float);
+    descriptor: (Ljava/util/function/Consumer;F)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=5, args_size=3
+         0: aload_0
+         1: getfield      #7                  // Field potion:Ljava/util/Optional;
+         4: invokevirtual #59                 // Method java/util/Optional.isPresent:()Z
+         7: ifeq          72
+        10: aload_0
+        11: getfield      #7                  // Field potion:Ljava/util/Optional;
+        14: invokevirtual #63                 // Method java/util/Optional.get:()Ljava/lang/Object;
+        17: checkcast     #67                 // class net/minecraft/core/Holder
+        20: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        25: checkcast     #80                 // class net/minecraft/world/item/alchemy/Potion
+        28: invokevirtual #82                 // Method net/minecraft/world/item/alchemy/Potion.getEffects:()Ljava/util/List;
+        31: invokeinterface #91,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        36: astore_3
+        37: aload_3
+        38: invokeinterface #95,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        43: ifeq          72
+        46: aload_3
+        47: invokeinterface #100,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        52: checkcast     #103                // class net/minecraft/world/effect/MobEffectInstance
+        55: astore        4
+        57: aload_1
+        58: aload         4
+        60: fload_2
+        61: invokevirtual #105                // Method net/minecraft/world/effect/MobEffectInstance.withScaledDuration:(F)Lnet/minecraft/world/effect/MobEffectInstance;
+        64: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+        69: goto          37
+        72: aload_0
+        73: getfield      #16                 // Field customEffects:Ljava/util/List;
+        76: invokeinterface #91,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        81: astore_3
+        82: aload_3
+        83: invokeinterface #95,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        88: ifeq          117
+        91: aload_3
+        92: invokeinterface #100,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        97: checkcast     #103                // class net/minecraft/world/effect/MobEffectInstance
+       100: astore        4
+       102: aload_1
+       103: aload         4
+       105: fload_2
+       106: invokevirtual #105                // Method net/minecraft/world/effect/MobEffectInstance.withScaledDuration:(F)Lnet/minecraft/world/effect/MobEffectInstance;
+       109: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       114: goto          82
+       117: return
+      LineNumberTable:
+        line 101: 0
+        line 102: 10
+        line 103: 57
+        line 104: 69
+        line 106: 72
+        line 107: 102
+        line 108: 114
+        line 109: 117
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+           57      12     4 effect   Lnet/minecraft/world/effect/MobEffectInstance;
+          102      12     4 effect   Lnet/minecraft/world/effect/MobEffectInstance;
+            0     118     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0     118     1 consumer   Ljava/util/function/Consumer;
+            0     118     2 durationScale   F
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0     118     1 consumer   Ljava/util/function/Consumer<Lnet/minecraft/world/effect/MobEffectInstance;>;
+      StackMapTable: number_of_entries = 4
+        frame_type = 252 /* append */
+          offset_delta = 37
+          locals = [ class java/util/Iterator ]
+        frame_type = 250 /* chop */
+          offset_delta = 34
+        frame_type = 252 /* append */
+          offset_delta = 9
+          locals = [ class java/util/Iterator ]
+        frame_type = 250 /* chop */
+          offset_delta = 34
+    MethodParameters:
+      Name                           Flags
+      consumer                       final
+      durationScale                  final
+    Signature: #591                         // (Ljava/util/function/Consumer<Lnet/minecraft/world/effect/MobEffectInstance;>;F)V
+
+  public net.minecraft.world.item.alchemy.PotionContents withPotion(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>);
+    descriptor: (Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/alchemy/PotionContents;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=2, args_size=2
+         0: new           #8                  // class net/minecraft/world/item/alchemy/PotionContents
+         3: dup
+         4: aload_1
+         5: invokestatic  #23                 // Method java/util/Optional.of:(Ljava/lang/Object;)Ljava/util/Optional;
+         8: aload_0
+         9: getfield      #13                 // Field customColor:Ljava/util/Optional;
+        12: aload_0
+        13: getfield      #16                 // Field customEffects:Ljava/util/List;
+        16: aload_0
+        17: getfield      #20                 // Field customName:Ljava/util/Optional;
+        20: invokespecial #38                 // Method "<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+        23: areturn
+      LineNumberTable:
+        line 112: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      24     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      24     1 potion   Lnet/minecraft/core/Holder;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      24     1 potion   Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;
+    MethodParameters:
+      Name                           Flags
+      potion                         final
+    Signature: #594                         // (Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;)Lnet/minecraft/world/item/alchemy/PotionContents;
+
+  public net.minecraft.world.item.alchemy.PotionContents withEffectAdded(net.minecraft.world.effect.MobEffectInstance);
+    descriptor: (Lnet/minecraft/world/effect/MobEffectInstance;)Lnet/minecraft/world/item/alchemy/PotionContents;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=2, args_size=2
+         0: new           #8                  // class net/minecraft/world/item/alchemy/PotionContents
+         3: dup
+         4: aload_0
+         5: getfield      #7                  // Field potion:Ljava/util/Optional;
+         8: aload_0
+         9: getfield      #13                 // Field customColor:Ljava/util/Optional;
+        12: aload_0
+        13: getfield      #16                 // Field customEffects:Ljava/util/List;
+        16: aload_1
+        17: invokestatic  #115                // Method net/minecraft/util/Util.copyAndAdd:(Ljava/util/List;Ljava/lang/Object;)Ljava/util/List;
+        20: aload_0
+        21: getfield      #20                 // Field customName:Ljava/util/Optional;
+        24: invokespecial #38                 // Method "<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+        27: areturn
+      LineNumberTable:
+        line 116: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      28     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      28     1 effect   Lnet/minecraft/world/effect/MobEffectInstance;
+    MethodParameters:
+      Name                           Flags
+      effect                         final
+
+  public int getColor();
+    descriptor: ()I
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: ldc           #121                // int -13083194
+         3: invokevirtual #122                // Method getColorOr:(I)I
+         6: ireturn
+      LineNumberTable:
+        line 120: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       7     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+
+  public int getColorOr(int);
+    descriptor: (I)I
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #13                 // Field customColor:Ljava/util/Optional;
+         4: invokevirtual #59                 // Method java/util/Optional.isPresent:()Z
+         7: ifeq          24
+        10: aload_0
+        11: getfield      #13                 // Field customColor:Ljava/util/Optional;
+        14: invokevirtual #63                 // Method java/util/Optional.get:()Ljava/lang/Object;
+        17: checkcast     #126                // class java/lang/Integer
+        20: invokevirtual #128                // Method java/lang/Integer.intValue:()I
+        23: ireturn
+        24: aload_0
+        25: invokevirtual #132                // Method getAllEffects:()Ljava/lang/Iterable;
+        28: invokestatic  #136                // Method getColorOptional:(Ljava/lang/Iterable;)Ljava/util/OptionalInt;
+        31: iload_1
+        32: invokevirtual #140                // Method java/util/OptionalInt.orElse:(I)I
+        35: ireturn
+      LineNumberTable:
+        line 124: 0
+        line 125: 10
+        line 127: 24
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      36     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      36     1 defaultColor   I
+      StackMapTable: number_of_entries = 1
+        frame_type = 24 /* same */
+    MethodParameters:
+      Name                           Flags
+      defaultColor                   final
+
+  public net.minecraft.network.chat.Component getName(java.lang.String);
+    descriptor: (Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=3, args_size=2
+         0: aload_0
+         1: getfield      #20                 // Field customName:Ljava/util/Optional;
+         4: aload_0
+         5: invokedynamic #145,  0            // InvokeDynamic #0:get:(Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/function/Supplier;
+        10: invokevirtual #148                // Method java/util/Optional.or:(Ljava/util/function/Supplier;)Ljava/util/Optional;
+        13: ldc           #152                // String empty
+        15: invokevirtual #153                // Method java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+        18: checkcast     #156                // class java/lang/String
+        21: astore_2
+        22: aload_1
+        23: aload_2
+        24: invokedynamic #158,  0            // InvokeDynamic #1:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+        29: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+        32: areturn
+      LineNumberTable:
+        line 131: 0
+        line 132: 10
+        line 133: 15
+        line 135: 22
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      33     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      33     1 prefix   Ljava/lang/String;
+           22      11     2 suffix   Ljava/lang/String;
+    MethodParameters:
+      Name                           Flags
+      prefix                         final
+
+  public static java.util.OptionalInt getColorOptional(java.lang.Iterable<net.minecraft.world.effect.MobEffectInstance>);
+    descriptor: (Ljava/lang/Iterable;)Ljava/util/OptionalInt;
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=4, locals=9, args_size=1
+         0: iconst_0
+         1: istore_1
+         2: iconst_0
+         3: istore_2
+         4: iconst_0
+         5: istore_3
+         6: iconst_0
+         7: istore        4
+         9: aload_0
+        10: invokeinterface #168,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
+        15: astore        5
+        17: aload         5
+        19: invokeinterface #95,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        24: ifeq          120
+        27: aload         5
+        29: invokeinterface #100,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        34: checkcast     #103                // class net/minecraft/world/effect/MobEffectInstance
+        37: astore        6
+        39: aload         6
+        41: invokevirtual #171                // Method net/minecraft/world/effect/MobEffectInstance.isVisible:()Z
+        44: ifne          50
+        47: goto          17
+        50: aload         6
+        52: invokevirtual #174                // Method net/minecraft/world/effect/MobEffectInstance.getEffect:()Lnet/minecraft/core/Holder;
+        55: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        60: checkcast     #178                // class net/minecraft/world/effect/MobEffect
+        63: invokevirtual #180                // Method net/minecraft/world/effect/MobEffect.getColor:()I
+        66: istore        7
+        68: aload         6
+        70: invokevirtual #183                // Method net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+        73: iconst_1
+        74: iadd
+        75: istore        8
+        77: iload_1
+        78: iload         8
+        80: iload         7
+        82: invokestatic  #186                // Method net/minecraft/util/ARGB.red:(I)I
+        85: imul
+        86: iadd
+        87: istore_1
+        88: iload_2
+        89: iload         8
+        91: iload         7
+        93: invokestatic  #191                // Method net/minecraft/util/ARGB.green:(I)I
+        96: imul
+        97: iadd
+        98: istore_2
+        99: iload_3
+       100: iload         8
+       102: iload         7
+       104: invokestatic  #194                // Method net/minecraft/util/ARGB.blue:(I)I
+       107: imul
+       108: iadd
+       109: istore_3
+       110: iload         4
+       112: iload         8
+       114: iadd
+       115: istore        4
+       117: goto          17
+       120: iload         4
+       122: ifne          129
+       125: invokestatic  #197                // Method java/util/OptionalInt.empty:()Ljava/util/OptionalInt;
+       128: areturn
+       129: iload_1
+       130: iload         4
+       132: idiv
+       133: iload_2
+       134: iload         4
+       136: idiv
+       137: iload_3
+       138: iload         4
+       140: idiv
+       141: invokestatic  #200                // Method net/minecraft/util/ARGB.color:(III)I
+       144: invokestatic  #204                // Method java/util/OptionalInt.of:(I)Ljava/util/OptionalInt;
+       147: areturn
+      LineNumberTable:
+        line 139: 0
+        line 140: 2
+        line 141: 4
+        line 142: 6
+        line 144: 9
+        line 145: 39
+        line 146: 47
+        line 149: 50
+        line 150: 68
+        line 151: 77
+        line 152: 88
+        line 153: 99
+        line 154: 110
+        line 155: 117
+        line 157: 120
+        line 158: 125
+        line 161: 129
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+           68      49     7 color   I
+           77      40     8 amplifier   I
+           39      78     6 effect   Lnet/minecraft/world/effect/MobEffectInstance;
+            0     148     0 effects   Ljava/lang/Iterable;
+            2     146     1   red   I
+            4     144     2 green   I
+            6     142     3  blue   I
+            9     139     4 totalWeight   I
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0     148     0 effects   Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;
+      StackMapTable: number_of_entries = 4
+        frame_type = 255 /* full_frame */
+          offset_delta = 17
+          locals = [ class java/lang/Iterable, int, int, int, int, class java/util/Iterator ]
+          stack = []
+        frame_type = 252 /* append */
+          offset_delta = 32
+          locals = [ class net/minecraft/world/effect/MobEffectInstance ]
+        frame_type = 249 /* chop */
+          offset_delta = 69
+        frame_type = 8 /* same */
+    MethodParameters:
+      Name                           Flags
+      effects                        final
+    Signature: #608                         // (Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;)Ljava/util/OptionalInt;
+
+  public boolean hasEffects();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #16                 // Field customEffects:Ljava/util/List;
+         4: invokeinterface #73,  1           // InterfaceMethod java/util/List.isEmpty:()Z
+         9: ifne          14
+        12: iconst_1
+        13: ireturn
+        14: aload_0
+        15: getfield      #7                  // Field potion:Ljava/util/Optional;
+        18: invokevirtual #59                 // Method java/util/Optional.isPresent:()Z
+        21: ifeq          57
+        24: aload_0
+        25: getfield      #7                  // Field potion:Ljava/util/Optional;
+        28: invokevirtual #63                 // Method java/util/Optional.get:()Ljava/lang/Object;
+        31: checkcast     #67                 // class net/minecraft/core/Holder
+        34: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        39: checkcast     #80                 // class net/minecraft/world/item/alchemy/Potion
+        42: invokevirtual #82                 // Method net/minecraft/world/item/alchemy/Potion.getEffects:()Ljava/util/List;
+        45: invokeinterface #73,  1           // InterfaceMethod java/util/List.isEmpty:()Z
+        50: ifne          57
+        53: iconst_1
+        54: goto          58
+        57: iconst_0
+        58: ireturn
+      LineNumberTable:
+        line 169: 0
+        line 170: 12
+        line 172: 14
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      59     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+      StackMapTable: number_of_entries = 3
+        frame_type = 14 /* same */
+        frame_type = 42 /* same */
+        frame_type = 64 /* same_locals_1_stack_item */
+          stack = [ int ]
+
+  public java.util.List<net.minecraft.world.effect.MobEffectInstance> customEffects();
+    descriptor: ()Ljava/util/List;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #16                 // Field customEffects:Ljava/util/List;
+         4: invokedynamic #207,  0            // InvokeDynamic #2:apply:()Lcom/google/common/base/Function;
+         9: invokestatic  #211                // Method com/google/common/collect/Lists.transform:(Ljava/util/List;Lcom/google/common/base/Function;)Ljava/util/List;
+        12: areturn
+      LineNumberTable:
+        line 177: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      13     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+    Signature: #610                         // ()Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;
+
+  public void applyToLivingEntity(net.minecraft.world.entity.LivingEntity, float);
+    descriptor: (Lnet/minecraft/world/entity/LivingEntity;F)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=4, locals=6, args_size=3
+         0: aload_1
+         1: invokevirtual #217                // Method net/minecraft/world/entity/LivingEntity.level:()Lnet/minecraft/world/level/Level;
+         4: astore        4
+         6: aload         4
+         8: instanceof    #223                // class net/minecraft/server/level/ServerLevel
+        11: ifeq          23
+        14: aload         4
+        16: checkcast     #223                // class net/minecraft/server/level/ServerLevel
+        19: astore_3
+        20: goto          24
+        23: return
+        24: aload_1
+        25: instanceof    #225                // class net/minecraft/world/entity/player/Player
+        28: ifeq          42
+        31: aload_1
+        32: checkcast     #225                // class net/minecraft/world/entity/player/Player
+        35: astore        5
+        37: aload         5
+        39: goto          43
+        42: aconst_null
+        43: astore        4
+        45: aload_0
+        46: aload_3
+        47: aload         4
+        49: aload_1
+        50: invokedynamic #227,  0            // InvokeDynamic #3:accept:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/function/Consumer;
+        55: fload_2
+        56: invokevirtual #230                // Method forEachEffect:(Ljava/util/function/Consumer;F)V
+        59: return
+      LineNumberTable:
+        line 181: 0
+        line 182: 23
+        line 185: 24
+        line 186: 45
+        line 193: 59
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+           20       3     3 serverLevel   Lnet/minecraft/server/level/ServerLevel;
+           37       5     5 playerEntity   Lnet/minecraft/world/entity/player/Player;
+            0      60     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      60     1 entity   Lnet/minecraft/world/entity/LivingEntity;
+            0      60     2 durationScale   F
+           24      36     3 serverLevel   Lnet/minecraft/server/level/ServerLevel;
+           45      15     4 player   Lnet/minecraft/world/entity/player/Player;
+      StackMapTable: number_of_entries = 4
+        frame_type = 23 /* same */
+        frame_type = 252 /* append */
+          offset_delta = 0
+          locals = [ class net/minecraft/server/level/ServerLevel ]
+        frame_type = 17 /* same */
+        frame_type = 64 /* same_locals_1_stack_item */
+          stack = [ class net/minecraft/world/entity/player/Player ]
+    MethodParameters:
+      Name                           Flags
+      entity                         final
+      durationScale                  final
+
+  public static void addPotionTooltip(java.lang.Iterable<net.minecraft.world.effect.MobEffectInstance>, java.util.function.Consumer<net.minecraft.network.chat.Component>, float, float);
+    descriptor: (Ljava/lang/Iterable;Ljava/util/function/Consumer;FF)V
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=8, locals=13, args_size=4
+         0: invokestatic  #234                // Method com/google/common/collect/Lists.newArrayList:()Ljava/util/ArrayList;
+         3: astore        4
+         5: iconst_1
+         6: istore        5
+         8: aload_0
+         9: invokeinterface #168,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
+        14: astore        6
+        16: aload         6
+        18: invokeinterface #95,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        23: ifeq          152
+        26: aload         6
+        28: invokeinterface #100,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        33: checkcast     #103                // class net/minecraft/world/effect/MobEffectInstance
+        36: astore        7
+        38: iconst_0
+        39: istore        5
+        41: aload         7
+        43: invokevirtual #174                // Method net/minecraft/world/effect/MobEffectInstance.getEffect:()Lnet/minecraft/core/Holder;
+        46: astore        8
+        48: aload         7
+        50: invokevirtual #183                // Method net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+        53: istore        9
+        55: aload         8
+        57: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        62: checkcast     #178                // class net/minecraft/world/effect/MobEffect
+        65: iload         9
+        67: aload         4
+        69: invokedynamic #238,  0            // InvokeDynamic #4:accept:(Ljava/util/List;)Ljava/util/function/BiConsumer;
+        74: invokevirtual #241                // Method net/minecraft/world/effect/MobEffect.createModifiers:(ILjava/util/function/BiConsumer;)V
+        77: aload         8
+        79: iload         9
+        81: invokestatic  #245                // Method getPotionDescription:(Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/MutableComponent;
+        84: astore        10
+        86: aload         7
+        88: bipush        20
+        90: invokevirtual #251                // Method net/minecraft/world/effect/MobEffectInstance.endsWithin:(I)Z
+        93: ifne          122
+        96: ldc           #255                // String potion.withDuration
+        98: iconst_2
+        99: anewarray     #257                // class java/lang/Object
+       102: dup
+       103: iconst_0
+       104: aload         10
+       106: aastore
+       107: dup
+       108: iconst_1
+       109: aload         7
+       111: fload_2
+       112: fload_3
+       113: invokestatic  #259                // Method net/minecraft/world/effect/MobEffectUtil.formatDuration:(Lnet/minecraft/world/effect/MobEffectInstance;FF)Lnet/minecraft/network/chat/Component;
+       116: aastore
+       117: invokestatic  #265                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+       120: astore        10
+       122: aload_1
+       123: aload         10
+       125: aload         8
+       127: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+       132: checkcast     #178                // class net/minecraft/world/effect/MobEffect
+       135: invokevirtual #268                // Method net/minecraft/world/effect/MobEffect.getCategory:()Lnet/minecraft/world/effect/MobEffectCategory;
+       138: invokevirtual #272                // Method net/minecraft/world/effect/MobEffectCategory.getTooltipFormatting:()Lnet/minecraft/ChatFormatting;
+       141: invokevirtual #278                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+       144: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       149: goto          16
+       152: iload         5
+       154: ifeq          166
+       157: aload_1
+       158: getstatic     #284                // Field NO_EFFECT:Lnet/minecraft/network/chat/Component;
+       161: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       166: aload         4
+       168: invokeinterface #73,  1           // InterfaceMethod java/util/List.isEmpty:()Z
+       173: ifne          458
+       176: aload_1
+       177: getstatic     #288                // Field net/minecraft/network/chat/CommonComponents.EMPTY:Lnet/minecraft/network/chat/Component;
+       180: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       185: aload_1
+       186: ldc_w         #293                // String potion.whenDrank
+       189: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+       192: getstatic     #295                // Field net/minecraft/ChatFormatting.DARK_PURPLE:Lnet/minecraft/ChatFormatting;
+       195: invokevirtual #278                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+       198: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       203: aload         4
+       205: invokeinterface #91,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       210: astore        6
+       212: aload         6
+       214: invokeinterface #95,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+       219: ifeq          458
+       222: aload         6
+       224: invokeinterface #100,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       229: checkcast     #301                // class com/mojang/datafixers/util/Pair
+       232: astore        7
+       234: aload         7
+       236: invokevirtual #303                // Method com/mojang/datafixers/util/Pair.getSecond:()Ljava/lang/Object;
+       239: checkcast     #306                // class net/minecraft/world/entity/ai/attributes/AttributeModifier
+       242: astore        8
+       244: aload         8
+       246: invokevirtual #308                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.amount:()D
+       249: dstore        9
+       251: aload         8
+       253: invokevirtual #312                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+       256: getstatic     #316                // Field net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.ADD_MULTIPLIED_BASE:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+       259: if_acmpeq     273
+       262: aload         8
+       264: invokevirtual #312                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+       267: getstatic     #322                // Field net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.ADD_MULTIPLIED_TOTAL:Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+       270: if_acmpne     287
+       273: aload         8
+       275: invokevirtual #308                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.amount:()D
+       278: ldc2_w        #325                // double 100.0d
+       281: dmul
+       282: dstore        11
+       284: goto          294
+       287: aload         8
+       289: invokevirtual #308                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.amount:()D
+       292: dstore        11
+       294: dload         9
+       296: dconst_0
+       297: dcmpl
+       298: ifle          372
+       301: aload_1
+       302: aload         8
+       304: invokevirtual #312                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+       307: invokevirtual #327                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.id:()I
+       310: invokedynamic #330,  0            // InvokeDynamic #5:makeConcatWithConstants:(I)Ljava/lang/String;
+       315: iconst_2
+       316: anewarray     #257                // class java/lang/Object
+       319: dup
+       320: iconst_0
+       321: getstatic     #333                // Field net/minecraft/world/item/component/ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT:Ljava/text/DecimalFormat;
+       324: dload         11
+       326: invokevirtual #339                // Method java/text/DecimalFormat.format:(D)Ljava/lang/String;
+       329: aastore
+       330: dup
+       331: iconst_1
+       332: aload         7
+       334: invokevirtual #345                // Method com/mojang/datafixers/util/Pair.getFirst:()Ljava/lang/Object;
+       337: checkcast     #67                 // class net/minecraft/core/Holder
+       340: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+       345: checkcast     #348                // class net/minecraft/world/entity/ai/attributes/Attribute
+       348: invokevirtual #350                // Method net/minecraft/world/entity/ai/attributes/Attribute.getDescriptionId:()Ljava/lang/String;
+       351: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+       354: aastore
+       355: invokestatic  #265                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+       358: getstatic     #354                // Field net/minecraft/ChatFormatting.BLUE:Lnet/minecraft/ChatFormatting;
+       361: invokevirtual #278                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+       364: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       369: goto          455
+       372: dload         9
+       374: dconst_0
+       375: dcmpg
+       376: ifge          455
+       379: dload         11
+       381: ldc2_w        #357                // double -1.0d
+       384: dmul
+       385: dstore        11
+       387: aload_1
+       388: aload         8
+       390: invokevirtual #312                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier.operation:()Lnet/minecraft/world/entity/ai/attributes/AttributeModifier$Operation;
+       393: invokevirtual #327                // Method net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation.id:()I
+       396: invokedynamic #359,  0            // InvokeDynamic #6:makeConcatWithConstants:(I)Ljava/lang/String;
+       401: iconst_2
+       402: anewarray     #257                // class java/lang/Object
+       405: dup
+       406: iconst_0
+       407: getstatic     #333                // Field net/minecraft/world/item/component/ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT:Ljava/text/DecimalFormat;
+       410: dload         11
+       412: invokevirtual #339                // Method java/text/DecimalFormat.format:(D)Ljava/lang/String;
+       415: aastore
+       416: dup
+       417: iconst_1
+       418: aload         7
+       420: invokevirtual #345                // Method com/mojang/datafixers/util/Pair.getFirst:()Ljava/lang/Object;
+       423: checkcast     #67                 // class net/minecraft/core/Holder
+       426: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+       431: checkcast     #348                // class net/minecraft/world/entity/ai/attributes/Attribute
+       434: invokevirtual #350                // Method net/minecraft/world/entity/ai/attributes/Attribute.getDescriptionId:()Ljava/lang/String;
+       437: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+       440: aastore
+       441: invokestatic  #265                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+       444: getstatic     #360                // Field net/minecraft/ChatFormatting.RED:Lnet/minecraft/ChatFormatting;
+       447: invokevirtual #278                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+       450: invokeinterface #109,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       455: goto          212
+       458: return
+      LineNumberTable:
+        line 196: 0
+        line 198: 5
+        line 199: 8
+        line 200: 38
+        line 202: 41
+        line 203: 48
+        line 204: 55
+        line 205: 77
+        line 206: 86
+        line 207: 96
+        line 210: 122
+        line 211: 149
+        line 213: 152
+        line 214: 157
+        line 217: 166
+        line 218: 176
+        line 219: 185
+        line 221: 203
+        line 222: 234
+        line 223: 244
+        line 226: 251
+        line 227: 273
+        line 229: 287
+        line 232: 294
+        line 233: 301
+        line 234: 304
+        line 235: 326
+        line 236: 334
+        line 234: 355
+        line 237: 361
+        line 233: 364
+        line 239: 372
+        line 240: 379
+        line 241: 387
+        line 242: 390
+        line 243: 412
+        line 244: 420
+        line 242: 441
+        line 245: 447
+        line 241: 450
+        line 248: 455
+        line 250: 458
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+           48     101     8 mobEffect   Lnet/minecraft/core/Holder;
+           55      94     9 amplifier   I
+           86      63    10  line   Lnet/minecraft/network/chat/MutableComponent;
+           38     111     7 effect   Lnet/minecraft/world/effect/MobEffectInstance;
+          284       3    11 displayAmount   D
+          244     211     8 modifier   Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+          251     204     9 amount   D
+          294     161    11 displayAmount   D
+          234     221     7 entry   Lcom/mojang/datafixers/util/Pair;
+            0     459     0 effects   Ljava/lang/Iterable;
+            0     459     1 lines   Ljava/util/function/Consumer;
+            0     459     2 durationScale   F
+            0     459     3 tickrate   F
+            5     454     4 modifiers   Ljava/util/List;
+            8     451     5 noEffects   Z
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+           48     101     8 mobEffect   Lnet/minecraft/core/Holder<Lnet/minecraft/world/effect/MobEffect;>;
+          234     221     7 entry   Lcom/mojang/datafixers/util/Pair<Lnet/minecraft/core/Holder<Lnet/minecraft/world/entity/ai/attributes/Attribute;>;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;>;
+            0     459     0 effects   Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;
+            0     459     1 lines   Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;
+            5     454     4 modifiers   Ljava/util/List<Lcom/mojang/datafixers/util/Pair<Lnet/minecraft/core/Holder<Lnet/minecraft/world/entity/ai/attributes/Attribute;>;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;>;>;
+      StackMapTable: number_of_entries = 11
+        frame_type = 254 /* append */
+          offset_delta = 16
+          locals = [ class java/util/List, int, class java/util/Iterator ]
+        frame_type = 255 /* full_frame */
+          offset_delta = 105
+          locals = [ class java/lang/Iterable, class java/util/function/Consumer, float, float, class java/util/List, int, class java/util/Iterator, class net/minecraft/world/effect/MobEffectInstance, class net/minecraft/core/Holder, int, class net/minecraft/network/chat/MutableComponent ]
+          stack = []
+        frame_type = 255 /* full_frame */
+          offset_delta = 29
+          locals = [ class java/lang/Iterable, class java/util/function/Consumer, float, float, class java/util/List, int ]
+          stack = []
+        frame_type = 13 /* same */
+        frame_type = 252 /* append */
+          offset_delta = 45
+          locals = [ class java/util/Iterator ]
+        frame_type = 254 /* append */
+          offset_delta = 60
+          locals = [ class com/mojang/datafixers/util/Pair, class net/minecraft/world/entity/ai/attributes/AttributeModifier, double ]
+        frame_type = 13 /* same */
+        frame_type = 252 /* append */
+          offset_delta = 6
+          locals = [ double ]
+        frame_type = 251 /* same_frame_extended */
+          offset_delta = 77
+        frame_type = 255 /* full_frame */
+          offset_delta = 82
+          locals = [ class java/lang/Iterable, class java/util/function/Consumer, float, float, class java/util/List, int, class java/util/Iterator ]
+          stack = []
+        frame_type = 250 /* chop */
+          offset_delta = 2
+    MethodParameters:
+      Name                           Flags
+      effects                        final
+      lines                          final
+      durationScale                  final
+      tickrate                       final
+    Signature: #636                         // (Ljava/lang/Iterable<Lnet/minecraft/world/effect/MobEffectInstance;>;Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;FF)V
+
+  public static net.minecraft.network.chat.MutableComponent getPotionDescription(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, int);
+    descriptor: (Lnet/minecraft/core/Holder;I)Lnet/minecraft/network/chat/MutableComponent;
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=5, locals=3, args_size=2
+         0: aload_0
+         1: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+         6: checkcast     #178                // class net/minecraft/world/effect/MobEffect
+         9: invokevirtual #363                // Method net/minecraft/world/effect/MobEffect.getDescriptionId:()Ljava/lang/String;
+        12: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+        15: astore_2
+        16: iload_1
+        17: ifle          47
+        20: ldc_w         #364                // String potion.withAmplifier
+        23: iconst_2
+        24: anewarray     #257                // class java/lang/Object
+        27: dup
+        28: iconst_0
+        29: aload_2
+        30: aastore
+        31: dup
+        32: iconst_1
+        33: iload_1
+        34: invokedynamic #366,  0            // InvokeDynamic #7:makeConcatWithConstants:(I)Ljava/lang/String;
+        39: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+        42: aastore
+        43: invokestatic  #265                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+        46: areturn
+        47: aload_2
+        48: areturn
+      LineNumberTable:
+        line 253: 0
+        line 254: 16
+        line 255: 20
+        line 257: 47
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      49     0 mobEffect   Lnet/minecraft/core/Holder;
+            0      49     1 amplifier   I
+           16      33     2  line   Lnet/minecraft/network/chat/MutableComponent;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      49     0 mobEffect   Lnet/minecraft/core/Holder<Lnet/minecraft/world/effect/MobEffect;>;
+      StackMapTable: number_of_entries = 1
+        frame_type = 252 /* append */
+          offset_delta = 47
+          locals = [ class net/minecraft/network/chat/MutableComponent ]
+    MethodParameters:
+      Name                           Flags
+      mobEffect                      final
+      amplifier                      final
+    Signature: #637                         // (Lnet/minecraft/core/Holder<Lnet/minecraft/world/effect/MobEffect;>;I)Lnet/minecraft/network/chat/MutableComponent;
+
+  public void onConsume(net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity, net.minecraft.world.item.ItemStack, net.minecraft.world.item.component.Consumable);
+    descriptor: (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/component/Consumable;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=5, locals=5, args_size=5
+         0: aload_0
+         1: aload_2
+         2: aload_3
+         3: getstatic     #367                // Field net/minecraft/core/component/DataComponents.POTION_DURATION_SCALE:Lnet/minecraft/core/component/DataComponentType;
+         6: fconst_1
+         7: invokestatic  #370                // Method java/lang/Float.valueOf:(F)Ljava/lang/Float;
+        10: invokevirtual #376                // Method net/minecraft/world/item/ItemStack.getOrDefault:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+        13: checkcast     #371                // class java/lang/Float
+        16: invokevirtual #379                // Method java/lang/Float.floatValue:()F
+        19: invokevirtual #383                // Method applyToLivingEntity:(Lnet/minecraft/world/entity/LivingEntity;F)V
+        22: return
+      LineNumberTable:
+        line 262: 0
+        line 263: 22
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      23     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      23     1 level   Lnet/minecraft/world/level/Level;
+            0      23     2  user   Lnet/minecraft/world/entity/LivingEntity;
+            0      23     3 stack   Lnet/minecraft/world/item/ItemStack;
+            0      23     4 consumable   Lnet/minecraft/world/item/component/Consumable;
+    MethodParameters:
+      Name                           Flags
+      level                          final
+      user                           final
+      stack                          final
+      consumable                     final
+
+  public void addToTooltip(net.minecraft.world.item.Item$TooltipContext, java.util.function.Consumer<net.minecraft.network.chat.Component>, net.minecraft.world.item.TooltipFlag, net.minecraft.core.component.DataComponentGetter);
+    descriptor: (Lnet/minecraft/world/item/Item$TooltipContext;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;Lnet/minecraft/core/component/DataComponentGetter;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=5, locals=5, args_size=5
+         0: aload_0
+         1: invokevirtual #132                // Method getAllEffects:()Ljava/lang/Iterable;
+         4: aload_2
+         5: aload         4
+         7: getstatic     #367                // Field net/minecraft/core/component/DataComponents.POTION_DURATION_SCALE:Lnet/minecraft/core/component/DataComponentType;
+        10: fconst_1
+        11: invokestatic  #370                // Method java/lang/Float.valueOf:(F)Ljava/lang/Float;
+        14: invokeinterface #387,  3          // InterfaceMethod net/minecraft/core/component/DataComponentGetter.getOrDefault:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+        19: checkcast     #371                // class java/lang/Float
+        22: invokevirtual #379                // Method java/lang/Float.floatValue:()F
+        25: aload_1
+        26: invokeinterface #390,  1          // InterfaceMethod net/minecraft/world/item/Item$TooltipContext.tickRate:()F
+        31: invokestatic  #395                // Method addPotionTooltip:(Ljava/lang/Iterable;Ljava/util/function/Consumer;FF)V
+        34: return
+      LineNumberTable:
+        line 267: 0
+        line 268: 34
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      35     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0      35     1 context   Lnet/minecraft/world/item/Item$TooltipContext;
+            0      35     2 consumer   Ljava/util/function/Consumer;
+            0      35     3  flag   Lnet/minecraft/world/item/TooltipFlag;
+            0      35     4 components   Lnet/minecraft/core/component/DataComponentGetter;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      35     2 consumer   Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;
+    MethodParameters:
+      Name                           Flags
+      context                        final
+      consumer                       final
+      flag                           final
+      components                     final
+    Signature: #653                         // (Lnet/minecraft/world/item/Item$TooltipContext;Ljava/util/function/Consumer<Lnet/minecraft/network/chat/Component;>;Lnet/minecraft/world/item/TooltipFlag;Lnet/minecraft/core/component/DataComponentGetter;)V
+
+  public final java.lang.String toString();
+    descriptor: ()Ljava/lang/String;
+    flags: (0x0011) ACC_PUBLIC, ACC_FINAL
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokedynamic #399,  0            // InvokeDynamic #8:toString:(Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/lang/String;
+         6: areturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       7     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+
+  public final int hashCode();
+    descriptor: ()I
+    flags: (0x0011) ACC_PUBLIC, ACC_FINAL
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokedynamic #403,  0            // InvokeDynamic #8:hashCode:(Lnet/minecraft/world/item/alchemy/PotionContents;)I
+         6: ireturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       7     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+
+  public final boolean equals(java.lang.Object);
+    descriptor: (Ljava/lang/Object;)Z
+    flags: (0x0011) ACC_PUBLIC, ACC_FINAL
+    Code:
+      stack=2, locals=2, args_size=2
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #407,  0            // InvokeDynamic #8:equals:(Lnet/minecraft/world/item/alchemy/PotionContents;Ljava/lang/Object;)Z
+         7: ireturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       8     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+            0       8     1     o   Ljava/lang/Object;
+    MethodParameters:
+      Name                           Flags
+      o
+
+  public java.util.Optional<net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>> potion();
+    descriptor: ()Ljava/util/Optional;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #7                  // Field potion:Ljava/util/Optional;
+         4: areturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+    Signature: #656                         // ()Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;
+
+  public java.util.Optional<java.lang.Integer> customColor();
+    descriptor: ()Ljava/util/Optional;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #13                 // Field customColor:Ljava/util/Optional;
+         4: areturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+    Signature: #657                         // ()Ljava/util/Optional<Ljava/lang/Integer;>;
+
+  public java.util.Optional<java.lang.String> customName();
+    descriptor: ()Ljava/util/Optional;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #20                 // Field customName:Ljava/util/Optional;
+         4: areturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+    Signature: #658                         // ()Ljava/util/Optional<Ljava/lang/String;>;
+
+  private static void lambda$addPotionTooltip$0(java.util.List, net.minecraft.core.Holder, net.minecraft.world.entity.ai.attributes.AttributeModifier);
+    descriptor: (Ljava/util/List;Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+    flags: (0x100a) ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=5, locals=3, args_size=3
+         0: aload_0
+         1: new           #301                // class com/mojang/datafixers/util/Pair
+         4: dup
+         5: aload_1
+         6: aload_2
+         7: invokespecial #411                // Method com/mojang/datafixers/util/Pair."<init>":(Ljava/lang/Object;Ljava/lang/Object;)V
+        10: invokeinterface #414,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+        15: pop
+        16: return
+      LineNumberTable:
+        line 204: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      17     0 modifiers   Ljava/util/List;
+            0      17     1 attribute   Lnet/minecraft/core/Holder;
+            0      17     2 modifier   Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+
+  private static void lambda$applyToLivingEntity$0(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.player.Player, net.minecraft.world.entity.LivingEntity, net.minecraft.world.effect.MobEffectInstance);
+    descriptor: (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/effect/MobEffectInstance;)V
+    flags: (0x100a) ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=8, locals=4, args_size=4
+         0: aload_3
+         1: invokevirtual #174                // Method net/minecraft/world/effect/MobEffectInstance.getEffect:()Lnet/minecraft/core/Holder;
+         4: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+         9: checkcast     #178                // class net/minecraft/world/effect/MobEffect
+        12: invokevirtual #418                // Method net/minecraft/world/effect/MobEffect.isInstantaneous:()Z
+        15: ifeq          45
+        18: aload_3
+        19: invokevirtual #174                // Method net/minecraft/world/effect/MobEffectInstance.getEffect:()Lnet/minecraft/core/Holder;
+        22: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        27: checkcast     #178                // class net/minecraft/world/effect/MobEffect
+        30: aload_0
+        31: aload_1
+        32: aload_1
+        33: aload_2
+        34: aload_3
+        35: invokevirtual #183                // Method net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+        38: dconst_1
+        39: invokevirtual #421                // Method net/minecraft/world/effect/MobEffect.applyInstantaneousEffect:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/LivingEntity;ID)V
+        42: goto          51
+        45: aload_2
+        46: aload_3
+        47: invokevirtual #425                // Method net/minecraft/world/entity/LivingEntity.addEffect:(Lnet/minecraft/world/effect/MobEffectInstance;)Z
+        50: pop
+        51: return
+      LineNumberTable:
+        line 187: 0
+        line 188: 18
+        line 190: 45
+        line 192: 51
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      52     0 serverLevel   Lnet/minecraft/server/level/ServerLevel;
+            0      52     1 player   Lnet/minecraft/world/entity/player/Player;
+            0      52     2 entity   Lnet/minecraft/world/entity/LivingEntity;
+            0      52     3 effect   Lnet/minecraft/world/effect/MobEffectInstance;
+      StackMapTable: number_of_entries = 2
+        frame_type = 45 /* same */
+        frame_type = 5 /* same */
+
+  private java.util.Optional lambda$getName$0();
+    descriptor: ()Ljava/util/Optional;
+    flags: (0x1002) ACC_PRIVATE, ACC_SYNTHETIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #7                  // Field potion:Ljava/util/Optional;
+         4: invokedynamic #429,  0            // InvokeDynamic #9:apply:()Ljava/util/function/Function;
+         9: invokevirtual #432                // Method java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+        12: areturn
+      LineNumberTable:
+        line 132: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      13     0  this   Lnet/minecraft/world/item/alchemy/PotionContents;
+
+  private static java.lang.String lambda$getName$1(net.minecraft.core.Holder);
+    descriptor: (Lnet/minecraft/core/Holder;)Ljava/lang/String;
+    flags: (0x100a) ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokeinterface #77,  1           // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+         6: checkcast     #80                 // class net/minecraft/world/item/alchemy/Potion
+         9: invokevirtual #436                // Method net/minecraft/world/item/alchemy/Potion.name:()Ljava/lang/String;
+        12: areturn
+      LineNumberTable:
+        line 132: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      13     0     p   Lnet/minecraft/core/Holder;
+
+  private static com.mojang.datafixers.kinds.App lambda$static$0(com.mojang.serialization.codecs.RecordCodecBuilder$Instance);
+    descriptor: (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+    flags: (0x100a) ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=6, locals=1, args_size=1
+         0: aload_0
+         1: getstatic     #439                // Field net/minecraft/world/item/alchemy/Potion.CODEC:Lcom/mojang/serialization/Codec;
+         4: ldc_w         #443                // String potion
+         7: invokeinterface #444,  2          // InterfaceMethod com/mojang/serialization/Codec.optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+        12: invokedynamic #450,  0            // InvokeDynamic #10:apply:()Ljava/util/function/Function;
+        17: invokevirtual #451                // Method com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+        20: getstatic     #457                // Field com/mojang/serialization/Codec.INT:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+        23: ldc_w         #461                // String custom_color
+        26: invokeinterface #463,  2          // InterfaceMethod com/mojang/serialization/codecs/PrimitiveCodec.optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+        31: invokedynamic #466,  0            // InvokeDynamic #11:apply:()Ljava/util/function/Function;
+        36: invokevirtual #451                // Method com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+        39: getstatic     #467                // Field net/minecraft/world/effect/MobEffectInstance.CODEC:Lcom/mojang/serialization/Codec;
+        42: invokeinterface #468,  1          // InterfaceMethod com/mojang/serialization/Codec.listOf:()Lcom/mojang/serialization/Codec;
+        47: ldc_w         #472                // String custom_effects
+        50: invokestatic  #33                 // InterfaceMethod java/util/List.of:()Ljava/util/List;
+        53: invokeinterface #474,  3          // InterfaceMethod com/mojang/serialization/Codec.optionalFieldOf:(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;
+        58: invokedynamic #477,  0            // InvokeDynamic #12:apply:()Ljava/util/function/Function;
+        63: invokevirtual #451                // Method com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+        66: getstatic     #478                // Field com/mojang/serialization/Codec.STRING:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+        69: ldc_w         #481                // String custom_name
+        72: invokeinterface #463,  2          // InterfaceMethod com/mojang/serialization/codecs/PrimitiveCodec.optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+        77: invokedynamic #483,  0            // InvokeDynamic #13:apply:()Ljava/util/function/Function;
+        82: invokevirtual #451                // Method com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+        85: invokevirtual #484                // Method com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P4;
+        88: aload_0
+        89: invokedynamic #490,  0            // InvokeDynamic #14:apply:()Lcom/mojang/datafixers/util/Function4;
+        94: invokevirtual #493                // Method com/mojang/datafixers/Products$P4.apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function4;)Lcom/mojang/datafixers/kinds/App;
+        97: areturn
+      LineNumberTable:
+        line 55: 0
+        line 56: 7
+        line 57: 26
+        line 58: 42
+        line 59: 72
+        line 55: 85
+        line 60: 94
+        line 55: 97
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      98     0     i   Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;
+
+  static {};
+    descriptor: ()V
+    flags: (0x0008) ACC_STATIC
+    Code:
+      stack=9, locals=0, args_size=0
+         0: new           #8                  // class net/minecraft/world/item/alchemy/PotionContents
+         3: dup
+         4: invokestatic  #29                 // Method java/util/Optional.empty:()Ljava/util/Optional;
+         7: invokestatic  #29                 // Method java/util/Optional.empty:()Ljava/util/Optional;
+        10: invokestatic  #33                 // InterfaceMethod java/util/List.of:()Ljava/util/List;
+        13: invokestatic  #29                 // Method java/util/Optional.empty:()Ljava/util/Optional;
+        16: invokespecial #38                 // Method "<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+        19: putstatic     #498                // Field EMPTY:Lnet/minecraft/world/item/alchemy/PotionContents;
+        22: ldc_w         #501                // String effect.none
+        25: invokestatic  #162                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+        28: getstatic     #503                // Field net/minecraft/ChatFormatting.GRAY:Lnet/minecraft/ChatFormatting;
+        31: invokevirtual #278                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+        34: putstatic     #284                // Field NO_EFFECT:Lnet/minecraft/network/chat/Component;
+        37: invokedynamic #506,  0            // InvokeDynamic #15:apply:()Ljava/util/function/Function;
+        42: invokestatic  #507                // Method com/mojang/serialization/codecs/RecordCodecBuilder.create:(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+        45: putstatic     #513                // Field FULL_CODEC:Lcom/mojang/serialization/Codec;
+        48: getstatic     #513                // Field FULL_CODEC:Lcom/mojang/serialization/Codec;
+        51: getstatic     #439                // Field net/minecraft/world/item/alchemy/Potion.CODEC:Lcom/mojang/serialization/Codec;
+        54: invokedynamic #516,  0            // InvokeDynamic #16:apply:()Ljava/util/function/Function;
+        59: invokestatic  #517                // InterfaceMethod com/mojang/serialization/Codec.withAlternative:(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+        62: putstatic     #521                // Field CODEC:Lcom/mojang/serialization/Codec;
+        65: getstatic     #522                // Field net/minecraft/world/item/alchemy/Potion.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+        68: invokedynamic #526,  0            // InvokeDynamic #17:apply:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+        73: invokeinterface #529,  2          // InterfaceMethod net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+        78: invokedynamic #450,  0            // InvokeDynamic #10:apply:()Ljava/util/function/Function;
+        83: getstatic     #534                // Field net/minecraft/network/codec/ByteBufCodecs.INT:Lnet/minecraft/network/codec/StreamCodec;
+        86: invokedynamic #526,  0            // InvokeDynamic #17:apply:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+        91: invokeinterface #529,  2          // InterfaceMethod net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+        96: invokedynamic #466,  0            // InvokeDynamic #11:apply:()Ljava/util/function/Function;
+       101: getstatic     #538                // Field net/minecraft/world/effect/MobEffectInstance.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+       104: invokestatic  #539                // InterfaceMethod net/minecraft/network/codec/ByteBufCodecs.list:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+       107: invokeinterface #529,  2          // InterfaceMethod net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+       112: invokedynamic #477,  0            // InvokeDynamic #12:apply:()Ljava/util/function/Function;
+       117: getstatic     #542                // Field net/minecraft/network/codec/ByteBufCodecs.STRING_UTF8:Lnet/minecraft/network/codec/StreamCodec;
+       120: invokedynamic #526,  0            // InvokeDynamic #17:apply:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+       125: invokeinterface #529,  2          // InterfaceMethod net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+       130: invokedynamic #483,  0            // InvokeDynamic #13:apply:()Ljava/util/function/Function;
+       135: invokedynamic #490,  0            // InvokeDynamic #14:apply:()Lcom/mojang/datafixers/util/Function4;
+       140: invokestatic  #545                // InterfaceMethod net/minecraft/network/codec/StreamCodec.composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;)Lnet/minecraft/network/codec/StreamCodec;
+       143: putstatic     #549                // Field STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+       146: return
+      LineNumberTable:
+        line 50: 0
+        line 52: 22
+        line 55: 37
+        line 62: 48
+        line 68: 65
+        line 69: 73
+        line 70: 91
+        line 71: 104
+        line 72: 125
+        line 68: 140
+}
+SourceFile: "PotionContents.java"
+Record:
+  java.util.Optional<net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>> potion;
+    descriptor: Ljava/util/Optional;
+    Signature: #555                         // Ljava/util/Optional<Lnet/minecraft/core/Holder<Lnet/minecraft/world/item/alchemy/Potion;>;>;
+
+  java.util.Optional<java.lang.Integer> customColor;
+    descriptor: Ljava/util/Optional;
+    Signature: #556                         // Ljava/util/Optional<Ljava/lang/Integer;>;
+
+  java.util.List<net.minecraft.world.effect.MobEffectInstance> customEffects;
+    descriptor: Ljava/util/List;
+    Signature: #557                         // Ljava/util/List<Lnet/minecraft/world/effect/MobEffectInstance;>;
+
+  java.util.Optional<java.lang.String> customName;
+    descriptor: Ljava/util/Optional;
+    Signature: #558                         // Ljava/util/Optional<Ljava/lang/String;>;
+
+BootstrapMethods:
+  0: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #677 ()Ljava/lang/Object;
+      #678 REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.lambda$getName$0:()Ljava/util/Optional;
+      #681 ()Ljava/util/Optional;
+  1: #758 REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #682 \u0001\u0001
+  2: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #685 REF_newInvokeSpecial net/minecraft/world/effect/MobEffectInstance."<init>":(Lnet/minecraft/world/effect/MobEffectInstance;)V
+      #689 (Lnet/minecraft/world/effect/MobEffectInstance;)Lnet/minecraft/world/effect/MobEffectInstance;
+  3: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #691 (Ljava/lang/Object;)V
+      #692 REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$applyToLivingEntity$0:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/effect/MobEffectInstance;)V
+      #695 (Lnet/minecraft/world/effect/MobEffectInstance;)V
+  4: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #696 (Ljava/lang/Object;Ljava/lang/Object;)V
+      #697 REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$addPotionTooltip$0:(Ljava/util/List;Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+      #700 (Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;)V
+  5: #758 REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #702 attribute.modifier.plus.\u0001
+  6: #758 REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #704 attribute.modifier.take.\u0001
+  7: #758 REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #706 potion.potency.\u0001
+  8: #764 REF_invokeStatic java/lang/runtime/ObjectMethods.bootstrap:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;
+    Method arguments:
+      #8 net/minecraft/world/item/alchemy/PotionContents
+      #708 potion;customColor;customEffects;customName
+      #710 REF_getField net/minecraft/world/item/alchemy/PotionContents.potion:Ljava/util/Optional;
+      #711 REF_getField net/minecraft/world/item/alchemy/PotionContents.customColor:Ljava/util/Optional;
+      #712 REF_getField net/minecraft/world/item/alchemy/PotionContents.customEffects:Ljava/util/List;
+      #713 REF_getField net/minecraft/world/item/alchemy/PotionContents.customName:Ljava/util/Optional;
+  9: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #714 REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$getName$1:(Lnet/minecraft/core/Holder;)Ljava/lang/String;
+      #717 (Lnet/minecraft/core/Holder;)Ljava/lang/String;
+  10: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #718 REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.potion:()Ljava/util/Optional;
+      #721 (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/Optional;
+  11: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #723 REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.customColor:()Ljava/util/Optional;
+      #721 (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/Optional;
+  12: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #726 REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.customEffects:()Ljava/util/List;
+      #729 (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/List;
+  13: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #731 REF_invokeVirtual net/minecraft/world/item/alchemy/PotionContents.customName:()Ljava/util/Optional;
+      #721 (Lnet/minecraft/world/item/alchemy/PotionContents;)Ljava/util/Optional;
+  14: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #734 (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      #736 REF_newInvokeSpecial net/minecraft/world/item/alchemy/PotionContents."<init>":(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V
+      #737 (Ljava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  15: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #739 REF_invokeStatic net/minecraft/world/item/alchemy/PotionContents.lambda$static$0:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+      #742 (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  16: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #684 (Ljava/lang/Object;)Ljava/lang/Object;
+      #743 REF_newInvokeSpecial net/minecraft/world/item/alchemy/PotionContents."<init>":(Lnet/minecraft/core/Holder;)V
+      #744 (Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/alchemy/PotionContents;
+  17: #751 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #745 (Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+      #747 REF_invokeStatic net/minecraft/network/codec/ByteBufCodecs.optional:(Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+      #745 (Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+InnerClasses:
+  public static final #772= #317 of #306; // Operation=class net/minecraft/world/entity/ai/attributes/AttributeModifier$Operation of class net/minecraft/world/entity/ai/attributes/AttributeModifier
+  public static #775= #391 of #773;       // TooltipContext=class net/minecraft/world/item/Item$TooltipContext of class net/minecraft/world/item/Item
+  public static final #776= #485 of #508; // Instance=class com/mojang/serialization/codecs/RecordCodecBuilder$Instance of class com/mojang/serialization/codecs/RecordCodecBuilder
+  public static final #779= #494 of #777; // P4=class com/mojang/datafixers/Products$P4 of class com/mojang/datafixers/Products
+  public static #782= #780 of #530;       // CodecOperation=class net/minecraft/network/codec/StreamCodec$CodecOperation of class net/minecraft/network/codec/StreamCodec
+  public static final #787= #783 of #785; // Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles

@@ -1,0 +1,598 @@
+Compiled from "ByteBufCodecs.java"
+public interface net.minecraft.network.codec.ByteBufCodecs {
+  public static final int MAX_INITIAL_COLLECTION_SIZE;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Boolean> BOOL;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Byte> BYTE;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Float> ROTATION_BYTE;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Short> SHORT;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Integer> UNSIGNED_SHORT;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Integer> INT;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Integer> VAR_INT;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.util.OptionalInt> OPTIONAL_VAR_INT;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Long> LONG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Long> VAR_LONG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Float> FLOAT;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Double> DOUBLE;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, byte[]> BYTE_ARRAY;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, long[]> LONG_ARRAY;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.String> STRING_UTF8;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.nbt.Tag> TAG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.nbt.Tag> TRUSTED_TAG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.nbt.CompoundTag> COMPOUND_TAG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.nbt.CompoundTag> TRUSTED_COMPOUND_TAG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.util.Optional<net.minecraft.nbt.CompoundTag>> OPTIONAL_COMPOUND_TAG;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, org.joml.Vector3fc> VECTOR3F;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, org.joml.Quaternionfc> QUATERNIONF;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Integer> CONTAINER_ID;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, com.mojang.authlib.properties.PropertyMap> GAME_PROFILE_PROPERTIES;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.String> PLAYER_NAME;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, com.mojang.authlib.GameProfile> GAME_PROFILE;
+
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.Integer> RGB_COLOR;
+
+  public static net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, byte[]> byteArray(int);
+    Code:
+         0: new           #1                  // class net/minecraft/network/codec/ByteBufCodecs$11
+         3: dup
+         4: iload_0
+         5: invokespecial #3                  // Method net/minecraft/network/codec/ByteBufCodecs$11."<init>":(I)V
+         8: areturn
+
+  public static net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.lang.String> stringUtf8(int);
+    Code:
+         0: new           #7                  // class net/minecraft/network/codec/ByteBufCodecs$14
+         3: dup
+         4: iload_0
+         5: invokespecial #9                  // Method net/minecraft/network/codec/ByteBufCodecs$14."<init>":(I)V
+         8: areturn
+
+  public static net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, java.util.Optional<net.minecraft.nbt.Tag>> optionalTagCodec(java.util.function.Supplier<net.minecraft.nbt.NbtAccounter>);
+    Code:
+         0: new           #10                 // class net/minecraft/network/codec/ByteBufCodecs$15
+         3: dup
+         4: aload_0
+         5: invokespecial #12                 // Method net/minecraft/network/codec/ByteBufCodecs$15."<init>":(Ljava/util/function/Supplier;)V
+         8: areturn
+
+  public static net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.nbt.Tag> tagCodec(java.util.function.Supplier<net.minecraft.nbt.NbtAccounter>);
+    Code:
+         0: new           #15                 // class net/minecraft/network/codec/ByteBufCodecs$16
+         3: dup
+         4: aload_0
+         5: invokespecial #17                 // Method net/minecraft/network/codec/ByteBufCodecs$16."<init>":(Ljava/util/function/Supplier;)V
+         8: areturn
+
+  public static net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.nbt.CompoundTag> compoundTagCodec(java.util.function.Supplier<net.minecraft.nbt.NbtAccounter>);
+    Code:
+         0: aload_0
+         1: invokestatic  #18                 // InterfaceMethod tagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         4: invokedynamic #24,  0             // InvokeDynamic #0:apply:()Ljava/util/function/Function;
+         9: invokedynamic #28,  0             // InvokeDynamic #1:apply:()Ljava/util/function/Function;
+        14: invokeinterface #29,  3           // InterfaceMethod net/minecraft/network/codec/StreamCodec.map:(Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+        19: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, T> fromCodecTrusted(com.mojang.serialization.Codec<T>);
+    Code:
+         0: aload_0
+         1: invokedynamic #35,  0             // InvokeDynamic #2:get:()Ljava/util/function/Supplier;
+         6: invokestatic  #39                 // InterfaceMethod fromCodec:(Lcom/mojang/serialization/Codec;Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, T> fromCodec(com.mojang.serialization.Codec<T>);
+    Code:
+         0: aload_0
+         1: invokedynamic #43,  0             // InvokeDynamic #3:get:()Ljava/util/function/Supplier;
+         6: invokestatic  #39                 // InterfaceMethod fromCodec:(Lcom/mojang/serialization/Codec;Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  public static <T, B extends io.netty.buffer.ByteBuf, V> net.minecraft.network.codec.StreamCodec$CodecOperation<B, T, V> fromCodec(com.mojang.serialization.DynamicOps<T>, com.mojang.serialization.Codec<V>);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: invokedynamic #44,  0             // InvokeDynamic #4:apply:(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/DynamicOps;)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         7: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, T> fromCodec(com.mojang.serialization.Codec<T>, java.util.function.Supplier<net.minecraft.nbt.NbtAccounter>);
+    Code:
+         0: aload_1
+         1: invokestatic  #18                 // InterfaceMethod tagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         4: getstatic     #47                 // Field net/minecraft/nbt/NbtOps.INSTANCE:Lnet/minecraft/nbt/NbtOps;
+         7: aload_0
+         8: invokestatic  #53                 // InterfaceMethod fromCodec:(Lcom/mojang/serialization/DynamicOps;Lcom/mojang/serialization/Codec;)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+        11: invokeinterface #56,  2           // InterfaceMethod net/minecraft/network/codec/StreamCodec.apply:(Lnet/minecraft/network/codec/StreamCodec$CodecOperation;)Lnet/minecraft/network/codec/StreamCodec;
+        16: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, T> fromCodecWithRegistriesTrusted(com.mojang.serialization.Codec<T>);
+    Code:
+         0: aload_0
+         1: invokedynamic #35,  0             // InvokeDynamic #2:get:()Ljava/util/function/Supplier;
+         6: invokestatic  #59                 // InterfaceMethod fromCodecWithRegistries:(Lcom/mojang/serialization/Codec;Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, T> fromCodecWithRegistries(com.mojang.serialization.Codec<T>);
+    Code:
+         0: aload_0
+         1: invokedynamic #43,  0             // InvokeDynamic #3:get:()Ljava/util/function/Supplier;
+         6: invokestatic  #59                 // InterfaceMethod fromCodecWithRegistries:(Lcom/mojang/serialization/Codec;Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, T> fromCodecWithRegistries(com.mojang.serialization.Codec<T>, java.util.function.Supplier<net.minecraft.nbt.NbtAccounter>);
+    Code:
+         0: aload_1
+         1: invokestatic  #18                 // InterfaceMethod tagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+         4: astore_2
+         5: new           #62                 // class net/minecraft/network/codec/ByteBufCodecs$18
+         8: dup
+         9: aload_2
+        10: aload_0
+        11: invokespecial #64                 // Method net/minecraft/network/codec/ByteBufCodecs$18."<init>":(Lnet/minecraft/network/codec/StreamCodec;Lcom/mojang/serialization/Codec;)V
+        14: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V> net.minecraft.network.codec.StreamCodec<B, java.util.Optional<V>> optional(net.minecraft.network.codec.StreamCodec<? super B, V>);
+    Code:
+         0: new           #67                 // class net/minecraft/network/codec/ByteBufCodecs$23
+         3: dup
+         4: aload_0
+         5: invokespecial #69                 // Method net/minecraft/network/codec/ByteBufCodecs$23."<init>":(Lnet/minecraft/network/codec/StreamCodec;)V
+         8: areturn
+
+  public static int readCount(io.netty.buffer.ByteBuf, int);
+    Code:
+         0: aload_0
+         1: invokestatic  #72                 // Method net/minecraft/network/VarInt.read:(Lio/netty/buffer/ByteBuf;)I
+         4: istore_2
+         5: iload_2
+         6: iload_1
+         7: if_icmple     25
+        10: new           #78                 // class io/netty/handler/codec/DecoderException
+        13: dup
+        14: iload_2
+        15: iload_1
+        16: invokedynamic #80,  0             // InvokeDynamic #5:makeConcatWithConstants:(II)Ljava/lang/String;
+        21: invokespecial #84                 // Method io/netty/handler/codec/DecoderException."<init>":(Ljava/lang/String;)V
+        24: athrow
+        25: iload_2
+        26: ireturn
+
+  public static void writeCount(io.netty.buffer.ByteBuf, int, int);
+    Code:
+         0: iload_1
+         1: iload_2
+         2: if_icmple     20
+         5: new           #87                 // class io/netty/handler/codec/EncoderException
+         8: dup
+         9: iload_1
+        10: iload_2
+        11: invokedynamic #80,  0             // InvokeDynamic #5:makeConcatWithConstants:(II)Ljava/lang/String;
+        16: invokespecial #89                 // Method io/netty/handler/codec/EncoderException."<init>":(Ljava/lang/String;)V
+        19: athrow
+        20: aload_0
+        21: iload_1
+        22: invokestatic  #90                 // Method net/minecraft/network/VarInt.write:(Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+        25: pop
+        26: return
+
+  public static <B extends io.netty.buffer.ByteBuf, V, C extends java.util.Collection<V>> net.minecraft.network.codec.StreamCodec<B, C> collection(java.util.function.IntFunction<C>, net.minecraft.network.codec.StreamCodec<? super B, V>);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: ldc           #96                 // int 2147483647
+         4: invokestatic  #97                 // InterfaceMethod collection:(Ljava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;I)Lnet/minecraft/network/codec/StreamCodec;
+         7: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V, C extends java.util.Collection<V>> net.minecraft.network.codec.StreamCodec<B, C> collection(java.util.function.IntFunction<C>, net.minecraft.network.codec.StreamCodec<? super B, V>, int);
+    Code:
+         0: new           #101                // class net/minecraft/network/codec/ByteBufCodecs$24
+         3: dup
+         4: iload_2
+         5: aload_0
+         6: aload_1
+         7: invokespecial #103                // Method net/minecraft/network/codec/ByteBufCodecs$24."<init>":(ILjava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;)V
+        10: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V, C extends java.util.Collection<V>> net.minecraft.network.codec.StreamCodec$CodecOperation<B, V, C> collection(java.util.function.IntFunction<C>);
+    Code:
+         0: aload_0
+         1: invokedynamic #106,  0            // InvokeDynamic #6:apply:(Ljava/util/function/IntFunction;)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         6: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V, C extends java.util.Collection<V>> net.minecraft.network.codec.StreamCodec$CodecOperation<B, V, C> collection(java.util.function.IntFunction<C>, int);
+    Code:
+         0: aload_0
+         1: iload_1
+         2: invokedynamic #109,  0            // InvokeDynamic #7:apply:(Ljava/util/function/IntFunction;I)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         7: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V> net.minecraft.network.codec.StreamCodec$CodecOperation<B, V, java.util.List<V>> list();
+    Code:
+         0: invokedynamic #112,  0            // InvokeDynamic #8:apply:()Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         5: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V> net.minecraft.network.codec.StreamCodec$CodecOperation<B, V, java.util.List<V>> list(int);
+    Code:
+         0: iload_0
+         1: invokedynamic #115,  0            // InvokeDynamic #9:apply:(I)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         6: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, K, V, M extends java.util.Map<K, V>> net.minecraft.network.codec.StreamCodec<B, M> map(java.util.function.IntFunction<? extends M>, net.minecraft.network.codec.StreamCodec<? super B, K>, net.minecraft.network.codec.StreamCodec<? super B, V>);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: ldc           #96                 // int 2147483647
+         5: invokestatic  #118                // InterfaceMethod map:(Ljava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;Lnet/minecraft/network/codec/StreamCodec;I)Lnet/minecraft/network/codec/StreamCodec;
+         8: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, K, V, M extends java.util.Map<K, V>> net.minecraft.network.codec.StreamCodec<B, M> map(java.util.function.IntFunction<? extends M>, net.minecraft.network.codec.StreamCodec<? super B, K>, net.minecraft.network.codec.StreamCodec<? super B, V>, int);
+    Code:
+         0: new           #121                // class net/minecraft/network/codec/ByteBufCodecs$25
+         3: dup
+         4: iload_3
+         5: aload_1
+         6: aload_2
+         7: aload_0
+         8: invokespecial #123                // Method net/minecraft/network/codec/ByteBufCodecs$25."<init>":(ILnet/minecraft/network/codec/StreamCodec;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/IntFunction;)V
+        11: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, L, R> net.minecraft.network.codec.StreamCodec<B, com.mojang.datafixers.util.Either<L, R>> either(net.minecraft.network.codec.StreamCodec<? super B, L>, net.minecraft.network.codec.StreamCodec<? super B, R>);
+    Code:
+         0: new           #126                // class net/minecraft/network/codec/ByteBufCodecs$26
+         3: dup
+         4: aload_0
+         5: aload_1
+         6: invokespecial #128                // Method net/minecraft/network/codec/ByteBufCodecs$26."<init>":(Lnet/minecraft/network/codec/StreamCodec;Lnet/minecraft/network/codec/StreamCodec;)V
+         9: areturn
+
+  public static <B extends io.netty.buffer.ByteBuf, V> net.minecraft.network.codec.StreamCodec$CodecOperation<B, V, V> lengthPrefixed(int, java.util.function.BiFunction<B, io.netty.buffer.ByteBuf, B>);
+    Code:
+         0: iload_0
+         1: aload_1
+         2: invokedynamic #131,  0            // InvokeDynamic #10:apply:(ILjava/util/function/BiFunction;)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         7: areturn
+
+  public static <V> net.minecraft.network.codec.StreamCodec$CodecOperation<io.netty.buffer.ByteBuf, V, V> lengthPrefixed(int);
+    Code:
+         0: iload_0
+         1: invokedynamic #134,  0            // InvokeDynamic #11:apply:()Ljava/util/function/BiFunction;
+         6: invokestatic  #137                // InterfaceMethod lengthPrefixed:(ILjava/util/function/BiFunction;)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         9: areturn
+
+  public static <V> net.minecraft.network.codec.StreamCodec$CodecOperation<net.minecraft.network.RegistryFriendlyByteBuf, V, V> registryFriendlyLengthPrefixed(int);
+    Code:
+         0: iload_0
+         1: invokedynamic #140,  0            // InvokeDynamic #12:apply:()Ljava/util/function/BiFunction;
+         6: invokestatic  #137                // InterfaceMethod lengthPrefixed:(ILjava/util/function/BiFunction;)Lnet/minecraft/network/codec/StreamCodec$CodecOperation;
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, T> idMapper(java.util.function.IntFunction<T>, java.util.function.ToIntFunction<T>);
+    Code:
+         0: new           #141                // class net/minecraft/network/codec/ByteBufCodecs$28
+         3: dup
+         4: aload_0
+         5: aload_1
+         6: invokespecial #143                // Method net/minecraft/network/codec/ByteBufCodecs$28."<init>":(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;)V
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, T> idMapper(net.minecraft.core.IdMap<T>);
+    Code:
+         0: aload_0
+         1: dup
+         2: invokestatic  #146                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+         5: pop
+         6: invokedynamic #152,  0            // InvokeDynamic #13:apply:(Lnet/minecraft/core/IdMap;)Ljava/util/function/IntFunction;
+        11: aload_0
+        12: dup
+        13: invokestatic  #146                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+        16: pop
+        17: invokedynamic #155,  0            // InvokeDynamic #14:applyAsInt:(Lnet/minecraft/core/IdMap;)Ljava/util/function/ToIntFunction;
+        22: invokestatic  #159                // InterfaceMethod idMapper:(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;)Lnet/minecraft/network/codec/StreamCodec;
+        25: areturn
+
+  private static <T, R> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, R> registry(net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<T>>, java.util.function.Function<net.minecraft.core.Registry<T>, net.minecraft.core.IdMap<R>>);
+    Code:
+         0: new           #163                // class net/minecraft/network/codec/ByteBufCodecs$29
+         3: dup
+         4: aload_1
+         5: aload_0
+         6: invokespecial #165                // Method net/minecraft/network/codec/ByteBufCodecs$29."<init>":(Ljava/util/function/Function;Lnet/minecraft/resources/ResourceKey;)V
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, T> registry(net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<T>>);
+    Code:
+         0: aload_0
+         1: invokedynamic #168,  0            // InvokeDynamic #15:apply:()Ljava/util/function/Function;
+         6: invokestatic  #169                // InterfaceMethod registry:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.core.Holder<T>> holderRegistry(net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<T>>);
+    Code:
+         0: aload_0
+         1: invokedynamic #173,  0            // InvokeDynamic #16:apply:()Ljava/util/function/Function;
+         6: invokestatic  #169                // InterfaceMethod registry:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.core.Holder<T>> holder(net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<T>>, net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T>);
+    Code:
+         0: new           #174                // class net/minecraft/network/codec/ByteBufCodecs$30
+         3: dup
+         4: aload_0
+         5: aload_1
+         6: invokespecial #176                // Method net/minecraft/network/codec/ByteBufCodecs$30."<init>":(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/network/codec/StreamCodec;)V
+         9: areturn
+
+  public static <T> net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.core.HolderSet<T>> holderSet(net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<T>>);
+    Code:
+         0: new           #179                // class net/minecraft/network/codec/ByteBufCodecs$31
+         3: dup
+         4: aload_0
+         5: invokespecial #181                // Method net/minecraft/network/codec/ByteBufCodecs$31."<init>":(Lnet/minecraft/resources/ResourceKey;)V
+         8: areturn
+
+  public static net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, com.google.gson.JsonElement> lenientJson(int);
+    Code:
+         0: new           #184                // class net/minecraft/network/codec/ByteBufCodecs$34
+         3: dup
+         4: iload_0
+         5: invokespecial #186                // Method net/minecraft/network/codec/ByteBufCodecs$34."<init>":(I)V
+         8: areturn
+
+  private static net.minecraft.core.IdMap lambda$registry$0(net.minecraft.core.Registry);
+    Code:
+         0: aload_0
+         1: areturn
+
+  private static net.minecraft.network.RegistryFriendlyByteBuf lambda$registryFriendlyLengthPrefixed$0(net.minecraft.network.RegistryFriendlyByteBuf, io.netty.buffer.ByteBuf);
+    Code:
+         0: new           #187                // class net/minecraft/network/RegistryFriendlyByteBuf
+         3: dup
+         4: aload_1
+         5: aload_0
+         6: invokevirtual #189                // Method net/minecraft/network/RegistryFriendlyByteBuf.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+         9: invokespecial #193                // Method net/minecraft/network/RegistryFriendlyByteBuf."<init>":(Lio/netty/buffer/ByteBuf;Lnet/minecraft/core/RegistryAccess;)V
+        12: areturn
+
+  private static io.netty.buffer.ByteBuf lambda$lengthPrefixed$1(io.netty.buffer.ByteBuf, io.netty.buffer.ByteBuf);
+    Code:
+         0: aload_1
+         1: areturn
+
+  private static net.minecraft.network.codec.StreamCodec lambda$lengthPrefixed$0(int, java.util.function.BiFunction, net.minecraft.network.codec.StreamCodec);
+    Code:
+         0: new           #196                // class net/minecraft/network/codec/ByteBufCodecs$27
+         3: dup
+         4: iload_0
+         5: aload_1
+         6: aload_2
+         7: invokespecial #198                // Method net/minecraft/network/codec/ByteBufCodecs$27."<init>":(ILjava/util/function/BiFunction;Lnet/minecraft/network/codec/StreamCodec;)V
+        10: areturn
+
+  private static net.minecraft.network.codec.StreamCodec lambda$list$1(int, net.minecraft.network.codec.StreamCodec);
+    Code:
+         0: invokedynamic #201,  0            // InvokeDynamic #17:apply:()Ljava/util/function/IntFunction;
+         5: aload_1
+         6: iload_0
+         7: invokestatic  #97                 // InterfaceMethod collection:(Ljava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;I)Lnet/minecraft/network/codec/StreamCodec;
+        10: areturn
+
+  private static net.minecraft.network.codec.StreamCodec lambda$list$0(net.minecraft.network.codec.StreamCodec);
+    Code:
+         0: invokedynamic #201,  0            // InvokeDynamic #17:apply:()Ljava/util/function/IntFunction;
+         5: aload_0
+         6: invokestatic  #204                // InterfaceMethod collection:(Ljava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+         9: areturn
+
+  private static net.minecraft.network.codec.StreamCodec lambda$collection$1(java.util.function.IntFunction, int, net.minecraft.network.codec.StreamCodec);
+    Code:
+         0: aload_0
+         1: aload_2
+         2: iload_1
+         3: invokestatic  #97                 // InterfaceMethod collection:(Ljava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;I)Lnet/minecraft/network/codec/StreamCodec;
+         6: areturn
+
+  private static net.minecraft.network.codec.StreamCodec lambda$collection$0(java.util.function.IntFunction, net.minecraft.network.codec.StreamCodec);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokestatic  #204                // InterfaceMethod collection:(Ljava/util/function/IntFunction;Lnet/minecraft/network/codec/StreamCodec;)Lnet/minecraft/network/codec/StreamCodec;
+         5: areturn
+
+  private static net.minecraft.network.codec.StreamCodec lambda$fromCodec$0(com.mojang.serialization.Codec, com.mojang.serialization.DynamicOps, net.minecraft.network.codec.StreamCodec);
+    Code:
+         0: new           #207                // class net/minecraft/network/codec/ByteBufCodecs$17
+         3: dup
+         4: aload_2
+         5: aload_0
+         6: aload_1
+         7: invokespecial #209                // Method net/minecraft/network/codec/ByteBufCodecs$17."<init>":(Lnet/minecraft/network/codec/StreamCodec;Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/DynamicOps;)V
+        10: areturn
+
+  private static net.minecraft.nbt.Tag lambda$compoundTagCodec$1(net.minecraft.nbt.CompoundTag);
+    Code:
+         0: aload_0
+         1: areturn
+
+  private static net.minecraft.nbt.CompoundTag lambda$compoundTagCodec$0(net.minecraft.nbt.Tag);
+    Code:
+         0: aload_0
+         1: instanceof    #212                // class net/minecraft/nbt/CompoundTag
+         4: ifeq          14
+         7: aload_0
+         8: checkcast     #212                // class net/minecraft/nbt/CompoundTag
+        11: astore_1
+        12: aload_1
+        13: areturn
+        14: new           #78                 // class io/netty/handler/codec/DecoderException
+        17: dup
+        18: aload_0
+        19: invokestatic  #214                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+        22: invokedynamic #220,  0            // InvokeDynamic #18:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+        27: invokespecial #84                 // Method io/netty/handler/codec/DecoderException."<init>":(Ljava/lang/String;)V
+        30: athrow
+
+  private static java.lang.Integer lambda$static$1(java.util.OptionalInt);
+    Code:
+         0: aload_0
+         1: invokevirtual #223                // Method java/util/OptionalInt.isPresent:()Z
+         4: ifeq          16
+         7: aload_0
+         8: invokevirtual #229                // Method java/util/OptionalInt.getAsInt:()I
+        11: iconst_1
+        12: iadd
+        13: goto          17
+        16: iconst_0
+        17: invokestatic  #233                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        20: areturn
+
+  private static java.util.OptionalInt lambda$static$0(java.lang.Integer);
+    Code:
+         0: aload_0
+         1: invokevirtual #236                // Method java/lang/Integer.intValue:()I
+         4: ifne          13
+         7: invokestatic  #239                // Method java/util/OptionalInt.empty:()Ljava/util/OptionalInt;
+        10: goto          22
+        13: aload_0
+        14: invokevirtual #236                // Method java/lang/Integer.intValue:()I
+        17: iconst_1
+        18: isub
+        19: invokestatic  #243                // Method java/util/OptionalInt.of:(I)Ljava/util/OptionalInt;
+        22: areturn
+
+  static {};
+    Code:
+         0: new           #247                // class net/minecraft/network/codec/ByteBufCodecs$1
+         3: dup
+         4: invokespecial #249                // Method net/minecraft/network/codec/ByteBufCodecs$1."<init>":()V
+         7: putstatic     #252                // Field BOOL:Lnet/minecraft/network/codec/StreamCodec;
+        10: new           #256                // class net/minecraft/network/codec/ByteBufCodecs$2
+        13: dup
+        14: invokespecial #258                // Method net/minecraft/network/codec/ByteBufCodecs$2."<init>":()V
+        17: putstatic     #259                // Field BYTE:Lnet/minecraft/network/codec/StreamCodec;
+        20: getstatic     #259                // Field BYTE:Lnet/minecraft/network/codec/StreamCodec;
+        23: invokedynamic #262,  0            // InvokeDynamic #19:apply:()Ljava/util/function/Function;
+        28: invokedynamic #263,  0            // InvokeDynamic #20:apply:()Ljava/util/function/Function;
+        33: invokeinterface #29,  3           // InterfaceMethod net/minecraft/network/codec/StreamCodec.map:(Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+        38: putstatic     #264                // Field ROTATION_BYTE:Lnet/minecraft/network/codec/StreamCodec;
+        41: new           #267                // class net/minecraft/network/codec/ByteBufCodecs$3
+        44: dup
+        45: invokespecial #269                // Method net/minecraft/network/codec/ByteBufCodecs$3."<init>":()V
+        48: putstatic     #270                // Field SHORT:Lnet/minecraft/network/codec/StreamCodec;
+        51: new           #273                // class net/minecraft/network/codec/ByteBufCodecs$4
+        54: dup
+        55: invokespecial #275                // Method net/minecraft/network/codec/ByteBufCodecs$4."<init>":()V
+        58: putstatic     #276                // Field UNSIGNED_SHORT:Lnet/minecraft/network/codec/StreamCodec;
+        61: new           #279                // class net/minecraft/network/codec/ByteBufCodecs$5
+        64: dup
+        65: invokespecial #281                // Method net/minecraft/network/codec/ByteBufCodecs$5."<init>":()V
+        68: putstatic     #282                // Field INT:Lnet/minecraft/network/codec/StreamCodec;
+        71: new           #285                // class net/minecraft/network/codec/ByteBufCodecs$6
+        74: dup
+        75: invokespecial #287                // Method net/minecraft/network/codec/ByteBufCodecs$6."<init>":()V
+        78: putstatic     #288                // Field VAR_INT:Lnet/minecraft/network/codec/StreamCodec;
+        81: getstatic     #288                // Field VAR_INT:Lnet/minecraft/network/codec/StreamCodec;
+        84: invokedynamic #291,  0            // InvokeDynamic #21:apply:()Ljava/util/function/Function;
+        89: invokedynamic #292,  0            // InvokeDynamic #22:apply:()Ljava/util/function/Function;
+        94: invokeinterface #29,  3           // InterfaceMethod net/minecraft/network/codec/StreamCodec.map:(Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+        99: putstatic     #293                // Field OPTIONAL_VAR_INT:Lnet/minecraft/network/codec/StreamCodec;
+       102: new           #296                // class net/minecraft/network/codec/ByteBufCodecs$7
+       105: dup
+       106: invokespecial #298                // Method net/minecraft/network/codec/ByteBufCodecs$7."<init>":()V
+       109: putstatic     #299                // Field LONG:Lnet/minecraft/network/codec/StreamCodec;
+       112: new           #302                // class net/minecraft/network/codec/ByteBufCodecs$8
+       115: dup
+       116: invokespecial #304                // Method net/minecraft/network/codec/ByteBufCodecs$8."<init>":()V
+       119: putstatic     #305                // Field VAR_LONG:Lnet/minecraft/network/codec/StreamCodec;
+       122: new           #308                // class net/minecraft/network/codec/ByteBufCodecs$9
+       125: dup
+       126: invokespecial #310                // Method net/minecraft/network/codec/ByteBufCodecs$9."<init>":()V
+       129: putstatic     #311                // Field FLOAT:Lnet/minecraft/network/codec/StreamCodec;
+       132: new           #314                // class net/minecraft/network/codec/ByteBufCodecs$10
+       135: dup
+       136: invokespecial #316                // Method net/minecraft/network/codec/ByteBufCodecs$10."<init>":()V
+       139: putstatic     #317                // Field DOUBLE:Lnet/minecraft/network/codec/StreamCodec;
+       142: new           #320                // class net/minecraft/network/codec/ByteBufCodecs$12
+       145: dup
+       146: invokespecial #322                // Method net/minecraft/network/codec/ByteBufCodecs$12."<init>":()V
+       149: putstatic     #323                // Field BYTE_ARRAY:Lnet/minecraft/network/codec/StreamCodec;
+       152: new           #326                // class net/minecraft/network/codec/ByteBufCodecs$13
+       155: dup
+       156: invokespecial #328                // Method net/minecraft/network/codec/ByteBufCodecs$13."<init>":()V
+       159: putstatic     #329                // Field LONG_ARRAY:Lnet/minecraft/network/codec/StreamCodec;
+       162: sipush        32767
+       165: invokestatic  #334                // InterfaceMethod stringUtf8:(I)Lnet/minecraft/network/codec/StreamCodec;
+       168: putstatic     #338                // Field STRING_UTF8:Lnet/minecraft/network/codec/StreamCodec;
+       171: invokedynamic #43,  0             // InvokeDynamic #3:get:()Ljava/util/function/Supplier;
+       176: invokestatic  #18                 // InterfaceMethod tagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+       179: putstatic     #341                // Field TAG:Lnet/minecraft/network/codec/StreamCodec;
+       182: invokedynamic #35,  0             // InvokeDynamic #2:get:()Ljava/util/function/Supplier;
+       187: invokestatic  #18                 // InterfaceMethod tagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+       190: putstatic     #344                // Field TRUSTED_TAG:Lnet/minecraft/network/codec/StreamCodec;
+       193: invokedynamic #43,  0             // InvokeDynamic #3:get:()Ljava/util/function/Supplier;
+       198: invokestatic  #347                // InterfaceMethod compoundTagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+       201: putstatic     #350                // Field COMPOUND_TAG:Lnet/minecraft/network/codec/StreamCodec;
+       204: invokedynamic #35,  0             // InvokeDynamic #2:get:()Ljava/util/function/Supplier;
+       209: invokestatic  #347                // InterfaceMethod compoundTagCodec:(Ljava/util/function/Supplier;)Lnet/minecraft/network/codec/StreamCodec;
+       212: putstatic     #353                // Field TRUSTED_COMPOUND_TAG:Lnet/minecraft/network/codec/StreamCodec;
+       215: new           #356                // class net/minecraft/network/codec/ByteBufCodecs$19
+       218: dup
+       219: invokespecial #358                // Method net/minecraft/network/codec/ByteBufCodecs$19."<init>":()V
+       222: putstatic     #359                // Field OPTIONAL_COMPOUND_TAG:Lnet/minecraft/network/codec/StreamCodec;
+       225: new           #362                // class net/minecraft/network/codec/ByteBufCodecs$20
+       228: dup
+       229: invokespecial #364                // Method net/minecraft/network/codec/ByteBufCodecs$20."<init>":()V
+       232: putstatic     #365                // Field VECTOR3F:Lnet/minecraft/network/codec/StreamCodec;
+       235: new           #368                // class net/minecraft/network/codec/ByteBufCodecs$21
+       238: dup
+       239: invokespecial #370                // Method net/minecraft/network/codec/ByteBufCodecs$21."<init>":()V
+       242: putstatic     #371                // Field QUATERNIONF:Lnet/minecraft/network/codec/StreamCodec;
+       245: new           #374                // class net/minecraft/network/codec/ByteBufCodecs$22
+       248: dup
+       249: invokespecial #376                // Method net/minecraft/network/codec/ByteBufCodecs$22."<init>":()V
+       252: putstatic     #377                // Field CONTAINER_ID:Lnet/minecraft/network/codec/StreamCodec;
+       255: new           #380                // class net/minecraft/network/codec/ByteBufCodecs$32
+       258: dup
+       259: invokespecial #382                // Method net/minecraft/network/codec/ByteBufCodecs$32."<init>":()V
+       262: putstatic     #383                // Field GAME_PROFILE_PROPERTIES:Lnet/minecraft/network/codec/StreamCodec;
+       265: bipush        16
+       267: invokestatic  #334                // InterfaceMethod stringUtf8:(I)Lnet/minecraft/network/codec/StreamCodec;
+       270: putstatic     #388                // Field PLAYER_NAME:Lnet/minecraft/network/codec/StreamCodec;
+       273: getstatic     #391                // Field net/minecraft/core/UUIDUtil.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+       276: invokedynamic #396,  0            // InvokeDynamic #23:apply:()Ljava/util/function/Function;
+       281: getstatic     #388                // Field PLAYER_NAME:Lnet/minecraft/network/codec/StreamCodec;
+       284: invokedynamic #397,  0            // InvokeDynamic #24:apply:()Ljava/util/function/Function;
+       289: getstatic     #383                // Field GAME_PROFILE_PROPERTIES:Lnet/minecraft/network/codec/StreamCodec;
+       292: invokedynamic #398,  0            // InvokeDynamic #25:apply:()Ljava/util/function/Function;
+       297: invokedynamic #399,  0            // InvokeDynamic #26:apply:()Lcom/mojang/datafixers/util/Function3;
+       302: invokestatic  #402                // InterfaceMethod net/minecraft/network/codec/StreamCodec.composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function3;)Lnet/minecraft/network/codec/StreamCodec;
+       305: putstatic     #406                // Field GAME_PROFILE:Lnet/minecraft/network/codec/StreamCodec;
+       308: new           #409                // class net/minecraft/network/codec/ByteBufCodecs$33
+       311: dup
+       312: invokespecial #411                // Method net/minecraft/network/codec/ByteBufCodecs$33."<init>":()V
+       315: putstatic     #412                // Field RGB_COLOR:Lnet/minecraft/network/codec/StreamCodec;
+       318: return
+}

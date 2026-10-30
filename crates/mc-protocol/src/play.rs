@@ -4324,6 +4324,28 @@ pub mod data_component_types {
     /// (list) ctor's -1 default, any server sync RESETS the client's
     /// selection (the bundle-selection round's own law).
     pub const BUNDLE_CONTENTS: i32 = 50;
+    /// `PotionContents.STREAM_CODEC` — the potion-kind seat the wire
+    /// carries (javap 26.2 DataComponents.<clinit> pc 738 putstatic —
+    /// the registration order pins id 51, BETWEEN bundle_contents 50
+    /// and the 53 suspicious-stew row the census shares; the 111
+    /// REGISTRY_SIZE keeps). The FOUR-field composite (javap
+    /// PotionContents.<clinit> pcs 65-143, the Function4):
+    /// `optional(Potion.STREAM_CODEC)` — `ByteBufCodecs.optional` =
+    /// ONE readBoolean then the value [ByteBufCodecs$23.decode pcs
+    /// 0-24]; the potion value is `holderRegistry(POTION)` — the `$29`
+    /// byIdOrThrow VarInt family [Potion.<clinit> pc 11-17], the
+    /// NEGATIVE id refuses (the enchantment-key verdict the same
+    /// codec family wears), the registry ORDER is the client's own
+    /// kind table's [the Potions bootstrap census — the 46 rows the
+    /// POTION_KIND tables wear, the id IS the kind];
+    /// `optional(INT)` — the custom color, a BE i32;
+    /// `MobEffectInstance.STREAM_CODEC.list()` — the no-arg list [pc
+    /// 101-104]; `optional(STRING_UTF8)` — the customName [the
+    /// record bootstrap's own field list: potion;customColor;
+    /// customEffects;customName]. The client-side resolution the
+    /// tooltip lanes wear: the kind the potion id answers, the
+    /// effects the wire's own rows speak.
+    pub const POTION_CONTENTS: i32 = 51;
     /// `FireworkExplosion.STREAM_CODEC` — ONE FireworkExplosion
     /// record (the star item's own component — the fireworks rocket
     /// component's single-entry sibling; the SAME record codec both
@@ -4611,6 +4633,72 @@ pub enum ComponentValue {
     /// component's value IS (no flight, no list count — the
     /// composite's five lanes ride bare).
     FireworkExplosion(FireworkExplosion),
+    /// The potion-kind lane: potion_contents (51) — the FOUR-field
+    /// composite the wire carries (see
+    /// [`data_component_types::POTION_CONTENTS`]): the optional
+    /// potion holder id (the `$29` family — the registry ORDER IS
+    /// the client's own kind table's id, the negative refuses), the
+    /// optional custom color (BE i32), the effect list (see
+    /// [`MobEffectInstanceData`]), the optional customName (UTF).
+    PotionContents(PotionContents),
+}
+
+/// ONE decoded `MobEffectInstance` — the `MobEffectInstance.STREAM_CODEC`
+/// composite verbatim (javap 26.2 MobEffectInstance.<clinit> pcs 17-41:
+/// a TWO-field composite — `MobEffect.STREAM_CODEC` [the `$29`
+/// holderRegistry(MOB_EFFECT) family, MobEffect.<clinit> pc 11-17] and
+/// `MobEffectInstance$Details.STREAM_CODEC`). The Details record (javap
+/// Details.<clinit> pcs 13-21 the recursive lane, lambda$static$3 pcs
+/// 0-64 the SIX-field composite) carries the five scalar fields + the
+/// recursive `hiddenEffect` — `optional(recursive Details)`, the ONE
+/// bool + the nested walk (the nesting the port caps at the NBT
+/// reader's own 128-depth discipline, the patch-walk family).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MobEffectInstanceData {
+    /// The effect's registry id — the `$29` family, the NEGATIVE id
+    /// refuses; the registry ORDER is the client's own effect tables'
+    /// (the MobEffects bootstrap census the MOB_EFFECT_CATEGORIES
+    /// table wears — speed 0, slowness 1...).
+    pub effect_id: i32,
+    /// The amplifier — a plain VarInt (0 = the roman-free base row).
+    pub amplifier: i32,
+    /// The duration in ticks — a plain VarInt (the instant rows ride 1).
+    pub duration: i32,
+    /// The ambient flag — one byte.
+    pub ambient: bool,
+    /// The show-particles flag — one byte.
+    pub show_particles: bool,
+    /// The show-icon flag — one byte.
+    pub show_icon: bool,
+    /// The hidden (amplified) prior instance — the recursive optional
+    /// lane (`optional(recursive Details)`), the deeper nest the SAME
+    /// walk answers.
+    pub hidden_effect: Option<Box<MobEffectInstanceData>>,
+}
+
+/// ONE decoded `PotionContents` — the component's own record (javap
+/// 26.2 PotionContents.<clinit> pcs 65-143 the FOUR-field Function4,
+/// the bootstrap's field list `potion;customColor;customEffects;
+/// customName`): every Optional field rides `ByteBufCodecs.optional`
+/// = ONE readBoolean then the value [ByteBufCodecs$23.decode pcs
+/// 0-24], the effects list the no-arg count lane [pc 101-104].
+#[derive(Debug, Clone, PartialEq)]
+pub struct PotionContents {
+    /// The potion's registry id — the `$29` family (the negative
+    /// refuses); `None` = the wire's false byte (the EMPTY field the
+    /// optional's own silence keeps). The id IS the client's own
+    /// kind-table id (the Potions bootstrap order the POTION_KIND
+    /// tables wear).
+    pub potion: Option<i32>,
+    /// The custom color override — a BE i32 (`ByteBufCodecs.INT`),
+    /// `None` = the absent field (the blend's own base the consumer
+    /// keeps).
+    pub custom_color: Option<i32>,
+    /// The custom effects, in wire order (the no-arg list — a
+    /// negative count refuses; NO cap, the readCount's own guard).
+    pub custom_effects: Vec<MobEffectInstanceData>,
+    /// The customName — a UTF string, `None` = the absent field.
+    pub custom_name: Option<String>,
 }
 
 /// The item stack's component patch — the `DataComponentPatch$3`
@@ -5297,6 +5385,14 @@ fn read_component_value(type_id: i32, c: &mut &[u8], depth: u32) -> Result<Compo
             // component's value IS (no flight, no list count).
             ComponentValue::FireworkExplosion(read_firework_explosion(c)?)
         }
+        t::POTION_CONTENTS => {
+            // PotionContents.STREAM_CODEC — the FOUR-field composite:
+            // optional(holder), optional(INT color), the effect list,
+            // optional(UTF name). The optionals the ONE-BOOL lane
+            // ride (ByteBufCodecs$23.decode), the list the no-arg
+            // count walk keeps.
+            ComponentValue::PotionContents(read_potion_contents(c)?)
+        }
         other => anyhow::bail!(
             "no value codec for component type {other} (the patch wire is unframed; \
              the value cannot be skipped honestly)"
@@ -5321,6 +5417,84 @@ fn read_firework_explosion(c: &mut &[u8]) -> Result<FireworkExplosion> {
         fade_colors,
         has_trail,
         has_twinkle,
+    })
+}
+
+/// The PotionContents.STREAM_CODEC's own walk — the FOUR-field
+/// composite in wire order (see [`data_component_types::POTION_CONTENTS`]
+/// and [`PotionContents`]): the two one-bool optionals [ByteBufCodecs$23
+/// decode pcs 0-24], the no-arg effect list [PotionContents.<clinit>
+/// pc 101-104], the tail optional the same bool lane keeps.
+fn read_potion_contents(c: &mut &[u8]) -> Result<PotionContents> {
+    // THE POTION HOLDER (the `$29` family — the negative id refuses,
+    // the out-of-range id the consumer resolves: the kind table's
+    // own 46 rows the client-side census keeps)
+    let potion = if read_u8(c)? != 0 {
+        let id = read_varint(c)?;
+        anyhow::ensure!(id >= 0, "negative potion registry id {id}");
+        Some(id)
+    } else {
+        None
+    };
+    // THE CUSTOM COLOR (the BE i32 the ByteBufCodecs.INT lane wears)
+    let custom_color = if read_u8(c)? != 0 {
+        Some(read_i32(c)?)
+    } else {
+        None
+    };
+    // THE EFFECT LIST (the no-arg list — a negative count refuses)
+    let n = read_component_count(c, "potion custom-effect list")?;
+    let mut custom_effects = Vec::with_capacity(n as usize);
+    for _ in 0..n {
+        custom_effects.push(read_mob_effect_instance(c, 0)?);
+    }
+    // THE CUSTOM NAME (the UTF string the STRING_UTF8 lane wears)
+    let custom_name = if read_u8(c)? != 0 {
+        Some(read_string(c)?)
+    } else {
+        None
+    };
+    Ok(PotionContents {
+        potion,
+        custom_color,
+        custom_effects,
+        custom_name,
+    })
+}
+
+/// ONE MobEffectInstance's wire walk — the TWO-field composite (the
+/// `$29` effect holder + the Details record, see
+/// [`MobEffectInstanceData`]): the Details' SIX lanes ride bare
+/// (amplifier/duration VAR_INTs, three one-byte flags, the hidden
+/// optional's ONE bool + the recursive walk — the depth cap the
+/// patch-walk family's own discipline keeps).
+fn read_mob_effect_instance(c: &mut &[u8], depth: u32) -> Result<MobEffectInstanceData> {
+    const MAX_DEPTH: u32 = 128;
+    anyhow::ensure!(
+        depth <= MAX_DEPTH,
+        "mob-effect hidden-effect nesting past the {}-depth lane (the NBT reader's own cap family)",
+        MAX_DEPTH
+    );
+    let effect_id = read_varint(c)?;
+    anyhow::ensure!(effect_id >= 0, "negative effect registry id {effect_id}");
+    let amplifier = read_varint(c)?;
+    let duration = read_varint(c)?;
+    let ambient = read_u8(c)? != 0;
+    let show_particles = read_u8(c)? != 0;
+    let show_icon = read_u8(c)? != 0;
+    let hidden_effect = if read_u8(c)? != 0 {
+        Some(Box::new(read_mob_effect_instance(c, depth + 1)?))
+    } else {
+        None
+    };
+    Ok(MobEffectInstanceData {
+        effect_id,
+        amplifier,
+        duration,
+        ambient,
+        show_particles,
+        show_icon,
+        hidden_effect,
     })
 }
 
@@ -14805,9 +14979,9 @@ mod tests {
             other => panic!("expected an item stack, got {other:?}"),
         }
 
-        // the FULL decodable slice: all SIXTEEN types in one added list
+        // the FULL decodable slice: all SEVENTEEN types in one added list
         let mut value = Vec::new();
-        for v in [4i32, 977, 16, 0] {
+        for v in [4i32, 977, 17, 0] {
             value.extend_from_slice(&test_support::entity_data_varint(v));
         }
         // 0 custom_data: a bare COMPOUND tag (compoundTagCodec's decode
@@ -14862,6 +15036,14 @@ mod tests {
         write_string(&mut value, "minecraft:epic");
         value.extend_from_slice(&test_support::entity_data_varint(t::NOTE_BLOCK_SOUND));
         write_string(&mut value, "minecraft:block.note_block.pling");
+        // 51 potion_contents: the optional lanes (the holder present,
+        // the color absent, the effects EMPTY, the name absent)
+        value.extend_from_slice(&test_support::entity_data_varint(t::POTION_CONTENTS));
+        value.push(1); // the potion holder: present
+        value.extend_from_slice(&test_support::entity_data_varint(15)); // strong_swiftness
+        value.push(0); // the custom color: absent
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // the effects: empty
+        value.push(0); // the custom name: absent
 
         let p = test_support::set_entity_data_packet(
             5,
@@ -14903,6 +15085,15 @@ mod tests {
                 (
                     t::NOTE_BLOCK_SOUND,
                     ComponentValue::String("minecraft:block.note_block.pling".into()),
+                ),
+                (
+                    t::POTION_CONTENTS,
+                    ComponentValue::PotionContents(PotionContents {
+                        potion: Some(15),
+                        custom_color: None,
+                        custom_effects: Vec::new(),
+                        custom_name: None,
+                    }),
                 ),
             ],
             removed: vec![],
@@ -15000,6 +15191,172 @@ mod tests {
             &test_support::entity_data_entry(8, s::ITEM_STACK, &str_tag),
         );
         assert!(parse_set_entity_data(&p).is_err());
+    }
+
+    /// The potion_contents component (51) — the FIFTH wave: the
+    /// potion-kind seat the wire carries. The audit (javap 26.2
+    /// PotionContents.<clinit> pcs 65-143): a FOUR-field composite —
+    /// `optional(holderRegistry(POTION))` [the ONE-BOOL optional
+    /// lane ByteBufCodecs$23 decode speaks; the potion value the
+    /// `$29` VarInt family], `optional(INT)` [the BE i32 custom
+    /// color], `MobEffectInstance.STREAM_CODEC.list()` [the no-arg
+    /// count lane], `optional(STRING_UTF8)` [the customName]. The
+    /// effect instance rides the TWO-field composite (the `$29`
+    /// effect holder + the Details' SIX lanes: amplifier/duration
+    /// VAR_INTs, three one-byte flags, the hiddenEffect
+    /// `optional(recursive)` — the deeper nest the SAME walk
+    /// answers, the 128-depth discipline the patch family keeps).
+    #[test]
+    fn the_potion_contents_component_rides_the_optional_lanes() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        // the helper: a one-entry patch whose value bytes are the
+        // given potion_contents payload
+        let stack_with = |value_bytes: &[u8]| -> Vec<u8> {
+            let mut v = Vec::new();
+            for prefix in [1i32, 1, 1, 0] {
+                v.extend_from_slice(&test_support::entity_data_varint(prefix));
+            }
+            v.extend_from_slice(&test_support::entity_data_varint(t::POTION_CONTENTS));
+            v.extend_from_slice(value_bytes);
+            v
+        };
+        let one_stack = |value_bytes: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &stack_with(value_bytes)),
+            )
+        };
+
+        // the FULL shape: the holder present (kind 15 = the
+        // strong_swiftness row the client's own table wears), the
+        // custom color present (the BE i32), TWO effects (the second
+        // with a hiddenEffect nest), the customName present
+        let mut v = Vec::new();
+        v.push(1); // the potion holder: present
+        v.extend_from_slice(&test_support::entity_data_varint(15));
+        v.push(1); // the custom color: present
+        v.extend_from_slice(&0x00FF00FFu32.to_be_bytes());
+        v.extend_from_slice(&test_support::entity_data_varint(2)); // two effects
+                                                                   // effect 0 (speed): amplifier 1, duration 1800, the flags the
+                                                                   // vanilla default rows wear (ambient false, particles true,
+                                                                   // icon true), no hiddenEffect
+        v.extend_from_slice(&test_support::entity_data_varint(0));
+        v.extend_from_slice(&test_support::entity_data_varint(1));
+        v.extend_from_slice(&test_support::entity_data_varint(1800));
+        v.push(0); // ambient
+        v.push(1); // show_particles
+        v.push(1); // show_icon
+        v.push(0); // hiddenEffect: absent
+                   // effect 1 (slowness): amplifier 3, duration 400, ambient
+                   // true, particles false, icon false, hiddenEffect present
+                   // (the recursion: amplifier 2, duration 396, the tail flag
+                   // absent)
+        v.extend_from_slice(&test_support::entity_data_varint(1));
+        v.extend_from_slice(&test_support::entity_data_varint(3));
+        v.extend_from_slice(&test_support::entity_data_varint(400));
+        v.push(1); // ambient
+        v.push(0); // show_particles
+        v.push(0); // show_icon
+        v.push(1); // hiddenEffect: present
+        v.extend_from_slice(&test_support::entity_data_varint(1));
+        v.extend_from_slice(&test_support::entity_data_varint(2));
+        v.extend_from_slice(&test_support::entity_data_varint(396));
+        v.push(0); // ambient
+        v.push(1); // show_particles
+        v.push(1); // show_icon
+        v.push(0); // hiddenEffect: absent
+        v.push(1); // the custom name: present
+        write_string(&mut v, "Bottle of the Turtle");
+        let p = one_stack(&v);
+        let d = parse_set_entity_data(&p).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => {
+                assert_eq!(patch.added.len(), 1);
+                assert_eq!(
+                    patch.added[0].0,
+                    t::POTION_CONTENTS,
+                    "the type id rides beside the value"
+                );
+                let pc = match &patch.added[0].1 {
+                    ComponentValue::PotionContents(pc) => pc,
+                    other => panic!("expected potion contents, got {other:?}"),
+                };
+                assert_eq!(pc.potion, Some(15));
+                assert_eq!(pc.custom_color, Some(0x00FF00FF));
+                assert_eq!(pc.custom_name.as_deref(), Some("Bottle of the Turtle"));
+                assert_eq!(pc.custom_effects.len(), 2);
+                let e0 = &pc.custom_effects[0];
+                assert_eq!(e0.effect_id, 0);
+                assert_eq!(e0.amplifier, 1);
+                assert_eq!(e0.duration, 1800);
+                assert!(!e0.ambient);
+                assert!(e0.show_particles);
+                assert!(e0.show_icon);
+                assert!(e0.hidden_effect.is_none());
+                let e1 = &pc.custom_effects[1];
+                assert_eq!(e1.effect_id, 1);
+                assert_eq!(e1.amplifier, 3);
+                assert_eq!(e1.duration, 400);
+                assert!(e1.ambient);
+                assert!(!e1.show_particles);
+                assert!(!e1.show_icon);
+                let hidden = e1.hidden_effect.as_ref().expect("the nested prior");
+                assert_eq!(hidden.effect_id, 1);
+                assert_eq!(hidden.amplifier, 2);
+                assert_eq!(hidden.duration, 396);
+                assert!(hidden.hidden_effect.is_none());
+            }
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+
+        // the EVERYTHING-EMPTY lane: all four fields silent — the
+        // potion holder's false byte, the color's false byte, the
+        // effect list's zero count, the customName's false byte (the
+        // PotionContents.EMPTY's own wire shape, FOUR bytes)
+        let empty = &[0u8, 0, 0, 0];
+        let p = one_stack(empty);
+        let d = parse_set_entity_data(&p).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => {
+                assert_eq!(
+                    patch.added[0].1,
+                    ComponentValue::PotionContents(PotionContents {
+                        potion: None,
+                        custom_color: None,
+                        custom_effects: Vec::new(),
+                        custom_name: None,
+                    })
+                );
+            }
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+
+        // the NEGATIVE potion holder refuses (the `$29` family's own
+        // direction — the enchantment-key verdict the same codec
+        // family wears)
+        let mut neg = Vec::new();
+        neg.push(1);
+        neg.extend_from_slice(&test_support::entity_data_varint(-1));
+        let p = one_stack(&neg);
+        assert!(parse_set_entity_data(&p).is_err(), "negative potion id");
+        // the NEGATIVE effect id refuses the same lane
+        let mut nege = Vec::new();
+        nege.push(0); // the holder: absent
+        nege.push(0); // the color: absent
+        nege.extend_from_slice(&test_support::entity_data_varint(1)); // one effect
+        nege.extend_from_slice(&test_support::entity_data_varint(-3));
+        let p = one_stack(&nege);
+        assert!(parse_set_entity_data(&p).is_err(), "negative effect id");
+        // the NEGATIVE effect-list count refuses (the no-arg list's
+        // own readCount guard)
+        let mut negn = Vec::new();
+        negn.push(0);
+        negn.push(0);
+        negn.extend_from_slice(&test_support::entity_data_varint(-1));
+        let p = one_stack(&negn);
+        assert!(parse_set_entity_data(&p).is_err(), "negative effect count");
     }
 
     /// The patch value codecs' FOURTH WAVE: the held-item's stat
