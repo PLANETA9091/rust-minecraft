@@ -9332,6 +9332,17 @@ pub struct App {
     /// pickup prediction — see [`crate::world_view::predict_pickup`]);
     /// the close/drop resets it. The (0, 0) sentinel is the emptiness.
     pub chest_carried: (i32, i32),
+    /// THE CHEST CARRIED'S OWN WORD (the autopush-361 round — the
+    /// dev-204 law the chest's own cursor wears: the offline walk's
+    /// four arms the kind bank — the pickup the seat's word the
+    /// cursor carries, the place the word the seat lays, the swap the
+    /// pairs exchange, the merge the emptied carried the NONE wears;
+    /// the chest rows the kindless model the word never lends, the
+    /// close the ride home the receiving seat banks, the live lane
+    /// the honest NONE wall keeps — the wire the kind word never
+    /// carries). The render's own id gate the stale word never
+    /// paints.
+    pub chest_carried_potion_kind: i32,
     /// THE BARREL LID'S OWN CELL (the dev-65 round — the opened
     /// barrel the OPEN bit the open_chest_for walk sets, the close
     /// walk the bit the barrel_lid_released release clears; the None
@@ -12913,6 +12924,7 @@ impl App {
             chest_slot_rects: Vec::new(),
             chest_panel: (0, 0),
             chest_carried: (0, 0),
+            chest_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             chest_open_cell: None,
             container_stores: std::collections::HashMap::new(),
             container_stores_file: None,
@@ -24667,6 +24679,8 @@ impl App {
         // scene the golden pins — a live session's held stack never
         // leaks into it)
         self.chest_carried = (0, 0);
+        // the fresh-open pair (the stale word the chest door retires)
+        self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         self.open(ScreenKind::Chest);
     }
 
@@ -27748,6 +27762,8 @@ impl App {
             self.container_open_cell_b = Some(ppos);
         }
         self.chest_carried = (0, 0);
+        // the fresh-open pair (the stale word the chest door retires)
+        self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // the player's own rows the REAL inventory projects (the menu
         // 27..63 the main grid + hotbar the sync speaks — the GUI the
         // player's own stock shows, the transfer clicks the real rows
@@ -27966,6 +27982,8 @@ impl App {
         self.container_open_cell_b = None;
         self.chest_slots = store.clone();
         self.chest_carried = (0, 0);
+        // the fresh-open pair (the stale word the chest door retires)
+        self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // the player's own rows the REAL inventory projects (the chest's
         // own sync law the menu's 27..63 rows the mirror keeps)
         self.chest_mirror_sync_from_inventory();
@@ -28048,6 +28066,8 @@ impl App {
         self.container_open_cell_b = None;
         self.chest_slots = store.clone();
         self.chest_carried = (0, 0);
+        // the fresh-open pair (the stale word the chest door retires)
+        self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // the player's own rows the REAL inventory projects (the menu's
         // addStandardInventorySlots(8, 51) the mirror rows the same
         // projection keeps)
@@ -31036,7 +31056,29 @@ impl App {
         let (id, count) = self.chest_carried;
         let selected = self.selected_hotbar;
         let creative = self.game_mode == GameMode::Creative;
+        // THE WORD'S OWN RIDE HOME (the close_inventory law the chest's
+        // own close re-wears — the kinded carried the receiving free
+        // row the word banks; the potion's max-stack-1 law the merge
+        // pass never speaks, the free seat the only home the add's own
+        // scan finds — the pre-scan the same first-empty law the
+        // landing re-speaks, the non-potion carried the NONE word the
+        // same silence keeps)
+        let carried_kind = if crate::world::brewing_is_potion_kind(id) {
+            self.chest_carried_potion_kind
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let landing = if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+            self.inventory.items.iter().position(|it| it.1 <= 0)
+        } else {
+            None
+        };
         let _ = self.inventory.add(selected, id, count, creative);
+        if let Some(idx) = landing {
+            if self.inventory.items[idx].0 == id && self.inventory.items[idx].1 > 0 {
+                self.items_potion_kinds[idx] = carried_kind;
+            }
+        }
         self.hotbar_slots = self.inventory.hotbar();
     }
 
@@ -32861,6 +32903,12 @@ impl App {
         let dropped = if button == 0 { count } else { 1 };
         self.drop_item_entity_aimed(id, dropped);
         self.chest_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+        // the throw's own word (the emptied carried the NONE wears —
+        // the whole-stack throw the word drops, the half the split the
+        // same stack keeps)
+        if self.chest_carried.1 <= 0 {
+            self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// The chest screen render: the frozen world dimmed underneath (the
@@ -33048,6 +33096,41 @@ impl App {
                 }
             }
         }
+        // THE OFFLINE HELD STACK (the sim's own local cursor the same
+        // post-panel pass wears — the live block's own shape the
+        // offline lane keeps, the quickcraft remainder projection the
+        // same helper answers. THE KIND'S OWN CARRIED TINT the 358 law
+        // the chest's own ghost re-wears — the offline word the liquid
+        // lane colors, the non-potion id the stale word never paints;
+        // the headless scenes track no mouse — the pixel goldens never
+        // see this pass.)
+        if !self.chest_is_live && self.chest_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                if let Some(painted) = floating_ghost_count(
+                    self.qc_armed,
+                    self.qc_slots.len(),
+                    self.qc_remainder,
+                    self.chest_carried.1,
+                ) {
+                    let carried_kind =
+                        if !crate::world::brewing_is_potion_kind(self.chest_carried.0) {
+                            crate::brewing_sim::POTION_KIND_NONE
+                        } else {
+                            self.chest_carried_potion_kind
+                        };
+                    if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                        draw_item_icon_kind(g, self.chest_carried.0, carried_kind, mx - 8, my - 8);
+                    } else {
+                        draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
+                    }
+                    if painted > 1 {
+                        let s = painted.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                    }
+                }
+            }
+        }
         // THE ITEM TOOLTIP (the extractTooltip pass — the dev-203 round
         // the chest's own canvas wears: the hovered seat's rows the
         // shared lane speaks, the topmost layer the carried stack
@@ -33191,10 +33274,23 @@ impl App {
         }
         // THE HELD STACK follows the cursor (the vanilla carried
         // render — the offline sim's local cursor the chest's own gate
-        // keeps, the headless scenes track no mouse)
+        // keeps, the headless scenes track no mouse; THE KIND'S OWN
+        // CARRIED TINT the 358 law the chest's own ghost re-wears —
+        // the offline word the liquid lane colors, the non-potion id
+        // the stale word never paints, the live lane the plain draw
+        // the honest NONE wall keeps)
         if !self.chest_is_live && self.chest_carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
+                let carried_kind = if !crate::world::brewing_is_potion_kind(self.chest_carried.0) {
+                    crate::brewing_sim::POTION_KIND_NONE
+                } else {
+                    self.chest_carried_potion_kind
+                };
+                if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, self.chest_carried.0, carried_kind, mx - 8, my - 8);
+                } else {
+                    draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
+                }
                 if self.chest_carried.1 > 1 {
                     let s = self.chest_carried.1.to_string();
                     let tw = g.text_width(&s);
@@ -37750,6 +37846,9 @@ impl App {
         self.live_chest_title = None; // the title dies with the window
         self.container_carried_returned(was_live);
         self.chest_carried = (0, 0);
+        // the ride home the word spent (the receiving seat the kind
+        // banks, the cursor's own emptiness the silence wears)
+        self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE CONTAINER VOICE'S OWN CLOSE HALF (the counter's 1->0
         // transition the last closer speaks — the OFFLINE lane only:
         // the live session the server's own counter the wire lane
@@ -40239,6 +40338,11 @@ impl App {
             }
         }
         self.chest_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        // the drag's own word (the emptied carried the NONE wears — the
+        // remainder the same stack the word keeps)
+        if self.chest_carried.1 <= 0 {
+            self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
                                                                           // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
                                                                           // re-syncs — the open's own law the write-through's tail
                                                                           // wears) + the HUD row the store's sync follows
@@ -49385,6 +49489,64 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, self.chest_carried)
         };
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 round's law the
+        // chest's own walk re-wears — the SAME four arms the table's
+        // store rows speak: the pickup the seat's kind the word banks,
+        // the place the word the seat lays, the model's own swap the
+        // pairs exchange, the merge the emptied carried the NONE word
+        // wears; the chest rows the kindless model the NONE word keeps
+        // — the (id, count) store the word never carried, the pickup
+        // the honest silence the stale seat never lends, the place
+        // into a chest row the word retires)
+        let inv_row = menu >= n;
+        let mapped = if inv_row {
+            if menu < n + 27 {
+                9 + menu - n
+            } else {
+                menu - n - 27
+            }
+        } else {
+            0
+        };
+        let old_seat_kind = if inv_row {
+            self.row_potion_kind(mapped)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.chest_carried_potion_kind;
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = self.chest_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.chest_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word (the chest
+                // row the honest NONE lends)
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat (the
+                // inventory row the seat banks, the chest row the word
+                // retires — the kindless store the silence wears)
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if believed.1 > 0 && new_slot.1 > 0 && believed.0 != new_slot.0 {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the kind the pairs
+                // exchange)
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the seat keeps its own kind, the emptied
+                // carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            if inv_row {
+                self.items_potion_kinds[mapped] = new_seat_kind;
+            }
+            self.chest_carried_potion_kind = new_carried_kind;
+        }
         if menu < n {
             self.chest_slots[menu] = new_slot;
         } else if menu < n + 27 {
@@ -74007,6 +74169,9 @@ impl App {
                 // correction is the wholesale replacement — the local
                 // belief never outlives the store's projection)
                 self.chest_carried = c.carried;
+                // the wire's own word (the live lane the honest NONE
+                // wall keeps — the correction the kind never carries)
+                self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 if self.screen == ScreenKind::World {
                     self.open(ScreenKind::Chest);
                 }
@@ -74061,6 +74226,7 @@ impl App {
                 }
                 self.chest_live_window = None;
                 self.chest_carried = (0, 0); // no window, no held stack
+                self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE; // the word the window's death retires
                 self.live_chest_title = None; // the title dies with the window
                                               // the store dropped: a LIVE furnace closes back to the
                                               // world (the same vanilla closeContainer return — the
