@@ -12330,3 +12330,155 @@ fn the_hopper_tooltip_the_five_seats_wear() {
         "the closed door the walk refuses"
     );
 }
+
+/// THE BREWING STAND'S OWN TOOLTIP SEAT (the autopush-354 round — the
+/// 351/352 law the brewing's own canvas wears, the render's own kind
+/// lane the icons bank): the kinded bottle seat the kind store rides
+/// (the display name the kind lane re-keys, the effect rows the ride
+/// speaks), the kind-less bottle the plain name keeps, the ingredient
+/// cell the plain ride speaks, the mirror rows the positional name +
+/// kind lanes re-key (the §o italic the named store row wears — the
+/// offline write-through the REAL inventory keeps), the carried wall
+/// + the empty seat + the closed door the None verdicts keep. The
+/// REAL walk the offline door wears — the headless frame the REAL
+/// rects the render lays.
+#[test]
+fn the_brewing_tooltip_the_seats_the_kinds_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_brewing_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Brewing,
+        "the brewing door the kind wears"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE KINDED BOTTLE'S OWN RIDE (the stand's own KIND store the
+    // icons wear — the night-vision seat the potion rows the shared
+    // lane speaks, the display name the kind lane re-keys)
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    app.brewing_slots[0] = (potion, 1);
+    app.brewing_kinds[0] = kind;
+    let (b0x, b0y) = seat(0);
+    let rows = app
+        .brewing_item_tooltip_hover(b0x + 8, b0y + 8)
+        .expect("the kinded bottle the rows speak");
+    assert_eq!(
+        rows[0].0,
+        App::potion_kind_display_name(kind),
+        "the kind store the display name wears"
+    );
+    assert!(rows.len() > 1, "the effect rows the kind lane rides");
+    // THE KIND-LESS BOTTLE'S OWN PLAIN WALL (the NONE seat the plain
+    // name keeps — the stale kind the lane never wears)
+    app.brewing_kinds[0] = crate::brewing_sim::POTION_KIND_NONE;
+    let rows = app
+        .brewing_item_tooltip_hover(b0x + 8, b0y + 8)
+        .expect("the kind-less bottle the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(potion).unwrap()),
+        "the NONE wall the plain name keeps"
+    );
+    // THE INGREDIENT SEAT'S OWN PLAIN RIDE (the non-potion cell the
+    // kind store never wears — the plain name the shared lane speaks)
+    app.brewing_slots[3] = (sword, 1);
+    let (ix, iy) = seat(3);
+    let rows = app
+        .brewing_item_tooltip_hover(ix + 8, iy + 8)
+        .expect("the ingredient seat the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the ingredient cell the plain name keeps"
+    );
+    // THE MIRROR'S OWN POSITIONAL RIDE (the §o italic the named store
+    // row wears — the mirror head the inventory's item 9 the lane
+    // keeps)
+    app.brewing_mirror[0] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = seat(5);
+    let rows = app
+        .brewing_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .brewing_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE MIRROR'S OWN KIND RIDE (the inventory's own kind lane the
+    // menu map reads — the kinded stack the row the icons wear, the
+    // +4 shift the main rows speak)
+    app.brewing_mirror[1] = (potion, 1);
+    app.items_potion_kinds[10] = kind;
+    let (mx1, my1) = seat(6);
+    let rows = app
+        .brewing_item_tooltip_hover(mx1 + 8, my1 + 8)
+        .expect("the kinded mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        App::potion_kind_display_name(kind),
+        "the inventory kind lane the mirror row wears"
+    );
+    app.items_potion_kinds[10] = crate::brewing_sim::POTION_KIND_NONE;
+    // THE CARRIED WALL (the offline cursor the same field answers)
+    app.brewing_carried = (1, 1);
+    assert_eq!(
+        app.brewing_item_tooltip_hover(mx + 8, my + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.brewing_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps)
+    app.brewing_slots[1] = (0, 0);
+    let (b1x, b1y) = seat(1);
+    assert_eq!(
+        app.brewing_item_tooltip_hover(b1x + 8, b1y + 8),
+        None,
+        "the empty seat the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_brewing(ScreenKind::World);
+    assert_eq!(
+        app.brewing_item_tooltip_hover(b0x + 8, b0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}

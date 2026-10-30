@@ -34063,6 +34063,78 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE BREWING STAND'S OWN MENU MAP (the mirror rows 5..40 the
+    /// inventory's positional rows answer — the main 27 the items
+    /// 9..35 the +4 shift speaks, the hotbar 9 the items 0..8 the
+    /// -32 shift keeps; the stand's five the container seats the
+    /// None keeps — the cells the store never maps).
+    fn brewing_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (5..32).contains(&menu) {
+            Some(menu + 4)
+        } else if (32..41).contains(&menu) {
+            Some(menu - 32)
+        } else {
+            None
+        }
+    }
+
+    /// THE BREWING STAND'S OWN TOOLTIP SEAT (the autopush-354 round —
+    /// the 351/352 law the container family's own canvases re-wear:
+    /// the hovered seat's rows the shared lane speaks, the stand's
+    /// five the seat's own KIND store the brewing_kinds the icons
+    /// ride [the bottle trio the live kinds the mix walk wears, the
+    /// ingredient/fuel seats the NONE wall keeps], the mirror rows
+    /// the items_potion_kinds the same menu map the icons read, the
+    /// store lane positionally re-keys [the offline write-through the
+    /// REAL inventory keeps — the stores the same cells answer], the
+    /// carried wall the offline cursor the same field answers, the
+    /// empty seat + the closed door the None verdicts keep. The
+    /// headless scenes track no mouse — the pixel goldens never see
+    /// this pass.)
+    fn brewing_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Brewing {
+            return None; // the brewing's own screen the walk serves
+        }
+        if self.brewing_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.brewing_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let (id, count) = if s < 5 {
+            *self.brewing_slots.get(s).unwrap_or(&(0, 0))
+        } else {
+            *self.brewing_mirror.get(s - 5).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let inv = Self::brewing_menu_to_inventory(s);
+        // THE KIND'S OWN SEAT (the render's own icon lane the 340
+        // round banks — the stand's five the brewing_kinds store
+        // reads, the mirror rows the items_potion_kinds the menu map
+        // rides, the non-potion id the NONE wall keeps)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            if s < 5 {
+                self.brewing_kinds[s]
+            } else {
+                inv.map(|i| self.items_potion_kinds[i])
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let ench = inv
+            .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
+            .unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
+        if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
     /// THE ENCHANTING TABLE'S OWN HOVER SEAT (the autopush-333 round —
     /// the same shared law the furnace + chest + hopper + dispenser +
     /// brewing walks bank): the hovered seat the rects the last render
@@ -35684,6 +35756,17 @@ impl App {
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
+            }
+        }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the autopush-354
+        // round the family law the brewing's own canvas wears: the
+        // hovered seat's rows the shared lane speaks, the stand's five
+        // the kind store the icons ride, the carried follow the layer
+        // under keeps; the headless scenes track no mouse — the pixel
+        // goldens never see this pass)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.brewing_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
             }
         }
         self.render_bundle_tooltip(g, a);
