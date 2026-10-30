@@ -30917,6 +30917,9 @@ impl App {
                         },
                     ));
                 } else {
+                    // THE OFFHAND'S OWN WALL SEAT (the 343 bank the
+                    // offhand never seats — the `None` the ride's
+                    // cursor-clear arm alone answers)
                     wire_inventory_pickup(
                         sink,
                         &mut self.live_inv_slots,
@@ -30925,6 +30928,8 @@ impl App {
                         45,
                         button,
                         state_id,
+                        None,
+                        &mut self.live_carried_potion_kind,
                     );
                 }
                 return;
@@ -30955,6 +30960,13 @@ impl App {
                         (carried.0, carried.1 - 1)
                     };
                     self.live_inv_carried = new_carried;
+                    // THE THROW'S OWN KIND RIDE (the 345 round — the
+                    // whole throw the kind the entity never carries
+                    // the cursor's bank clears, the split the
+                    // remainder's own kind keeps)
+                    if new_carried.1 <= 0 {
+                        self.live_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    }
                     let _ = sink.send(crate::world_view::ContainerCommand::Click(
                         crate::world_view::ContainerClick {
                             window_id: 0,
@@ -31024,6 +31036,12 @@ impl App {
             ));
             return;
         }
+        // THE BANKED SEAT'S OWN RIDE (the 345 round — the store row's
+        // kind the four arms the pickup table speaks move: the
+        // caller's own map the bank seat answers, the disjoint field
+        // borrows the free fn's shape keeps)
+        let kind_seat: Option<&mut i32> =
+            kind_bank_seat(menu).map(|b| &mut self.items_potion_kinds[b]);
         wire_inventory_pickup(
             sink,
             &mut self.live_inv_slots,
@@ -31032,6 +31050,8 @@ impl App {
             menu,
             button,
             state_id,
+            kind_seat,
+            &mut self.live_carried_potion_kind,
         );
     }
 
@@ -38140,6 +38160,7 @@ impl App {
                             self.qc_button as i8,
                             window_id,
                             state_id,
+                            None,
                         );
                     }
                 } else {
@@ -38206,6 +38227,7 @@ impl App {
                             self.qc_button as i8,
                             window_id,
                             state_id,
+                            None,
                         );
                     }
                 } else {
@@ -38268,6 +38290,7 @@ impl App {
                             self.qc_button as i8,
                             window_id,
                             state_id,
+                            None,
                         );
                     }
                 } else {
@@ -38330,6 +38353,7 @@ impl App {
                             self.qc_button as i8,
                             window_id,
                             state_id,
+                            None,
                         );
                     }
                 } else {
@@ -38407,6 +38431,7 @@ impl App {
                         self.qc_button as i8,
                         0,
                         self.live_inv_state_id,
+                        Some(&mut self.live_carried_potion_kind),
                     );
                 }
             } else {
@@ -82749,6 +82774,76 @@ fn store_menu_id(store: usize) -> i32 {
     }
 }
 
+/// THE KIND BANK'S OWN SEAT MAP (the 343 remap the ride re-keys): the
+/// menu id the bank's index answers — the main grid 9..35 the
+/// identity, the hotbar row 36..44 the bank's 0..8, the craft region
+/// 0..8 and the offhand 45 the walls the `None` keeps (the 343 law
+/// the bank's own map wears — the other hovers' own NONE walls the
+/// ride never seats).
+fn kind_bank_seat(menu: i32) -> Option<usize> {
+    match menu {
+        9..=35 => Some(menu as usize),
+        36..=44 => Some((menu - 36) as usize),
+        _ => None,
+    }
+}
+
+/// THE BELIEVED KIND'S OWN RIDE (the autopush-345 round — the brewing
+/// ride's own law the PICKUP walk re-wears): the before/after pairs
+/// the ride's own verdict reads — the kind follows the stack it
+/// belongs to. The banked seats (`Some`) the four arms the PICKUP
+/// table speaks answer: the TAKE the seat's kind the cursor wears
+/// [the whole take the seat clears, the split the seat keeps], the
+/// PLACE the cursor's kind the seat wears, the MERGE the seat's own
+/// identity keeps [the potions the max-stack-1 law the merge never
+/// walks], the SWAP the pairs exchange. The wall seats (`None` — the
+/// craft region 0..8 and the offhand 45 the bank never seats) the
+/// cursor's own clear alone answers: the place the kind leaves with
+/// the stack, the take the honest NONE the wall keeps (the echo the
+/// offhand's own kind re-answers). The prediction's own truth the
+/// sub-echo window wears — the server's own click echo the wholesale
+/// overwrite re-banks (the 343/344 law the next refresh re-answers).
+fn ride_pickup_kind(
+    before_slot: (i32, i32),
+    after_slot: (i32, i32),
+    before_carried: (i32, i32),
+    after_carried: (i32, i32),
+    seat_kind: Option<&mut i32>,
+    carried_kind: &mut i32,
+) {
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let Some(seat_kind) = seat_kind else {
+        // THE WALL SEATS: the cursor's own clear the ride alone
+        // answers (the banked walk the None never wears)
+        if after_carried.1 <= 0 {
+            *carried_kind = none;
+        }
+        return;
+    };
+    let before_seat_kind = *seat_kind;
+    let before_cursor_kind = *carried_kind;
+    // the kind the SEAT wears after the click
+    *seat_kind = if after_slot.1 <= 0 {
+        none // the take — the kind left with the stack
+    } else if before_slot.1 <= 0 {
+        before_cursor_kind // the place — the cursor's stack landed
+    } else if after_slot.0 == before_slot.0 {
+        before_seat_kind // the merge — the seat's own identity keeps
+    } else {
+        before_cursor_kind // the swap — the cursor's stack landed
+    };
+    // the kind the CURSOR wears after the click
+    *carried_kind = if after_carried.1 <= 0 {
+        none // the cursor emptied — the kind left with the stack
+    } else if before_carried.1 <= 0 {
+        before_seat_kind // the take — the seat's stack rides
+    } else if after_carried.0 == before_carried.0 {
+        before_cursor_kind // the merge remainder — its own kind keeps
+    } else {
+        before_seat_kind // the swap — the seat's stack rides
+    };
+}
+
 /// THE WINDOW-0 PICKUP ROUND (the doClick PICKUP table the
 /// `predict_pickup` / `predict_pickup_right` pair speaks, over the
 /// LIVE store's belief): the believed slot and cursor mutate in
@@ -82758,7 +82853,10 @@ fn store_menu_id(store: usize) -> i32 {
 /// the ServerboundContainerClickPacket the command lane carries rides
 /// with the changed slot + the post-click cursor. A free function —
 /// the frame thread's disjoint field borrows (the live_clicks sink
-/// stays held across the walk, the chest lane's own shape).
+/// stays held across the walk, the chest lane's own shape). THE KIND
+/// RIDE (the 345 round) the before/after pairs the belief's own walk
+/// answers — [`ride_pickup_kind`] the seat/cursor kinds the arms move.
+#[allow(clippy::too_many_arguments)]
 fn wire_inventory_pickup(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
@@ -82767,8 +82865,11 @@ fn wire_inventory_pickup(
     menu: i32,
     button: i8,
     state_id: i32,
+    seat_kind: Option<&mut i32>,
+    carried_kind: &mut i32,
 ) {
     let believed = live_slots[menu as usize];
+    let before_carried = *carried;
     let (new_slot, new_carried) = if button == 0 {
         crate::world_view::predict_pickup(believed, *carried)
     } else {
@@ -82776,6 +82877,16 @@ fn wire_inventory_pickup(
     };
     live_slots[menu as usize] = new_slot;
     *carried = new_carried;
+    // THE BELIEVED KIND'S OWN RIDE (the 345 round — the kind follows
+    // the stack the four arms move)
+    ride_pickup_kind(
+        believed,
+        new_slot,
+        before_carried,
+        new_carried,
+        seat_kind,
+        carried_kind,
+    );
     if (36..45).contains(&menu) {
         let mut row = [(0, 0); 9];
         row.copy_from_slice(&live_slots[36..45]);
@@ -82800,13 +82911,19 @@ fn wire_inventory_pickup(
 /// clear keeps, the packet the PICKUP input the -999 sentinel rides,
 /// the changed map the drop's own silence keeps EMPTY (the drop
 /// entity the server's Add Entity lane spawns — the local spawn the
-/// wire lane never rides).
+/// wire lane never rides). THE THROW'S OWN KIND RIDE (the 345 round —
+/// the drop the kind the cursor wore: the whole throw the kind the
+/// entity never carries [the honest 339 note] the cursor's bank
+/// clears, the split the remainder's own kind keeps; the `None` the
+/// kindless windows the chest/table/furnace/dispenser lanes wear —
+/// the (id, count) pair the kind the bank never knows).
 fn wire_throw_outside(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     carried: &mut (i32, i32),
     button: i8,
     window_id: i32,
     state_id: i32,
+    carried_kind: Option<&mut i32>,
 ) {
     if carried.1 <= 0 {
         return; // the drop arm's own isEmpty guard — silence
@@ -82816,6 +82933,11 @@ fn wire_throw_outside(
     } else {
         (carried.0, carried.1 - 1)
     };
+    if let Some(kind) = carried_kind {
+        if new_carried.1 <= 0 {
+            *kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
+    }
     *carried = new_carried;
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {

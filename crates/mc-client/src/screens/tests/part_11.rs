@@ -10311,3 +10311,179 @@ fn the_live_carried_potion_kind_bank_the_lane_wears() {
         "the offline world the lane's gate refuses"
     );
 }
+
+/// THE BELIEVED KIND'S OWN RIDE (the autopush-345 round — the brewing
+/// ride's own law the PICKUP walk re-wears): the four arms the PICKUP
+/// table speaks the kinds move — the TAKE the seat's kind the cursor
+/// wears [the whole take the seat clears], the PLACE the cursor's
+/// kind the seat wears, the SWAP the pairs exchange, the MERGE the
+/// seat's own identity keeps [the no-op the full seat answers] — and
+/// the WALL seat (the `None` the offhand wears) the cursor's clear
+/// alone answers. The seat map the bank's own numbering re-keys (the
+/// main grid the identity, the hotbar row the bank's 0..8, the walls
+/// the None keeps).
+#[test]
+fn the_pickup_ride_the_kinds_the_arms_wear() {
+    // THE SEAT MAP (the 343 remap the ride re-keys)
+    assert_eq!(kind_bank_seat(9), Some(9), "the main grid the identity");
+    assert_eq!(kind_bank_seat(40), Some(4), "the hotbar row the bank's 4");
+    assert_eq!(kind_bank_seat(45), None, "the offhand the wall keeps");
+    assert_eq!(kind_bank_seat(3), None, "the craft region the wall keeps");
+    let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_LONG_NIGHT_VISION;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    // THE TAKE (button 0, empty cursor over a kinded seat): the kind
+    // the cursor wears, the seat the NONE clears, the packet the
+    // pickup input rides
+    let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+    slots[9] = (potion, 1);
+    let mut carried = (0, 0);
+    let mut hotbar = [(0, 0); 9];
+    let mut seat_kind = kind_a;
+    let mut carried_kind = none;
+    wire_inventory_pickup(
+        &tx,
+        &mut slots,
+        &mut carried,
+        &mut hotbar,
+        9,
+        0,
+        1,
+        Some(&mut seat_kind),
+        &mut carried_kind,
+    );
+    assert_eq!(slots[9], (0, 0), "the take the seat empties");
+    assert_eq!(carried, (potion, 1), "the take the cursor wears the stack");
+    assert_eq!(seat_kind, none, "the whole take the seat's kind clears");
+    assert_eq!(carried_kind, kind_a, "the take the kind the cursor wears");
+    match rx.try_recv() {
+        Ok(crate::world_view::ContainerCommand::Click(c)) => {
+            assert_eq!(c.slot, 9, "the take the menu id rides");
+            assert_eq!(
+                c.input,
+                crate::world_view::ContainerInput::Pickup,
+                "the take the PICKUP input speaks"
+            );
+        }
+        _ => panic!("the take the packet rides"),
+    }
+    // THE PLACE (the kinded cursor over the empty seat): the kind the
+    // seat wears, the cursor the NONE clears
+    wire_inventory_pickup(
+        &tx,
+        &mut slots,
+        &mut carried,
+        &mut hotbar,
+        9,
+        0,
+        2,
+        Some(&mut seat_kind),
+        &mut carried_kind,
+    );
+    assert_eq!(slots[9], (potion, 1), "the place the seat wears the stack");
+    assert_eq!(carried, (0, 0), "the place the cursor empties");
+    assert_eq!(seat_kind, kind_a, "the place the kind the seat wears");
+    assert_eq!(carried_kind, none, "the place the cursor's kind clears");
+    // THE SWAP (two DIFFERENT kinded bottles exchange — the potion
+    // and the splash potion the max-stack-1 law never merges): the
+    // pairs the kinds exchange
+    let splash =
+        mc_registry::item_id_by_name("splash_potion").expect("the splash potion the table keeps");
+    slots[10] = (splash, 1);
+    let mut seat_b = kind_b;
+    let mut carried_a = kind_a;
+    let mut carried = (potion, 1);
+    wire_inventory_pickup(
+        &tx,
+        &mut slots,
+        &mut carried,
+        &mut hotbar,
+        10,
+        0,
+        3,
+        Some(&mut seat_b),
+        &mut carried_a,
+    );
+    assert_eq!(slots[10], (potion, 1), "the swap the seat wears the potion");
+    assert_eq!(carried, (splash, 1), "the swap the cursor wears the splash");
+    assert_eq!(seat_b, kind_a, "the swap the cursor's kind lands");
+    assert_eq!(carried_a, kind_b, "the swap the seat's kind rides");
+    // THE MERGE (the same-id non-potion with room): the seat's own
+    // identity keeps, the cursor's remainder its own kind keeps
+    let dirt = mc_registry::item_id_by_name("dirt").expect("the dirt the table keeps");
+    let mut slots2 = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+    slots2[11] = (dirt, 10);
+    let mut carried2 = (dirt, 20);
+    let mut seat_none = none;
+    let mut carried_none = none;
+    wire_inventory_pickup(
+        &tx,
+        &mut slots2,
+        &mut carried2,
+        &mut hotbar,
+        11,
+        0,
+        4,
+        Some(&mut seat_none),
+        &mut carried_none,
+    );
+    assert_eq!(slots2[11], (dirt, 30), "the merge the seat grows");
+    assert_eq!(carried2, (0, 0), "the merge the cursor empties");
+    assert_eq!(seat_none, none, "the kindless merge the seat keeps");
+    assert_eq!(carried_none, none, "the kindless merge the cursor keeps");
+    // THE WALL (menu 45, the `None` seat): the place the cursor's
+    // clear alone answers, the take the honest NONE the wall keeps
+    let mut slots3 = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+    let mut carried3 = (potion, 1);
+    let mut carried_wall = kind_a;
+    wire_inventory_pickup(
+        &tx,
+        &mut slots3,
+        &mut carried3,
+        &mut hotbar,
+        45,
+        0,
+        5,
+        None,
+        &mut carried_wall,
+    );
+    assert_eq!(slots3[45], (potion, 1), "the wall the place the seat wears");
+    assert_eq!(carried3, (0, 0), "the wall the place the cursor empties");
+    assert_eq!(
+        carried_wall, none,
+        "the wall the place the kind leaves with the stack"
+    );
+}
+
+/// THE THROW'S OWN KIND RIDE (the autopush-345 round — the drop the
+/// kind the cursor wore): the whole throw the kind the entity never
+/// carries the cursor's bank clears, the split the remainder's own
+/// kind keeps, the `None` the kindless windows the wall keeps silent.
+#[test]
+fn the_throw_ride_the_cursor_kind_the_drop_wears() {
+    let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    // THE WHOLE THROW (button 0): the kind the bank clears
+    let mut carried = (745, 1);
+    let mut carried_kind = kind_a;
+    wire_throw_outside(&tx, &mut carried, 0, 0, 1, Some(&mut carried_kind));
+    assert_eq!(carried, (0, 0), "the whole throw the cursor empties");
+    assert_eq!(carried_kind, none, "the whole throw the kind clears");
+    // THE SPLIT (button 1, count 2): the remainder's own kind keeps
+    let mut carried2 = (745, 2);
+    let mut carried_kind2 = kind_a;
+    wire_throw_outside(&tx, &mut carried2, 1, 0, 2, Some(&mut carried_kind2));
+    assert_eq!(carried2, (745, 1), "the split the remainder keeps");
+    assert_eq!(
+        carried_kind2, kind_a,
+        "the split the remainder's own kind keeps"
+    );
+    // THE KINDLESS WINDOW (the `None` the chest/table lanes wear):
+    // the walk the wall keeps silent
+    let mut carried3 = (745, 1);
+    wire_throw_outside(&tx, &mut carried3, 0, 5, 3, None);
+    assert_eq!(carried3, (0, 0), "the kindless throw the cursor empties");
+}
