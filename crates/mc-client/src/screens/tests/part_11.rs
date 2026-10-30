@@ -10908,3 +10908,87 @@ fn the_world_qdrop_ride_the_wire_the_prediction_wears() {
         "the sink-less belief the walk keeps whole"
     );
 }
+
+/// THE PICKER'S OWN WRAPPED KIND LANE (the autopush-348 round — the
+/// wrapped seats the bank the survival rows read the same rides wear):
+/// the wrapped offhand's tooltip the bank's [`OFFHAND_KIND_SEAT`] the
+/// kinded name answers (the 346 law's own seat the picker's mirror
+/// re-wears — the hovered shield cell the display name the effect
+/// rows ride), the wrapped main row the same bank the seat's own
+/// index reads, the ARMOR rows the kind never carries the plain name
+/// the wall keeps, the PALETTE rows the no-component vanilla law the
+/// kindless NONE keeps.
+#[test]
+fn the_picker_wrap_kind_the_bank_the_seats_rewear() {
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let mut app = App::new(262);
+    app.enter_world();
+    app.game_mode = GameMode::Creative;
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Creative, "the creative arm opens");
+    // THE WRAPPED TAB (the INVENTORY tab the wrapped seats serve —
+    // the default seat the building blocks keep)
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    app.creative_panel = (100, 50);
+    // THE WRAPPED OFFHAND (the bank's 36 the kinded name the tooltip
+    // wears — the 346 law the same seat the picker's mirror re-wears)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    let expected = App::potion_kind_display_name(kind_a);
+    assert!(
+        !expected.contains("potion.effect"),
+        "the lang row the tr resolves (got {expected})"
+    );
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 35 + 8, 50 + 20 + 8)
+        .expect("the offhand seat the gate answers");
+    assert_eq!(id, potion, "the offhand's own stack the gate banks");
+    assert_eq!(
+        rows[0],
+        (expected.clone(), [1.0, 1.0, 1.0]),
+        "the kinded name the wrapped offhand wears"
+    );
+    assert!(rows.len() > 1, "the effect rows the kind lane wears");
+    // THE WRAPPED MAIN ROW (the seat's own index the same bank reads)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind_a;
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 9 + 8, 50 + 54 + 8)
+        .expect("the wrapped main seat the gate answers");
+    assert_eq!(id, potion, "the main row's own stack the gate banks");
+    assert_eq!(
+        rows[0],
+        (expected.clone(), [1.0, 1.0, 1.0]),
+        "the kinded name the wrapped main wears"
+    );
+    // THE ARMOR WALL (the kind never carries — the plain name the
+    // row keeps whatever the bank's armor seats wore)
+    app.inventory.armor[0] = (potion, 1);
+    app.items_potion_kinds[5] = kind_a;
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 54 + 8, 50 + 6 + 8)
+        .expect("the armor seat the gate answers");
+    assert_eq!(id, potion, "the armor row's own stack the gate banks");
+    assert_ne!(
+        rows[0].0, expected,
+        "the armor row the kind never carries — the plain name the wall keeps"
+    );
+    // THE PALETTE WALL (the no-component vanilla law the kindless
+    // NONE keeps — the minted row the plain name speaks; the cell the
+    // seat test's own law sets — the first page the wire order's
+    // potion row never wears)
+    app.select_creative_tab(0);
+    app.creative_palette[2] = (potion, 1);
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 9 + 2 * 18 + 8, 50 + 18 + 8)
+        .expect("the palette seat the gate answers");
+    assert_eq!(id, potion, "the palette's own potion row");
+    assert_ne!(
+        rows[0].0, expected,
+        "the palette row the no-component law keeps kindless"
+    );
+}

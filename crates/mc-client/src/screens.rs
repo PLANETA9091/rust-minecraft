@@ -33273,7 +33273,21 @@ impl App {
             {
                 let (id, count) = self.inventory.offhand[0];
                 if count > 0 && id != 0 {
-                    draw_item_icon(g, id, panel.0 + 35 + 1, panel.1 + 20 + 1);
+                    // THE KIND'S OWN TINT RIDE (the autopush-348 round —
+                    // the wrapped rows the SAME bank the survival rows
+                    // read, the 346 law's own offhand seat the picker's
+                    // mirror re-wears — the stale seat the id gate
+                    // never paints, the NONE the plain draw keeps)
+                    let kind = if crate::world::brewing_is_potion_kind(id) {
+                        self.items_potion_kinds[OFFHAND_KIND_SEAT]
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    if kind != crate::brewing_sim::POTION_KIND_NONE {
+                        draw_item_icon_kind(g, id, kind, panel.0 + 35 + 1, panel.1 + 20 + 1);
+                    } else {
+                        draw_item_icon(g, id, panel.0 + 35 + 1, panel.1 + 20 + 1);
+                    }
                 }
             }
             for i in 9..36usize {
@@ -33285,7 +33299,19 @@ impl App {
                     panel.0 + 9 + ((i - 9) % 9) as i32 * 18 + 1,
                     panel.1 + 54 + ((i - 9) / 9) as i32 * 18 + 1,
                 );
-                draw_item_icon(g, id, sx, sy);
+                // THE KIND'S OWN TINT RIDE (the autopush-348 round —
+                // the wrapped rows the bank the seat's own index reads,
+                // the same law the survival store rows wear)
+                let kind = if crate::world::brewing_is_potion_kind(id) {
+                    self.items_potion_kinds[i]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                if kind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, id, kind, sx, sy);
+                } else {
+                    draw_item_icon(g, id, sx, sy);
+                }
                 if count > 1 {
                     let s = count.to_string();
                     let tw = g.text_width(&s);
@@ -33298,7 +33324,18 @@ impl App {
                     continue;
                 }
                 let (sx, sy) = (panel.0 + 9 + i as i32 * 18 + 1, panel.1 + 112 + 1);
-                draw_item_icon(g, id, sx, sy);
+                // THE KIND'S OWN TINT RIDE (the autopush-348 round —
+                // the wrapped hotbar row the same bank the index reads)
+                let kind = if crate::world::brewing_is_potion_kind(id) {
+                    self.items_potion_kinds[i]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                if kind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, id, kind, sx, sy);
+                } else {
+                    draw_item_icon(g, id, sx, sy);
+                }
                 if count > 1 {
                     let s = count.to_string();
                     let tw = g.text_width(&s);
@@ -33362,7 +33399,21 @@ impl App {
                 continue;
             }
             let (sx, sy) = (panel.0 + 9 + i as i32 * 18 + 1, panel.1 + 112 + 1);
-            draw_item_icon(g, id, sx, sy);
+            // THE KIND'S OWN TINT RIDE (the autopush-348 round — the
+            // picker's bottom row the SAME bank the survival rows
+            // read: the same store row the survival screen tints the
+            // picker's own mirror never loses — the palette rows the
+            // no-component vanilla law the plain draw keeps)
+            let kind = if crate::world::brewing_is_potion_kind(id) {
+                self.items_potion_kinds[i]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx, sy);
+            } else {
+                draw_item_icon(g, id, sx, sy);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -46618,34 +46669,40 @@ impl App {
         mx: i32,
         my: i32,
     ) -> Option<(i32, Vec<(String, [f32; 3])>)> {
-        let ((id, count), ench, creative_kind_row) = if CREATIVE_TABS[self.creative_tab].kind
-            == CreativeTabKind::Inventory
-        {
-            // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
-            match self.creative_wrap_cell(mx, my)? {
-                CreativeWrapSlot::Armor(k) => (self.inventory.armor[k], Vec::new(), usize::MAX),
-                CreativeWrapSlot::Offhand => (self.inventory.offhand[0], Vec::new(), usize::MAX),
-                // THE STORE SEATS (the main/hotbar rows the REAL
-                // inventory keeps — the enchanted stacks the store's
-                // own rows answer, the ride-home numbering the keys)
-                CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
-                    let store = self.inventory_enchants.get(i).cloned().unwrap_or_default();
-                    (self.inventory.items[i], store, i)
+        let ((id, count), ench, creative_kind_row) =
+            if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+                // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
+                match self.creative_wrap_cell(mx, my)? {
+                    CreativeWrapSlot::Armor(k) => (self.inventory.armor[k], Vec::new(), usize::MAX),
+                    // THE OFFHAND'S OWN SEAT (the autopush-348 round — the
+                    // bank's [`OFFHAND_KIND_SEAT`] the wrapped tooltip the
+                    // 346 law's own seat re-wears: the hovered shield cell
+                    // the kinded name the survival arm answers, the armor
+                    // rows the kind never carries the wall the MAX keeps)
+                    CreativeWrapSlot::Offhand => {
+                        (self.inventory.offhand[0], Vec::new(), OFFHAND_KIND_SEAT)
+                    }
+                    // THE STORE SEATS (the main/hotbar rows the REAL
+                    // inventory keeps — the enchanted stacks the store's
+                    // own rows answer, the ride-home numbering the keys)
+                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                        let store = self.inventory_enchants.get(i).cloned().unwrap_or_default();
+                        (self.inventory.items[i], store, i)
+                    }
+                    CreativeWrapSlot::Bin => return None, // the hasItem false
                 }
-                CreativeWrapSlot::Bin => return None, // the hasItem false
-            }
-        } else if let Some(cell) = self.creative_palette_cell(mx, my) {
-            (self.creative_palette[cell], Vec::new(), usize::MAX)
-        } else if let Some(slot) = self.creative_store_cell(mx, my) {
-            let store = self
-                .inventory_enchants
-                .get(slot)
-                .cloned()
-                .unwrap_or_default();
-            (self.inventory.items[slot], store, slot)
-        } else {
-            return None; // the seats' outside the walk refuses
-        };
+            } else if let Some(cell) = self.creative_palette_cell(mx, my) {
+                (self.creative_palette[cell], Vec::new(), usize::MAX)
+            } else if let Some(slot) = self.creative_store_cell(mx, my) {
+                let store = self
+                    .inventory_enchants
+                    .get(slot)
+                    .cloned()
+                    .unwrap_or_default();
+                (self.inventory.items[slot], store, slot)
+            } else {
+                return None; // the seats' outside the walk refuses
+            };
         if count <= 0 {
             return None; // the hasItem() gate
         }
@@ -46655,7 +46712,10 @@ impl App {
         // THE POTION KIND'S OWN NAME RIDE (the autopush-340 round — the
         // creative seats the same bank the display name answers, the
         // palette rows the kindless NONE keeps — the picker's own
-        // stacks the no-component law wears)
+        // stacks the no-component vanilla law wears; the WRAPPED
+        // OFFHAND the 348 round the bank's own seat re-wears — the
+        // same seat the survival arm answers, the armor rows the kind
+        // never carries the NONE wall keeps)
         let kind = if crate::world::brewing_is_potion_kind(id) {
             self.items_potion_kinds
                 .get(creative_kind_row)
