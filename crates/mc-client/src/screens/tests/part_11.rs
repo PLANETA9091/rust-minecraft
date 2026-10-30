@@ -12482,3 +12482,157 @@ fn the_brewing_tooltip_the_seats_the_kinds_wear() {
         "the closed door the walk refuses"
     );
 }
+
+/// THE CRAFTING TABLE'S OWN TOOLTIP SEAT (the autopush-355 round —
+/// the 351/352/203/353/354 law the table's own canvas wears, the
+/// window-1 menu numbering the ONE hover walk the clicks share): the
+/// craft cell the plain ride speaks, the result seat the sim's
+/// recompute the rows wear, the store rows the positional name +
+/// kind lanes re-key (the §o italic the named store row wears — the
+/// main grid the menu-1 map the items 9..35 speaks, the hotbar the
+/// -37 shift the items 0..8 keeps), the carried wall + the empty
+/// seat + the closed door the None verdicts keep. The REAL walk the
+/// offline door wears — the headless frame the REAL panel the
+/// render lays.
+#[test]
+fn the_table_tooltip_the_seats_the_store_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the walk reads
+    }
+    app.open_crafting_table();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Crafting,
+        "the table door the walk wears"
+    );
+    // THE REAL PANEL THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the panel lays)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.table_panel;
+    let craft_seat = |kind: usize| -> (i32, i32) {
+        let (x, y) = table_craft_origin(panel, kind);
+        (x + 1, y + 1)
+    };
+    let store_seat = |i: usize| -> (i32, i32) {
+        let (x, y) = inventory_slot_origin(panel, i);
+        (x + 1, y + 1)
+    };
+    // THE CRAFT CELL'S OWN PLAIN RIDE (the transient store the name
+    // lane never carries — the shared lane the display name answers)
+    app.table_grid[0] = (sword, 1);
+    let (c0x, c0y) = craft_seat(0);
+    let rows = app
+        .table_item_tooltip_hover(c0x + 8, c0y + 8)
+        .expect("the craft cell the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the craft cell the plain name keeps"
+    );
+    // THE RESULT SEAT'S OWN PLAIN RIDE (the sim's recompute the rows
+    // wear — the transient seat the store lane never maps)
+    app.table_result = (dirt, 4);
+    let (rx, ry) = craft_seat(9);
+    let rows = app
+        .table_item_tooltip_hover(rx + 8, ry + 8)
+        .expect("the result seat the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the result seat the plain name keeps"
+    );
+    // THE MAIN GRID'S OWN POSITIONAL RIDE (the §o italic the named
+    // store row wears — the menu-1 map the items 9..35 the lane
+    // keeps)
+    app.inventory.items[9] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = store_seat(9);
+    let rows = app
+        .table_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named main row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .table_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain main row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE HOTBAR'S OWN POSITIONAL RIDE (the -37 shift the items 0..8
+    // the lane keeps — the named hotbar row the §o italic wears)
+    app.inventory.items[0] = (sword, 1);
+    app.items_custom_names[0] = Some("Named Sword".to_string());
+    let (hx, hy) = store_seat(0);
+    let rows = app
+        .table_item_tooltip_hover(hx + 8, hy + 8)
+        .expect("the named hotbar row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Sword",
+        "the hotbar shift the store row wears"
+    );
+    app.items_custom_names[0] = None;
+    let rows = app
+        .table_item_tooltip_hover(hx + 8, hy + 8)
+        .expect("the plain hotbar row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE KIND'S OWN RIDE (the 354 brewing law the store rows
+    // re-wear — the kinded stack the row the potion rows the shared
+    // lane speaks, the display name the kind lane re-keys)
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    app.inventory.items[10] = (potion, 1);
+    app.items_potion_kinds[10] = kind;
+    let (kx, ky) = store_seat(10);
+    let rows = app
+        .table_item_tooltip_hover(kx + 8, ky + 8)
+        .expect("the kinded store row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        App::potion_kind_display_name(kind),
+        "the inventory kind lane the store row wears"
+    );
+    assert!(rows.len() > 1, "the effect rows the kind lane rides");
+    app.items_potion_kinds[10] = crate::brewing_sim::POTION_KIND_NONE;
+    // THE CARRIED WALL (the offline cursor the same field answers)
+    app.inv_carried = (1, 1);
+    assert_eq!(
+        app.table_item_tooltip_hover(mx + 8, my + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.inv_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps)
+    app.table_grid[1] = (0, 0);
+    let (c1x, c1y) = craft_seat(1);
+    assert_eq!(
+        app.table_item_tooltip_hover(c1x + 8, c1y + 8),
+        None,
+        "the empty seat the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_crafting_table(ScreenKind::World);
+    assert_eq!(
+        app.table_item_tooltip_hover(c0x + 8, c0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}

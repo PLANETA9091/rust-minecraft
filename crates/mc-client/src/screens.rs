@@ -33682,6 +33682,88 @@ impl App {
         Some((x + 1, y + 1))
     }
 
+    /// THE CRAFTING TABLE'S OWN TOOLTIP SEAT (the autopush-355 round —
+    /// the 351/352/203/353/354 law the container family's own canvases
+    /// re-wear: the hovered seat's rows the shared lane speaks, the
+    /// window-1 menu numbering the ONE hover walk the clicks share
+    /// answers [the result 0 the ctor's addResultSlot places, the 3x3
+    /// cells 1..9 the addCraftingGridSlots walk speaks, the store rows
+    /// 10..45 the standard numbering banks], the craft seats the
+    /// transient stores the plain rows wear [the offline grid/result
+    /// the sim's recompute keeps, the live lane the window-1 belief
+    /// the same array indexes], the store rows the REAL inventory the
+    /// positional map re-keys [the main grid the items 9..35 the
+    /// menu-1 speaks, the hotbar the items 0..8 the -37 shift keeps —
+    /// the highlight's own inverse walk the same law answers], the
+    /// KIND's own seat the 354 brewing law the store rows re-wear
+    /// [the items_potion_kinds the menu map reads, the craft seats
+    /// the NONE wall keeps — the kind the transient stores never
+    /// carry], the carried wall the render's own split reads [the
+    /// live lane's believed cursor the wire keeps, the offline sim's
+    /// local cursor the stand-in answers], the empty seat + the
+    /// closed door the None verdicts keep. The headless scenes track
+    /// no mouse — the pixel goldens never see this pass.)
+    fn table_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Crafting {
+            return None; // the table's own screen the walk serves
+        }
+        let live = self.world_is_network && self.table_is_live;
+        let carried = if live {
+            self.live_table_carried
+        } else {
+            self.inv_carried
+        };
+        if carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let menu = self.table_hover_menu(mx, my)?; // the ONE hover walk the clicks share
+        let (id, count) = if live {
+            self.live_table_slots[menu]
+        } else if menu == 0 {
+            self.table_result
+        } else if menu <= 9 {
+            self.table_grid[menu - 1]
+        } else if menu >= 37 {
+            self.inventory.hotbar()[menu - 37]
+        } else {
+            self.inventory.items[menu - 1]
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        // THE STORE'S OWN SEAT (the menu ids 10..45 the REAL inventory
+        // keys — the main grid the items 9..35 the menu-1 speaks, the
+        // hotbar the items 0..8 the -37 shift keeps; the craft seats
+        // the transient stores the None the honest lane wears)
+        let inv = if menu >= 37 {
+            Some(menu - 37)
+        } else if menu >= 10 {
+            Some(menu - 1)
+        } else {
+            None
+        };
+        // THE KIND'S OWN SEAT (the 354 brewing law the store rows
+        // re-wear — the real inventory's kinds the menu map reads, the
+        // craft seats the NONE wall keeps — the kind the transient
+        // stores never carry)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            inv.map(|i| self.items_potion_kinds[i])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let ench = inv
+            .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
+            .unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
+        if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
     /// THE FURNACE'S OWN HOVER SEAT (the 328 round — the vanilla's
     /// own single getHoveredSlot law the furnace lane finally wears:
     /// the ONE pure walk the clicks and the drops and the swaps and
@@ -34797,6 +34879,16 @@ impl App {
                         g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                     }
                 }
+            }
+        }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the 355 round
+        // the table's own canvas wears: the hovered seat's rows the
+        // shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.table_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
             }
         }
         self.render_bundle_tooltip(g, a);
