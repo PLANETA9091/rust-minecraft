@@ -12636,3 +12636,221 @@ fn the_table_tooltip_the_seats_the_store_wear() {
         "the closed door the walk refuses"
     );
 }
+
+/// THE MIRROR KIND RIDE'S FAMILY RETROFIT (the autopush-356 round —
+/// the 355 law the chest/furnace/dispenser/hopper walks re-wear: the
+/// kinded stack the mirror row the display name + the effect rows
+/// the shared lane speaks, the container cell the NONE wall keeps —
+/// the kind the per-cell stores never carry, the kind seat the cell
+/// never reads). The REAL walks the offline doors wear — the
+/// headless frames the REAL rects the renders lay.
+#[test]
+fn the_mirror_kind_the_family_wear() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    let surface_cell = |app: &mut App| -> (i32, i32, i32) {
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        (c, app.spawn_y - 1 + 1, c)
+    };
+    // THE CHEST'S OWN RIDE (the mirror head the inventory's item 9
+    // the lane keeps)
+    {
+        let mut app = App::new(3);
+        let cell = surface_cell(&mut app);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+        for it in app.inventory.items.iter_mut() {
+            *it = (0, 0);
+        }
+        app.open_chest_for(cell);
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+        let seat = |slot: i16| -> (i32, i32) {
+            app.chest_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s == slot)
+                .map(|&(x, y, _)| (x, y))
+                .unwrap()
+        };
+        app.chest_mirror[0] = (potion, 1);
+        app.items_potion_kinds[9] = kind;
+        let (mx, my) = seat(27);
+        let rows = app
+            .chest_item_tooltip_hover(mx + 8, my + 8)
+            .expect("the chest kinded mirror row the rows speak");
+        assert_eq!(
+            rows[0].0,
+            App::potion_kind_display_name(kind),
+            "the chest mirror row the kind lane wears"
+        );
+        assert!(rows.len() > 1, "the effect rows the chest mirror rides");
+        // THE CONTAINER CELL'S OWN NONE WALL (the kind seat the cell
+        // never reads — the per-cell store the kind never carries)
+        app.chest_slots[0] = (potion, 1);
+        let (c0x, c0y) = seat(0);
+        let rows = app
+            .chest_item_tooltip_hover(c0x + 8, c0y + 8)
+            .expect("the chest cell the rows speak");
+        assert_eq!(
+            rows[0].0,
+            item_display_name(mc_registry::item_name(potion).unwrap()),
+            "the chest cell the NONE wall keeps"
+        );
+        app.items_potion_kinds[9] = none;
+    }
+    // THE FURNACE'S OWN RIDE (the mirror head the seat 3 the lane
+    // keeps — the menu map the items 9..35 the +6 shift speaks)
+    {
+        let mut app = App::new(3);
+        let cell = surface_cell(&mut app);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        for it in app.inventory.items.iter_mut() {
+            *it = (0, 0);
+        }
+        app.open_furnace(cell);
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+        let seat = |slot: i16| -> (i32, i32) {
+            app.furnace_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s == slot)
+                .map(|&(x, y, _)| (x, y))
+                .unwrap()
+        };
+        app.furnace_slots[3] = (potion, 1);
+        app.items_potion_kinds[9] = kind;
+        let (mx, my) = seat(3);
+        let rows = app
+            .furnace_item_tooltip_hover(mx + 8, my + 8)
+            .expect("the furnace kinded mirror row the rows speak");
+        assert_eq!(
+            rows[0].0,
+            App::potion_kind_display_name(kind),
+            "the furnace mirror row the kind lane wears"
+        );
+        assert!(rows.len() > 1, "the effect rows the furnace mirror rides");
+        // THE TRIO'S OWN NONE WALL (the input seat the kind never
+        // reads — the furnace store the kind never carries)
+        app.furnace_slots[0] = (potion, 1);
+        let (i0x, i0y) = seat(0);
+        let rows = app
+            .furnace_item_tooltip_hover(i0x + 8, i0y + 8)
+            .expect("the furnace trio the rows speak");
+        assert_eq!(
+            rows[0].0,
+            item_display_name(mc_registry::item_name(potion).unwrap()),
+            "the furnace trio the NONE wall keeps"
+        );
+        app.items_potion_kinds[9] = none;
+    }
+    // THE DISPENSER'S OWN RIDE (the mirror head the seat 9 the lane
+    // keeps — the same numbering the identity keeps)
+    {
+        let mut app = App::new(3);
+        let cell = surface_cell(&mut app);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+        for it in app.inventory.items.iter_mut() {
+            *it = (0, 0);
+        }
+        app.open_dispenser_for(cell);
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+        let seat = |slot: i16| -> (i32, i32) {
+            app.dispenser_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s == slot)
+                .map(|&(x, y, _)| (x, y))
+                .unwrap()
+        };
+        app.dispenser_mirror[0] = (potion, 1);
+        app.items_potion_kinds[9] = kind;
+        let (mx, my) = seat(9);
+        let rows = app
+            .dispenser_item_tooltip_hover(mx + 8, my + 8)
+            .expect("the dispenser kinded mirror row the rows speak");
+        assert_eq!(
+            rows[0].0,
+            App::potion_kind_display_name(kind),
+            "the dispenser mirror row the kind lane wears"
+        );
+        assert!(rows.len() > 1, "the effect rows the dispenser mirror rides");
+        // THE GRID'S OWN NONE WALL (the cell the kind never reads —
+        // the dispenser store the kind never carries)
+        app.dispenser_slots[0] = (potion, 1);
+        let (g0x, g0y) = seat(0);
+        let rows = app
+            .dispenser_item_tooltip_hover(g0x + 8, g0y + 8)
+            .expect("the dispenser grid the rows speak");
+        assert_eq!(
+            rows[0].0,
+            item_display_name(mc_registry::item_name(potion).unwrap()),
+            "the dispenser grid the NONE wall keeps"
+        );
+        app.items_potion_kinds[9] = none;
+    }
+    // THE HOPPER'S OWN RIDE (the mirror head the seat 5 the lane
+    // keeps — the s-5 positional the chest map speaks)
+    {
+        let mut app = App::new(3);
+        let cell = surface_cell(&mut app);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+        for it in app.inventory.items.iter_mut() {
+            *it = (0, 0);
+        }
+        app.open_hopper_for(cell);
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+        let seat = |slot: i16| -> (i32, i32) {
+            app.chest_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s == slot)
+                .map(|&(x, y, _)| (x, y))
+                .unwrap()
+        };
+        app.chest_mirror[0] = (potion, 1);
+        app.items_potion_kinds[9] = kind;
+        let (mx, my) = seat(5);
+        let rows = app
+            .hopper_item_tooltip_hover(mx + 8, my + 8)
+            .expect("the hopper kinded mirror row the rows speak");
+        assert_eq!(
+            rows[0].0,
+            App::potion_kind_display_name(kind),
+            "the hopper mirror row the kind lane wears"
+        );
+        assert!(rows.len() > 1, "the effect rows the hopper mirror rides");
+        // THE FIVE-SEAT ROW'S OWN NONE WALL (the cell the kind never
+        // reads — the hopper store the kind never carries)
+        app.chest_slots[0] = (potion, 1);
+        let (h0x, h0y) = seat(0);
+        let rows = app
+            .hopper_item_tooltip_hover(h0x + 8, h0y + 8)
+            .expect("the hopper seat the rows speak");
+        assert_eq!(
+            rows[0].0,
+            item_display_name(mc_registry::item_name(potion).unwrap()),
+            "the hopper seat the NONE wall keeps"
+        );
+        app.items_potion_kinds[9] = none;
+    }
+}

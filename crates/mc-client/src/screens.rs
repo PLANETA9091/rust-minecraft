@@ -33826,8 +33826,11 @@ impl App {
     /// carried wall the render's own split reads [the live lane's
     /// believed cursor the wire keeps, the offline sim's local cursor
     /// the stand-in answers], the empty seat + the closed door the
-    /// None verdicts keep. The headless scenes track no mouse — the
-    /// pixel goldens never see this pass.)
+    /// None verdicts keep. THE KIND'S OWN RIDE the 356 round wears
+    /// (the 355 law the mirror rows re-wear — the inventory's kind
+    /// lane the menu map reads, the trio the NONE wall keeps). The
+    /// headless scenes track no mouse — the pixel goldens never see
+    /// this pass.)
     fn furnace_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Furnace {
             return None; // the furnace's own screen the walk serves
@@ -33850,12 +33853,17 @@ impl App {
         let ench = inv
             .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
             .unwrap_or_default();
-        let mut rows = Self::item_tooltip_rows_kind(
-            id,
-            crate::brewing_sim::POTION_KIND_NONE,
-            self.advanced_item_tooltips,
-            &ench,
-        );
+        // THE KIND'S OWN RIDE (the 356 round — the 355 law the family's
+        // mirror rows re-wear: the real inventory's kinds the menu map
+        // reads, the trio the NONE wall keeps — the kind the furnace
+        // store never carries)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            inv.map(|i| self.items_potion_kinds[i])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
         if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
             if let Some(first) = rows.first_mut() {
                 *first = Self::custom_name_row(&name);
@@ -33926,8 +33934,11 @@ impl App {
     /// the carried wall the offline cursor the same field answers,
     /// the empty seat + the closed door the None verdicts keep. THE
     /// HOPPER'S OWN DOOR the flag keeps — the five-seat canvas the
-    /// shared rects lay the later round wears. The headless scenes
-    /// track no mouse — the pixel goldens never see this pass.)
+    /// shared rects lay the later round wears. THE KIND'S OWN RIDE
+    /// the 356 round wears (the 355 law the mirror rows re-wear —
+    /// the inventory's kind lane the menu map reads, the container
+    /// cells the NONE wall keeps). The headless scenes track no
+    /// mouse — the pixel goldens never see this pass.)
     fn chest_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Chest || self.chest_window_hopper {
             return None; // the chest's own canvas the walk serves — the hopper the later round wears
@@ -33954,12 +33965,17 @@ impl App {
         let ench = inv
             .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
             .unwrap_or_default();
-        let mut rows = Self::item_tooltip_rows_kind(
-            id,
-            crate::brewing_sim::POTION_KIND_NONE,
-            self.advanced_item_tooltips,
-            &ench,
-        );
+        // THE KIND'S OWN RIDE (the 356 round — the 355 law the family's
+        // mirror rows re-wear: the real inventory's kinds the menu map
+        // reads, the container cells the NONE wall keeps — the kind
+        // the chest store never carries)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            inv.map(|i| self.items_potion_kinds[i])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
         if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
             if let Some(first) = rows.first_mut() {
                 *first = Self::custom_name_row(&name);
@@ -33976,9 +33992,11 @@ impl App {
     /// the REAL inventory keeps — the stores the same cells answer],
     /// the five-seat row the plain rows the per-cell absence keeps,
     /// the carried wall the offline cursor the same field answers,
-    /// the empty seat + the closed door the None verdicts keep. The
-    /// headless scenes track no mouse — the pixel goldens never see
-    /// this pass.)
+    /// the empty seat + the closed door the None verdicts keep. THE
+    /// KIND'S OWN RIDE the 356 round wears (the 355 law the mirror
+    /// rows re-wear — the inventory's kind lane the menu map reads,
+    /// the five-seat row the NONE wall keeps). The headless scenes
+    /// track no mouse — the pixel goldens never see this pass.)
     fn hopper_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Chest || !self.chest_window_hopper {
             return None; // the hopper's own canvas the walk serves
@@ -34004,12 +34022,17 @@ impl App {
         let ench = inv
             .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
             .unwrap_or_default();
-        let mut rows = Self::item_tooltip_rows_kind(
-            id,
-            crate::brewing_sim::POTION_KIND_NONE,
-            self.advanced_item_tooltips,
-            &ench,
-        );
+        // THE KIND'S OWN RIDE (the 356 round — the 355 law the family's
+        // mirror rows re-wear: the real inventory's kinds the menu map
+        // reads, the five-seat row the NONE wall keeps — the kind the
+        // hopper store never carries)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            inv.map(|i| self.items_potion_kinds[i])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
         if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
             if let Some(first) = rows.first_mut() {
                 *first = Self::custom_name_row(&name);
@@ -34075,9 +34098,11 @@ impl App {
     /// the REAL inventory keeps — the stores the same cells answer],
     /// the nine grid cells the plain rows the per-cell absence keeps,
     /// the carried wall the offline cursor the same field answers,
-    /// the empty seat + the closed door the None verdicts keep. The
-    /// headless scenes track no mouse — the pixel goldens never see
-    /// this pass.)
+    /// the empty seat + the closed door the None verdicts keep. THE
+    /// KIND'S OWN RIDE the 356 round wears (the 355 law the mirror
+    /// rows re-wear — the inventory's kind lane the menu map reads,
+    /// the grid cells the NONE wall keeps). The headless scenes
+    /// track no mouse — the pixel goldens never see this pass.)
     fn dispenser_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Dispenser {
             return None; // the dispenser's own screen the walk serves
@@ -34099,12 +34124,17 @@ impl App {
         let ench = inv
             .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
             .unwrap_or_default();
-        let mut rows = Self::item_tooltip_rows_kind(
-            id,
-            crate::brewing_sim::POTION_KIND_NONE,
-            self.advanced_item_tooltips,
-            &ench,
-        );
+        // THE KIND'S OWN RIDE (the 356 round — the 355 law the family's
+        // mirror rows re-wear: the real inventory's kinds the menu map
+        // reads, the grid cells the NONE wall keeps — the kind the
+        // dispenser store never carries)
+        let kind = if crate::world::brewing_is_potion_kind(id) {
+            inv.map(|i| self.items_potion_kinds[i])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
         if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
             if let Some(first) = rows.first_mut() {
                 *first = Self::custom_name_row(&name);
