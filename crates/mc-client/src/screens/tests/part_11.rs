@@ -11893,3 +11893,329 @@ fn the_enchant_tooltip_the_seats_the_stores_wear() {
         "the closed door the walk refuses"
     );
 }
+
+/// THE CHEST'S OWN TOOLTIP SEAT (the dev-203 round — the 351/352 law
+/// the chest's own canvas wears): the container cell the plain row
+/// the per-cell absence keeps, the mirror rows the store lane
+/// positionally re-keys (the §o italic the named store row wears —
+/// the offline write-through the REAL inventory keeps), the carried
+/// wall + the empty seat + the closed door the None verdicts keep.
+/// The REAL walk the offline door wears — the headless frame the
+/// REAL rects the render lays.
+#[test]
+fn the_chest_tooltip_the_mirror_stores_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_chest_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the chest door the kind wears"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE CONTAINER CELL'S OWN PLAIN ROW (the per-cell store the
+    // name lane never carries — the shared lane the display name
+    // answers)
+    app.chest_slots[0] = (sword, 1);
+    let (c0x, c0y) = seat(0);
+    let rows = app
+        .chest_item_tooltip_hover(c0x + 8, c0y + 8)
+        .expect("the held cell the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the cell the plain name keeps"
+    );
+    // THE MIRROR'S OWN POSITIONAL RIDE (the §o italic the named
+    // store row wears — the mirror head the inventory's item 9 the
+    // lane keeps)
+    app.chest_mirror[0] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = seat(27);
+    let rows = app
+        .chest_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .chest_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE CARRIED WALL (the offline cursor the same field answers)
+    app.chest_carried = (1, 1);
+    assert_eq!(
+        app.chest_item_tooltip_hover(mx + 8, my + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.chest_carried = (0, 0);
+    // THE EMPTY CELL (the hasItem gate the silence keeps)
+    app.chest_slots[1] = (0, 0);
+    let (c1x, c1y) = seat(1);
+    assert_eq!(
+        app.chest_item_tooltip_hover(c1x + 8, c1y + 8),
+        None,
+        "the empty cell the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(
+        app.chest_item_tooltip_hover(c0x + 8, c0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE FURNACE'S OWN TOOLTIP SEAT (the dev-203 round — the 351/352
+/// law the furnace's own canvas wears): the trio the plain rows the
+/// per-cell absence keeps, the mirror rows the store lane
+/// positionally re-keys (the §o italic + the ENCHANT line the store
+/// rides — the offline write-through the REAL inventory keeps), the
+/// carried wall the render's own split reads, the empty seat + the
+/// closed door the None verdicts keep. The REAL walk the offline
+/// door wears — the headless frame the REAL rects the render lays.
+#[test]
+fn the_furnace_tooltip_the_mirror_stores_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_furnace(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Furnace,
+        "the furnace door the kind wears"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE TRIO'S OWN PLAIN ROW (the input seat the per-cell store the
+    // name lane never carries — the shared lane the display name
+    // answers)
+    app.furnace_slots[0] = (sword, 1);
+    let (i0x, i0y) = seat(0);
+    let rows = app
+        .furnace_item_tooltip_hover(i0x + 8, i0y + 8)
+        .expect("the held input the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the trio seat the plain name keeps"
+    );
+    // THE MIRROR'S OWN POSITIONAL RIDE (the §o italic + the ENCHANT
+    // line the store rides — the mirror head the inventory's item 9
+    // the lane keeps)
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap();
+    app.furnace_slots[3] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    app.inventory_enchants[9] = vec![(sharp as i32, 3)];
+    let (mx, my) = seat(3);
+    let rows = app
+        .furnace_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(rows.len(), 2, "the name + the line the store wears");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    assert_eq!(rows[1].0, "Sharpness III", "the store line the walk speaks");
+    app.items_custom_names[9] = None;
+    app.inventory_enchants[9].clear();
+    let rows = app
+        .furnace_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE CARRIED WALL (the offline cursor the same field answers)
+    app.furnace_carried = (1, 1);
+    assert_eq!(
+        app.furnace_item_tooltip_hover(mx + 8, my + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.furnace_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps — the fuel
+    // cell the fresh zeros wear)
+    let (f1x, f1y) = seat(1);
+    assert_eq!(
+        app.furnace_item_tooltip_hover(f1x + 8, f1y + 8),
+        None,
+        "the empty seat the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_furnace(ScreenKind::World);
+    assert_eq!(
+        app.furnace_item_tooltip_hover(i0x + 8, i0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
+
+/// THE DISPENSER'S OWN TOOLTIP SEAT (the dev-203 round — the 351/352
+/// law the dispenser's own canvas wears): the grid cell the plain
+/// row the per-cell absence keeps, the mirror rows the store lane
+/// positionally re-keys (the §o italic the named store row wears —
+/// the offline write-through the REAL inventory keeps), the carried
+/// wall + the empty seat + the closed door the None verdicts keep.
+/// The REAL walk the offline door wears — the headless frame the
+/// REAL rects the render lays.
+#[test]
+fn the_dispenser_tooltip_the_mirror_stores_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_dispenser_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Dispenser,
+        "the dispenser door the kind wears"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE GRID CELL'S OWN PLAIN ROW (the per-cell store the name lane
+    // never carries — the shared lane the display name answers)
+    app.dispenser_slots[0] = (sword, 1);
+    let (g0x, g0y) = seat(0);
+    let rows = app
+        .dispenser_item_tooltip_hover(g0x + 8, g0y + 8)
+        .expect("the held cell the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the grid cell the plain name keeps"
+    );
+    // THE MIRROR'S OWN POSITIONAL RIDE (the §o italic the named store
+    // row wears — the mirror head the inventory's item 9 the lane
+    // keeps)
+    app.dispenser_mirror[0] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = seat(9);
+    let rows = app
+        .dispenser_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .dispenser_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE CARRIED WALL (the offline cursor the same field answers)
+    app.dispenser_carried = (1, 1);
+    assert_eq!(
+        app.dispenser_item_tooltip_hover(mx + 8, my + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.dispenser_carried = (0, 0);
+    // THE EMPTY CELL (the hasItem gate the silence keeps)
+    app.dispenser_slots[1] = (0, 0);
+    let (g1x, g1y) = seat(1);
+    assert_eq!(
+        app.dispenser_item_tooltip_hover(g1x + 8, g1y + 8),
+        None,
+        "the empty cell the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_dispenser(ScreenKind::World);
+    assert_eq!(
+        app.dispenser_item_tooltip_hover(g0x + 8, g0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}

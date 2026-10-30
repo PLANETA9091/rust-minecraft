@@ -32737,6 +32737,16 @@ impl App {
                 }
             }
         }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the dev-203 round
+        // the chest's own canvas wears: the hovered seat's rows the
+        // shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.chest_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
+            }
+        }
         // THE BUNDLE TOOLTIP (the renderTooltip pass — the hovered
         // bundle's contents grid the chest lane's rows speak, the
         // topmost layer the panel and the carried stack keep under)
@@ -33700,6 +33710,68 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE FURNACE'S OWN MENU-TO-INVENTORY SEAT (the standard rows'
+    /// own map — the menu 3..29 the main grid answers [the items
+    /// 9..35 the +6 shift keeps], the 30..38 the hotbar row the -30
+    /// shift speaks; the trio 0..2 the None the transient seats
+    /// wear).
+    fn furnace_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (3..30).contains(&menu) {
+            Some(menu + 6)
+        } else if (30..39).contains(&menu) {
+            Some(menu - 30)
+        } else {
+            None
+        }
+    }
+
+    /// THE FURNACE'S OWN TOOLTIP SEAT (the dev-203 round — the
+    /// 351/352 law the container family's own canvases re-wear: the
+    /// hovered seat's rows the shared lane speaks, the mirror rows
+    /// the store lane positionally re-keys [the offline write-through
+    /// the REAL inventory keeps — the stores the same cells answer],
+    /// the trio the plain rows the per-cell absence keeps, the
+    /// carried wall the render's own split reads [the live lane's
+    /// believed cursor the wire keeps, the offline sim's local cursor
+    /// the stand-in answers], the empty seat + the closed door the
+    /// None verdicts keep. The headless scenes track no mouse — the
+    /// pixel goldens never see this pass.)
+    fn furnace_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Furnace {
+            return None; // the furnace's own screen the walk serves
+        }
+        let carried = if self.furnace_is_live {
+            self.live_furnace_carried
+        } else {
+            self.furnace_carried
+        };
+        if carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.furnace_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let (id, count) = *self.furnace_slots.get(s).unwrap_or(&(0, 0));
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let inv = Self::furnace_menu_to_inventory(s);
+        let ench = inv
+            .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
+            .unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(
+            id,
+            crate::brewing_sim::POTION_KIND_NONE,
+            self.advanced_item_tooltips,
+            &ench,
+        );
+        if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
     /// THE CHEST'S OWN HOVER SEAT (the 329 round — the vanilla's own
     /// single getHoveredSlot law the chest lane finally wears: the
     /// ONE pure walk the clicks and the drops and the swaps and the
@@ -33739,6 +33811,71 @@ impl App {
         Some((sx, sy)) // the rects the +1 inset the render banks
     }
 
+    /// THE CHEST'S OWN MIRROR-TO-INVENTORY SEAT (the mirror rows' own
+    /// map — the mirror idx the main 27 rows the items 9..35 answer,
+    /// the hotbar row the items 0..8 speaks; the container cells the
+    /// None the per-cell store's own lanes wear).
+    fn chest_mirror_to_inventory(idx: usize) -> Option<usize> {
+        if idx < 27 {
+            Some(9 + idx)
+        } else if idx < 36 {
+            Some(idx - 27)
+        } else {
+            None
+        }
+    }
+
+    /// THE CHEST'S OWN TOOLTIP SEAT (the dev-203 round — the 351/352
+    /// law the container family's own canvases re-wear: the hovered
+    /// seat's rows the shared lane speaks, the mirror rows the store
+    /// lane positionally re-keys [the offline write-through the REAL
+    /// inventory keeps — the stores the same cells answer], the
+    /// container cells the plain rows the per-cell absence keeps,
+    /// the carried wall the offline cursor the same field answers,
+    /// the empty seat + the closed door the None verdicts keep. THE
+    /// HOPPER'S OWN DOOR the flag keeps — the five-seat canvas the
+    /// shared rects lay the later round wears. The headless scenes
+    /// track no mouse — the pixel goldens never see this pass.)
+    fn chest_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Chest || self.chest_window_hopper {
+            return None; // the chest's own canvas the walk serves — the hopper the later round wears
+        }
+        if self.chest_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.chest_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let n = self.chest_slots.len().max(27);
+        let (id, count) = if s < n {
+            *self.chest_slots.get(s).unwrap_or(&(0, 0))
+        } else {
+            *self.chest_mirror.get(s - n).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let inv = if s < n {
+            None
+        } else {
+            Self::chest_mirror_to_inventory(s - n)
+        };
+        let ench = inv
+            .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
+            .unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(
+            id,
+            crate::brewing_sim::POTION_KIND_NONE,
+            self.advanced_item_tooltips,
+            &ench,
+        );
+        if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
     /// THE DISPENSER'S OWN HOVER SEAT (the 331 round — the same shared
     /// law the furnace + chest walks bank): the hovered seat the rects
     /// the last render laid answer — the strict 16x16 predicate the
@@ -33772,6 +33909,66 @@ impl App {
         }
         let (sx, sy, _) = self.dispenser_hover_seat(mx, my)?;
         Some((sx, sy)) // the rects the +1 inset the render banks
+    }
+
+    /// THE DISPENSER'S OWN MENU-TO-INVENTORY SEAT (the standard rows'
+    /// own map — the menu 9..35 the main grid the items the SAME
+    /// numbering answers [the mirror row the items cell the identity
+    /// keeps], the 36..44 the hotbar row the -36 shift speaks; the
+    /// nine grid cells the None the per-cell store's own lanes wear).
+    fn dispenser_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (9..36).contains(&menu) {
+            Some(menu)
+        } else if (36..45).contains(&menu) {
+            Some(menu - 36)
+        } else {
+            None
+        }
+    }
+
+    /// THE DISPENSER'S OWN TOOLTIP SEAT (the dev-203 round — the
+    /// 351/352 law the container family's own canvases re-wear: the
+    /// hovered seat's rows the shared lane speaks, the mirror rows
+    /// the store lane positionally re-keys [the offline write-through
+    /// the REAL inventory keeps — the stores the same cells answer],
+    /// the nine grid cells the plain rows the per-cell absence keeps,
+    /// the carried wall the offline cursor the same field answers,
+    /// the empty seat + the closed door the None verdicts keep. The
+    /// headless scenes track no mouse — the pixel goldens never see
+    /// this pass.)
+    fn dispenser_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Dispenser {
+            return None; // the dispenser's own screen the walk serves
+        }
+        if self.dispenser_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.dispenser_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let (id, count) = if s < 9 {
+            *self.dispenser_slots.get(s).unwrap_or(&(0, 0))
+        } else {
+            *self.dispenser_mirror.get(s - 9).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let inv = Self::dispenser_menu_to_inventory(s);
+        let ench = inv
+            .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
+            .unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(
+            id,
+            crate::brewing_sim::POTION_KIND_NONE,
+            self.advanced_item_tooltips,
+            &ench,
+        );
+        if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
     }
 
     /// THE BREWING STAND'S OWN HOVER SEAT (the autopush-332 round — the
@@ -35030,6 +35227,16 @@ impl App {
                 }
             }
         }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the dev-203 round
+        // the furnace's own canvas wears: the hovered seat's rows the
+        // shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.furnace_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
+            }
+        }
         self.render_bundle_tooltip(g, a);
         // THE HIGHLIGHT'S OWN FRONT LAYER (the extractSlotHighlightFront
         // walk the slots AFTER serves — the white alpha-32 the front
@@ -35189,6 +35396,16 @@ impl App {
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
+            }
+        }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the dev-203 round
+        // the dispenser's own canvas wears: the hovered seat's rows the
+        // shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.dispenser_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
             }
         }
         self.render_bundle_tooltip(g, a);
