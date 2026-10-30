@@ -23272,6 +23272,134 @@ fn the_debug_profile_file_the_statuses_restart_outlives() {
     );
 }
 
+// THE DEBUG PROFILE'S OWN DATAFIXER ROUND (javap 26.2 the
+// DataFixTypes.DEBUG_PROFILE wrapCodec law — the wrapped encode the
+// "DataVersion": current row the mergeToMap lambda writes, the wrapped
+// decode the ops.get / read-or-default / remove + the
+// updateToCurrentVersion walk speaks: the missing row the birth
+// version's orElse banks [the pre-datafixer files the same decode
+// serve], the malformed row the same default wears, the FUTURE row the
+// newer-than-current throw the catch lane answers — the DEFAULT reset
+// + the save re-write the fresh 4649 stamp banks)
+#[test]
+fn the_debug_profile_datafixer_the_version_row_the_wrap_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_debug_profile_df_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("debug-profile.json");
+    let _ = std::fs::remove_file(&path);
+    // THE WRAPPED ENCODE'S OWN STAMP (the custom shape the row the
+    // mergeToMap law carries — the same 4649 both shapes wear)
+    let mut app = App::new(262);
+    app.debug_profile_file = Some(path.clone());
+    app.debug_entry_states[8] = crate::screens::DebugEntryStatus::Always;
+    app.debug_profile = None;
+    app.debug_profile_save();
+    let text = std::fs::read_to_string(&path).expect("the save the file writes");
+    let root: serde_json::Value = serde_json::from_str(&text).expect("the file the JSON wears");
+    assert_eq!(
+        root["DataVersion"], 4649,
+        "the custom shape the version row carries"
+    );
+    assert_eq!(
+        root["custom"]["fps"], "ALWAYS_ON",
+        "the shape rows the same file keep"
+    );
+    app.debug_profile = Some(true);
+    app.debug_profile_save();
+    let root2: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).expect("the profile save rides"))
+            .expect("the JSON keeps");
+    assert_eq!(
+        root2["DataVersion"], 4649,
+        "the profile shape the version row carries"
+    );
+    assert_eq!(
+        root2["profile"], "performance",
+        "the word the same file wears"
+    );
+    // THE BIRTH VERSION'S OWN DECODE (the 4649 row the shape decode
+    // serves — the fixer chain the empty keeps)
+    std::fs::write(
+        &path,
+        r#"{"DataVersion":4649,"custom":{"fps":"ALWAYS_ON","tps":"ALWAYS_ON"}}"#,
+    )
+    .expect("the probe the file writes");
+    let mut app3 = App::new(262);
+    app3.debug_profile_file = Some(path.clone());
+    app3.debug_profile_load();
+    assert_eq!(
+        app3.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Always,
+        "the birth-version file the custom row wears"
+    );
+    assert_eq!(
+        app3.debug_profile, None,
+        "the custom shape the identity keeps"
+    );
+    // THE MISSING ROW'S OWN OR ELSE (the pre-datafixer file the
+    // birth version the default keeps — the same decode serves)
+    std::fs::write(&path, r#"{"custom":{"fps":"ALWAYS_ON","tps":"ALWAYS_ON"}}"#)
+        .expect("the probe the file writes");
+    let mut app4 = App::new(262);
+    app4.debug_profile_file = Some(path.clone());
+    app4.debug_profile_load();
+    assert_eq!(
+        app4.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Always,
+        "the row-less file the same decode serves"
+    );
+    // THE MALFORMED ROW'S OWN OR ELSE (the non-int row the flatMap's
+    // parse error the result-empty wears — the same default answers)
+    std::fs::write(
+        &path,
+        r#"{"DataVersion":"four six four nine","custom":{"fps":"ALWAYS_ON"}}"#,
+    )
+    .expect("the probe the file writes");
+    let mut app5 = App::new(262);
+    app5.debug_profile_file = Some(path.clone());
+    app5.debug_profile_load();
+    assert_eq!(
+        app5.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Always,
+        "the malformed row the default version wears"
+    );
+    // THE FUTURE ROW'S OWN THROW (the newer-than-current update the
+    // DataFixerUpper's own verdict keeps — the catch lane the DEFAULT
+    // reset + the save re-write the fresh stamp banks)
+    std::fs::write(&path, r#"{"DataVersion":5000,"profile":"performance"}"#)
+        .expect("the probe the file writes");
+    let mut app6 = App::new(262);
+    app6.debug_profile_file = Some(path.clone());
+    app6.debug_profile_load();
+    assert_eq!(
+        app6.debug_profile,
+        Some(false),
+        "the future file the DEFAULT identity wears"
+    );
+    assert_eq!(
+        app6.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the future file the DEFAULT preset keeps"
+    );
+    let root6: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).expect("the catch the re-write"))
+            .expect("the re-write the JSON keeps");
+    assert_eq!(
+        root6["DataVersion"], 4649,
+        "the re-write the current stamp banks"
+    );
+    assert_eq!(
+        root6["profile"], "default",
+        "the re-write the DEFAULT word wears"
+    );
+    assert!(
+        root6.get("custom").is_none(),
+        "the profile shape the custom key never wears"
+    );
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_dir(&dir);
+}
+
 // THE PROFILES' OWN PRESET WALK (javap 26.2 the DebugScreenEntries
 // clinit the PROFILES map banks — the DEFAULT arm the nine
 // IN_OVERLAY rows speak, the PERFORMANCE arm the fps ALWAYS_ON word

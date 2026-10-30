@@ -7692,6 +7692,16 @@ pub(crate) const DEBUG_PRESET_PERFORMANCE: [(&str, DebugEntryStatus); 5] = [
     ("memory", DebugEntryStatus::Overlay),
     ("simple_performance_impactors", DebugEntryStatus::Overlay),
 ];
+/// THE DEBUG PROFILE'S OWN DATA VERSION (javap 26.2 the
+/// DataFixTypes.DEBUG_PROFILE wrapCodec law the jar's own pair
+/// speaks): the DEFAULT_DEBUG_PROFILE_VERSION constant the EntryList
+/// ctor's sipush banks [pc 53-56 the `11 1229 b6` bytes — 4649 the
+/// wrapCodec's third arg rides] AND the currentVersion() walk the
+/// wrapped encode's createInt answers [SharedConstants.getCurrentVersion
+/// ().dataVersion().version()] — the SAME 4649 this snapshot both
+/// wears [the future jar the pair may split — the honest doc keeps;
+/// the sim the one constant both laws read].
+pub const DEBUG_PROFILE_DATA_VERSION: i64 = 4649;
 /// THE CATEGORY HEADERS' OWN KEYS (the DebugEntryCategory.label()
 /// rows the refreshEntries walk emits at the group boundaries)
 const DEBUG_CATEGORY_LABELS: [&str; 2] = [
@@ -41941,7 +41951,19 @@ impl App {
     /// malformed file the catch lane the resetToProfile(DEFAULT) +
     /// the save re-write wears — the same decode-failure law the
     /// Options.load defaults wear). The unknown id the skip law
-    /// keeps, the unknown word the skip law keeps.
+    /// keeps, the unknown word the skip law keeps. THE WRAPPED DECODE'S
+    /// OWN PREAMBLE (the DataFixTypes.DEBUG_PROFILE wrapCodec — the
+    /// [`DEBUG_PROFILE_DATA_VERSION`] doc the pair law names): the
+    /// version row the ops.get walk reads, the result-empty the
+    /// defaultVersion orElse answers [the missing row the birth
+    /// version's own law banks — the pre-datafixer files the same
+    /// decode serve], the malformed row the same default wears; the
+    /// FUTURE row the newer-than-current update the DataFixerUpper's
+    /// own throw answers — the load()'s catch the DEFAULT reset + the
+    /// save re-write the malformed arm's same pair wears; the <=
+    /// current file the birth version's EMPTY fixer chain the no-op
+    /// upgrade keeps [the row the ops.remove strip the shape decode
+    /// never reads — the profile/custom keys the same walks serve].
     pub fn debug_profile_load(&mut self) {
         let Some(path) = self.debug_profile_file.clone() else {
             return;
@@ -41962,6 +41984,33 @@ impl App {
             self.debug_profile_save();
             return;
         };
+        // THE VERSION ROW'S OWN READ (the wrapCodec decode pc 0-56 —
+        // the ops.get("DataVersion") the flatMap the INT parse wears,
+        // the result-empty the defaultVersion orElse answers: the
+        // missing row the [`DEBUG_PROFILE_DATA_VERSION`] keeps, the
+        // malformed row the same default wears)
+        let version = root
+            .get("DataVersion")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(DEBUG_PROFILE_DATA_VERSION);
+        if version > DEBUG_PROFILE_DATA_VERSION {
+            // THE NEWER FILE'S OWN THROW (the updateToCurrentVersion
+            // walk the newer-than-current input the DataFixerUpper's
+            // own verdict keeps — the load()'s catch the DEFAULT reset
+            // + the save re-write the malformed arm's same pair wears,
+            // the re-write the wrapped encode's law the fresh stamp
+            // banks)
+            self.debug_profile = Some(false);
+            self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
+            self.debug_profile_save();
+            return;
+        }
+        // THE FIXER CHAIN'S OWN IDENTITY (the birth version the type's
+        // own chain the EMPTY keeps — the <= current file the upgrade
+        // the no-op answers, the shape decode the same walks serve; the
+        // version row the strip law the ops.remove speaks — the
+        // profile/custom shape the row never reads, the honest no-op
+        // the same law keeps)
         match root.get("profile") {
             Some(serde_json::Value::String(w)) if w == "default" => {
                 // THE PROFILE WORD (vanilla pc 70-94 — the present
@@ -42045,6 +42094,13 @@ impl App {
                 serde_json::json!({"custom": custom})
             }
         };
+        // THE WRAPPED ENCODE'S OWN VERSION ROW (the DataFixTypes
+        // .DEBUG_PROFILE wrapCodec's lambda$encode$0 — the
+        // mergeToMap(encoded, createString("DataVersion"),
+        // createInt(currentVersion())) walk the inner encode's tail
+        // answers: the file the running jar's data version carries)
+        let mut root = root;
+        root["DataVersion"] = serde_json::json!(DEBUG_PROFILE_DATA_VERSION);
         if let Ok(text) = serde_json::to_string(&root) {
             let _ = std::fs::write(path, text);
         }
