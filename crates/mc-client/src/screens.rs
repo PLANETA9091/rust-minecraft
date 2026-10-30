@@ -26103,8 +26103,11 @@ impl App {
                     self.hotbar_slots = self.inventory.hotbar();
                 } else {
                     // THE CARRIED DESTROYS (pc 238-251 —
-                    // setCarried(EMPTY), both buttons the same walk)
+                    // setCarried(EMPTY), both buttons the same walk;
+                    // the word the destroy drops — the throw's own
+                    // silence the carried's emptiness wears)
                     self.inv_carried = (0, 0);
+                    self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 }
             }
             CreativeWrapSlot::Armor(k) => {
@@ -26143,6 +26146,44 @@ impl App {
                     } else {
                         crate::world_view::predict_pickup_right(believed, self.inv_carried)
                     };
+                    // THE KIND'S OWN CURSOR RIDE (the dev-204 round's
+                    // law the creative wrap's own store rows re-wear —
+                    // the SAME four arms the survival screen speaks:
+                    // the pickup the seat's kind the word banks, the
+                    // place the word the seat lays, the model's own
+                    // swap the pairs exchange, the merge the emptied
+                    // carried the NONE word wears; the stale seat the
+                    // normalized read the non-potion rows never keeps)
+                    let old_seat_kind = self.row_potion_kind(i);
+                    let old_carried_kind = self.inv_carried_potion_kind;
+                    let mut new_seat_kind = old_seat_kind;
+                    let mut new_carried_kind = old_carried_kind;
+                    {
+                        let seat_gone = believed.1 > 0 && new_cell.1 <= 0;
+                        let seat_new = believed.1 <= 0 && new_cell.1 > 0;
+                        let carried_gone = self.inv_carried.1 > 0 && new_carried.1 <= 0;
+                        let carried_new = self.inv_carried.1 <= 0 && new_carried.1 > 0;
+                        if seat_gone && carried_new {
+                            // the PICKUP — the kind rides to the word
+                            new_carried_kind = old_seat_kind;
+                            new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+                        } else if carried_gone && seat_new {
+                            // the PLACE — the kind rides to the seat
+                            new_seat_kind = old_carried_kind;
+                            new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+                        } else if believed.1 > 0 && new_cell.1 > 0 && believed.0 != new_cell.0 {
+                            // the MODEL'S OWN SWAP (the (id, count)
+                            // pairs the different-item exchange keeps
+                            // — the kind the pairs exchange)
+                            std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+                        } else if carried_gone {
+                            // the MERGE — the seat keeps its own kind,
+                            // the emptied carried the NONE word wears
+                            new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+                        }
+                        self.items_potion_kinds[i] = new_seat_kind;
+                        self.inv_carried_potion_kind = new_carried_kind;
+                    }
                     self.inventory.items[i] = new_cell;
                     self.inv_carried = new_carried;
                     self.hotbar_slots = self.inventory.hotbar();
@@ -26281,20 +26322,32 @@ impl App {
                     self.inv_carried = (carried.0, carried.1 + 1);
                 }
             } else {
-                // the shrink(1) the palette eats
-                self.inv_carried = (carried.0, carried.1 - 1);
+                // the shrink(1) the palette eats — the emptied carried
+                // the word the same silence the bin's destroy wears
+                let left = carried.1 - 1;
+                self.inv_carried = (carried.0, left);
+                if left <= 0 {
+                    self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                }
             }
             return;
         }
         if carried.1 > 0 {
             // the palette EATS (the hovered empty OR the different
             // item): the left the whole carried destroys, the right
-            // one takes off
+            // one takes off — the emptied carried the word the same
+            // silence the bin's destroy wears
             if button == 0 {
                 self.inv_carried = (0, 0);
+                self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             } else {
                 let left = carried.1 - 1;
-                self.inv_carried = if left > 0 { (carried.0, left) } else { (0, 0) };
+                if left > 0 {
+                    self.inv_carried = (carried.0, left);
+                } else {
+                    self.inv_carried = (0, 0);
+                    self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                }
             }
             return;
         }
@@ -26322,6 +26375,36 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, self.inv_carried)
         };
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 round's law the
+        // picker's own bottom row re-wears — the SAME four arms the
+        // wrapped store rows speak, the store seat the ride answers)
+        let old_seat_kind = self.row_potion_kind(slot);
+        let old_carried_kind = self.inv_carried_potion_kind;
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            let seat_gone = believed.1 > 0 && new_cell.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_cell.1 > 0;
+            let carried_gone = self.inv_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.inv_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if believed.1 > 0 && new_cell.1 > 0 && believed.0 != new_cell.0 {
+                // the MODEL'S OWN SWAP — the kind the pairs exchange
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the emptied carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.items_potion_kinds[slot] = new_seat_kind;
+            self.inv_carried_potion_kind = new_carried_kind;
+        }
         self.inventory.items[slot] = new_cell;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
@@ -35335,10 +35418,22 @@ impl App {
                 }
             }
             // the carried follows (the shared law — the tail walk the
-            // picker's own seats keep)
+            // picker's own seats keep; the KIND'S OWN CARRIED TINT the
+            // survival screen's law re-wears — the rides' word the
+            // liquid lane colors, the stale id the gate never paints)
             if self.inv_carried.1 > 0 {
                 if let Some((mx, my)) = self.mouse_pos {
-                    draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                    let carried_kind = if !crate::world::brewing_is_potion_kind(self.inv_carried.0)
+                    {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    } else {
+                        self.inv_carried_potion_kind
+                    };
+                    if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                        draw_item_icon_kind(g, self.inv_carried.0, carried_kind, mx - 8, my - 8);
+                    } else {
+                        draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                    }
                     if self.inv_carried.1 > 1 {
                         let s = self.inv_carried.1.to_string();
                         let tw = g.text_width(&s);
@@ -35476,10 +35571,21 @@ impl App {
                 }
             }
         }
-        // THE HELD STACK follows the cursor (the vanilla carried render)
+        // THE HELD STACK follows the cursor (the vanilla carried render;
+        // the KIND'S OWN CARRIED TINT the same law the wrapped canvas
+        // wears — the rides' word the liquid lane colors)
         if self.inv_carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                let carried_kind = if !crate::world::brewing_is_potion_kind(self.inv_carried.0) {
+                    crate::brewing_sim::POTION_KIND_NONE
+                } else {
+                    self.inv_carried_potion_kind
+                };
+                if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, self.inv_carried.0, carried_kind, mx - 8, my - 8);
+                } else {
+                    draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                }
                 if self.inv_carried.1 > 1 {
                     let s = self.inv_carried.1.to_string();
                     let tw = g.text_width(&s);

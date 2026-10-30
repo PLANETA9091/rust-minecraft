@@ -13432,3 +13432,258 @@ fn the_table_store_the_cursor_word_rides() {
         "the far face the tint never wears"
     );
 }
+
+/// THE CREATIVE WRAP'S OWN RIDE (the autopush-359 round — the 358
+/// NEXT list's own first candidate the dev-204 law the creative
+/// screen's own cursor walks re-wear: the wrapped store rows the
+/// four arms the survival screen speaks, the picker's bottom row the
+/// same ride answers, the bin's destroy the word drops, the palette
+/// eats the emptied carried the same silence wears [the take the
+/// kindless vanilla law keeps], the wrapped + the canvas ghosts the
+/// rides' word the liquid lane colors).
+#[test]
+fn the_creative_wrap_the_cursor_word_rides() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let kind2 = 5;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(262);
+    app.enter_world();
+    app.game_mode = GameMode::Creative;
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Creative, "the creative arm opens");
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    app.creative_panel = (100, 50);
+    let seat = |i: usize| -> (i32, i32) {
+        let (sx, sy) = if i < 9 {
+            (9 + i as i32 * 18, 112)
+        } else {
+            (
+                9 + ((i - 9) % 9) as i32 * 18,
+                54 + ((i - 9) / 9) as i32 * 18,
+            )
+        };
+        (100 + sx + 8, 50 + sy + 8)
+    };
+    // THE PICKUP ARM (the wrapped main row the word banks)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind;
+    let (ox, oy) = seat(9);
+    app.click_creative(ox, oy, 0);
+    assert_eq!(app.inv_carried, (potion, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the kinded pickup the word banks"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the seat the pickup empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the emptied seat the NONE word wears"
+    );
+    // THE PLACE ARM (the word the new seat lays)
+    let (px, py) = seat(12);
+    app.click_creative(px, py, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the place the carried empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the placed carried the NONE word wears"
+    );
+    assert_eq!(
+        app.inventory.items[12],
+        (potion, 1),
+        "the new seat the stack lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], kind,
+        "the new seat the kind lays"
+    );
+    // THE RE-PICKUP (the seat's kind the word re-banks)
+    let (qx, qy) = seat(12);
+    app.click_creative(qx, qy, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the re-pickup the word banks"
+    );
+    // THE MODEL'S OWN SWAP (the kinded carried the dirt seat exchanges)
+    app.inventory.items[13] = (dirt, 1);
+    let (sx, sy) = seat(13);
+    app.click_creative(sx, sy, 0);
+    assert_eq!(
+        app.inventory.items[13],
+        (potion, 1),
+        "the swap the seat the potion lays"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 1),
+        "the swap the carried the dirt keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the swapped carried the dirt's NONE word wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[13], kind,
+        "the swapped seat the kind keeps"
+    );
+    // THE WRAPPED HOTBAR ROW'S OWN RIDE (the store 0..8 rows the same
+    // law answers — the y-112 row the walk's own map keeps)
+    app.inventory.items[5] = (potion, 1);
+    app.items_potion_kinds[5] = kind2;
+    let (hx, hy) = seat(5);
+    app.click_creative(hx, hy, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind2,
+        "the hotbar pickup the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[5], none,
+        "the hotbar seat the NONE word wears"
+    );
+    app.click_creative(hx, hy, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the hotbar place the word clears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[5], kind2,
+        "the hotbar seat the kind lays"
+    );
+    // THE BIN'S OWN DESTROY (the carried the word drops — the throw's
+    // own silence the destroy slot wears)
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    app.click_creative(100 + 173 + 8, 50 + 112 + 8, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the bin the carried destroys");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the destroyed carried the NONE word wears"
+    );
+    // THE PALETTE TAKE'S OWN KINDLESS LAW (the picker's copy the word
+    // never banks — the no-component vanilla law the ghost's plain
+    // draw keeps)
+    app.select_creative_tab(0);
+    app.creative_palette[2] = (potion, 1);
+    let palette_seat = |cell: usize| -> (i32, i32) {
+        (
+            100 + 9 + (cell % 9) as i32 * 18 + 8,
+            50 + 18 + (cell / 9) as i32 * 18 + 8,
+        )
+    };
+    let (tx, ty) = palette_seat(2);
+    app.click_creative(tx, ty, 0);
+    assert_eq!(app.inv_carried, (potion, 1), "the take the copy banks");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the palette take the kindless law keeps"
+    );
+    // THE SAME-ITEM DIAL'S OWN SHRINK (the emptied carried the word
+    // the same silence wears)
+    app.inv_carried_potion_kind = kind;
+    app.click_creative(tx, ty, 1); // the shrink(1) — the one bottle eats
+    assert_eq!(
+        app.inv_carried,
+        (potion, 0),
+        "the shrink the carried spends"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the shrunk-out carried the NONE word wears"
+    );
+    // THE PALETTE EAT'S OWN WORD (the different-item hover the whole
+    // carried destroys — the word the destroy drops)
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    app.creative_palette[3] = (dirt, 1);
+    let (ex, ey) = palette_seat(3);
+    app.click_creative(ex, ey, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the eat the carried destroys");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the eaten carried the NONE word wears"
+    );
+    // THE PICKER'S OWN BOTTOM ROW (the store walk the same ride
+    // answers — the hotbar seat the wrapped row's twin wears)
+    app.inventory.items[3] = (potion, 1);
+    app.items_potion_kinds[3] = kind2;
+    app.click_creative_store(3, 0);
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the store pickup the carried banks"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, kind2,
+        "the store pickup the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], none,
+        "the store seat the NONE word wears"
+    );
+    app.click_creative_store(3, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the store place the word clears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], kind2,
+        "the store seat the kind lays"
+    );
+    // THE GHOST'S OWN TINT (the wrapped canvas the word reads — the
+    // headless pair the only delta the ghost's own 16x16 wears)
+    app.select_creative_tab(inv_tab);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.creative_panel;
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    // the empty wrapped seat the ghost overpaints (main row 30 — the
+    // walk the store 30 the walk never touched)
+    let (gx, gy) = (
+        panel.0 + 9 + ((30 - 9) % 9) as i32 * 18 + 8,
+        panel.1 + 54 + ((30 - 9) / 9) as i32 * 18 + 8,
+    );
+    let mut fb_a = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((gx, gy));
+        app.render(&mut fb_a, &mut a);
+    }
+    app.inv_carried_potion_kind = none;
+    let mut fb_b = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = Some((gx, gy));
+        app.render(&mut fb_b, &mut a);
+    }
+    let mut diff = 0usize;
+    for dy in 0..16i32 {
+        for dx in 0..16i32 {
+            if pixel(&fb_a, gx - 8 + dx, gy - 8 + dy) != pixel(&fb_b, gx - 8 + dx, gy - 8 + dy) {
+                diff += 1;
+            }
+        }
+    }
+    assert!(diff > 0, "the kinded ghost the tint lane re-colors");
+    assert_eq!(
+        pixel(&fb_a, panel.0 + 4, panel.1 + 132),
+        pixel(&fb_b, panel.0 + 4, panel.1 + 132),
+        "the far face the tint never wears"
+    );
+}
