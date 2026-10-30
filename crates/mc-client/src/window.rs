@@ -177,6 +177,7 @@ fn run_join(
                 i32,
                 (i32, i32),
                 crate::world_model::HotbarPopFlash,
+                [i32; crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
@@ -1191,6 +1192,11 @@ fn run_join(
                                         // speaks (the HUD's fresh-pick cue
                                         // the App's own timer decays)
                                         upd.inventory_pop_flash,
+                                        // the store's own potion kinds ride with
+                                        // them — the tooltip lanes' bank the
+                                        // patch's POTION_CONTENTS feeds (the
+                                        // menu id the seat the remap wears)
+                                        upd.inventory_potion_kinds,
                                         // the ping chart's own snapshot rides
                                         // with them — the RTT ring the net
                                         // worker's pong lane logs (idx 0 the
@@ -1847,6 +1853,7 @@ pub fn run_gui_app(
                 i32,
                 (i32, i32),
                 crate::world_model::HotbarPopFlash,
+                [i32; crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
@@ -3820,6 +3827,7 @@ pub fn run_gui_app(
                     inv_state_id,
                     inv_carried,
                     inv_pop_flash,
+                    inv_potion_kinds,
                     ping_samples,
                     bw_samples,
                     tick_samples,
@@ -4314,6 +4322,12 @@ pub fn run_gui_app(
                     // revision and the cursor ride beside them — the
                     // click lane's own echo inputs
                     app.live_inventory_updated(inv_slots, inv_bundles, inv_state_id, inv_carried);
+                    // THE KIND BANK'S OWN WIRE SEAT beside the store's
+                    // slots — the patch's potion kinds the projection
+                    // carried the bank the tooltip lanes consult re-bank
+                    // (the hotbar row the menu ids 36..45 the bank's
+                    // 0..8 wear, the main grid the identity)
+                    app.live_potion_kinds_updated(inv_potion_kinds);
                     // the pop-time lane's own words beside the store's —
                     // the packet-time verdicts the single-slot sync spoke
                     // (the serial edge the HUD's pop re-arms on, the bulk

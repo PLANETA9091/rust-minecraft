@@ -10222,3 +10222,51 @@ fn the_potion_kinds_the_attribute_rows_the_jar_wears() {
         "the 20 kind seats the pairs the collect wears — the haste/mining_fatigue/unluck/health_boost/absorption rows no potion kind carries"
     );
 }
+
+/// THE KIND BANK'S OWN WIRE SEAT (the autopush-343 round — the
+/// window-0 projection's kinds the bank the tooltip lanes consult
+/// re-bank): the main grid the identity the seats wear, the hotbar
+/// row the menu ids 36..45 the bank's 0..8 wear, the kindless tail
+/// the NONE keeps — and the OFFLINE world the wire never feeds (the
+/// lane's own precondition the gate keeps, the local truth the bank
+/// retains).
+#[test]
+fn the_live_potion_kinds_remap_the_bank_the_store_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    // the projection's kinds: menu id 9 the strong swiftness seat
+    // (the main grid's identity), menu id 40 the long night vision
+    // row (the hotbar's own seat the bank's index 4 wears), the rest
+    // the NONE the kindless stacks keep
+    let mut kinds = [crate::brewing_sim::POTION_KIND_NONE; crate::world_view::INVENTORY_MENU_SLOTS];
+    kinds[9] = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    kinds[40] = crate::brewing_sim::POTION_LONG_NIGHT_VISION;
+    app.live_potion_kinds_updated(kinds);
+    assert_eq!(
+        app.items_potion_kinds[9],
+        crate::brewing_sim::POTION_STRONG_SWIFTNESS,
+        "the main grid the identity the seats wear"
+    );
+    assert_eq!(
+        app.items_potion_kinds[4],
+        crate::brewing_sim::POTION_LONG_NIGHT_VISION,
+        "the hotbar row the menu id 40 the bank's seat 4 wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the kindless tail the NONE keeps"
+    );
+    // THE OFFLINE GATE (the lane's own precondition): the offline
+    // world the wire never feeds — the bank the local truth keeps
+    let mut offline = App::new(3);
+    offline.enter_world();
+    let banked = offline.items_potion_kinds;
+    offline.live_potion_kinds_updated(kinds);
+    assert_eq!(
+        offline.items_potion_kinds, banked,
+        "the offline world the lane's gate refuses"
+    );
+}

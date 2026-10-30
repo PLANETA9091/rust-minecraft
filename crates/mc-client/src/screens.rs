@@ -71282,6 +71282,31 @@ impl App {
         }
     }
 
+    /// THE KIND BANK'S OWN WIRE SEAT (the autopush-343 round — the
+    /// POTION_CONTENTS component the wire stacks carry the bank the
+    /// tooltip lanes consult): the window-0 projection's kinds the
+    /// wholesale overwrite re-banks (the store's truth the bank IS —
+    /// the same law [`Self::live_inventory_updated`]'s slots walk
+    /// wears, the prediction's seat the next refresh re-answers). The
+    /// store's own menu numbering the remap walks — the main grid
+    /// 9..35 the identity the bank's seats wear, the hotbar row
+    /// 36..45 the bank's 0..8 (the store row numbering the hover lane
+    /// keeps — the [`Self::reconcile_wrapped_from_live`] walk the same
+    /// law wears). The craft region 0..8 and the offhand 45 the bank
+    /// never seats — the other hovers' own NONE walls keep. The live
+    /// lane's own precondition — the offline world the wire never
+    /// feeds (the lane's only feeder is the network pump).
+    pub fn live_potion_kinds_updated(
+        &mut self,
+        kinds: [i32; crate::world_view::INVENTORY_MENU_SLOTS],
+    ) {
+        if !self.world_is_network {
+            return; // the live lane's own precondition — the offline store is the truth
+        }
+        self.items_potion_kinds[0..9].copy_from_slice(&kinds[36..45]);
+        self.items_potion_kinds[9..36].copy_from_slice(&kinds[9..36]);
+    }
+
     /// The live session ended (a server kick or a transport error) while
     /// the client was IN the network world: the vanilla kick lands on
     /// the DisconnectedScreen and the level unloads exactly like Save

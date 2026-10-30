@@ -486,6 +486,18 @@ pub struct SnapshotView {
     /// HotbarPopFlash`]): the bulk epoch + the nine per-slot
     /// serial+verdict words the App's HUD pop rides.
     pub inventory_pop_flash: crate::world_model::HotbarPopFlash,
+    /// The window-0 store's OWN potion kinds (the autopush-343 round
+    /// — the POTION_CONTENTS component the wire stacks carry the
+    /// kind the client's own table answers), keyed by the window's
+    /// OWN menu id (the index IS the id): the patch's potion holder
+    /// id the extraction reads — the id IS the kind-table id (the
+    /// Potions bootstrap order the POTION_KIND tables wear) — and
+    /// the NONE the kindless stacks keep (the absent component the
+    /// patch's silence is, the EMPTY optional the wire's false byte
+    /// speaks). The App's live bank the tooltip lanes consult maps
+    /// the store's own numbering into the seats (the hotbar row the
+    /// 36..45 ids the bank's 0..8 wear, the main grid the identity).
+    pub inventory_potion_kinds: [i32; INVENTORY_MENU_SLOTS],
     /// THE GAME-MODE ECHO'S OWN WORD (the model's banked CHANGE_
     /// GAME_MODEL id — the server's own answer the game-event arm
     /// keeps): `None` until the echo speaks (the join snapshot
@@ -3629,6 +3641,29 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
 /// constants' audited layout).
 pub const INVENTORY_MENU_SLOTS: usize = crate::world_model::SHIELD_SLOT + 1;
 
+/// THE WIRE STACK'S OWN KIND EXTRACTION (the autopush-343 round —
+/// the POTION_CONTENTS component the patch carries the kind the
+/// client's own table answers): the added list's potion_contents
+/// seat the walk reads (the wire's ONE override the patch law
+/// keeps — the HashedPatchMap the added list the only lane), the
+/// potion holder id the kind-table id the decode banks (the
+/// Potions bootstrap order the POTION_KIND tables wear). The
+/// kindless walls: the absent component the NONE keeps (the item's
+/// default components the wire never speaks — the overrides-only
+/// patch law the honest reading wears) and the EMPTY optional the
+/// same NONE keeps (the wire's false byte the optional's own
+/// silence is).
+fn potion_kind_of(stack: &mc_protocol::play::ItemStack) -> i32 {
+    for (type_id, value) in &stack.patch.added {
+        if *type_id == mc_protocol::play::data_component_types::POTION_CONTENTS {
+            if let mc_protocol::play::ComponentValue::PotionContents(pc) = value {
+                return pc.potion.unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
+            }
+        }
+    }
+    crate::brewing_sim::POTION_KIND_NONE
+}
+
 /// The window-0 store projected for the UI — the pairs the screen's
 /// live store lane renders and hits, keyed by the window's OWN menu
 /// id (the index IS the id, the store's Vec numbering verbatim). A
@@ -3643,11 +3678,18 @@ fn live_inventory_view(
     i32,
     (i32, i32),
     crate::world_model::HotbarPopFlash,
+    [i32; INVENTORY_MENU_SLOTS],
 ) {
+    // THE KINDS' OWN EXTRACTION beside the slots — the same walk the
+    // pairs wear (the menu id the index IS): the patch's
+    // potion_contents seat the stack's kind answers, the NONE the
+    // kindless stacks keep.
     let inv = model.inventory();
     let mut slots = [(0i32, 0i32); INVENTORY_MENU_SLOTS];
+    let mut potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; INVENTORY_MENU_SLOTS];
     for (i, s) in inv.slots.iter().enumerate().take(INVENTORY_MENU_SLOTS) {
         slots[i] = (s.item_id, s.count);
+        potion_kinds[i] = potion_kind_of(s);
     }
     // THE BUNDLE ROWS' EXTRACTION (the set-slot sync's projection):
     // the shared walk over the window's own slots — the menu slot id
@@ -3664,6 +3706,7 @@ fn live_inventory_view(
         state_id,
         carried,
         inv.pop_flash.clone(),
+        potion_kinds,
     )
 }
 
@@ -3977,8 +4020,14 @@ pub fn materialize_snapshot_view(
     // the join's own store — the window-0 lane reads the adopted
     // state the same way the hand's lane does (empty until the wire
     // speaks)
-    let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried, inventory_pop_flash) =
-        live_inventory_view(&model);
+    let (
+        inventory_slots,
+        inventory_bundles,
+        inventory_state_id,
+        inventory_carried,
+        inventory_pop_flash,
+        inventory_potion_kinds,
+    ) = live_inventory_view(&model);
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
         camera,
@@ -4032,6 +4081,10 @@ pub fn materialize_snapshot_view(
         inventory_state_id,
         inventory_carried,
         inventory_pop_flash,
+        // the kinds ride with the store — the potion stacks the wire
+        // spoke the patch's own kind answers (the join's own state:
+        // the NONE array until the store speaks)
+        inventory_potion_kinds,
         // the join snapshot carries no mode echo — the CHANGE_GAME_
         // MODEL packets are the only source (the login word the login
         // phase's own lane banks)
@@ -5186,8 +5239,14 @@ impl LiveView {
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
-        let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried, inventory_pop_flash) =
-            live_inventory_view(&self.model);
+        let (
+            inventory_slots,
+            inventory_bundles,
+            inventory_state_id,
+            inventory_carried,
+            inventory_pop_flash,
+            inventory_potion_kinds,
+        ) = live_inventory_view(&self.model);
         // the arrows' sync mailbox's own projection (the words in wire
         // order — the worker's drain empties the mailbox after the
         // ship, each word rides exactly one refresh; the SAME arms both
@@ -5248,6 +5307,10 @@ impl LiveView {
                 inventory_state_id,
                 inventory_carried,
                 inventory_pop_flash,
+                // the kinds ride with the store — the pose-less arm
+                // the SAME projection wears (the store's truth the
+                // inventory's own lane keeps)
+                inventory_potion_kinds,
                 health: health_view(&self.model),
                 mobs,
                 // the boats' belief rides the pose-less arm too — the
@@ -5533,6 +5596,10 @@ impl LiveView {
             inventory_state_id,
             inventory_carried,
             inventory_pop_flash,
+            // the kinds ride with the store — the potion stacks the
+            // wire spoke the patch's own kind answers, every refresh
+            // exactly like the slots do
+            inventory_potion_kinds,
             // the mode echo rides every refresh — the server's answer
             // the session's own truth (the idempotent re-bank the
             // installer's own acmp keeps silent)
@@ -8819,6 +8886,88 @@ mod tests {
             view.inventory_bundles,
             vec![(10, vec![(926, 12)])],
             "the bundle rows the patches carry"
+        );
+    }
+
+    #[test]
+    fn the_window0_potion_kinds_projection_rides_the_view() {
+        // the wire's potion stacks the patch's POTION_CONTENTS the
+        // kind answers: the window-0 store the SAME projection the
+        // slots wear — the kinded stack the menu id the seat keeps,
+        // the plain stack the NONE the absent component keeps, the
+        // EMPTY-optional potion (the false byte the potion field
+        // speaks) the same NONE keeps, the hotbar row's seats the
+        // menu ids 36..45 the array wears
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
+        let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+        let potion_patch = |potion_id: Option<i32>| mc_protocol::play::ComponentPatch {
+            added: vec![(
+                mc_protocol::play::data_component_types::POTION_CONTENTS,
+                mc_protocol::play::ComponentValue::PotionContents(
+                    mc_protocol::play::PotionContents {
+                        potion: potion_id,
+                        custom_color: None,
+                        custom_effects: Vec::new(),
+                        custom_name: None,
+                    },
+                ),
+            )],
+            removed: Vec::new(),
+        };
+        let stack = |count, item_id, patch| mc_protocol::play::ItemStack {
+            count,
+            item_id,
+            patch,
+        };
+        // slot 9 the STRONG SWIFTNESS seat (kind 15 the bootstrap
+        // row), slot 10 the plain stack (the absent component), slot
+        // 11 the EMPTY-optional potion, slot 38 the hotbar's kinded
+        // row — the InventoryMenu numbering, the never-spoken heads
+        // the empty pairs keep
+        let mut items = vec![stack(0, 0, Default::default()); 9];
+        items.push(stack(1, potion, potion_patch(Some(15))));
+        items.push(stack(7, 745, Default::default()));
+        items.push(stack(1, potion, potion_patch(None)));
+        while items.len() < 38 {
+            items.push(stack(0, 0, Default::default()));
+        }
+        items.push(stack(1, potion, potion_patch(Some(15))));
+        live.apply(PlayEvent::ContainerFilled(
+            mc_protocol::play::ContainerContent {
+                container_id: crate::world_model::INVENTORY_WINDOW_ID,
+                state_id: 3,
+                items,
+                carried_item: stack(0, 0, Default::default()),
+            },
+        ));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.inventory_slots[9],
+            (potion, 1),
+            "the kinded potion the menu id keys"
+        );
+        assert_eq!(
+            view.inventory_potion_kinds[9], 15,
+            "the strong swiftness row the patch's own seat"
+        );
+        assert_eq!(
+            view.inventory_potion_kinds[10],
+            crate::brewing_sim::POTION_KIND_NONE,
+            "the plain stack the absent component the NONE keeps"
+        );
+        assert_eq!(
+            view.inventory_potion_kinds[11],
+            crate::brewing_sim::POTION_KIND_NONE,
+            "the EMPTY optional the false byte the same NONE keeps"
+        );
+        assert_eq!(
+            view.inventory_potion_kinds[38], 15,
+            "the hotbar row's seat the menu id keys"
+        );
+        assert_eq!(
+            view.inventory_potion_kinds[40],
+            crate::brewing_sim::POTION_KIND_NONE,
+            "the never-spoken tail the NONE keeps"
         );
     }
 
