@@ -45900,8 +45900,109 @@ impl App {
             && !rows.is_empty()
         {
             rows[0] = (Self::potion_kind_display_name(kind), WHITE);
+            // THE EFFECT ROWS (the autopush-341 round — the
+            // addPotionTooltip walk the component lane the effect lines
+            // the rows wear). THE ORDER the 26.2 walk banks: the
+            // component rows PRECEDE the advanced id row (the
+            // addDetailsToTooltip the component loop the AFTER lane
+            // keeps — the enchant rows the dev-198 evidence the same
+            // order wears), the pop the tail the re-lay serves.
+            let tail = if advanced { rows.pop() } else { None };
+            rows.extend(Self::potion_kind_effect_rows(kind));
+            if let Some(t) = tail {
+                rows.push(t);
+            }
         }
         rows
+    }
+
+    /// THE POTION KIND'S OWN EFFECT ROWS (javap 26.2 PotionContents.
+    /// addPotionTooltip pcs 0-161 — the static walk the effects the
+    /// rows wear [scripts/jar_work/potion_contents_340.txt the
+    /// evidence]): each row the `getPotionDescription(holder, amp)`
+    /// walk serves [pc 577-601] — the base the `effect.minecraft.<name>`
+    /// tr the getOrCreateDescriptionId law answers [the
+    /// `Util.makeDescriptionId("effect", registry key)` the lang
+    /// table's own 42 keys pairs], the amp > 0 the `potion.
+    /// withAmplifier` "%s %s" the `potion.potency.<n>` numeral pairs
+    /// [the 26.2 lang rows II..VI wear, the potency.0 the empty row
+    /// the amp-0 gate never reaches]; the `!instance.endsWithin(20)`
+    /// the `potion.withDuration` "%s (%s)" the formatDuration pairs
+    /// [pc 86-120] — the `formatTickDuration(floor(d*scale),
+    /// tickRate)` walk the %02d law wears [scripts/jar_work/
+    /// string_util_341.txt pcs 8-95: the seconds the ticks/tickRate
+    /// answers, the %02d:%02d the m:s, the h>0 the %02d:%02d:%02d
+    /// arm keeps; the scale the POTION_DURATION_SCALE default 1.0 the
+    /// tickRate the TooltipContext.tickRate() 20.0 the addToTooltip
+    /// pc 25-31 wears — the instant rows the duration-1 the gate's
+    /// own silence keeps], the ink the category's tooltip formatting
+    /// pc 122-144 wears [BENEFICIAL the BLUE the HARMFUL the RED the
+    /// MobEffectCategory.<clinit> ctor args speak — the NEUTRAL the
+    /// BLUE the same enum ctor wears]), the EMPTY rows the NO_EFFECT
+    /// row the static init pc 22-34 answers [translatable("effect.
+    /// none") the GRAY]. The attribute-modifier rows the walk's own
+    /// tail keeps — the whenDrank lane the NEXT list answers [the
+    /// honest wall].
+    fn potion_kind_effect_rows(kind: i32) -> Vec<(String, [f32; 3])> {
+        use crate::brewing_sim::{
+            MOB_EFFECT_CATEGORIES, POTION_KIND_DURATIONS, POTION_KIND_EFFECTS,
+        };
+        if kind < 0 || kind as usize >= POTION_KIND_EFFECTS.len() {
+            return Vec::new();
+        }
+        let rows = POTION_KIND_EFFECTS[kind as usize];
+        if rows.is_empty() {
+            // THE NO-EFFECT ROW (the NO_EFFECT field the static init
+            // wears — pc 22-34 the translatable the GRAY)
+            return vec![(tr("effect.none").unwrap_or("effect.none").to_string(), GRAY)];
+        }
+        let durs = POTION_KIND_DURATIONS[kind as usize];
+        let mut out: Vec<(String, [f32; 3])> = Vec::new();
+        for (i, &(effect, amp)) in rows.iter().enumerate() {
+            // THE DESCRIPTION (getPotionDescription pcs 0-48 — the
+            // base the tr, the amp > 0 the withAmplifier pairs)
+            let key = format!("effect.minecraft.{effect}");
+            let mut line = tr(&key).unwrap_or(&key).to_string();
+            if amp > 0 {
+                let pk = format!("potion.potency.{amp}");
+                let numeral = tr(&pk).unwrap_or(&pk);
+                let wa = tr("potion.withAmplifier").unwrap_or("%s %s");
+                line = wa.replacen("%s", &line, 1).replacen("%s", numeral, 1);
+            }
+            // THE DURATION FOLD (pc 86-120 — !endsWithin(20) the
+            // withDuration pairs, the formatTickDuration the %02d
+            // walk serves; the duration-1 instant rows the gate's
+            // own silence keeps)
+            if let Some(&d) = durs.get(i) {
+                if d > 20 {
+                    let secs = d / 20; // floor(d * 1.0 / 20) — the scale-1 tickRate-20 lane
+                    let (mut m, s) = (secs / 60, secs % 60);
+                    let h = m / 60;
+                    m %= 60;
+                    let dur = if h > 0 {
+                        format!("{h:02}:{m:02}:{s:02}")
+                    } else {
+                        format!("{m:02}:{s:02}")
+                    };
+                    let wd = tr("potion.withDuration").unwrap_or("%s (%s)");
+                    line = wd.replacen("%s", &line, 1).replacen("%s", &dur, 1);
+                }
+            }
+            // THE INK (pc 122-144 — the category's tooltip formatting:
+            // BENEFICIAL/NEUTRAL the BLUE, the HARMFUL the RED)
+            let cat = MOB_EFFECT_CATEGORIES
+                .iter()
+                .find(|(n, _)| *n == effect)
+                .map(|&(_, c)| c)
+                .unwrap_or(2);
+            let ink = if cat == 1 {
+                [1.0, 0.3333, 0.3333] // the RED the HARMFUL arm keeps
+            } else {
+                [0.3333, 0.3333, 1.0] // the BLUE the other arms wear
+            };
+            out.push((line, ink));
+        }
+        out
     }
 
     /// THE POTION KIND'S OWN DISPLAY NAME (javap 26.2 PotionContents.

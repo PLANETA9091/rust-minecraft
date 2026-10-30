@@ -1,0 +1,134 @@
+Compiled from "MobEffectUtil.java"
+public final class net.minecraft.world.effect.MobEffectUtil {
+  public net.minecraft.world.effect.MobEffectUtil();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static net.minecraft.network.chat.Component formatDuration(net.minecraft.world.effect.MobEffectInstance, float, float);
+    Code:
+         0: aload_0
+         1: invokevirtual #7                  // Method net/minecraft/world/effect/MobEffectInstance.isInfiniteDuration:()Z
+         4: ifeq          13
+         7: ldc           #13                 // String effect.duration.infinite
+         9: invokestatic  #15                 // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+        12: areturn
+        13: aload_0
+        14: invokevirtual #21                 // Method net/minecraft/world/effect/MobEffectInstance.getDuration:()I
+        17: i2f
+        18: fload_1
+        19: fmul
+        20: invokestatic  #25                 // Method net/minecraft/util/Mth.floor:(F)I
+        23: istore_3
+        24: iload_3
+        25: fload_2
+        26: invokestatic  #31                 // Method net/minecraft/util/StringUtil.formatTickDuration:(IF)Ljava/lang/String;
+        29: invokestatic  #37                 // InterfaceMethod net/minecraft/network/chat/Component.literal:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+        32: areturn
+
+  public static boolean hasDigSpeed(net.minecraft.world.entity.LivingEntity);
+    Code:
+         0: aload_0
+         1: getstatic     #40                 // Field net/minecraft/world/effect/MobEffects.HASTE:Lnet/minecraft/core/Holder;
+         4: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+         7: ifne          20
+        10: aload_0
+        11: getstatic     #52                 // Field net/minecraft/world/effect/MobEffects.CONDUIT_POWER:Lnet/minecraft/core/Holder;
+        14: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        17: ifeq          24
+        20: iconst_1
+        21: goto          25
+        24: iconst_0
+        25: ireturn
+
+  public static int getDigSpeedAmplification(net.minecraft.world.entity.LivingEntity);
+    Code:
+         0: iconst_0
+         1: istore_1
+         2: iconst_0
+         3: istore_2
+         4: aload_0
+         5: getstatic     #40                 // Field net/minecraft/world/effect/MobEffects.HASTE:Lnet/minecraft/core/Holder;
+         8: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        11: ifeq          25
+        14: aload_0
+        15: getstatic     #40                 // Field net/minecraft/world/effect/MobEffects.HASTE:Lnet/minecraft/core/Holder;
+        18: invokevirtual #55                 // Method net/minecraft/world/entity/LivingEntity.getEffect:(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/effect/MobEffectInstance;
+        21: invokevirtual #59                 // Method net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+        24: istore_1
+        25: aload_0
+        26: getstatic     #52                 // Field net/minecraft/world/effect/MobEffects.CONDUIT_POWER:Lnet/minecraft/core/Holder;
+        29: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        32: ifeq          46
+        35: aload_0
+        36: getstatic     #52                 // Field net/minecraft/world/effect/MobEffects.CONDUIT_POWER:Lnet/minecraft/core/Holder;
+        39: invokevirtual #55                 // Method net/minecraft/world/entity/LivingEntity.getEffect:(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/effect/MobEffectInstance;
+        42: invokevirtual #59                 // Method net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+        45: istore_2
+        46: iload_1
+        47: iload_2
+        48: invokestatic  #62                 // Method java/lang/Math.max:(II)I
+        51: ireturn
+
+  public static boolean hasWaterBreathing(net.minecraft.world.entity.LivingEntity);
+    Code:
+         0: aload_0
+         1: getstatic     #68                 // Field net/minecraft/world/effect/MobEffects.WATER_BREATHING:Lnet/minecraft/core/Holder;
+         4: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+         7: ifne          30
+        10: aload_0
+        11: getstatic     #52                 // Field net/minecraft/world/effect/MobEffects.CONDUIT_POWER:Lnet/minecraft/core/Holder;
+        14: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        17: ifne          30
+        20: aload_0
+        21: getstatic     #71                 // Field net/minecraft/world/effect/MobEffects.BREATH_OF_THE_NAUTILUS:Lnet/minecraft/core/Holder;
+        24: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        27: ifeq          34
+        30: iconst_1
+        31: goto          35
+        34: iconst_0
+        35: ireturn
+
+  public static boolean shouldEffectsRefillAirsupply(net.minecraft.world.entity.LivingEntity);
+    Code:
+         0: aload_0
+         1: getstatic     #71                 // Field net/minecraft/world/effect/MobEffects.BREATH_OF_THE_NAUTILUS:Lnet/minecraft/core/Holder;
+         4: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+         7: ifeq          30
+        10: aload_0
+        11: getstatic     #68                 // Field net/minecraft/world/effect/MobEffects.WATER_BREATHING:Lnet/minecraft/core/Holder;
+        14: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        17: ifne          30
+        20: aload_0
+        21: getstatic     #52                 // Field net/minecraft/world/effect/MobEffects.CONDUIT_POWER:Lnet/minecraft/core/Holder;
+        24: invokevirtual #46                 // Method net/minecraft/world/entity/LivingEntity.hasEffect:(Lnet/minecraft/core/Holder;)Z
+        27: ifeq          34
+        30: iconst_1
+        31: goto          35
+        34: iconst_0
+        35: ireturn
+
+  public static java.util.List<net.minecraft.server.level.ServerPlayer> addEffectToPlayersAround(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity, net.minecraft.world.phys.Vec3, double, net.minecraft.world.effect.MobEffectInstance, int);
+    Code:
+         0: aload         5
+         2: invokevirtual #74                 // Method net/minecraft/world/effect/MobEffectInstance.getEffect:()Lnet/minecraft/core/Holder;
+         5: astore        7
+         7: aload_0
+         8: aload_1
+         9: aload_2
+        10: dload_3
+        11: aload         7
+        13: aload         5
+        15: iload         6
+        17: invokedynamic #77,  0             // InvokeDynamic #0:test:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;DLnet/minecraft/core/Holder;Lnet/minecraft/world/effect/MobEffectInstance;I)Ljava/util/function/Predicate;
+        22: invokevirtual #81                 // Method net/minecraft/server/level/ServerLevel.getPlayers:(Ljava/util/function/Predicate;)Ljava/util/List;
+        25: astore        8
+        27: aload         8
+        29: aload         5
+        31: aload_1
+        32: invokedynamic #87,  0             // InvokeDynamic #1:accept:(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Ljava/util/function/Consumer;
+        37: invokeinterface #91,  2           // InterfaceMethod java/util/List.forEach:(Ljava/util/function/Consumer;)V
+        42: aload         8
+        44: areturn
+}

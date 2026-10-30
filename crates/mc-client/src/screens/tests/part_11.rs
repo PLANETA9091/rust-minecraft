@@ -9756,7 +9756,8 @@ fn the_potion_kinds_the_display_names_the_strip_wears() {
         "the non-potion id the kind never speaks"
     );
     // THE TOOLTIP ROWS (the kinded seat the name row swaps — the
-    // plain rows the parent walk keeps; the advanced id row the tail
+    // plain rows the parent walk keeps; the effect rows the 341 round
+    // the walk appends, the advanced id row the tail the AFTER lane
     // wears)
     let plain = App::item_tooltip_rows(potion_id, false);
     assert_eq!(plain.len(), 1);
@@ -9767,25 +9768,42 @@ fn the_potion_kinds_the_display_names_the_strip_wears() {
         false,
         &[],
     );
-    assert_eq!(kinded.len(), 1);
+    assert_eq!(
+        kinded.len(),
+        2,
+        "the name row the effect row the walk appends"
+    );
     assert_eq!(kinded[0].0, "Potion of Night Vision");
     assert_eq!(kinded[0].1, WHITE);
+    assert_eq!(
+        kinded[1].0, "Night Vision (08:00)",
+        "the long row the 9600-tick fold the %02d walk wears"
+    );
     let kinded_advanced =
         App::item_tooltip_rows_kind(potion_id, crate::brewing_sim::POTION_WATER, true, &[]);
-    assert_eq!(kinded_advanced.len(), 2);
+    assert_eq!(kinded_advanced.len(), 3);
     assert_eq!(kinded_advanced[0].0, "Water Bottle");
-    assert_eq!(kinded_advanced[1].0, "minecraft:potion");
+    assert_eq!(
+        kinded_advanced[1].0, "No Effects",
+        "the empty rows the NO_EFFECT row the walk wears"
+    );
+    assert_eq!(kinded_advanced[2].0, "minecraft:potion");
     // THE ENCHANT ROWS KEEP (the potion rows the glint override the
     // component never carries — the append the parent walk wears; the
-    // name row the kind swaps, the rows the kind never drops)
+    // name row the kind swaps, the effect rows the ench rows follow)
     let enched = App::item_tooltip_rows_kind(
         potion_id,
         crate::brewing_sim::POTION_WATER,
         false,
         &[(0, 1)],
     );
-    assert!(enched.len() >= 2, "the ench rows the walk appends");
+    assert_eq!(
+        enched.len(),
+        3,
+        "the ench rows the walk appends, the effect row follows"
+    );
     assert_eq!(enched[0].0, "Water Bottle");
+    assert_eq!(enched[2].0, "No Effects");
 }
 
 /// THE POTION KIND'S OWN TINT WIRING (the autopush-340 round — the
@@ -9855,5 +9873,112 @@ fn the_potion_kinds_the_icon_tint_the_wiring_wears() {
         app.held_name_last.as_ref().unwrap().1,
         "Stone",
         "the stale seat the id gate the NONE keeps"
+    );
+}
+
+/// THE POTION KIND'S OWN EFFECT LINES (the autopush-341 round — the
+/// addPotionTooltip walk the tooltip the rows wear: the description
+/// the effect.minecraft.<name> tr the potency numeral pairs, the
+/// duration the formatTickDuration %02d fold, the ink the category's
+/// tooltip formatting, the empty rows the NO_EFFECT row).
+#[test]
+fn the_potion_kinds_the_effect_lines_the_jar_wears() {
+    // THE TABLES' OWN SHAPES (the durations the rows the effects table
+    // pairs, the categories the 40 rows the bootstrap wears)
+    assert_eq!(crate::brewing_sim::POTION_KIND_DURATIONS.len(), 46);
+    for k in 0..46usize {
+        assert_eq!(
+            crate::brewing_sim::POTION_KIND_DURATIONS[k].len(),
+            crate::brewing_sim::POTION_KIND_EFFECTS[k].len(),
+            "row {k} the durations the pairs' own length answers"
+        );
+    }
+    assert_eq!(crate::brewing_sim::MOB_EFFECT_CATEGORIES.len(), 40);
+    // THE CATEGORY SPOTS (the MobEffects ctor's first arg the parse wears)
+    let cat = |n: &str| {
+        crate::brewing_sim::MOB_EFFECT_CATEGORIES
+            .iter()
+            .find(|(e, _)| *e == n)
+            .unwrap()
+            .1
+    };
+    assert_eq!(cat("speed"), 0);
+    assert_eq!(cat("slowness"), 1);
+    assert_eq!(cat("night_vision"), 0);
+    assert_eq!(cat("instant_damage"), 1);
+    // THE DURATION SPOTS (the clinit's int pushes the parse wears)
+    let k = crate::brewing_sim::POTION_NIGHT_VISION as usize;
+    assert_eq!(crate::brewing_sim::POTION_KIND_DURATIONS[k], &[3600]);
+    let k = crate::brewing_sim::POTION_LONG_NIGHT_VISION as usize;
+    assert_eq!(crate::brewing_sim::POTION_KIND_DURATIONS[k], &[9600]);
+    let k = crate::brewing_sim::POTION_TURTLE_MASTER as usize;
+    assert_eq!(crate::brewing_sim::POTION_KIND_DURATIONS[k], &[400, 400]);
+    let k = crate::brewing_sim::POTION_STRONG_HEALING as usize;
+    assert_eq!(
+        crate::brewing_sim::POTION_KIND_DURATIONS[k],
+        &[1],
+        "the instant row the duration-1 wears"
+    );
+    let k = crate::brewing_sim::POTION_LUCK as usize;
+    assert_eq!(crate::brewing_sim::POTION_KIND_DURATIONS[k], &[6000]);
+    // THE EFFECT ROWS' OWN WALK (the description + numeral + duration
+    // + ink the addPotionTooltip law answers)
+    let blue = [0.3333, 0.3333, 1.0];
+    let red = [1.0, 0.3333, 0.3333];
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_NIGHT_VISION);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].0, "Night Vision (03:00)");
+    assert_eq!(rows[0].1, blue, "the BENEFICIAL the BLUE ink wears");
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_STRONG_SWIFTNESS);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(
+        rows[0].0, "Speed II (01:30)",
+        "the amp-1 the potency numeral the 1800-tick fold pairs (the effect row the registry name the Speed lang key answers — the Swiftness the potion NAME the other lane keeps)"
+    );
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_STRONG_HEALING);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(
+        rows[0].0, "Instant Health II",
+        "the instant row the endsWithin(20) gate the duration never speaks"
+    );
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_HARMING);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].0, "Instant Damage");
+    assert_eq!(rows[0].1, red, "the HARMFUL the RED ink wears");
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_TURTLE_MASTER);
+    assert_eq!(rows.len(), 2, "the turtle rows the TWO effects wear");
+    assert_eq!(rows[0].0, "Slowness IV (00:20)");
+    assert_eq!(rows[0].1, red);
+    assert_eq!(rows[1].0, "Resistance III (00:20)");
+    assert_eq!(rows[1].1, blue);
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_LUCK);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].0, "Luck (05:00)");
+    let rows = App::potion_kind_effect_rows(crate::brewing_sim::POTION_WATER);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(
+        rows[0].0, "No Effects",
+        "the empty rows the NO_EFFECT row wears"
+    );
+    assert_eq!(rows[0].1, GRAY, "the NO_EFFECT the GRAY ink wears");
+    // THE BOUNDS (the unknown kind the empty vec keeps)
+    assert!(App::potion_kind_effect_rows(-1).is_empty());
+    assert!(App::potion_kind_effect_rows(999).is_empty());
+    // THE TOOLTIP'S OWN ORDER (the name the effect rows the advanced
+    // id row the AFTER lane wears — the pop the tail the re-lay)
+    let potion_id = mc_registry::item_id_by_name("potion").expect("the potion id");
+    let rows = App::item_tooltip_rows_kind(
+        potion_id,
+        crate::brewing_sim::POTION_TURTLE_MASTER,
+        true,
+        &[],
+    );
+    assert_eq!(rows.len(), 4);
+    assert_eq!(rows[0].0, "Potion of the Turtle Master");
+    assert_eq!(rows[1].0, "Slowness IV (00:20)");
+    assert_eq!(rows[2].0, "Resistance III (00:20)");
+    assert_eq!(
+        rows[3].0, "minecraft:potion",
+        "the id row the effect rows AFTER the walk wears"
     );
 }
