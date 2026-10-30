@@ -12572,6 +12572,110 @@ pub fn brewing_kinds_from_nbt(
     stores
 }
 
+/// THE CHEST ROWS' OWN KIND BANK'S DISK LANE (the autopush-364 round —
+/// the 363 bank the file's own row wears: the same file the
+/// "chest_row_kinds" list answers, each entry the x/y/z triple + the
+/// "Kinds" list of Ints the cell's parallel row speaks, the BTree
+/// order the deterministic bytes keep, the 27 the chest grid's own
+/// width the take wears — the restart the placed potion's word the
+/// session-only silence the disk retires).
+pub fn container_row_kinds_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), Vec<i32>>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for ((x, y, z), kinds) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            (
+                "Kinds".to_string(),
+                mc_protocol::nbt::Nbt::List(
+                    kinds
+                        .iter()
+                        .take(27)
+                        .map(|&k| mc_protocol::nbt::Nbt::Int(k))
+                        .collect(),
+                ),
+            ),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE CHEST ROWS' OWN KIND PARSE (the tolerant walk the brewing
+/// kinds parse wears: the missing list the honest empties keep, the
+/// missing coordinate the entry skip keeps, the short list the NONE
+/// pad fills — never a guessed kind the absence would invent, the
+/// over-long list the 27 cap truncates, the in-memory entry the
+/// extend law never clobbers).
+pub fn container_row_kinds_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), Vec<i32>> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("chest_row_kinds") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        let mut kinds = vec![crate::brewing_sim::POTION_KIND_NONE; 27];
+        if let Some(mc_protocol::nbt::Nbt::List(items)) =
+            fields.iter().find(|(k, _)| k == "Kinds").map(|(_, v)| v)
+        {
+            for (i, item) in items.iter().enumerate().take(27) {
+                if let Some(k) = item.as_i32() {
+                    kinds[i] = k;
+                }
+            }
+        }
+        stores.insert((x, y, z), kinds);
+    }
+    stores
+}
+
+/// THE ENDER JAR'S OWN KIND ROW'S DISK LANE (the 363 bank's shared
+/// store the file's own row wears: the bare Int list the 27-row
+/// speaks — the "ender_row_kinds" row the shared store's parallel
+/// banks, the every-cell binding the restart keeps).
+fn ender_row_kinds_to_nbt(kinds: &[i32]) -> mc_protocol::nbt::Nbt {
+    mc_protocol::nbt::Nbt::List(
+        kinds
+            .iter()
+            .copied()
+            .take(27)
+            .map(mc_protocol::nbt::Nbt::Int)
+            .collect(),
+    )
+}
+
+/// THE ENDER JAR'S OWN KIND PARSE (the tolerant walk the ender parse
+/// wears: the missing row the honest None keeps — the caller's own
+/// default the absent law banks, the short list the NONE pad fills,
+/// the over-long list the 27 cap truncates).
+fn ender_row_kinds_from_nbt(value: &mc_protocol::nbt::Nbt) -> Option<Vec<i32>> {
+    let Some(mc_protocol::nbt::Nbt::List(items)) = value.get("ender_row_kinds") else {
+        return None;
+    };
+    let mut kinds = vec![crate::brewing_sim::POTION_KIND_NONE; 27];
+    for (i, item) in items.iter().enumerate().take(27) {
+        if let Some(k) = item.as_i32() {
+            kinds[i] = k;
+        }
+    }
+    Some(kinds)
+}
+
 /// THE FRAME BANK'S OWN WALK (the autopush-136 round — the
 /// "item_frames" list the containers file's fourth bank wears: the
 /// wall frames the RESTART OUTLIVES the same file the chest/furnace
@@ -47664,6 +47768,17 @@ impl App {
                 if let Some(slots) = ender_slots_from_nbt(&root) {
                     self.ender_chest_store = slots;
                 }
+                // THE CHEST ROWS' OWN KIND PARSE (the autopush-364
+                // round — the same read the row-kind bank answers, the
+                // same extend law the in-memory entry never clobbers:
+                // the restart the 363 bank the file's own row loads)
+                self.container_stores_potion_kinds
+                    .extend(container_row_kinds_from_nbt(&root));
+                // THE ENDER JAR'S OWN KIND PARSE (the shared row the
+                // boot banks — the missing row the honest NONEs keep)
+                if let Some(kinds) = ender_row_kinds_from_nbt(&root) {
+                    self.ender_chest_store_potion_kinds = kinds;
+                }
                 // THE BED SPAWN'S OWN PARSE (the autopush-312 round —
                 // the "respawn_point" row the boot banks: the missing
                 // row the honest None keeps, the present row the same
@@ -47794,6 +47909,23 @@ impl App {
             (
                 "respawn_point".to_string(),
                 respawn_point_to_nbt(&self.respawn_point),
+            ),
+            // THE CHEST ROWS' OWN KIND BANK'S ROW (the autopush-364
+            // round — the 363 bank the same file the list wears, the
+            // BTree cell order the deterministic bytes keep, the 27
+            // the chest grid's own width the disk banks: the restart
+            // the placed potion's word the session-only silence the
+            // file retires)
+            (
+                "chest_row_kinds".to_string(),
+                container_row_kinds_bank_to_nbt(&self.container_stores_potion_kinds),
+            ),
+            // THE ENDER JAR'S OWN KIND ROW (the shared store's
+            // parallel the same file the row banks — the restart the
+            // words the every cell loads)
+            (
+                "ender_row_kinds".to_string(),
+                ender_row_kinds_to_nbt(&self.ender_chest_store_potion_kinds),
             ),
         ]);
         let mut bytes = Vec::new();

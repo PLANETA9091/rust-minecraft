@@ -14996,3 +14996,170 @@ fn the_chest_rows_the_word_bank_wears() {
     );
     app.shift_down = false;
 }
+
+/// THE CHEST ROWS' OWN KIND BANK'S DISK RIDE (the autopush-364 round —
+/// the 363 bank the file's own row wears: the close the words the
+/// "chest_row_kinds" list the flush banks, the fresh app the
+/// once-flag's parse the same words load [the restart the
+/// session-only silence the disk retires], the ender jar's own row
+/// the shared store's parallel banks, the pre-364 file the tolerant
+/// parse the honest NONE rows keep — never a guessed kind the absence
+/// invents).
+#[test]
+fn the_chest_kinds_the_disk_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let kind2 = 5;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let dir = std::env::temp_dir().join(format!("mc2rs-rowkinds-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("the temp dir");
+    let file = dir.join("rowkinds-round.nbt");
+    let _ = std::fs::remove_file(&file);
+    let mut app = App::new(364);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.container_stores_file = Some(file.clone());
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    // THE WORD'S OWN RIDE OUT (the place the row's word banks, the
+    // close the flush the file write wears)
+    app.open_chest_for(cell);
+    app.inventory.items[18] = (potion, 1); // the menu 36 the main grid wears
+    app.items_potion_kinds[18] = kind;
+    let (ox, oy) = chest_seat(&mut app, 36);
+    app.click_chest_slot(ox, oy, 0);
+    let (px, py) = chest_seat(&mut app, 3);
+    app.click_chest_slot(px, py, 0);
+    assert_eq!(
+        app.chest_row_potion_kinds[3], kind,
+        "the placed row the word banks"
+    );
+    app.on_escape();
+    assert!(file.exists(), "the close the file write banks");
+    // THE ENDER JAR'S OWN WORD (the shared row the same session the
+    // disk banks — the every-cell binding the file's own row speaks)
+    let ecell = (c, surface + 1, c + 5);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(ecell.0, ecell.1, ecell.2, crate::world::ENDER_CHEST);
+    app.open_chest_for(ecell);
+    app.inventory.items[21] = (potion, 1); // the menu 39 the main grid wears
+    app.items_potion_kinds[21] = kind2;
+    let (ex, ey) = chest_seat(&mut app, 39);
+    app.click_chest_slot(ex, ey, 0);
+    let (ex2, ey2) = chest_seat(&mut app, 7);
+    app.click_chest_slot(ex2, ey2, 0);
+    assert_eq!(
+        app.chest_row_potion_kinds[7], kind2,
+        "the ender row the word banks"
+    );
+    app.on_escape();
+    // THE FILE'S OWN SHAPE (the two rows the root wears — the
+    // entries' own triple + the Kinds list the Int row speaks)
+    let bytes = std::fs::read(&file).expect("the banked file reads");
+    let (_, root) =
+        mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+    let kinds_list = root
+        .get("chest_row_kinds")
+        .and_then(|v| v.as_list())
+        .expect("the kinds list");
+    assert_eq!(kinds_list.len(), 1, "the one opened cell rides");
+    let row = kinds_list[0]
+        .get("Kinds")
+        .and_then(|v| v.as_list())
+        .expect("the Kinds list");
+    assert_eq!(row.len(), 27, "the 27-row the disk banks");
+    assert_eq!(row[3].as_i32(), Some(kind), "the banked word rides");
+    let ender_row = root
+        .get("ender_row_kinds")
+        .and_then(|v| v.as_list())
+        .expect("the ender kinds row");
+    assert_eq!(ender_row.len(), 27, "the jar's own row the disk banks");
+    assert_eq!(ender_row[7].as_i32(), Some(kind2), "the jar's word rides");
+    // THE RESTART'S OWN LOAD (the fresh app the once-flag's parse the
+    // words bank — the session-only silence the disk retires: the
+    // chest cell the banked word the open composes, the ender the
+    // every-cell binding the same jar loads)
+    let mut fresh = App::new(364);
+    fresh.enter_world();
+    fresh.container_stores_file = Some(file.clone());
+    {
+        let w = fresh.offline_world.as_mut().unwrap();
+        w.set(cell.0, cell.1, cell.2, crate::world::CHEST);
+        w.set(ecell.0, ecell.1, ecell.2, crate::world::ENDER_CHEST);
+    }
+    fresh.open_chest_for(cell);
+    assert_eq!(
+        fresh.chest_slots[3],
+        (potion, 1),
+        "the banked stack the restart wears"
+    );
+    assert_eq!(
+        fresh.chest_row_potion_kinds[3], kind,
+        "the banked word the restart loads"
+    );
+    fresh.on_escape();
+    fresh.open_chest_for(ecell);
+    assert_eq!(
+        fresh.chest_slots[7],
+        (potion, 1),
+        "the jar's stack the restart wears"
+    );
+    assert_eq!(
+        fresh.chest_row_potion_kinds[7], kind2,
+        "the jar's word the every cell loads"
+    );
+    fresh.on_escape();
+    // THE OLD FILE'S OWN SILENCE (the pre-364 file the tolerant parse
+    // the honest NONE rows keep — the missing rows the absence banks,
+    // never a guessed kind the absence invents)
+    let old_file = dir.join("rowkinds-old.nbt");
+    let _ = std::fs::remove_file(&old_file);
+    let mut old_stores = std::collections::HashMap::new();
+    let mut old_slots = vec![(0i32, 0i32); 27];
+    old_slots[3] = (potion, 1);
+    old_stores.insert(cell, old_slots);
+    let old_root = mc_protocol::nbt::Nbt::Compound(vec![
+        (
+            "DataVersion".to_string(),
+            mc_protocol::nbt::Nbt::Int(CONTAINERS_DATA_VERSION),
+        ),
+        (
+            "entries".to_string(),
+            container_bank_to_nbt(&old_stores, 27),
+        ),
+    ]);
+    let mut old_bytes = Vec::new();
+    mc_protocol::nbt::write_file_nbt("", &old_root, &mut old_bytes)
+        .expect("the old file's write serves");
+    std::fs::write(&old_file, &old_bytes).expect("the old file banks");
+    let mut heir = App::new(364);
+    heir.enter_world();
+    heir.container_stores_file = Some(old_file.clone());
+    heir.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    heir.open_chest_for(cell);
+    assert_eq!(
+        heir.chest_slots[3],
+        (potion, 1),
+        "the old file's stack the restart wears"
+    );
+    assert_eq!(
+        heir.chest_row_potion_kinds[3], none,
+        "the old file the honest NONE rows keep"
+    );
+    let _ = std::fs::remove_file(&file);
+    let _ = std::fs::remove_file(&old_file);
+}
