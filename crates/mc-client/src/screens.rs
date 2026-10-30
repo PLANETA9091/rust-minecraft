@@ -32891,6 +32891,16 @@ impl App {
                 }
             }
         }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the autopush-353
+        // round the hopper's own canvas wears: the hovered seat's rows
+        // the shared lane speaks, the topmost layer the carried stack
+        // keeps under. The headless scenes track no mouse — the
+        // pixel goldens never see this pass.)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(rows) = self.hopper_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
+            }
+        }
         // THE BUNDLE TOOLTIP (the renderTooltip pass — the topmost
         // layer the panel and the carried stack keep under)
         self.render_bundle_tooltip(g, a);
@@ -33858,6 +33868,56 @@ impl App {
             None
         } else {
             Self::chest_mirror_to_inventory(s - n)
+        };
+        let ench = inv
+            .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
+            .unwrap_or_default();
+        let mut rows = Self::item_tooltip_rows_kind(
+            id,
+            crate::brewing_sim::POTION_KIND_NONE,
+            self.advanced_item_tooltips,
+            &ench,
+        );
+        if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
+            if let Some(first) = rows.first_mut() {
+                *first = Self::custom_name_row(&name);
+            }
+        }
+        Some(rows)
+    }
+
+    /// THE HOPPER'S OWN TOOLTIP SEAT (the autopush-353 round — the
+    /// 351/352 law the container family's own canvases re-wear, the
+    /// dev-203 door the hopper's own five-seat canvas the flag keeps: the
+    /// hovered seat's rows the shared lane speaks, the mirror rows
+    /// the store lane positionally re-keys [the offline write-through
+    /// the REAL inventory keeps — the stores the same cells answer],
+    /// the five-seat row the plain rows the per-cell absence keeps,
+    /// the carried wall the offline cursor the same field answers,
+    /// the empty seat + the closed door the None verdicts keep. The
+    /// headless scenes track no mouse — the pixel goldens never see
+    /// this pass.)
+    fn hopper_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
+        if self.screen != ScreenKind::Chest || !self.chest_window_hopper {
+            return None; // the hopper's own canvas the walk serves
+        }
+        if self.chest_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        let (_, _, slot) = self.chest_hover_seat(mx, my)?;
+        let s = slot as usize;
+        let (id, count) = if s < 5 {
+            *self.chest_slots.get(s).unwrap_or(&(0, 0))
+        } else {
+            *self.chest_mirror.get(s - 5).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return None; // the wire's own emptiness sentinel the hasItem law keeps
+        }
+        let inv = if s < 5 {
+            None
+        } else {
+            Self::chest_mirror_to_inventory(s - 5)
         };
         let ench = inv
             .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())

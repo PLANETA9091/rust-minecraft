@@ -12219,3 +12219,114 @@ fn the_dispenser_tooltip_the_mirror_stores_wear() {
         "the closed door the walk refuses"
     );
 }
+
+/// THE HOPPER'S OWN TOOLTIP SEAT (the autopush-353 round — the
+/// 351/352 law the hopper's own canvas wears, the dev-203 door the
+/// five-seat flag keeps): the five-seat row the plain rows the
+/// per-cell absence keeps, the mirror rows the store lane
+/// positionally re-keys (the §o italic the named store row wears —
+/// the offline write-through the REAL inventory keeps), the carried
+/// wall + the empty seat + the closed door the None verdicts keep.
+/// The REAL walk the offline door wears — the headless frame the
+/// REAL rects the render lays.
+#[test]
+fn the_hopper_tooltip_the_five_seats_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the mirror reads
+    }
+    app.open_hopper_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Chest,
+        "the hopper door the chest kind wears"
+    );
+    assert!(
+        app.chest_window_hopper,
+        "the five-seat flag the hopper door keeps"
+    );
+    // THE REAL RECTS THE RENDER BANKS (the door test's own harness —
+    // the headless mouse-less frame the cells lay)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let seat = |slot: i16| -> (i32, i32) {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // THE FIVE-SEAT ROW'S OWN PLAIN RIDE (the per-cell store the name
+    // lane never carries — the shared lane the display name answers)
+    app.chest_slots[0] = (sword, 1);
+    let (h0x, h0y) = seat(0);
+    let rows = app
+        .hopper_item_tooltip_hover(h0x + 8, h0y + 8)
+        .expect("the held seat the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the five-seat cell the plain name keeps"
+    );
+    // THE MIRROR'S OWN POSITIONAL RIDE (the §o italic the named store
+    // row wears — the mirror head the inventory's item 9 the lane
+    // keeps)
+    app.chest_mirror[0] = (dirt, 5);
+    app.items_custom_names[9] = Some("Named Dirt".to_string());
+    let (mx, my) = seat(5);
+    let rows = app
+        .hopper_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the named mirror row the rows speak");
+    assert_eq!(
+        rows[0].0, "\u{a7}oNamed Dirt",
+        "the positional map the store row wears"
+    );
+    app.items_custom_names[9] = None;
+    let rows = app
+        .hopper_item_tooltip_hover(mx + 8, my + 8)
+        .expect("the plain mirror row the rows speak");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(dirt).unwrap()),
+        "the cleared lane the plain name keeps"
+    );
+    // THE CARRIED WALL (the offline cursor the same field answers)
+    app.chest_carried = (1, 1);
+    assert_eq!(
+        app.hopper_item_tooltip_hover(mx + 8, my + 8),
+        None,
+        "the carried stack the wall refuses"
+    );
+    app.chest_carried = (0, 0);
+    // THE EMPTY SEAT (the hasItem gate the silence keeps)
+    app.chest_slots[1] = (0, 0);
+    let (h1x, h1y) = seat(1);
+    assert_eq!(
+        app.hopper_item_tooltip_hover(h1x + 8, h1y + 8),
+        None,
+        "the empty seat the gate refuses"
+    );
+    // THE WRONG SCREEN (the closed door the walk refuses)
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(
+        app.hopper_item_tooltip_hover(h0x + 8, h0y + 8),
+        None,
+        "the closed door the walk refuses"
+    );
+}
