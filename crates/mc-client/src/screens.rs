@@ -9649,11 +9649,15 @@ pub struct App {
     /// carry, the side lane the SAME 36-slot numbering keys: 0..9 the
     /// hotbar, 9..36 the main grid — the fill walk the WATER kind
     /// mints, the brewing stand's pickup/place/swap the seats ride,
-    /// the disk lane the "PotionKinds" list persists). The -1 the
-    /// [`crate::brewing_sim::POTION_KIND_NONE`] sentinel the absence
-    /// keeps; the accessor's normalization the non-potion rows the
-    /// NONE verdict reads.
-    pub items_potion_kinds: [i32; 36],
+    /// the disk lane the "PotionKinds" list persists). The 37TH SEAT
+    /// (the autopush-346 round — the offhand's own kind seat) the
+    /// wire's kinds[45] the bank re-seats: the pickup/tooltip/icon
+    /// lanes the seat consult, the offline world the NONE wall keeps
+    /// (the fill walk's scan the items' 36 rows the seat never mints).
+    /// The -1 the [`crate::brewing_sim::POTION_KIND_NONE`] sentinel
+    /// the absence keeps; the accessor's normalization the non-potion
+    /// rows the NONE verdict reads.
+    pub items_potion_kinds: [i32; 37],
     /// THE SPELL WALK'S OWN CLUES (the dev-197 round — the
     /// EnchantmentMenu's enchantClue/levelClue int arrays the
     /// DataSlot.shared lanes network: the row's registry id the
@@ -11380,8 +11384,9 @@ pub struct SavedPlayer {
     /// THE ROWS' OWN POTION-KIND BANK (the dev-199 round — the
     /// "PotionKinds" list the tag stores flat, the 36 rows the same
     /// numbering the Items list wears; the elder file the missing row
-    /// the NONE parse keeps).
-    pub potion_kinds: [i32; 36],
+    /// the NONE parse keeps — the 37TH SEAT the offhand's own kind
+    /// the 346 round wears, the elder 36-row list the pad fills).
+    pub potion_kinds: [i32; 37],
     /// The active hotbar slot (the HUD selection the reload re-wears).
     pub selected_hotbar: i32,
     /// The health bar (`Health` — the 0..=max clamp the live lane
@@ -11560,8 +11565,9 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
     // THE ROWS' OWN POTION-KIND BANK (the dev-199 round — the
     // "PotionKinds" list the elder file the missing row the NONE
     // parse keeps, the short list the pad fills, the over-long the
-    // 36-cap truncates)
-    let mut potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 36];
+    // 37-cap truncates — the 37TH SEAT the offhand's own kind the
+    // 346 round wears, the elder 36-row file the pad answers)
+    let mut potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 37];
     let doubles = |v: &mc_protocol::nbt::Nbt| -> Option<Vec<f64>> {
         let mc_protocol::nbt::Nbt::List(xs) = v else {
             return None;
@@ -11600,7 +11606,7 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
             "Items" => items = stacks_row_from_nbt(v, 36),
             "PotionKinds" => {
                 if let mc_protocol::nbt::Nbt::List(rows) = v {
-                    for (i, row) in rows.iter().enumerate().take(36) {
+                    for (i, row) in rows.iter().enumerate().take(37) {
                         if let mc_protocol::nbt::Nbt::Int(k) = row {
                             potion_kinds[i] = *k;
                         }
@@ -12816,7 +12822,7 @@ impl App {
             enchant_rng: crate::noise::VanillaRandom::new(0),
             enchant_comps: std::array::from_fn(|_| Vec::new()),
             inventory_enchants: std::array::from_fn(|_| Vec::new()),
-            items_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 36],
+            items_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 37],
             enchant_clues: [-1; 3],
             enchant_level_clues: [-1; 3],
             enchanting_table_pos: None,
@@ -30917,9 +30923,11 @@ impl App {
                         },
                     ));
                 } else {
-                    // THE OFFHAND'S OWN WALL SEAT (the 343 bank the
-                    // offhand never seats — the `None` the ride's
-                    // cursor-clear arm alone answers)
+                    // THE OFFHAND'S OWN KIND SEAT (the autopush-346
+                    // round — the bank's 36 the offhand pickup ride
+                    // wears: the `None` wall the 343 bank kept the
+                    // 37TH seat the kinds[45] wire the lanes consult
+                    // re-answers)
                     wire_inventory_pickup(
                         sink,
                         &mut self.live_inv_slots,
@@ -30928,7 +30936,7 @@ impl App {
                         45,
                         button,
                         state_id,
-                        None,
+                        Some(&mut self.items_potion_kinds[36]),
                         &mut self.live_carried_potion_kind,
                     );
                 }
@@ -32172,7 +32180,23 @@ impl App {
                 self.inventory.offhand[0]
             };
             if count > 0 {
-                draw_item_icon(g, id, sx + 1, sy + 1);
+                // THE KIND'S OWN TINT RIDE (the autopush-346 round —
+                // the bank's 37TH seat the offhand's potion the liquid
+                // overlay answers, the id gate the stale seat never
+                // paints — the NONE the plain draw keeps)
+                let kind = if crate::world::brewing_is_potion_kind(id) {
+                    self.items_potion_kinds
+                        .get(36)
+                        .copied()
+                        .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                if kind != crate::brewing_sim::POTION_KIND_NONE {
+                    draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
+                } else {
+                    draw_item_icon(g, id, sx + 1, sy + 1);
+                }
                 if count > 1 {
                     let s = count.to_string();
                     let tw = g.text_width(&s);
@@ -46392,13 +46416,19 @@ impl App {
         }
         // THE POTION KIND'S OWN NAME RIDE (the autopush-340 round — the
         // hovered store row the seat bank's kind the display name
-        // answers, the other seats the NONE keeps [the craft/armor/
-        // offhand rows the kind bank never carries — the honest wall
-        // the component round answers])
+        // answers; THE OFFHAND'S OWN SEAT (the autopush-346 round) the
+        // bank's 36 the hovered shield cell answers — the other rows
+        // the NONE keeps [the craft/armor rows the kind bank never
+        // carries — the honest wall the component round answers])
         let kind = match hover {
             InventoryHover::Store(i) if crate::world::brewing_is_potion_kind(id) => self
                 .items_potion_kinds
                 .get(i)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            InventoryHover::Offhand if crate::world::brewing_is_potion_kind(id) => self
+                .items_potion_kinds
+                .get(36)
                 .copied()
                 .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
             _ => crate::brewing_sim::POTION_KIND_NONE,
@@ -71353,8 +71383,10 @@ impl App {
     /// 9..35 the identity the bank's seats wear, the hotbar row
     /// 36..45 the bank's 0..8 (the store row numbering the hover lane
     /// keeps — the [`Self::reconcile_wrapped_from_live`] walk the same
-    /// law wears). The craft region 0..8 and the offhand 45 the bank
-    /// never seats — the other hovers' own NONE walls keep. The live
+    /// law wears). THE OFFHAND'S OWN SEAT (the autopush-346 round —
+    /// the 37TH seat): the wire's kinds[45] the bank's 36 wears — the
+    /// pickup/tooltip/icon lanes the seat consult, the craft region
+    /// the wall the None keeps. The live
     /// lane's own precondition — the offline world the wire never
     /// feeds (the lane's only feeder is the network pump).
     pub fn live_potion_kinds_updated(
@@ -71366,6 +71398,7 @@ impl App {
         }
         self.items_potion_kinds[0..9].copy_from_slice(&kinds[36..45]);
         self.items_potion_kinds[9..36].copy_from_slice(&kinds[9..36]);
+        self.items_potion_kinds[36] = kinds[45];
     }
 
     /// THE CARRIED CURSOR'S OWN KIND SEAT (the autopush-344 round —
@@ -82776,14 +82809,17 @@ fn store_menu_id(store: usize) -> i32 {
 
 /// THE KIND BANK'S OWN SEAT MAP (the 343 remap the ride re-keys): the
 /// menu id the bank's index answers — the main grid 9..35 the
-/// identity, the hotbar row 36..44 the bank's 0..8, the craft region
-/// 0..8 and the offhand 45 the walls the `None` keeps (the 343 law
+/// identity, the hotbar row 36..44 the bank's 0..8, THE OFFHAND 45
+/// THE BANK'S 36 (the autopush-346 round — the 37TH seat the wire's
+/// kinds[45] the pickup/tooltip lanes consult), the craft region
+/// 0..8 the walls the `None` keeps (the 343 law
 /// the bank's own map wears — the other hovers' own NONE walls the
 /// ride never seats).
 fn kind_bank_seat(menu: i32) -> Option<usize> {
     match menu {
         9..=35 => Some(menu as usize),
         36..=44 => Some((menu - 36) as usize),
+        45 => Some(36),
         _ => None,
     }
 }
@@ -82797,10 +82833,12 @@ fn kind_bank_seat(menu: i32) -> Option<usize> {
 /// PLACE the cursor's kind the seat wears, the MERGE the seat's own
 /// identity keeps [the potions the max-stack-1 law the merge never
 /// walks], the SWAP the pairs exchange. The wall seats (`None` — the
-/// craft region 0..8 and the offhand 45 the bank never seats) the
+/// craft region 0..8 the bank never seats) the
 /// cursor's own clear alone answers: the place the kind leaves with
 /// the stack, the take the honest NONE the wall keeps (the echo the
-/// offhand's own kind re-answers). The prediction's own truth the
+/// craft rows' own kind re-answers — the offhand the 346 round the
+/// bank's 36 re-seats, the wall the seat wears). The prediction's own
+/// truth the
 /// sub-echo window wears — the server's own click echo the wholesale
 /// overwrite re-banks (the 343/344 law the next refresh re-answers).
 fn ride_pickup_kind(

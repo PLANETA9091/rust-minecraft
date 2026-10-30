@@ -9502,7 +9502,7 @@ fn the_player_rows_the_potion_kinds_the_disk_wears() {
         yaw: 0.0,
         pitch: 0.0,
         inventory: crate::drops::Inventory::default(),
-        potion_kinds: [none; 36],
+        potion_kinds: [none; 37],
         selected_hotbar: 0,
         health: 20.0,
         food_level: 20,
@@ -9556,10 +9556,10 @@ fn the_player_rows_the_potion_kinds_the_disk_wears() {
     };
     let parsed = player_state_from_nbt(&elder_root).expect("the elder row the parse answers");
     assert_eq!(
-        parsed.potion_kinds, [none; 36],
+        parsed.potion_kinds, [none; 37],
         "the elder file the NONE parse keeps"
     );
-    // THE SHORT LIST the pad fills + THE OVER-LONG the 36-cap truncates
+    // THE SHORT LIST the pad fills + THE OVER-LONG the 37-cap truncates
     let patched = {
         let inner = player_row_to_nbt(&sp);
         let mut player_fields = match inner {
@@ -9580,6 +9580,10 @@ fn the_player_rows_the_potion_kinds_the_disk_wears() {
     };
     let parsed = player_state_from_nbt(&patched).expect("the patched row the parse answers");
     assert_eq!(parsed.potion_kinds[35], 35, "the cap the 36 keeps");
+    assert_eq!(
+        parsed.potion_kinds[36], 36,
+        "the cap the 37 wears — the offhand's own seat the row lands"
+    );
     assert_eq!(
         parsed.potion_kinds[3], 3,
         "the over-long list the rows wear"
@@ -10318,7 +10322,8 @@ fn the_live_carried_potion_kind_bank_the_lane_wears() {
 /// wears [the whole take the seat clears], the PLACE the cursor's
 /// kind the seat wears, the SWAP the pairs exchange, the MERGE the
 /// seat's own identity keeps [the no-op the full seat answers] — and
-/// the WALL seat (the `None` the offhand wears) the cursor's clear
+/// the WALL seats (the `None` the craft rows wear — the offhand the
+/// 346 round the bank's 36 re-seats) the cursor's clear
 /// alone answers. The seat map the bank's own numbering re-keys (the
 /// main grid the identity, the hotbar row the bank's 0..8, the walls
 /// the None keeps).
@@ -10327,7 +10332,11 @@ fn the_pickup_ride_the_kinds_the_arms_wear() {
     // THE SEAT MAP (the 343 remap the ride re-keys)
     assert_eq!(kind_bank_seat(9), Some(9), "the main grid the identity");
     assert_eq!(kind_bank_seat(40), Some(4), "the hotbar row the bank's 4");
-    assert_eq!(kind_bank_seat(45), None, "the offhand the wall keeps");
+    assert_eq!(
+        kind_bank_seat(45),
+        Some(36),
+        "the offhand the bank's 36 wears (the 346 re-seat)"
+    );
     assert_eq!(kind_bank_seat(3), None, "the craft region the wall keeps");
     let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
     let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
@@ -10486,4 +10495,127 @@ fn the_throw_ride_the_cursor_kind_the_drop_wears() {
     let mut carried3 = (745, 1);
     wire_throw_outside(&tx, &mut carried3, 0, 5, 3, None);
     assert_eq!(carried3, (0, 0), "the kindless throw the cursor empties");
+}
+/// THE OFFHAND'S OWN KIND SEAT (the autopush-346 round — the wire's
+/// kinds[45] the bank the offhand pickup/tooltip/icon lanes consult
+/// re-seats): the seat map the 45 the bank's 36 answers, the wire's
+/// wholesale overwrite the 37TH seat re-banks, the PICKUP ride the
+/// offhand's arms the kinds move (the take the kind the cursor wears
+/// + the seat clears, the place the cursor's kind the seat lands, the
+/// swap the pairs exchange) — and the OFFLINE world the wire never
+/// feeds (the lane's own precondition the gate keeps, the local truth
+/// the bank retains).
+#[test]
+fn the_offhand_seat_the_kinds_the_bank_wears() {
+    // THE SEAT MAP (the 346 round the 45 re-keys — the craft region
+    // the wall keeps)
+    assert_eq!(
+        kind_bank_seat(45),
+        Some(36),
+        "the offhand the bank's 36 wears"
+    );
+    assert_eq!(kind_bank_seat(4), None, "the craft region the wall keeps");
+    // THE WIRE SEAT (the projection's kinds[45] the bank re-seats —
+    // the wholesale overwrite the 37TH seat re-banks)
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    let mut kinds = [crate::brewing_sim::POTION_KIND_NONE; crate::world_view::INVENTORY_MENU_SLOTS];
+    kinds[45] = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    kinds[9] = crate::brewing_sim::POTION_LONG_NIGHT_VISION;
+    app.live_potion_kinds_updated(kinds);
+    assert_eq!(
+        app.items_potion_kinds[36],
+        crate::brewing_sim::POTION_STRONG_SWIFTNESS,
+        "the offhand's kind the bank's 36 wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9],
+        crate::brewing_sim::POTION_LONG_NIGHT_VISION,
+        "the main grid the identity the seats keep"
+    );
+    // THE OFFLINE GATE (the lane's own precondition): the offline
+    // world the wire never feeds — the bank the local truth keeps
+    let mut offline = App::new(3);
+    offline.enter_world();
+    let banked = offline.items_potion_kinds;
+    offline.live_potion_kinds_updated(kinds);
+    assert_eq!(
+        offline.items_potion_kinds, banked,
+        "the offline world the lane's gate refuses"
+    );
+    // THE OFFHAND'S OWN RIDE (menu 45 the banked seat the arms answer)
+    let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_LONG_NIGHT_VISION;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+    let mut carried = (0, 0);
+    let mut hotbar = [(0, 0); 9];
+    let mut offhand_kind = kind_a;
+    let mut carried_kind = none;
+    // THE TAKE (empty cursor over the kinded offhand): the kind the
+    // cursor wears, the seat the NONE clears
+    slots[45] = (potion, 1);
+    wire_inventory_pickup(
+        &tx,
+        &mut slots,
+        &mut carried,
+        &mut hotbar,
+        45,
+        0,
+        1,
+        Some(&mut offhand_kind),
+        &mut carried_kind,
+    );
+    assert_eq!(slots[45], (0, 0), "the take the seat empties");
+    assert_eq!(carried, (potion, 1), "the take the cursor wears the stack");
+    assert_eq!(offhand_kind, none, "the whole take the seat's kind clears");
+    assert_eq!(carried_kind, kind_a, "the take the kind the cursor wears");
+    // THE PLACE (the kinded cursor over the empty offhand): the kind
+    // the seat wears, the cursor the NONE clears
+    wire_inventory_pickup(
+        &tx,
+        &mut slots,
+        &mut carried,
+        &mut hotbar,
+        45,
+        0,
+        2,
+        Some(&mut offhand_kind),
+        &mut carried_kind,
+    );
+    assert_eq!(slots[45], (potion, 1), "the place the seat wears the stack");
+    assert_eq!(carried, (0, 0), "the place the cursor empties");
+    assert_eq!(offhand_kind, kind_a, "the place the kind the seat wears");
+    assert_eq!(carried_kind, none, "the place the cursor's kind clears");
+    // THE SWAP (the splash exchange — the max-stack-1 law the merge
+    // never walks): the pairs the kinds exchange
+    let splash =
+        mc_registry::item_id_by_name("splash_potion").expect("the splash potion the table keeps");
+    slots[45] = (splash, 1);
+    let mut carried2 = (potion, 1);
+    let mut carried_kind2 = kind_a;
+    let mut offhand_kind2 = kind_b;
+    wire_inventory_pickup(
+        &tx,
+        &mut slots,
+        &mut carried2,
+        &mut hotbar,
+        45,
+        0,
+        3,
+        Some(&mut offhand_kind2),
+        &mut carried_kind2,
+    );
+    assert_eq!(slots[45], (potion, 1), "the swap the seat wears the potion");
+    assert_eq!(
+        carried2,
+        (splash, 1),
+        "the swap the cursor wears the splash"
+    );
+    assert_eq!(offhand_kind2, kind_a, "the swap the cursor's kind lands");
+    assert_eq!(carried_kind2, kind_b, "the swap the seat's kind rides");
 }
