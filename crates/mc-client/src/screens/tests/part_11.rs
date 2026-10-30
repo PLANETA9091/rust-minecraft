@@ -10619,3 +10619,204 @@ fn the_offhand_seat_the_kinds_the_bank_wears() {
     assert_eq!(offhand_kind2, kind_a, "the swap the cursor's kind lands");
     assert_eq!(carried_kind2, kind_b, "the swap the seat's kind rides");
 }
+
+/// THE SWAP'S OWN KIND RIDE (the dev-201 round — the F key's ONE
+/// trade the bank's seats the same walk exchanges): the stack the
+/// kind follows — the offline bank's hotbar seat and the offhand's
+/// 36 the pairs exchange, the live bank the same trade the
+/// prediction's own truth wears (the sub-echo window the wholesale
+/// refresh re-banks, the 343/345 law the click lanes keep).
+#[test]
+fn the_swap_ride_the_kinds_the_seats_exchange() {
+    let dirt = mc_registry::item_id_by_name("dirt").expect("the dirt the table keeps");
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    // THE OFFLINE TRADE (the gameplay inventory the truth wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.inventory.items[0] = (dirt, 10);
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[0] = none;
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    app.on_swap_offhand_key();
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the offhand the hand wears"
+    );
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 10),
+        "the hand the offhand keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], kind_a,
+        "the potion's kind the hotbar seat rides"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the offhand seat the plain's NONE wears"
+    );
+    // THE ROUND TRIP (the re-swap the pairs restore)
+    app.on_swap_offhand_key();
+    assert_eq!(app.items_potion_kinds[0], none, "the hotbar seat restores");
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind_a,
+        "the offhand seat restores"
+    );
+    // THE LIVE TRADE (the belief + the bank the prediction's own
+    // truth wears — the wholesale refresh the next re-bank answers)
+    let mut live = App::new(3);
+    live.open(ScreenKind::Connect);
+    live.net_world = Some(air_net_world(2, 0));
+    live.enter_network_world(None, Skybox::Overworld, None, None);
+    let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    live.attach_live_clicks(tx);
+    live.live_inv_slots[36] = (dirt, 10);
+    live.live_inv_slots[45] = (potion, 1);
+    live.items_potion_kinds[0] = none;
+    live.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    live.on_swap_offhand_key();
+    assert_eq!(
+        live.live_inv_slots[36],
+        (potion, 1),
+        "the belief the trade wears"
+    );
+    assert_eq!(
+        live.live_inv_slots[45],
+        (dirt, 10),
+        "the belief the offhand keeps"
+    );
+    assert_eq!(
+        live.items_potion_kinds[0], kind_a,
+        "the live bank the hotbar seat rides"
+    );
+    assert_eq!(
+        live.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the live bank the offhand seat clears"
+    );
+}
+
+/// THE Q-DROP'S OWN SEAT CLEAR (the dev-201 round — the emptied
+/// store/offhand rows the bank the dev-199 walk's own law the
+/// inventory screen's own Q re-answers): the offline lane the
+/// emptied seat the bank clears, the remainder the banked kind
+/// keeps [the <= 0 gate the clear's own law wears]; the wire lane
+/// the belief's emptied seat the mapped bank seat the caller-side
+/// ride clears — the craft region the wall the None keeps, the
+/// packet the THROW input rides.
+#[test]
+fn the_qdrop_ride_the_seats_the_bank_clears() {
+    let dirt = mc_registry::item_id_by_name("dirt").expect("the dirt the table keeps");
+    let potion = mc_registry::item_id_by_name("potion").expect("the potion the table keeps");
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    // THE OFFLINE STORE ROW (the last item the seat empties — the
+    // potion the max-stack-1 law the one off the empty answers)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    app.inventory.items[5] = (potion, 1);
+    app.items_potion_kinds[5] = kind_a;
+    app.mouse_pos = Some((336, 246)); // store 5's own rect
+    app.on_inventory_drop_key(false);
+    assert_eq!(
+        app.inventory.items[5],
+        (potion, 0),
+        "the one off the seat empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[5], none,
+        "the emptied seat the bank clears"
+    );
+    // THE PLAIN REMAINDER (the partial the seat keeps — the banked
+    // kind the <= 0 gate the clear refuses, the whole take the clear
+    // answers)
+    app.inventory.items[6] = (dirt, 7);
+    app.items_potion_kinds[6] = kind_a;
+    app.mouse_pos = Some((354, 246)); // store 6's own rect
+    app.on_inventory_drop_key(false);
+    assert_eq!(
+        app.inventory.items[6],
+        (dirt, 6),
+        "the one off the seat keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[6], kind_a,
+        "the remainder the banked kind keeps"
+    );
+    app.on_inventory_drop_key(true);
+    assert_eq!(app.inventory.items[6], (0, 0), "the whole take empties");
+    assert_eq!(
+        app.items_potion_kinds[6], none,
+        "the emptied seat the bank clears"
+    );
+    // THE OFFHAND'S OWN SEAT (the shield cell the Q throws — the
+    // emptied offhand the bank's 36 clears)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    app.mouse_pos = Some((317, 167)); // the offhand's own rect
+    app.on_inventory_drop_key(false);
+    assert_eq!(
+        app.inventory.offhand[0],
+        (potion, 0),
+        "the one off the offhand empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the emptied offhand the bank clears"
+    );
+    // THE WIRE LANE (the belief's emptied seat the mapped bank seat
+    // the caller-side ride clears — the packet the THROW input rides)
+    let mut live = App::new(3);
+    live.open(ScreenKind::Connect);
+    live.net_world = Some(air_net_world(2, 0));
+    live.enter_network_world(None, Skybox::Overworld, None, None);
+    let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    live.attach_live_clicks(tx);
+    live.open(ScreenKind::Inventory);
+    live.inv_panel = inventory_panel_origin(640, 360);
+    live.live_inv_slots[45] = (potion, 1);
+    live.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    live.mouse_pos = Some((317, 167));
+    live.on_inventory_drop_key(false);
+    assert_eq!(
+        live.live_inv_slots[45],
+        (0, 0),
+        "the belief the throw empties"
+    );
+    assert_eq!(
+        live.items_potion_kinds[OFFHAND_KIND_SEAT], none,
+        "the wire lane the bank clears"
+    );
+    match rx.try_recv().expect("the THROW packet rode") {
+        crate::world_view::ContainerCommand::Click(c) => {
+            assert_eq!(c.slot, 45, "the offhand's own menu id");
+            assert_eq!(
+                c.input,
+                crate::world_view::ContainerInput::Throw,
+                "the THROW input the packet wears"
+            );
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CRAFT REGION'S WALL (the hover the map's None keeps — the
+    // banked seat the clear never answers)
+    live.live_inv_slots[1] = (potion, 1);
+    live.items_potion_kinds[0] = kind_a;
+    let (cx, cy) = craft_slot_origin(live.inv_panel, 0);
+    live.mouse_pos = Some((cx + 9, cy + 9));
+    live.on_inventory_drop_key(false);
+    assert_eq!(
+        live.live_inv_slots[1],
+        (0, 0),
+        "the craft cell the throw empties"
+    );
+    assert_eq!(
+        live.items_potion_kinds[0], kind_a,
+        "the craft region the wall the bank keeps"
+    );
+}

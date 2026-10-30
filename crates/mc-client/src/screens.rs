@@ -35845,6 +35845,14 @@ impl App {
                 self.inventory.armor[k] = new;
             } else if hovered_offhand {
                 self.inventory.offhand[0] = new;
+                // THE KIND'S OWN SEAT CLEAR (the dev-201 round — the
+                // emptied offhand the bank's 36 the dev-199 walk's own
+                // law the seat answers, the stale kind the later potion
+                // never wears; the armor rows the kind never carries)
+                if new.1 <= 0 {
+                    self.items_potion_kinds[OFFHAND_KIND_SEAT] =
+                        crate::brewing_sim::POTION_KIND_NONE;
+                }
             }
             return;
         };
@@ -35861,6 +35869,12 @@ impl App {
         // safeTake(count, MAX)'s own store walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         self.inventory.items[store] = if whole_stack { (0, 0) } else { (id, count - 1) };
+        // THE KIND'S OWN SEAT CLEAR (the dev-201 round — the emptied
+        // row the bank the dev-199 walk's own law the store seat
+        // answers, the stale kind the later potion never wears)
+        if self.inventory.items[store].1 <= 0 {
+            self.items_potion_kinds[store] = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
         // NO swing — the keyPressed chain the handleKeybinds arm never
         // rides; the container STAYS OPEN (only the close keys close it).
@@ -35912,6 +35926,17 @@ impl App {
             self.live_inv_carried,
             36..45,
         );
+        // THE KIND'S OWN SEAT CLEAR (the dev-201 round — the caller-side
+        // ride the disjoint borrows the free fn's shape keeps [the 345
+        // store-rows caller law]): the emptied belief seat the bank's
+        // mapped seat the clear answers — the prediction's own truth the
+        // sub-echo window keeps, the wholesale refresh the next re-bank
+        // answers [the 343 law]; the craft region the wall the None keeps
+        if self.live_inv_slots[hover_menu].1 <= 0 {
+            if let Some(seat) = kind_bank_seat(hover_menu as i32) {
+                self.items_potion_kinds[seat] = crate::brewing_sim::POTION_KIND_NONE;
+            }
+        }
     }
 
     /// THE TABLE'S OWN Q (the SAME keyPressed keyDrop arm — the
@@ -44974,7 +44999,12 @@ impl App {
     /// trade answers: the live store's window-0 belief (the hotbar row
     /// 36..45, the offhand 45), the offline gameplay inventory's
     /// selected stack (the items 0..8, the offhand array's own slot).
-    /// The projections the SAME-frame reads answer: the live hand the
+    /// THE KIND'S OWN RIDE (the dev-201 round — the swap the bank's
+    /// seats the same trade exchanges: the offline bank's hotbar seat
+    /// and the offhand's [`OFFHAND_KIND_SEAT`], the live bank the same
+    /// pair the prediction's own truth wears — the sub-echo window the
+    /// wholesale refresh re-banks, the 343/345 law the click lanes'
+    /// believed kind wears). The projections the SAME-frame reads answer: the live hand the
     /// `live_held_updated` reload walks (the id change the reload key
     /// speaks), the offline hand the held_id/load walk, the HUD rows
     /// the next frame's own projection.
@@ -44995,6 +45025,14 @@ impl App {
             // wholesale, the absolute set-slot the same values re-wears)
             let sel = 36 + self.selected_hotbar;
             self.live_inv_slots.swap(sel, 45);
+            // THE KIND'S OWN RIDE (the dev-201 round — the swap the
+            // bank's seats the one trade answers: the hotbar row the
+            // bank's 0..8 the selected seat wears, the offhand the
+            // bank's 36 — the prediction's own truth the sub-echo
+            // window keeps, the wholesale refresh the next re-bank
+            // answers [the 343/345 law the click lanes wear])
+            self.items_potion_kinds
+                .swap(self.selected_hotbar, OFFHAND_KIND_SEAT);
             // the hand's reload the id change speaks (the reload key
             // the store projection rides)
             let held = Some(self.live_inv_slots[sel]);
@@ -45010,6 +45048,11 @@ impl App {
             let hand = self.inventory.items[sel];
             self.inventory.items[sel] = self.inventory.offhand[0];
             self.inventory.offhand[0] = hand;
+            // THE KIND'S OWN RIDE (the dev-201 round — the stack the
+            // kind follows: the bank's hotbar seat and the offhand's
+            // 36 the same trade exchanges, the offline fill walk's
+            // own numbering the bank wears)
+            self.items_potion_kinds.swap(sel, OFFHAND_KIND_SEAT);
             let id = self.held_id();
             self.load_held_payload_from_id(id);
         }
@@ -82807,6 +82850,12 @@ fn store_menu_id(store: usize) -> i32 {
     }
 }
 
+/// THE OFFHAND'S OWN KIND SEAT (the autopush-346 round — the bank's
+/// 37TH seat the index answers): the offhand's kind the wire's
+/// kinds[45] re-seats, the swap/drop rides the same seat the move
+/// lanes consult (the dev-201 round the constant names).
+pub const OFFHAND_KIND_SEAT: usize = 36;
+
 /// THE KIND BANK'S OWN SEAT MAP (the 343 remap the ride re-keys): the
 /// menu id the bank's index answers — the main grid 9..35 the
 /// identity, the hotbar row 36..44 the bank's 0..8, THE OFFHAND 45
@@ -82819,7 +82868,7 @@ fn kind_bank_seat(menu: i32) -> Option<usize> {
     match menu {
         9..=35 => Some(menu as usize),
         36..=44 => Some((menu - 36) as usize),
-        45 => Some(36),
+        45 => Some(OFFHAND_KIND_SEAT),
         _ => None,
     }
 }
