@@ -12854,3 +12854,125 @@ fn the_mirror_kind_the_family_wear() {
         app.items_potion_kinds[9] = none;
     }
 }
+
+/// THE SAVED HOTBAR TAB'S OWN RIDE (the autopush-357 round — javap
+/// selectTab's Type.HOTBAR arm the honest silence retires): the tab
+/// the strip selects, the 81 seats the nine pages wear (the empty
+/// page the paper marker the diagonal seat keeps, the full page the
+/// row the stacks wear), the save chord the page banks the rebuild
+/// re-walks, the paper's lock the click refuses (the CREATIVE_SLOT_
+/// LOCK law the cursor keeps), the page stack the copy gives, the
+/// paper's tooltip the hotbarInfo text the keys name.
+#[test]
+fn the_creative_hotbar_tab_the_pages_wear() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let paper = mc_registry::item_id_by_name("paper").unwrap();
+    let mut app = App::new(262);
+    app.enter_world();
+    app.game_mode = GameMode::Creative;
+    // THE SAVE CHORD'S OWN RIDE FIRST (the screen-null gate the chords
+    // keep — the page the row banks BEFORE the picker opens)
+    app.inventory.items[0] = (sword, 1);
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        app.on_hotbar_save_load_key(2, true, false),
+        "the save chord the page banks"
+    );
+    assert_eq!(
+        app.hotbar_manager[2][0],
+        (sword, 1),
+        "the page the manager banks"
+    );
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Creative, "the creative arm opens");
+    let hb_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::SavedHotbar)
+        .expect("the saved hotbar tab the strip keeps");
+    app.select_creative_tab(hb_tab);
+    assert_eq!(
+        app.creative_tab, hb_tab,
+        "the tab the strip selects (the early return the walk retires)"
+    );
+    assert_eq!(
+        app.creative_items.len(),
+        81,
+        "the nine pages the list wears"
+    );
+    // THE NINE PAGES' OWN SEATS (the full page the row the stacks
+    // wear, the empty pages the papers the diagonal seats keep, the
+    // off-diagonal seats the emptiness speaks)
+    for i in 0..81usize {
+        let (id, count) = app.creative_items[i];
+        if i / 9 == 2 {
+            let expected = if i % 9 == 0 { (sword, 1) } else { (0, 0) };
+            assert_eq!(
+                (id, count),
+                expected,
+                "the saved page the row wears (seat {i})"
+            );
+        } else if i % 10 == 0 {
+            assert_eq!(
+                (id, count),
+                (paper, 1),
+                "the empty page the paper wears (seat {i})"
+            );
+        } else {
+            assert_eq!(
+                (id, count),
+                (0, 0),
+                "the off-diagonal seat the emptiness keeps (seat {i})"
+            );
+        }
+    }
+    assert!(
+        app.creative_can_scroll(),
+        "the 81 seats the scroll law answers"
+    );
+    // THE PAPER'S OWN TOOLTIP (the hotbarInfo text the keys name —
+    // the save activator the chords' own naming speaks, the digit the
+    // page's own 1-based number wears)
+    app.creative_panel = (100, 50);
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 9 + 8, 50 + 18 + 8)
+        .expect("the paper seat the tooltip answers");
+    assert_eq!(id, paper, "the paper seat the gate banks");
+    assert_eq!(
+        rows[0],
+        ("Save hotbar with C + 1".to_string(), [1.0, 1.0, 1.0]),
+        "the hotbarInfo text the keys name"
+    );
+    // THE FULL PAGE'S OWN TOOLTIP (the stack the plain name speaks —
+    // the seat the paper walk never names)
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 9 + 0 * 18 + 8, 50 + 18 + 2 * 18 + 8)
+        .expect("the page stack seat the tooltip answers");
+    assert_eq!(id, sword, "the page stack the gate banks");
+    assert_eq!(
+        rows[0].0,
+        item_display_name(mc_registry::item_name(sword).unwrap()),
+        "the page stack the plain name keeps"
+    );
+    // THE PAPER'S OWN LOCK (the CREATIVE_SLOT_LOCK the click refuses —
+    // the cursor the emptiness keeps)
+    app.click_creative_palette(0, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the paper lock the click refuses");
+    // THE OFF-DIAGONAL EMPTY SEAT (the silence — the take the empty
+    // hover never answers)
+    app.click_creative_palette(1, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the empty seat the silence keeps");
+    // THE PAGE STACK'S OWN COPY (the empty carried the take answers —
+    // the count-1 law the palette feeds)
+    app.click_creative_palette(2 * 9, 0);
+    assert_eq!(app.inv_carried, (sword, 1), "the page stack the copy gives");
+    // THE SCROLLED PAPER'S OWN SEAT (the offset the absolute index
+    // names — the bottom pages the paper walk the scroll law reads)
+    app.inv_carried = (0, 0);
+    app.creative_scroll = 1.0;
+    app.creative_scroll_to(1.0);
+    let bottom_cell = 4 * 9 + 8; // the viewport's last row, the last col
+    assert_eq!(
+        app.creative_hotbar_paper_page(bottom_cell),
+        Some(8),
+        "the scrolled seat the absolute index names"
+    );
+}

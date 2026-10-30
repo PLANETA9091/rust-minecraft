@@ -25062,6 +25062,65 @@ impl App {
             .collect();
     }
 
+    /// THE SAVED HOTBAR TAB'S OWN REBUILD (javap `selectTab`'s
+    /// Type.HOTBAR arm pcs 30-256 the 26.2 jar walk verbatim — the
+    /// `menu.items` the clear serves, the nine pages the `get(i)`
+    /// loop reads): the EMPTY page the paper marker the DIAGONAL
+    /// seat wears (the `j == i` arm — the CREATIVE_SLOT_LOCK the
+    /// component locks, the ITEM_NAME the `inventory.hotbarInfo`
+    /// text the save/load keys name [the tooltip lane the rows
+    /// speak]), the other eight the EMPTY stack keeps; the FULL
+    /// page the `hotbar.load(registryAccess)` list the row wears
+    /// (the in-memory page the file's own truth answers). The FILE'S
+    /// OWN ONCE-FLAG the first rebuild the lazy load speaks (the
+    /// `get(i)` walk the flag reads — the same walk the chords' arms
+    /// bank).
+    fn refresh_creative_hotbar_tab(&mut self) {
+        self.hotbar_file_load_once();
+        let paper = mc_registry::item_id_by_name("paper").unwrap_or(0);
+        let mut items = Vec::with_capacity(81);
+        for page_idx in 0..9usize {
+            let page = self.hotbar_manager[page_idx];
+            if page.iter().all(|&p| p.1 <= 0) {
+                // THE EMPTY PAGE'S OWN ROW (the diagonal the paper
+                // marker wears — the save hint the row names)
+                for j in 0..9usize {
+                    if j == page_idx {
+                        items.push((paper, 1));
+                    } else {
+                        items.push((0, 0));
+                    }
+                }
+            } else {
+                // THE FULL PAGE'S OWN ROW (the nine stacks the load
+                // list wears)
+                items.extend_from_slice(&page);
+            }
+        }
+        self.creative_items = items;
+    }
+
+    /// THE PAPER SEAT'S OWN WALK (the visible cell the absolute index
+    /// answers — the scrollTo's `(row + offset) * 9 + col` law the
+    /// inverse keeps: the offset the scroll's rounded product speaks,
+    /// the page the idx/9 names, the seat the idx%9 keeps): the PAPER
+    /// the EMPTY page's diagonal wears — the `col == page` pair the
+    /// selectTab arm banks, the page the in-memory store reads. The
+    /// Some the page number carries (the tooltip's own digit the
+    /// hint names), the None the page stack / the foreign seat the
+    /// plain lanes wear.
+    fn creative_hotbar_paper_page(&self, cell: usize) -> Option<usize> {
+        let offset = self.creative_row_index_for_scroll(self.creative_scroll) as usize;
+        let idx = cell + offset * 9;
+        let page = idx / 9;
+        let col = idx % 9;
+        if page < 9 && col == page && self.hotbar_manager[page].iter().all(|&s| s.1 <= 0) {
+            Some(page)
+        } else {
+            None
+        }
+    }
+
     /// THE SCROLLABLE ROW COUNT (the ItemPickerMenu.calculateRowCount's
     /// own walk — `positiveCeilDiv(items.size(), 9) - 5`: the rows the
     /// scroll can START at, the five visible rows the viewport never
@@ -25242,10 +25301,19 @@ impl App {
                 self.creative_search_highlight = None;
             }
             CreativeTabKind::SavedHotbar => {
-                // THE HONEST SILENCE (the hotbar pages the
-                // HotbarManager file lane rides — the follow-up round
-                // owes). The click the selection never banks.
-                return;
+                // THE SAVED HOTBAR TAB'S OWN REBUILD (javap selectTab's
+                // Type.HOTBAR arm the 357 round wears — the honest
+                // silence the early-return the walk retires: the tab
+                // the strip selects, the fresh-scroll tail the same
+                // order keeps, the nine pages the picker's own list
+                // wears [the empty page the paper marker the diagonal
+                // seat keeps, the full page the row the stacks wear]).
+                // The search box the fresh-tab clear the arms share.
+                self.creative_search.clear();
+                self.creative_search_cursor = 0;
+                self.creative_search_display = 0;
+                self.creative_search_highlight = None;
+                self.refresh_creative_hotbar_tab();
             }
             CreativeTabKind::Operator => {
                 // THE GATE'S OWN ANSWER (the hasPermissions walk the
@@ -26162,6 +26230,16 @@ impl App {
     /// the plain the hovered stack's own count — the display list's
     /// count-1 law the ONE-per-click palette feeds).
     fn click_creative_palette(&mut self, cell: usize, button: i8) {
+        // THE PAPER MARKER'S OWN LOCK (the CREATIVE_SLOT_LOCK component
+        // the vanilla stack wears — the picker's pickup the lock
+        // refuses: the 357 round the SavedHotbar tab's empty-page
+        // marker the gate answers, the diagonal seat the page's own
+        // index names)
+        if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::SavedHotbar
+            && self.creative_hotbar_paper_page(cell).is_some()
+        {
+            return; // the lock the click never banks
+        }
         let carried = self.inv_carried;
         let hovered = self.creative_palette[cell];
         // the per-item max the jar's own table speaks (the
@@ -48914,10 +48992,30 @@ impl App {
         } else {
             crate::brewing_sim::POTION_KIND_NONE
         };
-        Some((
-            id,
-            Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench),
-        ))
+        // THE PAPER MARKER'S OWN NAME (the 357 round — the ITEM_NAME
+        // component the vanilla stack wears: the SavedHotbar tab's
+        // empty-page marker the `inventory.hotbarInfo` text the
+        // save/load keys name [the save activator "C" the chords' own
+        // naming law keeps, the digit the page's own 1-based number
+        // speaks], the plain white row the custom-name lane never
+        // italics)
+        let rows = if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::SavedHotbar {
+            self.creative_palette_cell(mx, my)
+                .and_then(|cell| self.creative_hotbar_paper_page(cell))
+                .map(|page| {
+                    let fmt = tr("inventory.hotbarInfo").unwrap_or("Save hotbar with %1$s + %2$s");
+                    vec![(
+                        format_positional(fmt, &["C", &(page + 1).to_string()]),
+                        WHITE,
+                    )]
+                })
+                .unwrap_or_else(|| {
+                    Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench)
+                })
+        } else {
+            Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench)
+        };
+        Some((id, rows))
     }
 
     /// THE MIRROR'S OWN OFFLINE SYNC (the projection law — the menu's
