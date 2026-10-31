@@ -15433,3 +15433,104 @@ fn the_hopper_the_kind_lane_wears() {
         "the wordless seat the plain name wears"
     );
 }
+
+/// THE TABLE'S OWN STORE TINT (the dev-205 round — the 340 law the
+/// table's own store rows re-wear: the rows the REAL inventory the
+/// kind bank answers, the id gate the stale seat never paints, the
+/// wordless row the NONE draw the same pixels the plain icon wears —
+/// the golden scenes' wordless rows the bytes never move; the hotbar
+/// tail the same law answers).
+#[test]
+fn the_table_store_the_tint_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // THE DOOR (the table's own canvas the offline walk opens)
+    app.open_crafting_table();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Crafting,
+        "the table door the walk wears"
+    );
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears
+    // — the headless mouse-less frame the panel lays)
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let panel = app.table_panel;
+    let (mx, my) = inventory_slot_origin(panel, 12);
+    let (hx, hy) = inventory_slot_origin(panel, 3);
+    // THE KIND LANE'S OWN PAIR (the kinded words the liquid overlay
+    // colors, the wordless words the NONE draw keeps — the mut-closure
+    // lesson the app-borrowing helper the seat ids the arms wear)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let mut shot =
+        |main_id: i32, main_word: i32, hot_id: i32, hot_word: i32| -> crate::raster::Framebuf {
+            app.inventory.items[12] = (main_id, 1);
+            app.items_potion_kinds[12] = main_word;
+            app.inventory.items[3] = (hot_id, 1);
+            app.items_potion_kinds[3] = hot_word;
+            let mut fb = crate::raster::Framebuf::new(320, 180);
+            {
+                let mut a = GuiAssets::open(&assets_root);
+                app.mouse_pos = None;
+                app.render(&mut fb, &mut a);
+            }
+            fb
+        };
+    let fb_a = shot(potion, kind, potion, kind);
+    let fb_b = shot(potion, none, potion, none);
+    let mut main_diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, mx + 1 + gx, my + 1 + gy) != pixel(&fb_b, mx + 1 + gx, my + 1 + gy) {
+                main_diff += 1;
+            }
+        }
+    }
+    assert!(
+        main_diff > 0,
+        "the kinded store row the tint lane re-colors"
+    );
+    let mut hot_diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, hx + 1 + gx, hy + 1 + gy) != pixel(&fb_b, hx + 1 + gx, hy + 1 + gy) {
+                hot_diff += 1;
+            }
+        }
+    }
+    assert!(hot_diff > 0, "the hotbar row the tint lane re-colors");
+    // THE ID GATE'S OWN WALL (the stale word the non-potion row never
+    // paints — the dirt pair the same pixels keeps)
+    let fb_c = shot(dirt, kind, dirt, kind);
+    let fb_d = shot(dirt, none, dirt, none);
+    let mut gate = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_c, mx + 1 + gx, my + 1 + gy) != pixel(&fb_d, mx + 1 + gx, my + 1 + gy) {
+                gate += 1;
+            }
+        }
+    }
+    assert_eq!(gate, 0, "the stale word the dirt row never paints");
+    // THE FAR FACE (the tint the panel's own chrome never wears)
+    assert_eq!(
+        pixel(&fb_a, 20, 160),
+        pixel(&fb_b, 20, 160),
+        "the far face the tint never wears"
+    );
+}

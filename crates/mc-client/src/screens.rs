@@ -35612,7 +35612,22 @@ impl App {
                 continue;
             }
             let (sx, sy) = inventory_slot_origin(panel, i);
-            draw_item_icon(g, id, sx + 1, sy + 1);
+            // THE TABLE'S OWN STORE TINT (the dev-205 round — the 340
+            // law the table's own store rows re-wear: the rows the REAL
+            // inventory the kind bank answers, the id gate the stale
+            // seat never paints, the wordless row the NONE draw the
+            // same pixels the plain icon wears — the golden scenes'
+            // wordless rows the bytes never move)
+            let kind = if crate::world::brewing_is_potion_kind(id) {
+                self.items_potion_kinds[i]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
+            } else {
+                draw_item_icon(g, id, sx + 1, sy + 1);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
