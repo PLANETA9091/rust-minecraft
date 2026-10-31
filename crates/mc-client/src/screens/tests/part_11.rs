@@ -16297,3 +16297,152 @@ fn the_table_grid_the_drag_word_wears() {
         "the occupied cell the own word keeps"
     );
 }
+
+/// THE SAME-ID KIND PAIR'S OWN MODEL RIDE (the autopush-372 round —
+/// the vanilla `isSameItemSameComponents` the plain (id, count) model
+/// never saw: the same-id DIFFERENT-KIND potion pair the chest's own
+/// pickup the vanilla SWAP answers, the pairs the numerically
+/// identical stacks keep, the KINDS the exchange the honest verdict
+/// wears, the same-kind pair the max-1 gate the honest silence keeps,
+/// the wordless pair the component difference the same swap wears,
+/// the right press the never-swap law the silence keeps, the
+/// non-potion ids the plain id law the merge keeps).
+#[test]
+fn the_same_id_kind_pair_the_model_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    // THE MODEL'S OWN ANSWER (the pure walk the lane rides — the
+    // non-potion pair the plain law the merge keeps, the different
+    // ids the vanilla swap the base walk wears)
+    let (s, c) = crate::world_view::predict_pickup_kind((dirt, 3), (dirt, 2), none, none);
+    assert_eq!(s, (dirt, 5), "the non-potion pair the merge keeps");
+    assert_eq!(c, (0, 0), "the merge the carried empties");
+    let (s, c) = crate::world_view::predict_pickup_kind((dirt, 3), (stone, 2), none, none);
+    assert_eq!(s, (stone, 2), "the different ids the swap wears");
+    assert_eq!(c, (dirt, 3), "the swap the carried exchanges");
+    let mut app = App::new(372);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    app.open_chest_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the chest door opens");
+    assert!(!app.chest_is_live, "the offline sim the door keeps");
+    // THE REAL RECTS THE RENDER BANKS (the headless frame the seat
+    // lookups the same walk the clicks share)
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let seat_of = |rects: &[(i32, i32, i16)], slot: i16| -> (i32, i32) {
+        rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (gx, gy) = seat_of(&app.chest_slot_rects, 0);
+    let (gx1, gy1) = seat_of(&app.chest_slot_rects, 1);
+    // ARM A — THE DIFFERENT-KIND PAIR'S OWN SWAP (the vanilla law the
+    // plain id model never wore — the pairs the identical stacks
+    // keep, the KINDS the exchange the honest verdict wears)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = night;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = swift;
+    app.click_chest_slot_offline(gx + 8, gy + 8, 0);
+    assert_eq!(app.chest_slots[0], (potion, 1), "the seat the stack keeps");
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the carried the stack keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], swift,
+        "the carried's own word the seat wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the seat's own word the carried wears"
+    );
+    // ARM B — THE SAME-KIND PAIR'S OWN SILENCE (the same components
+    // the same item speaks, the max-1 gate the merge closes, the
+    // kinds the own words keep)
+    app.chest_row_potion_kinds[0] = night;
+    app.chest_carried_potion_kind = night;
+    app.click_chest_slot_offline(gx + 8, gy + 8, 0);
+    assert_eq!(
+        app.chest_row_potion_kinds[0], night,
+        "the same-kind pair the seat word keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the same-kind pair the carried word keeps"
+    );
+    // ARM C — THE WORDLESS PAIR'S OWN LAW (the contents-less stack
+    // the kinded potion the different components the swap answers —
+    // the NONE word the kinded word the seats exchange)
+    app.chest_row_potion_kinds[0] = none;
+    app.chest_carried_potion_kind = swift;
+    app.click_chest_slot_offline(gx + 8, gy + 8, 0);
+    assert_eq!(
+        app.chest_row_potion_kinds[0], swift,
+        "the kinded word the seat wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the wordless stack the carried wears"
+    );
+    // ARM D — THE RIGHT PRESS'S OWN SILENCE (the never-swap law the
+    // component pair the same no-op keeps — the kinds the own words
+    // keep, the button gate the kind exchange never lends)
+    app.chest_row_potion_kinds[0] = night;
+    app.chest_carried_potion_kind = swift;
+    app.click_chest_slot_offline(gx + 8, gy + 8, 1);
+    assert_eq!(
+        app.chest_row_potion_kinds[0], night,
+        "the right press the seat word keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the right press the carried word keeps"
+    );
+    // ARM E — THE NON-POTION PAIR'S OWN PLAIN LAW (the dirt rows the
+    // merge the plain id law wears, the kinds the NONE words keep,
+    // the emptied carried the honest NONE retires)
+    app.chest_slots[1] = (dirt, 3);
+    app.chest_row_potion_kinds[1] = none;
+    app.chest_carried = (dirt, 2);
+    app.chest_carried_potion_kind = none;
+    app.click_chest_slot_offline(gx1 + 8, gy1 + 8, 0);
+    assert_eq!(
+        app.chest_slots[1],
+        (dirt, 5),
+        "the dirt pair the merge wears"
+    );
+    assert_eq!(app.chest_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.chest_row_potion_kinds[1], none,
+        "the dirt row the word keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the emptied carried the NONE wears"
+    );
+}

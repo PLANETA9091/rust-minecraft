@@ -3055,6 +3055,53 @@ pub fn predict_pickup(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32), (i3
     }
 }
 
+/// THE SAME-ID KIND PAIR'S OWN COMPONENT LAW (the autopush-372 round —
+/// the vanilla `ItemStack.isSameItemSameComponents` the plain (id,
+/// count) model never sees): the same id the SAME item only when the
+/// COMPONENTS agree — the potion's own `potion_contents` the kind
+/// word speaks (the banks' own normalized reads the verdict wears),
+/// the wordless potion the contents-less stack the NONE word keeps,
+/// the non-potion ids the plain id law the TRUE keeps. The doClick
+/// PICKUP arm the verdict pre-keys: the same pair the merge walk
+/// answers (the max-1 law the potions' own room closes), the
+/// different pair the vanilla SWAP — the pairs the (id, count)
+/// model's plain id test never exchanged (the seat's word and the
+/// carried's word the lane's own banks wear).
+pub fn potion_pair_same_item(id: i32, a_kind: i32, b_kind: i32) -> bool {
+    if !crate::world::brewing_is_potion_kind(id) {
+        return true; // the non-potion ids the plain id law keeps
+    }
+    a_kind == b_kind
+}
+
+/// THE KIND-AWARE PICKUP (the same arms the base `predict_pickup`
+/// speaks, the both-filled arm the component law re-keys — the
+/// autopush-372 round): the same-id DIFFERENT-KIND potion pair the
+/// vanilla swap answers (the doClick PICKUP's own else arm the
+/// `isSameItemSameComponents` FALSE speaks — the plain id test the
+/// merge room the no-op wore, the vanilla the stacks exchange), the
+/// kinds the caller's own banks carry; every other shape the base
+/// walk verbatim wears (the empty arms, the merge room, the
+/// full-slot silence, the plain-id different-item swap, the
+/// same-kind pair the max-1 gate the honest no-op keeps).
+pub fn predict_pickup_kind(
+    slot: (i32, i32),
+    carried: (i32, i32),
+    slot_kind: i32,
+    carried_kind: i32,
+) -> ((i32, i32), (i32, i32)) {
+    if slot.1 > 0
+        && carried.1 > 0
+        && slot.0 == carried.0
+        && !potion_pair_same_item(slot.0, slot_kind, carried_kind)
+    {
+        // the vanilla swap — the different components the different
+        // items speak
+        return (carried, slot);
+    }
+    predict_pickup(slot, carried)
+}
+
 /// The vanilla `AbstractContainerMenu.doClick` PICKUP_ALL prediction
 /// (javap 26.2, sha1 2dc72797 — scripts/jar_work/acm_doClick_262.txt
 /// pcs 1611-1873): the DOUBLE-CLICK spread the carried stack wears over
