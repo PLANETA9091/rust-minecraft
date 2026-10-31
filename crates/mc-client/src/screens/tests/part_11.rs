@@ -15534,3 +15534,188 @@ fn the_table_store_the_tint_wears() {
         "the far face the tint never wears"
     );
 }
+
+/// THE TABLE GRID'S OWN KIND BANK (the autopush-367 round — the
+/// dev-204 law the 3x3 cells re-wear: the place the word the cell
+/// lays, the pickup the cell's kind the word banks, the model's own
+/// swap the pairs exchange, the normalized read the stale word the
+/// non-potion cells never keeps; the render the grid's own bank the
+/// liquid lane colors, the close the words the receiving seats ride
+/// home to [the carried's own return + the clearContainer's own grid
+/// drain], the reopen the fresh NONE row the door banks).
+#[test]
+fn the_table_grid_the_word_bank_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let kind2 = 5;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // THE DOOR (the fresh open the NONE row banks)
+    app.open_crafting_table();
+    assert_eq!(app.screen, ScreenKind::Crafting, "the table door opens");
+    assert!(
+        app.table_grid_potion_kinds.iter().all(|&k| k == none),
+        "the fresh open the grid the NONE bank wears"
+    );
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears)
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let panel = app.table_panel;
+    let cell_seat = |cell: usize| -> (i32, i32) {
+        let (x, y) = table_craft_origin(panel, cell);
+        (x + 8, y + 8)
+    };
+    // THE PLACE ARM (the kinded carried the cell's word lays — the
+    // carried the NONE word wears)
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind;
+    let (cx, cy) = cell_seat(0);
+    app.click_table_cell(0, 0);
+    assert_eq!(app.table_grid[0], (potion, 1), "the place the cell lays");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], kind,
+        "the placed cell the word banks"
+    );
+    assert_eq!(app.inv_carried, (0, 0), "the place the carried empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the placed carried the NONE word wears"
+    );
+    // THE RENDER'S OWN GRID TINT (the cell's word the liquid lane
+    // colors — the headless pair the only delta the cell's own icon
+    // wears, the far face the tint never wears)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let mut shot = |word: i32| -> crate::raster::Framebuf {
+        app.table_grid_potion_kinds[0] = word;
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        {
+            let mut a = GuiAssets::open(&assets_root);
+            app.mouse_pos = None;
+            app.render(&mut fb, &mut a);
+        }
+        fb
+    };
+    let fb_a = shot(kind);
+    let fb_b = shot(none);
+    let mut diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, cx - 7 + gx, cy - 7 + gy) != pixel(&fb_b, cx - 7 + gx, cy - 7 + gy) {
+                diff += 1;
+            }
+        }
+    }
+    assert!(diff > 0, "the kinded cell the tint lane re-colors");
+    assert_eq!(
+        pixel(&fb_a, 20, 160),
+        pixel(&fb_b, 20, 160),
+        "the far face the tint never wears"
+    );
+    app.table_grid_potion_kinds[0] = kind; // the pair's own state restores
+                                           // THE PICKUP ARM (the cell's kind the word banks, the emptied cell
+                                           // the NONE word wears)
+    app.click_table_cell(0, 0);
+    assert_eq!(app.inv_carried, (potion, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the kinded pickup the word banks"
+    );
+    assert_eq!(app.table_grid[0], (0, 0), "the pickup the cell empties");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the emptied cell the NONE word wears"
+    );
+    // THE SWAP ARM (the dirt seat the potion pairs exchange — the kind
+    // the pairs ride)
+    app.table_grid[1] = (dirt, 1);
+    app.table_grid_potion_kinds[1] = none;
+    app.click_table_cell(1, 0);
+    assert_eq!(app.table_grid[1], (potion, 1), "the swap the cell takes");
+    assert_eq!(
+        app.table_grid_potion_kinds[1], kind,
+        "the swapped cell the word banks"
+    );
+    assert_eq!(app.inv_carried, (dirt, 1), "the swap the carried takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the swapped carried the NONE word wears"
+    );
+    // THE STALE WORD'S OWN WALL (the dirt seat the stale kind never
+    // lends — the normalized read the non-potion cells the honest NONE
+    // keeps: the empty-hand pickup the NONE word wears)
+    app.throw_carried_outside(0); // the carried's own reset the stale arm wears
+    app.table_grid[2] = (dirt, 1);
+    app.table_grid_potion_kinds[2] = kind; // the stale word the bank keeps
+    app.click_table_cell(2, 0);
+    assert_eq!(app.inv_carried, (dirt, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the stale word the dirt cell never lends"
+    );
+    app.throw_carried_outside(0); // the carried's own reset the close wears
+                                  // THE SWAP'S OWN POTION HOME (the cell 1 the same pickup the word
+                                  // lends — the throw the ride retires, the close the cell 3's own
+                                  // potion alone drains)
+    app.click_table_cell(1, 0);
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the swap's own potion the word lends"
+    );
+    app.throw_carried_outside(0);
+    // THE CLOSE'S OWN GRID RIDE (the kinded cell the first-empty seat
+    // the word banks — the drain the grid empties, the bank the fresh
+    // NONE row wears)
+    app.table_grid[3] = (potion, 1);
+    app.table_grid_potion_kinds[3] = kind;
+    app.close_crafting_table(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world returns");
+    assert_eq!(app.table_grid[3], (0, 0), "the close the grid drains");
+    assert!(
+        app.table_grid_potion_kinds.iter().all(|&k| k == none),
+        "the close the bank the fresh NONE row wears"
+    );
+    let landing = app
+        .inventory
+        .items
+        .iter()
+        .position(|it| it.0 == potion && it.1 > 0)
+        .expect("the potion the inventory lands");
+    assert_eq!(
+        app.items_potion_kinds[landing], kind,
+        "the landed potion the word banks"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the close the carried word retires"
+    );
+    // THE CLOSE'S OWN CARRIED RIDE (the kinded carried the receiving
+    // free row the word banks — the 361 law the table's own close
+    // re-wears; the two rides the kinded pair the seats speak)
+    app.open_crafting_table();
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = kind2;
+    app.close_crafting_table(ScreenKind::World);
+    let landed_kinds: Vec<i32> = (0..36)
+        .filter(|&i| app.inventory.items[i] == (potion, 1))
+        .map(|i| app.items_potion_kinds[i])
+        .collect();
+    assert_eq!(landed_kinds.len(), 2, "the two rides the pair lands");
+    assert!(landed_kinds.contains(&kind), "the grid ride the word banks");
+    assert!(
+        landed_kinds.contains(&kind2),
+        "the carried ride the word banks"
+    );
+}
