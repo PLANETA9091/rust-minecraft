@@ -41470,7 +41470,12 @@ impl App {
     /// closure's own menu mapping serves (the grid nine the kindless
     /// store the 378 wall keeps, the store rows the shared bank's
     /// read — the offline fold's own mapped rows the same cells
-    /// answer).
+    /// answer). THE PLACE'S OWN WORD BANK (the autopush-389 round —
+    /// the 388 chest's own law the dispenser's wire lane re-wears,
+    /// the 384 round the reads the honest words wore): the empty
+    /// store row the placed stack's own word banks, the occupied row
+    /// the merge the original's word keeps, the grid nine the
+    /// kindless wall the write never wears.
     fn qc_distribute_dispenser_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -41480,6 +41485,20 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same cells the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| {
+                let seat = if m < 9 {
+                    self.dispenser_slots.get(m).copied().unwrap_or((0, 0))
+                } else {
+                    self.dispenser_mirror.get(m - 9).copied().unwrap_or((0, 0))
+                };
+                (m, seat.1)
+            })
+            .collect();
         let items_kinds = &self.items_potion_kinds;
         let carried_kind = self.dispenser_carried_potion_kind;
         let seat_kinds = |menu: usize| {
@@ -41503,6 +41522,29 @@ impl App {
             carried_kind,
             &seat_kinds,
         );
+        // THE PLACE'S OWN WORD BANK (the 388 chest's own law the
+        // dispenser's wire lane re-wears — the 384 round the reads
+        // the honest words wore, the write the bank this walk
+        // answers): the empty store row the placed stack's own word
+        // banks, the occupied row the merge the original's word
+        // keeps, the grid nine the kindless wall the write never
+        // wears
+        for (menu, old_count) in &before {
+            let new = if *menu < 9 {
+                self.dispenser_slots.get(*menu).copied().unwrap_or((0, 0))
+            } else {
+                self.dispenser_mirror
+                    .get(*menu - 9)
+                    .copied()
+                    .unwrap_or((0, 0))
+            };
+            if *old_count == 0 && new.1 > 0 && *menu >= 9 {
+                let mapped = if *menu < 36 { *menu } else { *menu - 36 };
+                if mapped < self.items_potion_kinds.len() {
+                    self.items_potion_kinds[mapped] = carried_kind;
+                }
+            }
+        }
         // the drag's own word (the offline walk's own law the wire's
         // tail re-wears — the emptied carried the NONE wears, the
         // remainder the same stack the word keeps)
