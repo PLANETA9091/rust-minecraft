@@ -18540,3 +18540,239 @@ fn the_drag_place_the_kind_pair_refuses_wears() {
         "the dirt row the NONE word keeps"
     );
 }
+
+/// THE WIRE FOLDS' OWN KIND HOIST (autopush-384 — the five wire
+/// distribute folds the kind words the signature wears): the same-id
+/// kind pair the seat gate refuses (the honest words the callers'
+/// own reads serve), the kindless pairs the plain law keeps, the
+/// wordless lanes the NONE wall the plain verdict wears.
+#[test]
+fn the_wire_folds_the_kind_words_answer_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(384);
+    app.enter_world();
+    app.spawn_offline_body();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    // ARM A — THE WIRE CHEST LANE'S OWN REFUSAL (the container row
+    // the mismatched pair the seat gate refuses — the stack the word
+    // the silence keeps, the honest store row the place serves, the
+    // carried the one share loses, the remainder the same word keeps)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    app.open_chest_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for s in app.chest_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.chest_mirror_sync_from_inventory();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.chest_is_live = true;
+    app.chest_live_window = Some((5, 11));
+    app.chest_slots[4] = (potion, 1);
+    app.chest_row_potion_kinds[4] = swift;
+    app.chest_carried = (potion, 9);
+    app.chest_carried_potion_kind = night;
+    app.qc_slots = vec![4, 54];
+    app.qc_type = 0;
+    app.qc_distribute_chest_wire();
+    assert_eq!(
+        app.chest_slots[4],
+        (potion, 1),
+        "the refused seat the stack keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[4], swift,
+        "the refused seat the word keeps"
+    );
+    assert_eq!(
+        app.chest_mirror[27],
+        (potion, 1),
+        "the honest row the place lays"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 8),
+        "the one seat the carried's share keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the remainder the same word keeps"
+    );
+    // ARM B — THE WIRE CHEST LANE'S OWN KINDLESS PAIR (the wordless
+    // pair the same NONE word the plain law keeps — the max-1 cap the
+    // merge never wears)
+    app.chest_slots[4] = (potion, 1);
+    app.chest_row_potion_kinds[4] = none;
+    app.chest_carried = (potion, 9);
+    app.chest_carried_potion_kind = none;
+    app.qc_slots = vec![4];
+    app.qc_type = 0;
+    app.qc_distribute_chest_wire();
+    assert_eq!(
+        app.chest_slots[4],
+        (potion, 1),
+        "the wordless pair the cap silence keeps"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 9),
+        "the wordless pair the carried keeps"
+    );
+    // ARM C — THE WIRE DISPENSER LANE'S OWN REFUSAL (the kindless
+    // grid the mismatch the 378 wall keeps, the mirror row the
+    // mismatched pair refuses, the honest row the place serves)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+    app.open_dispenser_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for s in app.dispenser_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.dispenser_mirror_sync_from_inventory();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.dispenser_is_live = true;
+    app.dispenser_live_window = Some((6, 12));
+    app.dispenser_slots[0] = (potion, 1);
+    app.dispenser_mirror[0] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    app.dispenser_carried = (potion, 9);
+    app.dispenser_carried_potion_kind = night;
+    app.qc_slots = vec![0, 9, 10];
+    app.qc_type = 0;
+    app.qc_distribute_dispenser_wire();
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the kindless grid the mismatch refuses"
+    );
+    assert_eq!(
+        app.dispenser_mirror[0],
+        (potion, 1),
+        "the mismatched row the stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the mismatched row the word keeps"
+    );
+    assert_eq!(
+        app.dispenser_mirror[1],
+        (potion, 1),
+        "the honest row the place lays"
+    );
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 8),
+        "the one seat the carried's share keeps"
+    );
+    // ARM D — THE WIRE GENERIC LANE'S OWN REFUSAL (the store row the
+    // mismatched pair refuses, the honest row the place serves, the
+    // live word the remainder keeps)
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    for s in app.live_inv_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.live_inv_slots[9] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    app.live_inv_carried = (potion, 9);
+    app.live_carried_potion_kind = night;
+    app.qc_slots = vec![9, 10];
+    app.qc_type = 0;
+    app.qc_distribute_wire();
+    assert_eq!(
+        app.live_inv_slots[9],
+        (potion, 1),
+        "the mismatched row the stack keeps"
+    );
+    assert_eq!(
+        app.live_inv_slots[10],
+        (potion, 1),
+        "the honest row the place lays"
+    );
+    assert_eq!(
+        app.live_inv_carried,
+        (potion, 8),
+        "the one seat the carried's share keeps"
+    );
+    assert_eq!(
+        app.live_carried_potion_kind, night,
+        "the remainder the same word keeps"
+    );
+    // ARM E — THE WIRE TABLE LANE'S OWN HONEST WALL (the carried word
+    // the sync never banks — the words the NONE wall keeps, the gate
+    // the plain verdict wears, the honest row the place serves)
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    for s in app.live_table_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.live_table_slots[10] = (potion, 1);
+    app.live_table_carried = (potion, 9);
+    app.table_live_window = Some((8, 14));
+    app.qc_slots = vec![10, 11];
+    app.qc_type = 0;
+    app.qc_distribute_table_wire();
+    assert_eq!(
+        app.live_table_slots[10],
+        (potion, 1),
+        "the wall's own pair the plain verdict keeps"
+    );
+    assert_eq!(
+        app.live_table_slots[11],
+        (potion, 1),
+        "the honest row the place lays"
+    );
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 8),
+        "the one seat the carried's share keeps"
+    );
+    // ARM F — THE WIRE FURNACE LANE'S OWN HONEST WALL (the trio the
+    // kindless wall keeps, the gate the plain verdict wears, the
+    // honest row the place serves)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+    app.open_furnace(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for s in app.furnace_slots.iter_mut() {
+        *s = (0, 0); // the open's own projection the deterministic zeros re-wear
+    }
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.furnace_live_window = Some((7, 13));
+    app.furnace_slots[0] = (potion, 1);
+    app.live_furnace_carried = (potion, 9);
+    app.qc_slots = vec![0, 3];
+    app.qc_type = 0;
+    app.qc_distribute_furnace_wire();
+    assert_eq!(
+        app.furnace_slots[0],
+        (potion, 1),
+        "the trio's own seat the wall keeps"
+    );
+    assert_eq!(
+        app.furnace_slots[3],
+        (potion, 1),
+        "the honest row the place lays"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 8),
+        "the one seat the carried's share keeps"
+    );
+}

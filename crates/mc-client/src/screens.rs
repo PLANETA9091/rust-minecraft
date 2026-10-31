@@ -41194,7 +41194,13 @@ impl App {
     /// [`wire_chest_quickcraft_distribute`] the disjoint field borrows
     /// keep): the packet triple the chest window's own identity rides,
     /// the place math the same net fold keeps, the HUD row the
-    /// mirror's hotbar rows sync follows.
+    /// mirror's hotbar rows sync follows. THE CALLER'S OWN KIND
+    /// READS (the autopush-384 round — the wire fold's own hoist the
+    /// words the signature wears): the carried word the chest lane's
+    /// own field answers, the seat words the closure's own menu
+    /// mapping serves (the container rows the bank's normalized word,
+    /// the store rows the shared bank's read — the fold's own
+    /// numbering the same rows the offline fold maps).
     fn qc_distribute_chest_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -41204,6 +41210,21 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        let chest_kinds = &self.chest_row_potion_kinds;
+        let items_kinds = &self.items_potion_kinds;
+        let carried_kind = self.chest_carried_potion_kind;
+        let seat_kinds = |menu: usize| {
+            if menu < 27 {
+                chest_kinds
+                    .get(menu)
+                    .copied()
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                let rel = menu - 27;
+                let row = if rel < 27 { 9 + rel } else { rel - 27 };
+                items_kinds[row]
+            }
+        };
         wire_chest_quickcraft_distribute(
             sink,
             &mut self.chest_slots,
@@ -41214,6 +41235,8 @@ impl App {
             window_id,
             state_id,
             &mut self.chest_carried,
+            carried_kind,
+            &seat_kinds,
         );
         // the drag's own word (the offline walk's own law the wire's
         // tail re-wears — the emptied carried the NONE wears, the
@@ -41350,7 +41373,14 @@ impl App {
     /// [`wire_dispenser_quickcraft_distribute`] the disjoint field
     /// borrows keep): the packet triple the dispenser window's own
     /// identity rides, the place math the same net fold keeps, the
-    /// HUD row the mirror's hotbar rows sync follows.
+    /// HUD row the mirror's hotbar rows sync follows. THE CALLER'S
+    /// OWN KIND READS (the autopush-384 round — the wire fold's own
+    /// hoist the words the signature wears): the carried word the
+    /// dispenser lane's own field answers, the seat words the
+    /// closure's own menu mapping serves (the grid nine the kindless
+    /// store the 378 wall keeps, the store rows the shared bank's
+    /// read — the offline fold's own mapped rows the same cells
+    /// answer).
     fn qc_distribute_dispenser_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -41360,6 +41390,16 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        let items_kinds = &self.items_potion_kinds;
+        let carried_kind = self.dispenser_carried_potion_kind;
+        let seat_kinds = |menu: usize| {
+            if menu < 9 {
+                crate::brewing_sim::POTION_KIND_NONE
+            } else {
+                let mapped = if menu < 36 { menu } else { menu - 36 };
+                items_kinds[mapped]
+            }
+        };
         wire_dispenser_quickcraft_distribute(
             sink,
             &mut self.dispenser_slots,
@@ -41370,6 +41410,8 @@ impl App {
             window_id,
             state_id,
             &mut self.dispenser_carried,
+            carried_kind,
+            &seat_kinds,
         );
         // the drag's own word (the offline walk's own law the wire's
         // tail re-wears — the emptied carried the NONE wears, the
@@ -42367,7 +42409,13 @@ impl App {
     /// `mask(0, type)` slot -999, the ADDs `mask(1, type)` per painted
     /// seat, the END `mask(2, type)` the changed map the distribution's
     /// own mutations name), the belief the same place math answers,
-    /// the HUD row the sync follows.
+    /// the HUD row the sync follows. THE CALLER'S OWN KIND READS (the
+    /// autopush-384 round — the wire fold's own hoist the words the
+    /// signature wears): the carried word the live lane's own field
+    /// answers, the seat words the closure's own menu mapping serves
+    /// (the store rows the kind bank's seat map reads, the craft +
+    /// armor seats the transient wall keeps — the same mapping the
+    /// offline fold's reads wear).
     fn qc_distribute_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42375,6 +42423,12 @@ impl App {
         let state_id = self.live_inv_state_id;
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        let items_kinds = &self.items_potion_kinds;
+        let carried_kind = self.live_carried_potion_kind;
+        let seat_kinds = |menu: usize| match kind_bank_seat(menu as i32) {
+            Some(seat) => items_kinds[seat],
+            None => crate::brewing_sim::POTION_KIND_NONE,
+        };
         wire_quickcraft_distribute(
             sink,
             &mut self.live_inv_slots,
@@ -42383,6 +42437,8 @@ impl App {
             qc_type,
             &qc_slots,
             state_id,
+            carried_kind,
+            &seat_kinds,
         );
         // the drag's own word (the offline walk's own law the wire's
         // tail re-wears — the emptied carried the NONE wears, the
@@ -42501,7 +42557,13 @@ impl App {
     /// keep): the packet triple the table window's own identity rides,
     /// the place math the same net fold keeps, the cells' mutation the
     /// recipe recompute the END's changed entry names, the HUD row the
-    /// hotbar menus 37..45 the sync follows.
+    /// hotbar menus 37..45 the sync follows. THE CALLER'S OWN KIND
+    /// READS (the autopush-384 round — the wire fold's own hoist the
+    /// words the signature wears): the live table lane the carried
+    /// word the sync never banks — the honest reads the NONE wall
+    /// keeps (the gate the plain verdict wears, the false refusal the
+    /// silence refuses; the live word's own field the next round's
+    /// sync may bank).
     fn qc_distribute_table_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42511,6 +42573,8 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        let carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        let seat_kinds = |_menu: usize| crate::brewing_sim::POTION_KIND_NONE;
         wire_table_quickcraft_distribute(
             sink,
             &mut self.live_table_slots,
@@ -42520,6 +42584,8 @@ impl App {
             window_id,
             state_id,
             &mut self.live_table_carried,
+            carried_kind,
+            &seat_kinds,
         );
     }
 
@@ -42678,7 +42744,13 @@ impl App {
     /// borrows keep): the packet triple the furnace window's own
     /// identity rides, the place math the same net fold keeps, the
     /// furnace's own mayPlace verdicts the per-seat gates re-check,
-    /// the HUD row the hotbar menus 30..38 the sync follows.
+    /// the HUD row the hotbar menus 30..38 the sync follows. THE
+    /// CALLER'S OWN KIND READS (the autopush-384 round — the wire
+    /// fold's own hoist the words the signature wears): the live
+    /// furnace lane the carried word never banks — the honest reads
+    /// the NONE wall keeps (the gate the plain verdict wears, the
+    /// false refusal the silence refuses; the live word's own field
+    /// the next round's sync may bank).
     fn qc_distribute_furnace_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42689,6 +42761,8 @@ impl App {
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
         let kind = self.furnace_sim.kind;
+        let carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        let seat_kinds = |_menu: usize| crate::brewing_sim::POTION_KIND_NONE;
         wire_furnace_quickcraft_distribute(
             sink,
             &mut self.furnace_slots,
@@ -42699,6 +42773,8 @@ impl App {
             window_id,
             state_id,
             &mut self.live_furnace_carried,
+            carried_kind,
+            &seat_kinds,
         );
     }
 
@@ -87700,7 +87776,12 @@ fn wire_throw_outside(
 /// type, carried) + seat, cap)` place the `k -= place - seat` net the
 /// carried fold speaks, the painted seats the copyWithCount write
 /// answers, the remainder the setCarried tail keeps, the HUD row the
-/// hotbar menus' sync follows.
+/// hotbar menus' sync follows. THE WIRE FOLD'S OWN KIND HOIST (the
+/// autopush-384 round — the kind words the slices never carry the
+/// caller's own reads the signature wears): the carried word the
+/// live lane's own field answers, the seat words the closure's own
+/// menu read serves — the same-id kind pair the seat gate refuses
+/// (the kindless pairs the NONE words the plain law keeps).
 fn wire_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
@@ -87709,6 +87790,8 @@ fn wire_quickcraft_distribute(
     qc_type: i32,
     qc_slots: &[usize],
     state_id: i32,
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
 ) {
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
@@ -87756,6 +87839,17 @@ fn wire_quickcraft_distribute(
             let (seat_id, seat_count) = live_slots[menu];
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the autopush-384 round — the wire
+            // fold's own kind hoist the same-id kind pair the seat
+            // refuses): the caller's own kind reads the closure wears,
+            // the potion pair the gate answers (the kindless pairs the
+            // NONE words the plain law keeps)
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if !quickcraft_seat_may_place(menu, carried.0) {
                 continue; // pc 384-391 — the mayPlace verdict
@@ -87850,7 +87944,14 @@ fn qc_collect_kind_refuses(seat_kind: i32, carried_kind: i32) -> bool {
 /// (the chest menu's slots ALL plain — the mayPlace TRUE pair the base
 /// Slot keeps, no verdict the walk wears), the HUD row the mirror's
 /// hotbar rows 54..62 the sync follows (the store indices 27..35 the
-/// chest swap walk banks).
+/// chest swap walk banks). THE WIRE FOLD'S OWN KIND HOIST (the
+/// autopush-384 round — the kind words the slices never carry the
+/// caller's own reads the signature wears): the carried word the
+/// chest lane's own field answers, the seat words the closure's own
+/// menu read serves (the container rows the bank's normalized word,
+/// the store rows the shared bank's read) — the same-id kind pair
+/// the seat gate refuses (the kindless pairs the NONE words the
+/// plain law keeps).
 fn wire_chest_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     grid: &mut [(i32, i32)],
@@ -87861,6 +87962,8 @@ fn wire_chest_quickcraft_distribute(
     window_id: i32,
     state_id: i32,
     carried: &mut (i32, i32),
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
 ) {
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
@@ -87899,7 +88002,9 @@ fn wire_chest_quickcraft_distribute(
         // THE DISTRIBUTION (doClick pcs 298-534): the per-seat gates +
         // place math the same table keeps — the chest's seats the
         // plain-Slot pair never refuses (canItemQuickReplace the only
-        // gate the walk re-checks)
+        // gate the walk re-checks), the same-id kind pair the
+        // component half refuses (the autopush-384 round — the wire
+        // fold's own kind hoist)
         let painted = qc_slots.len();
         let mut k = carried.1;
         for &menu in qc_slots {
@@ -87910,6 +88015,17 @@ fn wire_chest_quickcraft_distribute(
             };
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the autopush-384 round — the wire
+            // fold's own kind hoist the same-id kind pair the seat
+            // refuses): the caller's own kind reads the closure wears,
+            // the potion pair the gate answers (the kindless pairs the
+            // NONE words the plain law keeps)
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if qc_type != 2 && carried.1 < painted as i32 {
                 continue; // pc 394-416 — the count's own gate
@@ -87967,7 +88083,14 @@ fn wire_chest_quickcraft_distribute(
 /// (the dispenser menu's slots ALL plain — the mayPlace TRUE pair
 /// the base Slot keeps, no verdict the walk wears), the HUD row the
 /// mirror's hotbar rows 27..36 the sync follows (the store indices
-/// the chest swap walk banks).
+/// the chest swap walk banks). THE WIRE FOLD'S OWN KIND HOIST (the
+/// autopush-384 round — the kind words the slices never carry the
+/// caller's own reads the signature wears): the carried word the
+/// dispenser lane's own field answers, the seat words the closure's
+/// own menu read serves (the grid nine the kindless store the 378
+/// wall keeps, the store rows the shared bank's read) — the same-id
+/// kind pair the seat gate refuses (the kindless pairs the NONE
+/// words the plain law keeps).
 fn wire_dispenser_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     grid: &mut [(i32, i32)],
@@ -87978,6 +88101,8 @@ fn wire_dispenser_quickcraft_distribute(
     window_id: i32,
     state_id: i32,
     carried: &mut (i32, i32),
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
 ) {
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
@@ -88016,7 +88141,9 @@ fn wire_dispenser_quickcraft_distribute(
         // THE DISTRIBUTION (doClick pcs 298-534): the per-seat gates +
         // place math the same table keeps — the dispenser's seats the
         // plain-Slot pair never refuses (canItemQuickReplace the only
-        // gate the walk re-checks)
+        // gate the walk re-checks), the same-id kind pair the
+        // component half refuses (the autopush-384 round — the wire
+        // fold's own kind hoist)
         let painted = qc_slots.len();
         let mut k = carried.1;
         for &menu in qc_slots {
@@ -88027,6 +88154,17 @@ fn wire_dispenser_quickcraft_distribute(
             };
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the autopush-384 round — the wire
+            // fold's own kind hoist the same-id kind pair the seat
+            // refuses): the caller's own kind reads the closure wears,
+            // the potion pair the gate answers (the kindless pairs the
+            // NONE words the plain law keeps)
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if qc_type != 2 && carried.1 < painted as i32 {
                 continue; // pc 394-416 — the count's own gate
@@ -88106,7 +88244,12 @@ fn quickcraft_table_seat_may_place(menu: usize) -> bool {
 /// `k -= place - seat` net the carried fold speaks, the craft cells'
 /// mutation the recipe recompute the END's changed entry names (the
 /// slotsChanged chain the cell walks bank), the HUD row the hotbar
-/// menus 37..45 the sync follows.
+/// menus 37..45 the sync follows. THE WIRE FOLD'S OWN KIND HOIST (the
+/// autopush-384 round — the kind words the slices never carry the
+/// caller's own reads the signature wears): the live table lane the
+/// carried word the sync never banks — the caller's own reads the
+/// NONE wall keeps, the gate the plain verdict wears (the honest
+/// silence the false refusal refuses).
 fn wire_table_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); 46],
@@ -88116,6 +88259,8 @@ fn wire_table_quickcraft_distribute(
     window_id: i32,
     state_id: i32,
     carried: &mut (i32, i32),
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
 ) {
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
@@ -88163,6 +88308,17 @@ fn wire_table_quickcraft_distribute(
             let (seat_id, seat_count) = live_slots[menu];
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the autopush-384 round — the wire
+            // fold's own kind hoist the same-id kind pair the seat
+            // refuses): the live table lane's words the NONE wall
+            // keeps (the carried word the sync never banks), the gate
+            // the plain verdict wears
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if !quickcraft_table_seat_may_place(menu) {
                 continue; // pc 384-391 — the result's own mayPlace verdict
@@ -88257,7 +88413,12 @@ fn quickcraft_furnace_seat_may_place(
 /// (canItemQuickReplace + the furnace's own mayPlace verdicts + the
 /// count's own belt-and-braces), the `min(place_count + seat, cap)`
 /// place the `k -= place - seat` net the carried fold speaks, the
-/// HUD row the hotbar menus 30..38 the sync follows.
+/// HUD row the hotbar menus 30..38 the sync follows. THE WIRE FOLD'S
+/// OWN KIND HOIST (the autopush-384 round — the kind words the
+/// slices never carry the caller's own reads the signature wears):
+/// the live furnace lane the carried word never banks — the
+/// caller's own reads the NONE wall keeps, the gate the plain
+/// verdict wears (the honest silence the false refusal refuses).
 #[allow(clippy::too_many_arguments)]
 fn wire_furnace_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
@@ -88269,6 +88430,8 @@ fn wire_furnace_quickcraft_distribute(
     window_id: i32,
     state_id: i32,
     carried: &mut (i32, i32),
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
 ) {
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
@@ -88313,6 +88476,17 @@ fn wire_furnace_quickcraft_distribute(
             let (seat_id, seat_count) = live_slots.get(menu).copied().unwrap_or((0, 0));
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the autopush-384 round — the wire
+            // fold's own kind hoist the same-id kind pair the seat
+            // refuses): the live furnace lane's words the NONE wall
+            // keeps (the carried word never banks), the gate the
+            // plain verdict wears
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if !quickcraft_furnace_seat_may_place(menu, carried.0, kind) {
                 continue; // pc 384-391 — the furnace's own mayPlace verdicts
