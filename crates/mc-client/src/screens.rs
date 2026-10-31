@@ -40983,6 +40983,12 @@ impl App {
             state_id,
             &mut self.chest_carried,
         );
+        // the drag's own word (the offline walk's own law the wire's
+        // tail re-wears — the emptied carried the NONE wears, the
+        // remainder the same stack the word keeps)
+        if self.chest_carried.1 <= 0 {
+            self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE CHEST DRAG'S OWN OFFLINE DISTRIBUTION (the dispenser's own
@@ -41094,6 +41100,12 @@ impl App {
             state_id,
             &mut self.dispenser_carried,
         );
+        // the drag's own word (the offline walk's own law the wire's
+        // tail re-wears — the emptied carried the NONE wears, the
+        // remainder the same stack the word keeps)
+        if self.dispenser_carried.1 <= 0 {
+            self.dispenser_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE DISPENSER'S OFFLINE DISTRIBUTION (the doClick QUICK_CRAFT
@@ -41154,6 +41166,11 @@ impl App {
             }
         }
         self.dispenser_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+                                                                              // the drag's own word (the emptied carried the NONE wears — the
+                                                                              // remainder the same stack the word keeps)
+        if self.dispenser_carried.1 <= 0 {
+            self.dispenser_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
                                                                               // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
                                                                               // re-syncs — the open's own law the write-through's tail
                                                                               // wears) + the HUD row the store's sync follows
@@ -41207,6 +41224,11 @@ impl App {
             }
         }
         self.brewing_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // the drag's own word (the emptied carried the NONE wears — the
+        // remainder the same stack the word keeps)
+        if self.brewing_carried.1 <= 0 {
+            self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation re-syncs
         // — the open's own law the write-through's tail wears)
         self.brewing_mirror_sync_from_inventory();
@@ -41258,6 +41280,11 @@ impl App {
             }
         }
         self.enchant_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // the drag's own word (the emptied carried the NONE wears — the
+        // remainder the same stack the word keeps)
+        if self.enchant_carried.1 <= 0 {
+            self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         // THE STORE'S OWN DRAG RIDE (the dev-196 round — the emptied
         // carried the store hands to the FIRST placed seat: the
         // enchanted stack the count-1 law the one-seat distribution
@@ -41932,6 +41959,11 @@ impl App {
             }
         }
         self.inv_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps (the empty the (0,0) law speaks)
+                                                                        // the drag's own word (the emptied carried the NONE wears — the
+                                                                        // remainder the same stack the word keeps)
+        if self.inv_carried.1 <= 0 {
+            self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
         if grid_touched {
             // the slotsChanged chain — the grid's mutation the result
@@ -41963,6 +41995,12 @@ impl App {
             &qc_slots,
             state_id,
         );
+        // the drag's own word (the offline walk's own law the wire's
+        // tail re-wears — the emptied carried the NONE wears, the
+        // remainder the same stack the word keeps)
+        if self.live_inv_carried.1 <= 0 {
+            self.live_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE TABLE'S OFFLINE DISTRIBUTION (the doClick QUICK_CRAFT
@@ -42027,6 +42065,11 @@ impl App {
             }
         }
         self.inv_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+                                                                        // the drag's own word (the emptied carried the NONE wears — the
+                                                                        // remainder the same stack the word keeps)
+        if self.inv_carried.1 <= 0 {
+            self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
         if grid_touched {
             // the slotsChanged chain — the grid's mutation the result
@@ -42113,6 +42156,11 @@ impl App {
             }
         }
         self.furnace_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+                                                                            // the drag's own word (the emptied carried the NONE wears — the
+                                                                            // remainder the same stack the word keeps)
+        if self.furnace_carried.1 <= 0 {
+            self.furnace_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
     }
 

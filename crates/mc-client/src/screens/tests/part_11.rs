@@ -17554,3 +17554,343 @@ fn the_enchant_seats_the_kind_bank_wears() {
         "the emptied carried the NONE wears"
     );
 }
+
+/// THE DRAG'S OWN KIND RETIRE (autopush-380 — the nine distribute
+/// lanes the emptied carried the NONE word wears): the chest offline
+/// lane's own law the family's tails re-wear — the drag's place math
+/// the carried empties, the stale kind word the tail retires, the
+/// partial carry the remainder the same stack the word keeps.
+#[test]
+fn the_drag_tails_the_kind_word_retires_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(380);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    // ARM A — THE GENERIC LANE'S OWN RETIRE (the store rows 9 and 36
+    // the write-through wears, the exact split the carried empties,
+    // the stale word the NONE retires)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the split reads
+    }
+    app.open_inventory();
+    app.inv_carried = (potion, 2);
+    app.inv_carried_potion_kind = night;
+    app.qc_slots = vec![9, 36];
+    app.qc_type = 0;
+    app.qc_distribute_offline();
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the store row's own one"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the hotbar row's own one"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM B — THE PARTIAL CARRY'S OWN KEEP (the remainder the same
+    // stack the word keeps — the retire the emptied tail alone wears;
+    // the fresh seats the max-1 potion the merge never wears — the
+    // floor split the odd count the one item keeps)
+    app.inv_carried = (potion, 3);
+    app.inv_carried_potion_kind = night;
+    app.qc_slots = vec![10, 37];
+    app.qc_type = 0;
+    app.qc_distribute_offline();
+    assert_eq!(
+        app.inventory.items[10],
+        (potion, 1),
+        "the second row's own one"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (potion, 1),
+        "the hotbar row's own one"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the floor split the remainder keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, night,
+        "the remainder the same stack the word keeps"
+    );
+    // ARM C — THE TABLE LANE'S OWN RETIRE (the store rows 10 and 37
+    // the inverse folds wear, the exact split the carried empties)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_crafting_table();
+    app.inv_carried = (potion, 2);
+    app.inv_carried_potion_kind = night;
+    app.qc_slots = vec![10, 37];
+    app.qc_type = 0;
+    app.qc_distribute_table_offline();
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the main row's own one"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the hotbar row's own one"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM D — THE DISPENSER LANE'S OWN RETIRE (the grid seat 0 the
+    // nine's kindless store wears, the mirror row the write-through
+    // speaks, the stale word the tail retires)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+    app.open_dispenser_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
+    }
+    for s in app.dispenser_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.dispenser_mirror_sync_from_inventory();
+    app.dispenser_carried = (potion, 2);
+    app.dispenser_carried_potion_kind = night;
+    app.qc_slots = vec![0, 9];
+    app.qc_type = 0;
+    app.qc_distribute_dispenser_offline();
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the grid seat's own one"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the mirror row the write-through speaks"
+    );
+    assert_eq!(
+        app.dispenser_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM E — THE BREWING LANE'S OWN RETIRE (the stand's five the
+    // grid head wears, the mirror row the write-through speaks)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    app.open_brewing_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
+    }
+    for s in app.brewing_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.brewing_mirror_sync_from_inventory();
+    app.brewing_carried = (potion, 2);
+    app.brewing_carried_kind = night;
+    app.qc_slots = vec![0, 5];
+    app.qc_type = 0;
+    app.qc_distribute_brewing_offline();
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the stand seat's own one"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the mirror row the write-through speaks"
+    );
+    assert_eq!(
+        app.brewing_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM F — THE ENCHANT LANE'S OWN RETIRE (the pair's item seat the
+    // transient store wears, the mirror row the write-through speaks)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_enchanting_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
+    }
+    for s in app.enchant_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.enchant_mirror_sync_from_inventory();
+    app.enchant_carried = (potion, 2);
+    app.enchant_carried_potion_kind = night;
+    app.qc_slots = vec![0, 2];
+    app.qc_type = 0;
+    app.qc_distribute_enchanting_offline();
+    assert_eq!(app.enchant_slots[0], (potion, 1), "the pair seat's own one");
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the mirror row the write-through speaks"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.enchant_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM G — THE FURNACE LANE'S OWN RETIRE (the store rows 3 and 30
+    // the flat belief wears, the write-through the both cells speak)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_furnace(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
+    }
+    for s in app.furnace_slots.iter_mut() {
+        *s = (0, 0); // the open's own projection the deterministic zeros re-wear
+    }
+    app.furnace_carried = (potion, 2);
+    app.furnace_carried_potion_kind = night;
+    app.qc_slots = vec![3, 30];
+    app.qc_type = 0;
+    app.qc_distribute_furnace_offline();
+    assert_eq!(app.furnace_slots[3], (potion, 1), "the store row's own one");
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the write-through the main row speaks"
+    );
+    assert_eq!(
+        app.furnace_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM H — THE WIRE CHEST LANE'S OWN RETIRE (the live window the
+    // packets the sink rides, the free fn the belief answers, the
+    // caller's own tail the word retires)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    app.open_chest_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
+    }
+    for s in app.chest_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.chest_mirror_sync_from_inventory();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.chest_is_live = true;
+    app.chest_live_window = Some((5, 11));
+    app.chest_carried = (potion, 2);
+    app.chest_carried_potion_kind = night;
+    app.qc_slots = vec![4, 54];
+    app.qc_type = 0;
+    app.qc_distribute_chest_wire();
+    assert_eq!(app.chest_slots[4], (potion, 1), "the grid cell's own one");
+    assert_eq!(
+        app.chest_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM I — THE WIRE DISPENSER LANE'S OWN RETIRE (the live window
+    // the packets ride, the fresh stand the re-open's own law keeps,
+    // the caller's own tail the word retires)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+    app.open_dispenser_for(cell);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
+    }
+    for s in app.dispenser_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.dispenser_mirror_sync_from_inventory();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.dispenser_is_live = true;
+    app.dispenser_live_window = Some((6, 12));
+    app.dispenser_carried = (potion, 2);
+    app.dispenser_carried_potion_kind = night;
+    app.qc_slots = vec![0, 9];
+    app.qc_type = 0;
+    app.qc_distribute_dispenser_wire();
+    assert_eq!(
+        app.dispenser_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM J — THE WIRE GENERIC LANE'S OWN RETIRE (the live belief the
+    // free fn answers, the caller's own tail the word retires)
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.live_inv_carried = (potion, 2);
+    app.live_carried_potion_kind = night;
+    app.qc_slots = vec![9, 36];
+    app.qc_type = 0;
+    app.qc_distribute_wire();
+    assert_eq!(
+        app.live_inv_carried,
+        (0, 0),
+        "the exact split the carried empties"
+    );
+    assert_eq!(
+        app.live_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+}
