@@ -15878,3 +15878,98 @@ fn the_inventory_craft_cells_the_word_bank_wears() {
     );
     assert_eq!(app.craft_grid[2], (0, 0), "the picked cell the empty keeps");
 }
+
+/// THE CRAFT CELLS' OWN TOOLTIP RIDE (the autopush-369 round — the
+/// 340 law the inventory's own hover re-wears: the 368 bank the
+/// hovered craft cell's word the name row answers, the effect rows
+/// the kinded walk appends, the id gate the stale seat never lends,
+/// the wordless cell the plain name keeps, the carried wall the
+/// tooltip refuses).
+#[test]
+fn the_inventory_craft_cells_the_tooltip_word_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Inventory,
+        "the inventory door opens"
+    );
+    // THE REAL PANEL THE HOVER SEATS (the headless render the panel
+    // origin lays — the craft seats the same origin the click lane
+    // hits)
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let panel = app.inv_panel;
+    let cell_seat = |cell: usize| -> (i32, i32) {
+        let (x, y) = craft_slot_origin(panel, cell);
+        (x + 8, y + 8)
+    };
+    // THE KINDED CELL'S OWN NAME ROW (the 368 bank the hovered cell's
+    // word the display name answers — the effect rows the kinded walk
+    // appends)
+    app.craft_grid[0] = (potion, 1);
+    app.craft_grid_potion_kinds[0] = kind;
+    app.inv_carried = (0, 0);
+    let (cx, cy) = cell_seat(0);
+    let (_, rows_a) = app
+        .item_tooltip_hover(cx, cy)
+        .expect("the hovered craft cell the rows speak");
+    assert_eq!(
+        rows_a[0].0, "Potion of Night Vision",
+        "the banked word the name row wears"
+    );
+    assert!(rows_a.len() >= 2, "the effect row the kinded walk appends");
+    // THE WORDLESS CELL'S OWN PLAIN NAME (the NONE word the plain row
+    // keeps — the same pixels the plain lane wears)
+    app.craft_grid_potion_kinds[0] = none;
+    let (_, rows_b) = app
+        .item_tooltip_hover(cx, cy)
+        .expect("the hovered craft cell the rows speak");
+    assert_eq!(
+        rows_b[0].0, "Potion",
+        "the wordless cell the plain name wears"
+    );
+    // THE STALE WORD'S OWN WALL (the dirt cell the stale kind never
+    // lends — the normalized read the non-potion cells the honest
+    // plain name keeps)
+    app.craft_grid[0] = (dirt, 1);
+    app.craft_grid_potion_kinds[0] = kind;
+    let (_, rows_c) = app
+        .item_tooltip_hover(cx, cy)
+        .expect("the hovered craft cell the rows speak");
+    assert_eq!(
+        rows_c[0].0, "Dirt",
+        "the stale word the dirt cell never lends"
+    );
+    // THE CARRIED WALL (the carried stack the tooltip refuses — the
+    // image-less false answer the gate never serves)
+    app.craft_grid[0] = (potion, 1);
+    app.craft_grid_potion_kinds[0] = kind;
+    app.inv_carried = (dirt, 1);
+    assert!(
+        app.item_tooltip_hover(cx, cy).is_none(),
+        "the carried wall the tooltip refuses"
+    );
+    app.inv_carried = (0, 0);
+    // THE EMPTY CELL'S OWN SILENCE (the count gate the hasItem false
+    // the tooltip refuses)
+    let (ex, ey) = cell_seat(3);
+    assert!(
+        app.item_tooltip_hover(ex, ey).is_none(),
+        "the empty cell the tooltip refuses"
+    );
+}

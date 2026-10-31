@@ -49826,9 +49826,11 @@ impl App {
         // THE POTION KIND'S OWN NAME RIDE (the autopush-340 round — the
         // hovered store row the seat bank's kind the display name
         // answers; THE OFFHAND'S OWN SEAT (the autopush-346 round) the
-        // bank's 36 the hovered shield cell answers — the other rows
-        // the NONE keeps [the craft/armor rows the kind bank never
-        // carries — the honest wall the component round answers])
+        // bank's 36 the hovered shield cell answers; THE CRAFT CELLS'
+        // OWN SEAT (the autopush-369 round) the 368 bank's cell word
+        // the hovered craft cell answers — the armor rows the NONE
+        // keeps [the kind bank the armor seats never carry — the
+        // honest wall the component round answers])
         let kind = match hover {
             InventoryHover::Store(i) if crate::world::brewing_is_potion_kind(id) => self
                 .items_potion_kinds
@@ -49838,6 +49840,11 @@ impl App {
             InventoryHover::Offhand if crate::world::brewing_is_potion_kind(id) => self
                 .items_potion_kinds
                 .get(36)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            InventoryHover::Craft(cell) if crate::world::brewing_is_potion_kind(id) => self
+                .craft_grid_potion_kinds
+                .get(cell)
                 .copied()
                 .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
             _ => crate::brewing_sim::POTION_KIND_NONE,
