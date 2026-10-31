@@ -17894,3 +17894,203 @@ fn the_drag_tails_the_kind_word_retires_wears() {
         "the emptied carried the word retires"
     );
 }
+
+/// THE QUICK-MOVE'S OWN KIND RIDE (autopush-381 — the four shift
+/// lanes the moved stack the source's word rides): the drag retire's
+/// own law the shift tails re-wear — the drained source the NONE
+/// retires, the filled empty cell the word banks, the full section
+/// the silence keeps, the live belief the same tail wears.
+#[test]
+fn the_quick_move_the_kind_word_rides_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(381);
+    app.enter_world();
+    app.shift_down = true;
+    let panel = (100, 40);
+    app.inv_panel = panel;
+    // ARM A — THE SURVIVAL'S HOTBAR→MAIN RIDE (the occupied cell the
+    // merge skips, the empty fill the word banks, the drained source
+    // the NONE retires)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = night;
+    app.inventory.items[9] = (dirt, 64);
+    let (sx, sy) = inventory_slot_origin(panel, 0);
+    app.click_inventory_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.inventory.items[10],
+        (potion, 1),
+        "the fill the empty cell wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], night,
+        "the moved stack the word banks"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the source the move drains");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained source the word retires"
+    );
+    // ARM B — THE MAIN→HOTBAR RIDE (the hotbar's head the fill takes,
+    // the word the same ride banks)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.inventory.items[20] = (potion, 1);
+    app.items_potion_kinds[20] = swift;
+    let (bx, by) = inventory_slot_origin(panel, 20);
+    app.click_inventory_slot(bx + 8, by + 8, 0);
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the hotbar head the fill takes"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], swift,
+        "the word the hotbar row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[20], none,
+        "the drained source the word retires"
+    );
+    assert_eq!(
+        app.inventory.items[20],
+        (0, 0),
+        "the source the move drains"
+    );
+    // ARM C — THE FULL SECTION'S OWN SILENCE (the hotbar the max-1
+    // potions fill, the move the no-room walk refuses, the stack the
+    // source keeps, the word the same row wears)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    for i in 0..9 {
+        app.inventory.items[i] = (potion, 1);
+    }
+    app.inventory.items[30] = (potion, 1);
+    app.items_potion_kinds[30] = night;
+    let (cx, cy) = inventory_slot_origin(panel, 30);
+    app.click_inventory_slot(cx + 8, cy + 8, 0);
+    assert_eq!(
+        app.inventory.items[30],
+        (potion, 1),
+        "the no-room walk the stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[30], night,
+        "the silence the source's word wears"
+    );
+    // ARM D — THE TABLE STORE ROW'S OWN RIDE (the table screen's
+    // store rows the same shift lane wears, the hotbar head the fill
+    // takes, the word the same banks ride)
+    app.table_panel = (60, 30);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    let (tx, ty) = inventory_slot_origin((60, 30), 9);
+    app.click_table_slot(tx + 8, ty + 8, 0);
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the hotbar head the fill takes"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], night,
+        "the word the hotbar row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained source the word retires"
+    );
+    assert_eq!(app.inventory.items[9], (0, 0), "the source the move drains");
+    // ARM E — THE CREATIVE WRAP'S OWN RIDE (the wrap's hotbar seat
+    // the same shift arm wears, the main head the fill takes)
+    app.creative_panel = (200, 20);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = night;
+    app.click_creative_wrap(200 + 9 + 8, 20 + 112 + 8, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the main head the fill takes"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the word the main row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained source the word retires"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the source the move drains");
+    // ARM F — THE LIVE INVENTORY'S OWN RIDE (the live belief the same
+    // tail wears, the mirror cell the normalized read gates, the
+    // packet the changed map rides)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    for s in app.live_inv_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    app.live_clicks = Some(tx);
+    app.live_inv_state_id = 9;
+    app.live_inv_slots[36] = (potion, 1); // store_menu_id(0) — the hotbar head
+    app.items_potion_kinds[0] = night;
+    let (lx, ly) = inventory_slot_origin(panel, 0);
+    app.click_wire_inventory_slot(lx + 8, ly + 8, 0);
+    assert_eq!(
+        app.live_inv_slots[9],
+        (potion, 1),
+        "the main head the fill takes"
+    );
+    assert_eq!(app.live_inv_slots[36], (0, 0), "the source the move drains");
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the word the main row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained source the word retires"
+    );
+    match rx.try_recv() {
+        Ok(crate::world_view::ContainerCommand::Click(c)) => {
+            assert_eq!(c.slot, 36, "the hotbar head the menu id rides");
+            assert_eq!(
+                c.input,
+                crate::world_view::ContainerInput::QuickMove,
+                "the quick-move input speaks"
+            );
+        }
+        _ => panic!("the packet the changed map rides"),
+    }
+}

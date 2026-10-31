@@ -26338,6 +26338,16 @@ impl App {
                         &self.inventory.offhand[0],
                         i,
                     );
+                    // THE QUICK-MOVE'S OWN KIND READS (the ride the
+                    // writes pre-key — the source's normalized word +
+                    // the destinations' old cells the empty-fill gate
+                    // reads)
+                    let src_kind = self.row_potion_kind(i);
+                    let old_dests: Vec<(usize, (i32, i32))> = changed
+                        .iter()
+                        .filter(|(idx, _)| *idx < 36)
+                        .map(|(idx, _)| (*idx, self.inventory.items[*idx]))
+                        .collect();
                     for (idx, pair) in &changed {
                         if *idx >= 36 {
                             self.inventory.armor[*idx - 36] = *pair;
@@ -26346,6 +26356,16 @@ impl App {
                         }
                     }
                     self.hotbar_slots = self.inventory.hotbar();
+                    // THE QUICK-MOVE'S OWN KIND RIDE (the moved stack
+                    // the source's word rides — the helper the four
+                    // lanes wear)
+                    quick_move_kind_ride(
+                        &mut self.items_potion_kinds,
+                        &changed,
+                        i,
+                        src_kind,
+                        &old_dests,
+                    );
                 } else {
                     // THE PICKUP PAIR (the doClick PICKUP arms the base
                     // Slot's law answers — the same walk the survival
@@ -32131,6 +32151,15 @@ impl App {
                 &self.inventory.offhand[0],
                 store,
             );
+            // THE QUICK-MOVE'S OWN KIND READS (the ride the writes
+            // pre-key — the source's normalized word + the
+            // destinations' old cells the empty-fill gate reads)
+            let src_kind = self.row_potion_kind(store);
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i < 36)
+                .map(|(i, _)| (*i, self.inventory.items[*i]))
+                .collect();
             for (i, pair) in &changed {
                 if *i >= 36 {
                     self.inventory.armor[*i - 36] = *pair;
@@ -32139,6 +32168,15 @@ impl App {
                 }
             }
             self.hotbar_slots = self.inventory.hotbar();
+            // THE QUICK-MOVE'S OWN KIND RIDE (the moved stack the
+            // source's word rides — the helper the four lanes wear)
+            quick_move_kind_ride(
+                &mut self.items_potion_kinds,
+                &changed,
+                store,
+                src_kind,
+                &old_dests,
+            );
             return;
         }
         let believed = self.inventory.items[store];
@@ -33131,6 +33169,21 @@ impl App {
             let offhand = self.live_inv_slots[45];
             let changed =
                 crate::world_view::predict_quick_move_inventory(&items, &armor, &offhand, store);
+            // THE QUICK-MOVE'S OWN KIND READS (the live belief's own
+            // normalized read — the mirror cell the gate answers, the
+            // store row's own word the bank wears)
+            let src_kind = if crate::world::brewing_is_potion_kind(
+                self.live_inv_slots[store_menu_id(store) as usize].0,
+            ) {
+                self.items_potion_kinds[store]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i < 36)
+                .map(|(i, _)| (*i, self.live_inv_slots[store_menu_id(*i) as usize]))
+                .collect();
             for (i, pair) in &changed {
                 let menu_id: i32 = if *i >= 36 {
                     5 + (*i - 36) as i32
@@ -33140,6 +33193,16 @@ impl App {
                 self.live_inv_slots[menu_id as usize] = *pair;
             }
             self.hotbar_slots = self.live_hotbar_row();
+            // THE QUICK-MOVE'S OWN KIND RIDE (the moved stack the
+            // source's word rides — the helper the four lanes wear,
+            // the free fn the sink's live borrow never crosses)
+            quick_move_kind_ride(
+                &mut self.items_potion_kinds,
+                &changed,
+                store,
+                src_kind,
+                &old_dests,
+            );
             let _ = sink.send(crate::world_view::ContainerCommand::Click(
                 crate::world_view::ContainerClick {
                     window_id: 0,
@@ -33278,6 +33341,15 @@ impl App {
                 &self.inventory.offhand[0],
                 store,
             );
+            // THE QUICK-MOVE'S OWN KIND READS (the ride the writes
+            // pre-key — the source's normalized word + the
+            // destinations' old cells the empty-fill gate reads)
+            let src_kind = self.row_potion_kind(store);
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i < 36)
+                .map(|(i, _)| (*i, self.inventory.items[*i]))
+                .collect();
             for (i, pair) in &changed {
                 if *i >= 36 {
                     self.inventory.armor[*i - 36] = *pair;
@@ -33286,6 +33358,15 @@ impl App {
                 }
             }
             self.hotbar_slots = self.inventory.hotbar();
+            // THE QUICK-MOVE'S OWN KIND RIDE (the moved stack the
+            // source's word rides — the helper the four lanes wear)
+            quick_move_kind_ride(
+                &mut self.items_potion_kinds,
+                &changed,
+                store,
+                src_kind,
+                &old_dests,
+            );
             return;
         }
         let believed = self.inventory.items[store];
@@ -87010,6 +87091,44 @@ fn store_menu_id(store: usize) -> i32 {
         36 + store as i32
     } else {
         store as i32
+    }
+}
+
+/// THE QUICK-MOVE'S OWN KIND RIDE (the autopush-381 round — the drag
+/// retire's own law the shift tails re-wear: the moved stack the
+/// source's word rides, the drained source the NONE retires, the
+/// kinded remainder the word keeps, the filled empty cell the word
+/// banks, the merge the destination's own identity keeps — the
+/// vanilla isSameItemSameComponents law the added items the identity
+/// lose). The free fn the disjoint field borrows keep (the wire
+/// lane's sink the live borrow never crosses): the bank slice the
+/// caller's own reads (the normalized source word + the
+/// destinations' old cells) the ride answers. The four shift lanes
+/// (the survival store, the creative wrap, the table's store rows,
+/// the wire inventory) the same tail wears.
+fn quick_move_kind_ride(
+    kinds: &mut [i32; 37],
+    changed: &[(usize, (i32, i32))],
+    store: usize,
+    src_kind: i32,
+    old_dests: &[(usize, (i32, i32))],
+) {
+    // THE SOURCE'S OWN TAIL (the 370 round — the retire law the
+    // chest's own quick-move wears: the drained source the NONE
+    // retires, the kinded remainder the word keeps)
+    if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == store) {
+        kinds[store] = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+            src_kind
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+    }
+    // THE DESTINATIONS' OWN BANKS (the empty fill the moved stack's
+    // word wears — the merge the original keeps)
+    for (idx, old) in old_dests {
+        if *idx != store && old.1 <= 0 {
+            kinds[*idx] = src_kind;
+        }
     }
 }
 
