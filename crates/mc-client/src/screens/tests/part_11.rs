@@ -19138,3 +19138,171 @@ fn the_wire_chest_the_kind_word_rides_wears() {
         "the cursor's own word the silence keeps"
     );
 }
+
+/// THE WIRE DISPENSER'S OWN PICKUP RIDE (the dev-211 round — the
+/// wire chest's own shape the dispenser's live lane re-wears): the
+/// pickup the seat's kind the cursor banks, the grid nine the
+/// kindless store the honest NONE wall keeps, the mirror rows the
+/// mapped seat the bank answers, the wordless id the gate the stale
+/// word refuses, the right press the never-swap law the silence
+/// keeps.
+#[test]
+fn the_wire_dispenser_the_kind_word_rides_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(211);
+    app.enter_world();
+    let panel = chest_panel_origin(640, 360);
+    app.dispenser_panel = panel;
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_mirror = vec![(0, 0); 36];
+    app.dispenser_slot_rects = dispenser_rects_for(panel);
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.dispenser_is_live = true;
+    app.dispenser_live_window = Some((7, 13));
+    // ARM A — THE MIRROR ROW'S OWN TAKE RIDE (the main grid the
+    // mapped seat answers — the word the items bank lends, the
+    // MIRROR's own id the gate keeps)
+    app.dispenser_mirror[0] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    let (ox, oy) = chest_mirror_slot(panel, 0);
+    app.click_dispenser_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the mirror take the cursor wears"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, swift,
+        "the mirror seat's kind the word banks"
+    );
+    assert_eq!(app.dispenser_mirror[0], (0, 0), "the take the seat clears");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained seat the word retires"
+    );
+    // ARM B — THE GRID NINE'S OWN KINDLESS TAKE (the kindless store
+    // the word never banks — the (id, count) seat the honest NONE
+    // word the cursor wears)
+    app.dispenser_slots[0] = (potion, 1);
+    app.dispenser_carried = (0, 0);
+    app.dispenser_carried_potion_kind = none;
+    let (gx, gy) = dispenser_grid_slot(panel, 0);
+    app.click_dispenser_slot(gx + 9, gy + 9, 0);
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the grid take the cursor wears"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the kindless store the word never banks"
+    );
+    assert_eq!(app.dispenser_slots[0], (0, 0), "the take the seat clears");
+    // ARM C — THE HOTBAR ROW'S OWN PLACE RIDE (the mapped seat the
+    // -36 shift answers — the word the bank lays, the emptied cursor
+    // the NONE retires)
+    app.dispenser_mirror[27] = (0, 0);
+    app.items_potion_kinds[0] = none;
+    app.dispenser_carried = (potion, 1);
+    app.dispenser_carried_potion_kind = night;
+    let (ox, oy) = chest_mirror_slot(panel, 27);
+    app.click_dispenser_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.dispenser_mirror[27],
+        (potion, 1),
+        "the place the hotbar seat lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], night,
+        "the placed stack's own word the bank wears"
+    );
+    assert_eq!(
+        app.dispenser_carried,
+        (0, 0),
+        "the place the cursor empties"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the place the word retires"
+    );
+    // ARM D — THE SAME-ID KINDED PAIR'S OWN SWAP (the component law's
+    // own answer the plain id merge never wore — the kinds the pairs
+    // exchange)
+    app.dispenser_mirror[1] = (potion, 1);
+    app.items_potion_kinds[10] = night;
+    app.dispenser_carried = (potion, 1);
+    app.dispenser_carried_potion_kind = swift;
+    let (ox, oy) = chest_mirror_slot(panel, 1);
+    app.click_dispenser_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.dispenser_mirror[1],
+        (potion, 1),
+        "the swap the seat's stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], swift,
+        "the swap the seat's word wears"
+    );
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the swap the cursor's stack keeps"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, night,
+        "the swap the cursor's word wears"
+    );
+    // ARM E — THE WORDLESS ID'S OWN GATE (the stale bank word the
+    // mirror's own id refuses — the dirt row the honest NONE the
+    // cursor wears, the stale word the honest NONE replaces)
+    app.dispenser_mirror[2] = (dirt, 1);
+    app.items_potion_kinds[11] = swift;
+    app.dispenser_carried = (0, 0);
+    app.dispenser_carried_potion_kind = none;
+    let (ox, oy) = chest_mirror_slot(panel, 2);
+    app.click_dispenser_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.dispenser_carried,
+        (dirt, 1),
+        "the wordless take the cursor wears"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the stale word the honest NONE refuses"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], none,
+        "the stale word the write replaces"
+    );
+    // ARM F — THE RIGHT PRESS'S OWN NEVER-SWAP SILENCE (the max-1
+    // potion seat the place refuses, the kinded pair the right lane
+    // the kinds never exchanges — the silence the words keep)
+    app.dispenser_mirror[3] = (potion, 1);
+    app.items_potion_kinds[12] = swift;
+    app.dispenser_carried = (potion, 1);
+    app.dispenser_carried_potion_kind = night;
+    let (ox, oy) = chest_mirror_slot(panel, 3);
+    app.click_dispenser_slot(ox + 9, oy + 9, 1);
+    assert_eq!(
+        app.dispenser_mirror[3],
+        (potion, 1),
+        "the right press the seat keeps"
+    );
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the right press the cursor keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], swift,
+        "the seat's own word the silence keeps"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, night,
+        "the cursor's own word the silence keeps"
+    );
+}
