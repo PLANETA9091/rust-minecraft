@@ -31918,8 +31918,22 @@ impl App {
             return; // the quick-move-into-craft lane rides later
         }
         let believed = self.table_grid[cell];
+        // THE KIND'S OWN READS (the hoist the component law pre-keys —
+        // the banks' own normalized verdicts the pickup pair's answer
+        // wears, the 376 round the reads the predict call pre-wears)
+        let old_cell_kind = if crate::world::brewing_is_potion_kind(believed.0) {
+            self.table_grid_potion_kinds[cell]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.inv_carried_potion_kind;
         let (new_cell, new_carried) = if button == 0 {
-            crate::world_view::predict_pickup(believed, self.inv_carried)
+            crate::world_view::predict_pickup_kind(
+                believed,
+                self.inv_carried,
+                old_cell_kind,
+                old_carried_kind,
+            )
         } else {
             crate::world_view::predict_pickup_right(believed, self.inv_carried)
         };
@@ -31929,16 +31943,19 @@ impl App {
         // the place the word the cell lays, the model's own swap the
         // pairs exchange, the merge the emptied carried the NONE word
         // wears; the normalized read the stale word the non-potion
-        // cells never keeps)
-        let old_cell_kind = if crate::world::brewing_is_potion_kind(believed.0) {
-            self.table_grid_potion_kinds[cell]
-        } else {
-            crate::brewing_sim::POTION_KIND_NONE
-        };
-        let old_carried_kind = self.inv_carried_potion_kind;
+        // cells never keeps — the 376 round the SAME-ID KIND PAIR
+        // the component law's own swap wears)
         let mut new_cell_kind = old_cell_kind;
         let mut new_carried_kind = old_carried_kind;
         {
+            // THE COMPONENT'S OWN VERDICT (the plain id test the kind
+            // words never spoke — the same-id kind pair the vanilla
+            // isSameItemSameComponents the different items answers)
+            let pair_same = crate::world_view::potion_pair_same_item(
+                believed.0,
+                old_cell_kind,
+                old_carried_kind,
+            );
             let seat_gone = believed.1 > 0 && new_cell.1 <= 0;
             let seat_new = believed.1 <= 0 && new_cell.1 > 0;
             let carried_gone = self.inv_carried.1 > 0 && new_carried.1 <= 0;
@@ -31954,10 +31971,16 @@ impl App {
                 // ride survives)
                 new_cell_kind = old_carried_kind;
                 new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
-            } else if believed.1 > 0 && new_cell.1 > 0 && believed.0 != new_cell.0 {
+            } else if button == 0
+                && believed.1 > 0
+                && new_cell.1 > 0
+                && (believed.0 != new_cell.0 || !pair_same)
+            {
                 // the MODEL'S OWN SWAP (the (id, count) pairs the
-                // different-item exchange keeps — the kind the pairs
-                // exchange)
+                // different-item exchange keeps — the SAME-ID KIND
+                // PAIR the component law's own answer exchanges, the
+                // right press the never-swap law the silence keeps,
+                // the kind the pairs exchange)
                 std::mem::swap(&mut new_cell_kind, &mut new_carried_kind);
             } else if carried_gone {
                 // the MERGE — the cell keeps its own kind, the emptied
