@@ -19517,3 +19517,177 @@ fn the_wire_furnace_the_kind_word_rides_wears() {
         "the cursor's own word the silence keeps"
     );
 }
+
+/// THE WIRE FURNACE PAINT'S OWN KIND GATE (the autopush-386 round — the
+/// drag's own collect the 385 bank re-wears: the paint the wire lane
+/// the SAME component half the click walk answers — the same-id kinded
+/// pair the seat's own word refuses, the same-kind pair the verdict
+/// agrees, the empty seat no false refusal wears — the release the
+/// wire distribute the honest words serves, the emptied carried the
+/// tail retires, the distribute's own gate the real words the
+/// refusal speaks, the non-potion id the stale word never keys).
+#[test]
+fn the_wire_furnace_paint_the_kind_word_refuses_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(386);
+    app.enter_world();
+    app.open_furnace((0, 0, 0));
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE WIRE SESSION the flags arm (the 385 round's own shape — the
+    // geometry the render banks, the belief the wire's own emptiness
+    // wears, the fresh window the echo against this id speaks)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_is_live = true;
+    app.furnace_live_window = Some((9, 21));
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.world_is_network = true;
+    app.furnace_carried_potion_kind = none;
+    assert!(
+        !app.furnace_slot_rects.is_empty(),
+        "the render the rects bank"
+    );
+    // ARM A — THE WIRE PAINT'S OWN REFUSAL (the gate the 385 bank
+    // lifts — the same-id kinded pair the seat's own word refuses,
+    // the seat the drag never paints)
+    app.live_furnace_carried = (potion, 5);
+    app.furnace_carried_potion_kind = swift;
+    app.furnace_slots[3] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    let (gx, gy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_furnace(gx + 8, gy + 8, 0);
+    app.qc_paint_furnace(gx + 8, gy + 8);
+    assert!(
+        !app.qc_slots.contains(&3),
+        "the wire paint the kinded pair refuses"
+    );
+    // the paint-only arm the flag retires
+    app.qc_armed = false;
+    // ARM B — THE SAME-KIND PAIR'S OWN JOIN (the
+    // words the verdict agrees — the seat the
+    // paint answers)
+    app.furnace_carried_potion_kind = night;
+    app.qc_arm_furnace(gx + 8, gy + 8, 0);
+    app.qc_paint_furnace(gx + 8, gy + 8);
+    assert!(
+        app.qc_slots.contains(&3),
+        "the same-kind pair the paint joins"
+    );
+    app.qc_armed = false;
+    // ARM C — THE EMPTY SEAT'S OWN JOIN + THE RELEASE'S OWN RIDE (no
+    // false refusal the empty seat wears, the wire distribute the
+    // place serves, the remainder the same stack the word keeps)
+    app.live_furnace_carried = (potion, 5);
+    app.furnace_carried_potion_kind = swift;
+    app.furnace_slots[4] = (0, 0);
+    let (px, py) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_furnace(px + 8, py + 8, 0);
+    app.qc_paint_furnace(px + 8, py + 8);
+    assert!(app.qc_slots.contains(&4), "the empty seat the paint joins");
+    app.mouse_pos = Some((px + 8, py + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[4],
+        (potion, 1),
+        "the cap-1 place the seat wears"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 4),
+        "the remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, swift,
+        "the remainder the same stack the word keeps"
+    );
+    // ARM D — THE TAIL'S OWN RETIRE (the emptied carried the NONE
+    // wears — the whole-stack place the word spends)
+    app.live_furnace_carried = (potion, 1);
+    app.furnace_carried_potion_kind = night;
+    app.furnace_slots[5] = (0, 0);
+    let (dx, dy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 5)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_furnace(dx + 8, dy + 8, 0);
+    app.qc_paint_furnace(dx + 8, dy + 8);
+    assert!(app.qc_slots.contains(&5), "the empty seat the paint joins");
+    app.mouse_pos = Some((dx + 8, dy + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[5],
+        (potion, 1),
+        "the whole-stack place the seat wears"
+    );
+    assert_eq!(app.live_furnace_carried, (0, 0), "the place empties");
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM E — THE DISTRIBUTE'S OWN REFUSAL (the helper's component
+    // half the REAL words speak — the painted kinded pair the seat's
+    // own word refuses, the seat the place never wears)
+    app.furnace_slots[3] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.live_furnace_carried = (potion, 3);
+    app.furnace_carried_potion_kind = swift;
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_type = 0;
+    app.qc_slots = vec![3];
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[3],
+        (potion, 1),
+        "the kinded pair the seat keeps"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 3),
+        "the refused place the cursor keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, swift,
+        "the refused place the word keeps"
+    );
+    // ARM F — THE NON-POTION ID'S OWN PLAIN LAW (the stale word the
+    // id never keys — the plain pair the paint joins)
+    app.live_furnace_carried = (dirt, 5);
+    app.furnace_carried_potion_kind = none;
+    app.furnace_slots[6] = (dirt, 1);
+    app.items_potion_kinds[12] = night;
+    let (fx, fy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 6)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_furnace(fx + 8, fy + 8, 0);
+    app.qc_paint_furnace(fx + 8, fy + 8);
+    assert!(app.qc_slots.contains(&6), "the plain id the paint joins");
+}

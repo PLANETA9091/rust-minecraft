@@ -41124,21 +41124,22 @@ impl App {
         // kind pair the seat's own word refuses): the trio the
         // kindless store the dev-208 wall keeps, the store rows the
         // menu map's gated word (the write-through the same cells
-        // answer); the WIRE lane the carried word the sync never
-        // banks — the honest wall the plain verdict keeps
-        if !self.world_is_network {
-            let carried_kind = self.furnace_carried_potion_kind;
-            let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
-                match Self::furnace_menu_to_inventory(menu) {
-                    Some(row) => self.items_potion_kinds[row],
-                    None => crate::brewing_sim::POTION_KIND_NONE,
-                }
-            } else {
-                crate::brewing_sim::POTION_KIND_NONE
-            };
-            if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, carried_kind) {
-                return; // the component half — the same-id kind pair refuses
+        // answer); the WIRE lane the paint's own gate the 385 bank
+        // lifts — the carried word the wire walk banks (the open the
+        // fresh door re-banks, the close the word retires), the seat
+        // rows the items bank's honest word the same read speaks, the
+        // BOTH lanes the same verdict wears
+        let carried_kind = self.furnace_carried_potion_kind;
+        let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+            match Self::furnace_menu_to_inventory(menu) {
+                Some(row) => self.items_potion_kinds[row],
+                None => crate::brewing_sim::POTION_KIND_NONE,
             }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, carried_kind) {
+            return; // the component half — the same-id kind pair refuses
         }
         if !quickcraft_furnace_seat_may_place(menu, carried.0, self.furnace_sim.kind) {
             return; // shouldAdd pc 47-52 — the furnace's own mayPlace verdicts
@@ -42796,12 +42797,14 @@ impl App {
     /// identity rides, the place math the same net fold keeps, the
     /// furnace's own mayPlace verdicts the per-seat gates re-check,
     /// the HUD row the hotbar menus 30..38 the sync follows. THE
-    /// CALLER'S OWN KIND READS (the autopush-384 round — the wire
-    /// fold's own hoist the words the signature wears): the live
-    /// furnace lane the carried word never banks — the honest reads
-    /// the NONE wall keeps (the gate the plain verdict wears, the
-    /// false refusal the silence refuses; the live word's own field
-    /// the next round's sync may bank).
+    /// CALLER'S OWN KIND READS (the autopush-384 round the signature
+    /// wears, the autopush-386 round the honest words ride): the 385
+    /// bank the wire walk keeps — the carried word the field banks
+    /// (the open the fresh door re-banks, the close the word
+    /// retires), the store rows the items bank's mapped word the
+    /// shared helper answers (the +6/-30 shifts, the trio the
+    /// kindless wall the NONE keeps) — the gate the REAL verdict
+    /// wears, the false refusal the silence refuses.
     fn qc_distribute_furnace_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42812,8 +42815,12 @@ impl App {
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
         let kind = self.furnace_sim.kind;
-        let carried_kind = crate::brewing_sim::POTION_KIND_NONE;
-        let seat_kinds = |_menu: usize| crate::brewing_sim::POTION_KIND_NONE;
+        let items_kinds = &self.items_potion_kinds;
+        let carried_kind = self.furnace_carried_potion_kind;
+        let seat_kinds = |menu: usize| match Self::furnace_menu_to_inventory(menu) {
+            Some(row) => items_kinds[row],
+            None => crate::brewing_sim::POTION_KIND_NONE,
+        };
         wire_furnace_quickcraft_distribute(
             sink,
             &mut self.furnace_slots,
@@ -42827,6 +42834,12 @@ impl App {
             carried_kind,
             &seat_kinds,
         );
+        // THE DRAG'S OWN WORD RETIRE (the chest's own tail law the
+        // furnace's wire lane re-wears — the emptied carried the NONE
+        // wears, the remainder the same stack the word keeps)
+        if self.live_furnace_carried.1 <= 0 {
+            self.furnace_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// The LEFT press's rising edge (the vanilla MouseHandler's own
