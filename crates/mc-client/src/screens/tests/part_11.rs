@@ -20443,3 +20443,223 @@ fn the_wire_dispenser_place_the_kind_word_banks_wears() {
         "the plain carried the word keeps"
     );
 }
+
+/// THE WIRE TABLE PLACE'S OWN WORD BANK (the autopush-390 round —
+/// the 389 dispenser's own law the table's wire lane re-wears: the
+/// 384 round the reads the honest words wore, the write the bank
+/// this walk answers). THE PLACE'S OWN WORD BANK (the 389
+/// dispenser's own law the table's wire caller answers): the painted
+/// seats' own before-counts the snapshot speaks, the helper's own
+/// place math the same cells mutates, the after-walk the empty store
+/// row the placed stack's own word banks (the occupied row the merge
+/// the original's word keeps, the GRID NINE the kindless wall the
+/// write never wears — the 0 result seat the mayPlace wall keeps),
+/// the PRE-RETIRE word the honest order reads (the bank the
+/// carried_kind copy the pre-drag word wears, the drag's own word
+/// retire the AFTER the emptied carried the NONE wears — the split's
+/// emptied carried the words the rows the retire never spends).
+#[test]
+fn the_wire_table_place_the_kind_word_banks_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(390);
+    app.enter_world();
+    app.open_crafting_table();
+    app.table_panel = (100, 40);
+    app.world_is_network = true;
+    app.table_is_live = true;
+    app.table_live_window = Some((8, 14));
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    assert_eq!(app.screen, ScreenKind::Crafting, "the table door opens");
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    // ARM A — THE STORE ROW'S OWN BANK (the empty seat the placed
+    // stack's own word banks — the cap-1 place the row the word
+    // wears, the remainder the cursor the word keeps)
+    app.live_table_carried = (potion, 5);
+    app.live_table_carried_potion_kind = swift;
+    app.live_table_slots[10] = (0, 0);
+    app.items_potion_kinds[9] = none;
+    let (ax, ay) = inventory_slot_origin(app.table_panel, 9);
+    app.qc_arm_table(ax + 8, ay + 8, 0);
+    app.qc_paint_table(ax + 8, ay + 8);
+    assert!(app.qc_slots.contains(&10), "the empty seat the paint joins");
+    app.qc_release(0);
+    assert_eq!(
+        app.live_table_slots[10],
+        (potion, 1),
+        "the cap-1 place the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the placed stack's own word the row banks"
+    );
+    assert_eq!(app.live_table_carried, (potion, 4), "the remainder keeps");
+    assert_eq!(
+        app.live_table_carried_potion_kind, swift,
+        "the remainder the same stack the word keeps"
+    );
+    // ARM B — THE STORE MERGE'S OWN WORD KEEPS (the occupied row the
+    // original's word the bank never re-wears — the same-kind pair
+    // the merge the count keeps)
+    app.live_table_slots[11] = (potion, 1);
+    app.items_potion_kinds[10] = night;
+    app.live_table_carried = (potion, 1);
+    app.live_table_carried_potion_kind = night;
+    let (bx, by) = inventory_slot_origin(app.table_panel, 10);
+    app.qc_arm_table(bx + 8, by + 8, 0);
+    app.qc_paint_table(bx + 8, by + 8);
+    assert!(
+        app.qc_slots.contains(&11),
+        "the same-kind pair the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.live_table_slots[11],
+        (potion, 1),
+        "the merge the seat's count keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], night,
+        "the occupied row the original's word keeps"
+    );
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 1),
+        "the merge the cursor keeps"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, night,
+        "the word the merge keeps"
+    );
+    // ARM C — THE SPLIT'S OWN BOTH BANKS (the two empty store rows
+    // the floor split serves, the both mapped words the bank wears,
+    // the emptied carried the NONE retires — the bank the pre-retire
+    // word the honest order reads)
+    app.live_table_carried = (potion, 2);
+    app.live_table_carried_potion_kind = swift;
+    app.live_table_slots[12] = (0, 0);
+    app.live_table_slots[13] = (0, 0);
+    app.items_potion_kinds[11] = none;
+    app.items_potion_kinds[12] = none;
+    let (cx, cy) = inventory_slot_origin(app.table_panel, 11);
+    let (dx, dy) = inventory_slot_origin(app.table_panel, 12);
+    app.qc_arm_table(cx + 8, cy + 8, 0);
+    app.qc_paint_table(cx + 8, cy + 8);
+    app.qc_paint_table(dx + 8, dy + 8);
+    assert!(
+        app.qc_slots.contains(&12),
+        "the first store row the paint joins"
+    );
+    assert!(
+        app.qc_slots.contains(&13),
+        "the second store row the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.live_table_slots[12],
+        (potion, 1),
+        "the split's first the seat wears"
+    );
+    assert_eq!(
+        app.live_table_slots[13],
+        (potion, 1),
+        "the split's second the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], swift,
+        "the split's first the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], swift,
+        "the split's second the word banks"
+    );
+    assert_eq!(app.live_table_carried, (0, 0), "the split empties");
+    assert_eq!(
+        app.live_table_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM D — THE HOTBAR SEAT'S OWN STALE RETIRE (the empty row the
+    // stale word wore, the plain place the carried word re-banks —
+    // the -37 shift the mapped row answers)
+    app.live_table_carried = (dirt, 5);
+    app.live_table_carried_potion_kind = none;
+    app.live_table_slots[37] = (0, 0);
+    app.items_potion_kinds[0] = night;
+    let (ex, ey) = inventory_slot_origin(app.table_panel, 0);
+    app.qc_arm_table(ex + 8, ey + 8, 0);
+    app.qc_paint_table(ex + 8, ey + 8);
+    assert!(
+        app.qc_slots.contains(&37),
+        "the hotbar seat the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.live_table_slots[37],
+        (dirt, 5),
+        "the plain place the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the stale word the plain place retires"
+    );
+    // ARM E — THE REFUSED PAIR'S OWN BANK NEVER (the painted kinded
+    // pair the distribute's own gate refuses — the no place the bank
+    // never wears, the row's own word the refusal keeps)
+    app.live_table_slots[10] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.live_table_carried = (potion, 3);
+    app.live_table_carried_potion_kind = swift;
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_type = 0;
+    app.qc_slots = vec![10];
+    app.qc_release(0);
+    assert_eq!(
+        app.live_table_slots[10],
+        (potion, 1),
+        "the kinded pair the seat keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the refused place the row's word keeps"
+    );
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 3),
+        "the refused place the cursor keeps"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, swift,
+        "the refused place the word keeps"
+    );
+    // ARM F — THE KINDLESS GRID'S OWN WALL (the grid seat the plain
+    // place serves, the mapped rows the kindless wall never touches
+    // — the sentinel row the wrong-row write never keys)
+    app.live_table_carried = (dirt, 5);
+    app.live_table_carried_potion_kind = none;
+    app.live_table_slots[1] = (0, 0);
+    let (fx, fy) = table_craft_origin(app.table_panel, 0);
+    app.qc_arm_table(fx + 8, fy + 8, 0);
+    app.qc_paint_table(fx + 8, fy + 8);
+    assert!(app.qc_slots.contains(&1), "the grid seat the paint joins");
+    app.qc_release(0);
+    assert_eq!(
+        app.live_table_slots[1],
+        (dirt, 5),
+        "the grid seat the place serves"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the kindless wall the sentinel row keeps"
+    );
+    assert_eq!(app.live_table_carried, (0, 0), "the whole place empties");
+    assert_eq!(
+        app.live_table_carried_potion_kind, none,
+        "the plain carried the word keeps"
+    );
+}

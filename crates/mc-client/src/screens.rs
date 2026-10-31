@@ -42699,7 +42699,18 @@ impl App {
     /// 10..36 the items 9..35 the menu-1 speaks, the hotbar 37..45
     /// the items 0..8 the -37 shift keeps — the same mapping the
     /// offline fold's reads wear; the craft cells the transient wall
-    /// keeps — the kind the transient stores never carry).
+    /// keeps — the kind the transient stores never carry). THE
+    /// PLACE'S OWN WORD BANK (the autopush-390 round — the 389
+    /// dispenser's own law the table's wire lane re-wears): the
+    /// painted seats' own before-counts the snapshot speaks, the
+    /// helper's own place math the same cells mutates, the after-walk
+    /// the empty store row the placed stack's own word banks (the
+    /// occupied row the merge the original's word keeps, the grid
+    /// nine the kindless wall the write never wears — the 0 result
+    /// seat the mayPlace wall keeps), the pre-retire word the honest
+    /// order reads (the bank the carried_kind copy the pre-drag word
+    /// wears, the drag's own word retire the AFTER the emptied
+    /// carried the NONE wears).
     fn qc_distribute_table_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42709,6 +42720,13 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same seats the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| (m, self.live_table_slots[m].1))
+            .collect();
         let items_kinds = &self.items_potion_kinds;
         let carried_kind = self.live_table_carried_potion_kind;
         let seat_kinds = |menu: usize| match menu {
@@ -42728,6 +42746,27 @@ impl App {
             carried_kind,
             &seat_kinds,
         );
+        // THE PLACE'S OWN WORD BANK (the 389 dispenser's own law the
+        // table's wire lane re-wears — the 384 round the reads the
+        // honest words wore, the write the bank this walk answers):
+        // the empty store row the placed stack's own word banks, the
+        // occupied row the merge the original's word keeps, the grid
+        // nine the kindless wall the write never wears
+        for (menu, old_count) in &before {
+            let new = self.live_table_slots.get(*menu).copied().unwrap_or((0, 0));
+            if *old_count == 0 && new.1 > 0 && *menu >= 10 {
+                let row = if *menu <= 36 { *menu - 1 } else { *menu - 37 };
+                if row < self.items_potion_kinds.len() {
+                    self.items_potion_kinds[row] = carried_kind;
+                }
+            }
+        }
+        // THE DRAG'S OWN WORD RETIRE (the furnace's own tail law the
+        // table's wire lane re-wears — the emptied carried the NONE
+        // wears, the remainder the same stack the word keeps)
+        if self.live_table_carried.1 <= 0 {
+            self.live_table_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE FURNACE'S OFFLINE DISTRIBUTION (the doClick QUICK_CRAFT
