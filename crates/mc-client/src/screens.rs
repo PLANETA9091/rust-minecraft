@@ -50110,24 +50110,29 @@ impl App {
                         self.items_potion_kinds[*i - n - 27] = src_kind;
                     }
                 }
-                // the source's own word: the remainder the word keeps,
-                // the drain the NONE retires
-                if let Some(&(si, spair)) = changed.first() {
-                    if si == src_menu {
-                        let keep = if spair.1 > 0 {
-                            src_kind
-                        } else {
-                            crate::brewing_sim::POTION_KIND_NONE
-                        };
-                        if si < n {
-                            if si < self.chest_row_potion_kinds.len() {
-                                self.chest_row_potion_kinds[si] = keep;
-                            }
-                        } else if si < n + 27 {
-                            self.items_potion_kinds[9 + si - n] = keep;
-                        } else {
-                            self.items_potion_kinds[si - n - 27] = keep;
+            }
+            // THE SOURCE'S OWN TAIL (the 370 round — the retire law the
+            // gate's own skip wore out: the kindless source's own drain
+            // the stale word the same retire wears, the gate the reads
+            // normalize [the id wall the word never lends], the bank
+            // the honest NONE keeps; the kinded remainder the word
+            // keeps — the potion pair the gate's own pass the same
+            // keep wears, the drain the NONE retires)
+            if let Some(&(si, spair)) = changed.first() {
+                if si == src_menu {
+                    let keep = if spair.1 > 0 && crate::world::brewing_is_potion_kind(spair.0) {
+                        src_kind
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    if si < n {
+                        if si < self.chest_row_potion_kinds.len() {
+                            self.chest_row_potion_kinds[si] = keep;
                         }
+                    } else if si < n + 27 {
+                        self.items_potion_kinds[9 + si - n] = keep;
+                    } else {
+                        self.items_potion_kinds[si - n - 27] = keep;
                     }
                 }
             }

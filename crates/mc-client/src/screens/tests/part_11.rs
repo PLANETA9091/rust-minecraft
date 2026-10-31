@@ -15973,3 +15973,120 @@ fn the_inventory_craft_cells_the_tooltip_word_wears() {
         "the empty cell the tooltip refuses"
     );
 }
+
+/// THE HOPPER'S OWN TRANSFER RIDE (the autopush-370 round — the 369
+/// NEXT list's own third candidate the shift quick-move the hopper's
+/// five seats the chest's own lane re-wears: the kinded pair the
+/// both directions ride, the drained source the NONE retires, the
+/// stale word the kindless walk never lends, the scan order the
+/// vanilla's own shape wears [the grid source the hotbar-first
+/// reverse ride, the player row the seat-0 forward ride]).
+#[test]
+fn the_hopper_the_transfer_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(370);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    app.open_hopper_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the hopper door opens");
+    // THE GEOMETRY (the render the rects bank — the seat + the mirror
+    // rows the same panel origin lays)
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_probe, &mut a);
+    }
+    let (px, py) = app.chest_panel;
+    let (sx, sy) = hopper_container_slot((px, py), 0);
+    let (mx, my) = hopper_mirror_slot((px, py), 0);
+    let (s1x, s1y) = hopper_container_slot((px, py), 1);
+    // RIDE A (the hopper seat the player rows ride — the hotbar-first
+    // reverse scan the empty rows wear, the drained source the NONE
+    // retires, the landing row the word banks)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = kind;
+    app.shift_down = true;
+    app.click_chest_slot_offline(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.chest_slots[0],
+        (0, 0),
+        "the drained source the empty keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], none,
+        "the drained source the NONE retires"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (potion, 1),
+        "the hotbar-first scan the tail row lands"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], kind,
+        "the landing row the word banks"
+    );
+    app.shift_down = false;
+    app.inventory.items[8] = (0, 0); // the ride's own surface the round clears
+    app.items_potion_kinds[8] = none;
+    // RIDE B (the player row the hopper seat rides back — the mirror
+    // row's own word the seat banks, the drained row the NONE wears)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind;
+    app.shift_down = true;
+    app.click_chest_slot_offline(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the drained row the empty keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained row the NONE retires"
+    );
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the forward scan the seat-0 lands"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], kind,
+        "the landing seat the word banks"
+    );
+    app.shift_down = false;
+    // RIDE C (the stale silence — the dirt seat the stale word never
+    // lends: the kindless ride the honest NONE keeps, the drained
+    // seat the stale word the drain retires)
+    app.chest_slots[1] = (dirt, 1);
+    app.chest_row_potion_kinds[1] = kind; // the stale word the bank keeps
+    app.shift_down = true;
+    app.click_chest_slot_offline(s1x + 8, s1y + 8, 0);
+    assert_eq!(
+        app.inventory.items[8],
+        (dirt, 1),
+        "the kindless ride the row lands"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], none,
+        "the stale word the ride never lends"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[1], none,
+        "the drained seat the word retires"
+    );
+    app.shift_down = false;
+}
