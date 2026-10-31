@@ -19306,3 +19306,214 @@ fn the_wire_dispenser_the_kind_word_rides_wears() {
         "the cursor's own word the silence keeps"
     );
 }
+
+/// THE WIRE FURNACE'S OWN KIND BANK (the autopush-385 round — the
+/// wire chest's own shape the furnace's live lane re-wears): the
+/// pickup the seat's kind the cursor banks, the trio the kindless
+/// store the honest NONE wall keeps, the store rows the mapped seat
+/// the bank answers, the wordless id the gate the stale word refuses,
+/// the right press the never-swap law the silence keeps.
+#[test]
+fn the_wire_furnace_the_kind_word_rides_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(385);
+    app.enter_world();
+    app.open_furnace((0, 0, 0));
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE WIRE SESSION the flags arm (the render's own geometry the
+    // belief keeps — the wholesale belief the wire's own emptiness
+    // wears, the fresh window the echo against this id speaks)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_is_live = true;
+    app.furnace_live_window = Some((9, 21));
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.furnace_carried_potion_kind = none;
+    // ARM A — THE STORE ROW'S OWN TAKE RIDE (the mapped seat the +6
+    // shift answers — the word the items bank lends, the believed
+    // id's own gate keeps)
+    app.furnace_slots[3] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    let (rx, ry) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_furnace_slot(rx + 8, ry + 8, 0);
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 1),
+        "the store take the cursor wears"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, swift,
+        "the store seat's kind the word banks"
+    );
+    assert_eq!(app.furnace_slots[3], (0, 0), "the take the seat clears");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained seat the word retires"
+    );
+    // ARM B — THE TRIO'S OWN KINGLESS TAKE (the kindless store the
+    // word never banks — the (id, count) seat the honest NONE word
+    // the cursor wears)
+    app.furnace_slots[0] = (potion, 1);
+    app.live_furnace_carried = (0, 0);
+    app.furnace_carried_potion_kind = none;
+    let (ix, iy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_furnace_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 1),
+        "the trio take the cursor wears"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the kindless store the word never banks"
+    );
+    assert_eq!(app.furnace_slots[0], (0, 0), "the take the seat clears");
+    // ARM C — THE HOTBAR ROW'S OWN PLACE RIDE (the mapped seat the
+    // -30 shift answers — the word the bank lays, the emptied cursor
+    // the NONE retires)
+    app.furnace_slots[30] = (0, 0);
+    app.items_potion_kinds[0] = none;
+    app.live_furnace_carried = (potion, 1);
+    app.furnace_carried_potion_kind = night;
+    let (hx, hy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 30)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_furnace_slot(hx + 8, hy + 8, 0);
+    assert_eq!(
+        app.furnace_slots[30],
+        (potion, 1),
+        "the place the hotbar seat lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], night,
+        "the placed stack's own word the bank wears"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (0, 0),
+        "the place the cursor empties"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the place the word retires"
+    );
+    // ARM D — THE SAME-ID KINDED PAIR'S OWN SWAP (the component law's
+    // own answer the plain id merge never wore — the kinds the pairs
+    // exchange)
+    app.furnace_slots[4] = (potion, 1);
+    app.items_potion_kinds[10] = night;
+    app.live_furnace_carried = (potion, 1);
+    app.furnace_carried_potion_kind = swift;
+    let (dx, dy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_furnace_slot(dx + 8, dy + 8, 0);
+    assert_eq!(
+        app.furnace_slots[4],
+        (potion, 1),
+        "the swap the seat's stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], swift,
+        "the swap the seat's word wears"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 1),
+        "the swap the cursor's stack keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, night,
+        "the swap the cursor's word wears"
+    );
+    // ARM E — THE WORDLESS ID'S OWN GATE (the stale bank word the
+    // believed id refuses — the dirt row the honest NONE the cursor
+    // wears, the stale word the honest NONE replaces)
+    app.furnace_slots[5] = (dirt, 1);
+    app.items_potion_kinds[11] = swift;
+    app.live_furnace_carried = (0, 0);
+    app.furnace_carried_potion_kind = none;
+    let (ex, ey) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 5)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_furnace_slot(ex + 8, ey + 8, 0);
+    assert_eq!(
+        app.live_furnace_carried,
+        (dirt, 1),
+        "the wordless take the cursor wears"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the stale word the honest NONE refuses"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], none,
+        "the stale word the write replaces"
+    );
+    // ARM F — THE RIGHT PRESS'S OWN NEVER-SWAP SILENCE (the max-1
+    // potion seat the place refuses, the kinded pair the right lane
+    // the kinds never exchanges — the silence the words keep)
+    app.furnace_slots[6] = (potion, 1);
+    app.items_potion_kinds[12] = swift;
+    app.live_furnace_carried = (potion, 1);
+    app.furnace_carried_potion_kind = night;
+    let (sx, sy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 6)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_furnace_slot(sx + 8, sy + 8, 1);
+    assert_eq!(
+        app.furnace_slots[6],
+        (potion, 1),
+        "the right press the seat keeps"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 1),
+        "the right press the cursor keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], swift,
+        "the seat's own word the silence keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, night,
+        "the cursor's own word the silence keeps"
+    );
+}

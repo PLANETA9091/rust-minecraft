@@ -11,6 +11,7 @@ spec = importlib.util.spec_from_file_location("pg", "scripts/part_gate_205.py")
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 FILTERS = [
+    "the_wire_furnace_the_kind_word_rides_wears",
     "the_wire_dispenser_the_kind_word_rides_wears",
     "the_wire_chest_the_kind_word_rides_wears",
     "the_wire_table_the_kind_word_banks_wears",
