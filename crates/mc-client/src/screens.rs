@@ -9921,6 +9921,15 @@ pub struct App {
     /// contents PERSIST across open/close; only the carried stack
     /// returns ([`Self::close_inventory`]'s walk).
     pub craft_grid: [(i32, i32); 4],
+    /// THE INVENTORY CRAFT CELLS' OWN KIND BANK (the autopush-368 round —
+    /// the 367 law the 2x2 cells' own parallel row answers: the placed
+    /// potion the cell's word the bank keeps, the click's own rides the
+    /// four arms speak, the stale silence the kindless (id, count) grid
+    /// wore the bank retires — the PERSISTENT cells the persistent words
+    /// wear, the close the grid keeps the bank the same ride never
+    /// drains). The id gate the normalized read the stale word the
+    /// non-potion cells never lends ([`Self::click_craft_cell`]).
+    pub craft_grid_potion_kinds: [i32; 4],
     /// The craft grid's computed result slot (the InventoryMenu's slot
     /// 0 — the ctor's `addResultSlot(154, 28)`): the recompute law
     /// `InventoryMenu.slotsChanged` walks every container mutation
@@ -13172,6 +13181,7 @@ impl App {
             inv_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             inv_panel: (0, 0),
             craft_grid: [(0, 0); 4],
+            craft_grid_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 4],
             craft_result: (0, 0),
             table_grid: [(0, 0); 9],
             table_grid_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 9],
@@ -26283,7 +26293,11 @@ impl App {
                     // stale kind the later potion never wears; the armor
                     // rows the kind never carries the bank the seats
                     // never mint, the craft cells the wall the 343 law
-                    // keeps)
+                    // keeps — the 2x2 cells' own bank the 368 round the
+                    // same whole-clear the four seats retires)
+                    for k in self.craft_grid_potion_kinds.iter_mut() {
+                        *k = crate::brewing_sim::POTION_KIND_NONE;
+                    }
                     for k in self.items_potion_kinds.iter_mut().take(36) {
                         *k = crate::brewing_sim::POTION_KIND_NONE;
                     }
@@ -32415,6 +32429,51 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, self.inv_carried)
         };
+        // THE KIND'S OWN GRID RIDE (the autopush-368 round — the 367
+        // law the 2x2 cells re-wear, the SAME four arms the table's
+        // own cells speak: the pickup the cell's kind the word banks,
+        // the place the word the cell lays, the model's own swap the
+        // pairs through the exchange, the merge the seat its own kind
+        // keeps; the normalized read the stale word the non-potion
+        // cells never lends — the brewing_is_potion_kind gate the 361
+        // law the cells re-wear)
+        let old_cell_kind = if crate::world::brewing_is_potion_kind(believed.0) {
+            self.craft_grid_potion_kinds[cell]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.inv_carried_potion_kind;
+        let mut new_cell_kind = old_cell_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            let seat_gone = believed.1 > 0 && new_cell.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_cell.1 > 0;
+            let carried_gone = self.inv_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.inv_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word (the grid
+                // bank the cell's own word lends)
+                new_carried_kind = old_cell_kind;
+                new_cell_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the cell (the grid
+                // bank the word keeps — the potion's own identity the
+                // craft ride survives)
+                new_cell_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if believed.1 > 0 && new_cell.1 > 0 && believed.0 != new_cell.0 {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the kind the pairs
+                // exchange)
+                std::mem::swap(&mut new_cell_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the cell keeps its own kind, the emptied
+                // carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.craft_grid_potion_kinds[cell] = new_cell_kind;
+            self.inv_carried_potion_kind = new_carried_kind;
+        }
         self.craft_grid[cell] = new_cell;
         self.inv_carried = new_carried;
         self.refresh_craft_result();
@@ -34341,7 +34400,23 @@ impl App {
                 continue;
             }
             let (sx, sy) = craft_slot_origin(panel, cell);
-            draw_item_icon(g, id, sx + 1, sy + 1);
+            // THE CRAFT CELLS' OWN TINT (the autopush-368 round — the 340
+            // law the 2x2 cells re-wear: the kinded cell the row's word
+            // the liquid lane colors, the wordless cell the NONE draw the
+            // same pixels the plain icon wears — the golden scenes'
+            // wordless cells the bytes never move; the wire lane the
+            // plain draw the honest wall keeps — the belief the kind
+            // word never carries, the offline bank the only truth reads)
+            let kind = if !self.world_is_network && crate::world::brewing_is_potion_kind(id) {
+                self.craft_grid_potion_kinds[cell]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
+            } else {
+                draw_item_icon(g, id, sx + 1, sy + 1);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
