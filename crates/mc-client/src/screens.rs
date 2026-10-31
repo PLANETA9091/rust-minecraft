@@ -33180,8 +33180,18 @@ impl App {
             return;
         }
         let believed = self.inventory.items[store];
+        // THE KIND'S OWN READS (the hoist the component law pre-keys —
+        // the banks' own normalized verdicts the pickup pair's answer
+        // wears, the 373 round the reads the predict call pre-wears)
+        let old_seat_kind = self.row_potion_kind(store);
+        let old_carried_kind = self.inv_carried_potion_kind;
         let (new_slot, new_carried) = if button == 0 {
-            crate::world_view::predict_pickup(believed, self.inv_carried)
+            crate::world_view::predict_pickup_kind(
+                believed,
+                self.inv_carried,
+                old_seat_kind,
+                old_carried_kind,
+            )
         } else {
             crate::world_view::predict_pickup_right(believed, self.inv_carried)
         };
@@ -33190,12 +33200,19 @@ impl App {
         // seat's kind the word banks, the place the word the seat lays,
         // the swap the pairs exchange, the merge the emptied carried
         // the NONE word wears; the stale seat the normalized read the
-        // non-potion rows never keeps)
-        let old_seat_kind = self.row_potion_kind(store);
-        let old_carried_kind = self.inv_carried_potion_kind;
+        // non-potion rows never keeps; the 373 round the SAME-ID KIND
+        // PAIR the component law's own swap wears)
         let mut new_seat_kind = old_seat_kind;
         let mut new_carried_kind = old_carried_kind;
         {
+            // THE COMPONENT'S OWN VERDICT (the plain id test the kind
+            // words never spoke — the same-id kind pair the vanilla
+            // isSameItemSameComponents the different items answers)
+            let pair_same = crate::world_view::potion_pair_same_item(
+                believed.0,
+                old_seat_kind,
+                old_carried_kind,
+            );
             let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
             let seat_new = believed.1 <= 0 && new_slot.1 > 0;
             let carried_gone = self.inv_carried.1 > 0 && new_carried.1 <= 0;
@@ -33208,11 +33225,16 @@ impl App {
                 // the PLACE — the kind rides to the seat
                 new_seat_kind = old_carried_kind;
                 new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
-            } else if believed.1 > 0 && new_slot.1 > 0 && believed.0 != new_slot.0 {
+            } else if button == 0
+                && believed.1 > 0
+                && new_slot.1 > 0
+                && (believed.0 != new_slot.0 || !pair_same)
+            {
                 // the MODEL'S OWN SWAP (the (id, count) pairs the
-                // different-item exchange keeps — the vanilla
-                // setCarried walk the components ride, the kind the
-                // pairs exchange)
+                // different-item exchange keeps — the SAME-ID KIND
+                // PAIR the component law's own answer exchanges, the
+                // right press the never-swap law the silence keeps,
+                // the kind the pairs exchange)
                 std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
             } else if carried_gone {
                 // the MERGE — the seat keeps its own kind, the emptied

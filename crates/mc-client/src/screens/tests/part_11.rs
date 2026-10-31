@@ -16446,3 +16446,135 @@ fn the_same_id_kind_pair_the_model_wears() {
         "the emptied carried the NONE wears"
     );
 }
+
+/// THE INVENTORY STORE ROWS' OWN MODEL RIDE (the autopush-373 round —
+/// the 372 NEXT list's own family walk the store rows re-wear: the
+/// vanilla `isSameItemSameComponents` law the store rows' plain (id,
+/// count) model never saw: the same-id DIFFERENT-KIND potion pair the
+/// store row's own pickup the vanilla SWAP answers, the same-kind
+/// pair the max-1 gate the honest silence keeps, the wordless pair
+/// the component difference the same swap wears, the right press the
+/// never-swap law the silence keeps, the non-potion ids the plain id
+/// law the merge keeps).
+#[test]
+fn the_store_rows_the_model_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(373);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Inventory,
+        "the inventory door opens"
+    );
+    // THE REAL PANEL THE RENDER BANKS (the headless frame the seat
+    // lookups the same walk the clicks share)
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let panel = app.inv_panel;
+    let seat_of = |store: usize| -> (i32, i32) {
+        let (x, y) = inventory_slot_origin(panel, store);
+        (x + 8, y + 8)
+    };
+    // ARM A — THE DIFFERENT-KIND PAIR'S OWN SWAP (the vanilla law the
+    // plain id model never wore — the pairs the identical stacks
+    // keep, the KINDS the exchange the honest verdict wears)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = swift;
+    let (sx, sy) = seat_of(9);
+    app.click_inventory_slot(sx, sy, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the seat the stack keeps"
+    );
+    assert_eq!(app.inv_carried, (potion, 1), "the carried the stack keeps");
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the carried's own word the seat wears"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, night,
+        "the seat's own word the carried wears"
+    );
+    // ARM B — THE SAME-KIND PAIR'S OWN SILENCE (the same components
+    // the same item speaks, the max-1 gate the merge closes, the
+    // kinds the own words keep)
+    app.items_potion_kinds[9] = night;
+    app.inv_carried_potion_kind = night;
+    app.click_inventory_slot(sx, sy, 0);
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the same-kind pair the seat word keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, night,
+        "the same-kind pair the carried word keeps"
+    );
+    // ARM C — THE WORDLESS PAIR'S OWN LAW (the contents-less stack
+    // the kinded potion the different components the swap answers —
+    // the NONE word the kinded word the seats exchange)
+    app.items_potion_kinds[9] = none;
+    app.inv_carried_potion_kind = swift;
+    app.click_inventory_slot(sx, sy, 0);
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the kinded word the seat wears"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the wordless stack the carried wears"
+    );
+    // ARM D — THE RIGHT PRESS'S OWN SILENCE (the never-swap law the
+    // component pair the same no-op keeps — the kinds the own words
+    // keep, the button gate the kind exchange never lends)
+    app.items_potion_kinds[9] = night;
+    app.inv_carried_potion_kind = swift;
+    app.click_inventory_slot(sx, sy, 1);
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the right press the seat word keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, swift,
+        "the right press the carried word keeps"
+    );
+    // ARM E — THE NON-POTION PAIR'S OWN PLAIN LAW (the dirt rows the
+    // merge the plain id law wears, the kinds the NONE words keep,
+    // the emptied carried the honest NONE retires)
+    app.inventory.items[10] = (dirt, 3);
+    app.items_potion_kinds[10] = none;
+    app.inv_carried = (dirt, 2);
+    app.inv_carried_potion_kind = none;
+    let (sx1, sy1) = seat_of(10);
+    app.click_inventory_slot(sx1, sy1, 0);
+    assert_eq!(
+        app.inventory.items[10],
+        (dirt, 5),
+        "the dirt pair the merge wears"
+    );
+    assert_eq!(app.inv_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.items_potion_kinds[10], none,
+        "the dirt row the word keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the emptied carried the NONE wears"
+    );
+}
