@@ -11,6 +11,7 @@ spec = importlib.util.spec_from_file_location("pg", "scripts/part_gate_205.py")
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 FILTERS = [
+    "the_drag_place_the_kind_pair_refuses_wears",
     "the_drag_collect_the_kind_pair_refuses_wears",
     "the_quick_move_the_kind_word_rides_wears",
     "the_drag_tails_the_kind_word_retires_wears",
