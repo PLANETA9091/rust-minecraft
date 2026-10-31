@@ -16814,3 +16814,106 @@ fn the_offhand_seat_the_model_ride_wears() {
         "the emptied carried the NONE wears"
     );
 }
+
+/// THE CRAFT CELLS' OWN MODEL RIDE (the dev-207 round — the 375 NEXT
+/// list's own second candidate the 368 cells re-wear: the vanilla
+/// `isSameItemSameComponents` law the craft cells' plain (id, count)
+/// model never saw — the same-id DIFFERENT-KIND potion pair the
+/// cell's own pickup the vanilla SWAP answers, the same-kind pair
+/// the max-1 gate the honest silence keeps, the wordless pair the
+/// component difference the same swap wears, the right press the
+/// never-swap law the silence keeps, the non-potion ids the plain id
+/// law the merge keeps).
+#[test]
+fn the_craft_cells_the_model_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(207);
+    app.enter_world();
+    app.spawn_offline_body();
+    // ARM A — THE DIFFERENT-KIND PAIR'S OWN SWAP (the vanilla law the
+    // plain id model never wore — the pairs the identical stacks
+    // keep, the KINDS the exchange the honest verdict wears)
+    app.craft_grid[0] = (potion, 1);
+    app.craft_grid_potion_kinds[0] = night;
+    app.inv_carried = (potion, 1);
+    app.inv_carried_potion_kind = swift;
+    app.click_craft_cell(0, 0);
+    assert_eq!(app.craft_grid[0], (potion, 1), "the cell the stack keeps");
+    assert_eq!(app.inv_carried, (potion, 1), "the carried the stack keeps");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], swift,
+        "the carried's own word the cell wears"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, night,
+        "the cell's own word the carried wears"
+    );
+    // ARM B — THE SAME-KIND PAIR'S OWN SILENCE (the same components
+    // the same item speaks, the max-1 gate the merge closes, the
+    // kinds the own words keep)
+    app.craft_grid_potion_kinds[0] = night;
+    app.inv_carried_potion_kind = night;
+    app.click_craft_cell(0, 0);
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], night,
+        "the same-kind pair the cell word keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, night,
+        "the same-kind pair the carried word keeps"
+    );
+    // ARM C — THE WORDLESS PAIR'S OWN LAW (the contents-less stack
+    // the kinded potion the different components the swap answers —
+    // the NONE word the kinded word the seats exchange)
+    app.craft_grid_potion_kinds[0] = none;
+    app.inv_carried_potion_kind = swift;
+    app.click_craft_cell(0, 0);
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], swift,
+        "the kinded word the cell wears"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the wordless stack the carried wears"
+    );
+    // ARM D — THE RIGHT PRESS'S OWN SILENCE (the never-swap law the
+    // component pair the same no-op keeps — the kinds the own words
+    // keep, the button gate the kind exchange never lends)
+    app.craft_grid_potion_kinds[0] = night;
+    app.inv_carried_potion_kind = swift;
+    app.click_craft_cell(0, 1);
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], night,
+        "the right press the cell word keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, swift,
+        "the right press the carried word keeps"
+    );
+    // ARM E — THE NON-POTION PAIR'S OWN PLAIN LAW (the dirt cells the
+    // merge the plain id law wears, the kinds the NONE words keep,
+    // the emptied carried the honest NONE retires)
+    app.craft_grid[1] = (dirt, 3);
+    app.craft_grid_potion_kinds[1] = none;
+    app.inv_carried = (dirt, 2);
+    app.inv_carried_potion_kind = none;
+    app.click_craft_cell(1, 0);
+    assert_eq!(
+        app.craft_grid[1],
+        (dirt, 5),
+        "the dirt pair the merge wears"
+    );
+    assert_eq!(app.inv_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.craft_grid_potion_kinds[1], none,
+        "the dirt cell the word keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the emptied carried the NONE wears"
+    );
+}
