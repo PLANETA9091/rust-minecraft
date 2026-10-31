@@ -42804,7 +42804,12 @@ impl App {
     /// retires), the store rows the items bank's mapped word the
     /// shared helper answers (the +6/-30 shifts, the trio the
     /// kindless wall the NONE keeps) — the gate the REAL verdict
-    /// wears, the false refusal the silence refuses.
+    /// wears, the false refusal the silence refuses. THE PLACE'S OWN
+    /// WORD BANK (the autopush-387 round — the offline fold's own law
+    /// the wire tail re-wears, the 386 round the reads the honest
+    /// words wore): the empty seat the placed stack's own word banks,
+    /// the occupied row the merge the original's word keeps, the trio
+    /// the kindless seat the mapped row the None answer keeps.
     fn qc_distribute_furnace_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42815,6 +42820,13 @@ impl App {
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
         let kind = self.furnace_sim.kind;
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same seats the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| (m, self.furnace_slots.get(m).copied().unwrap_or((0, 0)).1))
+            .collect();
         let items_kinds = &self.items_potion_kinds;
         let carried_kind = self.furnace_carried_potion_kind;
         let seat_kinds = |menu: usize| match Self::furnace_menu_to_inventory(menu) {
@@ -42834,6 +42846,22 @@ impl App {
             carried_kind,
             &seat_kinds,
         );
+        // THE PLACE'S OWN WORD BANK (the offline fold's own law the
+        // wire tail re-wears — the 386 round the reads the honest
+        // words wore, the write the bank this walk answers): the
+        // empty seat the placed stack's own word banks, the occupied
+        // row the merge the original's word keeps, the trio the
+        // kindless seat the mapped row the None answer keeps
+        for (menu, old_count) in &before {
+            let new = self.furnace_slots.get(*menu).copied().unwrap_or((0, 0));
+            if *old_count == 0 && new.1 > 0 {
+                if let Some(row) = Self::furnace_menu_to_inventory(*menu) {
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = carried_kind;
+                    }
+                }
+            }
+        }
         // THE DRAG'S OWN WORD RETIRE (the chest's own tail law the
         // furnace's wire lane re-wears — the emptied carried the NONE
         // wears, the remainder the same stack the word keeps)

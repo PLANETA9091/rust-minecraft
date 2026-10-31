@@ -19691,3 +19691,265 @@ fn the_wire_furnace_paint_the_kind_word_refuses_wears() {
     app.qc_paint_furnace(fx + 8, fy + 8);
     assert!(app.qc_slots.contains(&6), "the plain id the paint joins");
 }
+
+/// THE WIRE FURNACE PLACE'S OWN WORD BANK (the autopush-387 round —
+/// the offline fold's own law the wire tail re-wears: the 386 round
+/// the reads the honest words wore, the write the bank this walk
+/// answers — the empty seat the placed stack's own word banks, the
+/// occupied row the merge the original's word keeps, the split the
+/// both rows' words banks, the kindless seat the mapped row the None
+/// answer keeps, the plain place the stale word retires, the refused
+/// pair the bank never wears).
+#[test]
+fn the_wire_furnace_place_the_kind_word_banks_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let coal = mc_registry::item_id_by_name("coal").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(387);
+    app.enter_world();
+    app.open_furnace((0, 0, 0));
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE WIRE SESSION the flags arm (the 386 round's own shape — the
+    // geometry the render banks, the belief the wire's own emptiness
+    // wears, the fresh window the echo against this id speaks)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_is_live = true;
+    app.furnace_live_window = Some((9, 21));
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.world_is_network = true;
+    app.furnace_carried_potion_kind = none;
+    assert!(
+        !app.furnace_slot_rects.is_empty(),
+        "the render the rects bank"
+    );
+    // ARM A — THE PLACE'S OWN BANK (the empty seat the placed
+    // stack's own word banks — the cap-1 place the row the word
+    // wears, the remainder the cursor the word keeps)
+    app.live_furnace_carried = (potion, 5);
+    app.furnace_carried_potion_kind = swift;
+    app.furnace_slots[3] = (0, 0);
+    app.items_potion_kinds[9] = none;
+    let (gx, gy) = app
+        .furnace_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 3)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_furnace(gx + 8, gy + 8, 0);
+    app.qc_paint_furnace(gx + 8, gy + 8);
+    assert!(app.qc_slots.contains(&3), "the empty seat the paint joins");
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[3],
+        (potion, 1),
+        "the cap-1 place the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the placed stack's own word the row banks"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 4),
+        "the remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, swift,
+        "the remainder the same stack the word keeps"
+    );
+    // ARM B — THE MERGE'S OWN WORD KEEPS (the occupied row the
+    // original's word the bank never re-wears — the same-kind pair
+    // the merge the count keeps)
+    app.furnace_slots[4] = (potion, 1);
+    app.items_potion_kinds[10] = night;
+    app.live_furnace_carried = (potion, 1);
+    app.furnace_carried_potion_kind = night;
+    let (bx, by) = app
+        .furnace_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 4)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_furnace(bx + 8, by + 8, 0);
+    app.qc_paint_furnace(bx + 8, by + 8);
+    assert!(
+        app.qc_slots.contains(&4),
+        "the same-kind pair the paint joins"
+    );
+    app.mouse_pos = Some((bx + 8, by + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[4],
+        (potion, 1),
+        "the merge the seat's count keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], night,
+        "the occupied row the original's word keeps"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 1),
+        "the merge the cursor keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, night,
+        "the word the merge keeps"
+    );
+    // ARM C — THE SPLIT'S OWN BOTH BANKS (the two empty seats the
+    // floor split serves, the both rows' words the bank wears, the
+    // emptied carried the NONE retires — the bank the pre-retire
+    // word the honest order reads)
+    app.live_furnace_carried = (potion, 2);
+    app.furnace_carried_potion_kind = swift;
+    app.furnace_slots[5] = (0, 0);
+    app.furnace_slots[6] = (0, 0);
+    app.items_potion_kinds[11] = none;
+    app.items_potion_kinds[12] = none;
+    let (cx, cy) = app
+        .furnace_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 5)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    let (dx, dy) = app
+        .furnace_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 6)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_furnace(cx + 8, cy + 8, 0);
+    app.qc_paint_furnace(cx + 8, cy + 8);
+    app.qc_paint_furnace(dx + 8, dy + 8);
+    assert!(app.qc_slots.contains(&5), "the first empty the paint joins");
+    assert!(
+        app.qc_slots.contains(&6),
+        "the second empty the paint joins"
+    );
+    app.mouse_pos = Some((dx + 8, dy + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[5],
+        (potion, 1),
+        "the split's first the seat wears"
+    );
+    assert_eq!(
+        app.furnace_slots[6],
+        (potion, 1),
+        "the split's second the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], swift,
+        "the split's first the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], swift,
+        "the split's second the word banks"
+    );
+    assert_eq!(app.live_furnace_carried, (0, 0), "the split empties");
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM D — THE KINDLESS SEAT'S OWN NONE WALL (the fuel seat the
+    // coal place serves, the mapped row the None answer keeps — the
+    // sentinel row the wrong-row write never touches)
+    app.live_furnace_carried = (coal, 3);
+    app.furnace_carried_potion_kind = none;
+    app.furnace_slots[1] = (0, 0);
+    let (fx, fy) = app
+        .furnace_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 1)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_furnace(fx + 8, fy + 8, 0);
+    app.qc_paint_furnace(fx + 8, fy + 8);
+    assert!(app.qc_slots.contains(&1), "the fuel seat the paint joins");
+    app.mouse_pos = Some((fx + 8, fy + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[1],
+        (coal, 3),
+        "the fuel seat the place serves"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the kindless seat the sentinel row keeps"
+    );
+    assert_eq!(app.live_furnace_carried, (0, 0), "the whole place empties");
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the plain carried the word keeps"
+    );
+    // ARM E — THE STALE WORD'S OWN RETIRE (the empty row the stale
+    // word wore, the plain place the carried word re-banks — the
+    // wordless stack the NONE answer wears)
+    app.live_furnace_carried = (dirt, 5);
+    app.furnace_carried_potion_kind = none;
+    app.furnace_slots[7] = (0, 0);
+    app.items_potion_kinds[13] = night;
+    let (ex, ey) = app
+        .furnace_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 7)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_furnace(ex + 8, ey + 8, 0);
+    app.qc_paint_furnace(ex + 8, ey + 8);
+    assert!(
+        app.qc_slots.contains(&7),
+        "the stale row's seat the paint joins"
+    );
+    app.mouse_pos = Some((ex + 8, ey + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[7],
+        (dirt, 5),
+        "the plain place the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[13], none,
+        "the stale word the plain place retires"
+    );
+    // ARM F — THE REFUSED PAIR'S OWN BANK NEVER (the painted kinded
+    // pair the distribute's own gate refuses — the no place the bank
+    // never wears, the row's own word the refusal keeps)
+    app.furnace_slots[3] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.live_furnace_carried = (potion, 3);
+    app.furnace_carried_potion_kind = swift;
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_type = 0;
+    app.qc_slots = vec![3];
+    app.qc_release(0);
+    assert_eq!(
+        app.furnace_slots[3],
+        (potion, 1),
+        "the kinded pair the seat keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the refused place the row's word keeps"
+    );
+    assert_eq!(
+        app.live_furnace_carried,
+        (potion, 3),
+        "the refused place the cursor keeps"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, swift,
+        "the refused place the word keeps"
+    );
+}
