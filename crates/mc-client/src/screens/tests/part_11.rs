@@ -19953,3 +19953,246 @@ fn the_wire_furnace_place_the_kind_word_banks_wears() {
         "the refused place the word keeps"
     );
 }
+
+/// THE WIRE CHEST PLACE'S OWN WORD BANK (the autopush-388 round —
+/// the 387 furnace's own law the chest's wire lane re-wears: the
+/// empty seat the placed stack's own word banks, the occupied row
+/// the merge the original's word keeps, the mirror split the both
+/// rows' words banks, the hotbar seat the stale word retires, the
+/// refused pair the bank never wears, the mirror merge the same
+/// silence the grid's own arm wears).
+#[test]
+fn the_wire_chest_place_the_kind_word_banks_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(388);
+    app.open_chest();
+    let panel = chest_panel_origin(640, 360);
+    app.chest_panel = panel;
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_slot_rects = chest_rects_for(panel);
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.chest_is_live = true;
+    app.chest_live_window = Some((5, 11));
+    app.world_is_network = true;
+    assert!(!app.chest_slot_rects.is_empty(), "the rects the walk banks");
+    // ARM A — THE GRID SEAT'S OWN BANK (the empty seat the placed
+    // stack's own word banks — the cap-1 place the row the word
+    // wears, the remainder the cursor the word keeps)
+    app.chest_carried = (potion, 5);
+    app.chest_carried_potion_kind = swift;
+    app.chest_slots[3] = (0, 0);
+    let (gx, gy) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 3)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(gx + 9, gy + 9, 0);
+    app.qc_paint_chest(gx + 9, gy + 9);
+    assert!(app.qc_slots.contains(&3), "the empty seat the paint joins");
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[3],
+        (potion, 1),
+        "the cap-1 place the seat wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], swift,
+        "the placed stack's own word the row banks"
+    );
+    assert_eq!(app.chest_carried, (potion, 4), "the remainder keeps");
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the remainder the same stack the word keeps"
+    );
+    // ARM B — THE GRID MERGE'S OWN WORD KEEPS (the occupied row the
+    // original's word the bank never re-wears — the same-kind pair
+    // the merge the count keeps)
+    app.chest_slots[4] = (potion, 1);
+    app.chest_row_potion_kinds[4] = night;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = night;
+    let (bx, by) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 4)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(bx + 9, by + 9, 0);
+    app.qc_paint_chest(bx + 9, by + 9);
+    assert!(
+        app.qc_slots.contains(&4),
+        "the same-kind pair the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[4],
+        (potion, 1),
+        "the merge the seat's count keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[4], night,
+        "the occupied row the original's word keeps"
+    );
+    assert_eq!(app.chest_carried, (potion, 1), "the merge the cursor keeps");
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the word the merge keeps"
+    );
+    // ARM C — THE MIRROR SPLIT'S OWN BOTH BANKS (the two empty store
+    // rows the floor split serves, the both mapped words the bank
+    // wears, the emptied carried the NONE retires — the bank the
+    // pre-retire word the honest order reads)
+    app.chest_carried = (potion, 2);
+    app.chest_carried_potion_kind = swift;
+    app.chest_mirror[0] = (0, 0);
+    app.chest_mirror[1] = (0, 0);
+    app.items_potion_kinds[9] = none;
+    app.items_potion_kinds[10] = none;
+    let (cx, cy) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 27)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    let (dx, dy) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 28)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(cx + 9, cy + 9, 0);
+    app.qc_paint_chest(cx + 9, cy + 9);
+    app.qc_paint_chest(dx + 9, dy + 9);
+    assert!(
+        app.qc_slots.contains(&27),
+        "the first store row the paint joins"
+    );
+    assert!(
+        app.qc_slots.contains(&28),
+        "the second store row the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_mirror[0],
+        (potion, 1),
+        "the split's first the seat wears"
+    );
+    assert_eq!(
+        app.chest_mirror[1],
+        (potion, 1),
+        "the split's second the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the split's first the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], swift,
+        "the split's second the word banks"
+    );
+    assert_eq!(app.chest_carried, (0, 0), "the split empties");
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the emptied carried the word retires"
+    );
+    // ARM D — THE HOTBAR SEAT'S OWN STALE RETIRE (the empty row the
+    // stale word wore, the plain place the carried word re-banks —
+    // the wordless stack the NONE answer wears)
+    app.chest_carried = (dirt, 5);
+    app.chest_carried_potion_kind = none;
+    app.chest_mirror[27] = (0, 0);
+    app.items_potion_kinds[0] = night;
+    let (ex, ey) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 54)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(ex + 9, ey + 9, 0);
+    app.qc_paint_chest(ex + 9, ey + 9);
+    assert!(
+        app.qc_slots.contains(&54),
+        "the hotbar seat the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_mirror[27],
+        (dirt, 5),
+        "the plain place the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the stale word the plain place retires"
+    );
+    // ARM E — THE REFUSED PAIR'S OWN BANK NEVER (the painted kinded
+    // pair the distribute's own gate refuses — the no place the bank
+    // never wears, the row's own word the refusal keeps)
+    app.chest_slots[5] = (potion, 1);
+    app.chest_row_potion_kinds[5] = night;
+    app.chest_carried = (potion, 3);
+    app.chest_carried_potion_kind = swift;
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_type = 0;
+    app.qc_slots = vec![5];
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[5],
+        (potion, 1),
+        "the kinded pair the seat keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[5], night,
+        "the refused place the row's word keeps"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 3),
+        "the refused place the cursor keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the refused place the word keeps"
+    );
+    // ARM F — THE MIRROR MERGE'S OWN WORD KEEPS (the occupied store
+    // row the same silence the grid's own arm wears — the mapped
+    // word the merge never re-wears)
+    app.chest_mirror[1] = (potion, 1);
+    app.items_potion_kinds[10] = night;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = night;
+    let (fx, fy) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 28)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(fx + 9, fy + 9, 0);
+    app.qc_paint_chest(fx + 9, fy + 9);
+    assert!(
+        app.qc_slots.contains(&28),
+        "the same-kind store row the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_mirror[1],
+        (potion, 1),
+        "the merge the seat's count keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], night,
+        "the occupied row the original's word keeps"
+    );
+    assert_eq!(app.chest_carried, (potion, 1), "the merge the cursor keeps");
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the word the merge keeps"
+    );
+}

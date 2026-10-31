@@ -41243,7 +41243,13 @@ impl App {
     /// own field answers, the seat words the closure's own menu
     /// mapping serves (the container rows the bank's normalized word,
     /// the store rows the shared bank's read — the fold's own
-    /// numbering the same rows the offline fold maps).
+    /// numbering the same rows the offline fold maps). THE PLACE'S
+    /// OWN WORD BANK (the autopush-388 round — the 387 furnace's own
+    /// law the chest's wire lane re-wears, the 384 round the reads
+    /// the honest words wore): the empty seat the placed stack's own
+    /// word banks, the occupied row the merge the original's word
+    /// keeps, the container rows the chest bank's own words answer,
+    /// the store rows the items bank's mapped word the closure maps.
     fn qc_distribute_chest_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -41253,6 +41259,20 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same cells the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| {
+                let seat = if m < 27 {
+                    self.chest_slots.get(m).copied().unwrap_or((0, 0))
+                } else {
+                    self.chest_mirror.get(m - 27).copied().unwrap_or((0, 0))
+                };
+                (m, seat.1)
+            })
+            .collect();
         let chest_kinds = &self.chest_row_potion_kinds;
         let items_kinds = &self.items_potion_kinds;
         let carried_kind = self.chest_carried_potion_kind;
@@ -41281,6 +41301,33 @@ impl App {
             carried_kind,
             &seat_kinds,
         );
+        // THE PLACE'S OWN WORD BANK (the 387 furnace's own law the
+        // chest's wire lane re-wears — the 384 round the reads the
+        // honest words wore, the write the bank this walk answers):
+        // the empty seat the placed stack's own word banks, the
+        // occupied row the merge the original's word keeps, the
+        // container rows the chest bank's own words answer, the
+        // store rows the items bank's mapped word the closure maps
+        for (menu, old_count) in &before {
+            let new = if *menu < 27 {
+                self.chest_slots.get(*menu).copied().unwrap_or((0, 0))
+            } else {
+                self.chest_mirror.get(*menu - 27).copied().unwrap_or((0, 0))
+            };
+            if *old_count == 0 && new.1 > 0 {
+                if *menu < 27 {
+                    if *menu < self.chest_row_potion_kinds.len() {
+                        self.chest_row_potion_kinds[*menu] = carried_kind;
+                    }
+                } else {
+                    let rel = *menu - 27;
+                    let row = if rel < 27 { 9 + rel } else { rel - 27 };
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = carried_kind;
+                    }
+                }
+            }
+        }
         // the drag's own word (the offline walk's own law the wire's
         // tail re-wears — the emptied carried the NONE wears, the
         // remainder the same stack the word keeps)
