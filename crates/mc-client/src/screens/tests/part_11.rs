@@ -16200,3 +16200,100 @@ fn the_inventory_craft_cells_the_drag_word_wears() {
         "the occupied seat the own word keeps"
     );
 }
+
+/// THE TABLE GRID'S OWN BANK DRAG (the autopush-371 round — the
+/// dev-206 law the 3x3 cells re-wear: the 367 bank the drag's own
+/// placement banks, the empty cell the cursor's word wears, the
+/// occupied cell the merge the stack's own word keeps, the type-1's
+/// own one-each ride the same bank wears).
+#[test]
+fn the_table_grid_the_drag_word_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(371);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_crafting_table();
+    assert_eq!(app.screen, ScreenKind::Crafting, "the table door opens");
+    // THE REAL PANEL THE DRAG SEATS (the headless render the panel
+    // origin lays — the table cells the same origin the click lane
+    // hits)
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let panel = app.table_panel;
+    let cell_seat = |cell: usize| -> (i32, i32) {
+        let (x, y) = table_craft_origin(panel, cell);
+        (x + 8, y + 8)
+    };
+    let (cx0, cy0) = cell_seat(0);
+    let (cx8, cy8) = cell_seat(8);
+    // THE EMPTY CELLS' OWN WORD (the type-0 drag the cursor's word
+    // wears — the two painted cells the kinded pair bank, the
+    // remainder the cursor keeps)
+    app.inv_carried = (potion, 3);
+    app.inv_carried_potion_kind = kind;
+    app.qc_arm_table(cx0, cy0, 0);
+    app.qc_paint_table(cx0, cy0);
+    app.qc_paint_table(cx8, cy8);
+    app.qc_release(0);
+    assert_eq!(app.table_grid[0], (potion, 1), "the drag the cell lays");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], kind,
+        "the placed cell the word banks"
+    );
+    assert_eq!(app.table_grid[8], (potion, 1), "the second cell lays");
+    assert_eq!(
+        app.table_grid_potion_kinds[8], kind,
+        "the second cell the word banks"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the remainder the cursor keeps"
+    );
+    // THE OCCUPIED CELL'S OWN WORD (the merge the stack's own
+    // components keep — the kindless cell the cursor's word never
+    // lends, the max-1 cap the net the carried never loses)
+    app.table_grid_potion_kinds[0] = none;
+    app.qc_arm_table(cx0, cy0, 0);
+    app.qc_paint_table(cx0, cy0);
+    app.qc_release(0);
+    assert_eq!(app.table_grid[0], (potion, 1), "the merge the count keeps");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the cell's own word the merge keeps"
+    );
+    // THE TYPE-1'S OWN RIDE (the right drag the one-each answer —
+    // the emptied cell the cursor's word the same lane banks)
+    app.table_grid[8] = (0, 0);
+    app.table_grid_potion_kinds[8] = none;
+    app.inv_carried = (potion, 3);
+    app.inv_carried_potion_kind = kind;
+    app.qc_arm_table(cx0, cy0, 1);
+    app.qc_paint_table(cx0, cy0);
+    app.qc_paint_table(cx8, cy8);
+    app.qc_release(1);
+    assert_eq!(
+        app.table_grid[0],
+        (potion, 1),
+        "the max-1 merge the count keeps"
+    );
+    assert_eq!(app.table_grid[8], (potion, 1), "the type-1 the cell lays");
+    assert_eq!(
+        app.table_grid_potion_kinds[8], kind,
+        "the type-1 cell the word banks"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the occupied cell the own word keeps"
+    );
+}

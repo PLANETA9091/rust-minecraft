@@ -41876,6 +41876,18 @@ impl App {
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
             if (1..=9).contains(&menu) {
+                // THE DRAG'S OWN WORD RIDE (the autopush-371 round — the
+                // 367 bank the drag's own placement banks: the dev-206
+                // law the 3x3 cells re-wear — the empty cell the
+                // cursor's word wears [the 367 place arm's own law the
+                // split lane re-wears], the occupied cell the merge the
+                // stack's own components the original keeps — the
+                // vanilla isSameItemSameComponents law the added items
+                // the identity lose, the read gates the stale word
+                // never lends)
+                if seat_count == 0 {
+                    self.table_grid_potion_kinds[menu - 1] = self.inv_carried_potion_kind;
+                }
                 self.table_grid[menu - 1] = new;
             } else if menu < 37 {
                 self.inventory.items[menu - 1] = new;
