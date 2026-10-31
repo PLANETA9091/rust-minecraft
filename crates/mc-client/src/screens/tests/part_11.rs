@@ -18094,3 +18094,222 @@ fn the_quick_move_the_kind_word_rides_wears() {
         _ => panic!("the packet the changed map rides"),
     }
 }
+
+/// THE DRAG'S OWN COLLECT VERDICT (the autopush-382 round — the
+/// shouldAdd's canItemQuickReplace the component half the plain id
+/// gate never wore): the chest paint lane the same-id kind pair the
+/// seat's own word refuses — the different kind the paint the seat
+/// never joins, the release the PICKUP the swap answers, the
+/// same-kind pair the paint the distribution's merge serves, the
+/// wordless pair the plain law keeps, the kindless seat the carried's
+/// word the mismatch refuses, the right drag the refused seat the
+/// never-swap silence keeps, the dirt pair the plain merge the kind
+/// tail retires.
+#[test]
+fn the_drag_collect_the_kind_pair_refuses_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(382);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    app.open_chest_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the chest door opens");
+    // THE REAL RECTS THE RENDER BANKS (the headless frame the seat
+    // lookups the same walk the clicks share)
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let seat_of = |rects: &[(i32, i32, i16)], slot: i16| -> (i32, i32) {
+        rects
+            .iter()
+            .find(|&&(_, _, s)| s == slot)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (gx, gy) = seat_of(&app.chest_slot_rects, 0);
+    // ARM A — THE DIFFERENT-KIND PAIR'S OWN REFUSAL (the paint the
+    // seat never joins, the release the PICKUP the swap answers —
+    // the stacks the exchange the honest verdict wears)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = night;
+    app.chest_carried = (potion, 3);
+    app.chest_carried_potion_kind = swift;
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(
+        !app.qc_slots.contains(&0),
+        "the different kind the paint refuses"
+    );
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(0);
+    assert_eq!(app.chest_slots[0], (potion, 3), "the swap the seat wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[0], swift,
+        "the carried's own word the seat wears"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the seat's own stack the carried wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the seat's own word the carried wears"
+    );
+    // ARM B — THE SAME-KIND PAIR'S OWN MERGE (the paint the seat
+    // joins, the distribution the max-1 cap the silence serves — the
+    // kinds the own words keep)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = night;
+    app.chest_carried = (potion, 3);
+    app.chest_carried_potion_kind = night;
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(app.qc_slots.contains(&0), "the same kind the paint joins");
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the max-1 cap the seat keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], night,
+        "the same-kind pair the seat word keeps"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 3),
+        "the max-1 cap the carried keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the same-kind pair the carried word keeps"
+    );
+    // ARM C — THE WORDLESS PAIR'S OWN PLAIN LAW (the NONE words the
+    // same item speaks, the paint the seat joins, the max-1 silence
+    // the same numbers keep)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = none;
+    app.chest_carried = (potion, 3);
+    app.chest_carried_potion_kind = none;
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(
+        app.qc_slots.contains(&0),
+        "the wordless pair the paint joins"
+    );
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the max-1 cap the seat keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], none,
+        "the wordless pair the seat word keeps"
+    );
+    // ARM D — THE KINDLESS SEAT'S OWN REFUSAL (the carried's word the
+    // wordless seat the mismatch refuses, the release the PICKUP the
+    // swap answers — the carried's word the seat wears, the seat's
+    // NONE the carried retires)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = none;
+    app.chest_carried = (potion, 3);
+    app.chest_carried_potion_kind = night;
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(
+        !app.qc_slots.contains(&0),
+        "the kindless seat the paint refuses"
+    );
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(0);
+    assert_eq!(app.chest_slots[0], (potion, 3), "the swap the seat wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[0], night,
+        "the carried's own word the seat wears"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the seat's own stack the carried wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the seat's own NONE the carried retires"
+    );
+    // ARM E — THE RIGHT DRAG'S OWN NEVER-SWAP (the refused seat the
+    // right release the place-ONE lane serves — the mismatched pair
+    // the silence keeps, the stacks the own words wear)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = night;
+    app.chest_carried = (potion, 2);
+    app.chest_carried_potion_kind = swift;
+    app.qc_arm_chest(gx + 8, gy + 8, 1);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(
+        !app.qc_slots.contains(&0),
+        "the right drag the paint refuses"
+    );
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(1);
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the never-swap law the seat keeps"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 2),
+        "the never-swap law the carried keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], night,
+        "the seat's own word the silence keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the carried's own word the silence keeps"
+    );
+    // ARM F — THE DIRT PAIR'S OWN PLAIN MERGE (the non-potion ids the
+    // NONE words the paint joins, the merge the whole carried lays,
+    // the emptied carried the kind tail retires)
+    app.chest_slots[0] = (dirt, 10);
+    app.chest_row_potion_kinds[0] = none;
+    app.chest_carried = (dirt, 5);
+    app.chest_carried_potion_kind = none;
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(app.qc_slots.contains(&0), "the dirt pair the paint joins");
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.qc_release(0);
+    assert_eq!(app.chest_slots[0], (dirt, 15), "the merge the seat lays");
+    assert_eq!(app.chest_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the emptied carried the kind tail retires"
+    );
+}

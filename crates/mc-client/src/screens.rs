@@ -40461,14 +40461,52 @@ impl App {
         if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
             return; // shouldAdd pc 14-37 — the count's own gate
         }
-        let (seat_id, _) = self.qc_seat_stack(inventory_hover_menu_id(hover));
+        let menu = inventory_hover_menu_id(hover);
+        let (seat_id, _) = self.qc_seat_stack(menu);
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
+        }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the store rows the
+        // bank's own word reads (the live sync the same bank wears),
+        // the offline craft cells the grid bank answers, the wire
+        // craft cells the unbanked NONE wall keeps, the armor/result
+        // seats the kindless law speaks
+        let carried_kind = if self.world_is_network {
+            self.live_carried_potion_kind
+        } else {
+            self.inv_carried_potion_kind
+        };
+        let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+            match menu {
+                1..5 => {
+                    if self.world_is_network {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    } else {
+                        self.craft_grid_potion_kinds[menu - 1]
+                    }
+                }
+                9..=45 => {
+                    let row = if menu == 45 {
+                        36
+                    } else if menu >= 36 {
+                        menu - 36
+                    } else {
+                        menu
+                    };
+                    self.items_potion_kinds[row]
+                }
+                _ => crate::brewing_sim::POTION_KIND_NONE,
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, carried_kind) {
+            return; // the component half — the same-id kind pair refuses
         }
         if !self.inventory_seat_may_place(hover, carried.0) {
             return; // shouldAdd pc 47-52 — the mayPlace verdict
         }
-        let menu = inventory_hover_menu_id(hover);
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
         }
@@ -40566,6 +40604,27 @@ impl App {
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
         }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the container rows
+        // the bank's own read the normalized helper speaks, the store
+        // rows the shared bank's gated word (the live sync the same
+        // layout wears — the offline store the same cells answer)
+        let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+            if menu < self.chest_slots.len() {
+                self.chest_row_potion_kind(menu)
+            } else {
+                let rel = menu - self.chest_slots.len();
+                let row = if rel < 27 { 9 + rel } else { rel - 27 };
+                self.items_potion_kinds[row]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(seat_kind, self.chest_carried_potion_kind)
+        {
+            return; // the component half — the same-id kind pair refuses
+        }
         // the mayPlace verdict: the chest menu's slots ALL plain (the
         // base Slot's iconst_1 pair the chest swap walk banks) — no
         // refusal the walk wears
@@ -40650,6 +40709,26 @@ impl App {
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
         }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the grid nine the
+        // kindless store the 378 wall keeps, the mirror rows the
+        // shared bank's gated word (the live sync the same layout
+        // wears — the click lane's own mapped read speaks)
+        let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+            if menu < 9 {
+                crate::brewing_sim::POTION_KIND_NONE
+            } else {
+                let mapped = if menu < 36 { menu } else { menu - 36 };
+                self.items_potion_kinds[mapped]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(seat_kind, self.dispenser_carried_potion_kind)
+        {
+            return; // the component half — the same-id kind pair refuses
+        }
         // the mayPlace verdict: the dispenser menu's slots ALL plain
         // (the base Slot's iconst_1 pair the chest swap walk banks) —
         // no refusal the walk wears
@@ -40710,6 +40789,24 @@ impl App {
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
         }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the stand seats the
+        // five-word bank the 377 ride reads, the mirror rows the
+        // shared bank's gated word (the 377's own row mapping speaks)
+        let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+            if menu < 5 {
+                self.brewing_kinds[menu]
+            } else if menu < 32 {
+                self.items_potion_kinds[menu + 4]
+            } else {
+                self.items_potion_kinds[menu - 32]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, self.brewing_carried_kind) {
+            return; // the component half — the same-id kind pair refuses
+        }
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the Set.add's own false the recalc never feeds
         }
@@ -40766,6 +40863,17 @@ impl App {
         let (seat_id, _) = self.qc_seat_stack(menu);
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
+        }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the pair seats the
+        // kindless store the 379 wall keeps (the bank the carried
+        // word alone wears), the kinded carried the wordless seat
+        // the mismatch refuses
+        let seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(seat_kind, self.enchant_carried_potion_kind)
+        {
+            return; // the component half — the same-id kind pair refuses
         }
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the Set.add's own false the recalc never feeds
@@ -40868,6 +40976,29 @@ impl App {
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
         }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the grid cells the
+        // 376 bank the gated read wears, the store rows the shared
+        // bank's word, the result seat the kindless law keeps; the
+        // WIRE lane the carried word the sync never banks — the
+        // honest wall the plain verdict keeps (the live word's own
+        // field the next round may wear)
+        if !self.world_is_network {
+            let carried_kind = self.inv_carried_potion_kind;
+            let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+                match menu {
+                    1..=9 => self.table_grid_potion_kinds[menu - 1],
+                    10..=36 => self.items_potion_kinds[menu - 1],
+                    37..=45 => self.items_potion_kinds[menu - 37],
+                    _ => crate::brewing_sim::POTION_KIND_NONE,
+                }
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, carried_kind) {
+                return; // the component half — the same-id kind pair refuses
+            }
+        }
         if !quickcraft_table_seat_may_place(menu) {
             return; // shouldAdd pc 47-52 — the result's own mayPlace the verdict refuses
         }
@@ -40946,6 +41077,26 @@ impl App {
         let (seat_id, _) = self.qc_seat_stack(menu);
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
+        }
+        // THE COMPONENT HALF (the autopush-382 round — the same-id
+        // kind pair the seat's own word refuses): the trio the
+        // kindless store the dev-208 wall keeps, the store rows the
+        // menu map's gated word (the write-through the same cells
+        // answer); the WIRE lane the carried word the sync never
+        // banks — the honest wall the plain verdict keeps
+        if !self.world_is_network {
+            let carried_kind = self.furnace_carried_potion_kind;
+            let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
+                match Self::furnace_menu_to_inventory(menu) {
+                    Some(row) => self.items_potion_kinds[row],
+                    None => crate::brewing_sim::POTION_KIND_NONE,
+                }
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, carried_kind) {
+                return; // the component half — the same-id kind pair refuses
+            }
         }
         if !quickcraft_furnace_seat_may_place(menu, carried.0, self.furnace_sim.kind) {
             return; // shouldAdd pc 47-52 — the furnace's own mayPlace verdicts
@@ -87456,6 +87607,20 @@ fn beacon_qc_seat_may_place(menu: usize, item: i32) -> bool {
     } else {
         true
     }
+}
+
+/// THE DRAG'S OWN COLLECT VERDICT (the autopush-382 round — the
+/// shouldAdd's canItemQuickReplace the component half the plain id
+/// gate never wore): the same-id kind pair the seat's own word keys —
+/// the `ItemStack.isSameItemSameComponents` verdict the merge's own
+/// seat gate answers (the different kind the pair the vanilla paint
+/// refuses, the wordless pair the same NONE word the plain law
+/// keeps). The seat's kind the caller's own honest read wears (the
+/// kindless seats the NONE word the wall keeps, the no-word lanes
+/// the gate the plain verdict keeps — the anvil/beacon carried the
+/// field-less walls the family banks).
+fn qc_collect_kind_refuses(seat_kind: i32, carried_kind: i32) -> bool {
+    seat_kind != carried_kind
 }
 
 /// THE CHEST DRAG'S OWN WIRE DISTRIBUTION (the same doClick QUICK_CRAFT
