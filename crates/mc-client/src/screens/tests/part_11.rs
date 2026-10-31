@@ -17816,11 +17816,12 @@ fn the_drag_tails_the_kind_word_retires_wears() {
         .unwrap()
         .set(cell.0, cell.1, cell.2, crate::world::CHEST);
     app.open_chest_for(cell);
+    // THE CHEST'S OWN SHAPE (the seat vec the 27-grid + the mirror
+    // names — the dispenser's own nine the same cell's store key
+    // wore, the chest's own width the shape restores)
+    app.chest_slots = vec![(0, 0); 27];
     for it in app.inventory.items.iter_mut() {
         *it = (0, 0); // the re-entry's own restore the deterministic zero re-wears
-    }
-    for s in app.chest_slots.iter_mut() {
-        *s = (0, 0);
     }
     app.chest_mirror_sync_from_inventory();
     app.live_clicks = Some(std::sync::mpsc::channel().0);
@@ -20662,4 +20663,256 @@ fn the_wire_table_place_the_kind_word_banks_wears() {
         app.live_table_carried_potion_kind, none,
         "the plain carried the word keeps"
     );
+}
+
+/// THE WIRE HOPPER'S OWN DOOR THE FIVE WEARS (the dev-212 round —
+/// the anvil wire route's own law the hopper's live lane wears: the
+/// OpenScreen word the menu type 16 the hopper's own door answers —
+/// the 41 wire slots the five + the standard 36 speaks, the
+/// wholesale projection the chest family's own fields ride, the
+/// hopper's own canvas the flag wears, the chest's own menu the
+/// false the family guard keeps — and THE FIVE'S OWN BOUNDARY the
+/// chest family's walk lanes re-wear: the grid/mirror split the
+/// slice's own count names [27 the single keeps, 5 the hopper's row
+/// speaks], the mirror seat the items bank's mapped row the word
+/// banks, the five seat the chest row's own word, the swap walk the
+/// mirror-relative row the glen names [the changed map the glen+ri
+/// menu id speaks — the five-grid read the bounds the panic never
+/// wears], the quick-move the -5 map the deltas wear).
+#[test]
+fn the_wire_hopper_the_door_the_five_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(389);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    // the hopper's own wire shape (the five + the standard 36 — the
+    // grid seat 0 and the mirror tail the feed's own rows name)
+    let mut hopper_slots = vec![(0, 0); 41];
+    hopper_slots[0] = (dirt, 3);
+    hopper_slots[40] = (sword, 1);
+    let feed_hopper = |app: &mut App| {
+        app.live_container_updated(Some(LiveContainer {
+            id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_HOPPER,
+            slots: hopper_slots.clone(),
+            bundle_rows: Vec::new(),
+            carried: (0, 0),
+            state_id: 9,
+            data_slots: Vec::new(),
+            title_nbt: Vec::new(),
+        }));
+    };
+    // ARM A — THE DOOR (the OpenScreen word the hopper's own menu the
+    // route answers — the chest family's fields the projection rides,
+    // the hopper canvas the flag wears, the live window the clicks
+    // echo against)
+    feed_hopper(&mut app);
+    assert_eq!(app.screen, ScreenKind::Chest, "the route the hopper opens");
+    assert!(app.chest_is_live, "the live flag the route wears");
+    assert!(app.chest_window_hopper, "the hopper canvas the flag wears");
+    assert_eq!(
+        app.chest_live_window,
+        Some((3, 9)),
+        "the window identity the clicks echo against"
+    );
+    assert_eq!(
+        app.chest_slots.len(),
+        5,
+        "the five the total-minus-36 wears"
+    );
+    assert_eq!(app.chest_mirror.len(), 36, "the mirror rows the tail");
+    assert_eq!(
+        app.chest_row_potion_kinds.len(),
+        5,
+        "the five-row bank the wall keeps"
+    );
+    assert_eq!(
+        app.chest_slots[0],
+        (dirt, 3),
+        "the grid seat the feed answers"
+    );
+    assert_eq!(
+        app.chest_mirror[35],
+        (sword, 1),
+        "the mirror tail the feed answers"
+    );
+    // ARM B — THE CHEST'S OWN SHAPE GUARD (the chest's own menu the
+    // false the family guard keeps — the 63-law the chest canvas
+    // wears, the re-feed the window's own identity replaces)
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+        slots: vec![(0, 0); 63],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 12,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert!(!app.chest_window_hopper, "the chest canvas the guard keeps");
+    assert_eq!(app.chest_slots.len(), 27, "the 63-law the chest keeps");
+    assert_eq!(
+        app.chest_live_window,
+        Some((4, 12)),
+        "the window the re-feed answers"
+    );
+    // ARM C — THE MIRROR SEAT'S OWN SPLIT (the -5 shift the mapped
+    // row banks — the mirror seat 7 the rel-2 row 11 the word wears,
+    // the cap-1 place the seat the remainder keeps)
+    feed_hopper(&mut app);
+    assert!(
+        app.chest_window_hopper,
+        "the re-feed the hopper canvas wears"
+    );
+    let panel = chest_panel_origin(640, 360);
+    app.chest_panel = panel;
+    app.chest_slot_rects = hopper_rects_for(panel);
+    app.chest_carried = (potion, 5);
+    app.chest_carried_potion_kind = swift;
+    let (mx7, my7) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 7)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(mx7 + 9, my7 + 9, 0);
+    app.qc_paint_chest(mx7 + 9, my7 + 9);
+    assert!(app.qc_slots.contains(&7), "the mirror seat the paint joins");
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_mirror[2],
+        (potion, 1),
+        "the cap-1 place the seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], swift,
+        "the -5 shift the mapped row banks"
+    );
+    assert_eq!(app.chest_carried, (potion, 4), "the remainder keeps");
+    // ARM D — THE FIVE SEAT'S OWN BANK (the container seat the chest
+    // row's own word wears — the menu < 5 split the bank answers)
+    app.chest_carried = (potion, 2);
+    app.chest_carried_potion_kind = night;
+    let (mx3, my3) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 3)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.qc_arm_chest(mx3 + 9, my3 + 9, 0);
+    app.qc_paint_chest(mx3 + 9, my3 + 9);
+    assert!(
+        app.qc_slots.contains(&3),
+        "the container seat the paint joins"
+    );
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[3],
+        (potion, 1),
+        "the cap-1 place the five seat wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], night,
+        "the five seat the row's own word banks"
+    );
+    // ARM E — THE SWAP'S OWN ROW (the digit the mirror-relative row
+    // speaks — the five-grid read the bounds the panic never wears,
+    // the changed map the glen+ri menu id names, the HUD row the
+    // mirror's hotbar rows sync)
+    app.chest_carried = (0, 0);
+    app.chest_carried_potion_kind = none;
+    app.chest_mirror[5] = (dirt, 3);
+    app.chest_mirror[29] = (0, 0);
+    while rx.try_recv().is_ok() {
+        // the drag arms' own packets the drain spends
+    }
+    let (mx10, my10) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 10)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.mouse_pos = Some((mx10 + 9, my10 + 9));
+    assert!(app.on_chest_swap_key(2), "the digit the swap walk consumes");
+    assert_eq!(app.chest_mirror[5], (0, 0), "the hovered cell empties");
+    assert_eq!(
+        app.chest_mirror[29],
+        (dirt, 3),
+        "the row seat the hover stack rides"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (dirt, 3),
+        "the HUD row the mirror's hotbar sync"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 3, "the window id the echo wears");
+            assert_eq!(click.state_id, 9, "the state id the echo wears");
+            assert_eq!(click.slot, 10, "the hovered seat the echo speaks");
+            assert_eq!(click.button, 2, "the digit the echo carries");
+            assert!(
+                matches!(click.input, ContainerInput::Swap),
+                "the swap mode the walk wears"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(10, (0, 0)), (34, (dirt, 3))],
+                "the changed map the glen+ri menu id names"
+            );
+        }
+        other => panic!("the click the echo speaks, not {other:?}"),
+    }
+    // ARM F — THE QUICK-MOVE'S OWN FIVE (the shift-click the -5 map
+    // the deltas wear — the grid src the hotbar-first order rides,
+    // the mirror tail the changed map's own menu id names)
+    app.chest_mirror[29] = (0, 0); // the merge seat the reset keeps
+    app.chest_mirror[35] = (0, 0);
+    app.chest_slots[4] = (dirt, 30);
+    while rx.try_recv().is_ok() {
+        // the swap's own packet the drain spends
+    }
+    let (mx4, my4) = app
+        .chest_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 4)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.shift_down = true;
+    app.click_chest_slot(mx4 + 9, my4 + 9, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.chest_slots[4],
+        (0, 0),
+        "the source seat the move empties"
+    );
+    assert_eq!(
+        app.chest_mirror[35],
+        (dirt, 30),
+        "the hotbar-first order the tail seat wears"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 3, "the window id the echo wears");
+            assert_eq!(click.slot, 4, "the source seat the echo speaks");
+            assert!(
+                matches!(click.input, ContainerInput::QuickMove),
+                "the quick-move mode the shift wears"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(4, (0, 0)), (40, (dirt, 30))],
+                "the changed map the -5 map the deltas wear"
+            );
+        }
+        other => panic!("the click the echo speaks, not {other:?}"),
+    }
 }

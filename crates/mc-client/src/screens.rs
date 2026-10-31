@@ -41259,16 +41259,22 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        // THE FIVE'S OWN SPLIT (the chest family's own law the hopper's
+        // wire lane re-wears — the grid the count names, the mirror the
+        // tail the count's own boundary speaks: 27 the single, 54 the
+        // double's compound, 5 the hopper's row — the same map the
+        // seat walks wear)
+        let n = self.chest_slots.len();
         // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
         // the after-walk the empty seat's bank reads — the helper the
         // same cells the place math mutates)
         let before: Vec<(usize, i32)> = qc_slots
             .iter()
             .map(|&m| {
-                let seat = if m < 27 {
+                let seat = if m < n {
                     self.chest_slots.get(m).copied().unwrap_or((0, 0))
                 } else {
-                    self.chest_mirror.get(m - 27).copied().unwrap_or((0, 0))
+                    self.chest_mirror.get(m - n).copied().unwrap_or((0, 0))
                 };
                 (m, seat.1)
             })
@@ -41277,13 +41283,13 @@ impl App {
         let items_kinds = &self.items_potion_kinds;
         let carried_kind = self.chest_carried_potion_kind;
         let seat_kinds = |menu: usize| {
-            if menu < 27 {
+            if menu < n {
                 chest_kinds
                     .get(menu)
                     .copied()
                     .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
             } else {
-                let rel = menu - 27;
+                let rel = menu - n;
                 let row = if rel < 27 { 9 + rel } else { rel - 27 };
                 items_kinds[row]
             }
@@ -41309,18 +41315,18 @@ impl App {
         // container rows the chest bank's own words answer, the
         // store rows the items bank's mapped word the closure maps
         for (menu, old_count) in &before {
-            let new = if *menu < 27 {
+            let new = if *menu < n {
                 self.chest_slots.get(*menu).copied().unwrap_or((0, 0))
             } else {
-                self.chest_mirror.get(*menu - 27).copied().unwrap_or((0, 0))
+                self.chest_mirror.get(*menu - n).copied().unwrap_or((0, 0))
             };
             if *old_count == 0 && new.1 > 0 {
-                if *menu < 27 {
+                if *menu < n {
                     if *menu < self.chest_row_potion_kinds.len() {
                         self.chest_row_potion_kinds[*menu] = carried_kind;
                     }
                 } else {
-                    let rel = *menu - 27;
+                    let rel = *menu - n;
                     let row = if rel < 27 { 9 + rel } else { rel - 27 };
                     if row < self.items_potion_kinds.len() {
                         self.items_potion_kinds[row] = carried_kind;
@@ -76325,17 +76331,26 @@ impl App {
                     }
                     return;
                 }
-                if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
+                if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST
+                    && c.menu_type_id != crate::world_model::MENU_TYPE_HOPPER
+                {
                     return; // not the wired menu — the honest drop
                 }
+                // THE HOPPER'S OWN SHAPE (the menu type the five names:
+                // the 41 wire slots the HopperMenu's five + the standard
+                // 36 speaks — the SAME total-minus-36 law the chest rows
+                // wear, the menu id the guard keys before the count's
+                // own 63 wall the chest fallback keeps)
+                let hopper = c.menu_type_id == crate::world_model::MENU_TYPE_HOPPER;
                 // the menu's own numbering: 0..N the container grid —
                 // 63 wire slots the 9x3's 27 rows speak, 90 the 9x6's
                 // 54 (the dev-71 round — the grid the wire's own count
-                // sizes: total minus the 36 player rows), the tail the
-                // player mirror (27 main + 9 hotbar) — padded to the
-                // layout's full shape, the wire's own (0, 0) emptiness
-                // riding verbatim
-                let grid_len = if c.slots.len() >= 63 {
+                // sizes: total minus the 36 player rows), the hopper's
+                // 41 the five-seat row wears, the tail the player
+                // mirror (27 main + 9 hotbar) — padded to the layout's
+                // full shape, the wire's own (0, 0) emptiness riding
+                // verbatim
+                let grid_len = if hopper || c.slots.len() >= 63 {
                     c.slots.len().saturating_sub(36)
                 } else {
                     27
@@ -76356,10 +76371,13 @@ impl App {
                 self.chest_is_live = true;
                 // the shulker's kind row the wire window never wears
                 // (the OpenScreen Component's own name the live lane
-                // banks — the flag the offline canvas alone reads); the
-                // hopper's canvas the same wire law keeps
+                // banks — the flag the offline canvas alone reads); THE
+                // HOPPER'S OWN CANVAS the flag wears (the 176x133
+                // hopper.png the five-seat row blits — the chest
+                // decode's false the chest canvas keeps, the hopper's
+                // own menu the same lane the true answers)
                 self.chest_window_shulker = false;
-                self.chest_window_hopper = false;
+                self.chest_window_hopper = hopper;
                 // THE WINDOW'S OWN NAME (the same decode ride — the
                 // OpenScreen Component the 3x3 canvas's round owns,
                 // the custom name the anvil rows speak; the None the
@@ -88490,12 +88508,17 @@ fn wire_chest_quickcraft_distribute(
         // component half refuses (the autopush-384 round — the wire
         // fold's own kind hoist)
         let painted = qc_slots.len();
+        // THE FIVE'S OWN BOUNDARY (the chest family's own law the
+        // hopper's wire lane re-wears — the grid the slice's own count
+        // names: 27 the single, 54 the double's compound, 5 the
+        // hopper's row, the mirror the tail the boundary speaks)
+        let glen = grid.len();
         let mut k = carried.1;
         for &menu in qc_slots {
-            let (seat_id, seat_count) = if menu < 27 {
+            let (seat_id, seat_count) = if menu < glen {
                 grid[menu]
             } else {
-                mirror[menu - 27]
+                mirror[menu - glen]
             };
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
@@ -88525,10 +88548,10 @@ fn wire_chest_quickcraft_distribute(
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
-            if menu < 27 {
+            if menu < glen {
                 grid[menu] = new;
             } else {
-                mirror[menu - 27] = new;
+                mirror[menu - glen] = new;
             }
             changed.push((menu as i16, new));
         }
@@ -89503,6 +89526,11 @@ fn wire_chest_swap(
 ) {
     debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(menu < 63, "the chest seat's own bounds");
+    // THE FIVE'S OWN BOUNDARY (the chest family's own law the
+    // hopper's wire lane re-wears — the grid the slice's own count
+    // names: 27 the single, 54 the double's compound, 5 the hopper's
+    // row, the mirror the tail the boundary speaks)
+    let glen = grid.len();
     // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(button)`
     // walk): the digits the mirror's hotbar rows speak (menu 54+button),
     // button 40 the player Inventory's OFFHAND answers (the index 40 the
@@ -89514,10 +89542,10 @@ fn wire_chest_swap(
     } else {
         Some(27 + button)
     };
-    let (hover_id, hover_count) = if menu < 27 {
+    let (hover_id, hover_count) = if menu < glen {
         grid[menu]
     } else {
-        mirror[menu - 27]
+        mirror[menu - glen]
     };
     let (row_id, row_count) = match row_idx {
         Some(ri) => mirror[ri],
@@ -89526,7 +89554,7 @@ fn wire_chest_swap(
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     let fired = !(row_count <= 0 && hover_count <= 0);
     if fired {
-        if menu >= 27 && Some(menu - 27) == row_idx {
+        if menu >= glen && Some(menu - glen) == row_idx {
             // THE SAME SEAT — the vanilla walk the identical pair sets
             // back, no mutation the diff ever names (the offhand row
             // the seat's menu id never wears — no same-seat press the
@@ -89534,16 +89562,16 @@ fn wire_chest_swap(
         } else if row_count <= 0 {
             // CASE B (pc 1149-1202): the hovered stack rides the
             // button row AS-IS, the hovered cell EMPTIES
-            if menu < 27 {
+            if menu < glen {
                 grid[menu] = (0, 0);
             } else {
-                mirror[menu - 27] = (0, 0);
+                mirror[menu - glen] = (0, 0);
             }
             note_batch_change(&mut changed, menu as i16, (0, 0));
             match row_idx {
                 Some(ri) => {
                     mirror[ri] = (hover_id, hover_count);
-                    note_batch_change(&mut changed, (27 + ri) as i16, (hover_id, hover_count));
+                    note_batch_change(&mut changed, (glen + ri) as i16, (hover_id, hover_count));
                 }
                 None => {
                     // THE OFFHAND — the outside-menu seat the changed
@@ -89558,10 +89586,10 @@ fn wire_chest_swap(
             // the max wears
             let max = crate::world_view::item_max_stack(row_id);
             if row_count > max {
-                if menu < 27 {
+                if menu < glen {
                     grid[menu] = (row_id, max);
                 } else {
-                    mirror[menu - 27] = (row_id, max);
+                    mirror[menu - glen] = (row_id, max);
                 }
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
                 match row_idx {
@@ -89569,7 +89597,7 @@ fn wire_chest_swap(
                         mirror[ri] = (row_id, row_count - max);
                         note_batch_change(
                             &mut changed,
-                            (27 + ri) as i16,
+                            (glen + ri) as i16,
                             (row_id, row_count - max),
                         );
                     }
@@ -89581,16 +89609,16 @@ fn wire_chest_swap(
                 match row_idx {
                     Some(ri) => {
                         mirror[ri] = (0, 0);
-                        note_batch_change(&mut changed, (27 + ri) as i16, (0, 0));
+                        note_batch_change(&mut changed, (glen + ri) as i16, (0, 0));
                     }
                     None => {
                         *offhand = (0, 0);
                     }
                 }
-                if menu < 27 {
+                if menu < glen {
                     grid[menu] = (row_id, row_count);
                 } else {
-                    mirror[menu - 27] = (row_id, row_count);
+                    mirror[menu - glen] = (row_id, row_count);
                 }
                 note_batch_change(&mut changed, menu as i16, (row_id, row_count));
             }
@@ -89603,10 +89631,10 @@ fn wire_chest_swap(
                 // remainder keeps, the ORIGINAL hovered stack the
                 // add rides (the add's leftover the belief's tail —
                 // the server's drop the wire speaks)
-                if menu < 27 {
+                if menu < glen {
                     grid[menu] = (row_id, max);
                 } else {
-                    mirror[menu - 27] = (row_id, max);
+                    mirror[menu - glen] = (row_id, max);
                 }
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
                 match row_idx {
@@ -89614,7 +89642,7 @@ fn wire_chest_swap(
                         mirror[ri] = (row_id, row_count - max);
                         note_batch_change(
                             &mut changed,
-                            (27 + ri) as i16,
+                            (glen + ri) as i16,
                             (row_id, row_count - max),
                         );
                     }
@@ -89635,16 +89663,20 @@ fn wire_chest_swap(
                 match row_idx {
                     Some(ri) => {
                         mirror[ri] = (hover_id, hover_count);
-                        note_batch_change(&mut changed, (27 + ri) as i16, (hover_id, hover_count));
+                        note_batch_change(
+                            &mut changed,
+                            (glen + ri) as i16,
+                            (hover_id, hover_count),
+                        );
                     }
                     None => {
                         *offhand = (hover_id, hover_count);
                     }
                 }
-                if menu < 27 {
+                if menu < glen {
                     grid[menu] = (row_id, row_count);
                 } else {
-                    mirror[menu - 27] = (row_id, row_count);
+                    mirror[menu - glen] = (row_id, row_count);
                 }
                 note_batch_change(&mut changed, menu as i16, (row_id, row_count));
             }

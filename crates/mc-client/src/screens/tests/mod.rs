@@ -266,6 +266,22 @@ fn chest_rects_for(panel: (i32, i32)) -> Vec<(i32, i32, i16)> {
         .collect()
 }
 
+/// The hopper rects the render lays (the five seats' 0..5, the
+/// mirror's 5..41 — the +1 inset the store's own lane speaks): the
+/// test stage's own copy of the hopper render walk's shape.
+fn hopper_rects_for(panel: (i32, i32)) -> Vec<(i32, i32, i16)> {
+    (0..5)
+        .map(|i| {
+            let (sx, sy) = hopper_container_slot(panel, i);
+            (sx + 1, sy + 1, i as i16)
+        })
+        .chain((0..36).map(|i| {
+            let (sx, sy) = hopper_mirror_slot(panel, i);
+            (sx + 1, sy + 1, (5 + i) as i16)
+        }))
+        .collect()
+}
+
 /// The 3x3 canvas's render-shaped hit boxes (the render's own
 /// layout the test pre-lays — the render-then-hit pattern the
 /// chest helper's shape keeps): the nine the j + i*3 order rides,

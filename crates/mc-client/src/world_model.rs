@@ -2348,6 +2348,18 @@ pub const MENU_TYPE_BLAST_FURNACE: i32 = 10;
 /// the SMOKING RecipeType the same override's half speaks).
 pub const MENU_TYPE_SMOKER: i32 = 22;
 
+/// `MenuType`'s hopper — the HopperMenu's registry id (the SAME
+/// clinit order speaks: furnace 14, grindstone 15, HOPPER lands at
+/// 16 — the wire's own word the live hopper lane routes on; the
+/// menu's own shape the HopperMenu ctor banks: FIVE slots (the
+/// `44 + i * 18` x-row the addSlot loop's (8, 51) y seat keeps) +
+/// the standard 36, the `checkContainerSize(container, 5)` width the
+/// BE's own withSize(5) answers, the
+/// addStandardInventorySlots(8, 84) the standard rows the same
+/// projection keeps — the 176x133 hopper.png canvas the
+/// [`crate::screens`]' own hopper split wears).
+pub const MENU_TYPE_HOPPER: i32 = 16;
+
 /// An OPEN container window — the `containerMenu` lane the audited
 /// consumer routes foreign-window container packets through (javap of
 /// the 26.2 `ClientPacketListener`): the Open Screen packet BIRTHS the
