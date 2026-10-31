@@ -33569,7 +33569,28 @@ impl App {
             if count <= 0 {
                 continue; // the wire's own emptiness sentinel
             }
-            draw_item_icon(g, id, sx, sy);
+            // THE HOPPER'S OWN KIND LANE (the autopush-366 round — the
+            // 340 row law the five seats re-wear [the row bank the open
+            // door loads, the click walk the words banks], the 365
+            // mirror law the player rows answer [the
+            // chest_mirror_to_inventory map the seat re-keys], the id
+            // gate the stale word never paints, the wordless rows the
+            // NONE draw the same pixels the plain icon wears — the
+            // golden scenes' wordless rows the bytes never move)
+            let kind = if slot < 5 {
+                self.chest_row_potion_kind(slot)
+            } else if crate::world::brewing_is_potion_kind(id) {
+                Self::chest_mirror_to_inventory(slot - 5)
+                    .map(|inv| self.items_potion_kinds[inv])
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx, sy);
+            } else {
+                draw_item_icon(g, id, sx, sy);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -34646,14 +34667,14 @@ impl App {
     /// the carried wall the offline cursor the same field answers,
     /// the empty seat + the closed door the None verdicts keep. THE
     /// HOPPER'S OWN DOOR the flag keeps — the five-seat canvas the
-    /// shared rects lay the later round wears. THE KIND'S OWN RIDE
-    /// the 356 round wears (the 355 law the mirror rows re-wear —
-    /// the inventory's kind lane the menu map reads, the container
-    /// cells the NONE wall keeps). The headless scenes track no
-    /// mouse — the pixel goldens never see this pass.)
+    /// shared rects lay the hopper's own hover fn serves. THE KIND'S
+    /// OWN RIDE the 356 round wears (the 355 law the mirror rows
+    /// re-wear — the inventory's kind lane the menu map reads, the
+    /// container cells the NONE wall keeps). The headless scenes
+    /// track no mouse — the pixel goldens never see this pass.)
     fn chest_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Chest || self.chest_window_hopper {
-            return None; // the chest's own canvas the walk serves — the hopper the later round wears
+            return None; // the chest's own canvas the walk serves — the hopper's own hover the same family keeps
         }
         if self.chest_carried.1 > 0 {
             return None; // the carried wall (the image-less false answer)
@@ -34706,8 +34727,9 @@ impl App {
     /// the carried wall the offline cursor the same field answers,
     /// the empty seat + the closed door the None verdicts keep. THE
     /// KIND'S OWN RIDE the 356 round wears (the 355 law the mirror
-    /// rows re-wear — the inventory's kind lane the menu map reads,
-    /// the five-seat row the NONE wall keeps). The headless scenes
+    /// rows re-wear — the inventory's kind lane the menu map reads;
+    /// the five-seat row's own bank the autopush-366 round the
+    /// chest_row_potion_kind read answers). The headless scenes
     /// track no mouse — the pixel goldens never see this pass.)
     fn hopper_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Chest || !self.chest_window_hopper {
@@ -34736,11 +34758,13 @@ impl App {
             .unwrap_or_default();
         // THE KIND'S OWN RIDE (the 356 round — the 355 law the family's
         // mirror rows re-wear: the real inventory's kinds the menu map
-        // reads, the five-seat row the NONE wall keeps — the kind the
-        // hopper store never carries)
+        // reads; THE FIVE-SEAT ROW'S OWN BANK the autopush-366 round
+        // retires — the 363 row bank the hopper's own door loads, the
+        // chest_row_potion_kind read the seat's own word answers, the
+        // id gate the stale word never lends)
         let kind = if crate::world::brewing_is_potion_kind(id) {
             inv.map(|i| self.items_potion_kinds[i])
-                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+                .unwrap_or_else(|| self.chest_row_potion_kind(s))
         } else {
             crate::brewing_sim::POTION_KIND_NONE
         };

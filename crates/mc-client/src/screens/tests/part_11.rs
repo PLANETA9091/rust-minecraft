@@ -15291,3 +15291,145 @@ fn the_chest_mirror_the_kind_lane_wears() {
         "the far face the tint never wears"
     );
 }
+
+/// THE HOPPER'S OWN KIND LANE (the autopush-366 round — the 340/365
+/// laws the five-seat canvas re-wears: the container seats the row
+/// bank's word the liquid lane colors [the open door the
+/// chest_row_potion_kinds loads, the click walk the words banks], the
+/// mirror rows the real inventory the 365 map re-keys, the id gate
+/// the stale word never paints, the wordless rows the NONE draw the
+/// same pixels the plain icon wears — the golden scenes' wordless
+/// rows the bytes never move; the tooltip's own five-seat ride the
+/// same bank the hover rows re-colors).
+#[test]
+fn the_hopper_the_kind_lane_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(366);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    // THE DOOR (the five-seat store the offline open inserts — the
+    // HopperMenu's own withSize(5) the width answers)
+    app.open_hopper_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the hopper door opens");
+    assert!(app.chest_window_hopper, "the hopper flag the canvas wears");
+    assert_eq!(app.chest_slots.len(), 5, "the five-seat row opens");
+    assert!(
+        app.chest_row_potion_kinds.iter().all(|&k| k == none),
+        "the fresh open the rows the NONE bank wears"
+    );
+    // THE SEAT'S OWN BANK + THE MIRROR'S OWN WORD (the kinded pair the
+    // lanes answer)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = kind;
+    app.inventory.items[9] = (potion, 1); // the mirror row 0 the main grid wears
+    app.items_potion_kinds[9] = kind;
+    app.chest_mirror_sync_from_inventory();
+    // THE GEOMETRY (the render the rects bank — the +1 inset the icons wear)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_probe, &mut a);
+    }
+    let (px, py) = app.chest_panel;
+    let (sx, sy) = hopper_container_slot((px, py), 0);
+    let (mx, my) = hopper_mirror_slot((px, py), 0);
+    // THE KIND LANE'S OWN PAIR (the kinded words the liquid overlay
+    // colors, the wordless words the NONE draw keeps — the deltas the
+    // two cells wear; the mut-closure lesson the app-borrowing helper
+    // the seat id's own arm the between-calls mutation never trips)
+    let mut shot = |seat_id: i32, seat_word: i32, mirror_word: i32| -> crate::raster::Framebuf {
+        app.chest_slots[0] = (seat_id, 1);
+        app.chest_row_potion_kinds[0] = seat_word;
+        app.items_potion_kinds[9] = mirror_word;
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        {
+            let mut a = GuiAssets::open(&assets_root);
+            app.render(&mut fb, &mut a);
+        }
+        fb
+    };
+    let fb_a = shot(potion, kind, kind);
+    let fb_b = shot(potion, none, none);
+    let mut seat_diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, sx + 1 + gx, sy + 1 + gy) != pixel(&fb_b, sx + 1 + gx, sy + 1 + gy) {
+                seat_diff += 1;
+            }
+        }
+    }
+    assert!(seat_diff > 0, "the kinded seat the tint lane re-colors");
+    let mut mirror_diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, mx + 1 + gx, my + 1 + gy) != pixel(&fb_b, mx + 1 + gx, my + 1 + gy) {
+                mirror_diff += 1;
+            }
+        }
+    }
+    assert!(
+        mirror_diff > 0,
+        "the kinded mirror row the tint lane re-colors"
+    );
+    // THE ID GATE'S OWN WALL (the stale word the non-potion seat never
+    // paints — the dirt pair the same pixels keeps; the seat's own id
+    // the pair's arm swaps)
+    let fb_c = shot(dirt, kind, none);
+    let fb_d = shot(dirt, none, none);
+    let mut gate = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_c, sx + 1 + gx, sy + 1 + gy) != pixel(&fb_d, sx + 1 + gx, sy + 1 + gy) {
+                gate += 1;
+            }
+        }
+    }
+    assert_eq!(gate, 0, "the stale word the dirt seat never paints");
+    // THE FAR FACE (the tint the panel's own chrome never wears)
+    assert_eq!(
+        pixel(&fb_a, 20, 160),
+        pixel(&fb_b, 20, 160),
+        "the far face the tint never wears"
+    );
+    // THE TOOLTIP'S OWN FIVE-SEAT RIDE (the 356 law the hopper's own
+    // hover re-wears — the seat's banked word the name row re-colors,
+    // the effect rows the walk appends, the wordless seat the plain
+    // name keeps; the carried wall the None verdict the fresh cursor
+    // never trips)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = kind;
+    let rows_a = app
+        .hopper_item_tooltip_hover(sx + 8, sy + 8)
+        .expect("the hovered seat the rows speak");
+    assert_eq!(
+        rows_a[0].0, "Potion of Night Vision",
+        "the banked word the name row wears"
+    );
+    assert!(rows_a.len() >= 2, "the effect row the kinded walk appends");
+    app.chest_row_potion_kinds[0] = none;
+    let rows_b = app
+        .hopper_item_tooltip_hover(sx + 8, sy + 8)
+        .expect("the hovered seat the rows speak");
+    assert_eq!(
+        rows_b[0].0, "Potion",
+        "the wordless seat the plain name wears"
+    );
+}
