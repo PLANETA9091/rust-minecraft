@@ -13813,9 +13813,11 @@ fn the_brewing_swap_the_pairs_exchange_wears() {
         app.brewing_carried_kind, none,
         "the dirt carried the NONE word wears"
     );
-    // THE SAME-ID PAIR'S OWN WALL (the (id, count) model the kind
-    // never carries — the same-id pair the predict's own no-op keeps,
-    // the words the silence wears)
+    // THE SAME-ID KIND PAIR'S OWN SWAP (the 377 round — the (id,
+    // count) model the kind never carries the wall the component law
+    // retires: the same-id DIFFERENT-KIND pair the vanilla
+    // isSameItemSameComponents the different items answers — the
+    // stacks the identical pairs keep, the kinds the exchange)
     app.brewing_slots[1] = (potion, 1);
     app.brewing_kinds[1] = kind_a;
     app.brewing_carried = (potion, 1);
@@ -13831,15 +13833,15 @@ fn the_brewing_swap_the_pairs_exchange_wears() {
     assert_eq!(
         app.brewing_slots[1],
         (potion, 1),
-        "the same-id pair the no-op keeps"
+        "the same-id pair the stacks keep"
     );
     assert_eq!(
-        app.brewing_kinds[1], kind_a,
-        "the seat's own word the wall keeps"
+        app.brewing_kinds[1], kind_c,
+        "the carried's own kind the seat banks"
     );
     assert_eq!(
-        app.brewing_carried_kind, kind_c,
-        "the carried's own word the wall keeps"
+        app.brewing_carried_kind, kind_a,
+        "the seat's own kind the carried banks"
     );
     // THE PICKUP ARM'S OWN REWEAR (the plain pickup the same walk
     // keeps — the retrofit the other arms never moves)
@@ -17017,6 +17019,142 @@ fn the_table_cells_the_model_ride_wears() {
     );
     assert_eq!(
         app.inv_carried_potion_kind, none,
+        "the emptied carried the NONE wears"
+    );
+}
+
+/// THE BREWING STAND'S OWN MODEL RIDE (the 377 round — the 376 NEXT
+/// list's own first candidate the 339/dev-199 seats re-wear: the
+/// vanilla `isSameItemSameComponents` law the brewing stand's plain
+/// (id, count) model never saw — the same-id DIFFERENT-KIND potion
+/// pair the seat's own pickup the vanilla SWAP answers, the same-kind
+/// pair the max-1 gate the honest silence keeps, the wordless pair
+/// the component difference the same swap wears, the right press the
+/// never-swap law the silence keeps, the non-potion ids the plain id
+/// law the merge keeps).
+#[test]
+fn the_brewing_seats_the_model_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(377);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_brewing_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORD (the scoped lookup the mutable walk keeps — the
+    // rects the render laid the click lane reads, the bottle seat 0
+    // the five's own kind bank wears)
+    let (bx, by) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // ARM A — THE DIFFERENT-KIND PAIR'S OWN SWAP (the vanilla law the
+    // plain id model never wore — the pairs the identical stacks
+    // keep, the KINDS the exchange the honest verdict wears)
+    app.brewing_slots[0] = (potion, 1);
+    app.brewing_kinds[0] = night;
+    app.brewing_carried = (potion, 1);
+    app.brewing_carried_kind = swift;
+    app.click_brewing_slot(bx + 8, by + 8, 0);
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the seat the stack keeps"
+    );
+    assert_eq!(
+        app.brewing_carried,
+        (potion, 1),
+        "the carried the stack keeps"
+    );
+    assert_eq!(
+        app.brewing_kinds[0], swift,
+        "the carried's own word the seat wears"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, night,
+        "the seat's own word the carried wears"
+    );
+    // ARM B — THE SAME-KIND PAIR'S OWN SILENCE (the same components
+    // the same item speaks, the max-1 gate the merge closes, the
+    // kinds the own words keep)
+    app.brewing_kinds[0] = night;
+    app.brewing_carried_kind = night;
+    app.click_brewing_slot(bx + 8, by + 8, 0);
+    assert_eq!(
+        app.brewing_kinds[0], night,
+        "the same-kind pair the seat word keeps"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, night,
+        "the same-kind pair the carried word keeps"
+    );
+    // ARM C — THE WORDLESS PAIR'S OWN LAW (the contents-less stack
+    // the kinded potion the different components the swap answers —
+    // the NONE word the kinded word the seats exchange)
+    app.brewing_kinds[0] = none;
+    app.brewing_carried_kind = swift;
+    app.click_brewing_slot(bx + 8, by + 8, 0);
+    assert_eq!(
+        app.brewing_kinds[0], swift,
+        "the kinded word the seat wears"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, none,
+        "the wordless stack the carried wears"
+    );
+    // ARM D — THE RIGHT PRESS'S OWN SILENCE (the never-swap law the
+    // component pair the same no-op keeps — the kinds the own words
+    // keep, the button gate the kind exchange never lends)
+    app.brewing_kinds[0] = night;
+    app.brewing_carried_kind = swift;
+    app.click_brewing_slot(bx + 8, by + 8, 1);
+    assert_eq!(
+        app.brewing_kinds[0], night,
+        "the right press the seat word keeps"
+    );
+    assert_eq!(
+        app.brewing_carried_kind, swift,
+        "the right press the carried word keeps"
+    );
+    // ARM E — THE NON-POTION PAIR'S OWN PLAIN LAW (the dirt seats the
+    // merge the plain id law wears, the kinds the NONE words keep,
+    // the emptied carried the honest NONE retires)
+    app.brewing_slots[0] = (dirt, 3);
+    app.brewing_kinds[0] = none;
+    app.brewing_carried = (dirt, 2);
+    app.brewing_carried_kind = none;
+    app.click_brewing_slot(bx + 8, by + 8, 0);
+    assert_eq!(
+        app.brewing_slots[0],
+        (dirt, 5),
+        "the dirt pair the merge wears"
+    );
+    assert_eq!(app.brewing_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(app.brewing_kinds[0], none, "the dirt seat the word keeps");
+    assert_eq!(
+        app.brewing_carried_kind, none,
         "the emptied carried the NONE wears"
     );
 }
