@@ -18776,3 +18776,206 @@ fn the_wire_folds_the_kind_words_answer_wears() {
         "the one seat the carried's share keeps"
     );
 }
+
+/// THE WIRE TABLE'S OWN KIND SYNC (dev-209 — the table lane the
+/// carried word the field banks): the store rows the real rides
+/// speak (the take the seat's kind the cursor wears, the place the
+/// word the seat lays, the swap the pairs exchange), the craft cells
+/// the honest NONE wall keeps, the result take the crafted word the
+/// wall wears, the throw the whole drop the kind retires the split
+/// keeps, the 384 wall the field voices (the store rows the real
+/// words the gate answers, the wordless cell the kinded carried
+/// refuses).
+#[test]
+fn the_wire_table_the_kind_word_banks_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(209);
+    app.enter_world();
+    app.table_panel = (100, 40);
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.table_is_live = true;
+    app.table_live_window = Some((8, 14));
+    // ARM A — THE STORE ROW'S OWN TAKE RIDE (the seat's kind the
+    // cursor wears — the word the items bank lends)
+    for s in app.live_table_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.live_table_slots[10] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    let (sx, sy) = inventory_slot_origin(app.table_panel, 9);
+    app.click_wire_table_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 1),
+        "the take the cursor wears"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, swift,
+        "the seat's kind the word banks"
+    );
+    assert_eq!(app.live_table_slots[10], (0, 0), "the take the seat clears");
+    // ARM B — THE STORE ROW'S OWN PLACE RIDE (the word the seat lays,
+    // the emptied cursor the NONE retires)
+    app.live_table_slots[11] = (0, 0);
+    app.items_potion_kinds[10] = none;
+    app.live_table_carried = (potion, 1);
+    app.live_table_carried_potion_kind = night;
+    let (sx, sy) = inventory_slot_origin(app.table_panel, 10);
+    app.click_wire_table_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.live_table_slots[11],
+        (potion, 1),
+        "the place the seat lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], night,
+        "the placed stack's own word the bank wears"
+    );
+    assert_eq!(
+        app.live_table_carried,
+        (0, 0),
+        "the place the cursor empties"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, none,
+        "the place the word retires"
+    );
+    // ARM C — THE STORE ROW'S OWN SWAP RIDE (the pairs the words
+    // exchange)
+    app.live_table_slots[12] = (potion, 1);
+    app.items_potion_kinds[11] = swift;
+    app.live_table_carried = (potion, 1);
+    app.live_table_carried_potion_kind = night;
+    let (sx, sy) = inventory_slot_origin(app.table_panel, 11);
+    app.click_wire_table_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.live_table_slots[12],
+        (potion, 1),
+        "the swap the seat's stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], night,
+        "the swap the seat's word wears"
+    );
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 1),
+        "the swap the cursor's stack keeps"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, swift,
+        "the swap the cursor's word wears"
+    );
+    // ARM D — THE CRAFT CELL'S OWN WALL TAKE (the cell's stack the
+    // word never names — the honest NONE the cursor wears)
+    for s in app.live_table_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.live_table_slots[1] = (potion, 1);
+    app.live_table_carried = (0, 0);
+    app.live_table_carried_potion_kind = none;
+    let (cx, cy) = table_craft_origin(app.table_panel, 0);
+    app.click_wire_table_slot(cx + 8, cy + 8, 0);
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 1),
+        "the cell take the cursor wears"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, none,
+        "the wall's own take the honest NONE wears"
+    );
+    // ARM E — THE RESULT TAKE'S OWN CRAFTED WALL (the recipe's output
+    // the kind never carries — the stale word the honest NONE
+    // replaces)
+    app.live_table_slots[0] = (potion, 2);
+    app.live_table_carried = (0, 0);
+    app.live_table_carried_potion_kind = night;
+    let (rx, ry) = table_craft_origin(app.table_panel, 9);
+    app.click_wire_table_slot(rx + 8, ry + 8, 0);
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 2),
+        "the take the cursor wears"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, none,
+        "the crafted word the wall keeps"
+    );
+    // ARM F — THE THROW'S OWN KIND RIDE (the whole drop the kind
+    // retires, the split the remainder the same word keeps)
+    app.live_table_carried = (potion, 5);
+    app.live_table_carried_potion_kind = night;
+    app.click_wire_table_slot(app.table_panel.0 - 5, app.table_panel.1 + 10, 0);
+    assert_eq!(
+        app.live_table_carried,
+        (0, 0),
+        "the whole throw the cursor empties"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, none,
+        "the whole throw the kind retires"
+    );
+    app.live_table_carried = (potion, 5);
+    app.live_table_carried_potion_kind = night;
+    app.click_wire_table_slot(app.table_panel.0 - 5, app.table_panel.1 + 10, 1);
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 4),
+        "the split the remainder keeps"
+    );
+    assert_eq!(
+        app.live_table_carried_potion_kind, night,
+        "the split the same word keeps"
+    );
+    // ARM G — THE 384 WALL'S OWN VOICE (the store row's real word the
+    // gate answers — the mismatched seat refuses the honest row
+    // places, the wordless cell the kinded carried refuses)
+    for s in app.live_table_slots.iter_mut() {
+        *s = (0, 0);
+    }
+    app.live_table_slots[10] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    app.live_table_slots[13] = (0, 0);
+    app.live_table_carried = (potion, 9);
+    app.live_table_carried_potion_kind = night;
+    app.qc_slots = vec![10, 13];
+    app.qc_type = 0;
+    app.qc_distribute_table_wire();
+    assert_eq!(
+        app.live_table_slots[10],
+        (potion, 1),
+        "the mismatched seat the gate refuses"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the refused seat the word keeps"
+    );
+    assert_eq!(
+        app.live_table_slots[13],
+        (potion, 1),
+        "the honest row the place lays"
+    );
+    assert_eq!(
+        app.live_table_carried,
+        (potion, 8),
+        "the one seat the carried's share keeps"
+    );
+    app.live_table_slots[1] = (potion, 1);
+    app.live_table_carried = (potion, 9);
+    app.live_table_carried_potion_kind = night;
+    app.qc_slots = vec![1];
+    app.qc_type = 0;
+    app.qc_distribute_table_wire();
+    assert_eq!(
+        app.live_table_slots[1],
+        (potion, 1),
+        "the wordless cell the mismatch refuses"
+    );
+}

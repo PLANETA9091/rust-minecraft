@@ -9996,6 +9996,17 @@ pub struct App {
     /// prediction walks mutate (the offline world's `inv_carried`
     /// stays the offline truth — the two lanes never mix).
     pub live_table_carried: (i32, i32),
+    /// THE WIRE TABLE'S OWN CARRIED WORD (the dev-209 round — the
+    /// chest's own field the table's walk re-wears: the cursor's
+    /// potion kind the word banks — the pickup rides the seat's kind
+    /// the cursor wears [the store rows the items bank the real words
+    /// serve, the craft cells the honest NONE wall keeps], the place
+    /// the word the seat lays, the swap the pairs exchange, the
+    /// emptied carried the NONE retires; the syncs the wholesale
+    /// replacement the NONE wall resets — the chest's own law the
+    /// correction the kind never carries; the 384 wall the field
+    /// voices — the distribute fold's gate the word reads).
+    pub live_table_carried_potion_kind: i32,
     /// THE CREATIVE PICKER'S SOURCE LIST (the ItemPickerMenu's own
     /// `items` NonNullList the tab switch refills — the registry's
     /// wire order the sim's vocabulary speaks, the DISPLAY LAW the
@@ -13198,6 +13209,7 @@ impl App {
             table_live_window: None,
             table_is_live: false,
             live_table_carried: (0, 0),
+            live_table_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             creative_source: Vec::new(),
             creative_items: Vec::new(),
             creative_search: String::new(),
@@ -31733,6 +31745,9 @@ impl App {
             self.table_live_window = None;
             self.live_table_title = None; // the title dies with the window
             self.live_table_carried = (0, 0);
+            // the window's death the word retires (the chest's own law
+            // the table's own field re-wears)
+            self.live_table_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             self.container_removed_rode = true; // the removed law rode
             self.open(back);
             return;
@@ -32317,6 +32332,7 @@ impl App {
                     button,
                     state_id,
                     window_id,
+                    &mut self.live_table_carried_potion_kind,
                 );
             }
             return;
@@ -32354,6 +32370,7 @@ impl App {
                         button,
                         state_id,
                         window_id,
+                        &mut self.live_table_carried_potion_kind,
                     );
                 }
                 return;
@@ -32384,6 +32401,13 @@ impl App {
                         (carried.0, carried.1 - 1)
                     };
                     self.live_table_carried = new_carried;
+                    // THE THROW'S OWN KIND RIDE (the 345 round's law the
+                    // table's own word re-wears — the whole throw the kind
+                    // the entity never carries the cursor's bank clears, the
+                    // split the remainder's own kind keeps)
+                    if new_carried.1 <= 0 {
+                        self.live_table_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    }
                     let _ = sink.send(crate::world_view::ContainerCommand::Click(
                         crate::world_view::ContainerClick {
                             window_id,
@@ -32439,6 +32463,16 @@ impl App {
                 },
             ));
         } else {
+            // THE STORE ROW'S OWN KIND SEAT (the caller's own map the
+            // bank seat answers — the main rows 10..36 the items 9..35
+            // the menu-1 speaks, the hotbar 37..45 the items 0..8 the
+            // -37 shift keeps — the same mapping the offline fold's
+            // reads wear; the disjoint field borrows the free fn keeps)
+            let kind_seat: Option<&mut i32> = match menu {
+                10..=36 => Some(&mut self.items_potion_kinds[menu as usize - 1]),
+                37..=45 => Some(&mut self.items_potion_kinds[menu as usize - 37]),
+                _ => None,
+            };
             wire_table_store_pickup(
                 sink,
                 &mut self.live_table_slots,
@@ -32448,6 +32482,8 @@ impl App {
                 button,
                 state_id,
                 window_id,
+                kind_seat,
+                &mut self.live_table_carried_potion_kind,
             );
         }
     }
@@ -42558,12 +42594,16 @@ impl App {
     /// the place math the same net fold keeps, the cells' mutation the
     /// recipe recompute the END's changed entry names, the HUD row the
     /// hotbar menus 37..45 the sync follows. THE CALLER'S OWN KIND
-    /// READS (the autopush-384 round — the wire fold's own hoist the
-    /// words the signature wears): the live table lane the carried
-    /// word the sync never banks — the honest reads the NONE wall
-    /// keeps (the gate the plain verdict wears, the false refusal the
-    /// silence refuses; the live word's own field the next round's
-    /// sync may bank).
+    /// READS (the autopush-384 round the hoist the words the signature
+    /// wears; the dev-209 round the 384 wall the field's own word
+    /// voices): the carried word the table lane's own field answers
+    /// (the pickup rides the real kinds bank, the syncs the NONE wall
+    /// resets), the seat words the closure's own menu mapping serves
+    /// (the store rows the items bank's real reads — the main rows
+    /// 10..36 the items 9..35 the menu-1 speaks, the hotbar 37..45
+    /// the items 0..8 the -37 shift keeps — the same mapping the
+    /// offline fold's reads wear; the craft cells the transient wall
+    /// keeps — the kind the transient stores never carry).
     fn qc_distribute_table_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -42573,8 +42613,13 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
-        let carried_kind = crate::brewing_sim::POTION_KIND_NONE;
-        let seat_kinds = |_menu: usize| crate::brewing_sim::POTION_KIND_NONE;
+        let items_kinds = &self.items_potion_kinds;
+        let carried_kind = self.live_table_carried_potion_kind;
+        let seat_kinds = |menu: usize| match menu {
+            10..=36 => items_kinds[menu - 1],
+            37..=45 => items_kinds[menu - 37],
+            _ => crate::brewing_sim::POTION_KIND_NONE,
+        };
         wire_table_quickcraft_distribute(
             sink,
             &mut self.live_table_slots,
@@ -52419,6 +52464,9 @@ impl App {
             }
             let carried = (id, crate::world_view::item_max_stack(id));
             self.live_table_carried = carried;
+            // THE COLLECT'S OWN WALL (the cell's stack the kind the
+            // bank never carries — the honest NONE the cursor wears)
+            self.live_table_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             let _ = sink.send(crate::world_view::ContainerCommand::Click(
                 crate::world_view::ContainerClick {
                     window_id,
@@ -75670,6 +75718,10 @@ impl App {
                     // believed (the wholesale replacement the chest's
                     // lane speaks)
                     self.live_table_carried = c.carried;
+                    // the wire's own word (the live lane the honest NONE
+                    // wall keeps — the correction the kind never carries,
+                    // the chest's own law the table's field re-wears)
+                    self.live_table_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Crafting);
                     }
@@ -75942,6 +75994,7 @@ impl App {
                 }
                 self.table_live_window = None;
                 self.live_table_carried = (0, 0); // no window, no held stack
+                self.live_table_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE; // the word the window's death retires
                 self.live_table_title = None; // the title dies with the window
                                               // the store dropped: a LIVE chest closes back to the
                                               // world (the vanilla closeContainer's return); the
@@ -87632,22 +87685,27 @@ fn ride_pickup_kind(
     };
     let before_seat_kind = *seat_kind;
     let before_cursor_kind = *carried_kind;
-    // the kind the SEAT wears after the click
+    // the kind the SEAT wears after the click (the merge the count's
+    // own growth keys — the same-id kinded pair the predict's own
+    // swap the exchange serves, the id equality alone the merge
+    // branch never keys)
     *seat_kind = if after_slot.1 <= 0 {
         none // the take — the kind left with the stack
     } else if before_slot.1 <= 0 {
         before_cursor_kind // the place — the cursor's stack landed
-    } else if after_slot.0 == before_slot.0 {
+    } else if after_slot.0 == before_slot.0 && after_slot.1 > before_slot.1 {
         before_seat_kind // the merge — the seat's own identity keeps
     } else {
         before_cursor_kind // the swap — the cursor's stack landed
     };
-    // the kind the CURSOR wears after the click
+    // the kind the CURSOR wears after the click (the merge remainder
+    // the count's own drain keys — the same-id kinded swap the
+    // exchange the honest words serve)
     *carried_kind = if after_carried.1 <= 0 {
         none // the cursor emptied — the kind left with the stack
     } else if before_carried.1 <= 0 {
         before_seat_kind // the take — the seat's stack rides
-    } else if after_carried.0 == before_carried.0 {
+    } else if after_carried.0 == before_carried.0 && after_carried.1 < before_carried.1 {
         before_cursor_kind // the merge remainder — its own kind keeps
     } else {
         before_seat_kind // the swap — the seat's stack rides
@@ -88247,9 +88305,10 @@ fn quickcraft_table_seat_may_place(menu: usize) -> bool {
 /// menus 37..45 the sync follows. THE WIRE FOLD'S OWN KIND HOIST (the
 /// autopush-384 round — the kind words the slices never carry the
 /// caller's own reads the signature wears): the live table lane the
-/// carried word the sync never banks — the caller's own reads the
-/// NONE wall keeps, the gate the plain verdict wears (the honest
-/// silence the false refusal refuses).
+/// carried word the field answers (the dev-209 round the 384 wall's
+/// own silence the field voices — the store rows the real words the
+/// gate answers, the craft cells the NONE wall keeps, the gate the
+/// honest words wear).
 fn wire_table_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); 46],
@@ -90036,7 +90095,10 @@ fn wire_furnace_swap(
 /// refusals no mutation speak (the packet still rides the lane — the
 /// server's verdict the sync's truth replaces the belief with). The
 /// remainder's own add may land in the hotbar rows — the HUD row the
-/// every-mutation law syncs after the walk.
+/// every-mutation law syncs after the walk. THE CRAFTED WORD'S OWN
+/// WALL (the dev-209 round — the recipe's output the kind never
+/// carries): the take the honest NONE the cursor wears, the merge
+/// the same stack the cursor's own word keeps.
 #[allow(clippy::too_many_arguments)]
 fn wire_table_result_take(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
@@ -90047,12 +90109,16 @@ fn wire_table_result_take(
     button: i8,
     state_id: i32,
     window_id: i32,
+    carried_kind: &mut i32,
 ) {
     let (id, count) = live_slots[0];
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     if count > 0 && carried.1 <= 0 {
         let taken = if button == 0 { count } else { (count + 1) / 2 };
         *carried = (id, taken);
+        // THE CRAFTED WORD'S OWN WALL (the recipe's output the kind
+        // never carries — the honest NONE the cursor wears)
+        *carried_kind = crate::brewing_sim::POTION_KIND_NONE;
         changed = wire_table_on_take(live_slots, selected);
     } else if count > 0 && carried.0 == id {
         let space = crate::world_view::item_max_stack(id) - carried.1;
@@ -90163,7 +90229,11 @@ fn wire_table_result_quick_move(
 /// believed result recomputes ([`craft_result_for_table`] over the
 /// window-1 projection's OWN cells — the instant preview the vanilla
 /// screen shows before the server's sync lands), the changed cell +
-/// the CHANGED verdict the one packet names.
+/// the CHANGED verdict the one packet names. THE CURSOR'S OWN WALL
+/// RIDE (the dev-209 round — the craft cells the bank never seats):
+/// [`ride_pickup_kind`] the `None` arm the wall seats wear — the
+/// place the kind leaves with the stack, the take the honest NONE
+/// the wall keeps (the echo the craft rows' own kind re-answers).
 fn wire_table_cell_pickup(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); 46],
@@ -90172,8 +90242,10 @@ fn wire_table_cell_pickup(
     button: i8,
     state_id: i32,
     window_id: i32,
+    carried_kind: &mut i32,
 ) {
     let believed = live_slots[menu as usize];
+    let before_carried = *carried;
     let (new_slot, new_carried) = if button == 0 {
         crate::world_view::predict_pickup(believed, *carried)
     } else {
@@ -90181,6 +90253,16 @@ fn wire_table_cell_pickup(
     };
     live_slots[menu as usize] = new_slot;
     *carried = new_carried;
+    // THE WALL SEAT'S OWN RIDE (the None arm the clear alone answers
+    // — the take's own NONE the empty cursor's word wears)
+    ride_pickup_kind(
+        believed,
+        new_slot,
+        before_carried,
+        new_carried,
+        None,
+        carried_kind,
+    );
     let mut changed = vec![(menu as i16, new_slot)];
     let cells: [(i32, i32); 9] = [
         live_slots[1],
@@ -90216,7 +90298,14 @@ fn wire_table_cell_pickup(
 /// the uniform pickup table mutates the believed slot + the cursor,
 /// the packet rides the lane (the changed entry the slot's final pair
 /// names), the HUD row's belief follows the hotbar's menu ids the
-/// mutation may have touched.
+/// mutation may have touched. THE KIND'S OWN RIDE (the dev-209 round
+/// — the wire table's own word the store rows the real rides serve):
+/// [`ride_pickup_kind`] the seat/cursor kinds the four arms move —
+/// the seat word the caller's own bank seat answers (the items bank
+/// the shared read wears), the cursor word the field's own ride
+/// keeps (the wall seats the None arm the generic's own craft region
+/// wears).
+#[allow(clippy::too_many_arguments)]
 fn wire_table_store_pickup(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); 46],
@@ -90226,8 +90315,11 @@ fn wire_table_store_pickup(
     button: i8,
     state_id: i32,
     window_id: i32,
+    seat_kind: Option<&mut i32>,
+    carried_kind: &mut i32,
 ) {
     let believed = live_slots[menu as usize];
+    let before_carried = *carried;
     let (new_slot, new_carried) = if button == 0 {
         crate::world_view::predict_pickup(believed, *carried)
     } else {
@@ -90235,6 +90327,16 @@ fn wire_table_store_pickup(
     };
     live_slots[menu as usize] = new_slot;
     *carried = new_carried;
+    // THE BELIEVED KIND'S OWN RIDE (the 345 round — the kind follows
+    // the stack the four arms move)
+    ride_pickup_kind(
+        believed,
+        new_slot,
+        before_carried,
+        new_carried,
+        seat_kind,
+        carried_kind,
+    );
     let mut row = [(0, 0); 9];
     row.copy_from_slice(&live_slots[37..46]);
     *hotbar = row;
