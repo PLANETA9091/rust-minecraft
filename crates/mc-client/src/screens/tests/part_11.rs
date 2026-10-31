@@ -16090,3 +16090,113 @@ fn the_hopper_the_transfer_ride_wears() {
     );
     app.shift_down = false;
 }
+
+/// THE CRAFT CELLS' OWN BANK DRAG (the dev-206 round — the 370 NEXT
+/// list's own third candidate the 368 bank the drag's own placement
+/// banks: the empty seat the cursor's word wears, the occupied seat
+/// the merge the stack's own word keeps, the remainder the cursor's
+/// word keeps, the type-1's own one-each ride the same bank wears).
+#[test]
+fn the_inventory_craft_cells_the_drag_word_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(206);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Inventory,
+        "the inventory door opens"
+    );
+    // THE REAL PANEL THE DRAG SEATS (the headless render the panel
+    // origin lays — the craft seats the same origin the click lane
+    // hits)
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb_probe, &mut a);
+    }
+    let panel = app.inv_panel;
+    let cell_seat = |cell: usize| -> (i32, i32) {
+        let (x, y) = craft_slot_origin(panel, cell);
+        (x + 8, y + 8)
+    };
+    let (cx0, cy0) = cell_seat(0);
+    let (cx3, cy3) = cell_seat(3);
+    // THE EMPTY SEATS' OWN WORD (the type-0 drag the cursor's word
+    // wears — the two painted cells the kinded pair bank, the
+    // remainder the cursor keeps)
+    app.inv_carried = (potion, 3);
+    app.inv_carried_potion_kind = kind;
+    app.qc_arm_inventory(cx0, cy0, 0);
+    app.qc_paint(cx0, cy0);
+    app.qc_paint(cx3, cy3);
+    app.qc_release(0);
+    assert_eq!(app.craft_grid[0], (potion, 1), "the drag the cell lays");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], kind,
+        "the placed cell the word banks"
+    );
+    assert_eq!(app.craft_grid[3], (potion, 1), "the second seat lays");
+    assert_eq!(
+        app.craft_grid_potion_kinds[3], kind,
+        "the second seat the word banks"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, kind,
+        "the remainder the word keeps"
+    );
+    // THE OCCUPIED SEAT'S OWN WORD (the merge the stack's own
+    // components keep — the kindless seat the cursor's word never
+    // lends, the max-1 cap the net the carried never loses)
+    app.craft_grid_potion_kinds[0] = none; // the kindless seat the scenario lays
+    app.qc_arm_inventory(cx0, cy0, 0);
+    app.qc_paint(cx0, cy0);
+    app.qc_release(0);
+    assert_eq!(app.craft_grid[0], (potion, 1), "the merge the count keeps");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], none,
+        "the seat's own word the merge keeps"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (potion, 1),
+        "the max-1 merge the carried keeps"
+    );
+    // THE TYPE-1'S OWN RIDE (the right drag the one-each answer — the
+    // empty cell the cursor's word the same lane banks)
+    app.craft_grid[3] = (0, 0); // the empty seat the type-1 lays
+    app.craft_grid_potion_kinds[3] = none;
+    app.inv_carried = (potion, 3);
+    app.inv_carried_potion_kind = kind;
+    app.qc_arm_inventory(cx0, cy0, 1);
+    app.qc_paint(cx0, cy0);
+    app.qc_paint(cx3, cy3);
+    app.qc_release(1);
+    assert_eq!(
+        app.craft_grid[0],
+        (potion, 1),
+        "the max-1 merge the count keeps"
+    );
+    assert_eq!(app.craft_grid[3], (potion, 1), "the type-1 the seat lays");
+    assert_eq!(
+        app.craft_grid_potion_kinds[3], kind,
+        "the type-1 seat the word banks"
+    );
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], none,
+        "the occupied seat the own word keeps"
+    );
+}

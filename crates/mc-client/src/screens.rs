@@ -41786,6 +41786,19 @@ impl App {
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             self.inventory_set_hover(hover, (carried.0, place)); // pc 505-514
+            if let InventoryHover::Craft(cell) = hover {
+                // THE DRAG'S OWN WORD RIDE (the dev-206 round — the 368
+                // bank the drag's own placement banks: the empty seat
+                // the placed stack the cursor's word wears [the 368
+                // place arm's own law the split lane re-wears], the
+                // occupied seat the merge the stack's own components
+                // the original keeps — the vanilla isSameItemSame-
+                // Components law the added items the identity lose,
+                // the read gates the stale word never lends)
+                if seat_count == 0 {
+                    self.craft_grid_potion_kinds[cell] = self.inv_carried_potion_kind;
+                }
+            }
         }
         self.inv_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps (the empty the (0,0) law speaks)
         self.hotbar_slots = self.inventory.hotbar();
