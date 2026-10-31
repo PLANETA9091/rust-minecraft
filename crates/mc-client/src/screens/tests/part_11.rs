@@ -18979,3 +18979,162 @@ fn the_wire_table_the_kind_word_banks_wears() {
         "the wordless cell the mismatch refuses"
     );
 }
+
+
+/// THE WIRE CHEST'S OWN KIND WORD RIDE (the dev-210 round — the
+/// offline chest's own law the live lane re-wears): the pickup the
+/// seat's kind the cursor banks, the place the word the seat lays,
+/// the same-id kinded pair the component law's own swap the exchange
+/// serves, the mirror rows the mapped seat the bank answers, the
+/// right press the never-swap law the silence keeps.
+#[test]
+fn the_wire_chest_the_kind_word_rides_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(210);
+    app.enter_world();
+    let panel = chest_panel_origin(640, 360);
+    app.chest_panel = panel;
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_slot_rects = chest_rects_for(panel);
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.chest_is_live = true;
+    app.chest_live_window = Some((5, 11));
+    // ARM A — THE CHEST ROW'S OWN TAKE RIDE (the seat's kind the
+    // cursor wears — the word the row bank lends)
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.chest_slots[3] = (potion, 1);
+    app.chest_row_potion_kinds[3] = swift;
+    let (ox, oy) = chest_container_slot(panel, 3);
+    app.click_chest_slot(ox + 9, oy + 9, 0);
+    assert_eq!(app.chest_carried, (potion, 1), "the take the cursor wears");
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the seat's kind the word banks"
+    );
+    assert_eq!(app.chest_slots[3], (0, 0), "the take the seat clears");
+    assert_eq!(
+        app.chest_row_potion_kinds[3], none,
+        "the drained seat the word retires"
+    );
+    // ARM B — THE CHEST ROW'S OWN PLACE RIDE (the word the seat lays,
+    // the emptied cursor the NONE retires)
+    app.chest_slots[4] = (0, 0);
+    app.chest_row_potion_kinds[4] = none;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = night;
+    let (ox, oy) = chest_container_slot(panel, 4);
+    app.click_chest_slot(ox + 9, oy + 9, 0);
+    assert_eq!(app.chest_slots[4], (potion, 1), "the place the seat lays");
+    assert_eq!(
+        app.chest_row_potion_kinds[4], night,
+        "the placed stack's own word the bank wears"
+    );
+    assert_eq!(app.chest_carried, (0, 0), "the place the cursor empties");
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the place the word retires"
+    );
+    // ARM C — THE SAME-ID KINDED PAIR'S OWN SWAP (the component law's
+    // own answer the plain id merge never wore — the kinds the pairs
+    // exchange)
+    app.chest_slots[5] = (potion, 1);
+    app.chest_row_potion_kinds[5] = swift;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = night;
+    let (ox, oy) = chest_container_slot(panel, 5);
+    app.click_chest_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.chest_slots[5],
+        (potion, 1),
+        "the swap the seat's stack keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[5], night,
+        "the swap the seat's word wears"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the swap the cursor's stack keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the swap the cursor's word wears"
+    );
+    // ARM D — THE MIRROR ROW'S OWN TAKE RIDE (the main grid the
+    // mapped seat answers — the word the items bank lends, the
+    // MIRROR's own id the gate keeps; the carried the EMPTY reset
+    // wears — the max-1 potion seat the kinded carried never merges)
+    app.chest_carried = (0, 0);
+    app.chest_carried_potion_kind = none;
+    app.chest_mirror[0] = (potion, 1);
+    app.items_potion_kinds[9] = swift;
+    let (ox, oy) = chest_mirror_slot(panel, 0);
+    app.click_chest_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the mirror take the cursor wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the mirror seat's kind the word banks"
+    );
+    assert_eq!(app.chest_mirror[0], (0, 0), "the take the seat clears");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained seat the word retires"
+    );
+    // ARM E — THE HOTBAR ROW'S OWN PLACE RIDE (the mapped seat the
+    // -27 shift answers — the word the bank lays)
+    app.chest_mirror[27] = (0, 0);
+    app.items_potion_kinds[0] = none;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = night;
+    let (ox, oy) = chest_mirror_slot(panel, 27);
+    app.click_chest_slot(ox + 9, oy + 9, 0);
+    assert_eq!(
+        app.chest_mirror[27],
+        (potion, 1),
+        "the place the hotbar seat lays"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], night,
+        "the placed stack's own word the bank wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the place the word retires"
+    );
+    // ARM F — THE RIGHT PRESS'S OWN NEVER-SWAP SILENCE (the max-1
+    // potion seat the place refuses, the kinded pair the right lane
+    // the kinds never exchanges — the silence the words keep)
+    app.chest_slots[6] = (potion, 1);
+    app.chest_row_potion_kinds[6] = swift;
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = night;
+    let (ox, oy) = chest_container_slot(panel, 6);
+    app.click_chest_slot(ox + 9, oy + 9, 1);
+    assert_eq!(
+        app.chest_slots[6],
+        (potion, 1),
+        "the right press the seat keeps"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the right press the cursor keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[6], swift,
+        "the seat's own word the silence keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, night,
+        "the cursor's own word the silence keeps"
+    );
+}

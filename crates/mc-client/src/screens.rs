@@ -51892,15 +51892,106 @@ impl App {
             ));
             return;
         }
+        // THE KIND'S OWN READS (the hoist the component law pre-keys —
+        // the banks' own normalized verdicts the pickup pair's answer
+        // wears, the 372 round the reads the predict call pre-wears;
+        // the mirror rows the MIRROR's own id the gate answers — the
+        // wire belief the real inventory's stale row never keys)
+        let n = self.chest_slots.len();
+        let menu = slot as usize;
+        let inv_row = menu >= n;
+        let mapped = if inv_row {
+            if menu < n + 27 {
+                9 + menu - n
+            } else {
+                menu - n - 27
+            }
+        } else {
+            0
+        };
+        let old_seat_kind = if inv_row {
+            let (mid, _) = self.chest_mirror[menu - n];
+            if crate::world::brewing_is_potion_kind(mid) {
+                self.items_potion_kinds[mapped]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            }
+        } else {
+            self.chest_row_potion_kind(menu)
+        };
+        let old_carried_kind = self.chest_carried_potion_kind;
         let (new_slot, new_carried) = if button == 0 {
-            crate::world_view::predict_pickup(believed, self.chest_carried)
+            crate::world_view::predict_pickup_kind(
+                believed,
+                self.chest_carried,
+                old_seat_kind,
+                old_carried_kind,
+            )
         } else {
             crate::world_view::predict_pickup_right(believed, self.chest_carried)
         };
-        if (slot as usize) < self.chest_slots.len() {
-            self.chest_slots[slot as usize] = new_slot;
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 round's law the
+        // chest's own walk re-wears — the SAME four arms the table's
+        // store rows speak: the pickup the seat's kind the word banks,
+        // the place the word the seat lays, the model's own swap the
+        // pairs exchange, the merge the emptied carried the NONE word
+        // wears; the mirror rows the mapped seat the bank answers —
+        // the 372 round the SAME-ID KIND PAIR the component law's own
+        // swap wears, the dev-210 round the wire chest's own lane the
+        // same verdict re-wears)
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            // THE COMPONENT'S OWN VERDICT (the plain id test the kind
+            // words never spoke — the same-id kind pair the vanilla
+            // isSameItemSameComponents the different items answers)
+            let pair_same = crate::world_view::potion_pair_same_item(
+                believed.0,
+                old_seat_kind,
+                old_carried_kind,
+            );
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = self.chest_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.chest_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word (the row
+                // bank the seat's own word lends)
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat (the row bank
+                // the word keeps — the potion's own identity the store
+                // ride survives)
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if button == 0
+                && believed.1 > 0
+                && new_slot.1 > 0
+                && (believed.0 != new_slot.0 || !pair_same)
+            {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the SAME-ID KIND
+                // PAIR the component law's own answer exchanges, the
+                // right press the never-swap law the silence keeps,
+                // the kind the pairs exchange)
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the seat keeps its own kind, the emptied
+                // carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            if inv_row {
+                self.items_potion_kinds[mapped] = new_seat_kind;
+            } else if menu < self.chest_row_potion_kinds.len() {
+                self.chest_row_potion_kinds[menu] = new_seat_kind;
+            }
+            self.chest_carried_potion_kind = new_carried_kind;
+        }
+        if menu < n {
+            self.chest_slots[menu] = new_slot;
         } else {
-            self.chest_mirror[slot as usize - self.chest_slots.len()] = new_slot;
+            self.chest_mirror[menu - n] = new_slot;
         }
         self.chest_carried = new_carried;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
