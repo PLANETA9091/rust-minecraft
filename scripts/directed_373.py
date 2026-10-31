@@ -11,6 +11,7 @@ spec = importlib.util.spec_from_file_location("pg", "scripts/part_gate_205.py")
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 FILTERS = [
+    "the_enchant_seats_the_kind_bank_wears",
     "the_furnace_seats_the_model_ride_wears",
     "the_dispenser_seats_the_model_ride_wears",
     "the_brewing_seats_the_model_ride_wears",

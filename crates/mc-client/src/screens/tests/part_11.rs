@@ -17425,3 +17425,132 @@ fn the_furnace_seats_the_model_ride_wears() {
         "the emptied carried the NONE wears"
     );
 }
+
+/// THE ENCHANTING SEATS' OWN KIND BANK (the 379 round — the dev-208
+/// NEXT list's own walk the plain id law re-wears: the vanilla
+/// `isSameItemSameComponents` law the enchant's plain (id, count)
+/// model never saw — the same-id DIFFERENT-KIND potion pair the
+/// seat's own pickup the vanilla SWAP answers, the merge gate the
+/// no-op wore, the pair seats the kindless store the honest wall
+/// keeps, the store rows the kinded words the exchange banks).
+#[test]
+fn the_enchant_seats_the_kind_bank_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(379);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // item seat 0 the kindless pair wears, the main rows 2 and 3 the
+    // store rows' write-through answers)
+    let (ix, iy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (rx, ry) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (dx, dy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // ARM A — THE WORDLESS SEAT'S OWN SWAP (the vanilla law the plain
+    // id model never wore — the wordless potion the kinded carried
+    // the different components answers, the stacks the identical
+    // pairs keep, the carried word the kindless pair store retires)
+    app.enchant_slots[0] = (potion, 1);
+    app.enchant_carried = (potion, 1);
+    app.enchant_carried_potion_kind = swift;
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (potion, 1),
+        "the seat the stack keeps"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (potion, 1),
+        "the carried the stack keeps"
+    );
+    assert_eq!(
+        app.enchant_carried_potion_kind, none,
+        "the kindless pair store the carried word retires"
+    );
+    // ARM B — THE SAME-WORDLESS PAIR'S OWN SILENCE (the same
+    // components the same item speaks, the max-1 gate the merge
+    // closes, the kind the NONE word keeps)
+    app.enchant_carried_potion_kind = none;
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_carried_potion_kind, none,
+        "the same-wordless pair the carried word keeps"
+    );
+    // ARM C — THE RIGHT PRESS'S OWN SILENCE (the never-swap law the
+    // component pair the same no-op keeps — the kind the own word
+    // keeps, the button gate the kind retire never lends)
+    app.enchant_carried_potion_kind = swift;
+    app.click_enchanting_slot(ix + 8, iy + 8, 1);
+    assert_eq!(
+        app.enchant_carried_potion_kind, swift,
+        "the right press the carried word keeps"
+    );
+    // ARM D — THE STORE ROW'S OWN EXCHANGE (the kinded row the kinded
+    // carried the different components the swap answers — the kinds
+    // the pairs exchange, the row the carried's word banks)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.enchant_carried = (potion, 1);
+    app.enchant_carried_potion_kind = swift;
+    app.click_enchanting_slot(rx + 8, ry + 8, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the row the stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the carried's own kind the row banks"
+    );
+    assert_eq!(
+        app.enchant_carried_potion_kind, night,
+        "the row's own kind the carried banks"
+    );
+    // ARM E — THE NON-POTION PAIR'S OWN PLAIN LAW (the dirt rows the
+    // merge the plain id law wears, the kinds the NONE words keep,
+    // the emptied carried the honest NONE retires)
+    app.inventory.items[10] = (dirt, 3);
+    app.items_potion_kinds[10] = none;
+    app.enchant_carried = (dirt, 2);
+    app.enchant_carried_potion_kind = none;
+    app.click_enchanting_slot(dx + 8, dy + 8, 0);
+    assert_eq!(
+        app.inventory.items[10],
+        (dirt, 5),
+        "the dirt pair the merge wears"
+    );
+    assert_eq!(app.enchant_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.enchant_carried_potion_kind, none,
+        "the emptied carried the NONE wears"
+    );
+}

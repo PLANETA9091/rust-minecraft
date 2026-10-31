@@ -9680,6 +9680,12 @@ pub struct App {
     /// cursor the pickup/split predictions mutate — the close's
     /// add-back walk returns it).
     pub enchant_carried: (i32, i32),
+    /// THE CARRIED STACK'S OWN KIND WORD (the 379 round — the
+    /// component law the enchant's plain (id, count) model never
+    /// banked: the potion's own `potion_contents` the word speaks, the
+    /// pickup/place/swap arms the cursor ride wears, the kindless
+    /// pair seats the honest NONE wall keeps).
+    pub enchant_carried_potion_kind: i32,
     /// The enchanting table's slot hit boxes the LAST render laid out:
     /// (x, y, the MENU's own slot number) — the pair (the item 0 the
     /// (15, 47) seat the lapis 1 the (35, 47) seat, the 26.2 ctor's
@@ -13147,6 +13153,7 @@ impl App {
             anvil_pos: None,
             enchant_mirror: Vec::new(),
             enchant_carried: (0, 0),
+            enchant_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             enchant_slot_rects: Vec::new(),
             enchant_panel: (0, 0),
             enchanting_power: 0,
@@ -29211,6 +29218,9 @@ impl App {
         // numbering banks)
         self.enchant_slots = vec![(0, 0), (0, 0)];
         self.enchant_carried = (0, 0);
+        // THE FRESH-OPEN'S OWN DOOR (the chest's own law — the stale
+        // word the open retires)
+        self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE SPELL WALK'S OWN SEAT + COSTS (the dev-195 round — the
         // pos the scan reads, the empty item the zero costs the
         // slotsChanged's own isEmpty gate keeps: the fresh open the
@@ -29290,6 +29300,10 @@ impl App {
         // first-empty placement the store answers)
         if self.enchant_carried.1 > 0 {
             let (id, count) = self.enchant_carried;
+            // THE KIND'S OWN RIDE HOME (the brewing close's own law —
+            // the kinded carried the receiving row the seat banks; the
+            // non-potion carried the NONE seat the same value wears)
+            let carried_kind = self.enchant_carried_potion_kind;
             let enchanted = !self.enchant_comps[38].is_empty();
             let mut rest = count;
             if !enchanted {
@@ -29310,6 +29324,7 @@ impl App {
                 }
                 if self.inventory.items[idx].1 <= 0 {
                     self.inventory.items[idx] = (id, rest);
+                    self.items_potion_kinds[idx] = carried_kind;
                     self.inventory_enchants[idx] = self.enchant_comps[38].clone();
                     rest = 0;
                 }
@@ -29318,6 +29333,9 @@ impl App {
                 self.spawn_drop_at_player(id, rest);
             }
             self.enchant_carried = (0, 0);
+            // THE CARRIED KIND'S OWN DROP (the ride home the seat the
+            // rows bank — the carried word the NONE wears)
+            self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             self.enchant_comps[38].clear();
         }
         // THE PAIR'S OWN HOME RIDE (the removed()'s clearContainer walk —
@@ -50917,6 +50935,10 @@ impl App {
         // components ride, the offline item entity the (id, count)
         // pair wears, the honest note the gap keeps])
         if self.enchant_carried.1 <= 0 {
+            // the throw's own word (the emptied carried the NONE wears —
+            // the whole-stack throw the word drops, the half the split
+            // the same stack keeps)
+            self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             self.enchant_comps[38].clear();
         }
     }
@@ -51008,6 +51030,19 @@ impl App {
             self.inventory.items[menu - 29]
         };
         let old_car = self.enchant_carried;
+        // THE KIND'S OWN READS (the hoist the component law pre-keys —
+        // the banks' own normalized verdicts the pickup pair's answer
+        // wears, the 379 round the reads the predict call pre-wears;
+        // the pair seats the kindless store the honest NONE keeps, the
+        // REAL rows the bank's own word lends)
+        let inv_row = menu >= 2;
+        let mapped = if menu < 29 { menu + 7 } else { menu - 29 };
+        let old_seat_kind = if inv_row {
+            self.row_potion_kind(mapped)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.enchant_carried_potion_kind;
         // THE COMPONENT IDENTITY LAW (the dev-196 round — the
         // enchanted pair the same-id merge never rides: the vanilla
         // components the stack identity carries, the merge the
@@ -51017,17 +51052,19 @@ impl App {
         let seat_ench = !self.enchant_comps[menu].is_empty();
         let car_ench = !self.enchant_comps[38].is_empty();
         let (new_slot, new_carried) = if button == 0 {
-            if (seat_ench || car_ench)
-                && believed.1 > 0
-                && old_car.1 > 0
-                && believed.0 == old_car.0
+            if (seat_ench || car_ench) && believed.1 > 0 && old_car.1 > 0 && believed.0 == old_car.0
             {
                 (old_car, believed) // the swap the merge refusal wears —
                                     // the full slot the vanilla's own
                                     // `if (!itemstack1.isEmpty())
                                     // setByPlayer` swap keeps
             } else {
-                crate::world_view::predict_pickup(believed, old_car)
+                crate::world_view::predict_pickup_kind(
+                    believed,
+                    old_car,
+                    old_seat_kind,
+                    old_carried_kind,
+                )
             }
         } else if (seat_ench || car_ench)
             && believed.1 > 0
@@ -51060,8 +51097,7 @@ impl App {
                 && believed.0 == old_car.0;
             let seat_store = self.enchant_comps[menu].clone();
             let car_store = self.enchant_comps[38].clone();
-            let (mut new_seat_store, mut new_car_store) =
-                (seat_store.clone(), car_store.clone());
+            let (mut new_seat_store, mut new_car_store) = (seat_store.clone(), car_store.clone());
             if new_slot != believed || new_carried != old_car {
                 if new_carried.1 == 0 && old_car.1 > 0 && new_slot.0 == old_car.0 {
                     // the place-all: the carried store rides to the seat
@@ -51079,9 +51115,7 @@ impl App {
                     // the swap: the stores exchange
                     new_seat_store = car_store;
                     new_car_store = seat_store;
-                } else if new_carried.1 > old_car.1
-                    && new_carried.0 == believed.0
-                    && believed.1 > 0
+                } else if new_carried.1 > old_car.1 && new_carried.0 == believed.0 && believed.1 > 0
                 {
                     // the partial pickup (the split): the picked half COPIES
                     new_car_store = seat_store.clone();
@@ -51096,6 +51130,54 @@ impl App {
             }
             self.enchant_comps[menu] = new_seat_store;
             self.enchant_comps[38] = new_car_store;
+        }
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 law the enchant's
+        // own walk re-wears — the SAME four arms the chest's walk
+        // speaks: the pickup the seat's kind the word banks, the place
+        // the word the seat lays, the model's own swap the pairs
+        // exchange, the merge the emptied carried the NONE word wears;
+        // the 379 round the SAME-ID KIND PAIR the component law's own
+        // swap wears — the kindless pair seats the word the honest
+        // store never banks, the carried word the exchange retires)
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            // THE COMPONENT'S OWN VERDICT (the plain id test the kind
+            // words never spoke — the same-id kind pair the vanilla
+            // isSameItemSameComponents the different items answers)
+            let pair_same = crate::world_view::potion_pair_same_item(
+                believed.0,
+                old_seat_kind,
+                old_carried_kind,
+            );
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = old_car.1 > 0 && new_carried.1 <= 0;
+            let carried_new = old_car.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if button == 0
+                && believed.1 > 0
+                && new_slot.1 > 0
+                && (believed.0 != new_slot.0 || !pair_same)
+            {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the SAME-ID KIND
+                // PAIR the component law's own answer exchanges, the
+                // right press the never-swap law the silence keeps,
+                // the kind the pairs exchange)
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            if inv_row {
+                self.items_potion_kinds[mapped] = new_seat_kind;
+            }
+            self.enchant_carried_potion_kind = new_carried_kind;
         }
         self.enchant_mirror_sync_from_inventory();
         // THE SLOTSCHANGED'S OWN WALK (the pickup/place the pair may
