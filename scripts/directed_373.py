@@ -13,6 +13,7 @@ spec.loader.exec_module(m)
 FILTERS = [
     "the_store_rows_the_model_ride_wears",
     "the_table_store_the_model_ride_wears",
+    "the_offhand_seat_the_model_ride_wears",
     "the_same_id_kind_pair_the_model_wears",
     "the_hopper_the_transfer_ride_wears",
     "the_inventory_craft_cells_the_tooltip_word_wears",
