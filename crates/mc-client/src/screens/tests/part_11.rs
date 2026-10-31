@@ -15163,3 +15163,131 @@ fn the_chest_kinds_the_disk_ride_wears() {
     let _ = std::fs::remove_file(&file);
     let _ = std::fs::remove_file(&old_file);
 }
+
+/// THE CHEST MIRROR'S OWN KIND LANE (the autopush-365 round — the 356
+/// tooltip law the mirror's render lane re-wears: the player rows the
+/// REAL inventory the kind bank answers, the mirror map the seat
+/// re-keys [the main row the items 9..36 the +9 speaks, the hotbar row
+/// the items 0..9 the -27 seat keeps], the kinded row the liquid
+/// overlay colors, the non-potion id the stale word never paints, the
+/// wordless row the NONE draw the same pixels the plain icon wears —
+/// the golden scenes' wordless rows the bytes never move).
+#[test]
+fn the_chest_mirror_the_kind_lane_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(365);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+    // THE OPEN (the mirror rows the real inventory the sync wears)
+    app.inventory.items[9] = (potion, 1); // the mirror row 0 the main grid wears
+    app.items_potion_kinds[9] = kind;
+    app.inventory.items[0] = (potion, 1); // the mirror row 27 the hotbar wears
+    app.items_potion_kinds[0] = kind;
+    app.open_chest_for(cell);
+    assert_eq!(
+        app.chest_mirror[0],
+        (potion, 1),
+        "the main row the mirror syncs"
+    );
+    assert_eq!(
+        app.chest_mirror[27],
+        (potion, 1),
+        "the hotbar row the mirror syncs"
+    );
+    // THE GEOMETRY (the render the panel banks — the mirror cell the
+    // +1 inset the icons wear)
+    let pixel = |fb: &crate::raster::Framebuf, x: i32, y: i32| -> u8 {
+        fb.color[((y as usize) * fb.w + x as usize) * 3]
+    };
+    let assets_root = assets_root();
+    let mut fb_probe = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_probe, &mut a);
+    }
+    let (px, py) = app.chest_panel;
+    let (mx, my) = chest_mirror_slot((px, py), 0);
+    let (hx, hy) = chest_mirror_slot((px, py), 27);
+    // THE MIRROR'S OWN TINT (the kinded words the liquid overlay
+    // colors, the wordless rows the NONE draw the same pixels keep —
+    // the only delta the two mirror cells wear)
+    let mut shot = |word: i32| -> crate::raster::Framebuf {
+        app.items_potion_kinds[9] = word;
+        app.items_potion_kinds[0] = word;
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        {
+            let mut a = GuiAssets::open(&assets_root);
+            app.render(&mut fb, &mut a);
+        }
+        fb
+    };
+    let fb_a = shot(kind);
+    let fb_b = shot(none);
+    let mut diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, mx + 1 + gx, my + 1 + gy) != pixel(&fb_b, mx + 1 + gx, my + 1 + gy) {
+                diff += 1;
+            }
+        }
+    }
+    assert!(diff > 0, "the kinded mirror row the tint lane re-colors");
+    let mut hot_diff = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_a, hx + 1 + gx, hy + 1 + gy) != pixel(&fb_b, hx + 1 + gx, hy + 1 + gy) {
+                hot_diff += 1;
+            }
+        }
+    }
+    assert!(
+        hot_diff > 0,
+        "the hotbar mirror row the tint lane re-colors"
+    );
+    // THE ID GATE'S OWN WALL (the stale word the non-potion row never
+    // paints — the dirt seat the same pixels the plain draw keeps)
+    app.inventory.items[9] = (dirt, 1);
+    app.items_potion_kinds[9] = kind; // the stale word the id gate retires
+    app.chest_mirror_sync_from_inventory();
+    let mut fb_c = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_c, &mut a);
+    }
+    app.items_potion_kinds[9] = none;
+    app.chest_mirror_sync_from_inventory();
+    let mut fb_d = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.render(&mut fb_d, &mut a);
+    }
+    let mut gate = 0usize;
+    for gy in 0..16i32 {
+        for gx in 0..16i32 {
+            if pixel(&fb_c, mx + 1 + gx, my + 1 + gy) != pixel(&fb_d, mx + 1 + gx, my + 1 + gy) {
+                gate += 1;
+            }
+        }
+    }
+    assert_eq!(gate, 0, "the stale word the dirt row never paints");
+    // THE FAR FACE (the tint the panel's own chrome never wears)
+    assert_eq!(
+        pixel(&fb_a, 20, 160),
+        pixel(&fb_b, 20, 160),
+        "the far face the tint never wears"
+    );
+}

@@ -33340,16 +33340,34 @@ impl App {
                 g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
             }
         }
-        // the live mirror's contents (the networked store's rows 27..63):
-        // the same icon/count treatment the grid rides over the mirror's
-        // own geometry — the offline stand-in keeps the chrome-only shape
-        // the golden pins
+        // the mirror's contents (the player's own rows the menu 27..63
+        // keeps): the same icon/count treatment the grid rides over the
+        // mirror's own geometry — the offline stand-in keeps the
+        // chrome-only shape the golden pins
         for (i, (id, count)) in self.chest_mirror.iter().enumerate().take(36) {
             if *count <= 0 {
                 continue; // the wire's own emptiness sentinel
             }
             let (sx, sy) = chest_mirror_slot((px, py + extra), i);
-            draw_item_icon(g, *id, sx + 1, sy + 1);
+            // THE MIRROR'S OWN KIND RIDE (the autopush-365 round — the
+            // 356 tooltip law the render lane re-wears: the player rows
+            // the REAL inventory the kind bank answers, the mirror map
+            // the seat re-keys, the non-potion id the stale word never
+            // paints, the wordless row the NONE draw the same pixels the
+            // plain icon wears — the golden scenes' wordless rows the
+            // bytes never move)
+            let kind = if crate::world::brewing_is_potion_kind(*id) {
+                Self::chest_mirror_to_inventory(i)
+                    .map(|inv| self.items_potion_kinds[inv])
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, *id, kind, sx + 1, sy + 1);
+            } else {
+                draw_item_icon(g, *id, sx + 1, sy + 1);
+            }
             if *count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
