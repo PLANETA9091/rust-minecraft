@@ -40891,8 +40891,18 @@ impl App {
     /// chest's six-row shape — the +54 the three extra rows speak).
     /// The outside-rect walks the press lanes read — the render's own
     /// numbers the belief never guesses.
+    /// THE CHEST FAMILY'S OWN PANEL HEIGHT (the hasClickedOutside's
+    /// own strict compare the arm + the deferred place share — the
+    /// canvas the render blits the height names): 220 the double's
+    /// compound, 166 the single's own rows, THE HOPPER'S OWN 133 the
+    /// five-seat canvas wears (the 176x133 hopper.png the
+    /// render_hopper blits — the 166 band the old single's height the
+    /// hopper's own outside test never wears again, the arm + the
+    /// release's drop lane the same height the canvas keeps).
     fn chest_panel_h(&self) -> i32 {
-        if self.chest_slots.len() > 27 {
+        if self.chest_window_hopper {
+            133 // the hopper's own canvas the five-seat row wears
+        } else if self.chest_slots.len() > 27 {
             220
         } else {
             166

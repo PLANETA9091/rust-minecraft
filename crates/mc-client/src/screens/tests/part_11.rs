@@ -20932,6 +20932,207 @@ fn the_wire_hopper_the_door_the_five_wears() {
     }
 }
 
+/// THE WIRE HOPPER PAINT'S OWN KIND GATE (the autopush-394 round —
+/// the 386 furnace paint's own kind gate the five re-arms: the
+/// door's own live session the paint lane wears, the same-id kinded
+/// pair the five seat's own word refuses, the mirror seat the -5
+/// shift the mapped row's word reads, the same-kind pair the paint
+/// joins, the empty five seat the release the cap-1 place the word
+/// banks, the plain id the paint joins, the canvas the hopper's own
+/// 133 the arm's outside band re-keys).
+#[test]
+fn the_wire_hopper_paint_the_kind_gate_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(394);
+    app.enter_world();
+    // the screen the door opens (the offline hopper's own walk the
+    // chest family's lane wears — the wire shape the fields after)
+    app.open_hopper_for((0, 0, 0));
+    app.world_is_network = true;
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    // the hopper's own wire shape (the door's own projection the
+    // five + the mirror rows wear — the 212 round's own fields the
+    // feed answers, the fresh window the echo against this id speaks)
+    app.chest_slots = vec![(0, 0); 5];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_row_potion_kinds = vec![none; 5];
+    app.chest_is_live = true;
+    app.chest_live_window = Some((7, 15));
+    app.chest_window_hopper = true;
+    // the geometry the hopper's own render lays (the 41-seat canvas
+    // the helpers speak — the five-seat row + the mirror rows the
+    // +1 inset wears)
+    let panel = ((640 - 176) / 2, (360 - 133) / 2);
+    app.chest_panel = panel;
+    let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(41);
+    for i in 0..5usize {
+        let (sx, sy) = hopper_container_slot(panel, i);
+        rects.push((sx + 1, sy + 1, i as i16));
+    }
+    for i in 0..36usize {
+        let (sx, sy) = hopper_mirror_slot(panel, i);
+        rects.push((sx + 1, sy + 1, (5 + i) as i16));
+    }
+    app.chest_slot_rects = rects;
+
+    // ARM A — THE FIVE SEAT'S OWN REFUSAL (the same-id kinded pair
+    // the seat's own word refuses — the paint the drag never feeds)
+    app.chest_carried = (potion, 5);
+    app.chest_carried_potion_kind = swift;
+    app.chest_slots[2] = (potion, 1);
+    app.chest_row_potion_kinds[2] = night;
+    let (gx, gy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(
+        !app.qc_slots.contains(&2),
+        "the wire paint the kinded pair refuses"
+    );
+    app.qc_armed = false;
+
+    // ARM B — THE SAME-KIND PAIR'S OWN JOIN (the words the verdict
+    // agrees — the seat the paint answers)
+    app.chest_carried_potion_kind = night;
+    app.qc_arm_chest(gx + 8, gy + 8, 0);
+    app.qc_paint_chest(gx + 8, gy + 8);
+    assert!(
+        app.qc_slots.contains(&2),
+        "the same-kind pair the paint joins"
+    );
+    app.qc_armed = false;
+
+    // ARM C — THE MIRROR SEAT'S OWN REFUSAL (the -5 shift the mapped
+    // row reads — the items bank's own word the paint wears)
+    app.chest_mirror[9] = (potion, 1);
+    app.items_potion_kinds[18] = swift;
+    app.chest_carried = (potion, 5);
+    app.chest_carried_potion_kind = night;
+    let (rx, ry) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 14)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_chest(rx + 8, ry + 8, 0);
+    app.qc_paint_chest(rx + 8, ry + 8);
+    assert!(
+        !app.qc_slots.contains(&14),
+        "the mirror pair the word refuses"
+    );
+    app.qc_armed = false;
+    app.chest_mirror[9] = (0, 0);
+    app.items_potion_kinds[18] = none;
+
+    // ARM D — THE EMPTY FIVE SEAT'S OWN RIDE (the paint the release
+    // the cap-1 place serves — the placed stack's own word the row
+    // bank wears, the remainder the cursor the same word keeps)
+    app.chest_carried = (potion, 5);
+    app.chest_carried_potion_kind = swift;
+    app.chest_slots[3] = (0, 0);
+    app.chest_row_potion_kinds[3] = none;
+    let (px, py) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_chest(px + 8, py + 8, 0);
+    app.qc_paint_chest(px + 8, py + 8);
+    assert!(app.qc_slots.contains(&3), "the empty seat the paint joins");
+    app.mouse_pos = Some((px + 8, py + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[3],
+        (potion, 1),
+        "the cap-1 place the seat wears"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 4),
+        "the remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], swift,
+        "the placed stack's own word the bank wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the remainder the same stack the word keeps"
+    );
+
+    // ARM E — THE DISTRIBUTE'S OWN REFUSAL (the helper's component
+    // half the REAL words speak — the painted kinded pair the place
+    // never wears)
+    app.chest_slots[2] = (potion, 1);
+    app.chest_row_potion_kinds[2] = night;
+    app.chest_carried = (potion, 3);
+    app.chest_carried_potion_kind = swift;
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_type = 0;
+    app.qc_slots = vec![2];
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_slots[2],
+        (potion, 1),
+        "the kinded pair the seat keeps"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (potion, 3),
+        "the refused place the cursor keeps"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, swift,
+        "the refused place the word keeps"
+    );
+
+    // ARM F — THE NON-POTION ID'S OWN PLAIN LAW (the stale word the
+    // id never keys — the plain pair the paint joins)
+    app.chest_carried = (dirt, 5);
+    app.chest_carried_potion_kind = none;
+    app.chest_slots[4] = (dirt, 1);
+    let (fx, fy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.qc_arm_chest(fx + 8, fy + 8, 0);
+    app.qc_paint_chest(fx + 8, fy + 8);
+    assert!(app.qc_slots.contains(&4), "the plain id the paint joins");
+    app.qc_armed = false;
+
+    // ARM G — THE CANVAS'S OWN OUTSIDE BAND (the 133 height the arm
+    // + the release's drop lane wear — the 166 band the old single's
+    // height the hopper's own outside test never wears again)
+    app.chest_carried = (potion, 2);
+    app.chest_carried_potion_kind = swift;
+    let (bx, by) = (panel.0 + 88, panel.1 + 140);
+    app.qc_arm_chest(bx, by, 0);
+    assert!(app.qc_armed, "the below-canvas band the outside arms");
+    app.mouse_pos = Some((bx, by));
+    app.qc_release(0);
+    assert_eq!(
+        app.chest_carried,
+        (0, 0),
+        "the outside drop the -999 speaks"
+    );
+}
+
 /// THE WIRE GENERIC'S OWN PLACE WORD BANK (the autopush-391 round —
 /// the 390 table's own law the generic's wire tail re-wears, the
 /// 382 folds' own reads the write follows): the wire window-0's
