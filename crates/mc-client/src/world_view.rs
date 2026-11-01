@@ -3354,6 +3354,79 @@ pub fn predict_pickup_all(
     Some((carried, changed))
 }
 
+/// THE GRID GATHER'S OWN WALK (the same doClick PICKUP_ALL arm the
+/// inventory predictor wears — [`Self::predict_pickup_all`] the
+/// window-0 shape keys, the GENERIC slice the enchant menu's own 38
+/// answers: no craft region the walk skips, every slot the
+/// canTakeItemForPickAll base TRUE the spread serves [the 26.2
+/// override census the merchant + the craft family alone refuses —
+/// the EnchantmentMenu the base family wears], the mayPlace call the
+/// spread NEVER consults [the acm_doClick_262.txt the pcs 1754-1791
+/// the gate chain speaks: hasItem -> canItemQuickReplace -> mayPickup
+/// -> canTakeItemForPickAll, no mayPlace the chain keeps, no paint
+/// arm the spread wears — the gather the same-item stacks alone
+/// pulls]). The same two-pass take the same gates each slot
+/// re-answers — the full stacks the first pass skips, the second
+/// every same-item stack the take answers, the carried stack the
+/// item's own max caps, the drained cell the (0, 0) pair speaks.
+pub fn predict_pickup_all_grid(
+    menu_slots: &[(i32, i32)],
+    carried: (i32, i32),
+    hovered_menu: usize,
+    button: i32,
+) -> Option<((i32, i32), Vec<(usize, (i32, i32))>)> {
+    if carried.1 <= 0 {
+        return None; // pcs 1641-1646 — the empty cursor the arm never walks
+    }
+    if hovered_menu >= menu_slots.len() {
+        return None; // pcs 1618-1619 — the no-slot press the same silence keeps
+    }
+    // pcs 1649-1664 — the hovered HAS an item (the base mayPickup the
+    // survival seats all keep) the whole arm refuses
+    if menu_slots[hovered_menu].1 > 0 {
+        return None;
+    }
+    // pcs 1675-1695 — the direction the button byte keys
+    let (start, step): (isize, isize) = if button != 0 {
+        (menu_slots.len() as isize - 1, -1)
+    } else {
+        (0, 1)
+    };
+    let mut slots = menu_slots.to_vec();
+    let mut carried = carried;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    let carried_max = item_max_stack(carried.0);
+    // pcs 1697-1703 — the two passes; the inner walk the loop head's
+    // own carried-full exit keeps (pcs 1727-1737)
+    for pass in 0..2 {
+        let mut cursor = start;
+        while cursor >= 0 && (cursor as usize) < slots.len() && carried.1 < carried_max {
+            let menu_id = cursor as usize;
+            cursor += step;
+            let d = slots[menu_id];
+            if d.1 <= 0 {
+                continue; // pcs 1754-1763 — the hasItem gate
+            }
+            if d.0 != carried.0 || d.1 > carried_max {
+                continue; // pcs 1762-1770 — canItemQuickReplace(slot, carried, TRUE):
+                          // the same item the count <= the carried's own max law keeps
+            }
+            if pass == 0 && d.1 == item_max_stack(d.0) {
+                continue; // pcs 1801-1819 — the FIRST pass the full stacks skip
+            }
+            // pcs 1822-1842 — safeTake(d.1, carriedMax - carried.1):
+            // tryRemove's min law the split speaks, the remainder stays
+            let room = carried_max - carried.1;
+            let take = d.1.min(room);
+            let rest = d.1 - take;
+            slots[menu_id] = if rest > 0 { (d.0, rest) } else { (0, 0) };
+            carried.1 += take; // pcs 1847-1854 — the grow
+            changed.push((menu_id, slots[menu_id]));
+        }
+    }
+    Some((carried, changed))
+}
+
 /// The vanilla `AbstractContainerMenu.doClick` PICKUP prediction for the
 /// RIGHT press (button 1) — the same PICKUP input mode on the wire, the
 /// button byte separates the tables. The semantics (the doClick

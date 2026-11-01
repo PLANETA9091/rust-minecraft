@@ -24119,3 +24119,179 @@ fn the_lapis_seat_the_may_place_wears() {
         "the remainder the cursor keeps"
     );
 }
+
+/// THE ENCHANT SEATS' OWN GATHER (the 408 round — the doClick PICKUP_ALL
+/// arm the enchant menu answers: the grid predictor the two-pass take
+/// wears, the release walk the flag the press arms, the
+/// canTakeItemForPickAll the base menu's TRUE the whole 38 answers,
+/// the mayPlace the spread never consults [the acm_doClick_262.txt the
+/// pcs 1754-1791 the gate chain speaks — hasItem -> canItemQuickReplace
+/// -> mayPickup -> canTakeItemForPickAll, no mayPlace the chain keeps,
+/// no paint arm the spread wears: the 407 NEXT list's own gather-gate
+/// premise the bytes retire, the lapis seat the same-item SOURCE alone
+/// answers]).
+#[test]
+fn the_enchant_seats_the_gather_wears() {
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // PURE ARM A — THE TWO-PASS TAKE (the partials drain in the
+    // forward order, the full stack the first pass skips, the second
+    // the room takes — the remainder the seat keeps, the cursor the
+    // item's own max caps)
+    let mut slots = vec![(0, 0); 38];
+    slots[2] = (lapis, 20);
+    slots[3] = (lapis, 64);
+    slots[4] = (lapis, 7);
+    slots[5] = (dirt, 30);
+    let (carried, changed) = crate::world_view::predict_pickup_all_grid(&slots, (lapis, 5), 0, 0)
+        .expect("the spread runs");
+    assert_eq!(carried, (lapis, 64), "the item's own max caps");
+    assert_eq!(
+        changed,
+        vec![(2, (0, 0)), (4, (0, 0)), (3, (lapis, 32))],
+        "the partials drain first, the full the second pass answers"
+    );
+    assert_eq!(
+        slots[5],
+        (dirt, 30),
+        "the different item the walk never names"
+    );
+
+    // PURE ARM B — THE GATES' OWN NONE (the hovered filled the arm
+    // refuses, the empty cursor the arm never walks, the out-of-range
+    // id the same silence keeps)
+    assert!(
+        crate::world_view::predict_pickup_all_grid(&slots, (lapis, 5), 3, 0).is_none(),
+        "the hovered's own item the arm refuses"
+    );
+    assert!(
+        crate::world_view::predict_pickup_all_grid(&slots, (0, 0), 0, 0).is_none(),
+        "the empty cursor the arm never walks"
+    );
+    assert!(
+        crate::world_view::predict_pickup_all_grid(&slots, (lapis, 5), 99, 0).is_none(),
+        "the out-of-range id the same silence keeps"
+    );
+
+    // PURE ARM C — THE LAPIS SEAT'S OWN SOURCE (the same-item stack the
+    // gather home pulls — the mayPlace the spread never consults, the
+    // item seat the hovered empty the spread answers)
+    let mut seaty = vec![(0, 0); 38];
+    seaty[1] = (lapis, 12);
+    let (carried, changed) = crate::world_view::predict_pickup_all_grid(&seaty, (lapis, 5), 0, 0)
+        .expect("the empty item seat the spread answers");
+    assert_eq!(carried, (lapis, 17), "the lapis seat the gather rides");
+    assert_eq!(changed, vec![(1, (0, 0))], "the seat the pull drains");
+
+    // APP ARM D — THE RELEASE'S OWN WALK (the armed flag the gather
+    // serves: the partial row the pull drains, the different-item row
+    // the walk never names, the arm's own clear the release speaks)
+    let mut app = App::new(408);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    app.inventory.items[10] = (lapis, 20);
+    app.inventory.items[11] = (dirt, 30);
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE ROW COORDS (the scoped lookup the mutable walk keeps — the
+    // main row menu 2 the items 9 answer)
+    let (rx, ry) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.enchant_carried = (lapis, 5);
+    app.enchant_doubleclick = true;
+    app.mouse_pos = Some((rx + 8, ry + 8));
+    app.on_left_release();
+    assert_eq!(
+        app.enchant_carried,
+        (lapis, 25),
+        "the pull the cursor grows"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the partial row the pull drains"
+    );
+    assert_eq!(
+        app.inventory.items[11],
+        (dirt, 30),
+        "the different row the walk never names"
+    );
+    assert!(
+        !app.enchant_doubleclick,
+        "the arm's own clear the release speaks"
+    );
+
+    // APP ARM E — THE NULL HOVER'S OWN FLAG KEEP (the cursor between
+    // the slots the release the spread never serves)
+    app.enchant_doubleclick = true;
+    app.mouse_pos = Some((2, 2));
+    app.on_left_release();
+    assert!(app.enchant_doubleclick, "the null hover the flag keeps");
+
+    // APP ARM F — THE PRESS'S OWN ARM (the doubled press the same seat
+    // the flag arms, the click the skip keeps, the release the gather
+    // serves — the end-to-end double-click walk)
+    app.enchant_doubleclick = false;
+    app.enchant_last_click_slot = Some(2);
+    app.press_doubled = true;
+    // THE MOUSE'S OWN SEAT (the window layer owns the pos — the press
+    // dispatch the coords alone reads, the release walk the stored
+    // pos the hover answers: the test the same seat the pair sets)
+    app.mouse_pos = Some((rx + 8, ry + 8));
+    app.on_press(rx + 8, ry + 8);
+    assert!(
+        app.enchant_doubleclick,
+        "the doubled press the same seat the flag arms"
+    );
+    app.on_left_release();
+    assert_eq!(app.enchant_carried, (lapis, 25), "the cursor whole");
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    assert!(
+        !app.enchant_doubleclick,
+        "the gather the arm's own clear wears"
+    );
+    // THE FLAG'S OWN SPEND (the plain press the reset seat the click
+    // keeps — the flag false the dispatch never skips)
+    app.press_doubled = false;
+    app.enchant_last_click_slot = None;
+    app.on_press(rx + 8, ry + 8);
+    assert!(
+        !app.enchant_doubleclick,
+        "the plain press the flag never arms"
+    );
+
+    // APP ARM G — THE CLOSE'S OWN RESET (the vanilla screen the
+    // removed() walk discards whole — the armed flag the close never
+    // rides)
+    app.enchant_doubleclick = true;
+    app.enchant_last_click_slot = Some(1);
+    app.close_enchanting(ScreenKind::World);
+    assert!(
+        !app.enchant_doubleclick,
+        "the close the flag the reset wears"
+    );
+    assert!(
+        app.enchant_last_click_slot.is_none(),
+        "the close the seat the reset wears"
+    );
+}

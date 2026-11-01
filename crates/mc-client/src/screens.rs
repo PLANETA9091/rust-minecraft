@@ -10280,6 +10280,13 @@ pub struct App {
     /// clears). The inventory press walk arms it, the release walk
     /// spends it.
     pub inv_doubleclick: bool,
+    /// THE ENCHANT SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the enchanting's
+    /// own copy banks — the press walk arms it, the release walk's
+    /// PICKUP_ALL arm the gather speaks through it, the arm's own
+    /// false clears: the 408 round the spread the enchant menu
+    /// answers)
+    pub enchant_doubleclick: bool,
     /// THE CONTAINER REMOVED RIDE'S OWN FLAG (the autopush-225 walk —
     /// the close walks' install tail the open() re-entry answers: the
     /// removed() law the transition answers ONCE, the takeover's own
@@ -10294,6 +10301,13 @@ pub struct App {
     /// close the reset speaks (the vanilla screen the removed() walk
     /// discards whole).
     pub inv_last_click_slot: Option<usize>,
+    /// THE ENCHANT SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the enchanting's own copy banks — the
+    /// menu id the enchant numbering keys [0..2 the pair seats, 2..28
+    /// the main rows, 29..37 the hotbar], the next press's flag
+    /// compute compares it against the new hover, the close the reset
+    /// speaks)
+    pub enchant_last_click_slot: Option<usize>,
     /// THE QUICKCRAFT DRAG'S OWN ARM (the `AbstractContainerScreen.
     /// isQuickCrafting` field — the mouseClicked walk pcs 316-326 the
     /// carried-NON-EMPTY press arms, the mouseReleased walk pcs 246-322
@@ -13281,8 +13295,10 @@ impl App {
             shift_down: false,
             press_doubled: false,
             inv_doubleclick: false,
+            enchant_doubleclick: false,
             container_removed_rode: false,
             inv_last_click_slot: None,
+            enchant_last_click_slot: None,
             qc_armed: false,
             qc_type: 0,
             qc_button: 0,
@@ -24058,6 +24074,13 @@ impl App {
         // never enters).
         let spread_fired = if self.screen == ScreenKind::Inventory {
             self.on_inventory_release_pickup_all()
+        } else if self.screen == ScreenKind::Enchanting {
+            // THE ENCHANT GATHER'S OWN ARM (the 408 round — the same
+            // mouseReleased walk the enchanting's own copy answers:
+            // the flag the press armed, the canTakeItemForPickAll the
+            // base menu's TRUE the whole 38 keeps [the override
+            // census the merchant + the craft family alone refuses])
+            self.on_enchant_release_pickup_all()
         } else {
             false
         };
@@ -25291,6 +25314,70 @@ impl App {
         }
         self.inv_carried = carried;
         self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE ENCHANT GATHER'S OWN RELEASE WALK (the 408 round — the same
+    /// mouseReleased pcs 64-240 walk the inventory's lane wears, the
+    /// Enchanting screen the doubleclick flag the press armed): the
+    /// hovered seat the null arm keeps, the canTakeItemForPickAll the
+    /// base menu's TRUE the whole 38 answers [the 26.2 override census
+    /// the merchant + the craft family alone refuses — the
+    /// EnchantmentMenu the base family wears], the offline walk the
+    /// spread serves (the screen the live window never banks — the
+    /// wire half the later round owes), the arm's own false the walk
+    /// AFTER clears, the null-hover arm the flag keeps.
+    fn on_enchant_release_pickup_all(&mut self) -> bool {
+        if !self.enchant_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.enchant_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.enchant_doubleclick = false; // pcs 238-240 — the arm's own clear
+        self.on_enchant_pickup_all_offline(slot as usize);
+        true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE ENCHANT GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
+    /// arm over the enchant menu — [`crate::world_view::
+    /// predict_pickup_all_grid`] the pure walk keeps, the menu's own
+    /// 38 the flat projection feeds): the pair 0..2 the seats speak,
+    /// the main rows 2..28 the items 9..35 answer (the +7 mapping the
+    /// click lane banks), the hotbar 29..37 the items 0..8 (the -29
+    /// shift) — the same-item stacks the gather home pulls, the
+    /// different-item rows the walk never names, the mayPlace call
+    /// the spread never consults [the acm_doClick_262.txt the pcs
+    /// 1754-1791 the gate chain speaks — the 407 NEXT list's own
+    /// gather-gate premise the bytes retire: no paint arm the spread
+    /// wears, the lapis seat the same-item SOURCE alone answers].
+    /// The every-mutation law the mirror re-syncs.
+    fn on_enchant_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let mut menu_slots: Vec<(i32, i32)> = Vec::with_capacity(38);
+        menu_slots.extend_from_slice(&self.enchant_slots);
+        menu_slots.extend_from_slice(&self.inventory.items[9..36]);
+        menu_slots.extend_from_slice(&self.inventory.items[0..9]);
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &menu_slots,
+            self.enchant_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in changed {
+            if menu_id < 2 {
+                self.enchant_slots[menu_id] = pair;
+            } else if menu_id < 29 {
+                self.inventory.items[menu_id + 7] = pair;
+            } else {
+                self.inventory.items[menu_id - 29] = pair;
+            }
+        }
+        self.enchant_carried = carried;
+        self.enchant_mirror_sync_from_inventory();
     }
 
     /// THE WIRE SPREAD'S OWN WALK (the offline walk's twin over the
@@ -29452,6 +29539,12 @@ impl App {
     /// own rows answer, the inventory_enchants the same 36-slot
     /// numbering keys).
     pub fn close_enchanting(&mut self, back: ScreenKind) {
+        // THE DOUBLE-CLICK PAIR'S OWN RESET (the close_inventory's own
+        // law — the vanilla screen the removed() walk discards whole:
+        // the armed flag the close never rides, the fresh open the
+        // clean pair lays)
+        self.enchant_doubleclick = false;
+        self.enchant_last_click_slot = None;
         // THE MIRROR ROWS' OWN STORE RIDE FIRST (the write-through
         // projection the pairs already keep — the SAME numbering the
         // stores ride: the menu seat's component rows the inventory
@@ -43848,16 +43941,29 @@ impl App {
                     }
                 }
             }
+            // THE DOUBLE-CLICK FLAG (the inventory's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.enchant_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.enchant_doubleclick = self.enchant_last_click_slot.is_some()
+                && self.enchant_last_click_slot == hovered_menu
+                && self.press_doubled;
             // THE TRANSIENT PAIR'S OWN PRESS (the same mouseClicked
             // walk the brewing's gate shape wears — the carried press
             // the drag arms, the carried-empty press the PICKUP
-            // dispatch keeps)
+            // dispatch keeps [the doubled press the release's gather
+            // serves])
             let held = self.enchant_carried.1 > 0;
             if held {
                 self.qc_arm_enchanting(mx, my, 0);
-            } else {
+            } else if !self.enchant_doubleclick {
                 self.click_enchanting_slot(mx, my, 0);
             }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.enchant_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Anvil {
