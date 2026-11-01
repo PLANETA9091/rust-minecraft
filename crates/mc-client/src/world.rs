@@ -6716,20 +6716,30 @@ pub fn projectile_shoot_law(
 /// front container took speaks — the caller's own shrink the copy
 /// fold answers]).
 pub fn dispenser_insert_into(slots: &mut [(i32, i32)], id: i32) -> bool {
+    dispenser_insert_into_at(slots, id).is_some()
+}
+
+/// THE INSERT WALK'S OWN INDEX LEND (the same merge law the landing
+/// seat's own address the lane answers — the merge arm the (idx, true)
+/// the grow law keeps [the same-item seat the count the cap answers],
+/// the split arm the (idx, false) the first-empty seat speaks [the
+/// fresh copy the landing cell wears], the FULL container the honest
+/// None keeps [the caller's own stack the refusal preserves]).
+pub fn dispenser_insert_into_at(slots: &mut [(i32, i32)], id: i32) -> Option<(usize, bool)> {
     let cap = mc_registry::item_max_stack(id).min(64);
-    for s in slots.iter_mut() {
+    for (i, s) in slots.iter_mut().enumerate() {
         if s.0 == id && s.1 > 0 && (s.1 as i64) < cap as i64 {
             s.1 += 1;
-            return true;
+            return Some((i, true));
         }
     }
-    for s in slots.iter_mut() {
+    for (i, s) in slots.iter_mut().enumerate() {
         if s.0 == 0 || s.1 <= 0 {
             *s = (id, 1);
-            return true;
+            return Some((i, false));
         }
     }
-    false
+    None
 }
 
 /// THE MOVING PISTON'S OWN VARIANT BYTE (the piston family's own

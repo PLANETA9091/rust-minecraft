@@ -24919,3 +24919,313 @@ fn the_dispenser_shot_the_kind_ride_wears() {
         "the stale cell the wall never touches"
     );
 }
+
+/// THE DROPPER'S OWN INSERT RIDE (the autopush-412 round — the 411
+/// list's own first walk the round answers: the front container's
+/// bank the landing cell the word banks, the insert walk's own index
+/// the lane lends, the source seat's drain the same retire wears):
+/// the arms wear — the pure walk's own index [the split the merge
+/// the full the wrapper the four verdicts speak], the split arm's
+/// own ride [the landing cell the word banks], the merge arm's own
+/// keep [the grow law the seat's own word wears], the kindless
+/// wall's own re-key [the stale word the fresh identity retires],
+/// the full refusal's own wall [the stack the word the cell keeps].
+#[test]
+fn the_dropper_insert_the_kind_ride_wears() {
+    // THE PURE WALK'S OWN ARMS (the world.rs index lane the verdicts
+    // wear — the same merge law the (idx, arm) pair speaks)
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    // the split arm's own index (the first-empty seat the pair speaks)
+    let mut spread = vec![(0i32, 0i32); 9];
+    spread[0] = (stone, 1);
+    assert_eq!(
+        crate::world::dispenser_insert_into_at(&mut spread, dirt),
+        Some((1, false)),
+        "the split arm the first-empty seat speaks"
+    );
+    assert_eq!(spread[1], (dirt, 1), "the landing seat the copy wears");
+    // the merge arm's own index (the same-id seat the pair speaks)
+    let mut gathered = vec![(0i32, 0i32); 9];
+    gathered[3] = (dirt, 2);
+    assert_eq!(
+        crate::world::dispenser_insert_into_at(&mut gathered, dirt),
+        Some((3, true)),
+        "the merge arm the same-id seat speaks"
+    );
+    assert_eq!(gathered[3], (dirt, 3), "the grow law the count wears");
+    // the full container the honest None keeps
+    let mut full = vec![(stone, 64); 27];
+    assert_eq!(
+        crate::world::dispenser_insert_into_at(&mut full, dirt),
+        None,
+        "the full container the None keeps"
+    );
+    // the wrapper's own verdict (the old signature the same walk speaks)
+    let mut pair = vec![(0i32, 0i32); 2];
+    assert!(
+        crate::world::dispenser_insert_into(&mut pair, dirt),
+        "the true the landing speaks"
+    );
+    assert_eq!(pair[0], (dirt, 1), "the landing seat the copy wears");
+
+    // THE BEAT'S OWN ARMS (the 411 harness's own shape — the dropper
+    // the front chest the pad's own stage wears)
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let (px, pz) = (16i32, 16i32);
+    let gy = 30i32;
+    // THE FRONT CHEST'S OWN CELL (the SOUTH delta the z+1 speaks)
+    let (cx, cy, cz) = (px, gy, pz + 1);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+            }
+        }
+        // THE DROPPER'S OWN SEAT (the facing the SOUTH byte stamps,
+        // the front cell the chest the sink wears)
+        world.set(px, gy, pz, crate::world::DROPPER);
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+        world.set(cx, cy, cz, crate::world::CHEST);
+    }
+    // APP ARM A — THE SPLIT ARM'S OWN RIDE (the potion the fresh seat
+    // lands, the word the landing cell banks, the source seat the
+    // drain retires)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (potion, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(cx, cy, cz)][0],
+        (potion, 1),
+        "the landed stack the sink wears"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(cx, cy, cz)][0],
+        night,
+        "the word the landing cell banks"
+    );
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (0, 0),
+        "the spent seat the write-back empties"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        none,
+        "the source cell the drain retires"
+    );
+    assert!(app.drops.is_empty(), "the insert arm the drop never spawns");
+
+    // APP ARM B — THE MERGE ARM'S OWN KEEP (the grow law the count
+    // wears, the seat's own cell the incoming word never overrides —
+    // the stale word the merge keeps)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (dirt, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    app.container_stores.insert(
+        (cx, cy, cz),
+        vec![
+            (dirt, 5),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (cx, cy, cz),
+        vec![
+            night, none, none, none, none, none, none, none, none, none, none, none, none, none,
+            none, none, none, none, none, none, none, none, none, none, none, none, none,
+        ],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(cx, cy, cz)][0],
+        (dirt, 6),
+        "the merge arm the count grows"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(cx, cy, cz)][0],
+        night,
+        "the seat's own cell the grow law keeps"
+    );
+
+    // APP ARM C — THE KINDLESS WALL'S OWN RE-KEY (the kindless stack
+    // the fresh seat lands, the stale word the identity retires — the
+    // source cell the wall never touches)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (dirt, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    app.container_stores.insert((cx, cy, cz), vec![(0, 0); 27]);
+    app.container_stores_potion_kinds.insert(
+        (cx, cy, cz),
+        vec![
+            night, none, none, none, none, none, none, none, none, none, none, none, none, none,
+            none, none, none, none, none, none, none, none, none, none, none, none, none,
+        ],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(cx, cy, cz)][0],
+        (dirt, 1),
+        "the kindless stack the fresh seat lands"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(cx, cy, cz)][0],
+        none,
+        "the stale word the fresh identity retires"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        night,
+        "the source cell the wall never touches"
+    );
+
+    // APP ARM D — THE FULL REFUSAL'S OWN WALL (the FULL container the
+    // insert refuses, the source stack the count wears, the word the
+    // cell keeps, the sink the store never moves)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (potion, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    app.container_stores
+        .insert((cx, cy, cz), vec![(stone, 64); 27]);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (potion, 1),
+        "the refused stack the count keeps"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        night,
+        "the word the kept stack wears"
+    );
+    assert_eq!(
+        app.container_stores[&(cx, cy, cz)][0],
+        (stone, 64),
+        "the sink the refusal never moves"
+    );
+    assert!(
+        app.drops.is_empty(),
+        "the refused shot the drop never spawns"
+    );
+}

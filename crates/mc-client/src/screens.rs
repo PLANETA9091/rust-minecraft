@@ -74807,15 +74807,47 @@ impl App {
                             vec![(0i32, 0i32); 27]
                         }
                     });
-                    if crate::world::dispenser_insert_into(
+                    // THE FRONT BANK'S OWN ROW (the 410 chest law the
+                    // front cell re-wears — the same-cell key the kind
+                    // map keeps, the fresh row the NONE law inserts, the
+                    // length the front's own shape the resize answers)
+                    let front_len = self
+                        .container_stores
+                        .get(&front)
+                        .map(|row| row.len())
+                        .unwrap_or(27);
+                    let bank_row = self
+                        .container_stores_potion_kinds
+                        .entry(front)
+                        .or_insert_with(|| vec![crate::brewing_sim::POTION_KIND_NONE; front_len]);
+                    if bank_row.len() < front_len {
+                        bank_row.resize(front_len, crate::brewing_sim::POTION_KIND_NONE);
+                    }
+                    // THE LANDING'S OWN RIDE (the insert walk's own index
+                    // the lane lends — the split arm the incoming word
+                    // the landing cell banks, the merge arm the grow law
+                    // the seat's own word keeps, the FULL refusal the
+                    // stack the cell never touches)
+                    let landed = crate::world::dispenser_insert_into_at(
                         self.container_stores
                             .get_mut(&front)
                             .expect("the sink the entry arm banks"),
                         item,
-                    ) {
-                        (true, 0) // the container arm the no-sound keeps
-                    } else {
-                        (false, 0) // the FULL container the stack keeps
+                    );
+                    match landed {
+                        Some((idx, merged)) => {
+                            if !merged {
+                                if let Some(row) =
+                                    self.container_stores_potion_kinds.get_mut(&front)
+                                {
+                                    if let Some(cell) = row.get_mut(idx) {
+                                        *cell = seat_kind;
+                                    }
+                                }
+                            }
+                            (true, 0) // the container arm the no-sound keeps
+                        }
+                        None => (false, 0), // the FULL container the stack keeps
                     }
                 } else if crate::world::is_orientable_furnace(front_kind) {
                     self.container_stores_load_once();
