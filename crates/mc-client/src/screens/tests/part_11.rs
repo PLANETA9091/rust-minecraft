@@ -24736,3 +24736,186 @@ fn the_dispenser_seats_the_kind_bank_wears() {
         "the reopen the same words loads"
     );
 }
+
+/// THE DISPENSER SHOT'S OWN KIND RIDE (the autopush-411 round — the
+/// 410 bank's own word the shot beat re-wears: the seat's own word
+/// the normalized read answers, the eject the spawn lane lends, the
+/// drain the bank's cell retires, the pickup the inventory seat
+/// banks): the arms wear — the eject's own kind lend [the drop the
+/// seat's word wears], the drain's own retire [the spent seat the
+/// NONE answers], the pickup's own ride [the landed stack the word
+/// banks, the whole entity the take discards], the id wall's own
+/// shot [the kindless stack the stale word never lends, the cell
+/// the wall never touches].
+#[test]
+fn the_dispenser_shot_the_kind_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE BODY'S OWN SPAWN (the mod harness's own law — the pickup
+    // walk the body's own box scans, the spawn the pad's reach never
+    // wears)
+    app.spawn_offline_body();
+    // THE SKY PAD'S OWN STAGE (the part-10 shot harness's own shape —
+    // the terrain's tops the pad's level never reaches)
+    let (px, pz) = (16i32, 16i32);
+    let gy = 30i32;
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+            }
+        }
+        // THE DISPENSER'S OWN SEAT (the facing the SOUTH byte stamps,
+        // the front cell the pad's own air keeps)
+        world.set(px, gy, pz, crate::world::DISPENSER);
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+    }
+    // THE FRESH ROWS' OWN CLEAR (the landing seat the ride's own
+    // honesty keeps — the stale rows the word never guesses)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    // THE STORE'S OWN ROW + THE BANK'S OWN WORD (the potion the first
+    // seat holds, the night word the parallel cell banks)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (potion, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    // THE PULSE'S OWN TAIL (the part-10 harness's own schedule shape)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+
+    // APP ARM A — THE EJECT'S OWN KIND LEND (the spawned drop the
+    // seat's own word wears — the 410 bank's read the spawn lane
+    // lends)
+    assert_eq!(app.drops.len(), 1, "the potion the eject lane flies");
+    assert_eq!(app.drops[0].item, potion, "the stack the eject wears");
+    assert_eq!(
+        app.drops[0].potion_kind, night,
+        "the word the spawn lane banks"
+    );
+
+    // APP ARM B — THE DRAIN'S OWN RETIRE (the spent seat the
+    // write-back empties, the bank's own cell the NONE answers — the
+    // word the stack carried the shot retires)
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (0, 0),
+        "the spent seat the write-back empties"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        none,
+        "the bank cell the drained seat retires"
+    );
+
+    // APP ARM C — THE PICKUP'S OWN RIDE (the landed stack the word
+    // banks — the fill arm the drop's kind the seat answers, the
+    // whole entity the take discards)
+    for _ in 0..20 {
+        app.update(); // the settle wait (the delay's 10 the flight answers)
+    }
+    let (dx0, dy0, dz0) = {
+        let d = &app.drops[0];
+        (d.x, d.y, d.z)
+    };
+    {
+        let b = app.body.as_mut().unwrap();
+        b.x = dx0;
+        b.y = dy0 + 0.5;
+        b.z = dz0;
+    }
+    for _ in 0..4 {
+        app.update();
+    }
+    assert!(app.drops.is_empty(), "the take the whole entity discards");
+    let home = app
+        .inventory
+        .items
+        .iter()
+        .position(|&p| p == (potion, 1))
+        .expect("the landed stack the take fills");
+    assert_eq!(
+        app.items_potion_kinds[home], night,
+        "the word the landing seat banks"
+    );
+
+    // THE BODY'S OWN RETREAT (the next shot the pickup's reach never
+    // wears — the four blocks north the inflate's own band refuses)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.x = f64::from(px) + 0.5;
+        b.y = f64::from(gy) + 1.0;
+        b.z = f64::from(pz) - 3.5;
+    }
+    // APP ARM D — THE ID WALL'S OWN SHOT (the kindless stack the
+    // stale word never lends — the dirt drop the NONE wears, the
+    // stale cell the wall never touches)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (dirt, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    let wall_drop = app.drops.iter().find(|d| d.item == dirt).unwrap();
+    assert_eq!(
+        wall_drop.potion_kind, none,
+        "the kindless stack the wall keeps"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        night,
+        "the stale cell the wall never touches"
+    );
+}

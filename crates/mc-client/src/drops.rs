@@ -229,6 +229,12 @@ pub struct ItemDrop {
     /// The stack: the wire item id and the count (the vanilla ItemStack).
     pub item: i32,
     pub count: i32,
+    /// The potion's own kind word (the vanilla ItemStack's NBT "Potion"
+    /// tag the offline entity's honest answer wears — the dispenser
+    /// shot's bank read lends the seat's word, the kindless spawn the
+    /// [`crate::brewing_sim::POTION_KIND_NONE`] wall keeps, the pickup
+    /// ride the word the inventory seat banks).
+    pub potion_kind: i32,
     pub x: f64,
     pub y: f64,
     pub z: f64,
@@ -265,6 +271,7 @@ impl ItemDrop {
             x: bx as f64 + 0.5 + rng.next_f64_between(-POP_SPREAD, POP_SPREAD),
             y: by as f64 + 0.5 + rng.next_f64_between(-POP_SPREAD, POP_SPREAD) - ITEM_HEIGHT / 2.0,
             z: bz as f64 + 0.5 + rng.next_f64_between(-POP_SPREAD, POP_SPREAD),
+            potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,
@@ -283,11 +290,20 @@ impl ItemDrop {
     /// movement untouched (zero), `setDefaultPickUpDelay` (10), the
     /// bob seed the ItemEntity constructor's own
     /// `random.nextFloat() * PI * 2` draws).
-    pub fn spawn_entity_loot(id: i32, item: i32, count: i32, x: f64, y: f64, z: f64, rng: &mut Lcg) -> Self {
+    pub fn spawn_entity_loot(
+        id: i32,
+        item: i32,
+        count: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        rng: &mut Lcg,
+    ) -> Self {
         Self {
             id,
             item,
             count,
+            potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             x,
             y,
             z,
@@ -331,6 +347,7 @@ impl ItemDrop {
             id,
             item,
             count,
+            potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             x,
             y,
             z,
@@ -405,6 +422,7 @@ impl ItemDrop {
                 id: id + out.len() as i32,
                 item,
                 count: taken,
+                potion_kind: crate::brewing_sim::POTION_KIND_NONE,
                 x,
                 y,
                 z,

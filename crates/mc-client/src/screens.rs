@@ -18520,6 +18520,17 @@ impl App {
                     let mut touched = false;
                     for d in self.drops.iter_mut() {
                         if crate::drops::pickup_scan(b, d) {
+                            // THE WORD BEFORE THE TAKE (the kinded drop
+                            // the ride's own snapshot banks — the rows
+                            // the add is about to walk, the kindless
+                            // drop the ride never wears)
+                            let drop_kind = d.potion_kind;
+                            let inv_before = if drop_kind != crate::brewing_sim::POTION_KIND_NONE {
+                                Some(self.inventory.items)
+                            } else {
+                                None
+                            };
+                            let mut moved = false;
                             match crate::drops::player_touch(
                                 d,
                                 &mut self.inventory,
@@ -18529,11 +18540,30 @@ impl App {
                                 crate::drops::Touch::Picked { .. } => {
                                     voiced = true;
                                     touched = true;
+                                    moved = true;
                                 }
                                 crate::drops::Touch::Took { .. } => {
                                     touched = true;
+                                    moved = true;
                                 }
                                 crate::drops::Touch::Idle => {}
+                            }
+                            if moved {
+                                if let Some(before) = inv_before {
+                                    // THE LANDING'S OWN KIND RIDE (the
+                                    // 345 law the offline take re-wears
+                                    // — the fill arm the drop's word
+                                    // the seat banks, the merge arm the
+                                    // seat's own identity keeps, the
+                                    // no-growth row the ride skips)
+                                    for i in 0..36usize {
+                                        if before[i].1 <= 0
+                                            && self.inventory.items[i].1 > before[i].1
+                                        {
+                                            self.items_potion_kinds[i] = drop_kind;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -74734,6 +74764,19 @@ impl App {
                 continue;
             };
             let (item, count) = slots[slot_i];
+            // THE SEAT'S OWN WORD (the 410 bank's own normalized read
+            // the shot re-wears — the potion stack the bank's own cell
+            // answers, the kindless stack the honest NONE keeps, the
+            // never-banked entry the same silence wears)
+            let seat_kind = if crate::world::brewing_is_potion_kind(item) {
+                self.container_stores_potion_kinds
+                    .get(&(x, y, z))
+                    .and_then(|row| row.get(slot_i))
+                    .copied()
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
             let arrow_id = mc_registry::item_id_by_name("arrow").unwrap_or(-1);
             let snowball_id = mc_registry::item_id_by_name("snowball").unwrap_or(-1);
             let egg_id = mc_registry::item_id_by_name("egg").unwrap_or(-1);
@@ -74830,6 +74873,17 @@ impl App {
             if let Some(store) = self.container_stores.get_mut(&(x, y, z)) {
                 store[slot_i] = row;
             }
+            // THE DRAIN'S OWN RETIRE (the bank cell the emptied seat
+            // answers — the word the spent stack carried the shot
+            // retires, the kindless pick the cell never touches, the
+            // 410 close's own flush law the same lane answers)
+            if new_count <= 0 && seat_kind != crate::brewing_sim::POTION_KIND_NONE {
+                if let Some(bank_row) = self.container_stores_potion_kinds.get_mut(&(x, y, z)) {
+                    if let Some(cell) = bank_row.get_mut(slot_i) {
+                        *cell = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                }
+            }
             // THE EJECT'S OWN ENTITY (the spawned drop the arrow the
             // two lanes the two Vecs wear — the position/velocity the
             // laws bank, the id the lane's own counter mints)
@@ -74851,6 +74905,11 @@ impl App {
                 drop.vx = vx;
                 drop.vy = vy;
                 drop.vz = vz;
+                // THE SPAWN LANE'S OWN KIND LEND (the 410 bank's word
+                // the shot's own ride lends — the potion drop the
+                // seat's own word wears, the pickup walk the word the
+                // inventory seat banks)
+                drop.potion_kind = seat_kind;
                 self.drops.push(drop);
             }
             // THE PROJECTILE'S OWN FLIGHT (the ArrowShot the from_spawn
