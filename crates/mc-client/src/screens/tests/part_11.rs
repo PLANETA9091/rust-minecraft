@@ -21582,3 +21582,244 @@ fn the_furnace_trio_the_kind_bank_wears() {
         "the emptied carried the word retires"
     );
 }
+
+/// THE FURNACE QUICK-MOVE'S OWN KIND RIDE (the 393 round — the 384
+/// law the furnace's own routing re-wears, the dev-213 trio's own
+/// bank the shift-click's words speak): the moved stack the source's
+/// word rides — the empty destination the placed stack's own word
+/// banks, the occupied merge the original's word keeps, the drained
+/// source the NONE retires, the kindless stack the honest NONE
+/// carries. The ROUTING the predictor's own arms answer: the main
+/// row the hotbar arm banks, the hotbar the main arm, the result the
+/// reversed walk the tail seat lends, the input the forward walk the
+/// main seat rides out, the cap-1 pair the merge refuses the walk
+/// the first EMPTY row answers.
+#[test]
+fn the_furnace_quick_move_the_kind_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(214);
+    app.enter_world();
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(0, 0, 0, crate::world::FURNACE);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.open_furnace((0, 0, 0));
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps —
+    // the main row 3, the hotbar seats 30/31, the trio 0/2)
+    let (mx, my) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (hx, hy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 30)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (ix, iy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (rx, ry) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.shift_down = true;
+    // ARM A — THE HOTBAR'S OWN BANK (the main row's own word the
+    // hotbar row banks, the drained src the NONE retires, the
+    // write-through the real inventory wears)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.furnace_slots[3] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.click_furnace_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.furnace_slots[30],
+        (potion, 1),
+        "the hotbar seat the ride wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the write-through the real inventory keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], night,
+        "the moved stack's own word the hotbar row banks"
+    );
+    assert_eq!(app.furnace_slots[3], (0, 0), "the ride the src empties");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained src the NONE retires"
+    );
+    // ARM B — THE MAIN'S OWN BANK (the reverse arm the hotbar's own
+    // word the main row banks — the +6 shift the mapped row wears)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.furnace_slots[30] = (potion, 1);
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = night;
+    app.click_furnace_slot(hx + 8, hy + 8, 0);
+    assert_eq!(
+        app.furnace_slots[3],
+        (potion, 1),
+        "the main seat the reverse ride wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the reverse ride the main row banks"
+    );
+    assert_eq!(app.furnace_slots[30], (0, 0), "the reverse the src empties");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the reverse ride the src word retires"
+    );
+    // ARM C — THE RESULT'S OWN LEND (the hand-placed result's own
+    // word the reversed first-empty banks — the hotbar tail seat 38
+    // the row 8 the -30 shift answers, the taken seat the word
+    // retires)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.furnace_slots[2] = (potion, 1);
+    app.furnace_seat_potion_kinds[2] = night;
+    app.click_furnace_slot(rx + 8, ry + 8, 0);
+    assert_eq!(
+        app.furnace_slots[38],
+        (potion, 1),
+        "the reversed walk the tail seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], night,
+        "the result's own word the tail row banks"
+    );
+    assert_eq!(app.furnace_slots[2], (0, 0), "the lend the result empties");
+    assert_eq!(
+        app.furnace_seat_potion_kinds[2], none,
+        "the taken result the word retires"
+    );
+    // ARM D — THE INPUT'S OWN RIDE OUT (the hand-placed input's own
+    // word the forward first-empty banks — the main row 9 the +6
+    // shift answers, the trio seat the word retires)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.furnace_slots[0] = (potion, 1);
+    app.furnace_seat_potion_kinds[0] = night;
+    app.click_furnace_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.furnace_slots[3],
+        (potion, 1),
+        "the forward walk the main seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the input's own word the main row banks"
+    );
+    assert_eq!(
+        app.furnace_seat_potion_kinds[0], none,
+        "the ridden input the word retires"
+    );
+    // ARM E — THE OCCUPIED SEAT'S OWN KEEP (the cap-1 pair the merge
+    // refuses — the walk the first EMPTY row the ride answers, the
+    // occupied row's own word the write never wears)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.furnace_slots[3] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    app.furnace_slots[30] = (potion, 1);
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = swift;
+    app.click_furnace_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.furnace_slots[31],
+        (potion, 1),
+        "the refused merge the walk the empty seat answers"
+    );
+    assert_eq!(
+        app.items_potion_kinds[1], night,
+        "the empty seat the moved word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], swift,
+        "the occupied row the original's word keeps"
+    );
+    assert_eq!(app.furnace_slots[3], (0, 0), "the ride the src empties");
+    // ARM F — THE WORDLESS IDENTITY'S OWN WALL (the kindless potion
+    // the honest NONE carries — the banked seat the NONE word wears,
+    // the kinded rows the walk never keys)
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.items_potion_kinds[0] = swift; // the stale row the ride never spends
+    app.furnace_slots[3] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.click_furnace_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the kindless stack the honest NONE banks"
+    );
+    assert_eq!(
+        app.furnace_slots[30],
+        (potion, 1),
+        "the wordless ride the seat wears"
+    );
+}

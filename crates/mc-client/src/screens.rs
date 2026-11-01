@@ -52681,6 +52681,16 @@ impl App {
                     slot as usize,
                     self.furnace_sim.kind,
                 );
+                // THE KIND'S OWN PRE-READS (the 384 law the furnace's
+                // own routing re-wears — the src's own word the ride
+                // banks, the destinations' old cells the empty-fill
+                // gate reads)
+                let src_kind = self.furnace_seat_potion_kind(slot as usize);
+                let old_dests: Vec<(usize, (i32, i32))> = changed
+                    .iter()
+                    .filter(|(i, _)| *i != slot as usize)
+                    .map(|(i, _)| (*i, self.furnace_slots.get(*i).copied().unwrap_or((0, 0))))
+                    .collect();
                 for (i, pair) in &changed {
                     self.furnace_slots[*i] = *pair;
                     if *i >= 3 {
@@ -52690,6 +52700,24 @@ impl App {
                         let idx = if *i < 30 { 9 + *i - 3 } else { *i - 30 };
                         self.inventory.items[idx] = *pair;
                     }
+                }
+                // THE QUICK-MOVE'S OWN KIND RIDE (the 384 law the
+                // furnace's own trio re-wears — the empty dst the
+                // placed stack's own word banks, the occupied merge
+                // the original's word keeps, the drained src the
+                // NONE retires, the kinded remainder the word keeps)
+                for (idx, old) in &old_dests {
+                    if old.1 <= 0 {
+                        self.furnace_seat_kind_put(*idx, src_kind);
+                    }
+                }
+                if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == slot as usize) {
+                    let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                        src_kind
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    self.furnace_seat_kind_put(slot as usize, tail);
                 }
                 self.hotbar_slots = self.inventory.hotbar();
                 return;
@@ -52856,7 +52884,10 @@ impl App {
         let Some((window_id, state_id)) = self.furnace_live_window else {
             return; // no window identity — nothing to echo against
         };
-        let Some(sink) = self.live_clicks.as_ref() else {
+        // THE SINK'S OWN CLONE (the owned sender the ride's own
+        // mutable walk wears — the borrow the walk's &mut self never
+        // conflicts, the send the same channel answers)
+        let Some(sink) = self.live_clicks.clone() else {
             return; // no live session — the command dies on the frame thread
         };
         let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
@@ -52881,10 +52912,40 @@ impl App {
                 slot as usize,
                 self.furnace_sim.kind,
             );
+            // THE KIND'S OWN PRE-READS (the 384 law the live lane's
+            // own routing re-wears — the src's own word the ride
+            // banks, the destinations' old cells the empty-fill gate
+            // reads)
+            let src_kind = self.furnace_seat_potion_kind(slot as usize);
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i != slot as usize)
+                .map(|(i, _)| (*i, self.furnace_slots.get(*i).copied().unwrap_or((0, 0))))
+                .collect();
             for (i, pair) in &changed {
                 if (*i as usize) < self.furnace_slots.len() {
                     self.furnace_slots[*i] = *pair;
                 }
+            }
+            // THE QUICK-MOVE'S OWN KIND RIDE (the offline lane's own
+            // law the live belief re-wears — the empty dst the placed
+            // stack's word banks, the occupied merge the original's
+            // word keeps, the drained src the NONE retires, the
+            // kinded remainder the word keeps; the trio the SEAT
+            // STORE banks, the store rows the INVENTORY bank the
+            // write-through keeps)
+            for (idx, old) in &old_dests {
+                if old.1 <= 0 {
+                    self.furnace_seat_kind_put(*idx, src_kind);
+                }
+            }
+            if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == slot as usize) {
+                let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                    src_kind
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                self.furnace_seat_kind_put(slot as usize, tail);
             }
             let _ = sink.send(crate::world_view::ContainerCommand::Click(
                 crate::world_view::ContainerClick {
