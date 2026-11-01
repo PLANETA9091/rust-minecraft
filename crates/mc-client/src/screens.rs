@@ -30339,6 +30339,13 @@ impl App {
             let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(39);
             snapshot.extend_from_slice(&self.anvil_slots);
             snapshot.push(self.anvil_result);
+            // THE RESULT SEAT'S OWN MAY-PLACE (the vanilla ResultContainer
+            // the quick-move the mayPlace-false law keeps — the blocked
+            // marker the prediction's same-item pass AND the empty-dest
+            // pass the seat never read, the third tool the hotbar row
+            // the chimera's own corruption rode, the remainder the
+            // source keeps)
+            snapshot[2] = (i32::MAX, i32::MAX);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 3);

@@ -22915,3 +22915,157 @@ fn the_anvil_numbering_the_walk_the_bounds_rekey_wears() {
         "the drained row the move empties"
     );
 }
+
+/// THE TRIO'S OWN MAY-PLACE (the vanilla ResultContainer the
+/// quick-move the mayPlace-false law keeps — the blocked marker the
+/// prediction's passes the result seat never read, the third tool the
+/// hotbar row the chimera's own corruption rode, the remainder the
+/// source keeps).
+#[test]
+fn the_anvil_quick_move_the_result_seat_the_may_place_wears() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(400);
+    app.enter_world();
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.anvil_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps —
+    // the main-last row 29 the source ride wears)
+    let (sx, sy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 29)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.shift_down = true;
+
+    // ARM A — THE THIRD TOOL'S OWN REMAINDER (the seats' own capacity
+    // the pair wears — the one the pair never took the source keeps,
+    // the hotbar row the old landing clobbered the honest empty keeps)
+    app.inventory.items[35] = (sword, 3);
+    app.click_anvil_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (sword, 1),
+        "the first seat the tool wears"
+    );
+    assert_eq!(
+        app.anvil_slots[1],
+        (sword, 1),
+        "the second seat the tool wears"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (sword, 1),
+        "the remainder the source keeps"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (0, 0),
+        "the hotbar row the corruption retires"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the result seat the write never wears"
+    );
+    app.anvil_slots = [(0, 0); 2];
+
+    // ARM B — THE TWO TOOLS' OWN FULL RIDE (the pair the seats wear,
+    // the source the drain keeps, the result seat the silence wears)
+    app.inventory.items[35] = (sword, 2);
+    app.click_anvil_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (sword, 1),
+        "the first seat the tool wears"
+    );
+    assert_eq!(
+        app.anvil_slots[1],
+        (sword, 1),
+        "the second seat the tool wears"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (0, 0),
+        "the hotbar row the corruption retires"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the result seat the write never wears"
+    );
+    app.anvil_slots = [(0, 0); 2];
+
+    // ARM C — THE STACKABLE'S OWN FULL RIDE (the first seat the whole
+    // stack takes, the siblings the untouched emptiness keeps, the
+    // result seat the same silence wears)
+    app.inventory.items[35] = (stone, 3);
+    app.click_anvil_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (stone, 3),
+        "the first seat the whole stack wears"
+    );
+    assert_eq!(
+        app.anvil_slots[1],
+        (0, 0),
+        "the second seat the ride never spends"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the result seat the write never wears"
+    );
+    app.anvil_slots = [(0, 0); 2];
+
+    // ARM D — THE MERGE'S OWN LAW (the room the merge takes, the
+    // non-same seat the walk never spends, the result seat the same
+    // silence wears)
+    app.anvil_slots[0] = (stone, 60);
+    app.anvil_slots[1] = (dirt, 1);
+    app.inventory.items[35] = (stone, 4);
+    app.click_anvil_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (stone, 64),
+        "the seat's room the merge takes"
+    );
+    assert_eq!(
+        app.anvil_slots[1],
+        (dirt, 1),
+        "the non-same seat the merge never spends"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the result seat the write never wears"
+    );
+}
