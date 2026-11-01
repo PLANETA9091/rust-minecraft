@@ -21133,6 +21133,248 @@ fn the_wire_hopper_paint_the_kind_gate_wears() {
     );
 }
 
+/// THE WIRE HOPPER QUICK-MOVE'S OWN KIND RIDE (the autopush-395
+/// round — the 384 law the furnace's own trio wears the chest
+/// family's live quick-move lane re-wears, the dev-212 door's own
+/// walk the words the plain deltas never moved): the shift-click's
+/// multi-slot deltas the kind words follow — the empty dest the
+/// placed stack's own word banks (the container rows the chest
+/// bank's own words answer, the store rows the items bank's mapped
+/// row the same closure maps), the occupied merge the original's
+/// word keeps, the drained source the NONE retires, the no-room
+/// walk the silence the stack's own word keeps, the hotbar seat the
+/// -27 shift the mapped row reads, the chest's own rows the same
+/// lane the family tail re-wears.
+#[test]
+fn the_wire_hopper_quick_move_the_kind_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(395);
+    app.enter_world();
+    // the screen the door opens (the paint gate's own shape the wire
+    // fields wear — the fresh window the echo against this id speaks)
+    app.open_hopper_for((0, 0, 0));
+    app.world_is_network = true;
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.chest_slots = vec![(0, 0); 5];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_row_potion_kinds = vec![none; 5];
+    app.chest_is_live = true;
+    app.chest_live_window = Some((7, 15));
+    app.chest_window_hopper = true;
+    // the geometry the hopper's own render lays (the 41-seat canvas
+    // the helpers speak — the five-seat row + the mirror rows the
+    // +1 inset wears)
+    let panel = ((640 - 176) / 2, (360 - 133) / 2);
+    app.chest_panel = panel;
+    let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(41);
+    for i in 0..5usize {
+        let (sx, sy) = hopper_container_slot(panel, i);
+        rects.push((sx + 1, sy + 1, i as i16));
+    }
+    for i in 0..36usize {
+        let (sx, sy) = hopper_mirror_slot(panel, i);
+        rects.push((sx + 1, sy + 1, (5 + i) as i16));
+    }
+    app.chest_slot_rects = rects;
+    app.shift_down = true;
+
+    // ARM A — THE FIVE SEAT'S OWN BANK (the grid src the hotbar-first
+    // order rides — the tail seat the placed stack's own word banks,
+    // the drained seat the NONE retires)
+    app.chest_slots[1] = (potion, 1);
+    app.chest_row_potion_kinds[1] = night;
+    let (ax, ay) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_chest_slot(ax + 9, ay + 9, 0);
+    assert_eq!(
+        app.chest_slots[1],
+        (0, 0),
+        "the drained seat the move empties"
+    );
+    assert_eq!(
+        app.chest_mirror[35],
+        (potion, 1),
+        "the hotbar-first order the tail seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], night,
+        "the placed stack's own word the mapped row banks"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[1], none,
+        "the drained seat the word retires"
+    );
+    app.chest_mirror[35] = (0, 0);
+    app.items_potion_kinds[8] = none;
+
+    // ARM B — THE MIRROR MAIN SEAT'S OWN BANK (the mirror src the
+    // grid dest the forward order wears — the mapped row the word
+    // lends, the drained row the NONE retires)
+    app.chest_mirror[5] = (potion, 1);
+    app.items_potion_kinds[14] = swift;
+    let (bx, by) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 10)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_chest_slot(bx + 9, by + 9, 0);
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the grid seat the fill wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], swift,
+        "the placed stack's own word the five seat banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the drained row the word retires"
+    );
+    app.chest_slots[0] = (0, 0);
+    app.chest_row_potion_kinds[0] = none;
+    app.chest_mirror[5] = (0, 0);
+    app.items_potion_kinds[14] = none;
+
+    // ARM C — THE OCCUPIED MERGE'S OWN SILENCE (the merge the
+    // original's word keeps — the stale word the ride never re-keys,
+    // the drained kindless src the NONE retires)
+    app.chest_slots[0] = (dirt, 10);
+    app.chest_mirror[0] = (dirt, 20);
+    app.items_potion_kinds[9] = swift;
+    let (cx, cy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_chest_slot(cx + 9, cy + 9, 0);
+    assert_eq!(app.chest_slots[0], (0, 0), "the src the merge drains");
+    assert_eq!(
+        app.chest_mirror[0],
+        (dirt, 30),
+        "the merge the dest's count wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the merge the original's word keeps"
+    );
+    app.chest_mirror[0] = (0, 0);
+    app.items_potion_kinds[9] = none;
+
+    // ARM D — THE NO-ROOM'S OWN SILENCE (the full mirror the move
+    // refuses — the stack the source keeps, the word the same row
+    // wears)
+    for row in app.chest_mirror.iter_mut() {
+        *row = (potion, 1);
+    }
+    app.chest_slots[2] = (potion, 1);
+    app.chest_row_potion_kinds[2] = night;
+    let (dx, dy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_chest_slot(dx + 9, dy + 9, 0);
+    assert_eq!(
+        app.chest_slots[2],
+        (potion, 1),
+        "the no-room walk the stack keeps"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[2], night,
+        "the silence the source's own word wears"
+    );
+    for row in app.chest_mirror.iter_mut() {
+        *row = (0, 0);
+    }
+    app.chest_slots[2] = (0, 0);
+    app.chest_row_potion_kinds[2] = none;
+
+    // ARM E — THE HOTBAR SEAT'S OWN BANK (the -27 shift the mapped
+    // row reads — the word the hotbar stack lends, the drained row
+    // the NONE retires)
+    app.chest_mirror[29] = (potion, 1);
+    app.items_potion_kinds[2] = night;
+    let (ex, ey) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 34)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_chest_slot(ex + 9, ey + 9, 0);
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the grid seat the fill wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], night,
+        "the placed stack's own word the five seat banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the drained row the word retires"
+    );
+    app.chest_slots[0] = (0, 0);
+    app.chest_row_potion_kinds[0] = none;
+    app.chest_mirror[29] = (0, 0);
+    app.items_potion_kinds[2] = none;
+
+    // ARM F — THE CHEST'S OWN ROWS THE SAME LANE RE-WEARS (the
+    // family tail the count re-keys — the 27 grid the same bank the
+    // words answer, the hotbar-first order the tail seat wears)
+    let cpanel = chest_panel_origin(640, 360);
+    app.chest_panel = cpanel;
+    app.chest_slot_rects = chest_rects_for(cpanel);
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_slots[3] = (potion, 1);
+    app.chest_row_potion_kinds[3] = night;
+    let (fx, fy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_chest_slot(fx + 9, fy + 9, 0);
+    assert_eq!(
+        app.chest_slots[3],
+        (0, 0),
+        "the drained seat the move empties"
+    );
+    assert_eq!(
+        app.chest_mirror[35],
+        (potion, 1),
+        "the hotbar-first order the tail seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], night,
+        "the placed stack's own word the mapped row banks"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], none,
+        "the drained seat the word retires"
+    );
+}
+
 /// THE WIRE GENERIC'S OWN PLACE WORD BANK (the autopush-391 round —
 /// the 390 table's own law the generic's wire tail re-wears, the
 /// 382 folds' own reads the write follows): the wire window-0's

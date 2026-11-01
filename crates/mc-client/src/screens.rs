@@ -52497,11 +52497,85 @@ impl App {
                 .copied()
                 .collect();
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
+            // THE KIND'S OWN PRE-READ (the source row's word the ride
+            // banks — the container row the bank's normalized read
+            // answers, the mirror rows the MIRROR's own id the gate
+            // keeps, the wire belief the real inventory's stale row
+            // never keys)
+            let src_kind = if (slot as usize) < n {
+                self.chest_row_potion_kind(slot as usize)
+            } else {
+                let rel = slot as usize - n;
+                let row = if rel < 27 { 9 + rel } else { rel - 27 };
+                let (mid, _) = self.chest_mirror[rel];
+                if crate::world::brewing_is_potion_kind(mid) {
+                    self.items_potion_kinds[row]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                }
+            };
+            // THE DESTINATIONS' OWN BEFORE-COUNTS (the 384 law the old
+            // pairs the empty-fill gate reads — the same cells the
+            // deltas the ride below mutates)
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i != slot as usize)
+                .map(|(i, _)| {
+                    (
+                        *i,
+                        if *i < n {
+                            self.chest_slots.get(*i).copied().unwrap_or((0, 0))
+                        } else {
+                            self.chest_mirror.get(*i - n).copied().unwrap_or((0, 0))
+                        },
+                    )
+                })
+                .collect();
             for (i, pair) in &changed {
                 if *i < n {
                     self.chest_slots[*i] = *pair;
                 } else {
                     self.chest_mirror[*i - n] = *pair;
+                }
+            }
+            // THE QUICK-MOVE'S OWN KIND RIDE (the 384 law the furnace's
+            // own trio wears — the empty dest the placed stack's own
+            // word banks, the occupied merge the original's word keeps,
+            // the drained source the NONE retires, the kinded remainder
+            // the word keeps; the container rows the chest bank's own
+            // words answer, the store rows the items bank's mapped row
+            // the same closure maps)
+            for (idx, old) in &old_dests {
+                if old.1 <= 0 {
+                    if *idx < n {
+                        if *idx < self.chest_row_potion_kinds.len() {
+                            self.chest_row_potion_kinds[*idx] = src_kind;
+                        }
+                    } else {
+                        let rel = *idx - n;
+                        let row = if rel < 27 { 9 + rel } else { rel - 27 };
+                        if row < self.items_potion_kinds.len() {
+                            self.items_potion_kinds[row] = src_kind;
+                        }
+                    }
+                }
+            }
+            if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == slot as usize) {
+                let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                    src_kind
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                if (slot as usize) < n {
+                    if (slot as usize) < self.chest_row_potion_kinds.len() {
+                        self.chest_row_potion_kinds[slot as usize] = tail;
+                    }
+                } else {
+                    let rel = slot as usize - n;
+                    let row = if rel < 27 { 9 + rel } else { rel - 27 };
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = tail;
+                    }
                 }
             }
             let _ = sink.send(crate::world_view::ContainerCommand::Click(
