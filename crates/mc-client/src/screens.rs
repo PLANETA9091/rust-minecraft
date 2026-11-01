@@ -40160,6 +40160,215 @@ impl App {
         true
     }
 
+    /// THE ENCHANT SCREEN'S OWN SWAP KEY (javap 26.2 — the
+    /// checkHotbarKeyPressed walk the acs_fresh.txt the pcs 0-10 +
+    /// 13-17 + 20-107 banks: the getCarried().isEmpty() arm the walk
+    /// opens with [the carried cursor the FALSE verdict keeps], the
+    /// hoveredSlot null arm the same FALSE speaks, the keySwapOffhand
+    /// match the slotClicked(hovered, index, 40, SWAP) call rides, the
+    /// digits 0..8 the same slotClicked(hovered, index, digit, SWAP)
+    /// walk serves; the enchanting screen the SAME base-class law the
+    /// inventory/chest/furnace/table rounds wear — the doClick SWAP
+    /// table the acm_doClick_262.txt the pcs 1130-1379 the rows keep:
+    /// the both-empty press the consumed silence answers, CASE B
+    /// pc 1149-1202 the row empty the hovered stack the row rides
+    /// AS-IS [onSwapCraft + setByPlayer(EMPTY) + onTake], CASE C
+    /// pc 1205-1273 the hovered empty the mayPlace gate pc 1213-1220
+    /// the row's stack places, the SPLIT law the
+    /// getMaxStackSize(stack) wears, CASE D pc 1276-1379 both filled
+    /// the mayPickup && mayPlace pair the gates answer, the count >
+    /// max arm the split + the ORIGINAL hovered stack `Inventory.add`
+    /// rides, the count <= max arm the straight trade wears).
+    /// THE SEATS (the EnchantmentMenu's own slot list the ctor speaks
+    /// — the item seat 0 at (15, 47), the lapis seat 1 at (35, 47),
+    /// the store rows 2..37 the +7/-29 mapping the click lane banks):
+    /// the item seat the `getMaxStackSize() = 1` override answers,
+    /// the lapis seat the `mayPlace = stack.is(lapis)` verdict speaks
+    /// [the EnchantmentMenu$3 the anon-class census banks — the
+    /// non-lapis row the lapis seat never lands, the F-key the same
+    /// refusal the digits keep], the mayPickup the override census
+    /// the base TRUE the whole 38 keeps [the 408 round the gather
+    /// walk pre-banked]. The walk's true verdict the digit CONSUMES
+    /// either way; the false verdicts (the screen's own gates) the
+    /// world chain answers.
+    pub fn on_enchant_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Enchanting || self.dead {
+            return false;
+        }
+        // THE CARRIED GATE (checkHotbarKeyPressed pc 0-10 — the
+        // getCarried().isEmpty() the walk opens with)
+        if self.enchant_carried.1 > 0 {
+            return false;
+        }
+        // THE HOVERED-SLOT GATE (pc 13-17 — the hoveredSlot null arm:
+        // the panel the render never spoke, the cursor the frame
+        // stream never fed — the headless scenes track no mouse)
+        if self.enchant_panel == (0, 0) {
+            return false;
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false;
+        };
+        let Some((_, _, slot)) = self.enchant_hover_seat(mx, my) else {
+            return false;
+        };
+        self.enchant_swap_table(button, slot as usize)
+    }
+
+    /// THE SWAP TABLE'S OWN OFFLINE WALK (the inventory walk's own
+    /// shape the enchant seats re-key — the pair stores the comps
+    /// ride the click lane's own law wears, the mirror the
+    /// every-mutation law re-syncs).
+    fn enchant_swap_table(&mut self, button: usize, menu: usize) -> bool {
+        debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+        debug_assert!(menu < 38, "the enchant seat's own bounds");
+        let lapis_id = mc_registry::item_id_by_name("lapis_lazuli").unwrap_or(-1);
+        // THE ROW SEAT (the doClick SWAP table's
+        // `inventory.getItem(button)` walk): the digits the player
+        // Inventory's own hotbar rows speak (the items 0..8), button
+        // 40 the OFFHAND answers (the index 40 the bytecode keys —
+        // the outside-menu seat the comps bank never wears)
+        let (row_id, row_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        // THE HOVERED SEAT'S OWN PAIR (the menu's own numbering the
+        // click lane banks — the pair 0..2 the seats speak, the main
+        // rows 2..28 the items 9..35 answer, the hotbar 29..37 the
+        // items 0..8 keep)
+        let (hover_id, hover_count) = if menu < 2 {
+            self.enchant_slots[menu]
+        } else if menu < 29 {
+            self.inventory.items[menu + 7]
+        } else {
+            self.inventory.items[menu - 29]
+        };
+        if row_count <= 0 && hover_count <= 0 {
+            return true; // pcs 1130-1146: the both-empty silence
+        }
+        if button != 40 && menu == button + 29 {
+            return true; // the SAME SEAT — the identical pair the
+                         // vanilla walk sets back, no mutation
+        }
+        // THE SEAT'S OWN MAY-PLACE (the EnchantmentMenu's own
+        // overrides — the anon-class census the 402/407 rounds bank:
+        // the item seat 0 the base TRUE keeps, the lapis seat 1 the
+        // `stack.is(lapis)` verdict speaks [the doClick bytes the
+        // pc 1213-1220 the same call family answers — the 407 round's
+        // own gate the place arm pre-wears], the store rows the base
+        // TRUE wears; the mayPickup the override census the base TRUE
+        // the whole 38 keeps)
+        let may_place = menu != 1 || row_id == lapis_id;
+        // THE SEAT'S OWN MAX (the doClick's
+        // `getMaxStackSize(itemstack)` walk — the item seat the
+        // `getMaxStackSize() = 1` override answers, the lapis seat the
+        // base 64 the plain slot keeps, the store rows the item's own
+        // law wears)
+        let seat_max = if menu == 0 {
+            1
+        } else if menu == 1 {
+            64
+        } else {
+            crate::world_view::item_max_stack(row_id)
+        };
+        // THE COMP STORES' OWN PAIR (the ride law the click walk
+        // banks — the seat's store the comps mirror answers, the
+        // hotbar row's store the mirror's own hotbar cell speaks [the
+        // menu button+29 the -29 mapping the click lane banks], the
+        // offhand the comp-less seat the plain Vec keeps)
+        let mut row_store = if button == 40 {
+            Vec::new()
+        } else {
+            self.enchant_comps[button + 29].clone()
+        };
+        let mut seat_store = self.enchant_comps[menu].clone();
+        let (seat_pair, row_pair);
+        let mut add_ride: Option<(i32, i32)> = None;
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered cell EMPTIES — the
+            // mayPickup the base TRUE the whole 38 keeps (the
+            // onSwapCraft + setByPlayer(EMPTY) + onTake tail the same
+            // law the bytes keep), the seat's store the ride wears
+            seat_pair = (0, 0);
+            row_pair = (hover_id, hover_count);
+            row_store = seat_store.clone();
+            seat_store.clear();
+        } else if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // mayPlace gate the seat's own verdict keeps (the
+            // non-lapis row the lapis seat never lands — the consumed
+            // silence both keep), the SPLIT law the seat max wears
+            if !may_place {
+                return true;
+            }
+            if row_count > seat_max {
+                seat_pair = (row_id, seat_max);
+                row_pair = (row_id, row_count - seat_max);
+                seat_store = row_store.clone(); // the placed half COPIES
+            } else {
+                row_pair = (0, 0);
+                seat_pair = (row_id, row_count);
+                seat_store = row_store.clone();
+                row_store.clear();
+            }
+        } else if !may_place {
+            return true; // CASE D's gates' refusal — BOTH stay
+        } else if row_count > seat_max {
+            // CASE D's split arm (pc 1315-1355): the seat takes max
+            // of the row's item, the ORIGINAL hovered stack the
+            // INVENTORY add rides (the add's own merge-then-first-
+            // empty law, the FALSE the player.drop speaks — the
+            // leftover the body's own drop lane spawns; the add the
+            // write-backs PRECEDE the vanilla order wears)
+            seat_pair = (row_id, seat_max);
+            row_pair = (row_id, row_count - seat_max);
+            seat_store = row_store.clone(); // the placed half COPIES
+            add_ride = Some((hover_id, hover_count));
+        } else {
+            // CASE D's straight trade (pc 1358-1379): the row the
+            // hovered stack takes, the seat the row's stack wears —
+            // the stores the exchange the ride law keeps
+            row_pair = (hover_id, hover_count);
+            seat_pair = (row_id, row_count);
+            std::mem::swap(&mut seat_store, &mut row_store);
+        }
+        // THE SEAT'S OWN WRITE-BACK (the menu's own numbering the
+        // pairs answer — the pair seats the enchant store's own cells
+        // keep, the store rows the REAL inventory's rows wear)
+        if menu < 2 {
+            self.enchant_slots[menu] = seat_pair;
+        } else if menu < 29 {
+            self.inventory.items[menu + 7] = seat_pair;
+        } else {
+            self.inventory.items[menu - 29] = seat_pair;
+        }
+        // THE ROW'S OWN WRITE-BACK (the digits the player Inventory's
+        // own hotbar rows answer, the offhand the plain pair keeps,
+        // the row's store the mirror's own cell wears)
+        if button == 40 {
+            self.inventory.offhand[0] = row_pair;
+        } else {
+            self.inventory.items[button] = row_pair;
+            self.enchant_comps[button + 29] = row_store;
+        }
+        self.enchant_comps[menu] = seat_store;
+        // THE ADD'S OWN RIDE (the write-backs the add follows — the
+        // merge the remainder row's room answers, the FALSE the drop
+        // lane spawns)
+        if let Some((id, count)) = add_ride {
+            let (leftover, _spoke) = self.inventory.add(self.selected_hotbar, id, count, false);
+            if leftover > 0 {
+                self.spawn_drop_at_player(id, leftover);
+            }
+        }
+        // THE EVERY-MUTATION LAW (the mirror the sync re-lays, the HUD
+        // row the same walk answers)
+        self.enchant_mirror_sync_from_inventory();
+        true
+    }
+
     /// THE FURNACE'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
     /// arm the container rounds bank, the doClick THROW table the
     /// inventory round v0.3.718 keeps verbatim; the furnace family's

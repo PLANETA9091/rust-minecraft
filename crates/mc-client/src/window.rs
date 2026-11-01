@@ -2645,6 +2645,12 @@ pub fn run_gui_app(
                 && !app.on_chest_swap_key(40)
                 && !app.on_furnace_swap_key(40)
                 && !app.on_table_swap_key(40)
+                // THE ENCHANTING'S OWN SWAP (the same base-class walk
+                // the table round wears — the checkHotbarKeyPressed
+                // arms the enchant screen answers, the lapis seat's
+                // own mayPlace the non-lapis row the F-key never
+                // lands)
+                && !app.on_enchant_swap_key(40)
                 && !app.on_creative_swap_key(40)
             {
                 app.on_swap_offhand_key();
@@ -2712,6 +2718,13 @@ pub fn run_gui_app(
                         // the walk's refusals speak; the walk's own
                         // false the non-answer arms keep)
                         && !app.on_table_swap_key(i)
+                        // THE ENCHANTING'S OWN SWAP (the same
+                        // base-class walk the table round wears — the
+                        // checkHotbarKeyPressed arms the enchant
+                        // screen answers, the lapis seat's own
+                        // mayPlace the non-lapis row the digits
+                        // never land)
+                        && !app.on_enchant_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)

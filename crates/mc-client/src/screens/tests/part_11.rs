@@ -24295,3 +24295,239 @@ fn the_enchant_seats_the_gather_wears() {
         "the close the seat the reset wears"
     );
 }
+
+/// THE ENCHANT SEATS' OWN SWAP (the autopush-409 round — the
+/// checkHotbarKeyPressed walk the acs_fresh.txt the pcs 0-10 + 13-17
+/// + 20-107 banks, the doClick SWAP table the acm_doClick_262.txt
+/// the pcs 1130-1379 the rows keep, the enchant seats the own
+/// mayPlace/max the overrides speak): the arms wear — the carried
+/// gate the FALSE keeps, the lapis seat's own may-place [the
+/// non-lapis row the refusal keeps, the lapis row the place wears,
+/// the 70-row the split speaks], the item seat's own max-one split,
+/// CASE B the pickup ride [the store the ride wears], CASE D the
+/// straight trade + the gates' refusal + the split's own add ride,
+/// the both-empty silence, the same-seat no-op, the offhand's own
+/// arm.
+#[test]
+fn the_enchant_seats_the_swap_wears() {
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    let mut app = App::new(409);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // lapis seat the menu 1 speaks, the item seat the menu 0, the
+    // hotbar row 8 the menu 37 answers)
+    let (lx, ly) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (ix, iy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (hx, hy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 37)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+
+    // APP ARM A — THE CARRIED GATE'S OWN FALSE (the
+    // checkHotbarKeyPressed pc 0-10 arm the family keeps — the
+    // carried cursor the walk refuses, the store the verdict keeps)
+    app.inventory.items[0] = (dirt, 30);
+    app.enchant_carried = (dirt, 1);
+    app.mouse_pos = Some((lx + 8, ly + 8));
+    assert!(
+        !app.on_enchant_swap_key(0),
+        "the carried cursor the walk refuses"
+    );
+    assert_eq!(app.enchant_slots[1], (0, 0), "the refusal the pair keeps");
+
+    // APP ARM B — THE LAPIS SEAT'S OWN MAY-PLACE (the round's own
+    // name — the non-lapis row the seat never lands: the CASE C
+    // mayPlace pc 1213-1220 the refusal answers, the consumed
+    // silence both keep)
+    app.enchant_carried = (0, 0);
+    assert!(app.on_enchant_swap_key(0), "the digit the walk consumes");
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the non-lapis row the lapis seat never lands"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 30),
+        "the refusal the row keeps"
+    );
+
+    // APP ARM C — THE LAPIS SEAT'S OWN ACCEPT (the lapis row the
+    // CASE C straight place wears — the row EMPTIES, the seat the
+    // whole takes)
+    app.inventory.items[0] = (lapis, 30);
+    assert!(app.on_enchant_swap_key(0), "the place the walk consumes");
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 30),
+        "the seat the whole takes"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the row the place drains");
+
+    // APP ARM D — THE SPLIT'S OWN ARM (the 70-row the seat max caps
+    // — the cell takes 64, the row the remainder keeps)
+    app.inventory.items[0] = (lapis, 70);
+    app.enchant_slots[1] = (0, 0);
+    assert!(app.on_enchant_swap_key(0), "the split the walk consumes");
+    assert_eq!(app.enchant_slots[1], (lapis, 64), "the seat the max caps");
+    assert_eq!(
+        app.inventory.items[0],
+        (lapis, 6),
+        "the row the remainder keeps"
+    );
+
+    // APP ARM E — THE ITEM SEAT'S OWN MAX-ONE SPLIT (the CASE C walk
+    // the `getMaxStackSize() = 1` override answers — the cell takes
+    // ONE, the row the remainder keeps)
+    app.enchant_slots[1] = (0, 0);
+    app.inventory.items[0] = (dirt, 30);
+    app.mouse_pos = Some((ix + 8, iy + 8));
+    assert!(
+        app.on_enchant_swap_key(0),
+        "the item seat the walk consumes"
+    );
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the item seat the max-one wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 29),
+        "the row the remainder keeps"
+    );
+
+    // APP ARM F — CASE B THE PICKUP RIDE (the row empty the seat's
+    // stack the row rides AS-IS — the seat EMPTIES, the store the
+    // ride wears)
+    app.enchant_slots[0] = (dirt, 1);
+    app.enchant_comps[0] = vec![(33, 1)]; // the enchanted store the ride wears
+    app.inventory.items[0] = (0, 0);
+    assert!(app.on_enchant_swap_key(0), "the ride the walk consumes");
+    assert_eq!(app.inventory.items[0], (dirt, 1), "the stack the row rides");
+    assert_eq!(app.enchant_slots[0], (0, 0), "the seat the ride drains");
+    assert_eq!(
+        app.enchant_comps[29],
+        vec![(33, 1)],
+        "the store the ride wears"
+    );
+    assert!(
+        app.enchant_comps[0].is_empty(),
+        "the seat's store the ride clears"
+    );
+
+    // APP ARM G — CASE D THE GATES' REFUSAL + THE STRAIGHT TRADE
+    // (the dirt row the filled lapis seat never lands — the
+    // both-stay silence; the lapis row the dirt seat the exchange
+    // wears)
+    app.enchant_slots[1] = (lapis, 12);
+    app.inventory.items[0] = (dirt, 3);
+    app.mouse_pos = Some((lx + 8, ly + 8));
+    assert!(app.on_enchant_swap_key(0), "the refusal the walk consumes");
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 12),
+        "the refusal the seat keeps"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 3),
+        "the refusal the row keeps"
+    );
+    app.enchant_slots[1] = (dirt, 2);
+    app.inventory.items[0] = (lapis, 5);
+    assert!(app.on_enchant_swap_key(0), "the trade the walk consumes");
+    assert_eq!(app.enchant_slots[1], (lapis, 5), "the trade the seat wears");
+    assert_eq!(app.inventory.items[0], (dirt, 2), "the trade the row wears");
+
+    // APP ARM H — CASE D THE SPLIT'S OWN ADD RIDE (the row 30 the
+    // seat max caps — the seat takes ONE, the ORIGINAL seat stack
+    // the add rides: the remainder row the merge tops up)
+    app.enchant_slots[1] = (0, 0);
+    app.enchant_slots[0] = (dirt, 1);
+    app.inventory.items[0] = (dirt, 30);
+    app.mouse_pos = Some((ix + 8, iy + 8));
+    assert!(
+        app.on_enchant_swap_key(0),
+        "the split-add the walk consumes"
+    );
+    assert_eq!(app.enchant_slots[0], (dirt, 1), "the seat the max takes");
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 30),
+        "the add the merge wears"
+    );
+
+    // APP ARM I — THE BOTH-EMPTY SILENCE + THE SAME-SEAT ARM (the
+    // pcs 1130-1146 the consumed silence keeps, the hovered hotbar
+    // row the button names the identical pair sets back)
+    app.enchant_slots[0] = (0, 0);
+    app.inventory.items[0] = (0, 0);
+    app.inventory.items[8] = (0, 0);
+    app.mouse_pos = Some((lx + 8, ly + 8));
+    assert!(app.on_enchant_swap_key(8), "the silence the walk consumes");
+    app.inventory.items[8] = (dirt, 5);
+    app.mouse_pos = Some((hx + 8, hy + 8));
+    assert!(
+        app.on_enchant_swap_key(8),
+        "the same seat the walk consumes"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (dirt, 5),
+        "the same seat the pair keeps"
+    );
+
+    // APP ARM J — THE OFFHAND'S OWN ARM (the F-key the CASE C walk
+    // answers — the non-lapis row the lapis seat the F never lands,
+    // the seat's stack the empty offhand the CASE B ride wears)
+    app.inventory.items[8] = (0, 0);
+    app.inventory.offhand[0] = (dirt, 2);
+    app.mouse_pos = Some((lx + 8, ly + 8));
+    assert!(app.on_enchant_swap_key(40), "the F-key the walk consumes");
+    assert_eq!(app.enchant_slots[1], (0, 0), "the F-key the refusal keeps");
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 2),
+        "the refusal the offhand keeps"
+    );
+    app.inventory.offhand[0] = (0, 0);
+    app.enchant_slots[0] = (dirt, 1);
+    app.mouse_pos = Some((ix + 8, iy + 8));
+    assert!(app.on_enchant_swap_key(40), "the F-key the ride consumes");
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 1),
+        "the stack the offhand rides"
+    );
+    assert_eq!(app.enchant_slots[0], (0, 0), "the seat the ride drains");
+}
