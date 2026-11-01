@@ -14671,9 +14671,10 @@ fn the_dispenser_carried_the_word_wears() {
         app.items_potion_kinds[25], none,
         "the dirt seat the NONE word wears"
     );
-    // THE NINE'S OWN HONEST WALL (the grid cell the word retires, the
-    // re-pickup the silence lends — the kindless store the word never
-    // carried)
+    // THE NINE'S OWN WORD RIDE (the 410 round the kindless wall the
+    // bank retires — the placed word the seat's own cell banks, the
+    // re-pickup the same word lends; the chest's own 363 law the
+    // store ride the nine wears)
     let (cx, cy) = dispenser_seat(&mut app, 0);
     app.click_dispenser_slot(cx, cy, 0);
     assert_eq!(
@@ -14693,8 +14694,8 @@ fn the_dispenser_carried_the_word_wears() {
         "the dispenser pickup the carried banks"
     );
     assert_eq!(
-        app.dispenser_carried_potion_kind, none,
-        "the kindless seat the NONE word lends"
+        app.dispenser_carried_potion_kind, kind,
+        "the seat's own word the re-pickup banks"
     );
     // THE THROW'S OWN WORD (the kinded carried the whole throw clears)
     app.throw_dispenser_carried_outside(0);
@@ -17239,14 +17240,19 @@ fn the_dispenser_seats_the_model_ride_wears() {
         app.dispenser_carried_potion_kind, none,
         "the kindless store the carried word retires"
     );
-    // ARM B — THE SAME-WORDLESS PAIR'S OWN SILENCE (the same
-    // components the same item speaks, the max-1 gate the merge
-    // closes, the kinds the NONE words keep)
+    // ARM B — THE SEAT'S OWN WORD'S OWN LEND (the 410 round the
+    // arm's own premise retires — the arm A swap the seat's own cell
+    // banked, the re-click the words re-exchange: the seat's own
+    // word the carried lends, the seat's own cell the NONE wears)
     app.dispenser_carried_potion_kind = none;
     app.click_dispenser_slot(gx + 8, gy + 8, 0);
     assert_eq!(
-        app.dispenser_carried_potion_kind, none,
-        "the same-wordless pair the carried word keeps"
+        app.dispenser_carried_potion_kind, swift,
+        "the seat's own word the carried lends"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[0], none,
+        "the seat's own cell the NONE wears"
     );
     // ARM C — THE MIRROR ROW'S OWN EXCHANGE (the kinded row the
     // kinded carried the different components the swap answers — the
@@ -24530,4 +24536,203 @@ fn the_enchant_seats_the_swap_wears() {
         "the stack the offhand rides"
     );
     assert_eq!(app.enchant_slots[0], (0, 0), "the seat the ride drains");
+}
+
+/// THE DISPENSER SEATS' OWN KIND BANK (the autopush-410 round — the
+/// chest's own row bank the block-entity store re-wears: the open
+/// the `container_stores_potion_kinds` entry loads, the click lanes'
+/// rides the words bank, the close flush the edited nine the map
+/// entry rides home to): the arms wear — the pickup's own bank ride
+/// [the word the cursor banks, the seat's cell the NONE retires],
+/// the place's own bank ride [the word the seat's own cell answers],
+/// the id wall's own read [the kindless stack the stale word never
+/// lends], the quick-move's own bank ride [the inventory source the
+/// grid dest the word banks, the grid source the player rows the
+/// word lends, the drained source the NONE retires], the model's own
+/// swap [the words the pairs exchange], the close's own ride home
+/// [the reopen the same words loads].
+#[test]
+fn the_dispenser_seats_the_kind_bank_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(410);
+    app.enter_world();
+    app.open_dispenser_for((0, 0, 0));
+    let panel = inventory_panel_origin(640, 360);
+    app.dispenser_panel = panel;
+    let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(45);
+    for i in 0..9usize {
+        let (sx, sy) = dispenser_grid_slot(panel, i);
+        rects.push((sx + 1, sy + 1, i as i16));
+    }
+    for i in 0..36usize {
+        let (sx, sy) = chest_mirror_slot(panel, i);
+        rects.push((sx + 1, sy + 1, (9 + i) as i16));
+    }
+    app.dispenser_slot_rects = rects;
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    let seat = |app: &App, menu: usize| {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == menu as i16)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+
+    // APP ARM A — THE PICKUP'S OWN BANK RIDE (the seat's word the
+    // cursor banks, the seat's own cell the NONE retires — the
+    // (id, count) store the word never carried, the parallel bank
+    // the potion's own identity answers)
+    app.dispenser_slots[4] = (potion, 1);
+    app.dispenser_row_potion_kinds = vec![none; 9];
+    app.dispenser_row_potion_kinds[4] = night;
+    let (sx, sy) = seat(&app, 4);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0);
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the stack the pickup wears"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, night,
+        "the word the cursor banks"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[4], none,
+        "the seat's own cell the NONE retires"
+    );
+
+    // APP ARM B — THE PLACE'S OWN BANK RIDE (the carried word the
+    // seat's own cell answers — the reopen the same word loads)
+    let (sx, sy) = seat(&app, 0);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the seat the place wears"
+    );
+    assert_eq!(app.dispenser_carried, (0, 0), "the cursor the place drains");
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the cursor's word the place retires"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[0], night,
+        "the word the seat's own cell banks"
+    );
+
+    // APP ARM C — THE ID WALL'S OWN READ (the kindless stack the
+    // stale word never lends — the bank's own cell the id wall
+    // answers)
+    app.dispenser_slots[1] = (mc_registry::item_id_by_name("dirt").unwrap(), 5);
+    app.dispenser_row_potion_kinds[1] = swift;
+    let (sx, sy) = seat(&app, 1);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0);
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the kindless stack the wall keeps"
+    );
+    app.click_dispenser_slot(sx + 9, sy + 9, 0); // the place-back the walk keeps
+
+    // APP ARM D — THE QUICK-MOVE'S OWN BANK RIDE (the inventory
+    // source the grid dest the word banks — the drained row the NONE
+    // retires, the grid's own cell the word wears; the FRESH GRID the
+    // arm's own state keeps — the stale pairs the seat search the
+    // earlier arm's potion never names)
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_row_potion_kinds = vec![none; 9];
+    app.shift_down = true;
+    app.inventory.items[19] = (potion, 1);
+    app.items_potion_kinds[19] = swift;
+    let (sx, sy) = seat(&app, 19);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0);
+    assert_eq!(
+        app.inventory.items[19],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[19], none,
+        "the drained row the word retires"
+    );
+    let landed = app
+        .dispenser_slots
+        .iter()
+        .position(|&p| p == (potion, 1))
+        .expect("the grid dest the move fills");
+    assert_eq!(
+        app.dispenser_row_potion_kinds[landed], swift,
+        "the word the grid's own cell banks"
+    );
+
+    // APP ARM E — THE GRID SOURCE'S OWN RIDE (the grid source the
+    // player rows the word lends — the drained cell the NONE
+    // retires, the items bank the same word wears)
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_row_potion_kinds = vec![none; 9];
+    app.dispenser_slots[2] = (potion, 1);
+    app.dispenser_row_potion_kinds[2] = night;
+    app.inventory.items[19] = (0, 0);
+    let (sx, sy) = seat(&app, 2);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0);
+    let home = app
+        .inventory
+        .items
+        .iter()
+        .position(|&p| p == (potion, 1))
+        .expect("the player row the move fills");
+    assert_eq!(
+        app.items_potion_kinds[home], night,
+        "the word the player row banks"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[2], none,
+        "the drained cell the NONE retires"
+    );
+
+    // APP ARM F — THE MODEL'S OWN SWAP (the same-id kind pair the
+    // component law's own answer exchanges — the words the pairs
+    // exchange, the 378 round's own law the bank wears)
+    app.shift_down = false;
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_row_potion_kinds = vec![none; 9];
+    app.dispenser_slots[4] = (potion, 1);
+    app.dispenser_row_potion_kinds[4] = night;
+    app.dispenser_slots[6] = (potion, 1);
+    app.dispenser_row_potion_kinds[6] = swift;
+    let (sx, sy) = seat(&app, 4);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0); // the pickup arms the cursor
+    let (sx, sy) = seat(&app, 6);
+    app.click_dispenser_slot(sx + 9, sy + 9, 0); // the swap the exchange wears
+    assert_eq!(
+        app.dispenser_row_potion_kinds[6], night,
+        "the seat's word the swap wears"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, swift,
+        "the carried word the swap wears"
+    );
+
+    // APP ARM G — THE CLOSE'S OWN RIDE HOME (the edited words the map
+    // entry banks, the reopen the same words loads — the disk bank's
+    // own 363 law the nine wears)
+    app.dispenser_carried = (0, 0);
+    app.dispenser_carried_potion_kind = none;
+    app.close_dispenser(ScreenKind::World);
+    assert_eq!(
+        app.container_stores_potion_kinds
+            .get(&(0, 0, 0))
+            .map(|k| k[6]),
+        Some(night),
+        "the close the map entry banks"
+    );
+    app.open_dispenser_for((0, 0, 0));
+    assert_eq!(
+        app.dispenser_row_potion_kinds[6], night,
+        "the reopen the same words loads"
+    );
 }
