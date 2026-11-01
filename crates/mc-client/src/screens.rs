@@ -9830,6 +9830,15 @@ pub struct App {
     /// merge/upgrade laws answers, the moves the hand-over rides, the
     /// ride-home the inventory_enchants lane answers).
     pub anvil_enchants: [Vec<(i32, i32)>; 40],
+    /// THE ANVIL'S OWN POTION-KIND SEAT (the dev-196 comps store's
+    /// second axis the kinds join — the `minecraft:potion_contents`
+    /// component the side lane the SAME menu numbering keys: 0/1 the
+    /// input seats, 2 the result, 3..38 the mirror rows the
+    /// items_potion_kinds bank reads [the store the transient seats
+    /// alone wears], 39 the carried cursor; the moves the four-arm
+    /// ride answers, the result the copy's own word wears, the
+    /// ride-home the INVENTORY lane answers).
+    pub anvil_seat_potion_kinds: [i32; 40],
     /// The anvil's live flag (the menu type 8 window the projection
     /// feeds — the chest's own law): `false` = the offline stand-in,
     /// the clicks and the close echo stay local acts.
@@ -13158,6 +13167,7 @@ impl App {
             anvil_repair_costs: [0; 40],
             items_custom_names: std::array::from_fn(|_| None),
             anvil_enchants: std::array::from_fn(|_| Vec::new()),
+            anvil_seat_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 40],
             anvil_is_live: false,
             anvil_live_window: None,
             live_anvil_title: None,
@@ -29483,6 +29493,44 @@ impl App {
         }
     }
 
+    /// THE ANVIL'S OWN SEAT KIND READ (the same split the name lane
+    /// keeps — the trio + the carried the seat store's word the id
+    /// gate answers, the mirror rows the INVENTORY bank's normalized
+    /// read speaks; the stale word the non-potion seat the honest
+    /// NONE keeps).
+    fn anvil_seat_potion_kind(&self, menu: usize) -> i32 {
+        let seat_id = match menu {
+            0 => self.anvil_slots[0].0,
+            1 => self.anvil_slots[1].0,
+            2 => self.anvil_result.0,
+            39 => self.anvil_carried.0,
+            m => {
+                return Self::anvil_menu_to_inventory(m)
+                    .map(|i| self.row_potion_kind(i))
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
+            }
+        };
+        if crate::world::brewing_is_potion_kind(seat_id) {
+            self.anvil_seat_potion_kinds[menu]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        }
+    }
+
+    /// THE ANVIL'S OWN SEAT KIND WRITE (the same split — the trio +
+    /// the carried the seat store answers, the mirror rows the
+    /// INVENTORY bank the positional map writes).
+    fn anvil_seat_kind_put(&mut self, menu: usize, kind: i32) {
+        match menu {
+            0 | 1 | 2 | 39 => self.anvil_seat_potion_kinds[menu] = kind,
+            m => {
+                if let Some(idx) = Self::anvil_menu_to_inventory(m) {
+                    self.items_potion_kinds[idx] = kind;
+                }
+            }
+        }
+    }
+
     /// THE ANVIL'S OWN OFFLINE OPEN (javap 26.2 AnvilBlock
     /// useWithoutItem the openMenu walk the door speaks + AnvilMenu
     /// ctor the disasm banks — scripts/jar_work/anvil_menu_202.txt the
@@ -29524,6 +29572,9 @@ impl App {
             self.anvil_repair_costs[seat] = 0;
             self.anvil_enchants[seat].clear();
         }
+        // THE KIND SEAT'S OWN FRESH LAY (the same fresh-empty open the
+        // trio + the carried the wordless keeps)
+        self.anvil_seat_potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 40];
         self.anvil_mirror_sync_from_inventory();
         // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
         // — the anvil kind the vanilla's own silence arm the emit call
@@ -29574,6 +29625,7 @@ impl App {
         self.anvil_names[2] = None;
         self.anvil_repair_costs[2] = 0;
         self.anvil_enchants[2].clear();
+        self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
         // THE FIELD'S OWN WORDS (the fresh open re-lays)
         self.anvil_name.clear();
         self.anvil_cost = 0;
@@ -29595,6 +29647,9 @@ impl App {
     fn anvil_ride_home(&mut self, id: i32, count: i32, seat: usize) {
         let named = self.anvil_names[seat].clone();
         let enchanted = !self.anvil_enchants[seat].is_empty();
+        // the seat's own word the ride wears (the kind the stack
+        // carries — the first-empty placement the bank answers)
+        let kind = self.anvil_seat_potion_kind(seat);
         let mut rest = count;
         if named.is_none() && !enchanted {
             for it in self.inventory.items.iter_mut() {
@@ -29616,6 +29671,7 @@ impl App {
                 self.inventory.items[idx] = (id, rest);
                 self.items_custom_names[idx] = named.clone();
                 self.inventory_enchants[idx] = self.anvil_enchants[seat].clone();
+                self.items_potion_kinds[idx] = kind;
                 rest = 0;
             }
         }
@@ -29625,6 +29681,7 @@ impl App {
         self.anvil_names[seat] = None;
         self.anvil_repair_costs[seat] = 0;
         self.anvil_enchants[seat].clear();
+        self.anvil_seat_potion_kinds[seat] = crate::brewing_sim::POTION_KIND_NONE;
     }
 
     /// THE COST WALK (javap 26.2 AnvilMenu.createResult pc 0-1077 the
@@ -29671,6 +29728,7 @@ impl App {
             self.anvil_names[2] = None;
             self.anvil_repair_costs[2] = 0;
             self.anvil_enchants[2].clear();
+            self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
             self.anvil_cost = 0;
             return;
         }
@@ -29680,6 +29738,9 @@ impl App {
         // lanes the copy's own rows keep)
         let mut copy_name = self.anvil_names[0].clone();
         let mut copy_ench = self.anvil_enchants[0].clone();
+        // the copy's own kind (the input 0's own word the copy
+        // carries — the potion_contents component the result wears)
+        let copy_kind = self.anvil_seat_potion_kind(0);
         // pc 97-137 — the totalRepairCost l = rc1 + rc2
         let l = self.anvil_seat_repair_cost(0) as i64 + self.anvil_seat_repair_cost(1) as i64;
         let mut j: i64 = 0;
@@ -29696,6 +29757,7 @@ impl App {
                 self.anvil_names[2] = None;
                 self.anvil_repair_costs[2] = 0;
                 self.anvil_enchants[2].clear();
+                self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
                 self.anvil_cost = 0;
                 return;
             }
@@ -29751,6 +29813,7 @@ impl App {
                     self.anvil_names[2] = None;
                     self.anvil_repair_costs[2] = 0;
                     self.anvil_enchants[2].clear();
+                    self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
                     self.anvil_cost = 0;
                     return;
                 }
@@ -29797,6 +29860,7 @@ impl App {
             self.anvil_names[2] = None;
             self.anvil_repair_costs[2] = 0;
             self.anvil_enchants[2].clear();
+            self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
             return;
         }
         // pc 950-1062 — the REPAIR-COST BUMP (the pure rename the bump
@@ -29810,6 +29874,7 @@ impl App {
         self.anvil_repair_costs[2] = rc;
         self.anvil_names[2] = copy_name;
         self.anvil_enchants[2] = copy_ench;
+        self.anvil_seat_potion_kinds[2] = copy_kind;
         self.anvil_result = item1; // the copy's own (id, count)
     }
 
@@ -29900,12 +29965,14 @@ impl App {
                 self.anvil_names[1] = None;
                 self.anvil_repair_costs[1] = 0;
                 self.anvil_enchants[1].clear();
+                self.anvil_seat_potion_kinds[1] = crate::brewing_sim::POTION_KIND_NONE;
             }
         } else if !self.anvil_only_renaming {
             self.anvil_slots[1] = (0, 0);
             self.anvil_names[1] = None;
             self.anvil_repair_costs[1] = 0;
             self.anvil_enchants[1].clear();
+            self.anvil_seat_potion_kinds[1] = crate::brewing_sim::POTION_KIND_NONE;
         }
         self.anvil_cost = 0;
         // THE RESULT'S OWN HAND (the carried the result answers — the
@@ -29914,15 +29981,20 @@ impl App {
         self.anvil_names[39] = self.anvil_names[2].clone();
         self.anvil_repair_costs[39] = self.anvil_repair_costs[2];
         self.anvil_enchants[39] = self.anvil_enchants[2].clone();
+        // the result's own word the carried hands (the copy's own
+        // kind the hand-over wears)
+        self.anvil_seat_potion_kinds[39] = self.anvil_seat_potion_kinds[2];
         self.anvil_result = (0, 0);
         self.anvil_names[2] = None;
         self.anvil_repair_costs[2] = 0;
         self.anvil_enchants[2].clear();
+        self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
         // pc 185-193 — the input 1 the ALWAYS-clear arm
         self.anvil_slots[0] = (0, 0);
         self.anvil_names[0] = None;
         self.anvil_repair_costs[0] = 0;
         self.anvil_enchants[0].clear();
+        self.anvil_seat_potion_kinds[0] = crate::brewing_sim::POTION_KIND_NONE;
         // the fresh compute (the broadcastChanges walk)
         self.anvil_create_result();
     }
@@ -29946,7 +30018,9 @@ impl App {
     /// banks the tooltip lines ride, the custom-name lane the first
     /// row re-keys (the §o italic the styled hover name wears). The
     /// trio + the mirror the belief rows the hovered_container walk
-    /// banks, the potion kind the store never carries the NONE keeps.
+    /// banks, the potion kind the seat store's own word answers (the
+    /// trio + the carried the store speaks, the mirror rows the
+    /// INVENTORY bank the normalized read lends).
     fn anvil_item_tooltip_hover(&self, mx: i32, my: i32) -> Option<Vec<(String, [f32; 3])>> {
         if self.screen != ScreenKind::Anvil {
             return None; // the anvil's own screen the walk serves
@@ -29969,7 +30043,7 @@ impl App {
         let ench = self.anvil_seat_enchants(s);
         let mut rows = Self::item_tooltip_rows_kind(
             id,
-            crate::brewing_sim::POTION_KIND_NONE,
+            self.anvil_seat_potion_kind(s),
             self.advanced_item_tooltips,
             &ench,
         );
@@ -30009,6 +30083,8 @@ impl App {
             self.anvil_names[39] = None;
             self.anvil_repair_costs[39] = 0;
             self.anvil_enchants[39].clear();
+            // the carried's own word the emptied cursor retires
+            self.anvil_seat_potion_kinds[39] = crate::brewing_sim::POTION_KIND_NONE;
         }
     }
 
@@ -30201,6 +30277,12 @@ impl App {
         let seat_ench = !self.anvil_seat_enchants(menu).is_empty();
         let car_named = self.anvil_names[39].is_some();
         let car_ench = !self.anvil_enchants[39].is_empty();
+        // THE KIND'S OWN READS (the hoist the component law pre-keys —
+        // the seat store's own words the trio answers, the REAL rows
+        // the bank's normalized read lends, the carried word the
+        // carried seat wears)
+        let old_seat_kind = self.anvil_seat_potion_kind(menu);
+        let old_carried_kind = self.anvil_seat_potion_kind(39);
         let (new_slot, new_carried) = if button == 0 {
             if (seat_named || seat_ench || car_named || car_ench)
                 && believed.1 > 0
@@ -30209,7 +30291,12 @@ impl App {
             {
                 (old_car, believed) // the swap the merge refusal wears
             } else {
-                crate::world_view::predict_pickup(believed, old_car)
+                crate::world_view::predict_pickup_kind(
+                    believed,
+                    old_car,
+                    old_seat_kind,
+                    old_carried_kind,
+                )
             }
         } else if (seat_named || seat_ench || car_named || car_ench)
             && believed.1 > 0
@@ -30234,6 +30321,38 @@ impl App {
         // vanilla components wear, the emptied seat the cleared lanes
         // keep)
         self.anvil_lanes_ride(menu, believed, new_slot, old_car, new_carried);
+        // THE KIND'S OWN FOUR-ARM RIDE (the dev-204 law the anvil's
+        // own walk re-wears — the chest/enchant's own shape the same
+        // arms wear: the pickup the seat's word the carried banks,
+        // the place the word the seat lays, the model's own swap the
+        // pairs exchange, the merge the emptied carried the NONE word
+        // wears; the trio seats the SEAT STORE the words bank, the
+        // mirror rows the INVENTORY bank the write-through keeps)
+        let pair_same =
+            crate::world_view::potion_pair_same_item(believed.0, old_seat_kind, old_carried_kind);
+        let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+        let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+        let carried_gone = old_car.1 > 0 && new_carried.1 <= 0;
+        let carried_new = old_car.1 <= 0 && new_carried.1 > 0;
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        if seat_gone && carried_new {
+            new_carried_kind = old_seat_kind;
+            new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+        } else if carried_gone && seat_new {
+            new_seat_kind = old_carried_kind;
+            new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        } else if button == 0
+            && believed.1 > 0
+            && new_slot.1 > 0
+            && (believed.0 != new_slot.0 || !pair_same)
+        {
+            std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+        } else if carried_gone {
+            new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
+        self.anvil_seat_kind_put(menu, new_seat_kind);
+        self.anvil_seat_potion_kinds[39] = new_carried_kind;
         self.anvil_mirror_sync_from_inventory();
         self.anvil_create_result();
     }
@@ -30384,6 +30503,18 @@ impl App {
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
         }
+        // THE COMPONENT HALF (the 382 chest's own law the anvil's own
+        // seats re-wear — the same-id kind pair the seat's own word
+        // refuses: the trio seats the store's normalized read, the
+        // mirror rows the bank's word)
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(
+                self.anvil_seat_potion_kind(menu),
+                self.anvil_seat_potion_kind(39),
+            )
+        {
+            return; // the component half — the same-id kind pair refuses
+        }
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the Set.add's own false the recalc never feeds
         }
@@ -30403,11 +30534,30 @@ impl App {
         }
         let painted = self.qc_slots.len();
         let mut k = carried.1;
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same cells the place math mutates)
+        let before: Vec<(usize, i32)> = self
+            .qc_slots
+            .iter()
+            .map(|&m| (m, self.qc_seat_stack(m).1))
+            .collect();
+        // the carried's own word (the pre-drag read the bank wears —
+        // the honest order the 391 law keeps)
+        let carried_kind = self.anvil_seat_potion_kind(39);
         let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
         for &menu in &seats {
             let (seat_id, seat_count) = self.qc_seat_stack(menu);
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the 382 chest's own law the anvil's
+            // own drag re-wears — the same-id kind pair the seat's own
+            // word the place refuses)
+            if seat_id == carried.0
+                && qc_collect_kind_refuses(self.anvil_seat_potion_kind(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if self.qc_type != 2 && carried.1 < painted as i32 {
                 continue; // pc 394-416 — the count's own gate
@@ -30433,9 +30583,30 @@ impl App {
                 }
             }
         }
+        // THE PLACE'S OWN WORD BANK (the 383 chest's own law the
+        // anvil's own drag re-wears — the empty seat the placed
+        // stack's own word banks: the trio seats the SEAT STORE the
+        // words bank, the mirror rows the INVENTORY bank the
+        // write-through keeps, the occupied seat the merge the
+        // original's word keeps)
+        for (menu, old_count) in &before {
+            let new = if *menu < 2 {
+                self.anvil_slots[*menu]
+            } else {
+                Self::anvil_menu_to_inventory(*menu)
+                    .map(|i| self.inventory.items[i])
+                    .unwrap_or((0, 0))
+            };
+            if *old_count == 0 && new.1 > 0 {
+                self.anvil_seat_kind_put(*menu, carried_kind);
+            }
+        }
         self.anvil_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
         if self.anvil_carried.1 <= 0 {
             self.anvil_lanes_clear_carried();
+            // the drag's own word (the emptied carried the NONE wears
+            // — the remainder the same stack the word keeps)
+            self.anvil_seat_potion_kinds[39] = crate::brewing_sim::POTION_KIND_NONE;
         }
         // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
         // re-syncs — the open's own law the write-through's tail
@@ -76352,6 +76523,9 @@ impl App {
                     // the AUTHORITATIVE carried lands too (the chest's
                     // wholesale replacement speaks)
                     self.anvil_carried = c.carried;
+                    // the wire's own word (the live lane the honest NONE
+                    // wall keeps — the correction the kind never carries)
+                    self.anvil_seat_potion_kinds[39] = crate::brewing_sim::POTION_KIND_NONE;
                     self.anvil_pos = None;
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Anvil);

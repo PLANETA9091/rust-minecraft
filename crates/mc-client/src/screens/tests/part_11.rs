@@ -21114,3 +21114,236 @@ fn the_wire_generic_place_the_kind_word_banks_wears() {
         "the refused place the word keeps"
     );
 }
+
+/// THE ANVIL'S OWN KIND BANK (the autopush-392 round — the repair
+/// walk's own trio the kind words the plain model never wore, the
+/// dev-196 comps store the second axis the kinds join): the seat
+/// store the trio + the carried the words bank, the mirror rows the
+/// INVENTORY bank the write-through keeps, the four arms the
+/// chest/enchant's own law re-wears, the result the copy's own word
+/// wears, the take the carried hands, the ride-home the first-empty
+/// seat banks, the drag the place's own word banks, the paint the
+/// same-id kind pair refuses.
+#[test]
+fn the_anvil_kind_bank_the_words_the_walks_wear() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(392);
+    app.enter_world();
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.anvil_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps —
+    // the input seat 0, the mirror head 3, the drag rows 4 and 5)
+    let (ix, iy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (mx, my) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (gx, gy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    // ARM A — THE PLACE'S OWN BANK (the carried kinded potion the
+    // input seat lays — the word the SEAT STORE banks, the emptied
+    // carried the NONE retires)
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = night;
+    app.click_anvil_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (potion, 1),
+        "the input seat the place wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], night,
+        "the placed stack's own word banks"
+    );
+    assert_eq!(app.anvil_carried, (0, 0), "the place the carried empties");
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], none,
+        "the emptied carried the NONE retires"
+    );
+    // ARM B — THE PICKUP'S OWN RIDE (the seat's own word the carried
+    // banks, the emptied seat the NONE wears)
+    app.click_anvil_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.anvil_carried,
+        (potion, 1),
+        "the pickup the carried gains"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], night,
+        "the seat's own word the carried banks"
+    );
+    assert_eq!(app.anvil_slots[0], (0, 0), "the pickup the seat empties");
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], none,
+        "the emptied seat the NONE wears"
+    );
+    // ARM C — THE MIRROR ROW'S OWN BANK (the write-through the
+    // INVENTORY bank keeps — the placed potion the row's word wears)
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = swift;
+    app.click_anvil_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the mirror head the place wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the row's own word the bank keeps"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], none,
+        "the emptied carried the NONE retires"
+    );
+    // ARM D — THE SAME-ID KIND PAIR'S OWN SWAP (the different words
+    // the vanilla exchange answers — the row the carried's word
+    // banks, the carried the row's word wears)
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = night;
+    app.click_anvil_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the carried's own word the row banks"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], swift,
+        "the row's own word the carried banks"
+    );
+    // ARM E — THE RESULT'S OWN HAND (the take walk the result's word
+    // the carried hands — the seats the take consumes the words
+    // retire)
+    app.anvil_slots[0] = (dirt, 1);
+    app.anvil_result = (potion, 1);
+    app.anvil_seat_potion_kinds[2] = night;
+    app.xp.level = 30;
+    app.anvil_cost = 1;
+    app.anvil_take_result();
+    assert_eq!(
+        app.anvil_carried,
+        (potion, 1),
+        "the result the carried hands"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], night,
+        "the result's own word the carried wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[2], none,
+        "the taken result the word retires"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], none,
+        "the consumed input the word retires"
+    );
+    // ARM F — THE EMPTY VERDICT'S OWN RETIRE (the kinded input the
+    // incompatible walk answers — the copy's own word the EMPTY
+    // result never banks)
+    app.anvil_carried = (0, 0);
+    app.anvil_seat_potion_kinds[39] = none;
+    app.anvil_slots[0] = (potion, 1);
+    app.anvil_seat_potion_kinds[0] = night;
+    app.anvil_slots[1] = (dirt, 1);
+    app.anvil_create_result();
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the incompatible pair the EMPTY wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[2], none,
+        "the copy's own word the EMPTY verdict never banks"
+    );
+    // ARM G — THE RIDE-HOME'S OWN WORD (the close walk the carried's
+    // kind the first-empty seat banks — the carried seat the word
+    // retires)
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = night;
+    app.close_anvil(ScreenKind::World);
+    let home = app
+        .inventory
+        .items
+        .iter()
+        .position(|&s| s == (potion, 1))
+        .expect("the carried stack the first-empty seat wears");
+    assert_eq!(
+        app.items_potion_kinds[home], night,
+        "the carried's own word the home seat banks"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], none,
+        "the ridden carried the word retires"
+    );
+    // ARM H — THE DRAG'S OWN BANK + THE PAINT GATE (the empty seat
+    // the placed stack's own word banks, the same-id kind pair the
+    // paint refuses)
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.anvil_mirror_sync_from_inventory();
+    app.qc_slots.clear();
+    // the PAINT GATE (the kinded pair the seat refuses — the no
+    // paint the walk's own gate keeps)
+    app.inventory.items[10] = (potion, 1);
+    app.items_potion_kinds[10] = swift;
+    app.anvil_mirror_sync_from_inventory();
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = night;
+    app.qc_paint_anvil(gx + 8, gy + 8);
+    assert!(
+        app.qc_slots.is_empty(),
+        "the same-id kind pair the paint refuses"
+    );
+    // the BANK (the empty row the placed stack's own word banks —
+    // the emptied carried the word retires)
+    app.inventory.items[10] = (0, 0);
+    app.items_potion_kinds[10] = none;
+    app.anvil_mirror_sync_from_inventory();
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = night;
+    app.qc_slots = vec![5];
+    app.qc_type = 0;
+    app.qc_distribute_anvil_offline();
+    assert_eq!(
+        app.inventory.items[11],
+        (potion, 1),
+        "the drag the row's own one"
+    );
+    assert_eq!(
+        app.items_potion_kinds[11], night,
+        "the drag the row's own word banks"
+    );
+    assert_eq!(app.anvil_carried, (0, 0), "the drag the carried empties");
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], none,
+        "the emptied carried the word retires"
+    );
+}
