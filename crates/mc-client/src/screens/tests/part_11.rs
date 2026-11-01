@@ -23069,3 +23069,188 @@ fn the_anvil_quick_move_the_result_seat_the_may_place_wears() {
         "the result seat the write never wears"
     );
 }
+
+/// THE ANVIL'S OWN QUICK-MOVE KIND RIDE (the 384 law the furnace's own
+/// trio wears, the 397 round the dispenser's own tail speaks — the
+/// source row's own PRE-READ the ride banks, the empty dest the placed
+/// stack's own word banks, the kinded remainder the word keeps, the
+/// drained row the NONE retires, the no-room walk the silence the
+/// stack's own word keeps, the trio source's own ride the word the
+/// mirror row banks).
+#[test]
+fn the_anvil_quick_move_the_kind_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(401);
+    app.enter_world();
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.anvil_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps —
+    // the trio head 0, the main-last row 29, the hotbar head 30)
+    let (ix, iy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (ax, ay) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 29)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (hx, hy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 30)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.shift_down = true;
+
+    // ARM A — THE MIRROR MAIN DRAIN'S OWN RETIRE (the mirror src the
+    // trio dest the forward order wears — the placed stack's own word
+    // the seat banks, the drained row the NONE retires)
+    app.inventory.items[35] = (potion, 1);
+    app.items_potion_kinds[35] = swift;
+    app.click_anvil_slot(ax + 8, ay + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (potion, 1),
+        "the trio seat the fill wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], swift,
+        "the placed stack's own word banks"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[35], none,
+        "the drained row the word retires"
+    );
+    app.anvil_slots[0] = (0, 0);
+    app.anvil_seat_potion_kinds[0] = none;
+
+    // ARM B — THE HOTBAR DRAIN'S OWN RETIRE (the -30 shift the mapped
+    // row reads — the word the hotbar stack lends, the drained row the
+    // NONE retires)
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = night;
+    app.click_anvil_slot(hx + 8, hy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (potion, 1),
+        "the trio seat the fill wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], night,
+        "the placed stack's own word banks"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained row the word retires"
+    );
+    app.anvil_slots[0] = (0, 0);
+    app.anvil_seat_potion_kinds[0] = none;
+
+    // ARM C — THE KINDED REMAINDER'S OWN WORD (the one-seat trio the
+    // partial move wears — the filled seat the fill wears, the
+    // remainder the source keeps, the word the same row wears)
+    app.anvil_slots[1] = (dirt, 1);
+    app.inventory.items[35] = (potion, 2);
+    app.items_potion_kinds[35] = swift;
+    app.click_anvil_slot(ax + 8, ay + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (potion, 1),
+        "the one seat the fill wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], swift,
+        "the placed stack's own word banks"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (potion, 1),
+        "the remainder the source keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[35], swift,
+        "the kinded remainder the word keeps"
+    );
+    app.anvil_slots[0] = (0, 0);
+    app.anvil_seat_potion_kinds[0] = none;
+    app.anvil_slots[1] = (0, 0);
+
+    // ARM D — THE NO-ROOM'S OWN SILENCE (the full trio the move
+    // refuses — the stack the source keeps, the word the same row
+    // wears)
+    app.anvil_slots[0] = (potion, 1);
+    app.anvil_slots[1] = (dirt, 1);
+    app.inventory.items[35] = (potion, 3);
+    app.items_potion_kinds[35] = swift;
+    app.click_anvil_slot(ax + 8, ay + 8, 0);
+    assert_eq!(
+        app.inventory.items[35],
+        (potion, 3),
+        "the no-room walk the stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[35], swift,
+        "the no-room walk the word keeps"
+    );
+    app.anvil_slots[0] = (0, 0);
+    app.anvil_slots[1] = (0, 0);
+
+    // ARM E — THE TRIO SOURCE'S OWN RIDE (the input seat the mirror
+    // lands — the word the seat store lends, the hotbar-tail row the
+    // bank keeps, the drained seat the NONE retires)
+    app.anvil_slots[0] = (potion, 1);
+    app.anvil_seat_potion_kinds[0] = night;
+    app.click_anvil_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (0, 0),
+        "the drained seat the move empties"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], none,
+        "the drained seat the word retires"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (potion, 1),
+        "the mirror tail the fill wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], night,
+        "the landed stack's own word banks"
+    );
+}

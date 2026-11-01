@@ -30349,6 +30349,31 @@ impl App {
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 3);
+            // THE KIND'S OWN PRE-READ (the source row's word the ride
+            // banks — the trio seats the seat store's own word the id
+            // gate answers, the mirror rows the INVENTORY bank's
+            // normalized read speaks [the row_potion_kind the own gate
+            // the read wears])
+            let src_kind = self.anvil_seat_potion_kind(menu);
+            // THE DESTINATIONS' OWN BEFORE-COUNTS (the 384 law the old
+            // pairs the empty-fill gate reads — the same cells the
+            // deltas the ride below mutates)
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i != menu)
+                .map(|(i, _)| {
+                    (
+                        *i,
+                        if *i < 2 {
+                            self.anvil_slots.get(*i).copied().unwrap_or((0, 0))
+                        } else if *i < 30 {
+                            self.inventory.items.get(*i + 6).copied().unwrap_or((0, 0))
+                        } else {
+                            self.inventory.items.get(*i - 30).copied().unwrap_or((0, 0))
+                        },
+                    )
+                })
+                .collect();
             // THE NUMBERING'S OWN WALK (the anvil's own map the loop
             // re-keys — the main rows 3..29 the +6 shift the write
             // keeps, the hotbar 30..38 the -30 shift the drain speaks;
@@ -30363,6 +30388,26 @@ impl App {
                 } else {
                     self.inventory.items[*i - 30] = *pair;
                 }
+            }
+            // THE QUICK-MOVE'S OWN KIND RIDE (the 384 law the furnace's
+            // own trio wears, the 397 round the dispenser's own tail
+            // speaks — the empty dest the placed stack's own word
+            // banks, the occupied merge the original's word keeps, the
+            // kinded remainder the word keeps, the drained row the
+            // NONE retires; the no-room walk the silence the stack's
+            // own word keeps [the empty changed the tail never wears])
+            for (idx, old) in &old_dests {
+                if old.1 <= 0 {
+                    self.anvil_seat_kind_put(*idx, src_kind);
+                }
+            }
+            if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == menu) {
+                let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                    src_kind
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                self.anvil_seat_kind_put(menu, tail);
             }
             // THE LANES' OWN QUICK-MOVE RIDE (the whole move the
             // hand-over answers — the source seat's lanes the FIRST
