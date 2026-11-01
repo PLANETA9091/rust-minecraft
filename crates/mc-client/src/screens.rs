@@ -76927,9 +76927,16 @@ impl App {
                     // the AUTHORITATIVE carried lands too (the chest's
                     // wholesale replacement speaks)
                     self.anvil_carried = c.carried;
-                    // the wire's own word (the live lane the honest NONE
-                    // wall keeps — the correction the kind never carries)
-                    self.anvil_seat_potion_kinds[39] = crate::brewing_sim::POTION_KIND_NONE;
+                    // THE WHOLESALE'S OWN KIND LANDING (the chest's own
+                    // law the anvil's wire lane re-wears — the
+                    // correction the kind never carries, the trio's own
+                    // words the wholesale landing the honest NONE wall
+                    // re-banks [the stale word the prior window's own
+                    // ride left the re-sync retires], the carried's own
+                    // seat the same wall keeps, the mirror rows the
+                    // words the landing never moves — the INVENTORY
+                    // bank the rows read)
+                    self.anvil_seat_potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 40];
                     self.anvil_pos = None;
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Anvil);

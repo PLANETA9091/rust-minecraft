@@ -21770,6 +21770,106 @@ fn the_offline_dispenser_quick_move_the_kind_tail_wears() {
     );
 }
 
+/// THE ANVIL'S OWN WIRE KIND WALK (the 397 NEXT list's own walk the
+/// round answers — the live lane's own projection the seat words the
+/// wholesale landing re-banks, the chest's own law the wire tail
+/// re-wears): the wholesale correction the kind never carries — the
+/// trio's own words the landing the honest NONE wall re-banks (the
+/// stale word the prior window's own ride left the re-sync retires),
+/// the carried's own seat the same wall keeps, the mirror rows the
+/// words the landing never moves (the INVENTORY bank the rows read).
+#[test]
+fn the_anvil_wire_wholesale_the_kind_landing_wears() {
+    use crate::world_view::LiveContainer;
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(398);
+    app.enter_world();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    let mut nbt = Vec::new();
+    mc_protocol::nbt::write_network_nbt(
+        &mc_protocol::nbt::Nbt::Compound(vec![(
+            "text".to_string(),
+            mc_protocol::nbt::Nbt::String("Villager's Anvil".to_string()),
+        )]),
+        &mut nbt,
+    );
+    let feed = |slots: Vec<(i32, i32)>, carried: (i32, i32), state: i32| LiveContainer {
+        id: 2,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots,
+        bundle_rows: Vec::new(),
+        carried,
+        state_id: state,
+        data_slots: Vec::new(),
+        title_nbt: nbt.clone(),
+    };
+    // the stale words the prior window's own ride left (the trio +
+    // the carried the seat store banks, the mirror row the INVENTORY
+    // bank wears)
+    app.anvil_seat_potion_kinds[0] = night;
+    app.anvil_seat_potion_kinds[1] = swift;
+    app.anvil_seat_potion_kinds[2] = night;
+    app.anvil_seat_potion_kinds[39] = night;
+    app.items_potion_kinds[10] = swift;
+
+    // ARM A — THE WHOLESALE'S OWN RETIRE (the landing the words the
+    // honest NONE wall re-banks — the pairs the wholesale wears)
+    let mut slots = vec![(potion, 1), (0, 0), (0, 0)];
+    slots.resize(39, (0, 0));
+    app.live_container_updated(Some(feed(slots, (0, 0), 7)));
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.anvil_slots[0],
+        (potion, 1),
+        "the wholesale the pairs wear"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], none,
+        "the stale word the landing retires"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[1], none,
+        "the stale word the landing retires"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[2], none,
+        "the stale word the landing retires"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], swift,
+        "the mirror row the word keeps"
+    );
+
+    // ARM B — THE CARRIED'S OWN SEAT (the carried the wholesale wears
+    // — the word the correction the kind never carries)
+    let mut slots = vec![(potion, 1), (0, 0), (0, 0)];
+    slots.resize(39, (0, 0));
+    app.live_container_updated(Some(feed(slots, (potion, 1), 8)));
+    assert_eq!(
+        app.anvil_carried,
+        (potion, 1),
+        "the carried the wholesale wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], none,
+        "the carried's word the wall keeps"
+    );
+
+    // ARM C — THE RE-SYNC'S OWN RE-BANK (the local ride's word the
+    // re-sync retires — the wholesale the same wall re-banks)
+    app.anvil_seat_potion_kinds[0] = night;
+    let mut slots = vec![(potion, 1), (0, 0), (0, 0)];
+    slots.resize(39, (0, 0));
+    app.live_container_updated(Some(feed(slots, (0, 0), 9)));
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], none,
+        "the re-sync the wholesale re-banks"
+    );
+}
+
 /// THE WIRE GENERIC'S OWN PLACE WORD BANK (the autopush-391 round —
 /// the 390 table's own law the generic's wire tail re-wears, the
 /// 382 folds' own reads the write follows): the wire window-0's
