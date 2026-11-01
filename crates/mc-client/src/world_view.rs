@@ -3112,8 +3112,15 @@ pub fn predict_pickup_kind(
 /// getMaxStackSize(stack) cap the 26.2 walk speaks], the merge arm
 /// the room the slot-max closes, the full seat the no-op keeps, the
 /// pickup arm the base walk verbatim wears, the component-refusal
-/// swap the kind walk's own law keeps. The left press's own walk the
-/// enchant lane's item seat answers.
+/// swap the kind walk's own law keeps. THE SWAP ARM'S OWN COUNT GATE
+/// (the autopush-406 round — the doClick bytes the pcs 989-1001 the
+/// acm_doClick_262.txt bank keeps): the `carried.getCount() >
+/// slot.getMaxStackSize(carried)` the if_icmpgt the silence answers
+/// — the carried 64 the max-1 seat the exchange never spends, the
+/// count-1 the stacks exchange wears, the both-filled different-item
+/// arm the same law answers, the kind-pair's own early return the
+/// same ceiling keeps. The left press's own walk the enchant lane's
+/// item seat answers.
 pub fn predict_pickup_kind_max(
     slot: (i32, i32),
     carried: (i32, i32),
@@ -3127,8 +3134,12 @@ pub fn predict_pickup_kind_max(
         && !potion_pair_same_item(slot.0, slot_kind, carried_kind)
     {
         // the vanilla swap — the different components the different
-        // items speak
-        return (carried, slot);
+        // items speak — the COUNT GATE the bytes keep (the carried
+        // over the seat's own max the silence answers)
+        if carried.1 <= slot_max {
+            return (carried, slot);
+        }
+        return (slot, carried);
     }
     let slot_empty = slot.1 <= 0;
     let carried_empty = carried.1 <= 0;
@@ -3163,8 +3174,14 @@ pub fn predict_pickup_kind_max(
                     )
                 }
             } else {
-                // different items: the vanilla swap
-                (carried, slot)
+                // different items: the vanilla swap — the COUNT GATE
+                // the same bytes keep (the 64 the max-1 seat the
+                // exchange never spends, the silence the no-op keeps)
+                if carried.1 <= slot_max {
+                    (carried, slot)
+                } else {
+                    (slot, carried)
+                }
             }
         }
     }

@@ -52536,7 +52536,18 @@ impl App {
         let seat_ench = !self.enchant_comps[menu].is_empty();
         let car_ench = !self.enchant_comps[38].is_empty();
         let (new_slot, new_carried) = if button == 0 {
-            if (seat_ench || car_ench) && believed.1 > 0 && old_car.1 > 0 && believed.0 == old_car.0
+            // THE SWAP ARM'S OWN COUNT GATE (the 406 round — the
+            // doClick bytes the pcs 989-1001 the acm_doClick_262.txt
+            // bank keeps: the `carried.getCount() >
+            // slot.getMaxStackSize(carried)` the if_icmpgt the silence
+            // answers — the max-1 seat the 64-carried the exchange
+            // never spends, the refused fall the predictor's own
+            // room-0 merge silence answers)
+            if (seat_ench || car_ench)
+                && believed.1 > 0
+                && old_car.1 > 0
+                && believed.0 == old_car.0
+                && !(menu == 0 && old_car.1 > 1)
             {
                 (old_car, believed) // the swap the merge refusal wears —
                                     // the full slot the vanilla's own
@@ -52594,7 +52605,8 @@ impl App {
             let refusal_swap = (seat_ench || car_ench)
                 && believed.1 > 0
                 && old_car.1 > 0
-                && believed.0 == old_car.0;
+                && believed.0 == old_car.0
+                && !(menu == 0 && old_car.1 > 1);
             let seat_store = self.enchant_comps[menu].clone();
             let car_store = self.enchant_comps[38].clone();
             let (mut new_seat_store, mut new_car_store) = (seat_store.clone(), car_store.clone());

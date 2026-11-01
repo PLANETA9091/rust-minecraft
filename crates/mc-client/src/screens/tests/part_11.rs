@@ -23855,3 +23855,132 @@ fn the_enchant_item_seat_the_max_one_wears() {
     );
     assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
 }
+
+/// THE SWAP ARM'S OWN COUNT GATE (the vanilla PICKUP swap the
+/// carried-count gate the bytes speak — the acm_doClick_262.txt the
+/// pcs 989-1001 bank keeps: the `carried.getCount() >
+/// slot.getMaxStackSize(carried)` the if_icmpgt the silence answers,
+/// the setCarried + setByPlayer exchange the fall-through wears —
+/// the item seat's own max-one the 64-carried the swap never spends,
+/// the component-refusal pair the same gate the stores keep, the
+/// count-1 the exchange rides, the place arm the gate never binds).
+#[test]
+fn the_enchant_swap_arm_the_count_gate_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+    let mut app = App::new(406);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // item seat 0)
+    let (ix, iy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+
+    // ARM A — THE DIFFERENT-ITEM SWAP'S OWN SILENCE (the 64-carried
+    // the max-1 seat the exchange never spends — the if_icmpgt the
+    // silence answers, the seat and the cursor the stacks keep)
+    app.enchant_slots[0] = (dirt, 1);
+    app.enchant_carried = (cobble, 64);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the gate the exchange never spends"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (cobble, 64),
+        "the silence the cursor keeps"
+    );
+
+    // ARM B — THE COUNT-ONE'S OWN SWAP (the single carried the gate
+    // opens — the stacks exchange, the seat the cobble wears)
+    app.enchant_carried = (cobble, 1);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (cobble, 1),
+        "the count-1 the exchange wears"
+    );
+    assert_eq!(app.enchant_carried, (dirt, 1), "the swap the cursor hands");
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_carried = (0, 0);
+
+    // ARM C — THE COMPONENT PAIR'S OWN SILENCE (the enchanted seat the
+    // 64-carried the same-id pair the swap never spends — the stores
+    // the silence keeps, the exchange the ride never answers)
+    app.enchant_slots[0] = (dirt, 1);
+    app.enchant_comps[0] = vec![(33, 1)];
+    app.enchant_carried = (dirt, 64);
+    app.enchant_comps[38].clear();
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the pair the gate never spends"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 64),
+        "the silence the cursor keeps"
+    );
+    assert!(
+        !app.enchant_comps[0].is_empty(),
+        "the seat store the silence keeps"
+    );
+    assert!(
+        app.enchant_comps[38].is_empty(),
+        "the cursor store the silence keeps"
+    );
+
+    // ARM D — THE COMPONENT PAIR'S OWN COUNT-ONE SWAP (the single
+    // carried the exchange the stores ride — the seat store the
+    // cursor hands, the cursor store the seat wears)
+    app.enchant_carried = (dirt, 1);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the count-1 the exchange wears"
+    );
+    assert_eq!(app.enchant_carried, (dirt, 1), "the swap the pair keeps");
+    assert!(
+        app.enchant_comps[0].is_empty(),
+        "the seat store the exchange retires"
+    );
+    assert!(
+        !app.enchant_comps[38].is_empty(),
+        "the cursor store the exchange wears"
+    );
+    app.enchant_comps[38].clear();
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_carried = (0, 0);
+
+    // ARM E — THE PLACE ARM'S OWN VERBATIM (the empty seat the ONE
+    // takes — the gate the place never binds, the whole-move law the
+    // 405 walk wears)
+    app.enchant_carried = (dirt, 1);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the place the gate never binds"
+    );
+    assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+}
