@@ -42561,6 +42561,17 @@ impl App {
         let state_id = self.live_inv_state_id;
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same seats the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| (m, self.live_inv_slots[m].1))
+            .collect();
+        // THE PRE-RETIRE WORD (the drag's own word the place spends —
+        // the copy the after-walk's bank reads, the drag's own word
+        // retire the AFTER the emptied carried the NONE wears)
+        let pre_drag_kind = self.live_carried_potion_kind;
         let items_kinds = &self.items_potion_kinds;
         let carried_kind = self.live_carried_potion_kind;
         let seat_kinds = |menu: usize| match kind_bank_seat(menu as i32) {
@@ -42578,6 +42589,22 @@ impl App {
             carried_kind,
             &seat_kinds,
         );
+        // THE PLACE'S OWN WORD BANK (the 390 table's own law the
+        // generic's wire tail re-wears — the 382 folds' own reads the
+        // write follows): the after-walk the empty seat the placed
+        // stack's own word banks (the occupied row the merge the
+        // original's word keeps, the craft/armor wall the None the
+        // write never wears — the kind_bank_seat's own mapping the
+        // same reads the bank answers), the pre-retire word the
+        // honest order reads
+        for (menu, old_count) in &before {
+            let new = self.live_inv_slots[*menu];
+            if *old_count == 0 && new.1 > 0 {
+                if let Some(seat) = kind_bank_seat(*menu as i32) {
+                    self.items_potion_kinds[seat] = pre_drag_kind;
+                }
+            }
+        }
         // the drag's own word (the offline walk's own law the wire's
         // tail re-wears — the emptied carried the NONE wears, the
         // remainder the same stack the word keeps)
