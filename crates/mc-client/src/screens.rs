@@ -52393,6 +52393,36 @@ impl App {
                 }
             }
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 2);
+            // THE KIND'S OWN PRE-READ (the source row's word the ride
+            // banks — the mirror rows the INVENTORY bank's normalized
+            // read speaks [the row_potion_kind the own gate the read
+            // wears], the pair seats the kindless store the honest
+            // NONE keeps — the dev-204 law the plain walk's read wears)
+            let mapped_src = if menu < 29 { menu + 7 } else { menu - 29 };
+            let src_kind = if menu >= 2 {
+                self.row_potion_kind(mapped_src)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            // THE DESTINATIONS' OWN BEFORE-COUNTS (the 384 law the old
+            // pairs the empty-fill gate reads — the same cells the
+            // deltas the ride below mutates)
+            let old_dests: Vec<(usize, (i32, i32))> = changed
+                .iter()
+                .filter(|(i, _)| *i != menu)
+                .map(|(i, _)| {
+                    (
+                        *i,
+                        if *i < 2 {
+                            self.enchant_slots.get(*i).copied().unwrap_or((0, 0))
+                        } else if *i < 29 {
+                            self.inventory.items.get(*i + 7).copied().unwrap_or((0, 0))
+                        } else {
+                            self.inventory.items.get(*i - 29).copied().unwrap_or((0, 0))
+                        },
+                    )
+                })
+                .collect();
             for (i, pair) in &changed {
                 if *i < 2 {
                     self.enchant_slots[*i] = *pair;
@@ -52400,6 +52430,32 @@ impl App {
                     self.inventory.items[*i + 7] = *pair;
                 } else {
                     self.inventory.items[*i - 29] = *pair;
+                }
+            }
+            // THE QUICK-MOVE'S OWN KIND RIDE (the 384 law the anvil's
+            // own walk re-wears, the 397 round the dispenser's own tail
+            // speaks — the empty dest the placed stack's own word
+            // banks [the mirror rows the INVENTORY bank the positional
+            // map writes, the pair seats the kindless store the honest
+            // wall keeps — the stale word the ride's own correction
+            // retires], the occupied merge the original's word keeps,
+            // the kinded remainder the word keeps, the drained row the
+            // NONE retires; the no-room walk the silence the stack's
+            // own word keeps [the empty changed the tail never wears])
+            for (idx, old) in &old_dests {
+                if old.1 <= 0 && *idx >= 2 {
+                    let dm = if *idx < 29 { *idx + 7 } else { *idx - 29 };
+                    self.items_potion_kinds[dm] = src_kind;
+                }
+            }
+            if menu >= 2 {
+                if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == menu) {
+                    let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                        src_kind
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    self.items_potion_kinds[mapped_src] = tail;
                 }
             }
             // THE STORE'S OWN QUICK-MOVE RIDE (the dev-196 round — the
