@@ -9499,6 +9499,13 @@ pub struct App {
     /// read, the close arm the flush banks, the break lane the
     /// removal walks, the dual-root save the third list rides.
     pub furnace_word_stores: std::collections::HashMap<(i32, i32, i32), [i32; 4]>,
+    /// THE FURNACE TRIO'S OWN KIND BANK (the dev-213 round — the
+    /// result take's own word the plain id model never banked, the
+    /// per-cell store the furnace_word_stores' own pattern wears:
+    /// INPUT 0 FUEL 1 RESULT 2 the FurnaceMenu law the words key,
+    /// the disk the "furnace_kinds" row the same file banks, the
+    /// restart the placed potion's word the reopen wears).
+    pub furnace_kind_stores: std::collections::HashMap<(i32, i32, i32), [i32; 3]>,
     /// THE FURNACE'S OWN LIVE SHAPE (the menu type 14 lane's own
     /// projection — the menu's 39 slots as (item_id, count) pairs:
     /// input 0, fuel 1, result 2, the standard rows 3..39 the
@@ -9556,6 +9563,11 @@ pub struct App {
     /// store the honest NONE wall keeps, the close's ride home the
     /// receiving row banks).
     pub furnace_carried_potion_kind: i32,
+    /// THE FURNACE TRIO'S OWN LIVE WORDS (the open window's three
+    /// seats the words wear — the bank's load the open rides, the
+    /// flush the re-bank serves, the reads the id gate normalizes;
+    /// the wire landing the honest NONE wall the fresh open keeps).
+    pub furnace_seat_potion_kinds: [i32; 3],
     /// THE OFFLINE SIM'S OWN MEMORY (the block entity's setItem
     /// detector the cooking-words reset answers — the tick walk's
     /// own state).
@@ -12476,6 +12488,75 @@ pub fn furnace_words_from_nbt(
     stores
 }
 
+/// THE FURNACE KINDS' OWN BANK (the dev-213 round — the trio's
+/// potion words the same file the list wears, the furnace_words'
+/// own shape the words bank rides: each entry the x/y/z triple +
+/// the "Kinds" list of 3 Int compounds the FurnaceMenu law keeps —
+/// 0 the input, 1 the fuel, 2 the result; the BTree order the
+/// deterministic bytes keep, the cap the 3-word width speaks).
+pub fn furnace_kinds_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), [i32; 3]>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for ((x, y, z), kinds) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            (
+                "Kinds".to_string(),
+                mc_protocol::nbt::Nbt::List(
+                    kinds
+                        .iter()
+                        .map(|&k| mc_protocol::nbt::Nbt::Int(k))
+                        .collect(),
+                ),
+            ),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE FURNACE KINDS' OWN PARSE (the tolerant walk the words parse
+/// wears: the missing list the honest empties keep, the missing
+/// coordinate the entry skip keeps, the short list the NONE pad
+/// fills — never a guessed kind the absence would invent, the
+/// over-long list the 3-word cap truncates).
+pub fn furnace_kinds_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), [i32; 3]> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("furnace_kinds") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        let mut kinds = [crate::brewing_sim::POTION_KIND_NONE; 3];
+        if let Some(mc_protocol::nbt::Nbt::List(items)) =
+            fields.iter().find(|(k, _)| k == "Kinds").map(|(_, v)| v)
+        {
+            for (i, item) in items.iter().enumerate().take(3) {
+                if let Some(k) = item.as_i32() {
+                    kinds[i] = k;
+                }
+            }
+        }
+        stores.insert((x, y, z), kinds);
+    }
+    stores
+}
+
 /// THE BREWING WORDS' OWN BANK (the dev-338 round — the furnace
 /// words' own law the brewing lane re-wears: the same file the
 /// "brewing_words" list wears, each entry the x/y/z triple + the
@@ -13122,6 +13203,7 @@ impl App {
             gateway_stores: std::collections::HashMap::new(),
             furnace_open_cell: None,
             furnace_word_stores: std::collections::HashMap::new(),
+            furnace_kind_stores: std::collections::HashMap::new(),
             furnace_slots: vec![(0, 0); 39],
             furnace_is_live: false,
             furnace_live_window: None,
@@ -13132,6 +13214,7 @@ impl App {
             furnace_pos: None,
             furnace_carried: (0, 0),
             furnace_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
+            furnace_seat_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 3],
             furnace_sim: crate::furnace_sim::FurnaceSim::default(),
             dispenser_slots: Vec::new(),
             dispenser_mirror: Vec::new(),
@@ -13876,6 +13959,16 @@ impl App {
             let flipped = self
                 .furnace_sim
                 .tick(&mut self.furnace_slots, &mut self.furnace_data);
+            // THE TRIO'S OWN WORD SYNC (the dev-213 round — the tick's
+            // smelt walk the words follow: the emptied seat the NONE
+            // retires, the shrink the same stack the word keeps, the
+            // fresh result the recipe's wordless output the NONE
+            // keeps)
+            for (s, seat) in self.furnace_slots.iter().enumerate().take(3) {
+                if seat.1 <= 0 {
+                    self.furnace_seat_potion_kinds[s] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
             if flipped {
                 let lit_now = self.furnace_data[crate::furnace_sim::DATA_LIT_TIME] > 0;
                 // THE FLIP'S OWN HELPER (the dev-72 round — the same
@@ -13989,6 +14082,21 @@ impl App {
                     };
                     sim.prime_loaded(&mut words, trio[0]);
                     let flipped = sim.tick(&mut trio, &mut words);
+                    // THE TRIO'S OWN WORD SYNC (the dev-213 round — the
+                    // banked cell's tick the words follow: the emptied
+                    // seat the NONE retires, the shrink the same stack
+                    // the word keeps)
+                    {
+                        let kinds = self
+                            .furnace_kind_stores
+                            .entry(cell)
+                            .or_insert([crate::brewing_sim::POTION_KIND_NONE; 3]);
+                        for (s, seat) in trio.iter().enumerate().take(3) {
+                            if seat.1 <= 0 {
+                                kinds[s] = crate::brewing_sim::POTION_KIND_NONE;
+                            }
+                        }
+                    }
                     self.furnace_stores.insert(cell, trio);
                     self.furnace_word_stores.insert(cell, words);
                     if flipped {
@@ -27616,6 +27724,11 @@ impl App {
                     self.container_stores_load_once();
                     self.furnace_stores.insert(prev, trio);
                     self.furnace_word_stores.insert(prev, self.furnace_data);
+                    // THE TRIO'S OWN WORD RIDE HOME (the dev-213 round —
+                    // the kind words the same switch walk re-banks, the
+                    // prev cell the reopen loads)
+                    self.furnace_kind_stores
+                        .insert(prev, self.furnace_seat_potion_kinds);
                     // THE PREV CELL'S OWN FILL (the switch the tick-worn
                     // trio the analog re-banks — the open-screen ticks
                     // the banked slots the flush never rode, the
@@ -27657,6 +27770,14 @@ impl App {
             // the zeros keep, the SAME furnace the retention law the
             // words never clobbers)
             self.furnace_data = *self.furnace_word_stores.entry(pos).or_insert([0i32; 4]);
+            // THE TRIO'S OWN WORD LOAD (the dev-213 round — the banked
+            // kinds the fresh branch wears: the restart the placed
+            // potion's word the reopen keeps, the fresh cell the
+            // wordless open lays)
+            self.furnace_seat_potion_kinds = *self
+                .furnace_kind_stores
+                .entry(pos)
+                .or_insert([crate::brewing_sim::POTION_KIND_NONE; 3]);
             // THE LOADED INPUT'S OWN PRIME (the dev-72 round — the
             // banked progress the first live tick never resets: the
             // vanilla law the setItem reset the input CHANGE alone
@@ -31777,6 +31898,11 @@ impl App {
             // the same flush walk the bank answers: the burn/cook
             // state the close banks, the restart the resume wears)
             self.furnace_word_stores.insert(pos, self.furnace_data);
+            // THE TRIO'S OWN WORD RIDE HOME (the dev-213 round — the
+            // kind words the same flush banks, the restart the
+            // reopen wears)
+            self.furnace_kind_stores
+                .insert(pos, self.furnace_seat_potion_kinds);
             self.container_stores_file_save();
             // THE FILL'S OWN RIDE HOME (the comparator's container lane
             // the close flush banks — the chest's own law the trio
@@ -31812,6 +31938,10 @@ impl App {
         // state the entry's removal wears: the broken furnace the
         // progress never resurrects)
         self.furnace_word_stores.remove(&pos);
+        // THE KINDS' OWN DEATH RIDE (the dev-213 round — the trio's
+        // words the entry's removal wears: the broken furnace the
+        // words never resurrect)
+        self.furnace_kind_stores.remove(&pos);
         // THE FILL'S OWN DEATH RIDE (the comparator's container lane
         // the dig serves — the chest's own removal law the trio wears:
         // the broken furnace the entry the air drops, the stale fill
@@ -35166,6 +35296,40 @@ impl App {
         }
     }
 
+    /// THE FURNACE TRIO'S OWN SEAT KIND READ (the dev-213 round — the
+    /// id-gated normalized word the live store answers: the trio the
+    /// SEAT STORE's own word speaks, the store rows the INVENTORY
+    /// bank's mapped read lends, the stale word the non-potion seat
+    /// the honest NONE keeps).
+    fn furnace_seat_potion_kind(&self, seat: usize) -> i32 {
+        let (id, _) = self.furnace_slots.get(seat).copied().unwrap_or((0, 0));
+        if !crate::world::brewing_is_potion_kind(id) {
+            return crate::brewing_sim::POTION_KIND_NONE;
+        }
+        match seat {
+            0 | 1 | 2 => self.furnace_seat_potion_kinds[seat],
+            s => match Self::furnace_menu_to_inventory(s) {
+                Some(row) => self.items_potion_kinds[row],
+                None => crate::brewing_sim::POTION_KIND_NONE,
+            },
+        }
+    }
+
+    /// THE FURNACE TRIO'S OWN SEAT KIND WRITE (the live store the
+    /// word banks — the trio the store answers, the store rows the
+    /// INVENTORY bank the positional map writes, the flush the disk
+    /// ride serves).
+    fn furnace_seat_kind_put(&mut self, seat: usize, kind: i32) {
+        match seat {
+            0 | 1 | 2 => self.furnace_seat_potion_kinds[seat] = kind,
+            s => {
+                if let Some(row) = Self::furnace_menu_to_inventory(s) {
+                    self.items_potion_kinds[row] = kind;
+                }
+            }
+        }
+    }
+
     /// THE FURNACE'S OWN TOOLTIP SEAT (the dev-203 round — the
     /// 351/352 law the container family's own canvases re-wear: the
     /// hovered seat's rows the shared lane speaks, the mirror rows
@@ -35202,16 +35366,11 @@ impl App {
         let ench = inv
             .map(|i| self.inventory_enchants.get(i).cloned().unwrap_or_default())
             .unwrap_or_default();
-        // THE KIND'S OWN RIDE (the 356 round — the 355 law the family's
-        // mirror rows re-wear: the real inventory's kinds the menu map
-        // reads, the trio the NONE wall keeps — the kind the furnace
-        // store never carries)
-        let kind = if crate::world::brewing_is_potion_kind(id) {
-            inv.map(|i| self.items_potion_kinds[i])
-                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
-        } else {
-            crate::brewing_sim::POTION_KIND_NONE
-        };
+        // THE KIND'S OWN RIDE (the 356 round the dev-213 wall re-wears
+        // — the real inventory's kinds the menu map reads, the TRIO
+        // the seat store's own word the id gate answers — the kind
+        // the furnace store carries now)
+        let kind = self.furnace_seat_potion_kind(s);
         let mut rows = Self::item_tooltip_rows_kind(id, kind, self.advanced_item_tooltips, &ench);
         if let Some(name) = inv.and_then(|i| self.items_custom_names[i].clone()) {
             if let Some(first) = rows.first_mut() {
@@ -41292,23 +41451,16 @@ impl App {
             return; // canItemQuickReplace — the different item the seat refuses
         }
         // THE COMPONENT HALF (the autopush-382 round — the same-id
-        // kind pair the seat's own word refuses): the trio the
-        // kindless store the dev-208 wall keeps, the store rows the
-        // menu map's gated word (the write-through the same cells
-        // answer); the WIRE lane the paint's own gate the 385 bank
-        // lifts — the carried word the wire walk banks (the open the
-        // fresh door re-banks, the close the word retires), the seat
-        // rows the items bank's honest word the same read speaks, the
-        // BOTH lanes the same verdict wears
+        // kind pair the seat's own word refuses; the WIRE lane the
+        // paint's own gate the 385 bank lifts — the carried word the
+        // wire walk banks, the BOTH lanes the same verdict wears)
         let carried_kind = self.furnace_carried_potion_kind;
-        let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
-            match Self::furnace_menu_to_inventory(menu) {
-                Some(row) => self.items_potion_kinds[row],
-                None => crate::brewing_sim::POTION_KIND_NONE,
-            }
-        } else {
-            crate::brewing_sim::POTION_KIND_NONE
-        };
+        // the seat's own word the helper reads (the dev-213 round —
+        // the trio the SEAT STORE's word answers, the store rows the
+        // bank's mapped read lends; the WIRE lane the paint's own
+        // gate the 385 bank lifts — the carried word the wire walk
+        // banks, the BOTH lanes the same verdict wears)
+        let seat_kind = self.furnace_seat_potion_kind(menu);
         if seat_id == carried.0 && qc_collect_kind_refuses(seat_kind, carried_kind) {
             return; // the component half — the same-id kind pair refuses
         }
@@ -42995,19 +43147,11 @@ impl App {
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
             }
-            // THE COMPONENT HALF (the autopush-383 round — the same-id
-            // kind pair the seat's own word the place refuses): the
-            // trio the kindless store the dev-208 wall keeps, the
-            // store rows the menu map's gated word (the paint's own
-            // reads the fold re-wears)
-            let seat_kind = if crate::world::brewing_is_potion_kind(seat_id) {
-                match Self::furnace_menu_to_inventory(menu) {
-                    Some(row) => self.items_potion_kinds[row],
-                    None => crate::brewing_sim::POTION_KIND_NONE,
-                }
-            } else {
-                crate::brewing_sim::POTION_KIND_NONE
-            };
+            // THE COMPONENT HALF (the autopush-383 round the dev-213
+            // read re-wears — the same-id kind pair the seat's own
+            // word the place refuses: the trio the SEAT STORE's word
+            // answers, the store rows the bank's mapped read lends)
+            let seat_kind = self.furnace_seat_potion_kind(menu);
             if seat_id == carried.0
                 && qc_collect_kind_refuses(seat_kind, self.furnace_carried_potion_kind)
             {
@@ -43039,16 +43183,13 @@ impl App {
                 let idx = if menu < 30 { 9 + menu - 3 } else { menu - 30 };
                 self.inventory.items[idx] = new;
             }
-            // THE PLACE'S OWN WORD BANK (the autopush-383 round — the
-            // empty store row the placed stack's own word banks, the
-            // occupied row the merge the original's word keeps, the
-            // trio the kindless wall the bank never wears)
+            // THE PLACE'S OWN WORD BANK (the autopush-383 round the
+            // dev-213 arm completes — the empty seat the placed
+            // stack's own word banks, the occupied seat the merge the
+            // original's word keeps, the TRIO the SEAT STORE the
+            // words bank the rows the INVENTORY keeps)
             if seat_count == 0 {
-                if let Some(row) = Self::furnace_menu_to_inventory(menu) {
-                    if row < self.items_potion_kinds.len() {
-                        self.items_potion_kinds[row] = self.furnace_carried_potion_kind;
-                    }
-                }
+                self.furnace_seat_kind_put(menu, self.furnace_carried_potion_kind);
             }
         }
         self.furnace_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
@@ -49165,6 +49306,8 @@ impl App {
                 // extend law the in-memory entry keeps)
                 self.furnace_word_stores
                     .extend(furnace_words_from_nbt(&root));
+                self.furnace_kind_stores
+                    .extend(furnace_kinds_from_nbt(&root));
                 // THE BREWING WORDS' OWN PARSE (the dev-338 round —
                 // the same read the brew/fuel bank answers, the same
                 // extend law the in-memory entry keeps)
@@ -49282,6 +49425,16 @@ impl App {
             (
                 "furnace_words".to_string(),
                 furnace_words_bank_to_nbt(&self.furnace_word_stores),
+            ),
+            // THE FURNACE KINDS' OWN ROW (the dev-213 round — the
+            // trio's potion words the same file the list wears, the
+            // BTree cell order the deterministic bytes keep, the 3
+            // the FurnaceMenu law's own width the disk banks: the
+            // restart the placed potion's word the session-only
+            // silence the file retires)
+            (
+                "furnace_kinds".to_string(),
+                furnace_kinds_bank_to_nbt(&self.furnace_kind_stores),
             ),
             // THE BREWING WORDS' OWN ROW (the dev-338 round — the
             // stands the same file the list wears, the BTree cell
@@ -52628,30 +52781,34 @@ impl App {
                 .get(slot as usize)
                 .copied()
                 .unwrap_or((0, 0));
-            // THE KIND'S OWN READ (the hoist the component law
-            // pre-keys — the kindless seat the NONE word the verdict
-            // wears, the dev-208 round the reads the predict call
+            // THE KIND'S OWN READS (the hoist the component law
+            // pre-keys — the dev-213 round the TRIO the seat store's
+            // own word answers, the store rows the bank's mapped read
+            // lends, the dev-208 round the reads the predict call
             // pre-wears)
+            let old_seat_kind = self.furnace_seat_potion_kind(slot as usize);
             let old_carried_kind = self.furnace_carried_potion_kind;
             let (new_slot, new_carried) = if button == 0 {
                 crate::world_view::predict_pickup_kind(
                     believed,
                     self.furnace_carried,
-                    crate::brewing_sim::POTION_KIND_NONE,
+                    old_seat_kind,
                     old_carried_kind,
                 )
             } else {
                 crate::world_view::predict_pickup_right(believed, self.furnace_carried)
             };
-            // THE KINDLESS SEAT'S OWN WALL (the chest rows' own law the
-            // furnace's own three re-wear — the (id, count) store the
-            // word never carried: the pickup the silence lends, the
-            // place the word retires, the swap the word the kindless
-            // seat loses, the merge the emptied carried the NONE wears;
-            // the dev-208 round the SAME-ID KIND PAIR the component
-            // law's own swap wears — the wordless seat the kinded
-            // carried the different components answers, the carried
-            // word the kindless store retires)
+            // THE KIND'S OWN FOUR-ARM RIDE (the dev-204 law the
+            // furnace's own trio re-wears — the chest/enchant/anvil's
+            // own shape the same arms speak: the PICKUP the seat's
+            // word the carried banks [the RESULT TAKE'S OWN KIND WORD
+            // the plain id model never wore — the smelted word the
+            // take's own hand answers], the PLACE the word the seat
+            // lays, the MODEL'S OWN SWAP the pairs exchange, the
+            // MERGE the emptied carried the NONE word wears; the trio
+            // the SEAT STORE the words bank, the store rows the
+            // INVENTORY bank the write-through keeps)
+            let mut new_seat_kind = old_seat_kind;
             let mut new_carried_kind = old_carried_kind;
             {
                 // THE COMPONENT'S OWN VERDICT (the plain id test the
@@ -52660,7 +52817,7 @@ impl App {
                 // answers)
                 let pair_same = crate::world_view::potion_pair_same_item(
                     believed.0,
-                    crate::brewing_sim::POTION_KIND_NONE,
+                    old_seat_kind,
                     old_carried_kind,
                 );
                 let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
@@ -52668,8 +52825,10 @@ impl App {
                 let carried_gone = self.furnace_carried.1 > 0 && new_carried.1 <= 0;
                 let carried_new = self.furnace_carried.1 <= 0 && new_carried.1 > 0;
                 if seat_gone && carried_new {
-                    new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    new_carried_kind = old_seat_kind;
+                    new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
                 } else if carried_gone && seat_new {
+                    new_seat_kind = old_carried_kind;
                     new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
                 } else if button == 0
                     && believed.1 > 0
@@ -52680,11 +52839,12 @@ impl App {
                     // different-item exchange keeps — the SAME-ID KIND
                     // PAIR the component law's own answer exchanges,
                     // the right press the never-swap law the silence
-                    // keeps, the carried word the kindless seat loses)
-                    new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    // keeps, the kind the pairs exchange)
+                    std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
                 } else if carried_gone {
                     new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
                 }
+                self.furnace_seat_kind_put(slot as usize, new_seat_kind);
                 self.furnace_carried_potion_kind = new_carried_kind;
             }
             if (slot as usize) < self.furnace_slots.len() {
@@ -76389,6 +76549,10 @@ impl App {
                     // the wire's own word (the live lane the honest NONE
                     // wall keeps — the offline memory the open retires)
                     self.furnace_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    // the trio's own word wall (the dev-213 round — the
+                    // wholesale landing the seats' words the honest NONE
+                    // keeps, the correction the kind never carries)
+                    self.furnace_seat_potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 3];
                     let mut slots = vec![(0i32, 0i32); 39];
                     for (i, &(id, count)) in c.slots.iter().take(39).enumerate() {
                         slots[i] = (id, count);
