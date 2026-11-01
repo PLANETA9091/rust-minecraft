@@ -51647,11 +51647,76 @@ impl App {
                 snapshot.extend_from_slice(&self.dispenser_slots);
                 snapshot.extend_from_slice(&self.dispenser_mirror);
                 let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 9);
+                // THE KIND'S OWN PRE-READ (the source row's word the
+                // ride banks — the nine the kindless store the honest
+                // NONE wall keeps [the (id, count) store the word
+                // never carried], the mirror rows the MIRROR's own id
+                // the gate keeps — the wire belief the real
+                // inventory's stale row never keys)
+                let src_kind = if menu < 9 {
+                    crate::brewing_sim::POTION_KIND_NONE
+                } else {
+                    let row = if menu < 36 { menu } else { menu - 36 };
+                    let (mid, _) = self.dispenser_mirror[menu - 9];
+                    if crate::world::brewing_is_potion_kind(mid) {
+                        self.items_potion_kinds[row]
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    }
+                };
+                // THE DESTINATIONS' OWN BEFORE-COUNTS (the 384 law the
+                // old pairs the empty-fill gate reads — the same cells
+                // the deltas the ride below mutates)
+                let old_dests: Vec<(usize, (i32, i32))> = changed
+                    .iter()
+                    .filter(|(i, _)| *i != menu)
+                    .map(|(i, _)| {
+                        (
+                            *i,
+                            if *i < 9 {
+                                self.dispenser_slots.get(*i).copied().unwrap_or((0, 0))
+                            } else {
+                                self.dispenser_mirror.get(*i - 9).copied().unwrap_or((0, 0))
+                            },
+                        )
+                    })
+                    .collect();
                 for (i, pair) in &changed {
                     if *i < 9 {
                         self.dispenser_slots[*i] = *pair;
                     } else {
                         self.dispenser_mirror[*i - 9] = *pair;
+                    }
+                }
+                // THE QUICK-MOVE'S OWN KIND RIDE (the 384 law the
+                // furnace's own trio wears, the 395 round the chest
+                // family's own lane speaks — the empty dest the placed
+                // stack's own word banks, the occupied merge the
+                // original's word keeps; the nine the kindless store
+                // the word never carried — the grid seats the silence
+                // the honest wall keeps, the mirror rows the items
+                // bank's mapped row the same walk answers [the main
+                // rows the seat itself speaks, the hotbar the -36
+                // shift answers])
+                for (idx, old) in &old_dests {
+                    if old.1 <= 0 && *idx >= 9 {
+                        let row = if *idx < 36 { *idx } else { *idx - 36 };
+                        if row < self.items_potion_kinds.len() {
+                            self.items_potion_kinds[row] = src_kind;
+                        }
+                    }
+                }
+                if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == menu) {
+                    let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                        src_kind
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    if menu >= 9 {
+                        let row = if menu < 36 { menu } else { menu - 36 };
+                        if row < self.items_potion_kinds.len() {
+                            self.items_potion_kinds[row] = tail;
+                        }
                     }
                 }
                 let _ = sink.send(crate::world_view::ContainerCommand::Click(

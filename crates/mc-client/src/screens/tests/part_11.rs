@@ -21375,6 +21375,224 @@ fn the_wire_hopper_quick_move_the_kind_ride_wears() {
     );
 }
 
+/// THE WIRE DISPENSER'S OWN QUICK-MOVE KIND RIDE (the 395 round's own
+/// law the 3x3's own lane re-wears — the chest family's ride the
+/// dispenser's live walk answers): the shift-click's multi-slot
+/// deltas the kind words follow — the nine the kindless store the
+/// honest NONE wall keeps (the grid seats the word never carried),
+/// the mirror rows the items bank's mapped row the same walk answers
+/// (the main rows the seat itself speaks, the hotbar the -36 shift
+/// wears): the empty mirror dest the placed stack's own word banks,
+/// the occupied merge the original's word keeps, the kinded
+/// remainder the word keeps, the no-room walk the silence the
+/// stack's own word keeps, the drained mirror source the NONE
+/// retires, the drained grid seat the store wall's silence wears.
+#[test]
+fn the_wire_dispenser_quick_move_the_kind_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(396);
+    app.enter_world();
+    // the screen the door opens (the paint gate's own shape the wire
+    // fields wear — the fresh window the echo against this id speaks)
+    app.open_dispenser_for((0, 0, 0));
+    app.world_is_network = true;
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_mirror = vec![(0, 0); 36];
+    app.dispenser_is_live = true;
+    app.dispenser_live_window = Some((7, 15));
+    // the geometry the dispenser's own render lays (the 45-seat
+    // canvas the helpers speak — the 3x3 grid + the mirror rows the
+    // standard walk wears)
+    let panel = inventory_panel_origin(640, 360);
+    app.dispenser_panel = panel;
+    let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(45);
+    for i in 0..9usize {
+        let (sx, sy) = dispenser_grid_slot(panel, i);
+        rects.push((sx + 1, sy + 1, i as i16));
+    }
+    for i in 0..36usize {
+        let (sx, sy) = chest_mirror_slot(panel, i);
+        rects.push((sx + 1, sy + 1, (9 + i) as i16));
+    }
+    app.dispenser_slot_rects = rects;
+    app.shift_down = true;
+
+    // ARM A — THE MIRROR MAIN ROW'S OWN TAIL (the mirror src the grid
+    // dest the forward order wears — the mapped row the word lends,
+    // the drained row the NONE retires)
+    app.dispenser_mirror[5] = (potion, 1);
+    app.items_potion_kinds[14] = swift;
+    let (ax, ay) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 14)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(ax + 9, ay + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the grid seat the fill wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the drained row the word retires"
+    );
+    assert_eq!(
+        app.dispenser_mirror[5],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    app.dispenser_slots[0] = (0, 0);
+    app.dispenser_mirror[5] = (0, 0);
+    app.items_potion_kinds[14] = none;
+
+    // ARM B — THE HOTBAR ROW'S OWN TAIL (the -36 shift the mapped row
+    // reads — the word the hotbar stack lends, the drained row the
+    // NONE retires)
+    app.dispenser_mirror[29] = (potion, 1);
+    app.items_potion_kinds[2] = night;
+    let (bx, by) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 38)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(bx + 9, by + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the grid seat the fill wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the drained row the word retires"
+    );
+    app.dispenser_slots[0] = (0, 0);
+    app.dispenser_mirror[29] = (0, 0);
+    app.items_potion_kinds[2] = none;
+
+    // ARM C — THE GRID SOURCE'S OWN RIDE (the kindless stack the
+    // hotbar-first order rides — the empty mirror dest the placed
+    // stack's own word banks [the stale word the ride retires], the
+    // drained seat the silence the store wall keeps)
+    app.dispenser_slots[1] = (dirt, 1);
+    app.items_potion_kinds[8] = night;
+    let (cx, cy) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(cx + 9, cy + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[1],
+        (0, 0),
+        "the drained seat the move empties"
+    );
+    assert_eq!(
+        app.dispenser_mirror[35],
+        (dirt, 1),
+        "the hotbar-first order the tail seat wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], none,
+        "the kindless stack's own word the row banks"
+    );
+    app.dispenser_mirror[35] = (0, 0);
+    app.items_potion_kinds[8] = none;
+
+    // ARM D — THE OCCUPIED MERGE'S OWN SILENCE (the merge the
+    // original's word keeps — the stale word the ride never re-keys,
+    // the drained kindless src the silence the wall keeps)
+    app.dispenser_slots[0] = (dirt, 10);
+    app.dispenser_mirror[0] = (dirt, 20);
+    app.items_potion_kinds[9] = swift;
+    let (dx, dy) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(dx + 9, dy + 9, 0);
+    assert_eq!(app.dispenser_slots[0], (0, 0), "the src the merge drains");
+    assert_eq!(
+        app.dispenser_mirror[0],
+        (dirt, 30),
+        "the merge the dest's count wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], swift,
+        "the merge the original's word keeps"
+    );
+    app.dispenser_mirror[0] = (0, 0);
+    app.items_potion_kinds[9] = none;
+
+    // ARM E — THE KINDED REMAINDER'S OWN WORD (the one-seat grid the
+    // partial move wears — the filled seat the fill wears, the
+    // remainder the source keeps, the word the same row wears)
+    for seat in app.dispenser_slots.iter_mut() {
+        *seat = (potion, 1);
+    }
+    app.dispenser_slots[4] = (0, 0);
+    app.dispenser_mirror[10] = (potion, 2);
+    app.items_potion_kinds[19] = swift;
+    let (ex, ey) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 19)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(ex + 9, ey + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[4],
+        (potion, 1),
+        "the one seat the fill wears"
+    );
+    assert_eq!(
+        app.dispenser_mirror[10],
+        (potion, 1),
+        "the remainder the source keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[19], swift,
+        "the kinded remainder the word keeps"
+    );
+
+    // ARM F — THE NO-ROOM'S OWN SILENCE (the full grid the move
+    // refuses — the stack the source keeps, the word the same row
+    // wears)
+    app.dispenser_mirror[0] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    let (fx, fy) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 9)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(fx + 9, fy + 9, 0);
+    assert_eq!(
+        app.dispenser_mirror[0],
+        (potion, 1),
+        "the no-room walk the stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the silence the source's own word wears"
+    );
+}
+
 /// THE WIRE GENERIC'S OWN PLACE WORD BANK (the autopush-391 round —
 /// the 390 table's own law the generic's wire tail re-wears, the
 /// 382 folds' own reads the write follows): the wire window-0's
