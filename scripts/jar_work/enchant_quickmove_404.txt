@@ -1,0 +1,110 @@
+=== quickMoveStack(Lnet/minecraft/world/entity/player/Player;I)Lnet/minecraft/world/item/ItemStack; (236 code bytes) ===
+     0: getstatic #247
+     3: astore_3
+     4: aload_0
+     5: getfield #251
+     8: iload_2
+     9: invokevirtual net/minecraft/core/NonNullList.get
+    12: checkcast net/minecraft/world/inventory/Slot
+    15: astore 4
+    17: aload 4
+    19: ifnull -> 234
+    22: aload 4
+    24: invokevirtual net/minecraft/world/inventory/Slot.hasItem
+    27: ifeq -> 234
+    30: aload 4
+    32: invokevirtual net/minecraft/world/inventory/Slot.getItem
+    35: astore 5
+    37: aload 5
+    39: invokevirtual net/minecraft/world/item/ItemStack.copy
+    42: astore_3
+    43: iload_2
+    44: ifne -> 64
+    47: aload_0
+    48: aload 5
+    50: iconst_2
+    51: bipush 38
+    53: iconst_1
+    54: invokevirtual net/minecraft/world/inventory/EnchantmentMenu.moveItemStackTo
+    57: ifne -> 186
+    60: getstatic #247
+    63: areturn
+    64: iload_2
+    65: iconst_1
+    66: if_icmpne -> 86
+    69: aload_0
+    70: aload 5
+    72: iconst_2
+    73: bipush 38
+    75: iconst_1
+    76: invokevirtual net/minecraft/world/inventory/EnchantmentMenu.moveItemStackTo
+    79: ifne -> 186
+    82: getstatic #247
+    85: areturn
+    86: aload 5
+    88: getstatic #274
+    91: invokevirtual net/minecraft/world/item/ItemStack.is
+    94: ifeq -> 113
+    97: aload_0
+    98: aload 5
+   100: iconst_1
+   101: iconst_2
+   102: iconst_1
+   103: invokevirtual net/minecraft/world/inventory/EnchantmentMenu.moveItemStackTo
+   106: ifne -> 186
+   109: getstatic #247
+   112: areturn
+   113: aload_0
+   114: getfield #251
+   117: iconst_0
+   118: invokevirtual net/minecraft/core/NonNullList.get
+   121: checkcast net/minecraft/world/inventory/Slot
+   124: invokevirtual net/minecraft/world/inventory/Slot.hasItem
+   127: ifne -> 182
+   130: aload_0
+   131: getfield #251
+   134: iconst_0
+   135: invokevirtual net/minecraft/core/NonNullList.get
+   138: checkcast net/minecraft/world/inventory/Slot
+   141: aload 5
+   143: invokevirtual net/minecraft/world/inventory/Slot.mayPlace
+   146: ifeq -> 182
+   149: aload 5
+   151: iconst_1
+   152: invokevirtual net/minecraft/world/item/ItemStack.copyWithCount
+   155: astore 6
+   157: aload 5
+   159: iconst_1
+   160: invokevirtual net/minecraft/world/item/ItemStack.shrink
+   163: aload_0
+   164: getfield #251
+   167: iconst_0
+   168: invokevirtual net/minecraft/core/NonNullList.get
+   171: checkcast net/minecraft/world/inventory/Slot
+   174: aload 6
+   176: invokevirtual net/minecraft/world/inventory/Slot.setByPlayer
+   179: goto -> 186
+   182: getstatic #247
+   185: areturn
+   186: aload 5
+   188: invokevirtual net/minecraft/world/item/ItemStack.isEmpty
+   191: ifeq -> 205
+   194: aload 4
+   196: getstatic #247
+   199: invokevirtual net/minecraft/world/inventory/Slot.setByPlayer
+   202: goto -> 210
+   205: aload 4
+   207: invokevirtual net/minecraft/world/inventory/Slot.setChanged
+   210: aload 5
+   212: invokevirtual net/minecraft/world/item/ItemStack.getCount
+   215: aload_3
+   216: invokevirtual net/minecraft/world/item/ItemStack.getCount
+   219: if_icmpne -> 226
+   222: getstatic #247
+   225: areturn
+   226: aload 4
+   228: aload_1
+   229: aload 5
+   231: invokevirtual net/minecraft/world/inventory/Slot.onTake
+   234: aload_3
+   235: areturn

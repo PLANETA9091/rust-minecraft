@@ -52375,24 +52375,40 @@ impl App {
             snapshot.extend_from_slice(&self.enchant_slots);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
-            // THE PAIR'S OWN MAY-PLACE (the vanilla EnchantmentMenu the
-            // quick-move arms the seats' own law keeps — the lapis
-            // source the (1,2) range the lapis seat answers, the
-            // non-lapis source the (0,1) range the item seat speaks;
-            // the shared prediction's own forward walk the illegal seat
-            // the blocked marker never reads — the dirt the lapis seat
-            // the empty-dest pass never lands, the remainder the
-            // source keeps, the illegal walk the no-entries silence
-            // the wire's own correction answers)
-            if menu >= 2 {
-                let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap_or(-1);
-                if snapshot[menu].0 == lapis {
-                    snapshot[0] = (i32::MAX, i32::MAX);
+            // THE ROWS' OWN TWO ARMS (the vanilla quickMoveStack the jar
+            // bytes speak — scripts/jar_work/enchant_quickmove_404.txt
+            // the disasm banks: the lapis row the moveItemStackTo(1, 2,
+            // true) range the lapis seat answers, the non-lapis row the
+            // copyWithCount(1)/shrink(1) walk the ONE-item seat speaks;
+            // the seat sources the moveItemStackTo(2, 38, true) reverse
+            // order the shared walk already wears)
+            let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap_or(-1);
+            let changed: Vec<(usize, (i32, i32))> = if menu >= 2 && snapshot[menu].0 != lapis {
+                // THE ONE-ITEM SEAT'S OWN WALK (the jar's hand-rolled
+                // arm the wholesale land retires — the occupied item
+                // seat the silence keeps, the empty seat the ONE
+                // takes, the remainder the source row keeps; the
+                // lapis seat the arm never reads)
+                let (id, count) = snapshot[menu];
+                if count <= 0 || self.enchant_slots[0].1 > 0 {
+                    Vec::new()
                 } else {
-                    snapshot[1] = (i32::MAX, i32::MAX);
+                    vec![
+                        (menu, if count > 1 { (id, count - 1) } else { (0, 0) }),
+                        (0, (id, 1)),
+                    ]
                 }
-            }
-            let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 2);
+            } else {
+                // THE SHARED WALK (the lapis row the blocked marker
+                // the (1,2) range the item seat never reads — the
+                // dirt the lapis seat the empty-dest pass never
+                // lands; the seat sources the unmarked walk the
+                // reverse order keeps)
+                if menu >= 2 && snapshot[menu].0 == lapis {
+                    snapshot[0] = (i32::MAX, i32::MAX);
+                }
+                crate::world_view::predict_quick_move_grid(&snapshot, menu, 2)
+            };
             // THE KIND'S OWN PRE-READ (the source row's word the ride
             // banks — the mirror rows the INVENTORY bank's normalized
             // read speaks [the row_potion_kind the own gate the read

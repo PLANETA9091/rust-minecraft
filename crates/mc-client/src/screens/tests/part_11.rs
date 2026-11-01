@@ -6725,21 +6725,19 @@ fn the_offline_enchanting_the_click_the_round_wear() {
         "the lapis seat the stack banks"
     );
     // THE QUICK-MOVE LANE (the shift-click the mirror main cell the
-    // pair banks — the whole stack the OTHER section moves)
+    // ONE banks — the jar's hand-rolled arm the vanilla bytes speak:
+    // the empty item seat the ONE takes, the remainder the source
+    // keeps)
     app.inventory.items[9] = (8, 3);
     app.enchant_mirror_sync_from_inventory();
     app.shift_down = true;
     app.click_enchanting_slot(m2x + 8, m2y + 8, 0);
     app.shift_down = false;
-    assert_eq!(
-        app.enchant_slots[0],
-        (8, 3),
-        "the quick-move the pair banks"
-    );
+    assert_eq!(app.enchant_slots[0], (8, 1), "the quick-move the ONE banks");
     assert_eq!(
         app.inventory.items[9],
-        (0, 0),
-        "the source row the empty wears"
+        (8, 2),
+        "the remainder the source keeps"
     );
     // THE CLOSE RIDE-HOME (the TRANSIENT pair the walk returns — the
     // NO store the vanilla menu never banks, the held stacks the
@@ -23293,15 +23291,16 @@ fn the_enchant_pair_the_may_place_wears() {
     };
     app.shift_down = true;
 
-    // ARM A — THE DIRT'S OWN LANDING (the both-seats-empty walk the
-    // vanilla's own routing speaks — the item seat the non-lapis
-    // source wears, the lapis seat the may-place law never opens)
+    // ARM A — THE DIRT'S OWN ONE-ITEM LANDING (the jar's hand-rolled
+    // arm the vanilla quickMoveStack speaks — the empty item seat the
+    // ONE takes, the remainder the source keeps, the lapis seat the
+    // may-place law never opens)
     app.inventory.items[35] = (dirt, 64);
     app.click_enchanting_slot(mx + 8, my + 8, 0);
     assert_eq!(
         app.enchant_slots[0],
-        (dirt, 64),
-        "the item seat the dirt wears"
+        (dirt, 1),
+        "the item seat the ONE takes"
     );
     assert_eq!(
         app.enchant_slots[1],
@@ -23310,10 +23309,11 @@ fn the_enchant_pair_the_may_place_wears() {
     );
     assert_eq!(
         app.inventory.items[35],
-        (0, 0),
-        "the drained row the move empties"
+        (dirt, 63),
+        "the remainder the source keeps"
     );
     app.enchant_slots = vec![(0, 0), (0, 0)];
+    app.inventory.items[35] = (0, 0);
 
     // ARM B — THE LAPIS'S OWN ROUTE (the reverse marker the same
     // routing speaks — the lapis seat the lapis source wears, the
@@ -23553,5 +23553,168 @@ fn the_enchant_quick_move_the_kind_ride_wears() {
     assert_eq!(
         app.items_potion_kinds[8], none,
         "the stale word the ride retires"
+    );
+}
+
+/// THE ENCHANT'S OWN ONE-ITEM SEAT LAW (the vanilla quickMoveStack the
+/// jar bytes speak — scripts/jar_work/enchant_quickmove_404.txt the
+/// disasm banks: the non-lapis row the hand-rolled copyWithCount(1)/
+/// shrink(1) arm the wholesale land retires — the occupied item seat
+/// the silence keeps, the empty seat the ONE takes, the remainder the
+/// source row keeps; the lapis row the moveItemStackTo(1, 2, true)
+/// range the whole stack wears, the seat sources the reverse order the
+/// shared walk keeps).
+#[test]
+fn the_enchant_rows_the_one_item_seat_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let mut app = App::new(404);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // item seat 0, the main-last row 28, the hotbar head 29)
+    let (ix, iy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (mx, my) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 28)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (hx, hy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 29)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.shift_down = true;
+
+    // ARM A — THE ONE-ITEM'S OWN LANDING (the stackable row the empty
+    // item seat the hand walk wears — the seat the ONE takes, the
+    // remainder the source keeps)
+    app.inventory.items[35] = (dirt, 64);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the empty item seat the ONE takes"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (dirt, 63),
+        "the remainder the source keeps"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+    app.inventory.items[35] = (0, 0);
+
+    // ARM B — THE OCCUPIED SEAT'S OWN SILENCE (the hasItem gate the
+    // walk refuses — the seat the walk never spends, the stack the
+    // source keeps)
+    app.enchant_slots[0] = (sword, 1);
+    app.inventory.items[35] = (dirt, 3);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the occupied seat the walk never spends"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (dirt, 3),
+        "the no-room walk the stack keeps"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+    app.inventory.items[35] = (0, 0);
+
+    // ARM C — THE SINGLE STACK'S OWN WHOLE MOVE (the count-1 row the
+    // shrink-to-empty tail wears — the seat the ONE takes, the row the
+    // move empties)
+    app.inventory.items[35] = (dirt, 1);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the single stack the seat wears"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+
+    // ARM D — THE LAPIS ARM'S OWN WHOLE STACK (the (1,2) range the
+    // shared walk keeps — the lapis seat the whole stack wears, the
+    // item seat the route never opens)
+    app.inventory.items[35] = (lapis, 40);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 40),
+        "the lapis seat the whole stack wears"
+    );
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the item seat the route never opens"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+
+    // ARM E — THE HOTBAR SOURCE'S OWN ONE-ITEM (the -29 shift the hand
+    // walk wears — the seat the ONE takes, the remainder the hotbar
+    // row keeps)
+    app.inventory.items[0] = (dirt, 5);
+    app.click_enchanting_slot(hx + 8, hy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the hotbar source the ONE wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 4),
+        "the remainder the hotbar row keeps"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+    app.inventory.items[0] = (0, 0);
+
+    // ARM F — THE SEAT SOURCE'S OWN WHOLE STACK (the reverse order the
+    // shared walk keeps — the item seat the whole stack hands over,
+    // the mirror tail the landed stack wears)
+    app.enchant_slots[0] = (dirt, 5);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the drained seat the move empties"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (dirt, 5),
+        "the mirror tail the whole stack wears"
     );
 }
