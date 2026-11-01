@@ -51869,6 +51869,17 @@ impl App {
             snapshot.extend_from_slice(&self.dispenser_slots);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            // THE KIND'S OWN PRE-READ (the source row's word the tail
+            // banks — the nine the kindless store the honest NONE wall
+            // keeps [the (id, count) store the word never carried],
+            // the inventory row the bank's normalized read answers —
+            // the id gate the read itself wears)
+            let src_kind = if menu < 9 {
+                crate::brewing_sim::POTION_KIND_NONE
+            } else {
+                let row = if menu < 36 { menu } else { menu - 36 };
+                self.row_potion_kind(row)
+            };
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 9);
             for (i, pair) in &changed {
                 if *i < 9 {
@@ -51877,6 +51888,25 @@ impl App {
                     self.inventory.items[*i] = *pair;
                 } else {
                     self.inventory.items[*i - 36] = *pair;
+                }
+            }
+            // THE QUICK-MOVE'S OWN KIND TAIL (the offline chest's own
+            // law the nine's own lane re-wears — the drained mirror
+            // source the NONE retires, the kinded remainder the word
+            // keeps, the grid seats the kindless store the silence
+            // keeps [the words the (id, count) store never carried],
+            // the kindless source's own drain the same retire wears)
+            if let Some(&(si, spair)) = changed.first() {
+                if si == menu && menu >= 9 {
+                    let keep = if spair.1 > 0 && crate::world::brewing_is_potion_kind(spair.0) {
+                        src_kind
+                    } else {
+                        crate::brewing_sim::POTION_KIND_NONE
+                    };
+                    let row = if menu < 36 { menu } else { menu - 36 };
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = keep;
+                    }
                 }
             }
             self.dispenser_mirror_sync_from_inventory();

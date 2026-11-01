@@ -21593,6 +21593,183 @@ fn the_wire_dispenser_quick_move_the_kind_ride_wears() {
     );
 }
 
+/// THE OFFLINE DISPENSER'S OWN QUICK-MOVE KIND TAIL (the 396 round's
+/// own live walk the offline lane re-wears — the offline chest's own
+/// law the nine's own tail answers): the drained mirror source the
+/// NONE retires (the stale word the drain the plain deltas never
+/// moved the tail retires), the kinded remainder the word keeps, the
+/// no-room walk the silence the stack's own word keeps, the grid
+/// seats the kindless store the silence keeps (the words the (id,
+/// count) store never carried — the landed stack the wordless wall
+/// wears).
+#[test]
+fn the_offline_dispenser_quick_move_the_kind_tail_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let swift = 13; // the swiftness row the same table banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(397);
+    app.enter_world();
+    // the screen the door opens (the offline stand-in — no window, no
+    // packet, the rects the click's own geometry wears)
+    app.open_dispenser_for((0, 0, 0));
+    let panel = inventory_panel_origin(640, 360);
+    app.dispenser_panel = panel;
+    let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(45);
+    for i in 0..9usize {
+        let (sx, sy) = dispenser_grid_slot(panel, i);
+        rects.push((sx + 1, sy + 1, i as i16));
+    }
+    for i in 0..36usize {
+        let (sx, sy) = chest_mirror_slot(panel, i);
+        rects.push((sx + 1, sy + 1, (9 + i) as i16));
+    }
+    app.dispenser_slot_rects = rects;
+    app.shift_down = true;
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+
+    // ARM A — THE MIRROR MAIN DRAIN'S OWN RETIRE (the mirror src the
+    // grid dest the forward order wears — the drained row the NONE
+    // retires, the stale word the drain never keeps)
+    app.inventory.items[19] = (potion, 1);
+    app.items_potion_kinds[19] = swift;
+    let (ax, ay) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 19)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(ax + 9, ay + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the grid seat the fill wears"
+    );
+    assert_eq!(
+        app.inventory.items[19],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[19], none,
+        "the drained row the word retires"
+    );
+    app.dispenser_slots[0] = (0, 0);
+
+    // ARM B — THE HOTBAR DRAIN'S OWN RETIRE (the -36 shift the mapped
+    // row reads — the word the hotbar stack lends, the drained row
+    // the NONE retires)
+    app.inventory.items[2] = (potion, 1);
+    app.items_potion_kinds[2] = night;
+    let (bx, by) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 38)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(bx + 9, by + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the grid seat the fill wears"
+    );
+    assert_eq!(
+        app.inventory.items[2],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the drained row the word retires"
+    );
+    app.dispenser_slots[0] = (0, 0);
+
+    // ARM C — THE KINDED REMAINDER'S OWN WORD (the one-seat grid the
+    // partial move wears — the filled seat the fill wears, the
+    // remainder the source keeps, the word the same row wears)
+    for seat in app.dispenser_slots.iter_mut() {
+        *seat = (potion, 1);
+    }
+    app.dispenser_slots[4] = (0, 0);
+    app.inventory.items[19] = (potion, 2);
+    app.items_potion_kinds[19] = swift;
+    app.click_dispenser_slot(ax + 9, ay + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[4],
+        (potion, 1),
+        "the one seat the fill wears"
+    );
+    assert_eq!(
+        app.inventory.items[19],
+        (potion, 1),
+        "the remainder the source keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[19], swift,
+        "the kinded remainder the word keeps"
+    );
+
+    // ARM D — THE NO-ROOM'S OWN SILENCE (the full grid the move
+    // refuses — the stack the source keeps, the word the same row
+    // wears)
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = night;
+    let (dx, dy) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 9)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(dx + 9, dy + 9, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the no-room walk the stack keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], night,
+        "the silence the source's own word wears"
+    );
+    app.inventory.items[9] = (0, 0);
+    app.items_potion_kinds[9] = none;
+
+    // ARM E — THE GRID POTION'S OWN SILENT LANDING (the kindless
+    // store the word never carried — the landed stack the wordless
+    // wall wears, the drained seat the silence the store keeps)
+    for seat in app.dispenser_slots.iter_mut() {
+        *seat = (0, 0);
+    }
+    app.inventory.items[19] = (0, 0);
+    app.dispenser_slots[2] = (potion, 1);
+    let (ex, ey) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.click_dispenser_slot(ex + 9, ey + 9, 0);
+    assert_eq!(
+        app.dispenser_slots[2],
+        (0, 0),
+        "the drained seat the move empties"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (potion, 1),
+        "the hotbar-first order the tail row wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], none,
+        "the kindless wall the landing keeps"
+    );
+}
+
 /// THE WIRE GENERIC'S OWN PLACE WORD BANK (the autopush-391 round —
 /// the 390 table's own law the generic's wire tail re-wears, the
 /// 382 folds' own reads the write follows): the wire window-0's
