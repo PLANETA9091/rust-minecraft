@@ -52375,6 +52375,23 @@ impl App {
             snapshot.extend_from_slice(&self.enchant_slots);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            // THE PAIR'S OWN MAY-PLACE (the vanilla EnchantmentMenu the
+            // quick-move arms the seats' own law keeps — the lapis
+            // source the (1,2) range the lapis seat answers, the
+            // non-lapis source the (0,1) range the item seat speaks;
+            // the shared prediction's own forward walk the illegal seat
+            // the blocked marker never reads — the dirt the lapis seat
+            // the empty-dest pass never lands, the remainder the
+            // source keeps, the illegal walk the no-entries silence
+            // the wire's own correction answers)
+            if menu >= 2 {
+                let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap_or(-1);
+                if snapshot[menu].0 == lapis {
+                    snapshot[0] = (i32::MAX, i32::MAX);
+                } else {
+                    snapshot[1] = (i32::MAX, i32::MAX);
+                }
+            }
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 2);
             for (i, pair) in &changed {
                 if *i < 2 {

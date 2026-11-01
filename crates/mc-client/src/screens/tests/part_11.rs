@@ -23254,3 +23254,132 @@ fn the_anvil_quick_move_the_kind_ride_wears() {
         "the landed stack's own word banks"
     );
 }
+
+/// THE ENCHANT'S OWN PAIR MAY-PLACE (the vanilla EnchantmentMenu the
+/// quick-move arms the seats' own law keeps — the lapis source the
+/// (1,2) range the lapis seat answers, the non-lapis source the
+/// (0,1) range the item seat speaks, the shared prediction's own
+/// forward walk the illegal seat the blocked marker never reads —
+/// the dirt the lapis seat the empty-dest pass never lands, the
+/// remainder the source keeps, the illegal walk the no-entries
+/// silence the wire's own correction answers).
+#[test]
+fn the_enchant_pair_the_may_place_wears() {
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let mut app = App::new(402);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps —
+    // the main-last row 28 the source ride wears)
+    let (mx, my) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 28)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.shift_down = true;
+
+    // ARM A — THE DIRT'S OWN LANDING (the both-seats-empty walk the
+    // vanilla's own routing speaks — the item seat the non-lapis
+    // source wears, the lapis seat the may-place law never opens)
+    app.inventory.items[35] = (dirt, 64);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 64),
+        "the item seat the dirt wears"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the lapis seat the may-place never opens"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+
+    // ARM B — THE LAPIS'S OWN ROUTE (the reverse marker the same
+    // routing speaks — the lapis seat the lapis source wears, the
+    // item seat the walk never opens)
+    app.inventory.items[35] = (lapis, 64);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 64),
+        "the lapis seat the lapis wears"
+    );
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the item seat the route never opens"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+
+    // ARM C — THE DIRT'S OWN SILENCE (the occupied item seat the
+    // empty-dest pass refuses, the lapis seat the blocked marker the
+    // corruption retires — the no-room walk the silence the source
+    // keeps)
+    app.enchant_slots[0] = (sword, 1);
+    app.inventory.items[35] = (dirt, 3);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the item seat the walk never spends"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the lapis seat the corruption retires"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (dirt, 3),
+        "the remainder the source keeps"
+    );
+    app.enchant_slots = vec![(0, 0), (0, 0)];
+
+    // ARM D — THE LAPIS'S OWN MERGE (the same-id room the pass-one
+    // merge takes, the drained row the remainder keeps, the item
+    // seat the route never opens)
+    app.enchant_slots[1] = (lapis, 30);
+    app.inventory.items[35] = (lapis, 40);
+    app.click_enchanting_slot(mx + 8, my + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 64),
+        "the seat's room the merge takes"
+    );
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the item seat the route never opens"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (lapis, 6),
+        "the remainder the source keeps"
+    );
+}
