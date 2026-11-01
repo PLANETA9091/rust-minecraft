@@ -74782,6 +74782,10 @@ impl App {
             let egg_id = mc_registry::item_id_by_name("egg").unwrap_or(-1);
             // THE TWO WALKS THE TWO KINDS WEAR (the dispenseFrom
             // override the dropper's own lane answers)
+            // THE SPILL'S OWN MARK (the place walk's own success the
+            // entity gate reads — the placed box the item entity never
+            // spawns, the default shot's own spawn the other arms keep)
+            let mut shulker_spill_placed = false;
             let (dispensed, voice) = if kind == crate::world::DROPPER {
                 // THE FRONT CONTAINER'S OWN READ (the getContainerAt
                 // walk — the chest/barrel + the sibling pair + THE
@@ -74794,7 +74798,56 @@ impl App {
                     .as_ref()
                     .map(|w| w.get(front.0, front.1, front.2))
                     .unwrap_or(0);
-                if crate::world::is_chest(front_kind)
+                // THE SHULKER BOX ITEM'S OWN SPILL (javap
+                // ShulkerBoxDispenseBehavior.execute the 26.3 jar —
+                // the item-keyed behavior the container-insert default
+                // NEVER reaches: the registry's own order the item's
+                // registered behavior the dropper's insert walk
+                // preempts, the shulker box item the front cell the
+                // BLOCK place walk answers — `blockItem.place(new
+                // DirectionalPlaceContext(level, relativePos, facing,
+                // dispensed, clickedFace))` the relativePos
+                // `pos.relative(FACING)` the front cell wears, the
+                // OptionalDispenseItemBehavior's own playSound the
+                // success the 1000 voice answers, the fail the 1001
+                // speaks, the setSuccess(false) head the refused walk
+                // banks). THE FACING LAW the 304 round's own stamp
+                // wears (javap ShulkerBoxBlock.getStateForPlacement
+                // the 26.2 jar — `setValue(FACING,
+                // context.getClickedFace())` the HIT face the FACING
+                // stamps: the DirectionalPlaceContext's own hit face
+                // the `facing` param banks, the placed lid the
+                // dispenser's own byte the shulker_variant's low three
+                // bits compose — the below-empty clickedFace param the
+                // context's look law carries, the shulker's own stamp
+                // the 26.2 jar never reads). THE SPILL'S OWN FRESH
+                // STORE the open door shares (the chest family's own
+                // lazy law — the open the fresh 27-slot grid inserts,
+                // the 412 insert lane's own entry arm the same map
+                // banks: the placed shulker the NBT-less item the
+                // honest empty wears).
+                if crate::world::is_shulker_box_item(item) {
+                    if front_kind == crate::world::AIR || crate::world::is_replaceable(front_kind) {
+                        if let Some(w) = self.offline_world.as_mut() {
+                            w.set(front.0, front.1, front.2, crate::world::SHULKER_BOX);
+                            w.set_variant(
+                                front.0,
+                                front.1,
+                                front.2,
+                                crate::world::shulker_variant(facing, false),
+                            );
+                        }
+                        // THE PLACEMENT'S OWN DISPATCH (the player
+                        // placement walk's own law the beat's arm
+                        // mirrors — the placed cell the falling check
+                        // the schedule speaks)
+                        self.schedule_falling_check_block_update(front.0, front.1, front.2);
+                        shulker_spill_placed = true;
+                        (true, 1000) // the success voice the place walk speaks
+                    } else {
+                        (false, 1001) // the occupied cell the fail speaks
+                    }
+                } else if crate::world::is_chest(front_kind)
                     || crate::world::is_barrel(front_kind)
                     || crate::world::is_dispenser_kind(front_kind)
                     || crate::world::is_shulker(front_kind)
@@ -74944,8 +74997,10 @@ impl App {
             }
             // THE EJECT'S OWN ENTITY (the spawned drop the arrow the
             // two lanes the two Vecs wear — the position/velocity the
-            // laws bank, the id the lane's own counter mints)
-            if dispensed && voice == 1000 {
+            // laws bank, the id the lane's own counter mints; the
+            // shulker spill's own success the mark never spawns — the
+            // placed box the item entity never wears)
+            if dispensed && voice == 1000 && !shulker_spill_placed {
                 let (px, py, pz) = crate::world::dispense_position(center, step);
                 let (vx, vy, vz) =
                     crate::world::dispense_item_velocity(&mut self.dispenser_rng, step);

@@ -3375,6 +3375,19 @@ pub fn is_shulker(id: u16) -> bool {
     id == SHULKER_BOX
 }
 
+/// THE SHULKER BOX ITEM'S OWN KIND (javap ShulkerBoxDispenseBehavior
+/// the 26.3 jar the item-keyed registry answer — `execute` reads
+/// `dispensed.getItem() instanceof BlockItem` the block-item pairing
+/// the walk's own gate wears: the item's name the placeable walk
+/// resolves, the resolved kind the shulker family the one predicate
+/// speaks — the colored rows the same family's own names answer, the
+/// non-block items the None the gate refuses).
+pub fn is_shulker_box_item(id: i32) -> bool {
+    mc_registry::item_name(id)
+        .and_then(World::placeable_block)
+        .is_some_and(is_shulker)
+}
+
 /// THE HOPPER'S OWN KIND SEAT (the autopush-305 round — the
 /// autopush-304 NEXT list's own first candidate the container_stores
 /// bank the client never seats: the jar's blockstates/hopper.json the

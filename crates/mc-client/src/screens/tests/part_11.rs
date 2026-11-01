@@ -25593,3 +25593,256 @@ fn the_dropper_furnace_the_kind_ride_wears() {
         "the refused shot the drop never spawns"
     );
 }
+
+/// THE DROPPER'S OWN SHULKER SPILL (javap ShulkerBoxDispenseBehavior
+/// the 26.3 jar — the shulker box item the front cell the BLOCK place
+/// walk answers, the item-keyed behavior the container-insert default
+/// never reaches): the arms wear — the place arm's own stamp [the
+/// front cell the block lands, the lid the dispenser's own hit-face
+/// byte banks, the item entity the spill never spawns, the source
+/// seat the consume drains], the open door's own share [the placed
+/// cell the fresh 27-slot store the same map banks], the refuse arm's
+/// own count [the occupied cell the fail speaks], the chest-keyed
+/// preempt arm's own order [the registry behavior the insert walk
+/// preempts — the sink's store the spill never touches].
+#[test]
+fn the_dropper_shulker_the_place_law_wears() {
+    let shulker = mc_registry::item_id_by_name("shulker_box").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE PLACE ARM'S OWN STAMP (the front cell the block
+    // lands, the lid the dispenser's own facing byte banks, the item
+    // entity the spill never spawns, the source seat the drain wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let (px, pz) = (16i32, 16i32);
+    let gy = 30i32;
+    let (fx, fy, fz) = (px, gy, pz + 1); // the SOUTH delta the z+1 speaks
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+            }
+        }
+        world.set(px, gy, pz, crate::world::DROPPER);
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+    }
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (shulker, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(fx, fy, fz),
+        crate::world::SHULKER_BOX,
+        "the front cell the block lands"
+    );
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().variant(fx, fy, fz),
+        crate::world::shulker_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        "the lid the dispenser's own hit-face byte banks"
+    );
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (0, 0),
+        "the spent seat the write-back empties"
+    );
+    assert!(
+        app.drops.is_empty(),
+        "the spill arm the item entity never spawns"
+    );
+
+    // APP ARM D — THE OPEN DOOR'S OWN SHARE (the placed cell the fresh
+    // 27-slot store the same map banks, the kind row the title lane
+    // banks)
+    app.open_shulker_for((fx, fy, fz));
+    assert_eq!(
+        app.chest_slots.len(),
+        27,
+        "the placed cell the fresh grid wears"
+    );
+    assert!(
+        app.chest_slots.iter().all(|s| s.0 == 0),
+        "the NBT-less item the honest empty wears"
+    );
+    assert!(
+        app.chest_window_shulker,
+        "the placed cell the shulker's own door opens"
+    );
+
+    // APP ARM B — THE REFUSE ARM'S OWN COUNT (the occupied cell the
+    // fail speaks, the refused stack the count keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+            }
+        }
+        world.set(px, gy, pz, crate::world::DROPPER);
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+        world.set(fx, fy, fz, crate::world::STONE);
+    }
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (shulker, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(fx, fy, fz),
+        crate::world::STONE,
+        "the occupied cell the place never wears"
+    );
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (shulker, 1),
+        "the refused stack the count keeps"
+    );
+    assert!(
+        app.drops.is_empty(),
+        "the refused shot the drop never spawns"
+    );
+
+    // APP ARM C — THE CHEST-KEYED PREEMPT ARM'S OWN ORDER (the
+    // item-keyed behavior the container-insert default never reaches —
+    // the sink's store the spill never touches, the front cell the
+    // chest family keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+            }
+        }
+        world.set(px, gy, pz, crate::world::DROPPER);
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+        world.set(fx, fy, fz, crate::world::CHEST);
+    }
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (shulker, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores.insert(
+        (fx, fy, fz),
+        vec![
+            (dirt, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(fx, fy, fz)][0],
+        (dirt, 1),
+        "the sink's own store the spill never touches"
+    );
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (shulker, 1),
+        "the preempted shot the count keeps"
+    );
+    assert_eq!(
+        app.offline_world.as_ref().unwrap().get(fx, fy, fz),
+        crate::world::CHEST,
+        "the occupied cell the place never wears"
+    );
+    assert!(
+        app.drops.is_empty(),
+        "the preempted shot the drop never spawns"
+    );
+}
