@@ -74863,11 +74863,21 @@ impl App {
                     self.furnace_kind_stores
                         .entry(front)
                         .or_insert_with(|| [crate::brewing_sim::POTION_KIND_NONE; 3]);
-                    let landed = crate::world::dispenser_insert_into_at(
+                    // THE FACE'S OWN LAW (javap HopperBlockEntity.addItem
+                    // the direction.getOpposite() walk the 26.2 jar —
+                    // the furnace's own face the dropper's back answers,
+                    // the getSlotsForFace order the face table banks [the
+                    // UP face the input row, the DOWN face the result +
+                    // fuel pair, the four walls the fuel row], the
+                    // canPlaceItem gate the seat pairs wear)
+                    let face = crate::world::facing6_opposite(facing);
+                    let order = crate::world::furnace_face_order(face);
+                    let landed = crate::world::furnace_insert_into_face(
                         self.furnace_stores
                             .get_mut(&front)
                             .expect("the sink the entry arm banks"),
                         item,
+                        order,
                     );
                     match landed {
                         Some((idx, merged)) => {

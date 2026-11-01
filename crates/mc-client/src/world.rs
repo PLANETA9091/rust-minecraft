@@ -3793,8 +3793,22 @@ pub fn furnace_can_take(slot: usize, id: i32) -> bool {
 /// first empty-or-mergeable the one item seats, the cap the item's own
 /// max stack the grow serves).
 pub fn furnace_move_one(to: &mut [(i32, i32)], id: i32, order: &[usize]) -> bool {
+    furnace_insert_into_face(to, id, order).is_some()
+}
+
+/// THE FURNACE'S OWN FACE MOVE-ONE'S OWN INDEX (the same face law the
+/// landing seat's own address the lane answers — the gate the seat
+/// pairs wear, the split arm the (idx, false) the first gated empty
+/// seat speaks, the merge arm the (idx, true) the grow law keeps, the
+/// refused walk the honest None keeps [the caller's own stack the
+/// refusal preserves]).
+pub fn furnace_insert_into_face(
+    to: &mut [(i32, i32)],
+    id: i32,
+    order: &[usize],
+) -> Option<(usize, bool)> {
     if id == 0 {
-        return false;
+        return None;
     }
     let cap = mc_registry::item_max_stack(id).min(64);
     for &s in order {
@@ -3804,14 +3818,14 @@ pub fn furnace_move_one(to: &mut [(i32, i32)], id: i32, order: &[usize]) -> bool
         let slot = &mut to[s];
         if slot.0 == 0 || slot.1 <= 0 {
             *slot = (id, 1);
-            return true;
+            return Some((s, false));
         }
         if slot.0 == id && (slot.1 as i64) < cap as i64 {
             slot.1 += 1;
-            return true;
+            return Some((s, true));
         }
     }
-    false
+    None
 }
 
 /// THE FURNACE'S OWN FACE FULL VERDICT (javap isFullContainer the 26.2

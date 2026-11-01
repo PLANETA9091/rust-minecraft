@@ -25230,20 +25230,117 @@ fn the_dropper_insert_the_kind_ride_wears() {
     );
 }
 
-/// THE DROPPER'S FURNACE KIND RIDE (the autopush-413 round — the 412
-/// NEXT list's own fourth walk the round answers: the furnace trio's
-/// own parallel the insert lane wears, the input seat's word the
-/// smelt lane answers): the arms wear — the split arm's own ride
-/// [the potion the input seat lands, the word the trio cell banks],
-/// the merge arm's own keep [the grow law the cell never overrides],
-/// the kindless wall's own re-key [the stale word the fresh identity
-/// retires], the full trio's own refusal [the stack the word the
-/// cell keeps].
+/// THE DROPPER'S FURNACE KIND RIDE (the autopush-413 round's own walk
+/// the autopush-414 face law re-keys — javap HopperBlockEntity.addItem
+/// the direction.getOpposite() walk the furnace's own face answers:
+/// the UP face the input row any item accepts, the four walls the fuel
+/// row the canPlace gate wears, the DOWN face the result + fuel pair
+/// the refuse-first order keeps): the arms wear — the input face's own
+/// ride [the potion the input seat lands, the word the trio cell
+/// banks], the fuel face's own landing + merge [the coal the fuel seat
+/// lands, the grow law the count wears], the fuel face's own gate [the
+/// non-fuel stack the refusal keeps], the output face's own gate [the
+/// DOWN face's pair the walk the refusal speaks].
 #[test]
 fn the_dropper_furnace_the_kind_ride_wears() {
-    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    // THE PURE WALK'S OWN ARMS (the world.rs face fn the verdicts wear
+    // — the same gate law the (idx, arm) pair speaks)
     let dirt = mc_registry::item_id_by_name("dirt").unwrap();
-    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let coal = mc_registry::item_id_by_name("coal").unwrap();
+    let mut trio = vec![(0i32, 0i32); 3];
+    // the input face's own split (the UP face the any-item law the
+    // first gated empty seat speaks)
+    assert_eq!(
+        crate::world::furnace_insert_into_face(
+            &mut trio,
+            dirt,
+            crate::world::furnace_face_order(crate::world::DISPENSER_FACING_UP),
+        ),
+        Some((crate::world::FURNACE_SLOT_INPUT, false)),
+        "the input face the any-item law speaks"
+    );
+    assert_eq!(
+        trio[crate::world::FURNACE_SLOT_INPUT],
+        (dirt, 1),
+        "the landing seat the copy wears"
+    );
+    // the fuel face's own gate (the non-fuel the honest None keeps)
+    let mut trio2 = vec![(0i32, 0i32); 3];
+    assert_eq!(
+        crate::world::furnace_insert_into_face(
+            &mut trio2,
+            dirt,
+            crate::world::furnace_face_order(crate::world::DISPENSER_FACING_SOUTH),
+        ),
+        None,
+        "the fuel face the non-fuel refuses"
+    );
+    assert_eq!(
+        trio2[crate::world::FURNACE_SLOT_FUEL],
+        (0, 0),
+        "the refused seat the walk never moves"
+    );
+    // the fuel face's own split + merge (the fuel the seat the walk
+    // answers, the grow law the count wears)
+    assert_eq!(
+        crate::world::furnace_insert_into_face(
+            &mut trio2,
+            coal,
+            crate::world::furnace_face_order(crate::world::DISPENSER_FACING_SOUTH),
+        ),
+        Some((crate::world::FURNACE_SLOT_FUEL, false)),
+        "the fuel face the fuel seat speaks"
+    );
+    assert_eq!(
+        crate::world::furnace_insert_into_face(
+            &mut trio2,
+            coal,
+            crate::world::furnace_face_order(crate::world::DISPENSER_FACING_SOUTH),
+        ),
+        Some((crate::world::FURNACE_SLOT_FUEL, true)),
+        "the merge arm the same-id seat speaks"
+    );
+    assert_eq!(
+        trio2[crate::world::FURNACE_SLOT_FUEL],
+        (coal, 2),
+        "the grow law the count wears"
+    );
+    // the DOWN face's own pair (the result seat the refuse wears, the
+    // fuel seat the gate the order walk answers)
+    let mut trio3 = vec![(0i32, 0i32); 3];
+    assert_eq!(
+        crate::world::furnace_insert_into_face(
+            &mut trio3,
+            coal,
+            crate::world::furnace_face_order(crate::world::DISPENSER_FACING_DOWN),
+        ),
+        Some((crate::world::FURNACE_SLOT_FUEL, false)),
+        "the DOWN face the result refuse the fuel seat speaks"
+    );
+    assert_eq!(
+        trio3[crate::world::FURNACE_SLOT_RESULT],
+        (0, 0),
+        "the result seat the walk never takes"
+    );
+    // the wrapper's own verdict (the old signature the same walk speaks)
+    let mut trio4 = vec![(0i32, 0i32); 3];
+    assert!(
+        crate::world::furnace_move_one(
+            &mut trio4,
+            coal,
+            crate::world::furnace_face_order(crate::world::DISPENSER_FACING_SOUTH),
+        ),
+        "the true the landing speaks"
+    );
+    assert_eq!(
+        trio4[crate::world::FURNACE_SLOT_FUEL],
+        (coal, 1),
+        "the landing seat the copy wears"
+    );
+
+    // THE BEAT'S OWN ARMS (the 413 harness's own shape the face law
+    // re-keys — the three sinks the three faces pre-stage)
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
     let night = 4; // the night_vision row the POTION_KIND_NAMES banks
     let none = crate::brewing_sim::POTION_KIND_NONE;
     let mut app = App::new(3);
@@ -25251,8 +25348,12 @@ fn the_dropper_furnace_the_kind_ride_wears() {
     app.spawn_offline_body();
     let (px, pz) = (16i32, 16i32);
     let gy = 30i32;
-    // THE FRONT FURNACE'S OWN CELL (the SOUTH delta the z+1 speaks)
-    let (cx, cy, cz) = (px, gy, pz + 1);
+    // THE THREE SINKS' OWN CELLS (the UP face the below cell wears,
+    // the four walls the south cell speaks, the DOWN face the above
+    // cell answers)
+    let (dx, dy, dz) = (px, gy - 1, pz); // the dropper's DOWN walk
+    let (sx, sy, sz) = (px, gy, pz + 1); // the dropper's SOUTH walk
+    let (ux, uy, uz) = (px, gy + 1, pz); // the dropper's UP walk
     {
         let world = app.offline_world.as_mut().unwrap();
         for dx in -4..=4 {
@@ -25260,20 +25361,25 @@ fn the_dropper_furnace_the_kind_ride_wears() {
                 world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
             }
         }
-        // THE DROPPER'S OWN SEAT (the facing the SOUTH byte stamps,
-        // the front cell the furnace the sink wears)
+        // THE DROPPER'S OWN SEAT (the facing the byte the arms re-key)
         world.set(px, gy, pz, crate::world::DROPPER);
+        // THE THREE FURNACES' OWN SINKS (the same trio the faces serve)
+        world.set(dx, dy, dz, crate::world::FURNACE);
+        world.set(sx, sy, sz, crate::world::FURNACE);
+        world.set(ux, uy, uz, crate::world::FURNACE);
+    }
+    // APP ARM A — THE INPUT FACE'S OWN RIDE (the dropper the DOWN
+    // walk wears, the potion the input seat lands, the word the trio
+    // cell banks, the source seat the drain retires)
+    {
+        let world = app.offline_world.as_mut().unwrap();
         world.set_variant(
             px,
             gy,
             pz,
-            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_DOWN, false),
         );
-        world.set(cx, cy, cz, crate::world::FURNACE);
     }
-    // APP ARM A — THE SPLIT ARM'S OWN RIDE (the potion the input seat
-    // lands, the word the trio cell banks, the source seat the drain
-    // retires)
     app.container_stores.insert(
         (px, gy, pz),
         vec![
@@ -25300,12 +25406,12 @@ fn the_dropper_furnace_the_kind_ride_wears() {
         app.update();
     }
     assert_eq!(
-        app.furnace_stores[&(cx, cy, cz)][crate::world::FURNACE_SLOT_INPUT],
+        app.furnace_stores[&(dx, dy, dz)][crate::world::FURNACE_SLOT_INPUT],
         (potion, 1),
         "the landed stack the input seat wears"
     );
     assert_eq!(
-        app.furnace_kind_stores[&(cx, cy, cz)][crate::world::FURNACE_SLOT_INPUT],
+        app.furnace_kind_stores[&(dx, dy, dz)][crate::world::FURNACE_SLOT_INPUT],
         night,
         "the word the trio cell banks"
     );
@@ -25321,12 +25427,22 @@ fn the_dropper_furnace_the_kind_ride_wears() {
     );
     assert!(app.drops.is_empty(), "the insert arm the drop never spawns");
 
-    // APP ARM B — THE MERGE ARM'S OWN KEEP (the grow law the count
-    // wears, the seat's own cell the incoming word never overrides)
+    // APP ARM B — THE FUEL FACE'S OWN LANDING + MERGE (the coal the
+    // fuel seat lands, the re-shot the grow law wears, the fuel's own
+    // silence the kind cell answers)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+    }
     app.container_stores.insert(
         (px, gy, pz),
         vec![
-            (dirt, 1),
+            (coal, 1),
             (0, 0),
             (0, 0),
             (0, 0),
@@ -25339,12 +25455,8 @@ fn the_dropper_furnace_the_kind_ride_wears() {
     );
     app.container_stores_potion_kinds.insert(
         (px, gy, pz),
-        vec![night, none, none, none, none, none, none, none, none],
+        vec![none, none, none, none, none, none, none, none, none],
     );
-    app.furnace_stores
-        .insert((cx, cy, cz), vec![(dirt, 5), (0, 0), (0, 0)]);
-    app.furnace_kind_stores
-        .insert((cx, cy, cz), [night, none, none]);
     {
         let world = app.offline_world.as_mut().unwrap();
         world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
@@ -25353,60 +25465,50 @@ fn the_dropper_furnace_the_kind_ride_wears() {
         app.update();
     }
     assert_eq!(
-        app.furnace_stores[&(cx, cy, cz)][0],
-        (dirt, 6),
+        app.furnace_stores[&(sx, sy, sz)][crate::world::FURNACE_SLOT_FUEL],
+        (coal, 1),
+        "the coal the fuel seat lands"
+    );
+    assert_eq!(
+        app.furnace_kind_stores[&(sx, sy, sz)][crate::world::FURNACE_SLOT_FUEL],
+        none,
+        "the fuel's own silence the cell answers"
+    );
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (coal, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.furnace_stores[&(sx, sy, sz)][crate::world::FURNACE_SLOT_FUEL],
+        (coal, 2),
         "the merge arm the count grows"
     );
     assert_eq!(
-        app.furnace_kind_stores[&(cx, cy, cz)][0],
-        night,
-        "the seat's own cell the grow law keeps"
+        app.container_stores[&(px, gy, pz)][0],
+        (0, 0),
+        "the spent seat the write-back empties"
     );
 
-    // APP ARM C — THE KINDLESS WALL'S OWN RE-KEY (the kindless stack
-    // the fresh seat lands, the stale word the identity retires)
-    app.container_stores.insert(
-        (px, gy, pz),
-        vec![
-            (dirt, 1),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-        ],
-    );
-    app.container_stores_potion_kinds.insert(
-        (px, gy, pz),
-        vec![night, none, none, none, none, none, none, none, none],
-    );
-    app.furnace_stores.insert((cx, cy, cz), vec![(0, 0); 3]);
-    app.furnace_kind_stores
-        .insert((cx, cy, cz), [night, none, none]);
-    {
-        let world = app.offline_world.as_mut().unwrap();
-        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
-    }
-    for _ in 0..6 {
-        app.update();
-    }
-    assert_eq!(
-        app.furnace_stores[&(cx, cy, cz)][0],
-        (dirt, 1),
-        "the kindless stack the fresh seat lands"
-    );
-    assert_eq!(
-        app.furnace_kind_stores[&(cx, cy, cz)][0],
-        none,
-        "the stale word the fresh identity retires"
-    );
-
-    // APP ARM D — THE FULL TRIO'S OWN REFUSAL (the FULL trio the
-    // insert refuses, the source stack the count wears, the word the
-    // cell keeps)
+    // APP ARM C — THE FUEL FACE'S OWN GATE (the non-fuel stack the
+    // refusal keeps — the source the count the word the cell wears,
+    // the sink the store never moves)
     app.container_stores.insert(
         (px, gy, pz),
         vec![
@@ -25425,8 +25527,6 @@ fn the_dropper_furnace_the_kind_ride_wears() {
         (px, gy, pz),
         vec![night, none, none, none, none, none, none, none, none],
     );
-    app.furnace_stores
-        .insert((cx, cy, cz), vec![(stone, 64); 3]);
     {
         let world = app.offline_world.as_mut().unwrap();
         world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
@@ -25445,9 +25545,48 @@ fn the_dropper_furnace_the_kind_ride_wears() {
         "the word the kept stack wears"
     );
     assert_eq!(
-        app.furnace_stores[&(cx, cy, cz)][0],
-        (stone, 64),
+        app.furnace_stores[&(sx, sy, sz)][crate::world::FURNACE_SLOT_FUEL],
+        (coal, 2),
         "the sink the refusal never moves"
+    );
+    assert!(
+        app.drops.is_empty(),
+        "the refused shot the drop never spawns"
+    );
+
+    // APP ARM D — THE OUTPUT FACE'S OWN GATE (the dropper the UP walk
+    // wears, the DOWN face's pair the result refuse the fuel gate
+    // speaks, the non-fuel the whole order refuses)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_UP, false),
+        );
+    }
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (potion, 1),
+        "the refused stack the count keeps"
+    );
+    assert_eq!(
+        app.furnace_stores[&(ux, uy, uz)][crate::world::FURNACE_SLOT_RESULT],
+        (0, 0),
+        "the result seat the walk never takes"
+    );
+    assert_eq!(
+        app.furnace_stores[&(ux, uy, uz)][crate::world::FURNACE_SLOT_FUEL],
+        (0, 0),
+        "the fuel seat the non-fuel never takes"
     );
     assert!(
         app.drops.is_empty(),
