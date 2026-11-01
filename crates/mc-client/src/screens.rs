@@ -52535,7 +52535,24 @@ impl App {
         // press's refusal answers, the no-op the right press's keeps)
         let seat_ench = !self.enchant_comps[menu].is_empty();
         let car_ench = !self.enchant_comps[38].is_empty();
-        let (new_slot, new_carried) = if button == 0 {
+        // THE LAPIS SEAT'S OWN MAY-PLACE (the 407 round — the jar's
+        // EnchantmentMenu$3 the mayPlace = stack.is(lapis) the
+        // enchant_menu_405.txt the anon-class census keeps, the doClick
+        // bytes the same call the walks pre-key [the acm_doClick_262.txt
+        // the both-filled arm the pcs 934-941 the mayPlace ifeq the
+        // silence answers — the gate the same-components split
+        // precedes, the plain place arm the safeInsert contract the
+        // same law wears, the 1213-1220 bytes the same call family
+        // speaks]): the non-lapis carried the lapis seat the press
+        // never lands — the silence the seat and the cursor keep, the
+        // lapis carried the gate never binds.
+        let lapis_id = mc_registry::item_id_by_name("lapis_lazuli").unwrap_or(-1);
+        let lapis_refusal = menu == 1 && old_car.1 > 0 && old_car.0 != lapis_id;
+        let (new_slot, new_carried) = if lapis_refusal {
+            // the silence the mayPlace bytes answer — the both presses
+            // the same pre-gate the vanilla order wears
+            (believed, old_car)
+        } else if button == 0 {
             // THE SWAP ARM'S OWN COUNT GATE (the 406 round — the
             // doClick bytes the pcs 989-1001 the acm_doClick_262.txt
             // bank keeps: the `carried.getCount() >

@@ -6655,11 +6655,13 @@ fn the_offline_enchanting_the_paint_the_cell_wear() {
 }
 
 /// THE ENCHANTING TABLE'S OWN CLICK ROUND (the offline sim's own walk —
-/// the pickup the mirror banks, the place the lapis seat keeps, the
-/// quick-move the shift lane speaks, the close the TRANSIENT pair the
-/// ride-home walk returns [NO store the vanilla menu never banks],
-/// the reopen the FRESH pair lays): the REAL click walk the offline
-/// door wears.
+/// the pickup the mirror banks, the place the lapis seat's own
+/// may-place the silence wears [the 407 round — the non-lapis carried
+/// the seat the press never lands, the ride home the close walk
+/// answers], the quick-move the shift lane speaks, the close the
+/// TRANSIENT pair the ride-home walk returns [NO store the vanilla
+/// menu never banks], the reopen the FRESH pair lays): the REAL click
+/// walk the offline door wears.
 #[test]
 fn the_offline_enchanting_the_click_the_round_wear() {
     let mut app = App::new(3);
@@ -6715,14 +6717,15 @@ fn the_offline_enchanting_the_click_the_round_wear() {
         (0, 0),
         "the lapis seat the untouched empty wears"
     );
-    // THE PLACE LANE (the lapis seat's own click the pair banks — the
-    // carried the empty wears, the mirror rows the sync re-speaks)
+    // THE PLACE LANE (the lapis seat's own may-place the 407 round
+    // wears — the non-lapis carried the mayPlace ifeq the silence
+    // answers: the seat the empty keeps, the cursor the stack keeps)
     app.click_enchanting_slot(l1x + 8, l1y + 8, 0);
-    assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+    assert_eq!(app.enchant_carried, (7, 10), "the silence the cursor keeps");
     assert_eq!(
         app.enchant_slots[1],
-        (7, 10),
-        "the lapis seat the stack banks"
+        (0, 0),
+        "the lapis seat the may-place silence keeps"
     );
     // THE QUICK-MOVE LANE (the shift-click the mirror main cell the
     // ONE banks — the jar's hand-rolled arm the vanilla bytes speak:
@@ -6751,7 +6754,7 @@ fn the_offline_enchanting_the_click_the_round_wear() {
         .filter(|it| it.0 == 7)
         .map(|it| it.1)
         .sum();
-    assert_eq!(total, 10, "the lapis seat's stack the ride home keeps");
+    assert_eq!(total, 10, "the cursor's stack the ride home keeps");
     let total8: i32 = app
         .inventory
         .items
@@ -23983,4 +23986,136 @@ fn the_enchant_swap_arm_the_count_gate_wears() {
         "the place the gate never binds"
     );
     assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+}
+
+/// THE LAPIS SEAT'S OWN MAY-PLACE (the jar's EnchantmentMenu$3 the
+/// mayPlace = stack.is(lapis) the enchant_menu_405.txt the anon-class
+/// census keeps, the doClick bytes the same call the walks pre-key —
+/// the acm_doClick_262.txt the both-filled arm the pcs 934-941 the
+/// mayPlace ifeq the silence answers, the plain place arm the
+/// safeInsert contract the same law wears): the non-lapis carried the
+/// lapis seat the press never lands — the plain place the silence
+/// answers, the both-filled pair the same pre-gate the swap never
+/// spends, the right press the same law wears, the lapis carried the
+/// gate never binds (the place the whole stack takes, the pair the
+/// merge answers, the right press the ONE wears).
+#[test]
+fn the_lapis_seat_the_may_place_wears() {
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+    let mut app = App::new(407);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // lapis seat 1)
+    let (lx, ly) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+
+    // ARM A — THE PLAIN PLACE'S OWN SILENCE (the empty seat the
+    // non-lapis carried the mayPlace ifeq the silence answers — the
+    // seat the empty keeps, the cursor the stack keeps)
+    app.enchant_carried = (dirt, 10);
+    app.click_enchanting_slot(lx + 8, ly + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the non-lapis the place never lands"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 10),
+        "the silence the cursor keeps"
+    );
+
+    // ARM B — THE LAPIS CARRIED'S OWN LANDING (the gate the lapis
+    // carried never binds — the base 64 place the whole stack wears,
+    // the cursor the empty wears)
+    app.enchant_carried = (lapis, 64);
+    app.click_enchanting_slot(lx + 8, ly + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 64),
+        "the lapis the whole stack wears"
+    );
+    assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+
+    // ARM C — THE BOTH-FILLED ARM'S OWN SILENCE (the lapis seat the
+    // diamond carried the pcs 934 pre-gate the swap never spends —
+    // the seat the lapis keeps, the cursor the diamond keeps, the
+    // exchange the mayPlace refuses)
+    app.enchant_slots[1] = (lapis, 12);
+    app.enchant_carried = (diamond, 5);
+    app.click_enchanting_slot(lx + 8, ly + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 12),
+        "the pre-gate the swap never spends"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (diamond, 5),
+        "the silence the cursor keeps"
+    );
+
+    // ARM D — THE LAPIS PAIR'S OWN MERGE (the gate the lapis pair
+    // never binds — the same-id walk the room the base 64 answers,
+    // the seat 17 the merge wears)
+    app.enchant_carried = (lapis, 5);
+    app.click_enchanting_slot(lx + 8, ly + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 17),
+        "the lapis pair the merge wears"
+    );
+    assert_eq!(app.enchant_carried, (0, 0), "the merge the cursor clears");
+    app.enchant_slots[1] = (0, 0);
+
+    // ARM E — THE RIGHT PRESS'S OWN SILENCE (the safeInsert contract
+    // the one-place the same law wears — the non-lapis the ONE never
+    // takes, the seat and the cursor the stacks keep)
+    app.enchant_carried = (dirt, 10);
+    app.click_enchanting_slot(lx + 8, ly + 8, 1);
+    assert_eq!(
+        app.enchant_slots[1],
+        (0, 0),
+        "the right press the mayPlace refuses"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 10),
+        "the silence the cursor keeps"
+    );
+
+    // ARM F — THE RIGHT PRESS'S OWN LAPIS ONE (the lapis carried the
+    // gate never binds — the ONE the seat takes, the remainder the
+    // cursor keeps)
+    app.enchant_carried = (lapis, 10);
+    app.click_enchanting_slot(lx + 8, ly + 8, 1);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 1),
+        "the right press the ONE takes"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (lapis, 9),
+        "the remainder the cursor keeps"
+    );
 }
