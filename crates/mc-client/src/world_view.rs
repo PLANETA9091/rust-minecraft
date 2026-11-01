@@ -3102,6 +3102,128 @@ pub fn predict_pickup_kind(
     predict_pickup(slot, carried)
 }
 
+/// THE SLOT-MAX HINT'S OWN PICKUP (the item seat's own ceiling the
+/// plain walk re-keys — the jar's EnchantmentMenu$2 the
+/// getMaxStackSize() = 1 override speaks [the anonymous class the
+/// autopush-405 parser banks, scripts/jar_work/enchant_menu_405.txt
+/// the disasm keeps], the item seat the stackable's own 64 the
+/// vanilla seat never wears): the place arm the split(min(count,
+/// slot max)) the doClick bytes keep [the safeInsert's own
+/// getMaxStackSize(stack) cap the 26.2 walk speaks], the merge arm
+/// the room the slot-max closes, the full seat the no-op keeps, the
+/// pickup arm the base walk verbatim wears, the component-refusal
+/// swap the kind walk's own law keeps. The left press's own walk the
+/// enchant lane's item seat answers.
+pub fn predict_pickup_kind_max(
+    slot: (i32, i32),
+    carried: (i32, i32),
+    slot_kind: i32,
+    carried_kind: i32,
+    slot_max: i32,
+) -> ((i32, i32), (i32, i32)) {
+    if slot.1 > 0
+        && carried.1 > 0
+        && slot.0 == carried.0
+        && !potion_pair_same_item(slot.0, slot_kind, carried_kind)
+    {
+        // the vanilla swap — the different components the different
+        // items speak
+        return (carried, slot);
+    }
+    let slot_empty = slot.1 <= 0;
+    let carried_empty = carried.1 <= 0;
+    match (slot_empty, carried_empty) {
+        // both empty — nothing to do
+        (true, true) => (slot, carried),
+        // a held stack over an empty slot — the seat the min takes,
+        // the remainder the cursor keeps
+        (true, false) => {
+            let take = carried.1.min(slot_max);
+            let rest = carried.1 - take;
+            (
+                (carried.0, take),
+                if rest > 0 { (carried.0, rest) } else { (0, 0) },
+            )
+        }
+        // an empty cursor over a filled slot — pick up the whole stack
+        (false, true) => ((0, 0), slot),
+        // both filled
+        (false, false) => {
+            if slot.0 == carried.0 {
+                // the same item: the room the slot-max closes
+                let room = slot_max - slot.1;
+                if room <= 0 {
+                    (slot, carried) // a full slot takes nothing
+                } else {
+                    let moved = room.min(carried.1);
+                    let rest = carried.1 - moved;
+                    (
+                        (slot.0, slot.1 + moved),
+                        if rest > 0 { (carried.0, rest) } else { (0, 0) },
+                    )
+                }
+            } else {
+                // different items: the vanilla swap
+                (carried, slot)
+            }
+        }
+    }
+}
+
+/// THE SLOT-MAX HINT'S OWN RIGHT PRESS (the same ceiling the one-item
+/// arms re-key — the place arm the ONE the base walk keeps [the
+/// single item any max >= 1 the seat accepts], the same-item move-one
+/// arm the room the slot-max closes, the full seat the silence
+/// keeps): the right press the max-1 seat the honest laws answer.
+pub fn predict_pickup_right_max(
+    slot: (i32, i32),
+    carried: (i32, i32),
+    slot_max: i32,
+) -> ((i32, i32), (i32, i32)) {
+    let slot_empty = slot.1 <= 0;
+    let carried_empty = carried.1 <= 0;
+    match (slot_empty, carried_empty) {
+        // both empty — nothing to do
+        (true, true) => (slot, carried),
+        // a held stack over an empty slot — place ONE
+        (true, false) => (
+            (carried.0, 1),
+            if carried.1 > 1 {
+                (carried.0, carried.1 - 1)
+            } else {
+                (0, 0)
+            },
+        ),
+        // an empty cursor over a filled slot — take the ceiling half
+        (false, true) => {
+            let take = (slot.1 + 1) / 2;
+            let leave = slot.1 - take;
+            (
+                if leave > 0 { (slot.0, leave) } else { (0, 0) },
+                (slot.0, take),
+            )
+        }
+        // both filled
+        (false, false) => {
+            if slot.0 == carried.0 && slot.1 < slot_max {
+                // the same item with room — move ONE
+                (
+                    (slot.0, slot.1 + 1),
+                    if carried.1 > 1 {
+                        (carried.0, carried.1 - 1)
+                    } else {
+                        (0, 0)
+                    },
+                )
+            } else {
+                // a different item or a full slot — the right press
+                // never swaps, never overfills
+                (slot, carried)
+            }
+        }
+    }
+}
+
 /// The vanilla `AbstractContainerMenu.doClick` PICKUP_ALL prediction
 /// (javap 26.2, sha1 2dc72797 — scripts/jar_work/acm_doClick_262.txt
 /// pcs 1611-1873): the DOUBLE-CLICK spread the carried stack wears over

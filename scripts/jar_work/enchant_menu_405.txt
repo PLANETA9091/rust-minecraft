@@ -1,0 +1,21 @@
+=== THE ENCHANTMENT MENU'S OWN ANONYMOUS CLASSES (the autopush-405 round's own parser the jar bytes answer — the javap the JRE headless never ships, scripts/jar_work_parse_enchant_quickmove_404.py the machinery the walk re-wears) ===
+=== net/minecraft/world/inventory/EnchantmentMenu$1.class super=net/minecraft/world/SimpleContainer ===
+=== net/minecraft/world/inventory/EnchantmentMenu$2.class super=net/minecraft/world/inventory/Slot ===
+=== getMaxStackSize()I (2 code bytes) ===
+     0: iconst_1
+     1: ireturn
+=== net/minecraft/world/inventory/EnchantmentMenu$3.class super=net/minecraft/world/inventory/Slot ===
+=== mayPlace(Lnet/minecraft/world/item/ItemStack;)Z (8 code bytes) ===
+     0: aload_1
+     1: getstatic #13
+     4: invokevirtual net/minecraft/world/item/ItemStack.is
+     7: ireturn
+=== THE LAW THE BYTES SPEAK (the anon-class census the ctor order keys) ===
+EnchantmentMenu$2 (the ctor's first anonymous Slot — the item seat, slot 0):
+  getMaxStackSize() = 1  [iconst_1/ireturn — the stackable's own 64 the
+  seat never wears]; mayPlace the BASE Slot keeps [any item].
+EnchantmentMenu$3 (the lapis seat, slot 1):
+  mayPlace = stack.is(<lapis>)  [the single-item test the getstatic +
+  ItemStack.is walk speaks]; getMaxStackSize the base 64 keeps.
+EnchantmentMenu$1 (the enchantSlots SimpleContainer subclass — the
+  setChanged -> slotsChanged walk the costs re-roll wears).

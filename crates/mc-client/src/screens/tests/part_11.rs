@@ -23718,3 +23718,140 @@ fn the_enchant_rows_the_one_item_seat_wears() {
         "the mirror tail the whole stack wears"
     );
 }
+
+/// THE ENCHANT'S ITEM SEAT'S OWN MAX-ONE (the jar's EnchantmentMenu$2
+/// the getMaxStackSize() = 1 override speaks — the anonymous class the
+/// autopush-405 parser banks, scripts/jar_work/enchant_menu_405.txt
+/// the disasm keeps: the item seat the stackable's own 64 the vanilla
+/// seat never wears — the place arm the split(min) cap the wholesale
+/// land retires, the merge arm the room the ceiling closes, the right
+/// press the move-one arm the same law answers, the lapis seat the
+/// base 64 the stackable's own ceiling keeps).
+#[test]
+fn the_enchant_item_seat_the_max_one_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let mut app = App::new(405);
+    app.enter_world();
+    app.open_enchanting_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.enchant_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps — the
+    // item seat 0, the lapis seat 1)
+    let (ix, iy) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (lx, ly) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+
+    // ARM A — THE LEFT PLACE'S OWN SPLIT CAP (the 64-stack the empty
+    // seat the ONE takes — the remainder the cursor keeps, the
+    // wholesale land the 64 seat never wears)
+    app.enchant_carried = (dirt, 64);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the item seat the ONE takes"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 63),
+        "the remainder the cursor keeps"
+    );
+    app.enchant_slots[0] = (0, 0);
+
+    // ARM B — THE LEFT MERGE'S OWN CLOSED ROOM (the occupied seat the
+    // ceiling never grows — the seat the ONE keeps, the cursor the
+    // stack keeps)
+    app.enchant_slots[0] = (dirt, 1);
+    app.enchant_carried = (dirt, 10);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the full seat the merge never grows"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 10),
+        "the no-room walk the cursor keeps"
+    );
+
+    // ARM C — THE RIGHT PRESS'S OWN CLOSED ROOM (the move-one arm the
+    // same ceiling answers — the seat the ONE keeps, the cursor the
+    // stack keeps)
+    app.click_enchanting_slot(ix + 8, iy + 8, 1);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the full seat the right press never grows"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 10),
+        "the no-room walk the cursor keeps"
+    );
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_carried = (0, 0);
+
+    // ARM D — THE RIGHT PLACE'S OWN ONE (the empty seat the ONE takes
+    // — the remainder the cursor keeps)
+    app.enchant_carried = (dirt, 64);
+    app.click_enchanting_slot(ix + 8, iy + 8, 1);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the right press the ONE takes"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 63),
+        "the remainder the cursor keeps"
+    );
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_carried = (0, 0);
+
+    // ARM E — THE LAPIS SEAT'S OWN WHOLE STACK (the base 64 the
+    // stackable's own ceiling keeps — the lapis stack the whole move
+    // wears, the cursor the empty wears)
+    app.enchant_carried = (lapis, 64);
+    app.click_enchanting_slot(lx + 8, ly + 8, 0);
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 64),
+        "the lapis seat the whole stack wears"
+    );
+    assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+    app.enchant_slots[1] = (0, 0);
+
+    // ARM F — THE SINGLE STACK'S OWN WHOLE MOVE (the count-1 carried
+    // the split-cap arm the whole move wears — the seat the ONE takes,
+    // the cursor the empty wears)
+    app.enchant_carried = (dirt, 1);
+    app.click_enchanting_slot(ix + 8, iy + 8, 0);
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the single stack the seat wears"
+    );
+    assert_eq!(app.enchant_carried, (0, 0), "the place the cursor clears");
+}

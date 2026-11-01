@@ -52542,6 +52542,18 @@ impl App {
                                     // the full slot the vanilla's own
                                     // `if (!itemstack1.isEmpty())
                                     // setByPlayer` swap keeps
+            } else if menu == 0 {
+                // THE ITEM SEAT'S OWN MAX-ONE (the jar's EnchantmentMenu$2
+                // the getMaxStackSize() = 1 override speaks — the place
+                // arm the split(min) cap wears, the merge arm the room
+                // the ceiling closes, the full seat the no-op keeps)
+                crate::world_view::predict_pickup_kind_max(
+                    believed,
+                    old_car,
+                    old_seat_kind,
+                    old_carried_kind,
+                    1,
+                )
             } else {
                 crate::world_view::predict_pickup_kind(
                     believed,
@@ -52556,6 +52568,10 @@ impl App {
             && believed.0 == old_car.0
         {
             (believed, old_car) // the no-op the refusal keeps
+        } else if menu == 0 {
+            // THE MAX-ONE'S OWN RIGHT PRESS (the same ceiling the
+            // move-one arm wears — the full seat the silence keeps)
+            crate::world_view::predict_pickup_right_max(believed, old_car, 1)
         } else {
             crate::world_view::predict_pickup_right(believed, old_car)
         };
