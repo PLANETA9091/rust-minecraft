@@ -74854,15 +74854,31 @@ impl App {
                     self.furnace_stores
                         .entry(front)
                         .or_insert_with(|| vec![(0i32, 0i32); 3]);
-                    if crate::world::dispenser_insert_into(
+                    // THE FURNACE TRIO'S OWN KIND RIDE (the dropper's
+                    // own word the input lane banks — the trio kind
+                    // bank's parallel the insert lane wears: the split
+                    // arm the incoming word the landing cell banks, the
+                    // merge arm the grow law keeps, the FULL trio the
+                    // stack the cell never touches)
+                    self.furnace_kind_stores
+                        .entry(front)
+                        .or_insert_with(|| [crate::brewing_sim::POTION_KIND_NONE; 3]);
+                    let landed = crate::world::dispenser_insert_into_at(
                         self.furnace_stores
                             .get_mut(&front)
                             .expect("the sink the entry arm banks"),
                         item,
-                    ) {
-                        (true, 0)
-                    } else {
-                        (false, 0)
+                    );
+                    match landed {
+                        Some((idx, merged)) => {
+                            if !merged && idx < 3 {
+                                if let Some(row) = self.furnace_kind_stores.get_mut(&front) {
+                                    row[idx] = seat_kind;
+                                }
+                            }
+                            (true, 0)
+                        }
+                        None => (false, 0),
                     }
                 } else {
                     // THE DEFAULT EJECT (the spawnItem walk — the

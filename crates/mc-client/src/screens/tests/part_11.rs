@@ -25229,3 +25229,228 @@ fn the_dropper_insert_the_kind_ride_wears() {
         "the refused shot the drop never spawns"
     );
 }
+
+/// THE DROPPER'S FURNACE KIND RIDE (the autopush-413 round — the 412
+/// NEXT list's own fourth walk the round answers: the furnace trio's
+/// own parallel the insert lane wears, the input seat's word the
+/// smelt lane answers): the arms wear — the split arm's own ride
+/// [the potion the input seat lands, the word the trio cell banks],
+/// the merge arm's own keep [the grow law the cell never overrides],
+/// the kindless wall's own re-key [the stale word the fresh identity
+/// retires], the full trio's own refusal [the stack the word the
+/// cell keeps].
+#[test]
+fn the_dropper_furnace_the_kind_ride_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let (px, pz) = (16i32, 16i32);
+    let gy = 30i32;
+    // THE FRONT FURNACE'S OWN CELL (the SOUTH delta the z+1 speaks)
+    let (cx, cy, cz) = (px, gy, pz + 1);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        for dx in -4..=4 {
+            for dz in -4..=4 {
+                world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+            }
+        }
+        // THE DROPPER'S OWN SEAT (the facing the SOUTH byte stamps,
+        // the front cell the furnace the sink wears)
+        world.set(px, gy, pz, crate::world::DROPPER);
+        world.set_variant(
+            px,
+            gy,
+            pz,
+            crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+        );
+        world.set(cx, cy, cz, crate::world::FURNACE);
+    }
+    // APP ARM A — THE SPLIT ARM'S OWN RIDE (the potion the input seat
+    // lands, the word the trio cell banks, the source seat the drain
+    // retires)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (potion, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.furnace_stores[&(cx, cy, cz)][crate::world::FURNACE_SLOT_INPUT],
+        (potion, 1),
+        "the landed stack the input seat wears"
+    );
+    assert_eq!(
+        app.furnace_kind_stores[&(cx, cy, cz)][crate::world::FURNACE_SLOT_INPUT],
+        night,
+        "the word the trio cell banks"
+    );
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (0, 0),
+        "the spent seat the write-back empties"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        none,
+        "the source cell the drain retires"
+    );
+    assert!(app.drops.is_empty(), "the insert arm the drop never spawns");
+
+    // APP ARM B — THE MERGE ARM'S OWN KEEP (the grow law the count
+    // wears, the seat's own cell the incoming word never overrides)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (dirt, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    app.furnace_stores
+        .insert((cx, cy, cz), vec![(dirt, 5), (0, 0), (0, 0)]);
+    app.furnace_kind_stores
+        .insert((cx, cy, cz), [night, none, none]);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.furnace_stores[&(cx, cy, cz)][0],
+        (dirt, 6),
+        "the merge arm the count grows"
+    );
+    assert_eq!(
+        app.furnace_kind_stores[&(cx, cy, cz)][0],
+        night,
+        "the seat's own cell the grow law keeps"
+    );
+
+    // APP ARM C — THE KINDLESS WALL'S OWN RE-KEY (the kindless stack
+    // the fresh seat lands, the stale word the identity retires)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (dirt, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    app.furnace_stores.insert((cx, cy, cz), vec![(0, 0); 3]);
+    app.furnace_kind_stores
+        .insert((cx, cy, cz), [night, none, none]);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.furnace_stores[&(cx, cy, cz)][0],
+        (dirt, 1),
+        "the kindless stack the fresh seat lands"
+    );
+    assert_eq!(
+        app.furnace_kind_stores[&(cx, cy, cz)][0],
+        none,
+        "the stale word the fresh identity retires"
+    );
+
+    // APP ARM D — THE FULL TRIO'S OWN REFUSAL (the FULL trio the
+    // insert refuses, the source stack the count wears, the word the
+    // cell keeps)
+    app.container_stores.insert(
+        (px, gy, pz),
+        vec![
+            (potion, 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+        ],
+    );
+    app.container_stores_potion_kinds.insert(
+        (px, gy, pz),
+        vec![night, none, none, none, none, none, none, none, none],
+    );
+    app.furnace_stores
+        .insert((cx, cy, cz), vec![(stone, 64); 3]);
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.schedule_dispenser_tick(app.frame + crate::world::DISPENSER_COOLDOWN, px, gy, pz);
+    }
+    for _ in 0..6 {
+        app.update();
+    }
+    assert_eq!(
+        app.container_stores[&(px, gy, pz)][0],
+        (potion, 1),
+        "the refused stack the count keeps"
+    );
+    assert_eq!(
+        app.container_stores_potion_kinds[&(px, gy, pz)][0],
+        night,
+        "the word the kept stack wears"
+    );
+    assert_eq!(
+        app.furnace_stores[&(cx, cy, cz)][0],
+        (stone, 64),
+        "the sink the refusal never moves"
+    );
+    assert!(
+        app.drops.is_empty(),
+        "the refused shot the drop never spawns"
+    );
+}
