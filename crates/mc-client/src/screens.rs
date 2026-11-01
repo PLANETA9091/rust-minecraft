@@ -30342,13 +30342,19 @@ impl App {
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 3);
+            // THE NUMBERING'S OWN WALK (the anvil's own map the loop
+            // re-keys — the main rows 3..29 the +6 shift the write
+            // keeps, the hotbar 30..38 the -30 shift the drain speaks;
+            // the enchant shape's own bounds the chimera wore — the
+            // main-last row the hotbar head clobbered, the plain click
+            // the underflow panic rode)
             for (i, pair) in &changed {
                 if *i < 2 {
                     self.anvil_slots[*i] = *pair;
-                } else if *i < 29 {
+                } else if *i < 30 {
                     self.inventory.items[*i + 6] = *pair;
                 } else {
-                    self.inventory.items[*i - 29] = *pair;
+                    self.inventory.items[*i - 30] = *pair;
                 }
             }
             // THE LANES' OWN QUICK-MOVE RIDE (the whole move the
@@ -30384,7 +30390,7 @@ impl App {
             self.anvil_slots[menu]
         } else if menu == 2 {
             self.anvil_result
-        } else if menu < 29 {
+        } else if menu < 30 {
             self.inventory.items[menu + 6]
         } else {
             self.inventory.items[menu - 30]
@@ -30428,10 +30434,12 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, old_car)
         };
-        // THE SEAT'S OWN WRITE (the believed row the mutation answers)
+        // THE SEAT'S OWN WRITE (the believed row the mutation answers
+        // — the anvil's own bounds the write re-keys, the main-last
+        // row the +6 shift the same map answers)
         if menu < 2 {
             self.anvil_slots[menu] = new_slot;
-        } else if menu < 29 {
+        } else if menu < 30 {
             self.inventory.items[menu + 6] = new_slot;
         } else {
             self.inventory.items[menu - 30] = new_slot;

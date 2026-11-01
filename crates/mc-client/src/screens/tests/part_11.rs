@@ -22761,3 +22761,157 @@ fn the_furnace_quick_move_the_kind_ride_wears() {
         "the wordless ride the seat wears"
     );
 }
+
+/// THE ANVIL'S OWN NUMBERING WALK (the offline lane's own map the
+/// round re-keys — the main rows 3..29 the +6 shift the trio walk
+/// keeps, the hotbar 30..38 the -30 shift the drain speaks; the
+/// enchant shape's own bounds the chimera the prior lane wore — the
+/// main-last row the hotbar head clobbered, the plain click the
+/// underflow panic rode).
+#[test]
+fn the_anvil_numbering_the_walk_the_bounds_rekey_wears() {
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(399);
+    app.enter_world();
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.anvil_mirror_sync_from_inventory();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE SEAT COORDS (the scoped lookup the mutable walk keeps —
+    // the main-last row 29, the hotbar head 30, the hotbar tail 38)
+    let (ax, ay) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 29)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (hx, hy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 30)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    let (tx, ty) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 38)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+
+    // ARM A — THE MAIN-LAST'S OWN PLAIN CLICK (the underflow's own
+    // retire — the menu 29 the believed read the +6 shift answers,
+    // the pickup the row the carry rides, the panic the walk never
+    // wears)
+    app.shift_down = false;
+    app.inventory.items[35] = (stone, 1);
+    app.click_anvil_slot(ax + 8, ay + 8, 0);
+    assert_eq!(
+        app.anvil_carried,
+        (stone, 1),
+        "the main-last row the pickup wears"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+
+    // ARM B — THE MAIN-LAST'S OWN RIDE (the write's re-key the ride
+    // wears — the drained row the -nothing shift answers, the hotbar
+    // head the old chimera clobbered the honest empty keeps)
+    app.anvil_carried = (0, 0);
+    app.inventory.items[35] = (stone, 1);
+    app.shift_down = true;
+    app.click_anvil_slot(ax + 8, ay + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (stone, 1),
+        "the trio seat the fill wears"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the hotbar head the ride never clobbers"
+    );
+    app.anvil_slots[0] = (0, 0);
+
+    // ARM C — THE HOTBAR HEAD'S OWN RIDE (the -30 shift the row lands
+    // — the head row the drain wears, the neighbor the ride never
+    // spends)
+    app.inventory.items[0] = (stone, 1);
+    app.inventory.items[1] = (dirt, 1);
+    app.click_anvil_slot(hx + 8, hy + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (stone, 1),
+        "the trio seat the fill wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the head row the drain wears"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (dirt, 1),
+        "the neighbor row the ride never spends"
+    );
+    app.anvil_slots[0] = (0, 0);
+
+    // ARM D — THE HOTBAR TAIL'S OWN RIDE (the tail row the own cell
+    // drains — the main head the old chimera clobbered the honest
+    // stack keeps)
+    app.inventory.items[8] = (stone, 1);
+    app.inventory.items[9] = (dirt, 1);
+    app.click_anvil_slot(tx + 8, ty + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (stone, 1),
+        "the trio seat the fill wears"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (0, 0),
+        "the tail row the drain wears"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (dirt, 1),
+        "the main head the clobber retires"
+    );
+    app.anvil_slots[0] = (0, 0);
+
+    // ARM E — THE MAIN-LAST'S OWN MERGE (the count the same-item ride
+    // wears — the seat's room the merge takes, the row the drain
+    // wears)
+    app.anvil_slots[0] = (stone, 16);
+    app.inventory.items[35] = (stone, 8);
+    app.click_anvil_slot(ax + 8, ay + 8, 0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (stone, 24),
+        "the seat's room the merge takes"
+    );
+    assert_eq!(
+        app.inventory.items[35],
+        (0, 0),
+        "the drained row the move empties"
+    );
+}
