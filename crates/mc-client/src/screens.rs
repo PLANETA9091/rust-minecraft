@@ -52784,10 +52784,48 @@ impl App {
             {
                 self.throw_brewing_carried_outside(button);
             }
-            // THE LIVE LANE'S OWN SILENCE (the outside press the THROW
-            // guard keeps — the enchant's own law the live window
-            // wears: no packet the press never mints, the throw walk
-            // the offline lane alone serves)
+            // THE LIVE LANE'S OWN THROW (the table's own wire shape —
+            // the -999 the doClick THROW arm speaks: the carried
+            // stack rides the packet, the whole stack the LEFT press
+            // drops, the one item the RIGHT splits, the belief clears
+            // or splits — the drop entity the SERVER spawns (the
+            // wire's own Add Entity lane — the local spawn never
+            // rides here). The EMPTY cursor's press stays silent (the
+            // doClick THROW arm's own isEmpty guard — no packet).
+            if self.brewing_is_live
+                && self.brewing_panel != (0, 0)
+                && (mx < self.brewing_panel.0
+                    || my < self.brewing_panel.1
+                    || mx >= self.brewing_panel.0 + 176
+                    || my >= self.brewing_panel.1 + 166)
+            {
+                let Some((window_id, state_id)) = self.brewing_live_window else {
+                    return; // no window identity — nothing to echo against
+                };
+                let Some(sink) = self.live_clicks.clone() else {
+                    return; // no live session — the command dies on the frame thread
+                };
+                let carried = self.live_brewing_carried;
+                if carried.1 > 0 {
+                    let new_carried = if button == 0 {
+                        (0, 0)
+                    } else {
+                        (carried.0, carried.1 - 1)
+                    };
+                    self.live_brewing_carried = new_carried;
+                    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                        crate::world_view::ContainerClick {
+                            window_id,
+                            state_id,
+                            slot: -999,
+                            button,
+                            input: crate::world_view::ContainerInput::Throw,
+                            changed: Vec::new(),
+                            carried: new_carried,
+                        },
+                    ));
+                }
+            }
             return;
         };
         if self.brewing_is_live {
