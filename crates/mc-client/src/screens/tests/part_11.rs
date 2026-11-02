@@ -26226,21 +26226,42 @@ fn the_enchant_gather_the_wire_half_wears() {
         "the arm's own clear the release speaks"
     );
 
-    // APP ARM C — THE HONEST GATES (the pickup press + the drag arm +
-    // the spell click the wire round never banks — the silence the
-    // local fiction never wears)
+    // APP ARM C — THE PICKUP'S OWN ECHO + THE HONEST GATES (the EMPTY
+    // cursor the 419 round's own echo the silence RETIRES — the press
+    // the packet the lane speaks [the gather's load the arm's own
+    // reset retires first]; the held press the drag arm the wire round
+    // still never banks, the spell click the same gated silence keeps)
+    app.enchant_carried = (0, 0); // the gather's load the empty-cursor press retires
     app.mouse_pos = Some((rx4 + 8, ry4 + 8));
     app.press_doubled = false;
     app.enchant_last_click_slot = None;
     app.on_press(rx4 + 8, ry4 + 8); // the empty carried the pickup dispatch keeps
-    assert!(
-        rx.try_recv().is_err(),
-        "the gated pickup press the silence keeps"
-    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 4, "the window id the echo wears");
+            assert_eq!(click.state_id, 9, "the state id the echo wears");
+            assert_eq!(click.slot, 2, "the hovered row the echo speaks");
+            assert_eq!(click.button, 0, "the left press the echo carries");
+            assert!(
+                matches!(click.input, ContainerInput::Pickup),
+                "the pickup mode the echo wears"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the empty delta the prediction-free lane rides"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the echo carries"
+            );
+        }
+        other => panic!("the pickup press the echo speaks, not {other:?}"),
+    }
     assert_eq!(
         app.enchant_mirror[2],
         (0, 0),
-        "the drained row the gated press never re-fills"
+        "the drained row the echo never re-fills — the server's own correction the sync re-banks"
     );
     let held_before = app.qc_armed;
     app.enchant_carried = (dirt, 10);
@@ -26454,5 +26475,228 @@ fn the_enchant_costs_the_data_words_wear() {
     assert!(
         app.enchant_clues.iter().all(|&c| c == -1),
         "the empty item seat the -1 clues keep"
+    );
+}
+
+/// THE ENCHANT PICKUP'S OWN WIRE ECHO (the 419 round — the anvil's
+/// dev-202 shape the enchant menu re-wears): the live window's pickup
+/// press the empty delta the lane echoes [the honest silence the 417
+/// arm kept the round retires], the believed cursor the packet rides,
+/// the server's own correction the projection re-banks, the split's
+/// right press the same Pickup input wears, the shift press the
+/// QuickMove input speaks, the outside press the empty cursor the
+/// THROW guard keeps silent, the drag arm + the spell click the gated
+/// lanes stay.
+#[test]
+fn the_enchant_pickup_the_wire_echo_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 13 the window
+    // opens — the seats the pair speaks, the rows the mirror feeds,
+    // the identity the echo answers)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (sword, 1);
+    slots[1] = (lapis, 3);
+    slots[4] = (dirt, 20);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.screen, ScreenKind::Enchanting, "the route opens");
+    assert!(app.enchant_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.enchant_live_window,
+        Some((4, 9)),
+        "the identity the echo answers"
+    );
+
+    // THE RECTS' OWN SPEAK (the render the geometry banks — the press
+    // walk the hover's rects read)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+
+    // APP ARM B — THE PICKUP'S OWN ECHO (the item seat the left press
+    // takes — the empty delta the packet rides, the projection the
+    // echo never mutates)
+    let (rx0, ry0) = app
+        .enchant_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 0)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.mouse_pos = Some((rx0 + 8, ry0 + 8));
+    app.press_doubled = false;
+    app.enchant_last_click_slot = None;
+    app.on_press(rx0 + 8, ry0 + 8);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 4, "the window id the echo wears");
+            assert_eq!(click.state_id, 9, "the state id the echo wears");
+            assert_eq!(click.slot, 0, "the item seat the echo speaks");
+            assert_eq!(click.button, 0, "the left press the echo carries");
+            assert!(
+                matches!(click.input, ContainerInput::Pickup),
+                "the pickup mode the echo wears"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the empty delta the prediction-free lane rides"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the echo carries"
+            );
+        }
+        other => panic!("the pickup the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the seat the echo never mutates — the server's own word the sync lands"
+    );
+    assert_eq!(
+        app.enchant_mirror[2],
+        (dirt, 20),
+        "the wire row the echo never mutates"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (0, 0),
+        "the cursor the echo never mints"
+    );
+
+    // THE SPLIT'S OWN ECHO (the lapis seat the right press halves —
+    // the same Pickup input the button 1 wears, the local split the
+    // prediction-free lane never wears)
+    let (rx1, ry1) = app
+        .enchant_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 1)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.mouse_pos = Some((rx1 + 8, ry1 + 8));
+    app.press_doubled = false;
+    app.enchant_last_click_slot = None;
+    app.on_right_press(rx1 + 8, ry1 + 8);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 1, "the lapis seat the echo speaks");
+            assert_eq!(click.button, 1, "the right press the echo carries");
+            assert!(
+                matches!(click.input, ContainerInput::Pickup),
+                "the split's own Pickup mode the packet wears"
+            );
+        }
+        other => panic!("the split the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 3),
+        "the lapis seat the echo never halves"
+    );
+
+    // THE SHIFT'S OWN ECHO (the row the shift press quick-moves — the
+    // QuickMove input the packet wears)
+    let (rx2, ry2) = app
+        .enchant_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 2)
+        .map(|&(x, y, _)| (x, y))
+        .unwrap();
+    app.mouse_pos = Some((rx2 + 8, ry2 + 8));
+    app.shift_down = true;
+    app.press_doubled = false;
+    app.enchant_last_click_slot = None;
+    app.on_press(rx2 + 8, ry2 + 8);
+    app.shift_down = false;
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 2, "the empty row the echo speaks");
+            assert!(
+                matches!(click.input, ContainerInput::QuickMove),
+                "the shift press the QuickMove input wears"
+            );
+        }
+        other => panic!("the shift press the echo speaks, not {other:?}"),
+    }
+
+    // APP ARM C — THE OUTSIDE'S OWN SILENCE (the empty cursor the
+    // outside press the THROW guard keeps — no packet, no fiction)
+    app.mouse_pos = Some((4, 90));
+    app.press_doubled = false;
+    app.enchant_last_click_slot = None;
+    app.on_press(4, 90);
+    assert!(
+        rx.try_recv().is_err(),
+        "the empty cursor's outside press the guard silences"
+    );
+
+    // APP ARM D — THE GATED LANES' OWN SILENCE (the drag arm + the
+    // spell click the wire round never banks)
+    let held_before = app.qc_armed;
+    app.enchant_carried = (dirt, 10);
+    app.qc_arm_enchanting(rx0 + 8, ry0 + 8, 0);
+    assert_eq!(
+        app.qc_armed, held_before,
+        "the gated drag arm the silence keeps"
+    );
+    app.enchant_carried = (0, 0);
+    assert!(
+        !app.click_enchant_option(0),
+        "the gated spell click the silence speaks"
+    );
+    assert!(rx.try_recv().is_err(), "the gated lanes no command speak");
+
+    // APP ARM E — THE SERVER'S OWN CORRECTION (the sync the echo's
+    // answer re-banks — the emptied seat the server's word lands, the
+    // authoritative cursor the projection banks, the state id the
+    // window re-keys)
+    let mut slots2 = vec![(0i32, 0i32); 38];
+    slots2[1] = (lapis, 3);
+    slots2[4] = (dirt, 20);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (sword, 1),
+        state_id: 10,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the emptied seat the correction lands"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (sword, 1),
+        "the authoritative cursor the projection re-banks"
+    );
+    assert_eq!(
+        app.enchant_live_window,
+        Some((4, 10)),
+        "the state id the window re-keys"
     );
 }

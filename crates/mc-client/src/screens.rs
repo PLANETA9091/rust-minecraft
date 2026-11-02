@@ -52867,13 +52867,14 @@ impl App {
     /// — the vanilla doClick's local walk the believed stack the
     /// pickup/split prediction mutates, the carried the local cursor
     /// keeps, NO echo: the fresh stand-in has no window and no
-    /// session). THE STANDARD ROWS the player's own store wear (the
-    /// menu 2..28 the main grid rides, the menu 29..37 the hotbar —
-    /// the write-through projection the inventory IS).
+    /// session). THE LIVE WINDOW the prediction-free echoes wear (the
+    /// anvil's dev-202 shape the 419 round re-wears — the empty delta
+    /// list with the believed cursor the packet rides, the server's
+    /// own corrections the container lane re-banks). THE STANDARD ROWS
+    /// the player's own store wear (the menu 2..28 the main grid
+    /// rides, the menu 29..37 the hotbar — the write-through
+    /// projection the inventory IS).
     fn click_enchanting_slot(&mut self, mx: i32, my: i32, button: i8) {
-        if self.enchant_is_live {
-            return; // the live window the pickup lane the later round owes — the honest silence (the local fiction the server never confirms)
-        }
         if self.enchant_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
         }
@@ -52891,6 +52892,36 @@ impl App {
             return;
         };
         let menu = slot as usize;
+        // THE ENCHANT PICKUP'S OWN WIRE ECHO (the anvil's dev-202 shape
+        // the 419 round re-wears — the prediction-free lane the empty
+        // delta list with the believed cursor the packet rides, the
+        // server's own corrections the container lane re-banks; the
+        // offline sim the local predictions answer)
+        if self.enchant_is_live {
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, state_id)) = self.enchant_live_window else {
+                return; // no window — the belief never armed
+            };
+            let input = if self.shift_down {
+                crate::world_view::ContainerInput::QuickMove
+            } else {
+                crate::world_view::ContainerInput::Pickup
+            };
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button,
+                    input,
+                    changed: Vec::new(),
+                    carried: self.enchant_carried,
+                },
+            ));
+            return;
+        }
         // THE QUICK_MOVE LANE (the shift-click — the vanilla doClick's
         // own precedence the chest's walk keeps): the combined
         // 38-slot snapshot the REAL inventory wears (the pair + the
