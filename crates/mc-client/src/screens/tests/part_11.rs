@@ -26230,8 +26230,8 @@ fn the_enchant_gather_the_wire_half_wears() {
     // APP ARM C — THE PICKUP'S OWN ECHO + THE HONEST GATES (the EMPTY
     // cursor the 419 round's own echo the silence RETIRES — the press
     // the packet the lane speaks [the gather's load the arm's own
-    // reset retires first]; the held press the drag arm the wire round
-    // still never banks, the spell click the same gated silence keeps)
+    // reset retires first]; the held press the drag arm the 428 echo's
+    // un-refusal answers, the spell click the same echo lane speaks)
     app.enchant_carried = (0, 0); // the gather's load the empty-cursor press retires
     app.mouse_pos = Some((rx4 + 8, ry4 + 8));
     app.press_doubled = false;
@@ -26264,12 +26264,19 @@ fn the_enchant_gather_the_wire_half_wears() {
         (0, 0),
         "the drained row the echo never re-fills — the server's own correction the sync re-banks"
     );
-    let held_before = app.qc_armed;
+    // THE LIVE WINDOW'S OWN ARM (the 428 echo's un-refusal — the arm
+    // the window answers: the armed flag the press raises, no packet
+    // the arm mints, the release's own wire lanes the drag mints)
     app.enchant_carried = (dirt, 10);
     app.qc_arm_enchanting(rx4 + 8, ry4 + 8, 0);
-    assert_eq!(
-        app.qc_armed, held_before,
-        "the gated drag arm the silence keeps"
+    assert!(
+        app.qc_armed,
+        "the live window the arm answers — the 428 echo's un-refusal"
+    );
+    app.qc_armed = false; // the disarm the drag-less test keeps — the later arms the fresh state wears
+    assert!(
+        rx.try_recv().is_err(),
+        "the arm's own press no packet mints"
     );
     app.enchant_carried = (0, 0);
     assert!(
@@ -26663,17 +26670,24 @@ fn the_enchant_pickup_the_wire_echo_wears() {
         "the empty cursor's outside press the guard silences"
     );
 
-    // APP ARM D — THE GATED LANES' OWN WALK (the drag arm the silence
-    // keeps, the spell click the echo the silence retires — the 420
-    // round's own re-wear: the live window's option press the
-    // ServerboundContainerButtonClickPacket speaks, the gated drag arm
-    // the same silence keeps)
-    let held_before = app.qc_armed;
+    // APP ARM D — THE LIVE ARM'S OWN ANSWER + THE SPELL'S OWN ECHO
+    // (the drag arm the 428 un-refusal answers, the spell click the
+    // echo the 420 round's own lane speaks: the live window's option
+    // press the ServerboundContainerButtonClickPacket wears, the armed
+    // drag the release's own wire lanes mint)
+    // THE LIVE WINDOW'S OWN ARM (the 428 echo's un-refusal — the arm
+    // the window answers: the armed flag the press raises, no packet
+    // the arm mints, the release's own wire lanes the drag mints)
     app.enchant_carried = (dirt, 10);
     app.qc_arm_enchanting(rx0 + 8, ry0 + 8, 0);
-    assert_eq!(
-        app.qc_armed, held_before,
-        "the gated drag arm the silence keeps"
+    assert!(
+        app.qc_armed,
+        "the live window the arm answers — the 428 echo's un-refusal"
+    );
+    app.qc_armed = false; // the disarm the drag-less test keeps — the later arms the fresh state wears
+    assert!(
+        rx.try_recv().is_err(),
+        "the arm's own press no packet mints"
     );
     app.enchant_carried = (0, 0);
     assert!(
@@ -27902,7 +27916,8 @@ fn the_brewing_stand_the_deferred_place_wears() {
 /// drag arm holds, the release the deferred place serves — the seat
 /// the click walk's own PICKUP speaks, the outside the -999 THROW
 /// the 339 walk serves, the between the -1 no-op keeps, the live
-/// window the arm's own gate never enters). The arms wear: the
+/// window the outside's silence the release keeps [the drag lane the
+/// 428 echo's wire lanes bank]). The arms wear: the
 /// place-back's own whole stack, the right's own place-ONE, the
 /// outside's own whole drop, the between's own no-op, the live
 /// window's own silence.
@@ -28015,9 +28030,9 @@ fn the_enchanting_table_the_deferred_place_wears() {
     assert!(!app.qc_armed, "the tail the arm clears either way");
 
     // ARM E — THE LIVE WINDOW'S OWN SILENCE (the outside release the
-    // arm never throws — the drag lane the arm's own gate refuses,
-    // the release the gate the silence keeps, the cursor the release
-    // never touches, no packet the release mints)
+    // arm never throws — the 424 press echo the drop already owns,
+    // the release the double-speak never mints, the cursor the
+    // release never touches, no packet the release wears)
     app.world_is_network = true;
     let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
     app.live_clicks = Some(tx);
@@ -28046,7 +28061,7 @@ fn the_enchanting_table_the_deferred_place_wears() {
     );
     assert!(
         rx.try_recv().is_err(),
-        "the live release no packet mints — the arm's own gate the drag never arms"
+        "the live release no packet mints — the press echo the drop owns"
     );
 }
 
@@ -28195,5 +28210,184 @@ fn the_anvil_the_deferred_place_wears() {
     assert!(
         rx.try_recv().is_err(),
         "the live release no packet mints — the arm's own gate the drag never arms"
+    );
+}
+
+/// THE ENCHANTING'S OWN QUICKCRAFT ECHO (the 428 autopush round — the
+/// live drag the arm's un-refusal answers: the painted distribution
+/// the wire packets the chest's own shape re-wears — the START the
+/// mask(0, type) button the slot -999 keeps, the ADDs the mask(1,
+/// type) buttons the painted seats ride, the END the mask(2, type)
+/// button the changed map the distribution's own deltas names, the
+/// belief the same net fold keeps — the mirror rows the tenths hold,
+/// the cursor the remainder keeps, the HUD row the mirror's hotbar
+/// sync speaks). The arms wear: the live drag's own triple + fold,
+/// the no-window refusal's own silence, the empty-paint release's
+/// own seat echo.
+#[test]
+fn the_enchanting_quickcraft_the_wire_echo_wears() {
+    use crate::world_view::ContainerCommand;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // THE LIVE DRAG'S OWN ECHO (the windowed session the drag rides —
+    // the arm the window answers, the paint the motion speaks, the
+    // release the triple mints)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    app.screen = ScreenKind::Enchanting;
+    app.enchant_is_live = true;
+    app.enchant_live_window = Some((5, 7));
+    app.enchant_panel = (100, 100);
+    app.enchant_slots = vec![(0, 0); 2];
+    app.enchant_mirror = vec![(0, 0); 36];
+    app.enchant_slot_rects = vec![
+        (100 + 8 + 1, 100 + 84 + 1, 2i16),    // the main row 0 — the menu 2
+        (100 + 26 + 1, 100 + 84 + 1, 3i16),   // the main row 1 — the menu 3
+        (100 + 8 + 1, 100 + 142 + 1, 29i16),  // the hotbar row 0 — the menu 29
+        (100 + 26 + 1, 100 + 142 + 1, 30i16), // the hotbar row 1 — the menu 30
+    ];
+    // the cursor 32 dirt; the drag over the mirror's main row 0 + the
+    // hotbar rows 0/1 (the menus 2/29/30) — the floor(32/3) tenths
+    app.enchant_carried = (dirt, 32);
+    app.on_press(100 + 8 + 8, 100 + 84 + 8);
+    assert!(
+        app.qc_armed,
+        "the live press the arm arms — no packet it mints"
+    );
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the arm's own press the silence keeps"
+    );
+    app.on_mouse_move(100 + 8 + 8, 100 + 84 + 8);
+    app.on_mouse_move(100 + 8 + 8, 100 + 142 + 8);
+    app.on_mouse_move(100 + 26 + 8, 100 + 142 + 8);
+    assert_eq!(
+        app.qc_slots,
+        vec![2, 29, 30],
+        "the three seats the motion paints"
+    );
+    app.on_left_release();
+    // THE BELIEF: the mirror rows the tenths hold, the cursor the
+    // remainder keeps, the pair the drag never names
+    assert_eq!(
+        app.enchant_slots,
+        vec![(0, 0); 2],
+        "the pair the drag never paints"
+    );
+    assert_eq!(app.enchant_mirror[0], (dirt, 10), "the main row 0's tenth");
+    assert_eq!(
+        app.enchant_mirror[27],
+        (dirt, 10),
+        "the hotbar row 0's tenth"
+    );
+    assert_eq!(
+        app.enchant_mirror[28],
+        (dirt, 10),
+        "the hotbar row 1's tenth"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 2),
+        "the remainder the belief keeps"
+    );
+    // THE HUD: the mirror's hotbar rows the sync speaks
+    assert_eq!(app.hotbar_slots[0], (dirt, 10));
+    assert_eq!(app.hotbar_slots[1], (dirt, 10));
+    // THE TRIPLE: the START (mask(0,0) byte 0), the three ADDs
+    // (mask(1,0) byte 1), the END (mask(2,0) byte 2) the changed map
+    // the tenths name — the enchant window's own identity rides
+    match click_rx.try_recv().expect("the START rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+            assert_eq!(c.changed, Vec::new());
+            assert_eq!(c.carried, (dirt, 32));
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    for menu in [2, 29, 30] {
+        match click_rx.try_recv().expect("the ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, menu);
+                assert_eq!(c.button, 1);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+    match click_rx.try_recv().expect("the END rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 2);
+            assert_eq!(
+                c.changed,
+                vec![(2, (dirt, 10)), (29, (dirt, 10)), (30, (dirt, 10))],
+                "the distribution's own deltas"
+            );
+            assert_eq!(c.carried, (dirt, 2), "the remainder the packet keeps");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(click_rx.try_recv().is_err(), "the triple the lane exhausts");
+
+    // THE NO-WINDOW REFUSAL'S OWN SILENCE (the wire session's no
+    // window the arm refuses — the chest's own gate the echo
+    // re-wears: no paint the drag speaks, no packet the release
+    // mints, the belief the drag never moves)
+    app.enchant_live_window = None;
+    app.enchant_is_live = false;
+    app.enchant_carried = (dirt, 8);
+    app.on_press(100 + 8 + 8, 100 + 84 + 8);
+    assert!(!app.qc_armed, "the no-window press the arm refuses");
+    app.on_mouse_move(100 + 26 + 8, 100 + 84 + 8);
+    assert!(app.qc_slots.is_empty(), "the refused drag no seat paints");
+    app.on_left_release();
+    assert!(click_rx.try_recv().is_err(), "the refusal no packet mints");
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 8),
+        "the cursor the refusal never moves"
+    );
+
+    // THE EMPTY-PAINT RELEASE'S OWN SEAT ECHO (the live drag the arm
+    // holds, no seat the motion paints, the release the deferred
+    // place's own PICKUP speaks — the click walk's own echo the
+    // packet rides, the believed cursor the packet wears, the
+    // prediction-free lane the cursor never moves)
+    app.enchant_live_window = Some((5, 7));
+    app.enchant_is_live = true;
+    app.enchant_carried = (dirt, 5);
+    app.on_press(100 + 8 + 8, 100 + 84 + 8);
+    assert!(app.qc_armed, "the live press the arm arms again");
+    assert!(click_rx.try_recv().is_err(), "the press no packet mints");
+    app.mouse_pos = Some((100 + 8 + 8, 100 + 84 + 8));
+    app.on_left_release();
+    match click_rx.try_recv().expect("the seat echo rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, 2);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+            assert_eq!(c.changed, Vec::new());
+            assert_eq!(c.carried, (dirt, 5), "the believed cursor the packet wears");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the single echo the lane exhausts"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (dirt, 5),
+        "the prediction-free lane the cursor never moves"
     );
 }
