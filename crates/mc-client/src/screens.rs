@@ -77851,12 +77851,44 @@ impl App {
                     // THE FRESH STATE'S OWN RESET (the open walk's own
                     // law — the stale gather pair the window retires,
                     // the spell stores the fresh empties keep, the NO
-                    // table pos the scan the zero costs keeps [the
-                    // data-word lane the later round owes])
+                    // table pos the scan the wire lane never rides)
                     self.enchant_doubleclick = false;
                     self.enchant_last_click_slot = None;
                     self.enchanting_table_pos = None;
-                    self.enchant_costs_refresh();
+                    // THE COSTS' OWN DATA WORDS (the 418 round — the
+                    // ContainerSetData lane the furnace's progress walk
+                    // banks: the ids 0..2 the three costs speak, the id
+                    // 3 the seed word the standalone mirror the DataSlot
+                    // doc banks — the server's own words the rolls the
+                    // LOCAL scan never wears; the words the wire never
+                    // spoke stay the fresh zeros, the stale seed the
+                    // prior window left the fresh open retires)
+                    self.enchant_seed = 0;
+                    self.enchanting_costs = [0, 0, 0];
+                    for (i, v) in c.data_slots.iter().take(3).enumerate() {
+                        self.enchanting_costs[i] = *v;
+                    }
+                    if let Some(&seed_word) = c.data_slots.get(3) {
+                        self.enchant_seed = seed_word;
+                    }
+                    // THE CLUE ROWS' OWN PICK (the refresh's own second
+                    // pass the wire words re-wear — the seed+row stream
+                    // the same pick fn serves, the item seat the same
+                    // gate reads, the empty seat the -1 clues keep)
+                    let item = self.enchant_slots.first().copied().unwrap_or((0, 0));
+                    self.enchanting_power = 0;
+                    for i in 0..3usize {
+                        self.enchant_clues[i] = -1;
+                        self.enchant_level_clues[i] = -1;
+                        if self.enchanting_costs[i] > 0 && item.1 > 0 {
+                            let (_, clue) =
+                                self.enchant_clue_pick(i, item.0, self.enchanting_costs[i]);
+                            if let Some((ench, level)) = clue {
+                                self.enchant_clues[i] = ench;
+                                self.enchant_level_clues[i] = level;
+                            }
+                        }
+                    }
                     for menu in 0..self.enchant_comps.len() {
                         self.enchant_comps[menu].clear();
                     }

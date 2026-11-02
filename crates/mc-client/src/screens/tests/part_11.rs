@@ -26306,3 +26306,153 @@ fn the_enchant_gather_the_wire_half_wears() {
     );
     assert_eq!(app.screen, ScreenKind::World, "the drop the world answers");
 }
+
+/// THE ENCHANT COSTS' OWN DATA WORDS (the 418 round — the
+/// ContainerSetData lane the furnace's progress walk banks): the ids
+/// 0..2 the three costs speak, the id 3 the seed word the standalone
+/// mirror the DataSlot doc banks, the clue rows the same seed+row
+/// stream the pure pick fn serves [the item seat the same gate reads,
+/// the empty seat the -1 clues keep], the wordless sync the fresh
+/// zeros keep [the stale seed the prior window left the fresh open
+/// retires], the new words the fields re-key.
+#[test]
+fn the_enchant_costs_the_data_words_wear() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+
+    // APP ARM A — THE WORDS' OWN LANDING (the ids 0..2 the costs, the
+    // id 3 the seed — the clue rows the same pick fn's answer wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (sword, 1);
+    slots[1] = (lapis, 3);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: vec![7, 13, 30, 4660],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.screen, ScreenKind::Enchanting, "the route opens");
+    assert_eq!(
+        app.enchanting_costs,
+        [7, 13, 30],
+        "the cost words the fields land"
+    );
+    assert_eq!(app.enchant_seed, 4660, "the seed word the field banks");
+    assert_eq!(
+        app.enchanting_power, 0,
+        "the wire window the scan never rides"
+    );
+    for i in 0..3usize {
+        let (_, clue) = app.enchant_clue_pick(i, sword, app.enchanting_costs[i]);
+        if let Some((ench, level)) = clue {
+            assert_eq!(
+                app.enchant_clues[i], ench,
+                "the clue row the same stream serves"
+            );
+            assert_eq!(
+                app.enchant_level_clues[i], level,
+                "the level row the same stream serves"
+            );
+        } else {
+            assert_eq!(
+                app.enchant_clues[i], -1,
+                "the empty pick list the -1 clue keeps"
+            );
+        }
+    }
+    assert!(
+        rx.try_recv().is_err(),
+        "the data-word sync no command speaks"
+    );
+
+    // APP ARM B — THE WORDLESS FRESH STATE (the stale seed the fresh
+    // open retires, the words the wire never spoke the zeros keep)
+    let mut slots2 = vec![(0i32, 0i32); 38];
+    slots2[0] = (sword, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.enchant_seed, 0, "the stale seed the fresh open retires");
+    assert_eq!(
+        app.enchanting_costs,
+        [0, 0, 0],
+        "the wordless sync the zeros keep"
+    );
+    assert!(
+        app.enchant_clues.iter().all(|&c| c == -1),
+        "the zero costs the -1 clues keep"
+    );
+
+    // APP ARM C — THE NEW WORDS' OWN RE-KEY (the fresh sync the fields
+    // re-keys — the clue rows the new stream's own answer wears)
+    let mut slots3 = vec![(0i32, 0i32); 38];
+    slots3[0] = (sword, 1);
+    slots3[1] = (lapis, 3);
+    app.live_container_updated(Some(LiveContainer {
+        id: 7,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots: slots3,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 5,
+        data_slots: vec![3, 9, 21, 77],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.enchanting_costs,
+        [3, 9, 21],
+        "the new words the costs re-key"
+    );
+    assert_eq!(app.enchant_seed, 77, "the new seed the field banks");
+    for i in 0..3usize {
+        let (_, clue) = app.enchant_clue_pick(i, sword, app.enchanting_costs[i]);
+        match clue {
+            Some((ench, level)) => {
+                assert_eq!(app.enchant_clues[i], ench, "the re-keyed clue");
+                assert_eq!(app.enchant_level_clues[i], level, "the re-keyed level");
+            }
+            None => assert_eq!(app.enchant_clues[i], -1, "the empty list the -1"),
+        }
+    }
+
+    // APP ARM D — THE EMPTY SEAT'S OWN GATE (the costs the words wear,
+    // the item seat empty the clue picks the gate never feeds)
+    let mut slots4 = vec![(0i32, 0i32); 38];
+    slots4[1] = (lapis, 3);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots: slots4,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 6,
+        data_slots: vec![7, 13, 30, 4660],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.enchanting_costs,
+        [7, 13, 30],
+        "the words the costs still land"
+    );
+    assert!(
+        app.enchant_clues.iter().all(|&c| c == -1),
+        "the empty item seat the -1 clues keep"
+    );
+}
