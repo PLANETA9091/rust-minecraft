@@ -28573,3 +28573,181 @@ fn the_brewing_quickcraft_the_wire_echo_wears() {
         "the prediction-free lane the cursor never moves"
     );
 }
+
+/// THE ANVIL'S OWN QUICKCRAFT ECHO (the 430 autopush round — the live
+/// drag the arm's un-refusal answers: the painted distribution the
+/// wire packets the chest's own shape re-wears — the START the
+/// mask(0, type) button the slot -999 keeps, the ADDs the mask(1,
+/// type) buttons the painted seats ride, the END the mask(2, type)
+/// button the changed map the distribution's own deltas names, the
+/// belief the same net fold keeps — the input pair + the mirror rows
+/// the tenths hold, the shared cursor the remainder retires, the HUD
+/// row the mirror's hotbar sync speaks). The arms wear: the live
+/// drag's own triple + fold, the no-window refusal's own silence,
+/// the empty-paint release's own seat echo.
+#[test]
+fn the_anvil_quickcraft_the_wire_echo_wears() {
+    use crate::world_view::ContainerCommand;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // THE LIVE DRAG'S OWN ECHO (the windowed session the drag rides —
+    // the arm the window answers, the paint the motion speaks, the
+    // release the triple mints)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    app.screen = ScreenKind::Anvil;
+    app.anvil_is_live = true;
+    app.anvil_live_window = Some((5, 7));
+    app.anvil_panel = (100, 100);
+    app.anvil_slots = [(0, 0); 2];
+    app.anvil_result = (0, 0);
+    app.anvil_mirror = vec![(0, 0); 36];
+    app.anvil_slot_rects = vec![
+        (100 + 27 + 1, 100 + 47 + 1, 0i16),   // the input — the menu 0
+        (100 + 76 + 1, 100 + 47 + 1, 1i16),   // the material — the menu 1
+        (100 + 134 + 1, 100 + 47 + 1, 2i16),  // the result — the menu 2
+        (100 + 8 + 1, 100 + 84 + 1, 3i16),    // the main row 0 — the menu 3
+        (100 + 26 + 1, 100 + 84 + 1, 4i16),   // the main row 1 — the menu 4
+        (100 + 8 + 1, 100 + 142 + 1, 30i16),  // the hotbar row 0 — the menu 30
+        (100 + 26 + 1, 100 + 142 + 1, 31i16), // the hotbar row 1 — the menu 31
+    ];
+    // the shared cursor 30 dirt (the stale kind word the id gate
+    // retires); the drag over the input + the mirror's main row 0 +
+    // the hotbar row 0 (the menus 0/3/30) — the floor(30/3) tenths
+    app.anvil_seat_potion_kinds[39] = 7;
+    app.anvil_carried = (dirt, 30);
+    app.on_press(100 + 27 + 8, 100 + 47 + 8);
+    assert!(
+        app.qc_armed,
+        "the live press the arm arms — no packet it mints"
+    );
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the arm's own press the silence keeps"
+    );
+    app.on_mouse_move(100 + 27 + 8, 100 + 47 + 8);
+    app.on_mouse_move(100 + 8 + 8, 100 + 84 + 8);
+    app.on_mouse_move(100 + 8 + 8, 100 + 142 + 8);
+    assert_eq!(
+        app.qc_slots,
+        vec![0, 3, 30],
+        "the three seats the motion paints"
+    );
+    app.on_left_release();
+    // THE BELIEF: the input + the mirror rows the tenths hold, the
+    // shared cursor the remainder retires, the result the drag never
+    // names, the kind wall the normalized word the bank re-speaks
+    assert_eq!(app.anvil_slots[0], (dirt, 10), "the input's tenth");
+    assert_eq!(app.anvil_mirror[0], (dirt, 10), "the main row 0's tenth");
+    assert_eq!(app.anvil_mirror[27], (dirt, 10), "the hotbar row 0's tenth");
+    assert_eq!(
+        app.anvil_carried,
+        (0, 0),
+        "the whole carried the distribution retires"
+    );
+    assert_eq!(app.anvil_result, (0, 0), "the result the drag never paints");
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the live kind wall the word bank re-speaks"
+    );
+    // THE HUD: the mirror's hotbar rows the sync speaks
+    assert_eq!(app.hotbar_slots[0], (dirt, 10));
+    // THE TRIPLE: the START (mask(0,0) byte 0), the three ADDs
+    // (mask(1,0) byte 1), the END (mask(2,0) byte 2) the changed map
+    // the tenths name — the anvil window's own identity rides
+    match click_rx.try_recv().expect("the START rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+            assert_eq!(c.changed, Vec::new());
+            assert_eq!(c.carried, (dirt, 30));
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    for menu in [0, 3, 30] {
+        match click_rx.try_recv().expect("the ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, menu);
+                assert_eq!(c.button, 1);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+    match click_rx.try_recv().expect("the END rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 2);
+            assert_eq!(
+                c.changed,
+                vec![(0, (dirt, 10)), (3, (dirt, 10)), (30, (dirt, 10))],
+                "the distribution's own deltas"
+            );
+            assert_eq!(c.carried, (0, 0), "the retired cursor the packet keeps");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(click_rx.try_recv().is_err(), "the triple the lane exhausts");
+
+    // THE NO-WINDOW REFUSAL'S OWN SILENCE (the wire session's no
+    // window the arm refuses — the chest's own gate the echo
+    // re-wears: no paint the drag speaks, no packet the release
+    // mints, the cursor the drag never moves)
+    app.anvil_live_window = None;
+    app.anvil_is_live = false;
+    app.anvil_carried = (dirt, 8);
+    app.on_press(100 + 27 + 8, 100 + 47 + 8);
+    assert!(!app.qc_armed, "the no-window press the arm refuses");
+    app.on_mouse_move(100 + 8 + 8, 100 + 84 + 8);
+    assert!(app.qc_slots.is_empty(), "the refused drag no seat paints");
+    app.on_left_release();
+    assert!(click_rx.try_recv().is_err(), "the refusal no packet mints");
+    assert_eq!(
+        app.anvil_carried,
+        (dirt, 8),
+        "the cursor the refusal never moves"
+    );
+
+    // THE EMPTY-PAINT RELEASE'S OWN SEAT ECHO (the live drag the arm
+    // holds, no seat the motion paints, the release the deferred
+    // place's own PICKUP speaks — the click walk's own echo the
+    // packet rides, the believed live cursor the packet wears, the
+    // prediction-free lane the cursor never moves)
+    app.anvil_live_window = Some((5, 7));
+    app.anvil_is_live = true;
+    app.anvil_carried = (dirt, 5);
+    app.on_press(100 + 8 + 8, 100 + 84 + 8);
+    assert!(app.qc_armed, "the live press the arm arms again");
+    assert!(click_rx.try_recv().is_err(), "the press no packet mints");
+    app.mouse_pos = Some((100 + 8 + 8, 100 + 84 + 8));
+    app.on_left_release();
+    match click_rx.try_recv().expect("the seat echo rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, 3);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+            assert_eq!(c.changed, Vec::new());
+            assert_eq!(c.carried, (dirt, 5), "the believed cursor the packet wears");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the single echo the lane exhausts"
+    );
+    assert_eq!(
+        app.anvil_carried,
+        (dirt, 5),
+        "the prediction-free lane the cursor never moves"
+    );
+}
