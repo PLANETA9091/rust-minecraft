@@ -27473,3 +27473,128 @@ fn the_brewing_stand_the_swap_key_wears() {
         "no session — the sink gate refuses"
     );
 }
+
+/// THE HOPPER'S OWN WIRE TITLE (the 215 dev round — the render's
+/// own title read the chest's own law wears: the live window the
+/// decode name the canvas banks, the None the container.hopper row
+/// the offline canvas keeps — the golden bytes the shape never
+/// moves). The arms wear: the wire's own text row the decode banks,
+/// the translatable row the lang table answers, the empty bytes the
+/// None keeps, the None the lang row the same canvas wears, the
+/// custom name the title band the ONLY delta paints.
+#[test]
+fn the_hopper_the_wire_title_wears() {
+    use crate::world_view::LiveContainer;
+    use mc_protocol::nbt::{write_network_nbt, Nbt};
+    // the wire's own encoder (the decode walk's own mirror)
+    let enc = |v: &Nbt| -> Vec<u8> {
+        let mut b = Vec::new();
+        write_network_nbt(v, &mut b).unwrap();
+        b
+    };
+    // THE RENDER TRIO (the 320x180 the scale-1 canvas keeps — the
+    // same frame the family rounds answer, the title the only delta
+    // wears)
+    let render = |app: &mut App| -> crate::raster::Framebuf {
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        let assets_root = assets_root();
+        {
+            let mut a = GuiAssets::open(&assets_root);
+            app.mouse_pos = None;
+            app.render(&mut fb, &mut a);
+        }
+        fb
+    };
+    let hopper = |title: Vec<u8>| -> LiveContainer {
+        LiveContainer {
+            id: 6,
+            menu_type_id: crate::world_model::MENU_TYPE_HOPPER,
+            slots: vec![(0i32, 0i32); 41],
+            bundle_rows: Vec::new(),
+            carried: (0, 0),
+            state_id: 7,
+            data_slots: Vec::new(),
+            title_nbt: title,
+        }
+    };
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+
+    // ARM A — THE WIRE'S OWN TEXT ROW (the custom name the decode
+    // banks — the anvil rename's own bytes the field keeps)
+    app.live_container_updated(Some(hopper(enc(&Nbt::Compound(vec![(
+        "text".to_string(),
+        Nbt::String("Grain Silo".to_string()),
+    )])))));
+    assert!(app.chest_is_live, "the live flag the route wears");
+    assert!(
+        app.chest_window_hopper,
+        "the hopper's own canvas the flag wears"
+    );
+    assert_eq!(
+        app.live_chest_title.as_deref(),
+        Some("Grain Silo"),
+        "the wire's own text row the decode banks"
+    );
+    let fb_custom = render(&mut app);
+
+    // ARM B — THE TRANSLATABLE ROW (the kind's own lang row the
+    // decode answers — the same text the fallback speaks)
+    app.live_container_updated(Some(hopper(enc(&Nbt::Compound(vec![(
+        "translate".to_string(),
+        Nbt::String("container.hopper".to_string()),
+    )])))));
+    assert_eq!(
+        app.live_chest_title.as_deref(),
+        Some("Item Hopper"),
+        "the kind's own lang row the decode answers"
+    );
+    let fb_lang = render(&mut app);
+
+    // ARM C — THE EMPTY BYTES (the None the decode keeps — the
+    // fallback the kind's own lang row answers, the offline canvas's
+    // own voice the golden law banks)
+    app.live_container_updated(Some(hopper(Vec::new())));
+    assert_eq!(app.live_chest_title, None, "the empty bytes the None keeps");
+    let fb_none = render(&mut app);
+
+    // THE FALLBACK'S OWN IDENTITY (the None the lang row the SAME
+    // canvas wears — the whole frame the bytes keep)
+    assert!(
+        fb_none.color == fb_lang.color,
+        "the None the lang row the same canvas wears — the bytes the frame keeps"
+    );
+
+    // THE CUSTOM'S OWN BAND (the title row the ONLY delta the frame
+    // wears — the band the custom name paints, the rest the bytes
+    // keep)
+    let panel = ((320 - 176) / 2, (180 - 133) / 2);
+    let mut rest_none = fb_none.color.clone();
+    let mut rest_custom = fb_custom.color.clone();
+    let mut band_differ = false;
+    for y in 0..180 {
+        for x in 0..320 {
+            let in_band = y >= panel.1 + 4 && y < panel.1 + 18 && x >= panel.0 && x < panel.0 + 176;
+            if !in_band {
+                continue;
+            }
+            let i = ((y * 320) + x) * 3;
+            if rest_none[i..i + 3] != rest_custom[i..i + 3] {
+                band_differ = true;
+            }
+            for k in 0..3 {
+                rest_none[i + k] = 0;
+                rest_custom[i + k] = 0;
+            }
+        }
+    }
+    assert!(
+        band_differ,
+        "the custom name the title band paints — the band the delta speaks"
+    );
+    assert!(
+        rest_none == rest_custom,
+        "the band the ONLY delta the frame wears — the rest the bytes keep"
+    );
+}

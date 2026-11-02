@@ -34632,8 +34632,20 @@ impl App {
         // the base class keeps, the container.hopper row the
         // DEFAULT_NAME banks)
         let label = [0.251, 0.251, 0.251];
-        if let Some(t) = tr("container.hopper") {
-            g.text(a, panel.0 + 8, panel.1 + 6, t, label, false);
+        // THE LIVE WINDOW'S OWN NAME (the chest's own law the
+        // hopper's split re-wears — the same decode ride the anvil
+        // rows speak; the None the container.hopper row the offline
+        // canvas wears — the golden bytes the shape never moves)
+        let title_text: String = if self.chest_is_live {
+            self.live_chest_title
+                .clone()
+                .or_else(|| tr("container.hopper").map(String::from))
+                .unwrap_or_default()
+        } else {
+            tr("container.hopper").unwrap_or("").to_string()
+        };
+        if !title_text.is_empty() {
+            g.text(a, panel.0 + 8, panel.1 + 6, &title_text, label, false);
         }
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 39, t, label, false);
