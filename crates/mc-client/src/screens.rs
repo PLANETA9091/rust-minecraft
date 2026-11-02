@@ -43199,6 +43199,47 @@ impl App {
             // never enters)
             return;
         }
+        if self.screen == ScreenKind::Anvil {
+            // THE REPAIR WALK'S OWN DEFERRED PLACE (the same pc
+            // 325-449 walk the chest geometry answers — the
+            // enchanting's own shape the 426 round serves): the seat
+            // the click walk's own PICKUP speaks (the place-back the
+            // tables answer, the right drag's deferred place the
+            // place-ONE speaks — the input pair the plain 64-ceiling
+            // takes, the result seat the held cursor's no-op the
+            // mayPlace-false keeps), the outside the -999 THROW the
+            // 339 walk serves (the whole carried the PRIMARY button
+            // drops, the ONE item the right wears), the between the
+            // -1 no-op keeps. THE LIVE WINDOW the arm never enters —
+            // the drag lane the arm's own gate refuses (the wire echo
+            // the later round owes), the release the gate the silence
+            // keeps.
+            let panel = self.anvil_panel;
+            let on_seat = self.anvil_hover_seat(mx, my).is_some();
+            let outside = panel != (0, 0)
+                && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+            if on_seat {
+                // pc 427-449 — the PICKUP the click walk's own lanes
+                // serve (the armed button the release wears — the
+                // right drag's deferred place the place-ONE speaks)
+                self.click_anvil_slot(mx, my, self.qc_button as i8);
+                return;
+            }
+            if outside {
+                // doClick pc 599-660 — the -999 THROW the carried's
+                // drop speaks (the offline sim the local throw IS —
+                // the live window the arm's own gate the drag never
+                // arms)
+                if !self.anvil_is_live {
+                    self.throw_anvil_carried_outside(self.qc_button as i8);
+                }
+                return;
+            }
+            // pc 599's own jump — the -1 PICKUP the no-op keeps (the
+            // offline sim no window keeps — the wire lane the arm
+            // never enters)
+            return;
+        }
         if self.screen == ScreenKind::Dispenser {
             // THE DISPENSER'S OWN DEFERRED PLACE (the same pc 325-449
             // walk the furnace geometry answers — dev-148's own shape

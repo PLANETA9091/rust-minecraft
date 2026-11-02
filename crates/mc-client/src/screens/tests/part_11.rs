@@ -28049,3 +28049,151 @@ fn the_enchanting_table_the_deferred_place_wears() {
         "the live release no packet mints — the arm's own gate the drag never arms"
     );
 }
+
+/// THE ANVIL'S OWN DEFERRED PLACE (the 427 autopush round — the empty
+/// release the repair canvas owes: the press the drag arm holds, the
+/// release the deferred place serves — the seat the click walk's own
+/// PICKUP speaks, the outside the -999 THROW the 339 walk serves, the
+/// between the -1 no-op keeps, the live window the arm's own gate
+/// never enters). The arms wear: the input seat's own whole stack,
+/// the right's own place-ONE, the outside's own whole drop, the
+/// between's own no-op, the live window's own silence.
+#[test]
+fn the_anvil_the_deferred_place_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // THE OFFLINE SIM'S OWN ARM (the fresh stand-in the drag the
+    // local lanes ride — no window, no packet, the world the drop
+    // entity's own lane keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = false;
+    app.screen = ScreenKind::Anvil;
+    // THE 26.2 CTOR'S OWN SEATS (the input (27, 47), the material
+    // (76, 47), the result (134, 47), the rows the
+    // addStandardInventorySlots (8, 84) walk keeps — the 18-pitch
+    // the family grid wears)
+    app.anvil_slot_rects = vec![
+        (100 + 27 + 1, 100 + 47 + 1, 0i16),
+        (100 + 76 + 1, 100 + 47 + 1, 1i16),
+        (100 + 134 + 1, 100 + 47 + 1, 2i16),
+        (100 + 8 + 1, 100 + 84 + 1, 3i16),
+        (100 + 26 + 1, 100 + 84 + 1, 4i16),
+    ];
+    app.anvil_panel = (100, 100);
+    app.anvil_slots = [(0, 0); 2]; // the input pair the fresh stand-in banks
+
+    // ARM A — THE INPUT SEAT'S OWN WHOLE STACK (the press the arm
+    // holds, the release the click walk's own PICKUP serves — the
+    // carried the input seat takes [the menu 0 the anvil_slots the
+    // pair wears], the cursor the walk clears)
+    app.anvil_carried = (dirt, 5);
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_slots.clear();
+    app.qc_remainder = 0;
+    app.mouse_pos = Some((100 + 27 + 8, 100 + 47 + 8));
+    app.qc_release(0);
+    assert_eq!(
+        app.anvil_slots[0],
+        (dirt, 5),
+        "the input seat the place-back takes"
+    );
+    assert_eq!(
+        app.anvil_carried,
+        (0, 0),
+        "the whole stack the cursor hands over"
+    );
+    assert!(!app.qc_armed, "the release the arm's own tail clears");
+
+    // ARM B — THE RIGHT'S OWN PLACE-ONE (the split press the armed
+    // byte wears — the ONE item the material seat takes, the
+    // remainder the cursor keeps)
+    app.anvil_carried = (dirt, 5);
+    app.qc_armed = true;
+    app.qc_button = 1;
+    app.qc_slots.clear();
+    app.qc_remainder = 0;
+    app.mouse_pos = Some((100 + 76 + 8, 100 + 47 + 8));
+    app.qc_release(1);
+    assert_eq!(app.anvil_slots[1], (dirt, 1), "the ONE item the seat takes");
+    assert_eq!(
+        app.anvil_carried,
+        (dirt, 4),
+        "the remainder the cursor keeps"
+    );
+
+    // ARM C — THE OUTSIDE'S OWN WHOLE DROP (the -999 THROW the 339
+    // walk serves — the carried the world's own entity takes, the
+    // kind the cursor's bank clears)
+    app.anvil_carried = (potion, 5);
+    app.anvil_seat_potion_kinds[39] = 1;
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_slots.clear();
+    app.qc_remainder = 0;
+    app.mouse_pos = Some((100 - 10, 100 + 40));
+    app.qc_release(0);
+    assert_eq!(
+        app.anvil_carried,
+        (0, 0),
+        "the whole drop the cursor clears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drop the kind's own bank clears"
+    );
+
+    // ARM D — THE BETWEEN'S OWN NO-OP (the -1 PICKUP the walk keeps —
+    // the carried the release never moves, the arm the tail clears)
+    app.anvil_carried = (dirt, 5);
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_slots.clear();
+    app.qc_remainder = 0;
+    app.mouse_pos = Some((100 + 140, 100 + 35));
+    app.qc_release(0);
+    assert_eq!(
+        app.anvil_carried,
+        (dirt, 5),
+        "the between the cursor never moves"
+    );
+    assert!(!app.qc_armed, "the tail the arm clears either way");
+
+    // ARM E — THE LIVE WINDOW'S OWN SILENCE (the outside release the
+    // arm never throws — the drag lane the arm's own gate refuses,
+    // the release the gate the silence keeps, the cursor the release
+    // never touches, no packet the release mints)
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    app.live_clicks = Some(tx);
+    app.live_container_updated(Some(crate::world_view::LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: vec![(0i32, 0i32); 39],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    app.anvil_carried = (dirt, 5);
+    app.qc_armed = true;
+    app.qc_button = 0;
+    app.qc_slots.clear();
+    app.qc_remainder = 0;
+    app.mouse_pos = Some((100 - 10, 100 + 40));
+    app.qc_release(0);
+    assert_eq!(
+        app.anvil_carried,
+        (dirt, 5),
+        "the live release the throw never wears"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the live release no packet mints — the arm's own gate the drag never arms"
+    );
+}
