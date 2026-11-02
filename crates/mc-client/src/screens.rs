@@ -74786,18 +74786,26 @@ impl App {
             // entity gate reads — the placed box the item entity never
             // spawns, the default shot's own spawn the other arms keep)
             let mut shulker_spill_placed = false;
-            let (dispensed, voice) = if kind == crate::world::DROPPER {
-                // THE FRONT CONTAINER'S OWN READ (the getContainerAt
-                // walk — the chest/barrel + the sibling pair + THE
-                // SHULKER BOX the autopush-147 row the predicate
-                // wears, the store map banks, the furnace family the
-                // trio map keeps)
-                let front = (x + fdx, y + fdy, z + fdz);
-                let front_kind = self
-                    .offline_world
-                    .as_ref()
-                    .map(|w| w.get(front.0, front.1, front.2))
-                    .unwrap_or(0);
+            // THE FRONT CONTAINER'S OWN READ (the getContainerAt
+            // walk — the chest/barrel + the sibling pair + THE
+            // SHULKER BOX the autopush-147 row the predicate
+            // wears, the store map banks, the furnace family the
+            // trio map keeps; the spill arm the same front cell the
+            // both blocks' own lanes read)
+            let front = (x + fdx, y + fdy, z + fdz);
+            let front_kind = self
+                .offline_world
+                .as_ref()
+                .map(|w| w.get(front.0, front.1, front.2))
+                .unwrap_or(0);
+            // THE ITEM-KEYED REGISTRY'S OWN ORDER (the 416 round's
+            // own hoist — the getDispenseMethod walk the registry
+            // consults FIRST, the item's registered behavior the
+            // block-kind split precedes: the shulker box item the
+            // front cell the BLOCK place walk the dispenser AND the
+            // dropper wear, the 415's own DROPPER scope the sibling
+            // arm the hoist retires)
+            let (dispensed, voice) = if crate::world::is_shulker_box_item(item) {
                 // THE SHULKER BOX ITEM'S OWN SPILL (javap
                 // ShulkerBoxDispenseBehavior.execute the 26.3 jar —
                 // the item-keyed behavior the container-insert default
@@ -74826,28 +74834,28 @@ impl App {
                 // the 412 insert lane's own entry arm the same map
                 // banks: the placed shulker the NBT-less item the
                 // honest empty wears).
-                if crate::world::is_shulker_box_item(item) {
-                    if front_kind == crate::world::AIR || crate::world::is_replaceable(front_kind) {
-                        if let Some(w) = self.offline_world.as_mut() {
-                            w.set(front.0, front.1, front.2, crate::world::SHULKER_BOX);
-                            w.set_variant(
-                                front.0,
-                                front.1,
-                                front.2,
-                                crate::world::shulker_variant(facing, false),
-                            );
-                        }
-                        // THE PLACEMENT'S OWN DISPATCH (the player
-                        // placement walk's own law the beat's arm
-                        // mirrors — the placed cell the falling check
-                        // the schedule speaks)
-                        self.schedule_falling_check_block_update(front.0, front.1, front.2);
-                        shulker_spill_placed = true;
-                        (true, 1000) // the success voice the place walk speaks
-                    } else {
-                        (false, 1001) // the occupied cell the fail speaks
+                if front_kind == crate::world::AIR || crate::world::is_replaceable(front_kind) {
+                    if let Some(w) = self.offline_world.as_mut() {
+                        w.set(front.0, front.1, front.2, crate::world::SHULKER_BOX);
+                        w.set_variant(
+                            front.0,
+                            front.1,
+                            front.2,
+                            crate::world::shulker_variant(facing, false),
+                        );
                     }
-                } else if crate::world::is_chest(front_kind)
+                    // THE PLACEMENT'S OWN DISPATCH (the player
+                    // placement walk's own law the beat's arm
+                    // mirrors — the placed cell the falling check
+                    // the schedule speaks)
+                    self.schedule_falling_check_block_update(front.0, front.1, front.2);
+                    shulker_spill_placed = true;
+                    (true, 1000) // the success voice the place walk speaks
+                } else {
+                    (false, 1001) // the occupied cell the fail speaks
+                }
+            } else if kind == crate::world::DROPPER {
+                if crate::world::is_chest(front_kind)
                     || crate::world::is_barrel(front_kind)
                     || crate::world::is_dispenser_kind(front_kind)
                     || crate::world::is_shulker(front_kind)
