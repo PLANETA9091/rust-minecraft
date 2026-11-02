@@ -37775,7 +37775,19 @@ impl App {
         // DispenserScreen's own override speaks — the kind's own lang
         // row the opened kind banks)
         let label = [0.251, 0.251, 0.251];
-        let title_text = tr("container.brewing").unwrap_or("").to_string();
+        // THE LIVE WINDOW'S OWN NAME (the furnace's own law the
+        // brewing's wire lane re-wears — the same decode ride the
+        // anvil rows speak; the None the kind's own lang row the
+        // offline canvas wears — the golden bytes the shape never
+        // moves)
+        let title_text: String = if self.brewing_is_live {
+            self.live_brewing_title
+                .clone()
+                .or_else(|| tr("container.brewing").map(String::from))
+                .unwrap_or_default()
+        } else {
+            tr("container.brewing").unwrap_or("").to_string()
+        };
         if !title_text.is_empty() {
             let tx = panel.0 + (176 - g.text_width(&title_text)) / 2;
             g.text(a, tx, panel.1 + 6, &title_text, label, false);
