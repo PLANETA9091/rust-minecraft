@@ -28922,3 +28922,103 @@ fn the_anvil_field_the_caret_walk_wears() {
         "the retired seat the line never wears"
     );
 }
+
+/// THE ANVIL FIELD'S OWN CTRL HOP (the 432 round — the vanilla EditBox
+/// keyPressed's 262/263 arms the `Screen.hasControlDown()` branch the
+/// `moveCursorTo(this.getWordPosition(±1))` walk the rename field
+/// re-wears): the whole word the bound the seat hops, the backward
+/// walk the space-run skip the word start wears, the forward walk the
+/// space seek the run skip serves, the zero the tail the bounds the
+/// same seat keeps, the hop + the type the mid-string combo the
+/// honest walk answers, the stale screen the gate never passes.
+#[test]
+fn the_anvil_field_the_ctrl_hop_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the zero park wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    assert_eq!(app.screen, ScreenKind::Anvil, "the door the kind wears");
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the typed word the field wears"
+    );
+    assert_eq!(app.anvil_caret, 12, "the tail park the walk wears");
+    // THE BACKWARD HOP (the getWordPosition(-1) walk the word start
+    // wears — the space run the skip the non-space run the walk answers)
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 5, "the ctrl LEFT the Bringer start wears");
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 0, "the second hop the Doom start wears");
+    // THE ZERO'S OWN FLOOR (the backward walk the zero seat keeps)
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 0, "the zero floor the hop never wears");
+    // THE FORWARD HOP (the getWordPosition(1) walk the space seek the
+    // run skip serves — the word start the seat hops)
+    app.on_anvil_ctrl_caret_arrow(false);
+    assert_eq!(app.anvil_caret, 5, "the ctrl RIGHT the Bringer start wears");
+    app.on_anvil_ctrl_caret_arrow(false);
+    assert_eq!(app.anvil_caret, 12, "the tail the forward hop wears");
+    // THE TAIL'S OWN CEILING (the forward walk the len seat keeps)
+    app.on_anvil_ctrl_caret_arrow(false);
+    assert_eq!(app.anvil_caret, 12, "the len ceiling the hop never wears");
+    // THE HOP + THE TYPE (the mid-string combo the honest walk serves
+    // — the seat the insert answers, the +1 step the cursor banks,
+    // the backspace the char before removes)
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 5, "the backward hop the seat re-wears");
+    app.on_anvil_char('X');
+    assert_eq!(app.anvil_name, "Doom XBringer", "the seat the insert wears");
+    assert_eq!(app.anvil_caret, 6, "the +1 step the cursor banks");
+    app.on_anvil_backspace();
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the backspace the pair removes"
+    );
+    assert_eq!(app.anvil_caret, 5, "the -1 step the walk banks");
+    // THE SPACE-RUN'S OWN SKIP (the double space the backward walk
+    // the whole run hops, the forward walk the same run skips)
+    app.anvil_name.clear();
+    app.anvil_caret = 0;
+    for ch in "A  B".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_name, "A  B", "the spaced word the field wears");
+    assert_eq!(app.anvil_caret, 4, "the tail park the walk wears");
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 3, "the backward hop the B start wears");
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 0, "the space run the whole hop wears");
+    app.on_anvil_ctrl_caret_arrow(false);
+    assert_eq!(app.anvil_caret, 3, "the forward walk the run skip wears");
+    // THE SINGLE WORD'S OWN WALK (the whole field the one word wears —
+    // the backward hop the zero parks, the forward hop the tail parks)
+    app.anvil_name.clear();
+    app.anvil_caret = 0;
+    for ch in "sword".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 5, "the typed word the tail parks");
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 0, "the one word the backward hop parks");
+    app.on_anvil_ctrl_caret_arrow(false);
+    assert_eq!(app.anvil_caret, 5, "the one word the forward hop parks");
+    // THE GATE'S OWN SILENCE (the stale screen the hop never wears —
+    // the field's own seat the walk never moves)
+    app.screen = ScreenKind::World;
+    app.on_anvil_ctrl_caret_arrow(true);
+    app.on_anvil_ctrl_caret_arrow(false);
+    assert_eq!(app.anvil_caret, 5, "the stale screen the seat never moves");
+}

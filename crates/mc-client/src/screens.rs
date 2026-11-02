@@ -31287,7 +31287,8 @@ impl App {
     /// 262/263 arms the moveCursorBy ±1 walk serves — the seat the
     /// clamp law the bounds wears, the LEFT the -1 the zero floor
     /// keeps, the RIGHT the +1 the len ceiling keeps, the ctrl
-    /// word-hop + the shift ride the NEXT round's own line banks).
+    /// word-hop the same family's own lane banks [the sibling fn the
+    /// hop wears], the shift ride the NEXT round's own line banks).
     pub fn on_anvil_caret_arrow(&mut self, left: bool) {
         if self.screen != ScreenKind::Anvil {
             return;
@@ -31298,6 +31299,23 @@ impl App {
         } else {
             self.anvil_caret = (self.anvil_caret.min(len) + 1).min(len);
         }
+    }
+
+    /// THE ANVIL FIELD'S OWN CTRL HOP (the EditBox keyPressed's
+    /// 262/263 arms the `Screen.hasControlDown()` branch the
+    /// `moveCursorTo(this.getWordPosition(±1))` walk serves — the
+    /// whole word the bound the seat hops, the one-arg form the
+    /// anchor never re-seats [the field's own no-highlight law the
+    /// 431 round wears — the shift ride the NEXT round's own lane
+    /// banks], the 266 chat + the creative search + the entry forms'
+    /// siblings the same law the name box re-wears).
+    pub fn on_anvil_ctrl_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        let len = self.anvil_name.chars().count();
+        let seat = self.anvil_caret.min(len);
+        self.anvil_caret = word_boundary(&self.anvil_name, seat, !left);
     }
 
     /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door

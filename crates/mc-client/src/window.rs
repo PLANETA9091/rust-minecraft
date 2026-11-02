@@ -2140,22 +2140,35 @@ pub fn run_gui_app(
             }
         }
         // THE ANVIL FIELD'S OWN CARET RIDE (the EditBox keyPressed's
-        // 262/263 arms the moveCursorBy ±1 walk serves — the focused
-        // name box the LEFT/RIGHT the seat answers, the plain walk the
-        // ctrl/shift the later rounds' own lanes bank, the stale
-        // screens the gate never passes)
+        // 262/263 arms the focused name box the seat answers — the
+        // hasControlDown branch the ctrl hop the word bounds wears,
+        // the plain walk the moveCursorBy ±1 serves, the shift ride
+        // the later round's own lane banks, the stale screens the
+        // gate never passes)
         if !app.chat_open && app.screen == crate::screens::ScreenKind::Anvil {
             let anvil_shift =
                 window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
-            if !ctrl_down && !anvil_shift && window.is_key_pressed(Key::Left, minifb::KeyRepeat::No)
-            {
-                app.on_anvil_caret_arrow(true);
+            if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                if ctrl_down {
+                    // THE ANVIL FIELD'S OWN CTRL HOP (the 262 arm the
+                    // hasControlDown branch the `moveCursorTo(
+                    // getWordPosition(-1))` walk serves — the whole
+                    // word the backward bound the seat hops, the 266
+                    // chat + the creative siblings the same law wear)
+                    app.on_anvil_ctrl_caret_arrow(true);
+                } else if !anvil_shift {
+                    app.on_anvil_caret_arrow(true);
+                }
             }
-            if !ctrl_down
-                && !anvil_shift
-                && window.is_key_pressed(Key::Right, minifb::KeyRepeat::No)
-            {
-                app.on_anvil_caret_arrow(false);
+            if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                if ctrl_down {
+                    // the 263 arm the forward bound the same law wears
+                    // — the `moveCursorTo(getWordPosition(1))` walk
+                    // the hop answers
+                    app.on_anvil_ctrl_caret_arrow(false);
+                } else if !anvil_shift {
+                    app.on_anvil_caret_arrow(false);
+                }
             }
         }
         // THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen
