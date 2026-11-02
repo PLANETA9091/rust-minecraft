@@ -2353,8 +2353,22 @@ pub const MENU_TYPE_FURNACE: i32 = 14;
 /// RecipeType the block entity's getBurnDuration/2 override speaks).
 pub const MENU_TYPE_BLAST_FURNACE: i32 = 10;
 
-/// `MenuType`'s smoker — the SmokerMenu's registry id (the SAME
-/// clinit order speaks: shulker_box 20, smithing 21, SMOKER lands at
+/// `MenuType`'s brewing_stand — the BrewingStandMenu's registry id
+/// (the SAME clinit order speaks: blast_furnace 10, BREWING_STAND
+/// lands at 11 — the CRAFTING row's own doc the neighbor walk keeps,
+/// the wire's own word the live stand lane routes on; the menu's own
+/// shape the BrewingStandMenu class's own constants the javap
+/// brewmenu walk banks: BOTTLE_SLOT_START 0 / BOTTLE_SLOT_END 2 /
+/// INGREDIENT_SLOT 3 / FUEL_SLOT 4 the five the BE's withSize(5)
+/// order IS [the bottle trio, the ingredient, the fuel — the SAME
+/// order the [`crate::screens`]' own offline store keeps, the
+/// identity map the wire's lanes never re-order] + the standard 36
+/// [INV_SLOT_START 5, USE_ROW_SLOT_END 41], the DATA_COUNT 2 the
+/// brewTime/fuel word pair the ContainerSetData lane rides).
+pub const MENU_TYPE_BREWING_STAND: i32 = 11;
+
+/// `MenuType`'s smoker — the SmokerMenu's registry id (the SAME clinit
+/// order speaks: shulker_box 20, smithing 21, SMOKER lands at
 /// 22 — the dev-26 round's javap walk the putstatic pc 296 row keeps;
 /// the SMOKING RecipeType the same override's half speaks).
 pub const MENU_TYPE_SMOKER: i32 = 22;

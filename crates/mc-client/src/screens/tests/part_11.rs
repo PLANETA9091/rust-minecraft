@@ -26910,3 +26910,273 @@ fn the_enchant_option_the_wire_click_wears() {
         "the state id the window re-keys"
     );
 }
+
+/// THE BREWING STAND'S OWN WIRE LANE (the 421 round — the menu type
+/// 11 the OpenScreen word routes, the honest drop the round retires:
+/// the stand's own five the wire banks, the rows the mirror feeds,
+/// the presses the prediction-free echo speaks, the close the
+/// retire walks, the corrections the wholesale lane re-banks).
+#[test]
+fn the_brewing_stand_the_wire_lane_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let nether_wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+    let blaze_powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 11 the window
+    // opens — the live flag the route wears, the identity the presses
+    // echo against, the fresh-zeros the sim's own third word keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 41];
+    slots[0] = (potion, 1); // the first bottle the wire's own trio wears
+    slots[3] = (nether_wart, 3); // the ingredient seat
+    slots[4] = (blaze_powder, 2); // the fuel seat
+    slots[5] = (dirt, 7); // the main grid's first row the mirror feeds
+    slots[32] = (dirt, 1); // the hotbar's first row the mirror's tail wears
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: vec![400, 20],
+        title_nbt: Vec::new(),
+    }));
+    assert!(app.brewing_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.brewing_live_window,
+        Some((4, 9)),
+        "the identity the presses echo against"
+    );
+    assert_eq!(
+        app.brewing_slots,
+        vec![
+            (potion, 1),
+            (0, 0),
+            (0, 0),
+            (nether_wart, 3),
+            (blaze_powder, 2)
+        ],
+        "the stand's five the identity map banks — the trio the ingredient the fuel"
+    );
+    assert_eq!(
+        app.brewing_mirror[0],
+        (dirt, 7),
+        "the main row the mirror's head wears — the wire's slot 5"
+    );
+    assert_eq!(
+        app.brewing_mirror[27],
+        (dirt, 1),
+        "the hotbar row the mirror's tail wears — the wire's slot 32"
+    );
+    assert_eq!(
+        app.brewing_data,
+        [400, 20, 0],
+        "the words the wire's pair banks — the sim's own third the fresh zero keeps"
+    );
+    assert_eq!(
+        app.brewing_kinds,
+        [crate::brewing_sim::POTION_KIND_NONE; 5],
+        "the kinds the wire never carries — the honest NONE wall"
+    );
+    assert_eq!(
+        app.brewing_carried,
+        (0, 0),
+        "the offline carried the window never wears"
+    );
+    assert_eq!(
+        app.live_brewing_carried,
+        (0, 0),
+        "the authoritative cursor the wholesale banks"
+    );
+    assert_eq!(
+        app.brewing_open_cell, None,
+        "the offline cell the live window retires"
+    );
+    assert_eq!(app.brewing_pos, None, "the sim's walk the pos None stops");
+    assert_eq!(
+        app.screen,
+        ScreenKind::Brewing,
+        "the open walk the lane speaks"
+    );
+
+    // APP ARM B — THE PRESS'S OWN ECHO (the bottle seat the left press
+    // takes — the Pickup input the packet rides, the empty delta list
+    // the prediction-free lane wears, the seats the press never
+    // mutates)
+    app.brewing_slot_rects = vec![
+        (100 + 56 + 1, 100 + 51 + 1, 0i16),
+        (100 + 79 + 1, 100 + 58 + 1, 1i16),
+        (100 + 102 + 1, 100 + 51 + 1, 2i16),
+        (100 + 79 + 1, 100 + 17 + 1, 3i16),
+        (100 + 17 + 1, 100 + 17 + 1, 4i16),
+    ];
+    app.brewing_panel = (100, 100);
+    app.click_brewing_slot(100 + 56 + 8, 100 + 51 + 8, 0);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 4, "the window id the echo wears");
+            assert_eq!(click.state_id, 9, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the bottle seat the packet rides");
+            assert_eq!(click.button, 0, "the left press the button wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Pickup,
+                "the pickup input the press speaks"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the deltas the prediction never mints"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the packet carries"
+            );
+        }
+        other => panic!("the seat press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the bottle seat the press never mutates"
+    );
+    assert_eq!(
+        app.live_brewing_carried,
+        (0, 0),
+        "the cursor the press never mints"
+    );
+
+    // THE SPLIT'S OWN ECHO (the ingredient seat the right press takes
+    // — the same Pickup input the button 1's split wears)
+    app.click_brewing_slot(100 + 79 + 8, 100 + 17 + 8, 1);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 3, "the ingredient seat the packet rides");
+            assert_eq!(click.button, 1, "the right press the split wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Pickup,
+                "the same pickup input the split speaks"
+            );
+        }
+        other => panic!("the right press the echo speaks, not {other:?}"),
+    }
+
+    // THE SHIFT'S OWN ECHO (the fuel seat the shift press takes — the
+    // QuickMove input the precedence wears)
+    app.shift_down = true;
+    app.click_brewing_slot(100 + 17 + 8, 100 + 17 + 8, 0);
+    app.shift_down = false;
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 4, "the fuel seat the packet rides");
+            assert_eq!(
+                click.input,
+                ContainerInput::QuickMove,
+                "the quick-move input the shift speaks"
+            );
+        }
+        other => panic!("the shift press the echo speaks, not {other:?}"),
+    }
+
+    // APP ARM C — THE OUTSIDE'S OWN SILENCE (the press off the panel
+    // the THROW guard keeps — no packet, no fiction)
+    app.click_brewing_slot(50, 50, 0);
+    assert!(
+        rx.try_recv().is_err(),
+        "the outside press no command speaks"
+    );
+
+    // APP ARM D — THE NO-SESSION LANE'S OWN SILENCE (the sink None the
+    // command dies on the frame thread)
+    let sink = app.live_clicks.take();
+    app.click_brewing_slot(100 + 56 + 8, 100 + 51 + 8, 0);
+    assert!(
+        rx.try_recv().is_err(),
+        "the no-session lane no command speaks"
+    );
+    app.live_clicks = sink;
+
+    // APP ARM E — THE NO-WINDOW LANE'S OWN SILENCE (the identity None
+    // the echo never arms)
+    let window = app.brewing_live_window.take();
+    app.click_brewing_slot(100 + 56 + 8, 100 + 51 + 8, 0);
+    assert!(
+        rx.try_recv().is_err(),
+        "the no-window lane no command speaks"
+    );
+    app.brewing_live_window = window;
+
+    // APP ARM F — THE CLOSE'S OWN RETIRE (the serverbound Close the
+    // sink echoes, the flag the retire wears, the name the window
+    // dies with)
+    app.close_brewing(ScreenKind::World);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 4, "the close the window's own id wears");
+        }
+        other => panic!("the close the echo speaks, not {other:?}"),
+    }
+    assert!(!app.brewing_is_live, "the flag the close retires");
+    assert_eq!(
+        app.brewing_live_window, None,
+        "the identity the close takes"
+    );
+    assert_eq!(
+        app.live_brewing_title, None,
+        "the name the window dies with"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the back walk the close wears"
+    );
+
+    // APP ARM G — THE SERVER'S OWN CORRECTION (the sync the wholesale
+    // replacement banks — the spent fuel + the ticked brew the words
+    // re-bank, the state id the window re-keys, the flag the route
+    // re-arms)
+    let mut slots2 = vec![(0i32, 0i32); 41];
+    slots2[0] = (potion, 1);
+    slots2[3] = (nether_wart, 2); // the consume the server's own law kept
+    slots2[5] = (dirt, 7);
+    slots2[32] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 10,
+        data_slots: vec![0, 19],
+        title_nbt: Vec::new(),
+    }));
+    assert!(app.brewing_is_live, "the flag the route re-arms");
+    assert_eq!(
+        app.brewing_live_window,
+        Some((4, 10)),
+        "the state id the window re-keys"
+    );
+    assert_eq!(
+        app.brewing_slots[3],
+        (nether_wart, 2),
+        "the consume the correction re-banks"
+    );
+    assert_eq!(
+        app.brewing_data,
+        [0, 19, 0],
+        "the ticked words the correction wears"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::Brewing,
+        "the reopen the wholesale lane speaks"
+    );
+}

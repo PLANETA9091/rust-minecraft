@@ -9684,6 +9684,28 @@ pub struct App {
     /// screen (the live window the server's own words drive) and
     /// before any offline door ever spoke.
     pub brewing_pos: Option<(i32, i32, i32)>,
+    /// THE BREWING STAND'S OWN LIVE FLAG (the 421 round — the wire
+    /// lane the server's OpenScreen word arms: the menu type 11 the
+    /// [`Self::live_container_updated`] lane routes, the offline door
+    /// the flag never wears [the door's own false keeps]). The live
+    /// window the seat presses echo, the offline store the flag never
+    /// flushes, the sim's own walk the pos None retires.
+    pub brewing_is_live: bool,
+    /// THE BREWING STAND'S OWN WINDOW IDENTITY (the (window id,
+    /// stateId) pair the OpenScreen word births — the presses echo
+    /// against THIS id and revision, the wholesale sync the stateId
+    /// re-keys; `None` while no live window wears).
+    pub brewing_live_window: Option<(i32, i32)>,
+    /// THE BREWING STAND'S OWN LIVE CARRIED (the AUTHORITATIVE cursor
+    /// the server's own word banks — the wholesale replacement lands,
+    /// the presses the believed pair carry, the close the reset
+    /// speaks).
+    pub live_brewing_carried: (i32, i32),
+    /// THE BREWING WINDOW'S OWN NAME (the OpenScreen Component the
+    /// decode lane banks — the custom name the anvil rows speak, the
+    /// None the container.brewing_stand default keeps; the close the
+    /// window the name dies with).
+    pub live_brewing_title: Option<String>,
     /// THE ENCHANTING TABLE'S OWN TRANSIENT PAIR (the EnchantmentMenu's
     /// SimpleContainer(2) the offline canvas projects — the item 0 the
     /// lapis 1 the menu numbering banks; the (0, 0) stacks the empty
@@ -13267,6 +13289,10 @@ impl App {
             brewing_kind_stores: std::collections::HashMap::new(),
             brewing_carried_kind: crate::brewing_sim::POTION_KIND_NONE,
             brewing_pos: None,
+            brewing_is_live: false,
+            brewing_live_window: None,
+            live_brewing_carried: (0, 0),
+            live_brewing_title: None,
             enchant_slots: Vec::new(),
             anvil_slots: [(0, 0); 2],
             anvil_result: (0, 0),
@@ -28994,6 +29020,26 @@ impl App {
     /// fill the comparator's back read re-banks, the wire voice the
     /// cell+six re-consult answers, the screen back to the world.
     pub fn close_brewing(&mut self, back: ScreenKind) {
+        // THE LIVE WINDOW'S OWN CLOSE (the furnace's own law the
+        // brewing's wire lane re-wears — the 421 round): the
+        // serverbound Close the sink echoes, the flag retires, the
+        // offline store the live window never serves (the flush the
+        // open_cell's None skips, the ride-home walk the empty
+        // offline carried never serves)
+        if self.brewing_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.brewing_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.brewing_is_live = false;
+            self.brewing_pos = None; // the server's own BE the walk never banks
+            self.live_brewing_title = None; // the title dies with the window
+        }
+        self.brewing_live_window = None;
+        // the live cursor the belief resets with the window (the
+        // server's own close returns the held stack)
+        self.live_brewing_carried = (0, 0);
         // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
         // placeItemBackInInventory walk — the close_furnace shape)
         if self.brewing_carried.1 > 0 {
@@ -41677,6 +41723,9 @@ impl App {
     /// OFFLINE sim the drag the local lanes ride (the wire lane the
     /// hopper's own law never wears).
     fn qc_arm_brewing(&mut self, mx: i32, my: i32, button: usize) {
+        if self.brewing_is_live {
+            return; // the drag lane the wire round never banks — the honest silence (the QUICK_CRAFT echo the later round owes)
+        }
         if self.qc_armed {
             return; // pc 168-172 — the in-flight drag the press never re-arms
         }
@@ -52643,7 +52692,8 @@ impl App {
         let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
             // THE DROP-OUTSIDE LANE (the furnace's own shape — the
             // laid-out panel the strict rect compare speaks)
-            if self.brewing_panel != (0, 0)
+            if !self.brewing_is_live
+                && self.brewing_panel != (0, 0)
                 && (mx < self.brewing_panel.0
                     || my < self.brewing_panel.1
                     || mx >= self.brewing_panel.0 + 176
@@ -52651,8 +52701,47 @@ impl App {
             {
                 self.throw_brewing_carried_outside(button);
             }
+            // THE LIVE LANE'S OWN SILENCE (the outside press the THROW
+            // guard keeps — the enchant's own law the live window
+            // wears: no packet the press never mints, the throw walk
+            // the offline lane alone serves)
             return;
         };
+        if self.brewing_is_live {
+            // THE BREWING SEAT'S OWN WIRE ECHO (the 421 round — the
+            // prediction-free lane the enchant's own walk banks: the
+            // press the packet rides, the seat the press never
+            // mutates, the server's own doClick the verdict answers,
+            // the corrections the wholesale lane re-banks)
+            let Some((window_id, state_id)) = self.brewing_live_window else {
+                return; // no window identity — nothing to echo against
+            };
+            let Some(sink) = self.live_clicks.clone() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            // THE INPUT'S OWN PRECEDENCE (the vanilla doClick's own
+            // walk: the hasShiftDown test the pickup/split branches
+            // PRECEDES — the shift press the QuickMove speaks, the
+            // left the Pickup 0, the right the same Pickup the
+            // button 1's split halves wear)
+            let input = if self.shift_down {
+                crate::world_view::ContainerInput::QuickMove
+            } else {
+                crate::world_view::ContainerInput::Pickup
+            };
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot,
+                    button,
+                    input,
+                    changed: Vec::new(), // the prediction-free lane the deltas never mints
+                    carried: self.live_brewing_carried,
+                },
+            ));
+            return;
+        }
         let menu = slot as usize;
         // THE QUICK_MOVE LANE (the shift-click — the vanilla doClick's
         // own precedence the chest's walk keeps): the combined
@@ -77950,6 +78039,68 @@ impl App {
                     self.enchant_live_window = Some((c.id, c.state_id));
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Enchanting);
+                    }
+                    return;
+                }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_BREWING_STAND {
+                    // THE BREWING STAND'S OWN WIRE LANE (the 421 round —
+                    // the menu type 11 the OpenScreen word routes, the
+                    // honest drop the round retires: the stand's own
+                    // five the wire banks, the rows the mirror feeds,
+                    // the carried the authoritative cursor lands). The
+                    // menu's own numbering (the class's own constants
+                    // the javap brewmenu walk banks): the bottle trio
+                    // 0..3, the ingredient 3, the fuel 4 — the SAME
+                    // order the offline store's five keeps, the
+                    // identity map the lanes never re-order — the
+                    // standard 36 the rows 5..41 answer (the 27 main +
+                    // the 9 hotbar the mirror's own shape wears), the
+                    // wire's own (0, 0) emptiness riding verbatim
+                    let mut five = [(0i32, 0i32); 5];
+                    for (i, &(id, count)) in c.slots.iter().take(5).enumerate() {
+                        five[i] = (id, count);
+                    }
+                    let mut mirror = vec![(0i32, 0i32); 36];
+                    for (i, &(id, count)) in c.slots.iter().skip(5).take(36).enumerate() {
+                        mirror[i] = (id, count);
+                    }
+                    self.brewing_slots = five.to_vec();
+                    self.brewing_mirror = mirror;
+                    // THE KINDS' OWN WALL (the live lane the honest NONE
+                    // keeps — the wire the kind word never carries, the
+                    // sim's own walk the pos None retires)
+                    self.brewing_kinds = [crate::brewing_sim::POTION_KIND_NONE; 5];
+                    self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    // THE WORDS' OWN LANE (the DATA_COUNT 2 the wire
+                    // wears — the brewTime + the fuel the first pair
+                    // speaks, the sim's own third word the
+                    // start-ingredient the wire never carries)
+                    self.brewing_data = [0, 0, 0];
+                    for (i, v) in c.data_slots.iter().take(2).enumerate() {
+                        self.brewing_data[i] = *v;
+                    }
+                    // THE WINDOW'S OWN NAME (the decode ride — the None
+                    // the container.brewing_stand default banks)
+                    self.live_brewing_title = decode_container_title(&c.title_nbt);
+                    // THE OFFLINE MEMORY'S OWN RETIRE (the furnace law
+                    // — the server's own block entity the window
+                    // speaks, the local cell the door recorded the live
+                    // lane never rides, the sim's own walk the pos None
+                    // never ticks)
+                    self.brewing_open_cell = None;
+                    self.brewing_pos = None;
+                    // the offline carried the window never wears (the
+                    // live lane's own cursor the authoritative pair
+                    // banks — the wholesale replacement the chest's
+                    // lane speaks)
+                    self.brewing_carried = (0, 0);
+                    self.live_brewing_carried = c.carried;
+                    self.brewing_is_live = true;
+                    // the window's identity rides in: the presses echo
+                    // against THIS id and revision (the stateId lane)
+                    self.brewing_live_window = Some((c.id, c.state_id));
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Brewing);
                     }
                     return;
                 }
