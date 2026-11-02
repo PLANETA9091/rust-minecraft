@@ -138,7 +138,9 @@ pub mod clientbound {
 pub mod serverbound {
     pub use crate::generated::packet_ids::{
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION, SB_ATTACK as ATTACK,
-        SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
+        SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED,
+        SB_CONTAINER_BUTTON_CLICK as CONTAINER_BUTTON_CLICK,
+        SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE,
         SB_RENAME_ITEM as RENAME_ITEM,
         SB_PING_REQUEST as PING_REQUEST, SB_PONG as PONG,
@@ -7862,6 +7864,29 @@ pub fn encode_container_click(click: &ContainerClick) -> Result<Vec<u8>> {
     Ok(p)
 }
 
+/// Container Button Click (serverbound play 0x11 — the generated id
+/// table's SB_CONTAINER_BUTTON_CLICK = 17, `minecraft:container_button_click`,
+/// the 26.2 name the wiki-era ClickMenuButton memory the table
+/// re-keys): the record's two VarInt lanes written back — the
+/// container id and the button id. THE WALK (the
+/// `handleInventoryButtonClick` disasm the checked-in
+/// `scripts/jar_work/mpgm_fresh.txt` banks — the ctor's `(II)` the
+/// two plain-int fields the packet carries, the RECORD codec's VarInt
+/// pair the fields' own shape wears; the packets' own bytes):
+/// `container=4 button=2` = `11 04 02` (body — the packet id prefix
+/// is the dispatch's own lane, the house convention). The enchant
+/// table's option row the spell click speaks — the server's own
+/// `clickMenuButton` the verdict answers (the costs the server's own
+/// walk re-validates, the prediction-free lane the client's belief
+/// never mints).
+pub fn encode_container_button_click(container_id: i32, button_id: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(5);
+    write_varint(&mut p, serverbound::CONTAINER_BUTTON_CLICK);
+    write_varint(&mut p, container_id);
+    write_varint(&mut p, button_id);
+    p
+}
+
 /// One HashedStack lane's write mirror: the presence byte, then the
 /// ActualItem's item id + count as VarInts and the hashed patch map —
 /// the VarInt added-count, per entry the component type's registry id
@@ -11648,6 +11673,19 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&pkt)
             .context("send container click")
+    }
+
+    /// The player's OWN menu button click (the vanilla
+    /// `handleInventoryButtonClick`'s echo — the enchant table's
+    /// option row the spell click speaks): the two VarInts encoded and
+    /// sent in place (the server's own `clickMenuButton` the verdict
+    /// answers — the prediction-free lane the client's belief never
+    /// mints).
+    pub fn click_container_button(&mut self, container_id: i32, button_id: i32) -> Result<()> {
+        let pkt = encode_container_button_click(container_id, button_id);
+        self.conn
+            .send_packet(&pkt)
+            .context("send container button click")
     }
 
     /// The player's OWN container close (the vanilla closeContainer's
@@ -17385,6 +17423,42 @@ mod tests {
         );
         // the close: the window id alone
         assert_eq!(encode_container_close(2), vec![0x13, 0x02]);
+    }
+
+    /// The container button click's serverbound lane (the generated id
+    /// table's SB_CONTAINER_BUTTON_CLICK = 17): the two VarInts the
+    /// RECORD codec's own order wears — the container id FIRST, the
+    /// button id LAST (`handleInventoryButtonClick`'s ctor `(II)` the
+    /// checked-in disasm banks, the pair the same order the ctor's
+    /// iload_1/iload_2 walk keeps). The enchant option row the spell
+    /// click's own wire — the three fixtures the live window's press
+    /// rides (the `11 04 02` shape the doc's own walk banks).
+    #[test]
+    fn the_container_button_click_lane_the_option_word_wears() {
+        assert_eq!(
+            serverbound::CONTAINER_BUTTON_CLICK,
+            17,
+            "minecraft:container_button_click"
+        );
+        // the option row 2 in the enchant window 4 — the doc's own walk
+        assert_eq!(
+            encode_container_button_click(4, 2),
+            vec![0x11, 0x04, 0x02],
+            "the option row's own bytes"
+        );
+        // the first row
+        assert_eq!(
+            encode_container_button_click(4, 0),
+            vec![0x11, 0x04, 0x00],
+            "the first row's own bytes"
+        );
+        // the wider ids: window 11 the button 0 (the multi-byte
+        // container VarInt's own shape)
+        assert_eq!(
+            encode_container_button_click(11, 0),
+            vec![0x11, 0x0b, 0x00],
+            "the wider window's own bytes"
+        );
     }
 
     /// The anvil's rename word — the generated id table's SB_RENAME_ITEM

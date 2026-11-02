@@ -2791,6 +2791,23 @@ pub enum ContainerCommand {
     /// the clientbound echo rides back through its gate; see
     /// `mc_protocol::play::encode_change_game_mode`).
     ChangeGameMode { mode_id: i32 },
+    /// THE MENU BUTTON'S OWN WIRE (the vanilla
+    /// `MultiPlayerGameMode.handleInventoryButtonClick`'s own echo —
+    /// the ServerboundContainerButtonClickPacket the enchant table's
+    /// option row the spell click speaks): the live window's id the
+    /// container field rides, the pressed row's id the button field
+    /// wears (the two plain-int fields the ctor's `(II)` the checked-in
+    /// disasm banks). The prediction-free lane the pickup's echo wears
+    /// — the server's own `clickMenuButton` the verdict answers (the
+    /// xp/lapis/transmute the server's own walk banks, the
+    /// corrections the container lane re-bank), the client's belief
+    /// the press never mints.
+    MenuButton {
+        /// The window id the server assigned (the Open Screen packet's).
+        window_id: i32,
+        /// The pressed option row (the enchant table's 0..2).
+        button_id: i32,
+    },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

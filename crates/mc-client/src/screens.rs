@@ -29504,7 +29504,29 @@ impl App {
             return false; // pc 0-27 — the costs.length gate the log arm keeps
         }
         if self.enchant_is_live {
-            return false; // the spell lane the wire round never banks — the honest silence (the ClickMenuButton echo the later round owes)
+            // THE ENCHANT OPTION'S OWN WIRE CLICK (the 420 round — the
+            // honest silence the 417 arm kept the round retires: the
+            // live window's option row the
+            // ServerboundContainerButtonClickPacket speaks, the
+            // handleInventoryButtonClick ctor `(II)` the two VarInts
+            // the wire wears). THE PREDICTION-FREE LANE the pickup's
+            // echo wears: the server's own clickMenuButton the verdict
+            // answers (the xp spend + the lapis consume + the
+            // transmute the server's own walk banks), the client's
+            // belief the press never mints — the corrections ride the
+            // container lane back (the seats the wholesale replacement
+            // re-banks, the state id the window re-keys).
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return false; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, _)) = self.enchant_live_window else {
+                return false; // no window identity — nothing to echo against
+            };
+            let _ = sink.send(crate::world_view::ContainerCommand::MenuButton {
+                window_id,
+                button_id: id as i32,
+            });
+            return true;
         }
         let i = id + 1;
         let lapis = self.enchant_slots.get(1).copied().unwrap_or((0, 0));

@@ -26093,9 +26093,10 @@ fn the_dispenser_shulker_the_place_law_wears() {
 /// release serves [the belief the prediction answers, the packet the
 /// command lane speaks, the seat the pull rides, the different row the
 /// walk never names, the HUD row the sync follows], the honest gates
-/// the silence keeps [the pickup press + the drag arm + the spell
-/// click the wire round never banks], the wire close the echo speaks,
-/// the server's own drop the window retires.
+/// the silence keeps [the pickup press + the drag arm the wire round
+/// never banks — the spell click the 420 round's own echo retires],
+/// the wire close the echo speaks, the server's own drop the window
+/// retires.
 #[test]
 fn the_enchant_gather_the_wire_half_wears() {
     use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
@@ -26272,10 +26273,20 @@ fn the_enchant_gather_the_wire_half_wears() {
     );
     app.enchant_carried = (0, 0);
     assert!(
-        !app.click_enchant_option(0),
-        "the gated spell click the silence speaks"
+        app.click_enchant_option(0),
+        "the spell click the echo speaks — the silence the 420 round retires"
     );
-    assert!(rx.try_recv().is_err(), "the gated lanes no command speak");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::MenuButton {
+            window_id,
+            button_id,
+        } => {
+            assert_eq!(window_id, 4, "the window id the option echo wears");
+            assert_eq!(button_id, 0, "the row the option echo speaks");
+        }
+        other => panic!("the spell click the echo speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the re-worn arm no second speak");
 
     // APP ARM D — THE WIRE CLOSE'S OWN ECHO (the client-initiated
     // close the packet speaks — the belief resets with the window, no
@@ -26485,8 +26496,9 @@ fn the_enchant_costs_the_data_words_wear() {
 /// the server's own correction the projection re-banks, the split's
 /// right press the same Pickup input wears, the shift press the
 /// QuickMove input speaks, the outside press the empty cursor the
-/// THROW guard keeps silent, the drag arm + the spell click the gated
-/// lanes stay.
+/// THROW guard keeps silent, the drag arm the gated lane stays — the
+/// spell click the 420 round's own echo retires (the re-worn arm D the
+/// option press the packet rides).
 #[test]
 fn the_enchant_pickup_the_wire_echo_wears() {
     use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
@@ -26651,8 +26663,11 @@ fn the_enchant_pickup_the_wire_echo_wears() {
         "the empty cursor's outside press the guard silences"
     );
 
-    // APP ARM D — THE GATED LANES' OWN SILENCE (the drag arm + the
-    // spell click the wire round never banks)
+    // APP ARM D — THE GATED LANES' OWN WALK (the drag arm the silence
+    // keeps, the spell click the echo the silence retires — the 420
+    // round's own re-wear: the live window's option press the
+    // ServerboundContainerButtonClickPacket speaks, the gated drag arm
+    // the same silence keeps)
     let held_before = app.qc_armed;
     app.enchant_carried = (dirt, 10);
     app.qc_arm_enchanting(rx0 + 8, ry0 + 8, 0);
@@ -26662,10 +26677,24 @@ fn the_enchant_pickup_the_wire_echo_wears() {
     );
     app.enchant_carried = (0, 0);
     assert!(
-        !app.click_enchant_option(0),
-        "the gated spell click the silence speaks"
+        app.click_enchant_option(0),
+        "the spell click the echo speaks — the silence the 420 round retires"
     );
-    assert!(rx.try_recv().is_err(), "the gated lanes no command speak");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::MenuButton {
+            window_id,
+            button_id,
+        } => {
+            assert_eq!(window_id, 4, "the window id the option echo wears");
+            assert_eq!(button_id, 0, "the row the option echo speaks");
+        }
+        other => panic!("the spell click the echo speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the re-worn arm no second speak");
+    assert!(
+        !app.click_enchant_option(3),
+        "the id bound the costs.length gate keeps"
+    );
 
     // APP ARM E — THE SERVER'S OWN CORRECTION (the sync the echo's
     // answer re-banks — the emptied seat the server's word lands, the
@@ -26693,6 +26722,187 @@ fn the_enchant_pickup_the_wire_echo_wears() {
         app.enchant_carried,
         (sword, 1),
         "the authoritative cursor the projection re-banks"
+    );
+    assert_eq!(
+        app.enchant_live_window,
+        Some((4, 10)),
+        "the state id the window re-keys"
+    );
+}
+
+/// THE ENCHANT OPTION'S OWN WIRE CLICK (the 420 round — the live
+/// window's option row the ServerboundContainerButtonClickPacket
+/// speaks, the prediction-free lane the pickup's echo wears: the
+/// server's own clickMenuButton the verdict answers, the press the
+/// client's belief never mints — the xp/lapis/transmute the server's
+/// own walk banks, the corrections the container lane re-banks).
+#[test]
+fn the_enchant_option_the_wire_click_wears() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 13 the window
+    // opens — the live flag the route wears, the identity the option
+    // echo answers, the fresh-zero costs the data lane's silence keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (sword, 1);
+    slots[1] = (lapis, 3);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert!(app.enchant_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.enchant_live_window,
+        Some((4, 9)),
+        "the identity the option echo answers"
+    );
+
+    // APP ARM B — THE PRESS'S OWN ECHO (the option row 0 the packet
+    // rides — the window 4 the container field wears, the row the
+    // button field speaks, the projection the press never mutates)
+    let level_before = app.xp.level;
+    assert!(
+        app.click_enchant_option(0),
+        "the row press the option echo speaks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::MenuButton {
+            window_id,
+            button_id,
+        } => {
+            assert_eq!(window_id, 4, "the window id the option echo wears");
+            assert_eq!(button_id, 0, "the first row the button field speaks");
+        }
+        other => panic!("the option press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.enchant_slots[0],
+        (sword, 1),
+        "the item seat the press never mints"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 3),
+        "the lapis seat the press never spends"
+    );
+    assert_eq!(
+        app.xp.level, level_before,
+        "the xp the press never spends — the server's own walk the verdict banks"
+    );
+    assert_eq!(
+        app.enchant_carried,
+        (0, 0),
+        "the cursor the press never mints"
+    );
+
+    // THE ROWS' OWN ECHO (the ids 1 and 2 the same packet law wears —
+    // the split rows the same wire the press rides)
+    assert!(
+        app.click_enchant_option(1),
+        "the second row the option echo speaks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::MenuButton {
+            window_id,
+            button_id,
+        } => {
+            assert_eq!(window_id, 4, "the window id the row's echo wears");
+            assert_eq!(button_id, 1, "the second row the button field speaks");
+        }
+        other => panic!("the row press the echo speaks, not {other:?}"),
+    }
+    assert!(
+        app.click_enchant_option(2),
+        "the third row the option echo speaks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::MenuButton {
+            window_id,
+            button_id,
+        } => {
+            assert_eq!(window_id, 4, "the window id the row's echo wears");
+            assert_eq!(button_id, 2, "the third row the button field speaks");
+        }
+        other => panic!("the row press the echo speaks, not {other:?}"),
+    }
+
+    // APP ARM C — THE ID BOUND'S OWN GATE (the row 3 the costs.length
+    // gate the false keeps — no packet the lane speaks)
+    assert!(!app.click_enchant_option(3), "the id bound the gate keeps");
+    assert!(rx.try_recv().is_err(), "the bound press no command speaks");
+
+    // APP ARM D — THE NO-SESSION LANE'S OWN SILENCE (the sink None the
+    // command dies on the frame thread — the false the lane keeps)
+    let sink = app.live_clicks.take();
+    assert!(
+        !app.click_enchant_option(0),
+        "the no-session lane the silence keeps"
+    );
+    app.live_clicks = sink;
+
+    // APP ARM E — THE NO-WINDOW LANE'S OWN SILENCE (the identity None
+    // the echo never arms — the false the lane keeps)
+    let window = app.enchant_live_window.take();
+    assert!(
+        !app.click_enchant_option(0),
+        "the no-window lane the silence keeps"
+    );
+    app.enchant_live_window = window;
+
+    // APP ARM F — THE OFFLINE LANE THE SIM KEEPS (the live flag
+    // cleared, the fresh-zero costs the unaffordable press the false
+    // keeps — the offline gates the same walk the sim answers)
+    app.enchant_is_live = false;
+    assert!(
+        !app.click_enchant_option(0),
+        "the offline sim the fresh-zero costs the false keeps"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the offline refuse no command speaks"
+    );
+    app.enchant_is_live = true;
+
+    // APP ARM G — THE SERVER'S OWN CORRECTION (the spell's verdict the
+    // sync lands — the transmuted seat the wholesale replacement banks,
+    // the consumed lapis the server's own law re-banks, the state id
+    // the window re-keys)
+    let enchanted_book = mc_registry::item_id_by_name("enchanted_book").unwrap();
+    let mut slots2 = vec![(0i32, 0i32); 38];
+    slots2[0] = (enchanted_book, 1); // the transmute the server's own walk wore
+    slots2[1] = (lapis, 2); // the consume the server's own law kept
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 10,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.enchant_slots[0],
+        (enchanted_book, 1),
+        "the transmute the correction lands"
+    );
+    assert_eq!(
+        app.enchant_slots[1],
+        (lapis, 2),
+        "the consume the correction re-banks"
     );
     assert_eq!(
         app.enchant_live_window,

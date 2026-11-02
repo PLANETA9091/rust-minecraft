@@ -807,6 +807,21 @@ fn run_join(
                             // prediction the walk keeps)
                             session.change_game_mode(mode_id)
                         }
+                        crate::world_view::ContainerCommand::MenuButton {
+                            window_id,
+                            button_id,
+                        } => {
+                            // THE MENU BUTTON'S OWN WIRE (the vanilla
+                            // MultiPlayerGameMode.handleInventoryButtonClick's
+                            // own echo — the enchant table's option row the
+                            // spell click speaks): the two VarInts the
+                            // packet rides, the server's own clickMenuButton
+                            // the verdict answers — NO local prediction the
+                            // press never mints (the xp/lapis/transmute the
+                            // server's own walk banks, the corrections the
+                            // container lane re-bank)
+                            session.click_container_button(window_id, button_id)
+                        }
                         crate::world_view::ContainerCommand::NetworkCharts(on) => {
                             // THE NETWORK CHARTS' OWN GATE (the vanilla
                             // ClientPacketListener.tick's
