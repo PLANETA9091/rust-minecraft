@@ -5851,3 +5851,90 @@ THE BREWING SWAP ARM'S OWN RETROFIT (v0.3.1143, commit d5609eba — the 359 NEXT
 - THE WALK (the chest's own gate the live lane re-wears — the brewing's own live cursor the shape re-keys): the ARM the un-refusal wears [qc_arm_brewing the brewing_is_live wall retires — the world_is_network && brewing_live_window.is_none() refusal the chest's own shape keeps], THE LIVE CURSOR the reads re-key [the press dispatch's held read the authoritative live_brewing_carried pair answers, the paint's own carried read the live window re-keys, qc_carried's brewing arm the live pair the recalc's ghost reads — the offline sim the SAME field's own stack keeps, the qc_carried enchant arm's stale doc the 428 echo's own honesty retires], the RELEASE the split wears [qc_distribute_brewing_wire the world_is_network arm mints, the offline fold the walk keeps], the WIRE the free fn mints [wire_brewing_quickcraft_distribute — the packet triple quickCraftToSlots pcs 0-90 speaks, the FIVE the boundary the fold reads (the bottle trio 0..3 the ingredient 3 the fuel 4 the seats, the mirror rows 5..41 the store keeps), the seat words the caller's own closure serves (the stand seats the five-word bank, the mirror rows the shared bank's mapped word — the paint's own reads the fold re-wears), the same-id kind pair the component half refuses, the HUD row the mirror's hotbar rows 27..36 the sync follows, the live cursor the authoritative pair the fold mutates], THE PLACE'S OWN WORD BANK the chest's tail wears [the empty seat the placed stack's own word banks — the five-word bank + the items bank's mapped word speak, the live wall the NONE word the bank re-speaks verbatim], the DEFERRED PLACE the echo's own live walk keeps [the empty-paint release the lane's own arms wear — the seat the click walk's own echo serves, the outside the 424 press-echo's silence the release keeps].
 - TESTS: part_11.rs NEW ONE (the_brewing_quickcraft_the_wire_echo_wears — the arms wear: the live drag's own triple + fold [the menus 0/5/32 the motion paints, the floor(30/3) tenths the bottle + the mirror rows hold, the live cursor the distribution retires, the offline cursor the live window never wears, the kind walls the NONE keep, the HUD row the sync speaks, the window-5 identity the packets ride, the changed map the END names], the no-window refusal's own silence [the arm refuses, no paint, no packet, the cursor the drag never moves], the empty-paint release's own seat echo [the drag the arm holds, no seat the motion paints, the release the deferred place's PICKUP speaks — the believed live cursor the packet wears, the prediction-free lane the cursor never moves]). Verdict: green. THE WALK: the twelve-window WALL-GATE (w1..w11 + rest — 1526/1544/1502/1720/1515/1533/1548/1537/1525/1563/1635/1435 passed, each rc=0, 0 failed — the counts the 428 baseline the w11 the echo's own walk +1 keeps [1634 -> 1635 the prediction wore], the other windows the 428 numbers keep) + the fast trio (the 161/100/80 the protocol/registry/gen banks keep) + the directed families (70 passed, 0 failed, scripts/directed_429.py the 74 filters the echo's own head the part_11 gate rides) + the workspace's own full link (the --no-run walk the evidence chain keeps). GOLDEN: NO regeneration (19/19 rms 0.000 on the FINAL code — the post-bump re-verify the red line re-wears — the lane the release dispatch's own brewing arm the only branch moves, the render the round never edits, the golden scenes the bytes never see). FMT: the region law (scripts/fmt_probe_429.py — the qc_carried re-keys + the un-refusal + the wire lanes + the dispatch split + the deferred place's comment walk + the press's live cursor read + the free fn + the round's own test, ALL-REGIONS-CLEAN — the probe's first walk the marker-order stumble caught [the regions the file order the threading wears], the test splice the same walk the 428 round answered). Bump 0.3.1221 -> 0.3.1222 (bump_version.py the workspace version + lock wear, the six members the same version keeps).
 - NEXT CANDIDATES: THE ANVIL'S OWN QUICKCRAFT WIRE (the drag the offline window wears — the wire distribution the chest's own lanes may lend, the anvil carried the same field's own live window banks [the 427 deferred place's live silence the arm gate keeps — the un-refusal the wire round wears]), THE HOPPER'S OWN FACE MOVE-ONE'S OWN INDEX (the hopper lanes' own furnace walk the (idx, arm) pair may lend — the suck lane's own kind ride the same law wears), THE LIVE QUICKCRAFT'S OWN STATE-ID RIDE (the wire folds' believed state id the window re-keys — the server's own correction the sync the later round banks).
+--- Task ID: autopush-430 (2026-11-03 04:22:01 +08:00, Job 384923,
+trace 1a0a02c3c1060631-cron-agent-loop-202611030422) — v0.3.1223 THE
+ANVIL'S OWN QUICKCRAFT WIRE
+- Calibration: the WARM sandbox the round answers (the 429 round's own
+  lane the head wears — 5e1f7a72 clean + origin-synced, the cargo
+  1.99.1 the PATH keeps, the assets-cache the recovery lane's own
+  extract serves, the worklog's 109 autopush entries the count keeps
+  — autopush-429 the last, the wheel the 430 rotates). Chosen step:
+  THE ANVIL'S OWN QUICKCRAFT WIRE (the 429 NEXT list's own first walk
+  the round answers — the live drag lane the wire round owes, the
+  painted distribution the wire packets the chest's own shape
+  re-wears, the THREE the boundary the fold reads). The hopper's face
+  move-one + the live quickcraft's own state-id ride the round
+  DEFERS.
+- THE WALK (the chest's own gate the live lane re-wears — the anvil's
+  own shared cursor the shape re-keys): the ARM the un-refusal wears
+  [qc_arm_anvil the anvil_is_live wall retires — the
+  world_is_network && anvil_live_window.is_none() refusal the
+  chest's own shape keeps — the LIVE window the arm answers, the
+  wire session's no window the silence keeps, the offline sim the
+  local lanes ride], the RELEASE the split wears
+  [qc_distribute_anvil_wire the world_is_network arm mints, the
+  offline fold the walk keeps], the WIRE the free fn mints
+  [wire_anvil_quickcraft_distribute — the packet triple
+  quickCraftToSlots pcs 0-90 speaks, the THREE the boundary the fold
+  reads (the input pair 0..2 the menu's own seats, the result 2 the
+  mayPlace-false seat the paint never wears, the mirror rows 3..38
+  the store the tail keeps), the seat words the caller's own closure
+  serves (the trio + the carried the seat store's normalized read,
+  the mirror rows the inventory bank's mapped word — the paint's own
+  reads the fold re-wears), the same-id kind pair the component half
+  refuses, the HUD row the mirror's hotbar rows 27..36 the sync
+  follows, the SHARED CURSOR the fold mutates (the authoritative
+  pair the wholesale landing banks — the anvil the chest's own
+  one-field lane mirrors, the qc_carried read the belief alone
+  keeps)], the WORD BANK the chest's tail wears [the empty seat the
+  placed stack's own word banks — the trio seats the SEAT STORE the
+  words bank, the mirror rows the INVENTORY bank's mapped word
+  speak, the live wall the NONE word the bank re-speaks verbatim],
+  the DEFERRED PLACE the echo's own live walk keeps [the
+  empty-paint release the lane's own arms wear — the seat the click
+  walk's own echo serves, the outside the 424 press-echo's silence
+  the release keeps, the between the -1 no-op keeps].
+- TESTS: part_11.rs NEW ONE
+  (the_anvil_quickcraft_the_wire_echo_wears — the arms wear: the
+  live drag's own triple + fold [the menus 0/3/30 the motion
+  paints, the floor(30/3) tenths the input + the mirror rows hold,
+  the shared cursor the distribution retires, the result the drag
+  never names, the kind wall the normalized word the bank
+  re-speaks, the HUD row the sync speaks, the window-5 identity the
+  packets ride, the changed map the END names], the no-window
+  refusal's own silence [the arm refuses, no paint, no packet, the
+  cursor the drag never moves], the empty-paint release's own seat
+  echo [the drag the arm holds, no seat the motion paints, the
+  release the deferred place's PICKUP speaks — the believed live
+  cursor the packet wears, the prediction-free lane the cursor
+  never moves]). Verdict: green. THE WALK: the twelve-window
+  WALL-GATE (w1..w11 + rest — 1526/1544/1502/1720/1515/1533/1548/
+  1537/1525/1563/1636/1435 passed, each rc=0, 0 failed — the counts
+  the 429 baseline the w11 the echo's own walk +1 keeps
+  [1635 -> 1636 the prediction wore], the other windows the 429
+  numbers keep; the post-fmt post-bump re-walk the w11 the FINAL
+  code re-wears) + the fast trio (the 161/100/80 the
+  protocol/registry/gen banks keep) + the directed families (71
+  passed, 0 failed, scripts/directed_430.py the 75 filters the
+  echo's own head the part_11 gate rides). GOLDEN: NO regeneration
+  (19/19 rms 0.000 on the FINAL code — the post-bump re-verify the
+  red line re-wears — the lane the release dispatch's own anvil arm
+  the only branch moves, the render the round never edits, the
+  golden scenes the bytes never see). FMT: the region law
+  (scripts/fmt_probe_430.py — the un-refusal + the wire lanes + the
+  dispatch split + the deferred place's comment walk + the free fn
+  + the round's own test, ALL-REGIONS-CLEAN — the probe's first
+  walk the assert-shape stumbles caught, the rustfmt's own wish the
+  mirror-27's single line + the carried's multi-line bank the round
+  answers). Bump 0.3.1222 -> 0.3.1223 (bump_version.py the
+  workspace version + lock wear, the six members the same version
+  keeps).
+- NEXT CANDIDATES: THE HOPPER'S OWN FACE MOVE-ONE'S OWN INDEX (the
+  hopper lanes' own furnace walk the (idx, arm) pair may lend — the
+  suck lane's own kind ride the same law wears), THE LIVE
+  QUICKCRAFT'S OWN STATE-ID RIDE (the wire folds' believed state id
+  the window re-keys — the server's own correction the sync the
+  later round banks), THE ANVIL'S OWN CARROT CARET (the rename
+  field's tail-append the caret-less walk wore — the caret the
+  field's own line banks, the honest left-right walk the later
+  round owes).
