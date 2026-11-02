@@ -9840,6 +9840,11 @@ pub struct App {
     /// keeps, the setItemName law the typed word consumes, the empty
     /// string the blank arm wears).
     pub anvil_name: String,
+    /// THE RENAME FIELD'S OWN CARET (the EditBox cursorPos char seat
+    /// the typed walk re-keys — the 0..=len bounds the lanes clamp,
+    /// the fresh open the zero park wears, the mid-string seat the
+    /// insert/backspace/arrow walks the honest answer keeps).
+    pub anvil_caret: usize,
     /// THE COST WORD (the AnvilMenu's cost DataSlot the broadcast
     /// rides — the createResult walk's own verdict, the extractLabels
     /// row the >0 gate renders).
@@ -13301,6 +13306,7 @@ impl App {
             anvil_slot_rects: Vec::new(),
             anvil_panel: (0, 0),
             anvil_name: String::new(),
+            anvil_caret: 0,
             anvil_cost: 0,
             anvil_only_renaming: false,
             anvil_repair_item_count: 0,
@@ -30003,8 +30009,10 @@ impl App {
         self.anvil_result = (0, 0);
         self.anvil_carried = (0, 0);
         // THE RENAME FIELD'S OWN FRESH WORD (the AnvilScreen's EditBox
-        // the setValue("") ctor speaks)
+        // the setValue("") ctor speaks — the cursorPos the fresh
+        // field's own zero park wears)
         self.anvil_name.clear();
+        self.anvil_caret = 0;
         self.anvil_cost = 0;
         self.anvil_only_renaming = false;
         self.anvil_repair_item_count = 0;
@@ -30071,8 +30079,10 @@ impl App {
         self.anvil_repair_costs[2] = 0;
         self.anvil_enchants[2].clear();
         self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
-        // THE FIELD'S OWN WORDS (the fresh open re-lays)
+        // THE FIELD'S OWN WORDS (the fresh open re-lays — the caret
+        // the cleared word's own zero park keeps)
         self.anvil_name.clear();
+        self.anvil_caret = 0;
         self.anvil_cost = 0;
         self.anvil_only_renaming = false;
         self.anvil_repair_item_count = 0;
@@ -31224,35 +31234,71 @@ impl App {
 
     /// THE ANVIL FIELD'S OWN CHARS (the charTyped lane the focused box
     /// answers — the open screen the EditBox arm serves, the
-    /// MAX_NAME_LENGTH 50 cap the honest bound keeps, the tail-append
-    /// the caret-less walk wears [the caret walk the NEXT round's own
-    /// line banks], the responder the typed word consumes).
+    /// MAX_NAME_LENGTH 50 cap the honest bound keeps, the insertText
+    /// walk the CURSORPOS SEAT the mid-string insert wears [the
+    /// 431 round's own caret law — the tail-append the caret-less
+    /// walk wore], the cursor the +1 step banks, the responder's own
+    /// identity reset the fresh word the seat the clamp re-keys, the
+    /// responder the typed word consumes).
     pub fn on_anvil_char(&mut self, c: char) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
-        if self.anvil_name.chars().count() < 50 {
+        let len = self.anvil_name.chars().count();
+        if len < 50 {
             let mut w = self.anvil_name.clone();
-            w.push(c);
+            let idx = caret_byte_index(&w, self.anvil_caret.min(len));
+            w.insert(idx, c);
+            self.anvil_caret = self.anvil_caret.min(len) + 1;
             self.on_anvil_name_changed(&w);
+            // THE RESPONDER'S OWN RE-KEY (the identity reset / the
+            // format strip the word the walk re-shapes — the seat the
+            // fresh bounds the clamp keeps)
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
         }
     }
 
     /// THE ANVIL FIELD'S OWN BACKSPACE (the EditBox.keyPressed's 259
-    /// arm the focused box answers — the LAST char the tail pops, the
-    /// empty word the no-op keeps, the responder the word consumes).
+    /// arm the focused box answers — the char BEFORE the seat the
+    /// mid-string walk removes [the 431 round's own caret law — the
+    /// tail pop the caret-less walk wore], the seat-0 word the no-op
+    /// keeps, the responder the word consumes).
     pub fn on_anvil_backspace(&mut self) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
-        if self.anvil_name.pop().is_some() {
-            let w = self.anvil_name.clone();
-            self.on_anvil_name_changed(&w);
+        let len = self.anvil_name.chars().count();
+        let seat = self.anvil_caret.min(len);
+        if seat == 0 {
+            return; // the seat-0 backspace the word never wears
         }
+        let mut w = self.anvil_name.clone();
+        let end = caret_byte_index(&w, seat);
+        let start = caret_byte_index(&w, seat - 1);
+        w.replace_range(start..end, "");
+        self.anvil_caret = seat - 1;
+        self.on_anvil_name_changed(&w);
+        // THE RESPONDER'S OWN RE-KEY (the identity reset the word the
+        // walk re-shapes — the seat the fresh bounds the clamp keeps)
+        self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
     }
 
-
-
+    /// THE ANVIL FIELD'S OWN CARET RIDE (the EditBox keyPressed's
+    /// 262/263 arms the moveCursorBy ±1 walk serves — the seat the
+    /// clamp law the bounds wears, the LEFT the -1 the zero floor
+    /// keeps, the RIGHT the +1 the len ceiling keeps, the ctrl
+    /// word-hop + the shift ride the NEXT round's own line banks).
+    pub fn on_anvil_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        let len = self.anvil_name.chars().count();
+        if left {
+            self.anvil_caret = self.anvil_caret.min(len).saturating_sub(1);
+        } else {
+            self.anvil_caret = (self.anvil_caret.min(len) + 1).min(len);
+        }
+    }
 
     /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door
     /// speaks + BeaconMenu ctor the disasm banks: the PaymentSlot the
@@ -38536,6 +38582,40 @@ impl App {
                 [1.0, 1.0, 1.0],
                 false,
             );
+        }
+        // THE CARET'S OWN LINE (the EditBox.render's insert-indicator
+        // walk the cursorPos seat serves — the prefix the shown crop's
+        // own width the seat answers [the tail-crop the '>' prefix the
+        // skip re-keys, the off-crop seat the clamp parks], the 1x8
+        // white bar the entry boxes' own law wears, the frame/6 blink
+        // the direct box's phase keeps, the empty word the line still
+        // wears — the focused box the caret never retires)
+        {
+            let len = self.anvil_name.chars().count();
+            let seat = self.anvil_caret.min(len);
+            let crop = len.saturating_sub(24);
+            let mut prefix = String::new();
+            if crop > 0 {
+                prefix.push('>');
+                prefix.extend(
+                    self.anvil_name
+                        .chars()
+                        .skip(crop)
+                        .take(seat.saturating_sub(crop)),
+                );
+            } else {
+                prefix.extend(self.anvil_name.chars().take(seat));
+            }
+            let tw = g.text_width(&prefix);
+            if (self.frame / 6) % 2 == 0 {
+                g.fill(
+                    panel.0 + 62 + tw + 1,
+                    panel.1 + 26,
+                    1,
+                    8,
+                    [1.0, 1.0, 1.0, 1.0],
+                );
+            }
         }
         // THE TITLE + THE INVENTORY LABEL (the extractLabels walk —
         // the title the ctor's titleLabelX 60 seat keeps, the

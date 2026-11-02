@@ -28751,3 +28751,174 @@ fn the_anvil_quickcraft_the_wire_echo_wears() {
         "the prediction-free lane the cursor never moves"
     );
 }
+
+/// THE ANVIL FIELD'S OWN CARET WALK (the 431 round — the vanilla
+/// EditBox cursorPos law the rename field re-wears): the fresh open
+/// the zero park wears, the charTyped the mid-string seat inserts
+/// (the +1 step the cursorPos banks), the backspace the char BEFORE
+/// the seat removes (the seat-0 word the no-op keeps), the LEFT/RIGHT
+/// the moveCursorBy ±1 bounds ride, the plain name the identity reset
+/// the clamp re-keys, the caret's own line the prefix-width seat
+/// renders (the frame/6 blink the entry boxes' phase keeps, the LEFT
+/// walk the seat the line re-keys).
+#[test]
+fn the_anvil_field_the_caret_walk_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the zero park wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the anvil door the kind wears"
+    );
+    assert_eq!(app.anvil_caret, 0, "the fresh field the zero park wears");
+    // THE TAIL PARK'S OWN TYPE (the word the seat the responder banks)
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the typed word the field wears"
+    );
+    assert_eq!(
+        app.anvil_caret, 12,
+        "the tail append the seat the tail parks"
+    );
+    assert_eq!(
+        app.anvil_names[2].as_deref(),
+        Some("Doom Bringer"),
+        "the responder the result seat banks"
+    );
+    // THE MID-STRING INSERT (the charTyped walk the cursorPos seat
+    // serves — the LEFT pair the seat steps back, the char the seat
+    // inserts, the +1 step the cursorPos banks)
+    app.on_anvil_caret_arrow(true);
+    app.on_anvil_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 10, "the LEFT pair the seat steps back");
+    app.on_anvil_char('X');
+    assert_eq!(app.anvil_name, "Doom BringXer", "the seat the insert wears");
+    assert_eq!(app.anvil_caret, 11, "the +1 step the cursorPos banks");
+    assert_eq!(
+        app.anvil_names[2].as_deref(),
+        Some("Doom BringXer"),
+        "the re-key the responder banks"
+    );
+    // THE SEAT'S OWN BACKSPACE (the deleteText(-1) walk the char
+    // BEFORE the seat removes)
+    app.on_anvil_backspace();
+    assert_eq!(app.anvil_name, "Doom Bringer", "the seat the removal wears");
+    assert_eq!(app.anvil_caret, 10, "the -1 step the walk banks");
+    // THE BOUNDS' OWN WALK (the moveCursorBy ±1 the clamp law wears)
+    for _ in 0..20 {
+        app.on_anvil_caret_arrow(false);
+    }
+    assert_eq!(app.anvil_caret, 12, "the RIGHT run the len ceiling keeps");
+    for _ in 0..20 {
+        app.on_anvil_caret_arrow(true);
+    }
+    assert_eq!(app.anvil_caret, 0, "the LEFT run the zero floor keeps");
+    // THE SEAT-0 WORD'S OWN SILENCE (the backspace the word never
+    // wears — the vanilla deleteText(-1) the zero seat refuses)
+    app.on_anvil_backspace();
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the seat-0 backspace the word never wears"
+    );
+    // THE IDENTITY RESET'S OWN RE-KEY (the plain name the typed word
+    // equals — the empty string the reset wears, the seat the fresh
+    // bounds the clamp keeps; the FRESH field the word the typed walk
+    // never inherits)
+    app.anvil_name.clear();
+    app.anvil_caret = 0;
+    for ch in "Iron Sword".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert!(
+        app.anvil_name.is_empty(),
+        "the plain name the reset arm wears"
+    );
+    assert_eq!(app.anvil_caret, 0, "the reset the seat the clamp re-keys");
+    // THE CARET LINE'S OWN RENDER (the prefix-width seat the canvas
+    // banks — the EMPTY word the line still wears, the frame/6 blink
+    // the off phase the line retires)
+    app.frame = 0; // the on phase the line wears
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let cy = panel.1 + 26;
+    let buf = fb.to_argb();
+    let at = |x: i32, y: i32| buf[(y as usize) * 320 + x as usize];
+    assert_eq!(
+        at(panel.0 + 63, cy),
+        0xFFFF_FFFF,
+        "the empty word the line wears"
+    );
+    assert_eq!(
+        at(panel.0 + 63, cy + 7),
+        0xFFFF_FFFF,
+        "the line the 1x8 band wears"
+    );
+    {
+        app.frame = 6; // the off phase the line retires
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let buf2 = fb.to_argb();
+    let at2 = |x: i32, y: i32| buf2[(y as usize) * 320 + x as usize];
+    assert_ne!(
+        at2(panel.0 + 63, cy),
+        0xFFFF_FFFF,
+        "the off phase the line retires"
+    );
+    // THE TAIL SEAT'S OWN LINE (the word the field wears — the prefix
+    // width the seat answers, the LEFT walk the seat the line re-keys)
+    app.anvil_name = "Doom Bringer".to_string();
+    app.anvil_caret = 12;
+    {
+        app.frame = 0;
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let tw = crate::gui::font_text_width("Doom Bringer");
+    let cx = panel.0 + 62 + tw + 1;
+    let buf3 = fb.to_argb();
+    let at3 = |x: i32, y: i32| buf3[(y as usize) * 320 + x as usize];
+    assert_eq!(at3(cx, cy), 0xFFFF_FFFF, "the tail seat the line wears");
+    for _ in 0..3 {
+        app.on_anvil_caret_arrow(true);
+    }
+    {
+        app.frame = 0;
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let tw2 = crate::gui::font_text_width("Doom Brin");
+    let cx2 = panel.0 + 62 + tw2 + 1;
+    let buf4 = fb.to_argb();
+    let at4 = |x: i32, y: i32| buf4[(y as usize) * 320 + x as usize];
+    assert_eq!(at4(cx2, cy), 0xFFFF_FFFF, "the shifted seat the line wears");
+    assert_ne!(
+        at4(cx, cy),
+        0xFFFF_FFFF,
+        "the retired seat the line never wears"
+    );
+}

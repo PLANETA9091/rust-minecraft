@@ -2139,6 +2139,25 @@ pub fn run_gui_app(
                 app.on_anvil_backspace();
             }
         }
+        // THE ANVIL FIELD'S OWN CARET RIDE (the EditBox keyPressed's
+        // 262/263 arms the moveCursorBy ±1 walk serves — the focused
+        // name box the LEFT/RIGHT the seat answers, the plain walk the
+        // ctrl/shift the later rounds' own lanes bank, the stale
+        // screens the gate never passes)
+        if !app.chat_open && app.screen == crate::screens::ScreenKind::Anvil {
+            let anvil_shift =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
+            if !ctrl_down && !anvil_shift && window.is_key_pressed(Key::Left, minifb::KeyRepeat::No)
+            {
+                app.on_anvil_caret_arrow(true);
+            }
+            if !ctrl_down
+                && !anvil_shift
+                && window.is_key_pressed(Key::Right, minifb::KeyRepeat::No)
+            {
+                app.on_anvil_caret_arrow(false);
+            }
+        }
         // THE ENTRY FORMS' OWN TAB RIDE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the same law the
         // debug options + the options family rides wear, the
