@@ -27304,3 +27304,172 @@ fn the_brewing_stand_the_wire_title_wears() {
         "the band the ONLY delta the frame wears — the rest the bytes keep"
     );
 }
+
+/// THE BREWING STAND'S OWN SWAP KEY (the 214 dev round — the
+/// checkHotbarKeyPressed walk the stand screen answers: the digits
+/// the offhand 40 the `slotClicked(hovered, hovered.index, i, SWAP)`
+/// the same base-class walk rides, the prediction-free law the 421
+/// press echo banks — the packet the lane speaks, the seat the key
+/// never mints). The arms wear: the route feed, the digit's own
+/// echo, the offhand's own echo, the carried's own gate, the
+/// no-window lane's own silence, the no-session lane's own silence,
+/// the no-geometry + no-hover + no-screen lanes' own silence.
+#[test]
+fn the_brewing_stand_the_swap_key_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let nether_wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+    let blaze_powder = mc_registry::item_id_by_name("blaze_powder").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 11 the window
+    // opens — the identity the keys echo against, the seats the
+    // wholesale banks, the mirror the hotbar row the feed keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 41];
+    slots[0] = (potion, 1);
+    slots[3] = (nether_wart, 3);
+    slots[4] = (blaze_powder, 2);
+    slots[5] = (dirt, 7);
+    slots[32] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert!(app.brewing_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.brewing_live_window,
+        Some((4, 9)),
+        "the identity the keys echo against"
+    );
+
+    // THE NO-SCREEN + NO-GEOMETRY LANES (the walk the gates keep —
+    // the false verdicts the world chain answers, no packet the
+    // lanes mint)
+    app.screen = ScreenKind::World;
+    assert!(
+        !app.on_brewing_swap_key(3),
+        "the world screen the swap key refuses"
+    );
+    app.screen = ScreenKind::Brewing;
+    app.brewing_slot_rects.clear();
+    assert!(
+        !app.on_brewing_swap_key(3),
+        "no render spoke — the geometry gate refuses"
+    );
+    app.brewing_slot_rects = vec![
+        (100 + 56 + 1, 100 + 51 + 1, 0i16),
+        (100 + 79 + 1, 100 + 58 + 1, 1i16),
+        (100 + 102 + 1, 100 + 51 + 1, 2i16),
+        (100 + 79 + 1, 100 + 17 + 1, 3i16),
+        (100 + 17 + 1, 100 + 17 + 1, 4i16),
+    ];
+    app.brewing_panel = (100, 100);
+    app.mouse_pos = None;
+    assert!(
+        !app.on_brewing_swap_key(3),
+        "no cursor — the hovered-slot gate refuses"
+    );
+
+    // ARM B — THE DIGIT'S OWN ECHO (the bottle seat the digit 3
+    // takes — the SWAP input the packet rides, the empty delta list
+    // the prediction-free lane wears, the seats the key never
+    // mints)
+    app.mouse_pos = Some((100 + 56 + 8, 100 + 51 + 8));
+    assert!(
+        app.on_brewing_swap_key(3),
+        "the digit the walk consumes — the true verdict"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 4, "the window id the echo wears");
+            assert_eq!(click.state_id, 9, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the bottle seat the packet rides");
+            assert_eq!(click.button, 3, "the digit the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the key speaks"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the deltas the prediction never mints"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the packet carries"
+            );
+        }
+        other => panic!("the digit press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the bottle seat the key never mints"
+    );
+    assert_eq!(
+        app.live_brewing_carried,
+        (0, 0),
+        "the cursor the key never mints"
+    );
+
+    // ARM C — THE OFFHAND'S OWN ECHO (button 40 the keySwapOffhand
+    // arm the pcs 20-57 bipush answers — the same SWAP input the
+    // packet rides)
+    assert!(
+        app.on_brewing_swap_key(40),
+        "the offhand key the walk consumes"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 0, "the hovered seat the packet rides");
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the F-key speaks"
+            );
+        }
+        other => panic!("the offhand press the echo speaks, not {other:?}"),
+    }
+
+    // ARM D — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
+    // the walk opens with — the live cursor the wholesale banks, the
+    // false verdict BEFORE the packet lane keeps)
+    app.live_brewing_carried = (dirt, 1);
+    assert!(
+        !app.on_brewing_swap_key(3),
+        "the carried cursor the gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the refusal no packet mints");
+    app.live_brewing_carried = (0, 0);
+
+    // ARM E — THE NO-WINDOW LANE (the offline stand-in no window
+    // keeps — the swap lane the wire's own shape refuses)
+    app.brewing_live_window = None;
+    assert!(
+        !app.on_brewing_swap_key(3),
+        "no window — the identity gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the silence no packet breaks");
+    app.brewing_live_window = Some((4, 9));
+
+    // ARM F — THE NO-SESSION LANE (the command dies on the frame
+    // thread — no session the sink never answers)
+    app.live_clicks = None;
+    assert!(
+        !app.on_brewing_swap_key(3),
+        "no session — the sink gate refuses"
+    );
+}

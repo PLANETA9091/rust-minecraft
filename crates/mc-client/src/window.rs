@@ -2660,6 +2660,11 @@ pub fn run_gui_app(
                 && !app.on_chest_swap_key(40)
                 && !app.on_furnace_swap_key(40)
                 && !app.on_table_swap_key(40)
+                // THE BREWING'S OWN SWAP (the same base-class walk
+                // the table round wears — the checkHotbarKeyPressed
+                // arms the stand screen answers, the prediction-free
+                // law the 421 press echo banks)
+                && !app.on_brewing_swap_key(40)
                 // THE ENCHANTING'S OWN SWAP (the same base-class walk
                 // the table round wears — the checkHotbarKeyPressed
                 // arms the enchant screen answers, the lapis seat's
@@ -2733,6 +2738,11 @@ pub fn run_gui_app(
                         // the walk's refusals speak; the walk's own
                         // false the non-answer arms keep)
                         && !app.on_table_swap_key(i)
+                        // THE BREWING'S OWN SWAP (the same base-class
+                        // walk the table round wears — the digits the
+                        // stand's seats answer, the prediction-free
+                        // law the 421 press echo banks)
+                        && !app.on_brewing_swap_key(i)
                         // THE ENCHANTING'S OWN SWAP (the same
                         // base-class walk the table round wears — the
                         // checkHotbarKeyPressed arms the enchant

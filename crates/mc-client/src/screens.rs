@@ -52690,6 +52690,65 @@ impl App {
         }
     }
 
+    /// THE BREWING STAND'S OWN SWAP KEY (javap 26.2 — the banked
+    /// acs_fresh.txt checkHotbarKeyPressed pcs 0-114 the carried-empty
+    /// + hovered-slot gates the container rounds keep, the digit's
+    /// `slotClicked(hovered, hovered.index, i, SWAP)` the SAME walk
+    /// rides, the offhand 40 the keySwapOffhand arm the pcs 20-57
+    /// bipush answers): the BREWING screen the same base-class walk
+    /// keeps — the stand's own lane the 421 round's prediction-free
+    /// law wears (the press the packet rides, the seat the key never
+    /// mints, the server's own doClick SWAP table the verdict
+    /// answers, the corrections the wholesale lane re-banks — the
+    /// wire_furnace family's believed walk the later round owes if
+    /// the drift speaks). THE GATES: the screen/dead, the rects the
+    /// last render laid, the cursor the frame stream fed, the LIVE
+    /// window (the offline stand-in no window keeps — the swap lane
+    /// the wire's own shape the enchant round banks), the CARRIED
+    /// gate the false BEFORE the packet lane keeps (the live cursor
+    /// the wholesale banks — the offline carried the live lane never
+    /// serves). The true verdict the digit CONSUMES either way (the
+    /// SWAP arm ran — the refusals the checkHotbarKeyPressed's own
+    /// true-return keep); the false verdicts the world chain answers.
+    pub fn on_brewing_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Brewing || self.dead {
+            return false;
+        }
+        if self.brewing_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
+        // THE CARRIED GATE (checkHotbarKeyPressed pc 0-10 — the
+        // getCarried().isEmpty() arm the walk opens with; the live
+        // cursor the wholesale banks)
+        if self.live_brewing_carried.1 > 0 {
+            return false;
+        }
+        let Some((window_id, state_id)) = self.brewing_live_window else {
+            return false; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: button as i8,
+                input: crate::world_view::ContainerInput::Swap,
+                changed: Vec::new(), // the prediction-free lane the deltas never mints
+                carried: self.live_brewing_carried,
+            },
+        ));
+        true
+    }
+
     /// THE BREWING STAND'S OWN CLICK LANE (the offline sim's own walk
     /// — the vanilla doClick's local walk the believed stack the
     /// pickup/split prediction mutates, the carried the local cursor
