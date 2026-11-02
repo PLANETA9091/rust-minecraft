@@ -43120,6 +43120,44 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Brewing {
+            // THE FIVE-SEAT'S OWN DEFERRED PLACE (the same pc 325-449
+            // walk the chest geometry answers — the offline drag the
+            // release serves: the seat the click walk's own PICKUP
+            // speaks (the place-back the tables answer), the outside
+            // the -999 THROW the 339 walk serves (the whole carried
+            // the PRIMARY button drops, the ONE item the right wears),
+            // the between the -1 no-op keeps. THE LIVE WINDOW the arm
+            // never enters — the drag lane the wire round never banks,
+            // the press lane's own echo the 421 law wears (the outside
+            // the 424 press THROW the drop already served — the
+            // release the double-speak never mints)
+            let panel = self.brewing_panel;
+            let on_seat = self.brewing_hover_seat(mx, my).is_some();
+            let outside =
+                mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166;
+            if on_seat {
+                // pc 427-449 — the PICKUP the click walk's own lanes
+                // serve (the armed button the release wears — the
+                // right drag's deferred place the place-ONE speaks)
+                self.click_brewing_slot(mx, my, self.qc_button as i8);
+                return;
+            }
+            if outside {
+                // doClick pc 599-660 — the -999 THROW the carried's
+                // drop speaks (the offline sim the local throw IS —
+                // the live window the 424 press lane the drop already
+                // serves)
+                if !self.brewing_is_live {
+                    self.throw_brewing_carried_outside(self.qc_button as i8);
+                }
+                return;
+            }
+            // pc 599's own jump — the -1 PICKUP the no-op keeps (the
+            // offline sim no window keeps — the wire lane the live
+            // arm never enters)
+            return;
+        }
         if self.screen == ScreenKind::Dispenser {
             // THE DISPENSER'S OWN DEFERRED PLACE (the same pc 325-449
             // walk the furnace geometry answers — dev-148's own shape
