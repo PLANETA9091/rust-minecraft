@@ -2325,6 +2325,17 @@ pub const MENU_TYPE_ANVIL: i32 = 8;
 /// lands at 12 — the wire's own word the live table lane routes on).
 pub const MENU_TYPE_CRAFTING: i32 = 12;
 
+/// `MenuType`'s enchantment — the EnchantmentMenu's registry id (the
+/// SAME clinit order speaks: crafting 12, ENCHANTMENT lands at 13,
+/// furnace 14 — the FURNACE row's own javap walk the neighbor doc
+/// already banks; the menu's own shape the EnchantmentMenu ctor
+/// banks: the item + lapis PAIR the SimpleContainer(2) answers [the
+/// TRANSIENT pair the fresh seats lay, the 38-slot total the
+/// [`crate::screens`]' own enchant projection wears] + the standard
+/// 36, the costs the DataSlot words the ContainerSetData lane
+/// rides).
+pub const MENU_TYPE_ENCHANTMENT: i32 = 13;
+
 /// `MenuType`'s furnace — the FurnaceMenu's registry id (the SAME
 /// clinit order speaks: crafting 12, enchantment 13, FURNACE lands
 /// at 14 — the wire's own word the live furnace lane routes on; the

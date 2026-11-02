@@ -9700,6 +9700,15 @@ pub struct App {
     /// cursor the pickup/split predictions mutate — the close's
     /// add-back walk returns it).
     pub enchant_carried: (i32, i32),
+    /// THE ENCHANT WINDOW'S OWN LIVE FLAG (the 417 round — the chest's
+    /// own law the wire lane wears: the menu type 13 window the
+    /// server's OpenScreen word opens, the offline stand-in the flag
+    /// never wears).
+    pub enchant_is_live: bool,
+    /// THE ENCHANT WINDOW'S OWN IDENTITY (the (container id, state id)
+    /// pair the clicks echo against — the gather's wire half the
+    /// command lane speaks, the server's own drop the window retires).
+    pub enchant_live_window: Option<(i32, i32)>,
     /// THE CARRIED STACK'S OWN KIND WORD (the 379 round — the
     /// component law the enchant's plain (id, count) model never
     /// banked: the potion's own `potion_contents` the word speaks, the
@@ -13280,6 +13289,8 @@ impl App {
             anvil_pos: None,
             enchant_mirror: Vec::new(),
             enchant_carried: (0, 0),
+            enchant_is_live: false,
+            enchant_live_window: None,
             enchant_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             enchant_slot_rects: Vec::new(),
             enchant_panel: (0, 0),
@@ -25361,10 +25372,11 @@ impl App {
     /// hovered seat the null arm keeps, the canTakeItemForPickAll the
     /// base menu's TRUE the whole 38 answers [the 26.2 override census
     /// the merchant + the craft family alone refuses — the
-    /// EnchantmentMenu the base family wears], the offline walk the
-    /// spread serves (the screen the live window never banks — the
-    /// wire half the later round owes), the arm's own false the walk
-    /// AFTER clears, the null-hover arm the flag keeps.
+    /// EnchantmentMenu the base family wears], the wire half the 417
+    /// round wears (the live session the wire walk rides — the screen
+    /// the live window NOW banks), the offline walk the spread serves,
+    /// the arm's own false the walk AFTER clears, the null-hover arm
+    /// the flag keeps.
     fn on_enchant_release_pickup_all(&mut self) -> bool {
         if !self.enchant_doubleclick {
             return false; // pcs 64-68 — the flag the gate keeps
@@ -25376,7 +25388,11 @@ impl App {
             return false; // the hoveredSlot null arm — the cursor between the slots
         };
         self.enchant_doubleclick = false; // pcs 238-240 — the arm's own clear
-        self.on_enchant_pickup_all_offline(slot as usize);
+        if self.world_is_network {
+            self.on_enchant_pickup_all_wire(slot as usize);
+        } else {
+            self.on_enchant_pickup_all_offline(slot as usize);
+        }
         true // pc 243's goto 452 — the arm the release CONSUMED
     }
 
@@ -25417,6 +25433,67 @@ impl App {
         }
         self.enchant_carried = carried;
         self.enchant_mirror_sync_from_inventory();
+    }
+
+    /// THE ENCHANT GATHER'S OWN WIRE HALF (the 417 round — the offline
+    /// walk's twin over the LIVE belief, the inventory gather's own
+    /// wire shape the menu's 38 wears): the belief the prediction
+    /// answers (the pair the seats speak, the rows the mirror feeds —
+    /// the wire projection the sync lane banks), the packet the
+    /// command lane speaks (`ContainerInput::PickupAll`, the changed
+    /// map the walk's ACTUAL mutations name — the broadcastChanges
+    /// diff law), the no-op gates the ALWAYS-PACKET law the swap round
+    /// banked keeps, the HUD row the sync follows. THE WIRE'S OWN
+    /// ROWS (the mirror the mutation feeds — the local inventory the
+    /// walk never touches: the server's own correction the world lane
+    /// re-banks, the mirror the window's own projection the next sync
+    /// refreshes).
+    fn on_enchant_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.enchant_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let mut menu_slots: Vec<(i32, i32)> = Vec::with_capacity(38);
+        menu_slots.extend_from_slice(&self.enchant_slots);
+        menu_slots.extend_from_slice(&self.enchant_mirror);
+        let (new_carried, changed) = crate::world_view::predict_pickup_all_grid(
+            &menu_slots,
+            self.enchant_carried,
+            hovered_menu,
+            0,
+        )
+        .unwrap_or((self.enchant_carried, Vec::new()));
+        for (menu_id, pair) in &changed {
+            if *menu_id < 2 {
+                self.enchant_slots[*menu_id] = *pair;
+            } else {
+                self.enchant_mirror[*menu_id - 2] = *pair;
+            }
+        }
+        self.enchant_carried = new_carried;
+        // the HUD row's own sync (the every-mutation law — the hotbar
+        // menu ids 29..37 the row projection feeds)
+        let mut row = [(0, 0); 9];
+        for (i, cell) in row.iter_mut().enumerate() {
+            *cell = self.enchant_mirror[27 + i];
+        }
+        self.hotbar_slots = row;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried: new_carried,
+            },
+        ));
     }
 
     /// THE WIRE SPREAD'S OWN WALK (the offline walk's twin over the
@@ -29426,6 +29503,9 @@ impl App {
         if id >= 3 {
             return false; // pc 0-27 — the costs.length gate the log arm keeps
         }
+        if self.enchant_is_live {
+            return false; // the spell lane the wire round never banks — the honest silence (the ClickMenuButton echo the later round owes)
+        }
         let i = id + 1;
         let lapis = self.enchant_slots.get(1).copied().unwrap_or((0, 0));
         let item = self.enchant_slots.first().copied().unwrap_or((0, 0));
@@ -29602,6 +29682,26 @@ impl App {
     /// own rows answer, the inventory_enchants the same 36-slot
     /// numbering keys).
     pub fn close_enchanting(&mut self, back: ScreenKind) {
+        // THE WIRE'S OWN CLOSE (the 417 round — the dispenser's own
+        // shape: the live session's close echoes the serverbound
+        // Container Close packet through the live session's send lane,
+        // the belief resets with the window, the server's own close
+        // returns the carried stack server-side — NO ride-home walk
+        // the local fiction never wears)
+        if self.enchant_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.enchant_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.enchant_is_live = false;
+            self.enchant_live_window = None;
+            self.enchant_carried = (0, 0);
+            self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+            self.container_removed_rode = true; // the removed law rode
+            self.open(back);
+            return;
+        }
         // THE DOUBLE-CLICK PAIR'S OWN RESET (the close_inventory's own
         // law — the vanilla screen the removed() walk discards whole:
         // the armed flag the close never rides, the fresh open the
@@ -41630,6 +41730,9 @@ impl App {
     /// whole arm skips. The OFFLINE sim the drag the local lanes ride
     /// (the wire lane the brewing's own law never wears).
     fn qc_arm_enchanting(&mut self, mx: i32, my: i32, button: usize) {
+        if self.enchant_is_live {
+            return; // the drag lane the wire round never banks — the honest silence (the QUICK_CRAFT echo the later round owes)
+        }
         if self.qc_armed {
             return; // pc 168-172 — the in-flight drag the press never re-arms
         }
@@ -52768,6 +52871,9 @@ impl App {
     /// menu 2..28 the main grid rides, the menu 29..37 the hotbar —
     /// the write-through projection the inventory IS).
     fn click_enchanting_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.enchant_is_live {
+            return; // the live window the pickup lane the later round owes — the honest silence (the local fiction the server never confirms)
+        }
         if self.enchant_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
         }
@@ -77709,6 +77815,59 @@ impl App {
                     }
                     return;
                 }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_ENCHANTMENT {
+                    // THE ENCHANT TABLE'S OWN WIRE LANE (the 417 round —
+                    // the menu type 13 the OpenScreen word routes, the
+                    // honest drop the round retires: the gather's own
+                    // wire half the live window banks — the seats the
+                    // pair speaks, the rows the mirror feeds, the
+                    // carried the authoritative cursor lands; the costs
+                    // the data-word lane the later round owes the fresh
+                    // zeros keep)
+                    self.enchant_is_live = true;
+                    // the menu's own numbering: the pair 0..2 the seats
+                    // wear, the rows 2..38 the player rows answer (the
+                    // 27 main + the 9 hotbar the offline projection's
+                    // own shape keeps — the mirror rows the wire's own
+                    // (0, 0) emptiness riding verbatim)
+                    let mut seats = [(0i32, 0i32); 2];
+                    for (i, &(id, count)) in c.slots.iter().take(2).enumerate() {
+                        seats[i] = (id, count);
+                    }
+                    let mut mirror = vec![(0i32, 0i32); 36];
+                    for (i, &(id, count)) in c.slots.iter().skip(2).take(36).enumerate() {
+                        mirror[i] = (id, count);
+                    }
+                    self.enchant_slots = seats.to_vec();
+                    self.enchant_mirror = mirror;
+                    // the AUTHORITATIVE carried lands too: the server's
+                    // own cursor replaces whatever the prediction
+                    // believed (the wholesale replacement the chest's
+                    // lane speaks)
+                    self.enchant_carried = c.carried;
+                    // the wire's own word (the live lane the honest NONE
+                    // wall keeps — the correction the kind never carries)
+                    self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    // THE FRESH STATE'S OWN RESET (the open walk's own
+                    // law — the stale gather pair the window retires,
+                    // the spell stores the fresh empties keep, the NO
+                    // table pos the scan the zero costs keeps [the
+                    // data-word lane the later round owes])
+                    self.enchant_doubleclick = false;
+                    self.enchant_last_click_slot = None;
+                    self.enchanting_table_pos = None;
+                    self.enchant_costs_refresh();
+                    for menu in 0..self.enchant_comps.len() {
+                        self.enchant_comps[menu].clear();
+                    }
+                    // the window's identity rides in: the gather echoes
+                    // against THIS id and revision (the stateId lane)
+                    self.enchant_live_window = Some((c.id, c.state_id));
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Enchanting);
+                    }
+                    return;
+                }
                 if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST
                     && c.menu_type_id != crate::world_model::MENU_TYPE_HOPPER
                 {
@@ -77854,6 +78013,17 @@ impl App {
                                                  // the window's death the word retires (the honest
                                                  // NONE wall the wire lanes keep)
                 self.dispenser_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                // the store dropped: a LIVE enchant table closes back to
+                // the world (the same vanilla closeContainer return — the
+                // chest's own lane the menu-type-13 window mirrors); the
+                // offline stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Enchanting && self.enchant_is_live {
+                    self.enchant_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.enchant_live_window = None;
+                self.enchant_carried = (0, 0); // no window, no held stack
+                self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
                 // screen, the next window re-learns from its own sync)
