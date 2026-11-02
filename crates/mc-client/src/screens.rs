@@ -41378,14 +41378,19 @@ impl App {
         }
         if self.screen == ScreenKind::Brewing {
             // THE FIVE-SEAT'S OWN LANE CURSOR (the offline sim the
-            // SAME field's own stack holds — the wire lane the
-            // brewing door never wears)
+            // SAME field's own stack holds — the 429 echo's own
+            // un-refusal the live window re-keys: the authoritative
+            // pair the live lane banks the recalc's own ghost reads)
+            if self.brewing_is_live {
+                return self.live_brewing_carried;
+            }
             return self.brewing_carried;
         }
         if self.screen == ScreenKind::Enchanting {
             // THE TRANSIENT PAIR'S OWN LANE CURSOR (the offline sim
-            // the SAME field's own stack holds — the wire lane the
-            // enchanting door never wears)
+            // the SAME field's own stack holds — the 428 echo's own
+            // live window the authoritative carried the same field
+            // banks)
             return self.enchant_carried;
         }
         if self.screen == ScreenKind::Anvil {
@@ -41743,12 +41748,17 @@ impl App {
     /// AbstractContainerScreen base class wears): the carried-NON-EMPTY
     /// press the isQuickCrafting start speaks — NO slot click, NO
     /// packet. The hovered seat AND the outside press the arm answers;
-    /// the press BETWEEN the slots (k == -1) the whole arm skips. The
-    /// OFFLINE sim the drag the local lanes ride (the wire lane the
-    /// hopper's own law never wears).
+    /// the press BETWEEN the slots (k == -1) the whole arm skips. THE
+    /// ECHO'S OWN UN-REFUSAL (the 429 autopush round — the chest's own
+    /// gate the live lane re-wears): the LIVE window the arm answers
+    /// (the drag the painted distribution the release's own wire lanes
+    /// mint — the live cursor the [`Self::live_brewing_carried`] pair
+    /// holds, the paint and the recalc the live-aware reads wear), the
+    /// wire session's NO window the refusal keeps, the OFFLINE sim the
+    /// drag the local lanes ride.
     fn qc_arm_brewing(&mut self, mx: i32, my: i32, button: usize) {
-        if self.brewing_is_live {
-            return; // the drag lane the wire round never banks — the honest silence (the QUICK_CRAFT echo the later round owes)
+        if self.world_is_network && self.brewing_live_window.is_none() {
+            return; // the wire session's no-window refusal the stand-in's silence keeps (the chest's own gate the echo re-wears — the LIVE window the arm answers, the QUICK_CRAFT echo the drag's own release mints)
         }
         if self.qc_armed {
             return; // pc 168-172 — the in-flight drag the press never re-arms
@@ -41779,7 +41789,15 @@ impl App {
         let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
             return; // pc 25 — the no-seat frame the paint skips
         };
-        let carried = self.brewing_carried;
+        // THE LIVE CURSOR the paint read re-keys (the 429 echo's own
+        // un-refusal — the offline sim the SAME field's own stack
+        // holds, the live window the authoritative pair the paint
+        // reads)
+        let carried = if self.brewing_is_live {
+            self.live_brewing_carried
+        } else {
+            self.brewing_carried
+        };
         if carried.1 <= 0 {
             return; // shouldAdd pc 7-11 — the empty cursor never paints
         }
@@ -42620,10 +42638,104 @@ impl App {
         self.hotbar_slots = self.inventory.hotbar();
     }
 
+    /// THE BREWING DRAG'S OWN WIRE LANES (the offline walk's twin over
+    /// the LIVE brewing belief — the free fn
+    /// [`wire_brewing_quickcraft_distribute`] the disjoint field
+    /// borrows keep, the chest's own shape the 429 echo re-wears):
+    /// the packet triple the brewing window's own identity rides, the
+    /// place math the same net fold keeps, the HUD row the mirror's
+    /// hotbar rows sync follows. THE LIVE CURSOR the fold re-keys (the
+    /// 429 echo's own un-refusal — the offline sim the SAME field's
+    /// own stack the fold wears, the live window the authoritative
+    /// pair [`Self::live_brewing_carried`] the fold mutates, the kind
+    /// the live lane's honest NONE wall keeps), THE PLACE'S OWN WORD
+    /// BANK (the 383/388 rounds' own law the chest's wire lane
+    /// re-wears — the empty seat the placed stack's own word banks:
+    /// the stand seats the five-word bank the walk wears, the mirror
+    /// rows the shared bank's mapped word speaks — the live wall the
+    /// NONE word the bank would re-speak verbatim).
+    fn qc_distribute_brewing_wire(&mut self) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.brewing_live_window else {
+            return; // the offline stand-in: no window, no echo
+        };
+        let qc_type = self.qc_type;
+        let qc_slots = self.qc_slots.clone();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same cells the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| (m, self.qc_seat_stack(m).1))
+            .collect();
+        let kinds_bank = self.brewing_kinds;
+        let items_kinds = self.items_potion_kinds;
+        let carried_kind = self.brewing_carried_kind;
+        let seat_kinds = move |menu: usize| -> i32 {
+            if menu < 5 {
+                kinds_bank
+                    .get(menu)
+                    .copied()
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else if menu < 32 {
+                items_kinds
+                    .get(menu + 4)
+                    .copied()
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                items_kinds
+                    .get(menu - 32)
+                    .copied()
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            }
+        };
+        wire_brewing_quickcraft_distribute(
+            sink,
+            &mut self.brewing_slots,
+            &mut self.brewing_mirror,
+            &mut self.hotbar_slots,
+            &mut self.live_brewing_carried,
+            qc_type,
+            &qc_slots,
+            window_id,
+            state_id,
+            carried_kind,
+            &seat_kinds,
+        );
+        // THE PLACE'S OWN WORD BANK (the chest's own law the wire's
+        // tail re-wears — the empty seat the placed stack's own word
+        // banks: the stand seats the five-word bank answers, the
+        // mirror rows the shared bank's mapped word speaks)
+        for (menu, old_count) in &before {
+            let new_count = self.qc_seat_stack(*menu).1;
+            if *old_count == 0 && new_count > 0 {
+                if *menu < 5 {
+                    if *menu < self.brewing_kinds.len() {
+                        self.brewing_kinds[*menu] = carried_kind;
+                    }
+                } else {
+                    let row = *menu - 5;
+                    let idx = if row < 27 { 9 + row } else { row - 27 };
+                    if idx < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[idx] = carried_kind;
+                    }
+                }
+            }
+        }
+        // the drag's own word (the offline walk's own law the wire's
+        // tail re-wears — the emptied carried the NONE wears, the
+        // remainder the same stack the word keeps)
+        if self.live_brewing_carried.1 <= 0 {
+            self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
+    }
+
     /// THE BREWING DRAG'S OWN DISTRIBUTION (the same pcs 299-322 walk
     /// the dispenser's offline lane wears — the painted set the
-    /// one-each law serves): the offline door the wire lane never
-    /// wears (the hopper's own law the brewing door keeps).
+    /// one-each law serves): the OFFLINE sim the local write-through
+    /// answer (the live window the wire lanes the 429 echo mints).
     fn qc_distribute_brewing_offline(&mut self) {
         let carried = self.brewing_carried;
         if carried.1 <= 0 {
@@ -43040,11 +43152,17 @@ impl App {
                     self.qc_distribute_dispenser_offline();
                 }
             } else if self.screen == ScreenKind::Brewing {
-                // THE FIVE-SEAT'S OWN LANES (the offline sim the local
-                // write-through answer — the dispenser's own shape the
-                // offline door wears, the wire lane the hopper's own
-                // law never wears)
-                self.qc_distribute_brewing_offline();
+                // THE FIVE-SEAT'S OWN LANES (the click walk's own split
+                // — the wire the window belief rides, the offline sim
+                // the local write-through answer — the chest's own
+                // lanes the 429 echo re-wears: the packets the painted
+                // distribution mints, the belief the same net fold
+                // keeps, the live cursor the authoritative pair banks)
+                if self.world_is_network {
+                    self.qc_distribute_brewing_wire();
+                } else {
+                    self.qc_distribute_brewing_offline();
+                }
             } else if self.screen == ScreenKind::Enchanting {
                 // THE TRANSIENT PAIR'S OWN LANES (the click walk's own
                 // split — the wire the window belief rides, the offline
@@ -43182,11 +43300,14 @@ impl App {
             // speaks (the place-back the tables answer), the outside
             // the -999 THROW the 339 walk serves (the whole carried
             // the PRIMARY button drops, the ONE item the right wears),
-            // the between the -1 no-op keeps. THE LIVE WINDOW the arm
-            // never enters — the drag lane the wire round never banks,
-            // the press lane's own echo the 421 law wears (the outside
-            // the 424 press THROW the drop already served — the
-            // release the double-speak never mints)
+            // the between the -1 no-op keeps. THE ECHO'S OWN LIVE WALK
+            // (the 429 round — the arm the window answers, the drag's
+            // own painted distribution the wire lanes mint, the
+            // EMPTY-paint release the deferred place's own lanes wear —
+            // the seat the click walk's own echo serves, the outside
+            // the press-echo's silence the release keeps — the 424
+            // press THROW the drop already served, the release the
+            // double-speak never mints)
             let panel = self.brewing_panel;
             let on_seat = self.brewing_hover_seat(mx, my).is_some();
             let outside =
@@ -43201,16 +43322,15 @@ impl App {
             if outside {
                 // doClick pc 599-660 — the -999 THROW the carried's
                 // drop speaks (the offline sim the local throw IS —
-                // the live window the 424 press lane the drop already
-                // serves)
+                // the live window the 424 press echo the drop already
+                // serves, the release the double-speak never mints)
                 if !self.brewing_is_live {
                     self.throw_brewing_carried_outside(self.qc_button as i8);
                 }
                 return;
             }
             // pc 599's own jump — the -1 PICKUP the no-op keeps (the
-            // offline sim no window keeps — the wire lane the live
-            // arm never enters)
+            // between the release the silence keeps)
             return;
         }
         if self.screen == ScreenKind::Enchanting {
@@ -44558,8 +44678,16 @@ impl App {
         if self.screen == ScreenKind::Brewing {
             // THE FIVE-SEAT'S OWN PRESS (the same mouseClicked walk the
             // dispenser's gate shape wears — the carried press the drag
-            // arms, the carried-empty press the PICKUP dispatch keeps)
-            let held = self.brewing_carried.1 > 0;
+            // arms, the carried-empty press the PICKUP dispatch keeps;
+            // THE LIVE CURSOR the held read re-keys — the 429 echo's
+            // own un-refusal: the live window the authoritative pair
+            // the offline field retires, the drag arm the held cursor
+            // the same press arms)
+            let held = if self.brewing_is_live {
+                self.live_brewing_carried.1 > 0
+            } else {
+                self.brewing_carried.1 > 0
+            };
             if held {
                 self.qc_arm_brewing(mx, my, 0);
             } else {
@@ -91209,6 +91337,142 @@ fn wire_enchant_quickcraft_distribute(
             if seat_id == carried.0
                 && crate::world::brewing_is_potion_kind(seat_id)
                 && qc_collect_kind_refuses(crate::brewing_sim::POTION_KIND_NONE, carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
+            }
+            if qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor(count/painted),
+            // the type-1's own ONE per seat (the right drag's answer)
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < glen {
+                seats[menu] = new;
+            } else {
+                mirror[menu - glen] = new;
+            }
+            changed.push((menu as i16, new));
+        }
+        *carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&mirror[27..36]);
+        *hotbar = row; // the HUD row the mirror's hotbar rows speak
+    }
+    // THE END (pc 71-87 — slotClicked(null, -999, mask(2, type),
+    // QUICK_CRAFT)): the distribution's own mutations the changed map
+    // names, the empty-cursor drag the EMPTY map keeps
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: end_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed,
+            carried: *carried,
+        },
+    ));
+}
+
+/// THE BREWING DRAG'S OWN WIRE DISTRIBUTION (the same doClick
+/// QUICK_CRAFT status-2 arm pcs 298-534 over the brewing stand's
+/// belief, the packet triple `quickCraftToSlots` pcs 0-90 speaks —
+/// the brewing window's own identity the packets ride, the chest's
+/// own lane the shape mirrors — the 429 autopush round the drag's
+/// un-refusal banks): the START packet the `mask(0, type)` button
+/// the slot -999 keeps (the changed map the state transition's own
+/// silence keeps EMPTY), the ADD packets the `mask(1, type)` button
+/// per painted seat ride (the collect's own no-mutation the EMPTY
+/// map names), the END packet the `mask(2, type)` button the changed
+/// map the distribution's own mutations names. The per-seat place
+/// math the same net fold keeps — the FIVE the boundary the fold
+/// reads (the bottle trio 0..3 the ingredient 3 the fuel 4 the
+/// menu's own seats, the mirror rows 5..41 the store the tail
+/// keeps), the seat words the caller's own closure serves (the
+/// stand seats the five-word bank, the mirror rows the shared
+/// bank's mapped word — the same reads the paint's own gates wear),
+/// the same-id kind pair the component half refuses (the kindless
+/// pairs the NONE words the plain law keeps), the HUD row the
+/// mirror's hotbar rows 27..36 the sync follows.
+fn wire_brewing_quickcraft_distribute(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    seats: &mut [(i32, i32)],
+    mirror: &mut [(i32, i32)],
+    hotbar: &mut [(i32, i32); 9],
+    carried: &mut (i32, i32),
+    qc_type: i32,
+    qc_slots: &[usize],
+    window_id: i32,
+    state_id: i32,
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
+) {
+    let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
+    let add_button = start_button | 1; // getQuickcraftMask(1, type)
+    let end_button = start_button | 2; // getQuickcraftMask(2, type)
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: start_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed: Vec::new(),
+            carried: *carried,
+        },
+    ));
+    // THE ADDS (pc 19-68 — slotClicked(slot, slot.index, mask(1, type),
+    // QUICK_CRAFT) per painted seat): the collect's own no-mutation
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if carried.1 > 0 {
+        for &menu in qc_slots {
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button: add_button,
+                    input: crate::world_view::ContainerInput::QuickCraft,
+                    changed: Vec::new(),
+                    carried: *carried,
+                },
+            ));
+        }
+        // THE DISTRIBUTION (doClick pcs 298-534): the per-seat gates +
+        // place math the same net fold keeps — the five the boundary
+        // the fold reads, the seat words the closure's own menu read
+        // serves
+        let painted = qc_slots.len();
+        let glen = seats.len();
+        let mut k = carried.1;
+        for &menu in qc_slots {
+            let (seat_id, seat_count) = if menu < glen {
+                seats[menu]
+            } else {
+                mirror[menu - glen]
+            };
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the paint's own gate the fold
+            // re-wears — the caller's own kind reads the closure
+            // wears): the same-id potion pair the mismatched word
+            // refuses (the kindless pairs the NONE words the plain
+            // law keeps)
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
             {
                 continue; // the component half — the same-id kind pair refuses
             }
