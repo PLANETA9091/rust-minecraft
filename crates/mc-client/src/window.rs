@@ -2161,6 +2161,22 @@ pub fn run_gui_app(
             if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
                 app.on_anvil_select_all();
             }
+            // THE ANVIL FIELD'S OWN CLIPBOARD CHORD (the EditBox
+            // keyPressed's 67/86/88 arms the hasControlDown branch the
+            // copy/paste/cut walks serve — the whole value the copy law
+            // banks [the live range the copied word never narrows], the
+            // empty store the paste guard never passes, the wipe the
+            // cut answers, the f3 chords' own debug store the same bank
+            // wears)
+            if ctrl_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
+                app.on_anvil_copy();
+            }
+            if ctrl_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
+                app.on_anvil_paste();
+            }
+            if ctrl_down && window.is_key_pressed(Key::X, minifb::KeyRepeat::No) {
+                app.on_anvil_cut();
+            }
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
                 if ctrl_down {
                     // THE ANVIL FIELD'S OWN CTRL HOP (the 262 arm the

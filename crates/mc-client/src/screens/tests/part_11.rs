@@ -29809,3 +29809,166 @@ fn the_anvil_field_the_double_climb_wears() {
     app2.screen = ScreenKind::World;
     assert!(!app2.on_anvil_box_click(ox + 5, oy));
 }
+
+#[test]
+fn the_anvil_field_the_clipboard_walk_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the tail seat wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    // THE COPY'S OWN WHOLE-VALUE LAW (the 67 arm the [0, 2) live range
+    // the copy never narrows — the WHOLE value the store banks)
+    app.on_anvil_caret_home_end(false);
+    app.on_anvil_caret_shift_arrow(false); // the right walk the seat-1 rides
+    app.on_anvil_caret_shift_arrow(false); // the second step the seat-2 banks
+    assert_eq!(app.anvil_caret, 2, "the shift walk the seat-2 wears");
+    assert_eq!(app.anvil_highlight, Some(0), "the range the anchor banks");
+    app.on_anvil_copy();
+    assert_eq!(
+        app.clipboard, "Doom Bringer",
+        "the copy the whole value banks"
+    );
+    // THE CUT'S OWN WIPE (the 88 arm the copy law the store banks
+    // first — the setValue("") walk the whole value wipes, the caret
+    // the zero parks, the anchor the collapse wears)
+    app.on_anvil_cut();
+    assert_eq!(app.anvil_name, "", "the cut the whole value wipes");
+    assert_eq!(app.anvil_caret, 0, "the wipe the caret parks");
+    assert_eq!(app.anvil_highlight, None, "the wipe the anchor drops");
+    assert_eq!(app.clipboard, "Doom Bringer", "the cut the store banks");
+    // THE PASTE'S OWN SEAT INSERT (the 86 arm the empty field the
+    // store's word seeds — the caret the inserted walk the tail wears)
+    app.clipboard = "Doom Bringer".to_string();
+    app.on_anvil_paste();
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the paste the empty field seeds"
+    );
+    assert_eq!(app.anvil_caret, 12, "the paste the caret banks");
+    assert_eq!(app.anvil_highlight, None, "the paste the anchor keeps");
+    // THE EMPTY-COPY'S OWN SILENCE (the fresh door the empty field the
+    // store never touches — the copy + the cut the idempotent pair the
+    // sentinel keeps)
+    let mut app3 = App::new(3);
+    app3.enter_world();
+    app3.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app3.open_anvil_for(cell);
+    app3.anvil_slots[0] = (sword, 1);
+    app3.clipboard = "the empty field the store never touches".to_string();
+    app3.on_anvil_copy();
+    assert_eq!(
+        app3.clipboard, "the empty field the store never touches",
+        "the empty copy the store keeps"
+    );
+    app3.on_anvil_cut();
+    assert_eq!(app3.anvil_name, "", "the empty cut the word keeps");
+    assert_eq!(app3.anvil_caret, 0, "the empty cut the zero parks");
+    assert_eq!(
+        app3.clipboard, "the empty field the store never touches",
+        "the empty cut the store keeps"
+    );
+    // THE MID-SEAT'S OWN INSERT (the second door the word the seat-1
+    // the walk answers — the caret the +1 step banks)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    app2.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app2.open_anvil_for(cell);
+    app2.anvil_slots[0] = (sword, 1);
+    for ch in "Doom".chars() {
+        app2.on_anvil_char(ch);
+    }
+    app2.on_anvil_caret_home_end(false);
+    app2.on_anvil_caret_arrow(false); // the right walk the seat-1 parks
+    app2.clipboard = "X".to_string();
+    app2.on_anvil_paste();
+    assert_eq!(app2.anvil_name, "DXoom", "the mid-seat the X inserts");
+    assert_eq!(app2.anvil_caret, 2, "the insert the seat-2 banks");
+    // THE SELECTION'S OWN REPLACE (the [0, 2) live range the paste the
+    // first step removes — the 'Q' the lo seat the walk seeds)
+    app2.on_anvil_caret_home_end(false);
+    app2.on_anvil_caret_shift_arrow(false); // the right walk the range opens
+    app2.on_anvil_caret_shift_arrow(false);
+    assert_eq!(app2.anvil_highlight, Some(0), "the range re-banks");
+    app2.clipboard = "Q".to_string();
+    app2.on_anvil_paste();
+    assert_eq!(app2.anvil_name, "Qoom", "the range the Q replaces");
+    assert_eq!(app2.anvil_caret, 1, "the replace the lo seat banks");
+    assert_eq!(app2.anvil_highlight, None, "the replace the anchor drops");
+    // THE EMPTY STORE'S OWN SILENCE (the guard the walk never enters —
+    // the live range the silence keeps, the word the store wears)
+    app2.on_anvil_caret_home_end(false);
+    app2.on_anvil_caret_shift_arrow(false); // the range the silence guards
+    app2.on_anvil_caret_shift_arrow(false);
+    app2.clipboard = String::new();
+    app2.on_anvil_paste();
+    assert_eq!(app2.anvil_name, "Qoom", "the empty store the word keeps");
+    assert_eq!(
+        app2.anvil_highlight,
+        Some(0),
+        "the silence the live range keeps"
+    );
+    // THE CAP'S OWN CLAMP (the 60-char flood the tail appends — the
+    // 50-tail the walk wears, the second paste the cap re-answers)
+    app2.on_anvil_caret_home_end(true);
+    app2.clipboard = "y".repeat(60);
+    app2.on_anvil_paste();
+    assert_eq!(
+        app2.anvil_name.chars().count(),
+        50,
+        "the flood the cap clamps"
+    );
+    assert_eq!(app2.anvil_caret, 50, "the clamp the caret parks");
+    app2.on_anvil_paste();
+    assert_eq!(
+        app2.anvil_name.chars().count(),
+        50,
+        "the second flood the cap re-answers"
+    );
+    assert_eq!(app2.anvil_caret, 50, "the re-answer the caret keeps");
+    // THE RESPONDER'S OWN STRIP RIDE (the empty door the DEL char the
+    // filter re-shapes — the AB the head the walk seeds, the seat the
+    // fresh bounds the clamp keeps)
+    app3.clipboard = "A\u{7f}B".to_string();
+    app3.on_anvil_paste();
+    assert_eq!(app3.anvil_name, "AB", "the strip the AB the seeds");
+    assert_eq!(app3.anvil_caret, 2, "the strip the clamp re-keys");
+    // THE IDENTITY RESET'S OWN RIDE (the cut the field wipes [the AB
+    // the store banks], the display-name word the paste the plain
+    // stack's own hover law answers — the empty word the reset wears)
+    app3.on_anvil_cut();
+    app3.clipboard = "Iron Sword".to_string();
+    app3.on_anvil_paste();
+    assert_eq!(app3.anvil_name, "", "the display word the reset wears");
+    assert_eq!(app3.anvil_caret, 0, "the reset the caret parks");
+    // THE GATE'S OWN SILENCE (the stale screen the three walks the
+    // store never serves)
+    app3.screen = ScreenKind::World;
+    app3.clipboard = "the gate never serves".to_string();
+    app3.on_anvil_copy();
+    app3.on_anvil_paste();
+    app3.on_anvil_cut();
+    assert_eq!(
+        app3.clipboard, "the gate never serves",
+        "the gate the store never touches"
+    );
+    assert_eq!(app3.anvil_name, "", "the gate the word never wears");
+}

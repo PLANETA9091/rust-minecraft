@@ -31551,6 +31551,80 @@ impl App {
         self.anvil_highlight = Some(0);
     }
 
+    /// THE ANVIL FIELD'S OWN COPY SEAT (the EditBox keyPressed's 67 arm
+    /// the hasControlDown branch the `copy()` walk serves — the WHOLE
+    /// value the store banks [the vanilla law the live range never
+    /// narrows the copied word], the empty field the store never
+    /// touches, the stale screen the gate never passes; the f3 chords'
+    /// own debug store the same `clipboard` bank wears).
+    pub fn on_anvil_copy(&mut self) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        if !self.anvil_name.is_empty() {
+            self.clipboard = self.anvil_name.clone();
+        }
+    }
+
+    /// THE ANVIL FIELD'S OWN CUT SEAT (the EditBox keyPressed's 88 arm
+    /// the `cut()` walk serves — the copy law the store banks first,
+    /// the `setValue("")` walk the whole value wipes [the mid-string
+    /// seat the wipe never spares], the caret the zero parks, the
+    /// anchor the collapse the None wears, the responder the empty
+    /// word consumes [the equal-word early-out the idempotent answer
+    /// keeps], the empty field the same walk the store never touches,
+    /// the stale screen the gate never passes).
+    pub fn on_anvil_cut(&mut self) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        self.on_anvil_copy();
+        self.anvil_caret = 0;
+        self.anvil_highlight = None;
+        self.on_anvil_name_changed("");
+        self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+    }
+
+    /// THE ANVIL FIELD'S OWN PASTE SEAT (the EditBox keyPressed's 86
+    /// arm the `insertText(getClipboard())` walk serves — the EMPTY
+    /// store the guard the walk never enters [the live range the
+    /// silence keeps], the live selection the deleteSelection first
+    /// step removes, the store's word the seat the insert walk
+    /// answers, the 50-char cap the tail the clamp keeps [the typed
+    /// char's own law the paste word wears], the responder the pasted
+    /// word consumes [the filter strip / the identity reset the walk
+    /// re-shapes — the caret the fresh bounds the clamp re-keys], the
+    /// stale screen the gate never passes).
+    pub fn on_anvil_paste(&mut self) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        let word = self.clipboard.clone();
+        if word.is_empty() {
+            return; // the empty store the guard the walk never passes
+        }
+        // THE SELECTION'S OWN FIRST STEP (the insertText the
+        // deleteSelection walk the live range removes — the cursor the
+        // lo seat re-parks, the anchor the collapse the None wears)
+        self.anvil_delete_selection();
+        let mut w = self.anvil_name.clone();
+        let mut seat = self.anvil_caret.min(self.anvil_name.chars().count());
+        for c in word.chars() {
+            if w.chars().count() >= 50 {
+                break; // the cap the tail the clamp keeps
+            }
+            let idx = caret_byte_index(&w, seat);
+            w.insert(idx, c);
+            seat += 1;
+        }
+        self.anvil_caret = seat;
+        self.on_anvil_name_changed(&w);
+        // THE RESPONDER'S OWN RE-KEY (the filter strip / the identity
+        // reset the word the walk re-shapes — the seat the fresh
+        // bounds the clamp keeps)
+        self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+    }
+
     /// THE ANVIL FIELD'S OWN X-BAND SEAT (the private seat compute —
     /// the 267 chat law the rename box wears: the VISIBLE WINDOW the
     /// tail-24 crop the render's own law keeps, the '>' glyph the
