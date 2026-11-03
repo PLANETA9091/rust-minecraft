@@ -2972,6 +2972,19 @@ pub fn run_gui_app(
                 // the inside click the caret the x-band seats, the
                 // buttons walk the consume skips, the outside the
                 // tab/palette lanes answer)
+            } else if app.screen == crate::screens::ScreenKind::Anvil
+                && (if shift_down {
+                    app.on_anvil_box_shift_click(gmx, gmy)
+                } else {
+                    app.on_anvil_box_click(gmx, gmy)
+                })
+            {
+                // THE ANVIL FIELD'S OWN BOX CONSUME (the same EditBox
+                // mouseClicked law the container's rename box wears —
+                // the inside click the caret the x-band parks, the
+                // consumed press the DRAG ARM banks, the slot walk the
+                // consume skips — the field band the slot cells the
+                // y-overlap never wears)
             } else {
                 if app.screen == crate::screens::ScreenKind::DebugOptions {
                     app.debug_search_focus = false;
@@ -3056,6 +3069,13 @@ pub fn run_gui_app(
         // the unarmed box the lane never answers)
         if left_down && app.creative_search_drag_armed {
             app.on_creative_box_drag(gmx, gmy);
+        }
+        // THE ANVIL FIELD'S OWN DRAG WALK (the 267 chat law the rename
+        // box wears — the armed press's held frames the caret the seat
+        // follows, the range the press place opens; the unarmed box
+        // the lane never answers)
+        if left_down && app.anvil_drag_armed {
+            app.on_anvil_box_drag(gmx, gmy);
         }
         // THE PICKER'S OWN SCROLL DRAG (the mouseDragged walk's armed
         // lane — the scrollbar press armed the flag, the HELD button's
@@ -3149,6 +3169,7 @@ pub fn run_gui_app(
             app.es_drag_armed = false;
             app.debug_search_drag_armed = false;
             app.creative_search_drag_armed = false;
+            app.anvil_drag_armed = false;
         }
         was_left_down = left_down;
         // the RIGHT press's rising edge: the container screen's own

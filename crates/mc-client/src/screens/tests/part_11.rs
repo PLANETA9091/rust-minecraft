@@ -29548,3 +29548,130 @@ fn the_anvil_field_the_delete_ride_wears() {
     );
     assert_eq!(app.anvil_caret, 1, "the stale screen the seat never moves");
 }
+
+#[test]
+fn the_anvil_field_the_click_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the tail seat wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 12, "the typed word the tail parks");
+    // THE RENDER'S OWN BANK (the panel the render lays the walk reads
+    // — the test the same store freshness the buttons' rects wear)
+    app.anvil_panel = (100, 80);
+    let ox = 100 + 62; // the text origin the field's own law wears
+    let oy = 80 + 20 + 5; // the 16-tall band's own mid row
+    let w_doom_space = crate::gui::font_text_width("Doom ");
+    // THE CLICK'S OWN PARK (the inside press the caret the x-band
+    // seats — the B seat the prefix width speaks, the anchor the
+    // plain walk collapses, the DRAG ARM the consumed press banks)
+    assert!(app.on_anvil_box_click(ox + w_doom_space, oy));
+    assert_eq!(app.anvil_caret, 5, "the click the B seat parks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the plain walk the anchor collapses"
+    );
+    assert!(app.anvil_drag_armed, "the press the drag arm banks");
+    // THE PAST-TAIL'S OWN CLAMP (the band's far side the len parks —
+    // the x the box's own 110-wide bounds the tail seat speaks)
+    assert!(app.on_anvil_box_click(ox + 106, oy));
+    assert_eq!(app.anvil_caret, 12, "the past-tail the len parks");
+    // THE LEFT EDGE'S OWN CLAMP (the padding strip the window head
+    // wears — the rel <= 0 the zero count the head seat answers)
+    assert!(app.on_anvil_box_click(100 + 60, oy));
+    assert_eq!(app.anvil_caret, 0, "the left edge the head parks");
+    // THE OUTSIDE'S OWN REFUSAL (the band's own bounds the FALSE the
+    // slot walk keeps — the caret the state never moves, the arm the
+    // press never banks)
+    assert!(!app.on_anvil_box_click(100 + 58, oy));
+    assert!(!app.on_anvil_box_click(ox + 5, 80 + 19));
+    assert!(!app.on_anvil_box_click(ox + 5, 80 + 37));
+    assert_eq!(app.anvil_caret, 0, "the outside the seat keeps");
+    assert!(!app.anvil_drag_armed, "the outside the arm never banks");
+    // THE SHIFT CLICK'S OWN RANGE (the two-arg walk the anchor
+    // preserves — the no-anchor first ride the PRE-CLICK caret banks,
+    // the live anchor the next ride keeps)
+    assert!(app.on_anvil_box_shift_click(ox + w_doom_space, oy));
+    assert_eq!(app.anvil_highlight, Some(0), "the ride the head banks");
+    assert_eq!(app.anvil_caret, 5, "the ride the seat parks");
+    let w_doom = crate::gui::font_text_width("Doom");
+    assert!(app.on_anvil_box_shift_click(ox + w_doom, oy));
+    assert_eq!(
+        app.anvil_highlight,
+        Some(0),
+        "the live anchor the ride keeps"
+    );
+    assert_eq!(app.anvil_caret, 4, "the second ride the seat walks");
+    // THE DRAG'S OWN WALK (the armed press's held frames the caret
+    // the seat follows — the press place the anchor banks, the range
+    // the walk opens, the outside row the drag never owns)
+    assert!(app.on_anvil_box_click(ox, oy));
+    assert_eq!(app.anvil_caret, 0, "the plain click the head parks");
+    app.on_anvil_box_drag(ox + w_doom_space, oy);
+    assert_eq!(
+        app.anvil_highlight,
+        Some(0),
+        "the drag the press place banks"
+    );
+    assert_eq!(app.anvil_caret, 5, "the drag the seat follows");
+    let w_all = crate::gui::font_text_width("Doom Bringer");
+    app.on_anvil_box_drag(ox + w_all, oy);
+    assert_eq!(app.anvil_caret, 12, "the far drag the tail walks");
+    app.on_anvil_box_drag(ox + w_all, 80 + 50);
+    assert_eq!(app.anvil_caret, 12, "the outside row the drag keeps");
+    // THE UNARMED DRAG'S OWN SILENCE (the release the disarm speaks —
+    // the held walk the unarmed box never answers)
+    app.anvil_drag_armed = false;
+    app.on_anvil_box_drag(ox + w_doom_space, oy);
+    assert_eq!(app.anvil_caret, 12, "the unarmed box the drag keeps");
+    // THE CROP BAND'S OWN SEAT (the 24-tail window the long word
+    // wears — the '>' glyph the count re-keys, the head click the
+    // crop seat parks, the mid click the same seat the full field
+    // speaks, the past-tail the whole len answers)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    app2.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app2.open_anvil_for(cell);
+    app2.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer the Wide Word".chars() {
+        app2.on_anvil_char(ch);
+    }
+    assert_eq!(app2.anvil_caret, 26, "the long word the tail parks");
+    app2.anvil_panel = (100, 80);
+    let crop = 2; // the 26-char word the 24-tail window wears
+    let w_arrow = crate::gui::font_text_width(">");
+    let w_om_space = crate::gui::font_text_width("om ");
+    assert!(app2.on_anvil_box_click(ox + w_arrow + w_om_space, oy));
+    assert_eq!(
+        app2.anvil_caret, 5,
+        "the crop band the B seat the full field speaks"
+    );
+    assert!(app2.on_anvil_box_click(ox + 2, oy));
+    assert_eq!(app2.anvil_caret, crop, "the '>' strip the crop head parks");
+    // THE GATE'S OWN SILENCE (the stale screen the box lanes the walk
+    // never answers — the strip seat the last click parked keeps)
+    app2.screen = ScreenKind::World;
+    assert!(!app2.on_anvil_box_click(ox + 5, oy));
+    assert!(!app2.on_anvil_box_shift_click(ox + 5, oy));
+    app2.on_anvil_box_drag(ox + 5, oy);
+    assert_eq!(
+        app2.anvil_caret, crop,
+        "the stale screen the seat never moves"
+    );
+}

@@ -9850,6 +9850,11 @@ pub struct App {
     /// opens, the one-arg walks the collapse the None keeps, the
     /// fresh open the absent anchor wears).
     pub anvil_highlight: Option<usize>,
+    /// THE ANVIL FIELD'S OWN DRAG ARM (the AbstractWidget.setDragging
+    /// law the press arm banks — the consumed inside press the held
+    /// walk arms, the release the disarm speaks; the 267 chat law the
+    /// rename box re-wears).
+    pub anvil_drag_armed: bool,
     /// THE COST WORD (the AnvilMenu's cost DataSlot the broadcast
     /// rides — the createResult walk's own verdict, the extractLabels
     /// row the >0 gate renders).
@@ -13313,6 +13318,7 @@ impl App {
             anvil_name: String::new(),
             anvil_caret: 0,
             anvil_highlight: None,
+            anvil_drag_armed: false,
             anvil_cost: 0,
             anvil_only_renaming: false,
             anvil_repair_item_count: 0,
@@ -31537,6 +31543,106 @@ impl App {
         }
         self.anvil_caret = self.anvil_name.chars().count();
         self.anvil_highlight = Some(0);
+    }
+
+    /// THE ANVIL FIELD'S OWN X-BAND SEAT (the private seat compute —
+    /// the 267 chat law the rename box wears: the VISIBLE WINDOW the
+    /// tail-24 crop the render's own law keeps, the '>' glyph the
+    /// crop band the count re-keys, the x the render's own text
+    /// origin `panel.0 + 62` the seat answers, the past-tail the
+    /// clamp parks, the left edge the window head wears; the helper
+    /// the entry trio the same walk shares).
+    fn anvil_click_seat(&self, mx: i32) -> usize {
+        let (px, _) = self.anvil_panel;
+        let len = self.anvil_name.chars().count();
+        let crop = len.saturating_sub(24);
+        let visible: String = self.anvil_name.chars().skip(crop).collect();
+        let window = if crop > 0 {
+            format!(">{visible}")
+        } else {
+            visible
+        };
+        let count = caret_char_index_at(&window, mx - (px + 62));
+        if crop > 0 {
+            count.saturating_sub(1) + crop
+        } else {
+            count
+        }
+    }
+
+    /// THE ANVIL FIELD'S OWN CLICK (the EditBox.mouseClicked walk the
+    /// rename box answers — the 267 chat law the container's own
+    /// x-band serves: the inside click the caret the seat parks, the
+    /// plain the one-arg walk the anchor collapses, the TRUE the
+    /// consumed press returns, the outside the FALSE the caller's
+    /// slot walk keeps, the stale screen the gate never passes; the
+    /// DRAG ARM the setDragging walk the same press banks — the
+    /// inside the held walk arms, the outside the disarm speaks [the
+    /// `setDragging(flag && button == 0)` law the entry siblings
+    /// wear]; the band the render's own sprite seat wears — the
+    /// (59, 20) 110x16 blit the x/y pair answers).
+    pub fn on_anvil_box_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::Anvil {
+            return false;
+        }
+        let (px, py) = self.anvil_panel;
+        let inside = mx >= px + 59 && mx < px + 59 + 110 && my >= py + 20 && my < py + 20 + 16;
+        // THE DRAG ARM'S OWN BANK (the vanilla `setDragging(flag &&
+        // button == 0)` walk the inside press serves — the arm the
+        // held frames the drag walk answers, the outside the false
+        // disarms)
+        self.anvil_drag_armed = inside;
+        if !inside {
+            return false; // the outside click the band never owns
+        }
+        let seat = self.anvil_click_seat(mx);
+        self.anvil_highlight = None;
+        self.anvil_caret = seat;
+        true
+    }
+
+    /// THE ANVIL FIELD'S OWN SHIFT CLICK (the 267 chat law the EditBox
+    /// mouseClick's hasShiftDown branch wears — the two-arg
+    /// `moveCursorTo(pos, true)` walk the anchor preserves: the
+    /// no-anchor first ride the PRE-CLICK caret the anchor banks, the
+    /// caret the clicked seat wears, the outside click the FALSE the
+    /// caller's slot walk keeps).
+    pub fn on_anvil_box_shift_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::Anvil {
+            return false;
+        }
+        let (px, py) = self.anvil_panel;
+        if mx < px + 59 || mx >= px + 59 + 110 || my < py + 20 || my >= py + 20 + 16 {
+            return false; // the outside click the band never owns
+        }
+        let seat = self.anvil_click_seat(mx);
+        if self.anvil_highlight.is_none() {
+            self.anvil_highlight = Some(self.anvil_caret);
+        }
+        self.anvil_caret = seat;
+        true
+    }
+
+    /// THE ANVIL FIELD'S OWN DRAG (the 267 chat law the EditBox.onDrag
+    /// walk wears — the armed press's held frames the caret the seat
+    /// follows, the anchor the press place the range opens, the
+    /// y-band the row keeps, the closed/unarmed box the lane never
+    /// answers).
+    pub fn on_anvil_box_drag(&mut self, mx: i32, my: i32) {
+        if self.screen != ScreenKind::Anvil || !self.anvil_drag_armed {
+            return;
+        }
+        let (px, py) = self.anvil_panel;
+        if my < py + 20 || my >= py + 20 + 16 {
+            return; // the outside row the drag never owns
+        }
+        let seat = self.anvil_click_seat(mx);
+        if self.anvil_highlight.is_none() {
+            // the press seat the anchor banks (the vanilla drag the
+            // first-click place the range opens)
+            self.anvil_highlight = Some(self.anvil_caret);
+        }
+        self.anvil_caret = seat;
     }
 
     /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door
