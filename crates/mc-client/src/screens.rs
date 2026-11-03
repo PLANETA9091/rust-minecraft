@@ -26272,6 +26272,99 @@ impl App {
         self.creative_search_window_sync();
     }
 
+    /// THE SEARCH BOX'S OWN COPY SEAT (the 441/442 entry lanes' 67 law
+    /// the search box re-wears — the whole value the store banks [the
+    /// vanilla law the live range never narrows the copied word], the
+    /// empty box the store never touches, the stale screen the
+    /// non-search tab the gate never passes; the f3 chords' own debug
+    /// store the same `clipboard` bank wears).
+    pub fn on_creative_copy(&mut self) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        if !self.creative_search.is_empty() {
+            self.clipboard = self.creative_search.clone();
+        }
+    }
+
+    /// THE SEARCH BOX'S OWN CUT SEAT (the 441/442 entry lanes' 88 law
+    /// the search box re-wears — the copy law the store banks first,
+    /// the wipe the whole value clears, the caret the zero parks, the
+    /// anchor the collapse the None wears, the responder walk the
+    /// changed value alone answers [the equal-word early-out the
+    /// idempotent answer keeps — the refresh + the scroll reset the
+    /// same tails the backspace wears], the stale screen the
+    /// non-search tab the gate never passes).
+    pub fn on_creative_cut(&mut self) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        self.on_creative_copy();
+        let had_text = !self.creative_search.is_empty();
+        self.creative_search.clear();
+        self.creative_search_cursor = 0;
+        self.creative_search_highlight = None;
+        if had_text {
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+            self.creative_search_window_sync();
+        }
+    }
+
+    /// THE SEARCH BOX'S OWN PASTE SEAT (the 441/442 entry lanes' 86
+    /// law the search box re-wears — the empty store the guard the
+    /// walk never enters [the live range the silence keeps], the
+    /// live selection the deleteSelection first step removes, the
+    /// store's word the seat the insert walk answers, the 50
+    /// setMaxLength cap the tail the clamp keeps [the typed char's
+    /// own law the paste word wears], the responder walk the
+    /// inserted word alone answers [the refresh + the scroll reset
+    /// the same tails the char walk wears], the stale screen the
+    /// non-search tab the gate never passes).
+    pub fn on_creative_paste(&mut self) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        let word = self.clipboard.clone();
+        if word.is_empty() {
+            return; // the empty store the guard the walk never passes
+        }
+        entry_delete_selection(
+            &mut self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+        );
+        let mut inserted = false;
+        for c in word.chars() {
+            if self.creative_search.chars().count() >= 50 {
+                break; // the cap the tail the clamp keeps
+            }
+            let len = self.creative_search.chars().count();
+            let seat = self.creative_search_cursor.min(len);
+            if seat == len {
+                self.creative_search.push(c);
+            } else {
+                let start = caret_byte_index(&self.creative_search, seat);
+                self.creative_search.insert(start, c);
+            }
+            self.creative_search_cursor = seat + 1;
+            inserted = true;
+        }
+        if inserted {
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+            self.creative_search_window_sync();
+        }
+    }
+
     /// THE SEARCH BOX'S OWN CLICK SEAT (the EditBox.mouseClicked walk
     /// the 270/271 entry + the 272 debug laws the box wears — the
     /// inside click the caret the x-band seats, the TRUE the consumed

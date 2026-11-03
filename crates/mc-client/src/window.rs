@@ -2436,6 +2436,21 @@ pub fn run_gui_app(
             if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
                 app.on_creative_select_all();
             }
+            // THE SEARCH BOX'S OWN CLIPBOARD CHORD (the EditBox
+            // keyPressed's 67/86/88 arms the hasControlDown branch the
+            // copy/paste/cut walks serve — the whole value the copy
+            // law banks, the empty store the paste guard never
+            // passes, the wipe the cut answers, the 441/442 entry
+            // lanes' own law the search box re-wears)
+            if ctrl_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
+                app.on_creative_copy();
+            }
+            if ctrl_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
+                app.on_creative_paste();
+            }
+            if ctrl_down && window.is_key_pressed(Key::X, minifb::KeyRepeat::No) {
+                app.on_creative_cut();
+            }
             // THE SELECTION'S OWN SHIFT SEAT (the hasShiftDown query
             // the two-arg branches — the 266 chat law the box wears,
             // the ride the anchor keeps)

@@ -30411,3 +30411,139 @@ fn the_editserver_pair_the_clipboard_siblings_wear() {
     );
     assert_eq!(app.es_address, "untouched", "the gate the boxes never wear");
 }
+
+// THE CREATIVE SEARCH'S OWN CLIPBOARD SIBLING WALK (the autopush-443
+// round — the 441/442 entry lanes' 67/86/88 law the search box
+// re-wears, the whole value the copy banks, the wipe the cut answers
+// [the refresh + the scroll reset the same tails the backspace
+// wears], the store's word the paste inserts at the seat, the 50 cap
+// the tail clamps, the non-search tab the gate never passes).
+#[test]
+fn the_creative_search_the_clipboard_sibling_wears() {
+    let mut app = App::new(3);
+    // THE DOOR'S OWN OPEN (the picker the tab-6 seat arms, the typed
+    // word the box keeps)
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    assert_eq!(app.creative_tab, 6, "the search tab the seat wears");
+    for c in "stone".chars() {
+        app.on_creative_char(c);
+    }
+    assert_eq!(
+        app.creative_search, "stone",
+        "the typed word the seat seeds"
+    );
+    // THE SELECT-ALL'S OWN LIVE RANGE (the [0, len) the box wears)
+    app.on_creative_select_all();
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the all the anchor parks"
+    );
+    // THE COPY'S OWN WHOLE-VALUE LAW (the live range the copied word
+    // never narrows — the whole value the store banks)
+    app.on_creative_copy();
+    assert_eq!(
+        app.clipboard, "stone",
+        "the whole value the copy banks [the range never narrows]"
+    );
+    assert_eq!(app.creative_search, "stone", "the copy the box never trims");
+    // THE CUT'S OWN WIPE (the store keeps, the value clears, the
+    // caret parks, the anchor drops)
+    app.on_creative_cut();
+    assert_eq!(app.creative_search, "", "the cut the whole value wipes");
+    assert_eq!(app.creative_search_cursor, 0, "the wipe the caret parks");
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the wipe the anchor drops"
+    );
+    assert_eq!(
+        app.clipboard, "stone",
+        "the cut the store keeps [the copy first step]"
+    );
+    // THE PASTE'S OWN SEAT INSERT (the empty box the store's word
+    // seeds, the caret the tail rides)
+    app.on_creative_paste();
+    assert_eq!(app.creative_search, "stone", "the paste the word seeds");
+    assert_eq!(app.creative_search_cursor, 5, "the paste the caret rides");
+    // THE MID-SEAT'S OWN INSERT (the HOME the seat 0 parks, the
+    // paste the head the word wears)
+    app.on_creative_caret_home_end(false);
+    assert_eq!(app.creative_search_cursor, 0, "the home the seat parks");
+    app.on_creative_paste();
+    assert_eq!(
+        app.creative_search, "stonestone",
+        "the paste the head wears"
+    );
+    assert_eq!(app.creative_search_cursor, 5, "the insert the caret rides");
+    // THE SELECTION'S OWN REPLACE (the live range the first step
+    // removes, the store's word the range the answer replaces)
+    app.on_creative_select_all();
+    app.on_creative_paste();
+    assert_eq!(app.creative_search, "stone", "the paste the range replaces");
+    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps)
+    app.clipboard = String::new();
+    app.on_creative_select_all();
+    app.on_creative_paste();
+    assert_eq!(
+        app.creative_search, "stone",
+        "the empty store the silence keeps"
+    );
+    assert_eq!(
+        app.creative_search_highlight,
+        Some(0),
+        "the empty paste the live range keeps"
+    );
+    app.on_creative_cut();
+    assert_eq!(
+        app.creative_search, "",
+        "the empty store the cut still wipes"
+    );
+    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty box the
+    // store never overwrites)
+    app.clipboard = "sentinel".to_string();
+    app.on_creative_copy();
+    assert_eq!(
+        app.clipboard, "sentinel",
+        "the empty box the store never touches"
+    );
+    // THE CAP'S OWN CLAMP (the 50 the search box's setMaxLength wears
+    // — the flood the tail clamps, the second paste the cap
+    // re-answers)
+    let flood: String = "z".repeat(60);
+    app.clipboard = flood;
+    app.on_creative_paste();
+    assert_eq!(
+        app.creative_search.chars().count(),
+        50,
+        "the flood the tail clamps"
+    );
+    assert_eq!(app.creative_search_cursor, 50, "the clamp the caret parks");
+    app.on_creative_paste();
+    assert_eq!(
+        app.creative_search.chars().count(),
+        50,
+        "the second paste the cap re-answers"
+    );
+    // THE GATE'S OWN SILENCE (the non-search tab the three walks the
+    // store and box never serve)
+    app.select_creative_tab(0);
+    assert_eq!(
+        app.creative_tab, 0,
+        "the building-blocks tab the seat wears"
+    );
+    app.clipboard = "the gate never passes".to_string();
+    app.creative_search = "untouched".to_string();
+    app.creative_search_cursor = 9;
+    app.on_creative_copy();
+    app.on_creative_paste();
+    app.on_creative_cut();
+    assert_eq!(
+        app.clipboard, "the gate never passes",
+        "the gate the store never touches"
+    );
+    assert_eq!(
+        app.creative_search, "untouched",
+        "the gate the box never wears"
+    );
+}
