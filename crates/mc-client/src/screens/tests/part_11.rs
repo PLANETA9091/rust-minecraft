@@ -29022,3 +29022,256 @@ fn the_anvil_field_the_ctrl_hop_wears() {
     app.on_anvil_ctrl_caret_arrow(false);
     assert_eq!(app.anvil_caret, 5, "the stale screen the seat never moves");
 }
+
+/// THE ANVIL FIELD'S OWN SELECTION RIDE (the 433 round — the vanilla
+/// EditBox keyPressed's 262/263 arms the `moveCursorBy(±1,
+/// hasShiftDown())` walk the rename field re-wears): the no-anchor
+/// first ride the old cursor the anchor banks, the two-arg law the
+/// anchor the PREVIOUS seat never re-seats, the one-arg walks (the
+/// plain arrow + the ctrl hop) the anchor the collapse wears, the
+/// insertText/deleteText the live range the deleteSelection first
+/// step removes, the collapsed pair the phantom range never opens,
+/// the canvas the 0xFF808080 band the min/max prefix widths draws.
+#[test]
+fn the_anvil_field_the_selection_ride_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the absent anchor wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the fresh field the absent anchor wears"
+    );
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 12, "the tail park the walk wears");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the typed walk the anchor never banks"
+    );
+    // THE FIRST RIDE'S OWN BANK (the shift LEFT the old cursor the
+    // anchor wears — the two-arg law the range opens)
+    app.on_anvil_caret_shift_arrow(true);
+    assert_eq!(app.anvil_caret, 11, "the shift LEFT the seat steps back");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the first ride the old seat the anchor banks"
+    );
+    // THE TWO-ARG'S OWN KEEP (the shift ride the anchor never
+    // re-seats — the same value the PREVIOUS seat wears)
+    app.on_anvil_caret_shift_arrow(true);
+    assert_eq!(app.anvil_caret, 10, "the second ride the seat steps back");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the anchor the ride never re-seats"
+    );
+    app.on_anvil_caret_shift_arrow(false);
+    assert_eq!(app.anvil_caret, 11, "the shift RIGHT the seat rides back");
+    app.on_anvil_caret_shift_arrow(false);
+    assert_eq!(app.anvil_caret, 12, "the tail the forward ride wears");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the collapsed pair the anchor keeps"
+    );
+    // THE ONE-ARG'S OWN COLLAPSE (the plain arrow the anchor the None
+    // wears — the moveCursorBy one-arg law the 266 sibling wears)
+    app.on_anvil_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 11, "the plain LEFT the seat steps back");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the plain ride the anchor collapses"
+    );
+    // THE RANGE'S OWN CHAR WALK (the rebuild the shift pair the range
+    // opens, the typed char the deleteSelection first step answers —
+    // the range removes, the lo seat re-parks, the insert the seat
+    // wears)
+    app.on_anvil_caret_shift_arrow(true);
+    assert_eq!(app.anvil_caret, 10, "the shift LEFT the seat steps back");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(11),
+        "the rebuilt ride the anchor banks"
+    );
+    app.on_anvil_char('X');
+    assert_eq!(
+        app.anvil_name, "Doom BringXr",
+        "the range the removal the insert wears"
+    );
+    assert_eq!(app.anvil_caret, 11, "the +1 step the cursor banks");
+    assert_eq!(app.anvil_highlight, None, "the insert the anchor collapses");
+    // THE SELECTION'S OWN BACKSPACE (the deleteText the live range
+    // the first step removes — the plain pop the absent selection
+    // keeps)
+    app.on_anvil_caret_shift_arrow(true);
+    assert_eq!(
+        app.anvil_highlight,
+        Some(11),
+        "the rebuild the anchor banks again"
+    );
+    app.on_anvil_backspace();
+    assert_eq!(
+        app.anvil_name, "Doom Bringr",
+        "the range the backspace removes"
+    );
+    assert_eq!(app.anvil_caret, 10, "the lo seat the walk re-parks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the removal the anchor collapses"
+    );
+    // THE HOP'S OWN COLLAPSE (the ctrl walk the one-arg law the
+    // anchor resets — the word bound the seat hops)
+    app.on_anvil_caret_shift_arrow(true);
+    assert_eq!(app.anvil_caret, 9, "the shift LEFT the seat steps back");
+    assert_eq!(app.anvil_highlight, Some(10), "the anchor banks");
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 5, "the ctrl hop the word start wears");
+    assert_eq!(app.anvil_highlight, None, "the hop the anchor collapses");
+    // THE BOUNDS' OWN RIDE (the shift run the zero floor + the len
+    // ceiling keeps, the anchor the PREVIOUS bank the same value
+    // wears)
+    for _ in 0..6 {
+        app.on_anvil_caret_shift_arrow(true);
+    }
+    assert_eq!(app.anvil_caret, 0, "the run the zero floor keeps");
+    assert_eq!(app.anvil_highlight, Some(5), "the bank the run keeps");
+    for _ in 0..11 {
+        app.on_anvil_caret_shift_arrow(false);
+    }
+    assert_eq!(app.anvil_caret, 11, "the run the len seat keeps");
+    assert_eq!(app.anvil_highlight, Some(5), "the bank the ride keeps");
+    // THE COLLAPSED PAIR'S OWN SILENCE (the ride the anchor seat
+    // re-parks — the equal pair the insert the phantom range never
+    // opens, the re-park the None wears, the char the seat the
+    // insert answers)
+    for _ in 0..6 {
+        app.on_anvil_caret_shift_arrow(true);
+    }
+    assert_eq!(app.anvil_caret, 5, "the ride the anchor seat re-parks");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(5),
+        "the pair the equal seats wear"
+    );
+    app.on_anvil_char('Z');
+    assert_eq!(
+        app.anvil_name, "Doom ZBringr",
+        "the pair the insert the walk wears"
+    );
+    assert_eq!(app.anvil_caret, 6, "the +1 step the cursor banks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the collapsed pair the phantom never opens"
+    );
+    // THE BAND'S OWN RENDER (the live range the 0xFF808080 gray the
+    // y-1..y+9 band draws, the prefix widths the min/max seats
+    // answer, the collapsed pair the band never wears, the caret
+    // line the seat the white bar keeps)
+    app.anvil_name = "Doom Bringer".to_string();
+    app.anvil_caret = 12;
+    app.anvil_highlight = Some(5);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        app.frame = 0;
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    let cy = panel.1 + 26;
+    let buf = fb.to_argb();
+    let at = |x: i32, y: i32| buf[(y as usize) * 320 + x as usize];
+    let w_lo = crate::gui::font_text_width("Doom ");
+    let w_hi = crate::gui::font_text_width("Doom Bringer");
+    let x1 = panel.0 + 62 + w_lo;
+    let x2 = panel.0 + 62 + w_hi;
+    assert_eq!(
+        at(x1, cy - 1),
+        0xFFFF_FFFF,
+        "the ink the band overdraws — the vanilla order the text after wears"
+    );
+    assert_eq!(
+        at(x1 + 5, cy - 1),
+        0xFF808080u32,
+        "the band the inkless seat wears"
+    );
+    assert_ne!(
+        at(panel.0 + 61, cy - 1),
+        0xFF808080u32,
+        "the outside seat the band never wears"
+    );
+    assert_eq!(
+        at(x2 + 1, cy),
+        0xFFFF_FFFF,
+        "the caret line the seat the bar keeps"
+    );
+    // THE SPACE BAND'S OWN GRAY (the [space] range the no-ink band
+    // wears — the whole 10-row band the gray answers, the no glyph
+    // the overdraw never speaks)
+    app.anvil_caret = 5;
+    app.anvil_highlight = Some(4);
+    {
+        app.frame = 0;
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let w_sp = crate::gui::font_text_width("Doom");
+    let sx = panel.0 + 62 + w_sp + 1; // the space band's own seat
+    let buf3 = fb.to_argb();
+    let at3 = |x: i32, y: i32| buf3[(y as usize) * 320 + x as usize];
+    assert_eq!(
+        at3(sx, cy - 1),
+        0xFF808080u32,
+        "the space band the top row wears"
+    );
+    assert_eq!(
+        at3(sx, cy + 1),
+        0xFF808080u32,
+        "the space band the mid row wears"
+    );
+    assert_eq!(
+        at3(sx, cy + 8),
+        0xFF808080u32,
+        "the space band the bottom row wears"
+    );
+    {
+        app.anvil_caret = 12;
+        app.anvil_highlight = Some(12); // the collapsed pair
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let buf2 = fb.to_argb();
+    let at2 = |x: i32, y: i32| buf2[(y as usize) * 320 + x as usize];
+    assert_ne!(
+        at2(x1 + 1, cy - 1),
+        0xFF808080u32,
+        "the collapsed pair the band never wears"
+    );
+    // THE GATE'S OWN SILENCE (the stale screen the ride never wears —
+    // the field's own seat the anchor the walk never moves)
+    app.screen = ScreenKind::World;
+    app.on_anvil_caret_shift_arrow(true);
+    app.on_anvil_caret_shift_arrow(false);
+    assert_eq!(app.anvil_caret, 12, "the stale screen the seat never moves");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the stale screen the anchor never banks"
+    );
+}

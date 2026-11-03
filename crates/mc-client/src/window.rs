@@ -2142,9 +2142,9 @@ pub fn run_gui_app(
         // THE ANVIL FIELD'S OWN CARET RIDE (the EditBox keyPressed's
         // 262/263 arms the focused name box the seat answers — the
         // hasControlDown branch the ctrl hop the word bounds wears,
-        // the plain walk the moveCursorBy ±1 serves, the shift ride
-        // the later round's own lane banks, the stale screens the
-        // gate never passes)
+        // the hasShiftDown ride the two-arg law the selection opens,
+        // the plain walk the moveCursorBy ±1 serves, the stale screens
+        // the gate never passes)
         if !app.chat_open && app.screen == crate::screens::ScreenKind::Anvil {
             let anvil_shift =
                 window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
@@ -2156,7 +2156,12 @@ pub fn run_gui_app(
                     // word the backward bound the seat hops, the 266
                     // chat + the creative siblings the same law wear)
                     app.on_anvil_ctrl_caret_arrow(true);
-                } else if !anvil_shift {
+                } else if anvil_shift {
+                    // THE SELECTION'S OWN SHIFT RIDE (the two-arg
+                    // moveCursorBy the anchor banks — the 433 round's
+                    // own law the chat sibling wears)
+                    app.on_anvil_caret_shift_arrow(true);
+                } else {
                     app.on_anvil_caret_arrow(true);
                 }
             }
@@ -2166,7 +2171,11 @@ pub fn run_gui_app(
                     // — the `moveCursorTo(getWordPosition(1))` walk
                     // the hop answers
                     app.on_anvil_ctrl_caret_arrow(false);
-                } else if !anvil_shift {
+                } else if anvil_shift {
+                    // the two-arg ride the forward arm the same law
+                    // answers
+                    app.on_anvil_caret_shift_arrow(false);
+                } else {
                     app.on_anvil_caret_arrow(false);
                 }
             }

@@ -9845,6 +9845,11 @@ pub struct App {
     /// the fresh open the zero park wears, the mid-string seat the
     /// insert/backspace/arrow walks the honest answer keeps).
     pub anvil_caret: usize,
+    /// THE SELECTION'S OWN ANCHOR (the EditBox highlightPos the
+    /// two-arg law banks — the Some seat the shift ride the range
+    /// opens, the one-arg walks the collapse the None keeps, the
+    /// fresh open the absent anchor wears).
+    pub anvil_highlight: Option<usize>,
     /// THE COST WORD (the AnvilMenu's cost DataSlot the broadcast
     /// rides — the createResult walk's own verdict, the extractLabels
     /// row the >0 gate renders).
@@ -13307,6 +13312,7 @@ impl App {
             anvil_panel: (0, 0),
             anvil_name: String::new(),
             anvil_caret: 0,
+            anvil_highlight: None,
             anvil_cost: 0,
             anvil_only_renaming: false,
             anvil_repair_item_count: 0,
@@ -30013,6 +30019,7 @@ impl App {
         // field's own zero park wears)
         self.anvil_name.clear();
         self.anvil_caret = 0;
+        self.anvil_highlight = None;
         self.anvil_cost = 0;
         self.anvil_only_renaming = false;
         self.anvil_repair_item_count = 0;
@@ -30083,6 +30090,7 @@ impl App {
         // the cleared word's own zero park keeps)
         self.anvil_name.clear();
         self.anvil_caret = 0;
+        self.anvil_highlight = None;
         self.anvil_cost = 0;
         self.anvil_only_renaming = false;
         self.anvil_repair_item_count = 0;
@@ -31244,6 +31252,10 @@ impl App {
         if self.screen != ScreenKind::Anvil {
             return;
         }
+        // THE SELECTION'S OWN FIRST STEP (the insertText the
+        // deleteSelection walk the live range removes — the cursor the
+        // lo seat re-parks, the anchor the collapse the None wears)
+        self.anvil_delete_selection();
         let len = self.anvil_name.chars().count();
         if len < 50 {
             let mut w = self.anvil_name.clone();
@@ -31267,6 +31279,18 @@ impl App {
         if self.screen != ScreenKind::Anvil {
             return;
         }
+        // THE SELECTION'S OWN BACKSPACE (the deleteText the live range
+        // the deleteSelection first step removes — the plain char pop
+        // the absent selection keeps, the responder the removed word
+        // consumes)
+        if self.anvil_delete_selection() {
+            self.on_anvil_name_changed(&self.anvil_name.clone());
+            // THE RESPONDER'S OWN RE-KEY (the identity reset the word
+            // the walk re-shapes — the seat the fresh bounds the clamp
+            // keeps)
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+            return;
+        }
         let len = self.anvil_name.chars().count();
         let seat = self.anvil_caret.min(len);
         if seat == 0 {
@@ -31286,13 +31310,19 @@ impl App {
     /// THE ANVIL FIELD'S OWN CARET RIDE (the EditBox keyPressed's
     /// 262/263 arms the moveCursorBy ±1 walk serves — the seat the
     /// clamp law the bounds wears, the LEFT the -1 the zero floor
-    /// keeps, the RIGHT the +1 the len ceiling keeps, the ctrl
+    /// keeps, the RIGHT the +1 the len ceiling keeps, the one-arg form
+    /// the selection's own anchor the collapse wears, the ctrl
     /// word-hop the same family's own lane banks [the sibling fn the
-    /// hop wears], the shift ride the NEXT round's own line banks).
+    /// hop wears], the shift ride the sibling fn the two-arg law
+    /// answers).
     pub fn on_anvil_caret_arrow(&mut self, left: bool) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
+        // the one-arg moveCursorBy the anchor collapses (the plain law
+        // the 266 chat sibling wears — the highlightPos the cursorPos
+        // the tail resets)
+        self.anvil_highlight = None;
         let len = self.anvil_name.chars().count();
         if left {
             self.anvil_caret = self.anvil_caret.min(len).saturating_sub(1);
@@ -31305,17 +31335,78 @@ impl App {
     /// 262/263 arms the `Screen.hasControlDown()` branch the
     /// `moveCursorTo(this.getWordPosition(±1))` walk serves — the
     /// whole word the bound the seat hops, the one-arg form the
-    /// anchor never re-seats [the field's own no-highlight law the
-    /// 431 round wears — the shift ride the NEXT round's own lane
-    /// banks], the 266 chat + the creative search + the entry forms'
+    /// selection's own anchor the collapse wears [the 433 round's own
+    /// selection law the shift sibling rides], the 266 chat + the
+    /// creative search + the entry forms'
     /// siblings the same law the name box re-wears).
     pub fn on_anvil_ctrl_caret_arrow(&mut self, left: bool) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
+        // the one-arg word-hop the anchor collapses (the plain law the
+        // 266 chat + the creative siblings wear)
+        self.anvil_highlight = None;
         let len = self.anvil_name.chars().count();
         let seat = self.anvil_caret.min(len);
         self.anvil_caret = word_boundary(&self.anvil_name, seat, !left);
+    }
+
+    /// THE SELECTION'S OWN REMOVAL (the EditBox.deleteSelection law —
+    /// the [min(anchor,cursor), max) range the replace removes, the
+    /// cursor the lo seat re-parks, the anchor the collapse the None
+    /// wears, the live-selection true the caller's insertText /
+    /// deleteText first step answers, the collapsed/absent pair the
+    /// false the plain arms keep; the stale screen the gate never
+    /// passes).
+    fn anvil_delete_selection(&mut self) -> bool {
+        if self.screen != ScreenKind::Anvil {
+            return false;
+        }
+        let Some(anchor) = self.anvil_highlight else {
+            return false;
+        };
+        let len = self.anvil_name.chars().count();
+        let cursor = self.anvil_caret.min(len);
+        if anchor == cursor {
+            // THE COLLAPSED PAIR'S OWN RE-PARK (the banked-but-collapsed
+            // seat the insert the collapsed state keeps — the phantom
+            // range the never-opens law keeps)
+            self.anvil_highlight = None;
+            return false;
+        }
+        let lo = anchor.min(cursor);
+        let hi = anchor.max(cursor);
+        let start = caret_byte_index(&self.anvil_name, lo);
+        let end = caret_byte_index(&self.anvil_name, hi);
+        self.anvil_name.replace_range(start..end, "");
+        self.anvil_caret = lo;
+        self.anvil_highlight = None;
+        true
+    }
+
+    /// THE SELECTION'S OWN SHIFT RIDE (the EditBox keyPressed's 262/263
+    /// arms the `moveCursorBy(±1, hasShiftDown())` walk serves — the
+    /// shift the anchor the PREVIOUS seat never re-seats (the two-arg
+    /// law the highlightPos the same value keeps), the no-anchor first
+    /// ride the old cursor the anchor banks, the cursor the ±1 clamp
+    /// the bounds keep, the stale screen the gate never passes).
+    pub fn on_anvil_caret_shift_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        let len = self.anvil_name.chars().count();
+        let prev = self.anvil_caret.min(len);
+        self.anvil_caret = if left {
+            prev.saturating_sub(1)
+        } else {
+            (prev + 1).min(len)
+        };
+        if self.anvil_highlight.is_none() {
+            // the collapsed pair the old seat the anchor wears (the
+            // highlightPos == cursorPos pre-state the vanilla field
+            // keeps — the first shift step the range opens)
+            self.anvil_highlight = Some(prev);
+        }
     }
 
     /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door
@@ -38592,6 +38683,43 @@ impl App {
             } else {
                 word
             };
+            // THE SELECTION'S OWN BAND (the EditBox.render's highlight
+            // walk the 266 law the box wears — the min/max(cursor,
+            // anchor) the prefix widths the 0xFF808080 gray fill the
+            // text's y-1..y+9 band draws, the collapsed/absent seat the
+            // band never wears — the golden scenes the None seat the
+            // byte-identical law keeps; the crop window the shown
+            // prefix's own law the band re-wears)
+            let flen = self.anvil_name.chars().count();
+            let fseat = self.anvil_caret.min(flen);
+            let crop = flen.saturating_sub(24);
+            if let Some(anchor) = self.anvil_highlight {
+                if anchor != fseat {
+                    let lo = anchor.min(fseat).saturating_sub(crop);
+                    let hi = anchor.max(fseat).saturating_sub(crop);
+                    if hi > lo {
+                        let base: String = self.anvil_name.chars().skip(crop).take(lo).collect();
+                        let full: String = self.anvil_name.chars().skip(crop).take(hi).collect();
+                        let w1 = if crop > 0 {
+                            g.text_width(&format!(">{base}"))
+                        } else {
+                            g.text_width(&base)
+                        };
+                        let w2 = if crop > 0 {
+                            g.text_width(&format!(">{full}"))
+                        } else {
+                            g.text_width(&full)
+                        };
+                        g.fill(
+                            panel.0 + 62 + w1,
+                            panel.1 + 25,
+                            (w2 - w1).max(1),
+                            10,
+                            [0.502, 0.502, 0.502, 1.0],
+                        );
+                    }
+                }
+            }
             g.text(
                 a,
                 panel.0 + 62,
