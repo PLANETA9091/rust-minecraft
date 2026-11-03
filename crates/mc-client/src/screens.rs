@@ -10398,6 +10398,22 @@ pub struct App {
     /// compares it against the new hover, the close the reset
     /// speaks)
     pub furnace_last_click_slot: Option<usize>,
+    /// THE BREWING SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the brewing's own
+    /// copy banks — the press walk arms it, the release walk's
+    /// PICKUP_ALL arm the gather speaks through it, the arm's own
+    /// false clears: the autopush-447 round the spread the brewing
+    /// menu answers — the base menu's TRUE the whole 41 keeps [the
+    /// override census the merchant + the craft family alone
+    /// refuses])
+    pub brewing_doubleclick: bool,
+    /// THE BREWING SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the brewing's own copy banks — the menu
+    /// id the brewing numbering keys [0..5 the five seats, 5..32 the
+    /// main rows, 32..41 the hotbar], the next press's flag compute
+    /// compares it against the new hover, the close the reset
+    /// speaks)
+    pub brewing_last_click_slot: Option<usize>,
     /// THE QUICKCRAFT DRAG'S OWN ARM (the `AbstractContainerScreen.
     /// isQuickCrafting` field — the mouseClicked walk pcs 316-326 the
     /// carried-NON-EMPTY press arms, the mouseReleased walk pcs 246-322
@@ -13404,6 +13420,8 @@ impl App {
             chest_last_click_slot: None,
             furnace_doubleclick: false,
             furnace_last_click_slot: None,
+            brewing_doubleclick: false,
+            brewing_last_click_slot: None,
             qc_armed: false,
             qc_type: 0,
             qc_button: 0,
@@ -24230,6 +24248,13 @@ impl App {
             // the whole 39 keeps [the override census the merchant +
             // the craft family alone refuses])
             self.on_furnace_release_pickup_all()
+        } else if self.screen == ScreenKind::Brewing {
+            // THE BREWING GATHER'S OWN ARM (the 446 furnace round's own
+            // shape the five-seat menu re-wears — the flag the press
+            // armed, the canTakeItemForPickAll the base menu's TRUE
+            // the whole 41 keeps [the override census the merchant +
+            // the craft family alone refuses])
+            self.on_brewing_release_pickup_all()
         } else {
             false
         };
@@ -25832,6 +25857,136 @@ impl App {
         let mut row = [(0, 0); 9];
         for (i, cell) in row.iter_mut().enumerate() {
             *cell = self.furnace_slots[30 + i];
+        }
+        self.hotbar_slots = row;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried: new_carried,
+            },
+        ));
+    }
+
+    /// THE BREWING GATHER'S OWN RELEASE ARM (the 446 furnace round's
+    /// own shape the five-seat menu re-wears — the mouseReleased walk
+    /// pcs 64-240 the doubleclick flag the gate keeps, the hovered
+    /// seat's canTakeItemForPickAll the base menu's TRUE the whole
+    /// 41 answers [the override census the merchant + the craft
+    /// family alone refuses], the flag the arm's own clear the
+    /// release speaks, the true the release CONSUMED [the goto 452
+    /// the quickcraft lane the pc 246 verdict never enters]).
+    fn on_brewing_release_pickup_all(&mut self) -> bool {
+        if !self.brewing_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.brewing_doubleclick = false; // pcs 238-240 — the arm's own clear
+        if self.world_is_network && self.brewing_is_live {
+            self.on_brewing_pickup_all_wire(slot as usize);
+        } else {
+            self.on_brewing_pickup_all_offline(slot as usize);
+        }
+        true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE BREWING GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
+    /// arm over the five-seat menu — [`crate::world_view::
+    /// predict_pickup_all_grid`] the pure walk keeps, the menu's own
+    /// 41 the flat projection feeds [the bottle trio + the ingredient
+    /// + the fuel the 0..5 seats speak, the main rows 5..32 the items
+    /// 9..35 answer, the hotbar 32..41 the items 0..8]): the same-item
+    /// stacks the gather home pulls, the different-item rows the walk
+    /// never names, the mayPlace the spread never consults [the
+    /// acm_doClick_262.txt the pcs 1754-1791 the gate chain speaks].
+    /// The every-mutation law the write-through the standard rows
+    /// keeps [the menu slot the inventory cell answers, the mirror
+    /// sync the hotbar's own projection follows] — the kinded rows
+    /// the gather's own pull never drains [the potion's max-stack-1
+    /// law the cursor the ride never arms, the plain (id, count) law
+    /// the spread keeps].
+    fn on_brewing_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(41);
+        snapshot.extend_from_slice(&self.brewing_slots);
+        snapshot.extend_from_slice(&self.inventory.items[9..36]);
+        snapshot.extend_from_slice(&self.inventory.items[0..9]);
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &snapshot,
+            self.brewing_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in &changed {
+            if *menu_id < 5 {
+                self.brewing_slots[*menu_id] = *pair;
+            } else if *menu_id < 32 {
+                self.inventory.items[*menu_id + 4] = *pair;
+            } else {
+                self.inventory.items[*menu_id - 32] = *pair;
+            }
+        }
+        self.brewing_carried = carried;
+        // THE MIRROR'S OWN SYNC (the every-mutation law — the quick-
+        // move lane's own tail the projection re-speaks, the HUD row
+        // the hotbar's own answer follows)
+        self.brewing_mirror_sync_from_inventory();
+    }
+
+    /// THE BREWING GATHER'S OWN WIRE HALF (the 446 furnace round's
+    /// own shape the five-seat menu re-wears — the offline walk's
+    /// twin over the LIVE belief, the brewing gather's own wire
+    /// shape the menu's 41 wears): the belief the prediction
+    /// answers, the packet the command lane speaks
+    /// (`ContainerInput::PickupAll`, the changed map the walk's
+    /// ACTUAL mutations name — the broadcastChanges diff law), the
+    /// no-op gates the ALWAYS-PACKET law the swap round banked
+    /// keeps, the HUD row the sync follows [the wire belief the
+    /// hotbar rows the projection feeds — the server's own
+    /// correction the world lane re-banks].
+    fn on_brewing_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.brewing_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(41);
+        snapshot.extend_from_slice(&self.brewing_slots);
+        snapshot.extend_from_slice(&self.brewing_mirror);
+        let (new_carried, changed) = crate::world_view::predict_pickup_all_grid(
+            &snapshot,
+            self.live_brewing_carried,
+            hovered_menu,
+            0,
+        )
+        .unwrap_or((self.live_brewing_carried, Vec::new()));
+        for (menu_id, pair) in &changed {
+            if *menu_id < 5 {
+                self.brewing_slots[*menu_id] = *pair;
+            } else if (*menu_id as usize) < 5 + self.brewing_mirror.len() {
+                self.brewing_mirror[*menu_id - 5] = *pair;
+            }
+        }
+        self.live_brewing_carried = new_carried;
+        // the HUD row's own sync (the every-mutation law — the hotbar
+        // menu ids 32..41 the mirror rows 27..36 the projection feeds)
+        let mut row = [(0, 0); 9];
+        for (i, cell) in row.iter_mut().enumerate() {
+            *cell = self.brewing_mirror[27 + i];
         }
         self.hotbar_slots = row;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
@@ -29393,6 +29548,11 @@ impl App {
         self.brewing_slots = store.clone();
         self.brewing_open_cell = Some(pos);
         self.brewing_carried = (0, 0);
+        // THE FRESH SESSION'S OWN RESET (the stale gather pair the
+        // open retires — the 446 furnace round's own law the brewing
+        // open re-wears)
+        self.brewing_doubleclick = false;
+        self.brewing_last_click_slot = None;
         // THE PROGRESS WORDS' OWN READ (the dev-338 round — the banked
         // brew/fuel state the fresh branch wears: the restart the
         // mid-brew the resume wears, the fresh cell the zeros keep,
@@ -29468,6 +29628,10 @@ impl App {
             self.live_brewing_title = None; // the title dies with the window
         }
         self.brewing_live_window = None;
+        // THE GATHER PAIR'S OWN DEATH (the removed() walk the whole
+        // state discards — the armed flag the close never rides)
+        self.brewing_doubleclick = false;
+        self.brewing_last_click_slot = None;
         // the live cursor the belief resets with the window (the
         // server's own close returns the held stack)
         self.live_brewing_carried = (0, 0);
@@ -45773,13 +45937,22 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Brewing {
+            // THE DOUBLE-CLICK FLAG (the furnace's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.brewing_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.brewing_doubleclick = self.brewing_last_click_slot.is_some()
+                && self.brewing_last_click_slot == hovered_menu
+                && self.press_doubled;
             // THE FIVE-SEAT'S OWN PRESS (the same mouseClicked walk the
             // dispenser's gate shape wears — the carried press the drag
             // arms, the carried-empty press the PICKUP dispatch keeps;
             // THE LIVE CURSOR the held read re-keys — the 429 echo's
             // own un-refusal: the live window the authoritative pair
             // the offline field retires, the drag arm the held cursor
-            // the same press arms)
+            // the same press arms; the doubled press the release's
+            // gather serves)
             let held = if self.brewing_is_live {
                 self.live_brewing_carried.1 > 0
             } else {
@@ -45787,9 +45960,13 @@ impl App {
             };
             if held {
                 self.qc_arm_brewing(mx, my, 0);
-            } else {
+            } else if !self.brewing_doubleclick {
                 self.click_brewing_slot(mx, my, 0);
             }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.brewing_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Enchanting {
@@ -79943,6 +80120,11 @@ impl App {
                     // the window's identity rides in: the presses echo
                     // against THIS id and revision (the stateId lane)
                     self.brewing_live_window = Some((c.id, c.state_id));
+                    // THE FRESH STATE'S OWN RESET (the open walk's own
+                    // law the furnace route wears — the stale gather
+                    // pair the window retires)
+                    self.brewing_doubleclick = false;
+                    self.brewing_last_click_slot = None;
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Brewing);
                     }
