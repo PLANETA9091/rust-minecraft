@@ -3349,6 +3349,21 @@ pub fn run_gui_app(
             if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
                 app.on_chat_select_all();
             }
+            // THE CHAT FIELD'S OWN CLIPBOARD CHORD (the EditBox
+            // keyPressed's 67/86/88 arms the hasControlDown branch the
+            // copy/paste/cut walks serve — the whole value the copy
+            // law banks, the empty store the paste guard never
+            // passes, the wipe the cut answers, the f3 chords' own
+            // debug store the same bank wears)
+            if ctrl_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
+                app.on_chat_copy();
+            }
+            if ctrl_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
+                app.on_chat_paste();
+            }
+            if ctrl_down && window.is_key_pressed(Key::X, minifb::KeyRepeat::No) {
+                app.on_chat_cut();
+            }
             // THE SHIFT SEAT'S OWN READ (the hasShiftDown query the
             // arrows/parks the two-arg walk branches — the shift the
             // anchor keeps, the plain motion the highlight resets)

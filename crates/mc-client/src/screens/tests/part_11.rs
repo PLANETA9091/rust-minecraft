@@ -29972,3 +29972,153 @@ fn the_anvil_field_the_clipboard_walk_wears() {
     );
     assert_eq!(app3.anvil_name, "", "the gate the word never wears");
 }
+
+// THE CHAT FIELD'S OWN CLIPBOARD SIBLING WALK (the autopush-440 round
+// — the anvil round's 67/86/88 law the chat lane re-wears, the whole
+// value the copy banks, the wipe the cut answers, the store's word
+// the paste inserts at the seat, the 256 cap the tail clamps, the
+// is_control refusal the paste word wears, the equal-word early-out
+// the empty walks keep, the closed chat the gate never passes).
+#[test]
+fn the_chat_field_the_clipboard_sibling_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the empty store wears)
+    app.chat_open = true;
+    app.chat_cursor = 0;
+    app.chat_highlight = None;
+    for ch in "hi there".chars() {
+        app.on_chat_char(ch);
+    }
+    assert_eq!(app.chat_input, "hi there", "the typed word the seat seeds");
+    assert_eq!(app.chat_cursor, 8, "the typed walk the caret rides");
+    // THE SELECT-ALL'S OWN LIVE RANGE (the [0, len) the field wears)
+    app.on_chat_select_all();
+    assert_eq!(app.chat_highlight, Some(0), "the all the anchor parks");
+    // THE COPY'S OWN WHOLE-VALUE LAW (the live range the copied word
+    // never narrows — the whole value the store banks)
+    app.on_chat_copy();
+    assert_eq!(
+        app.clipboard, "hi there",
+        "the whole value the copy banks [the range never narrows]"
+    );
+    assert_eq!(app.chat_input, "hi there", "the copy the field never trims");
+    assert_eq!(app.chat_cursor, 8, "the copy the caret never moves");
+    // THE CUT'S OWN WIPE (the store keeps, the value clears, the
+    // caret parks, the anchor drops, the draft disclaims)
+    app.chat_input_is_draft = true;
+    app.on_chat_cut();
+    assert_eq!(app.chat_input, "", "the cut the whole value wipes");
+    assert_eq!(app.chat_cursor, 0, "the wipe the caret parks");
+    assert_eq!(app.chat_highlight, None, "the wipe the anchor drops");
+    assert_eq!(
+        app.clipboard, "hi there",
+        "the cut the store keeps [the copy first step]"
+    );
+    assert!(!app.chat_input_is_draft, "the edit the draft disclaims");
+    // THE PASTE'S OWN SEAT INSERT (the empty field the store's word
+    // seeds, the caret the tail rides)
+    app.on_chat_paste();
+    assert_eq!(app.chat_input, "hi there", "the paste the word seeds");
+    assert_eq!(app.chat_cursor, 8, "the paste the caret rides");
+    // THE MID-SEAT'S OWN INSERT (the HOME the seat 0 parks, the
+    // paste the head the word wears)
+    app.on_chat_caret_home_end(false);
+    assert_eq!(app.chat_cursor, 0, "the home the seat parks");
+    app.on_chat_paste();
+    assert_eq!(
+        app.chat_input, "hi therehi there",
+        "the paste the head wears"
+    );
+    assert_eq!(app.chat_cursor, 8, "the insert the caret the tail rides");
+    // THE SELECTION'S OWN REPLACE (the live range the first step
+    // removes, the store's word the range the answer replaces)
+    app.on_chat_select_all();
+    app.on_chat_paste();
+    assert_eq!(app.chat_input, "hi there", "the paste the range replaces");
+    assert_eq!(app.chat_cursor, 8, "the replace the caret rides");
+    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps —
+    // the store's own empty the walk never enters)
+    app.clipboard = String::new();
+    app.on_chat_select_all();
+    app.on_chat_paste();
+    assert_eq!(
+        app.chat_input, "hi there",
+        "the empty store the silence keeps"
+    );
+    assert_eq!(
+        app.chat_highlight,
+        Some(0),
+        "the empty paste the live range keeps"
+    );
+    app.on_chat_cut();
+    assert_eq!(app.chat_input, "", "the empty store the cut still wipes");
+    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty field the
+    // store never overwrites)
+    app.clipboard = "sentinel".to_string();
+    app.on_chat_copy();
+    assert_eq!(
+        app.clipboard, "sentinel",
+        "the empty field the store never touches"
+    );
+    // THE EMPTY CUT'S OWN EARLY-OUT (the already-empty wipe the
+    // idempotent answer keeps — the parks the walk still answers)
+    app.chat_input_is_draft = true;
+    app.on_chat_cut();
+    assert_eq!(app.chat_cursor, 0, "the empty wipe the caret keeps");
+    assert_eq!(app.chat_highlight, None, "the empty wipe the anchor keeps");
+    assert!(
+        app.chat_input_is_draft,
+        "the equal word the responder never fires [the draft stays]"
+    );
+    // THE CONTROL CHAR'S OWN DROP (the typed-char refusal the paste
+    // word wears — the \n the strip answers, the rest seeds)
+    app.clipboard = "A\nB".to_string();
+    app.on_chat_paste();
+    assert_eq!(app.chat_input, "AB", "the control strip the AB seeds");
+    assert_eq!(app.chat_cursor, 2, "the strip the caret re-keys");
+    // THE CAP'S OWN CLAMP (the 256 the chat's own setMaxLength wears —
+    // the flood the tail clamps, the second paste the cap re-answers)
+    let flood: String = "x".repeat(300);
+    app.clipboard = flood.clone();
+    app.on_chat_paste();
+    assert_eq!(
+        app.chat_input.chars().count(),
+        256,
+        "the flood the tail clamps"
+    );
+    assert_eq!(app.chat_cursor, 256, "the clamp the caret parks");
+    app.on_chat_paste();
+    assert_eq!(
+        app.chat_input.chars().count(),
+        256,
+        "the second paste the cap re-answers"
+    );
+    // THE FRESH FIELD'S OWN SECOND VERDICT (the standalone app the
+    // cap walk re-answers at the empty seed)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    app2.chat_open = true;
+    app2.clipboard = flood;
+    app2.on_chat_paste();
+    assert_eq!(
+        app2.chat_input.chars().count(),
+        256,
+        "the fresh seed the cap keeps"
+    );
+    // THE GATE'S OWN SILENCE (the closed chat the three walks the
+    // store and field never serve)
+    let app3 = App::new(3);
+    let mut app3 = app3;
+    app3.enter_world();
+    app3.clipboard = "the gate never passes".to_string();
+    app3.on_chat_copy();
+    app3.on_chat_paste();
+    app3.on_chat_cut();
+    assert_eq!(
+        app3.clipboard, "the gate never passes",
+        "the gate the store never touches"
+    );
+    assert_eq!(app3.chat_input, "", "the gate the field never wears");
+    assert_eq!(app3.chat_cursor, 0, "the gate the caret never moves");
+}

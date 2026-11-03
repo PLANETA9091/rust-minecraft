@@ -58493,6 +58493,82 @@ impl App {
         self.chat_window_sync();
     }
 
+    /// THE CHAT FIELD'S OWN COPY SEAT (the anvil round's copy law the
+    /// chat lane re-wears — the whole value the store banks [the
+    /// vanilla law the live range never narrows the copied word], the
+    /// empty field the store never touches, the closed chat the gate
+    /// never passes; the f3 chords' own debug store the same
+    /// `clipboard` bank wears).
+    pub fn on_chat_copy(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        if !self.chat_input.is_empty() {
+            self.clipboard = self.chat_input.clone();
+        }
+    }
+
+    /// THE CHAT FIELD'S OWN CUT SEAT (the anvil round's cut law the
+    /// chat lane re-wears — the copy law the store banks first, the
+    /// wipe the whole value clears [the mid-string seat the wipe
+    /// never spares], the caret the zero parks, the anchor the
+    /// collapse the None wears, the responder walk the changed value
+    /// alone answers [the equal-word early-out the idempotent
+    /// answer keeps], the closed chat the gate never passes).
+    pub fn on_chat_cut(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        self.on_chat_copy();
+        let had_text = !self.chat_input.is_empty();
+        self.chat_input.clear();
+        self.chat_cursor = 0;
+        self.chat_highlight = None;
+        if had_text {
+            self.chat_window_sync();
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
+        }
+    }
+
+    /// THE CHAT FIELD'S OWN PASTE SEAT (the anvil law the chat lane
+    /// re-wears — the empty store the guard the walk never enters
+    /// [the live range the silence keeps], the live selection the
+    /// deleteSelection first step removes, the store's word the seat
+    /// the insert walk answers, the 256 setMaxLength cap the tail
+    /// the clamp keeps [the typed char's own law the paste wears —
+    /// the is_control refusal the same gate serves], the responder
+    /// walk the inserted word alone answers, the closed chat the
+    /// gate never passes).
+    pub fn on_chat_paste(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        let word = self.clipboard.clone();
+        if word.is_empty() {
+            return; // the empty store the guard the walk never passes
+        }
+        self.chat_delete_selection();
+        let mut inserted = false;
+        for c in word.chars() {
+            if c.is_control() {
+                continue; // the typed char's own refusal the paste wears
+            }
+            if self.chat_input.chars().count() >= 256 {
+                break; // the cap the tail the clamp keeps
+            }
+            let idx = caret_byte_index(&self.chat_input, self.chat_cursor);
+            self.chat_input.insert(idx, c);
+            self.chat_cursor += 1;
+            inserted = true;
+        }
+        if inserted {
+            self.chat_window_sync();
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
+        }
+    }
+
     /// THE SELECTION'S OWN WORD SEAT (the vanilla double-click walk
     /// the word the click lands in answers — the non-space seat the
     /// [start, end) run banks, the space seat the empty pair wears,
