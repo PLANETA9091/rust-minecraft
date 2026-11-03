@@ -2119,6 +2119,12 @@ pub fn run_gui_app(
                 app.on_debug_options_ctrl_words(false);
                 app.on_direct_ctrl_words(false);
                 app.on_editserver_ctrl_words(false);
+                // THE ANVIL'S OWN CTRL WORD (the 259 arm the same
+                // branch the rename box answers — the word the
+                // backward bound removes, the internal gate the
+                // screen state alone keeps, the chat sibling the
+                // same law wears)
+                app.on_anvil_ctrl_words(false);
             } else {
                 // THE SEARCH BOXES' OWN BACKSPACE (the EditBox's own
                 // keyPressed arm the same lane serves — the two boxes
@@ -2206,6 +2212,21 @@ pub fn run_gui_app(
                     app.on_anvil_caret_shift_home_end(true);
                 } else {
                     app.on_anvil_caret_home_end(true);
+                }
+            }
+            // THE ANVIL FIELD'S OWN DELETE (the EditBox keyPressed's
+            // 261 arm the `deleteText(1)` walk serves — the char AT
+            // the seat the mid-string caret removes, the ctrl branch
+            // the `deleteWords(1)` walk the whole-word bound answers,
+            // the chat lane the same law wears)
+            if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
+                if ctrl_down {
+                    // the 261 arm the ctrl branch the forward word
+                    // bound the walk serves — the cursor the seat
+                    // keeps
+                    app.on_anvil_ctrl_words(true);
+                } else {
+                    app.on_anvil_delete();
                 }
             }
         }

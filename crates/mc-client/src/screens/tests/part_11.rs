@@ -29407,3 +29407,144 @@ fn the_anvil_field_the_parks_the_all_wears() {
         "the stale screen the anchor never banks"
     );
 }
+
+/// THE ANVIL FIELD'S OWN DELETE RIDE (the 435 round — the vanilla
+/// EditBox keyPressed's 261 arm the `deleteText(1)` walk the rename
+/// field re-wears, the 259/261 ctrl branch the `deleteWords(±1)` walk
+/// the whole-word bound serves): the char AT the seat the mid-string
+/// caret removes, the cursor the seat keeps, the tail seat the no-op
+/// keeps, the live range the deleteSelection first step removes, the
+/// backward ctrl word the bound re-seats, the forward the seat keeps,
+/// the stale screen the gate never passes.
+#[test]
+fn the_anvil_field_the_delete_ride_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the tail seat wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 12, "the typed word the tail parks");
+    // THE TAIL'S OWN SILENCE (the seat-==len delete the word never
+    // wears — the no-op the plain walk keeps)
+    app.on_anvil_delete();
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the tail seat the word keeps"
+    );
+    assert_eq!(app.anvil_caret, 12, "the tail seat the caret keeps");
+    // THE MID-STRING DELETE (the 261 arm the char AT the seat
+    // removes — the cursor the seat keeps, the 'B' the walk pops)
+    app.on_anvil_caret_home_end(false);
+    for _ in 0..5 {
+        app.on_anvil_caret_arrow(false);
+    }
+    assert_eq!(app.anvil_caret, 5, "the ride the B seat parks");
+    app.on_anvil_delete();
+    assert_eq!(
+        app.anvil_name, "Doom ringer",
+        "the delete the B char removes"
+    );
+    assert_eq!(app.anvil_caret, 5, "the cursor the seat keeps");
+    // THE CTRL WORD'S OWN BACKWARD RIDE (the 259 ctrl branch the
+    // `deleteWords(-1)` walk serves — the whole word the backward
+    // bound removes, the cursor the bound re-seats)
+    app.on_anvil_ctrl_words(false);
+    assert_eq!(
+        app.anvil_name, "ringer",
+        "the ctrl backspace the Doom word removes"
+    );
+    assert_eq!(app.anvil_caret, 0, "the backward bound the seat re-parks");
+    // THE CTRL WORD'S OWN FORWARD RIDE (the 261 ctrl branch the
+    // `deleteWords(1)` walk serves — the whole word the forward
+    // bound removes, the cursor the seat keeps, the empty field the
+    // walk the silence keeps)
+    app.on_anvil_ctrl_words(true);
+    assert_eq!(app.anvil_name, "", "the ctrl delete the whole word removes");
+    assert_eq!(app.anvil_caret, 0, "the forward walk the seat keeps");
+    app.on_anvil_ctrl_words(true);
+    assert_eq!(app.anvil_name, "", "the empty field the walk never wears");
+    // THE ALL'S OWN DELETE (the live range the deleteSelection first
+    // step answers — the whole value removes, the lo seat re-parks)
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 12, "the rebuilt word the tail parks");
+    app.on_anvil_select_all();
+    assert_eq!(app.anvil_highlight, Some(0), "the all the range opens");
+    app.on_anvil_delete();
+    assert_eq!(app.anvil_name, "", "the delete the whole range removes");
+    assert_eq!(app.anvil_caret, 0, "the lo seat the walk re-parks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the removal the anchor collapses"
+    );
+    // THE SHIFT RANGE'S OWN DELETE (the ride the range opens, the
+    // delete the walk answers — the pair the head wears, the lo seat
+    // the walk re-parks)
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    app.on_anvil_caret_home_end(false);
+    app.on_anvil_caret_shift_arrow(false);
+    app.on_anvil_caret_shift_arrow(false);
+    assert_eq!(app.anvil_highlight, Some(0), "the ride the anchor banks");
+    app.on_anvil_delete();
+    assert_eq!(
+        app.anvil_name, "om Bringer",
+        "the range the Do pair removes"
+    );
+    assert_eq!(app.anvil_caret, 0, "the lo seat the walk re-parks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the removal the anchor collapses"
+    );
+    // THE CTRL WALK'S OWN SELECTION STEP (the live range the
+    // deleteWords' own deleteText first step answers — the word-walk
+    // the range never reaches)
+    app.on_anvil_select_all();
+    assert_eq!(app.anvil_highlight, Some(0), "the all the range opens");
+    app.on_anvil_ctrl_words(true);
+    assert_eq!(
+        app.anvil_name, "",
+        "the ctrl walk the selection first step removes"
+    );
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the removal the anchor collapses"
+    );
+    // THE DELETE + TYPE COMBO (the head delete the D removes, the
+    // char the fresh head wears — the honest pair the mid-field
+    // answers)
+    for ch in "Doom".chars() {
+        app.on_anvil_char(ch);
+    }
+    app.on_anvil_caret_home_end(false);
+    app.on_anvil_delete();
+    assert_eq!(app.anvil_name, "oom", "the head delete the D removes");
+    app.on_anvil_char('X');
+    assert_eq!(app.anvil_name, "Xoom", "the type the fresh head wears");
+    assert_eq!(app.anvil_caret, 1, "the +1 step the seat banks");
+    // THE GATE'S OWN SILENCE (the stale screen the delete rides the
+    // walk never moves)
+    app.screen = ScreenKind::World;
+    app.on_anvil_delete();
+    app.on_anvil_ctrl_words(false);
+    app.on_anvil_ctrl_words(true);
+    assert_eq!(
+        app.anvil_name, "Xoom",
+        "the stale screen the word never moves"
+    );
+    assert_eq!(app.anvil_caret, 1, "the stale screen the seat never moves");
+}

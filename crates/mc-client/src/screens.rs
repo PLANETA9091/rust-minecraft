@@ -31307,6 +31307,83 @@ impl App {
         self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
     }
 
+    /// THE ANVIL FIELD'S OWN DELETE (the EditBox keyPressed's 261 arm
+    /// the `deleteText(1)` walk serves — the char AT the caret the
+    /// mid-string seat removes, the cursor the seat keeps, the tail
+    /// seat the no-op keeps, the live selection the deleteText's own
+    /// first step the range removal answers, the stale screen the
+    /// gate never passes; the 266 chat sibling the same law wears).
+    pub fn on_anvil_delete(&mut self) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        // THE SELECTION'S OWN FIRST STEP (the deleteText the live range
+        // the deleteSelection walk removes — the plain char pop the
+        // absent selection keeps, the responder the removed word
+        // consumes)
+        if self.anvil_delete_selection() {
+            self.on_anvil_name_changed(&self.anvil_name.clone());
+            // THE RESPONDER'S OWN RE-KEY (the identity reset the word
+            // the walk re-shapes — the seat the fresh bounds the clamp
+            // keeps)
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+            return;
+        }
+        let len = self.anvil_name.chars().count();
+        let seat = self.anvil_caret.min(len);
+        if seat < len {
+            let mut w = self.anvil_name.clone();
+            let start = caret_byte_index(&w, seat);
+            let end = caret_byte_index(&w, seat + 1);
+            w.replace_range(start..end, "");
+            self.on_anvil_name_changed(&w);
+            // THE RESPONDER'S OWN RE-KEY (the identity reset the word
+            // the walk re-shapes — the seat the fresh bounds the clamp
+            // keeps, the cursor the seat the plain walk keeps)
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+        }
+    }
+
+    /// THE ANVIL FIELD'S OWN CTRL WORD (the EditBox keyPressed's
+    /// 259/261 arms the `Screen.hasControlDown()` branch the
+    /// `deleteWords(±1)` walk serves — the getWordPosition bound the
+    /// whole-word removal answers: the backward arm the [bound..seat)
+    /// the walk removes, the cursor the bound re-seats, the forward
+    /// arm the [seat..bound) the same law speaks, the cursor the seat
+    /// keeps, the live selection the deleteText's own first step
+    /// answers, the stale screen the gate never passes, the 266 chat
+    /// sibling the same law the rename box re-wears).
+    pub fn on_anvil_ctrl_words(&mut self, forward: bool) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        // THE SELECTION'S OWN FIRST STEP (the deleteWords' own
+        // deleteText walk the live range removes — the word-walk the
+        // collapsed field keeps)
+        if self.anvil_delete_selection() {
+            self.on_anvil_name_changed(&self.anvil_name.clone());
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+            return;
+        }
+        let len = self.anvil_name.chars().count();
+        let seat = self.anvil_caret.min(len);
+        let bound = word_boundary(&self.anvil_name, seat, forward);
+        if bound != seat {
+            let mut w = self.anvil_name.clone();
+            let start = caret_byte_index(&w, bound.min(seat));
+            let end = caret_byte_index(&w, bound.max(seat));
+            w.replace_range(start..end, "");
+            if !forward {
+                self.anvil_caret = bound;
+            }
+            self.on_anvil_name_changed(&w);
+            // THE RESPONDER'S OWN RE-KEY (the identity reset the word
+            // the walk re-shapes — the seat the fresh bounds the clamp
+            // keeps)
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+        }
+    }
+
     /// THE ANVIL FIELD'S OWN CARET RIDE (the EditBox keyPressed's
     /// 262/263 arms the moveCursorBy ±1 walk serves — the seat the
     /// clamp law the bounds wears, the LEFT the -1 the zero floor
