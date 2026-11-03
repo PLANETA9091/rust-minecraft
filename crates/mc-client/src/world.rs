@@ -3598,22 +3598,37 @@ pub const HOPPER_COOLDOWN_TICKS: u64 = 8;
 /// is EMPTY or same-item-with-room the one item takes, the
 /// canMergeItems gate the grow fold the itemMaxStack cap serves —
 /// the true the item seated speaks, the full row the false keeps).
+/// THE WRAPPER THE FURNACE'S OWN LAW KEEPS (the
+/// furnace_move_one's own thin walk the hopper lanes wear — the
+/// (idx, arm) pair the flat verdict's is_some answers).
 pub fn hopper_move_one(to: &mut [(i32, i32)], id: i32) -> bool {
+    hopper_insert_into_slot(to, id).is_some()
+}
+
+/// THE HOPPER'S OWN MOVE-ONE'S OWN INDEX (the
+/// furnace_insert_into_face's own flat-order sibling — the (idx, arm)
+/// pair the furnace walk the hopper lanes lend: the zero id the
+/// honest None gate keeps, the empty-or-dead seat the (idx, false)
+/// split arm speaks [the fresh stack the one item seeds], the
+/// same-id roomy seat the (idx, true) merge arm keeps [the grow fold
+/// the cap serves], the full row the honest None wears [the caller's
+/// own false verdict the flat law banks]).
+pub fn hopper_insert_into_slot(to: &mut [(i32, i32)], id: i32) -> Option<(usize, bool)> {
     if id == 0 {
-        return false;
+        return None;
     }
     let cap = mc_registry::item_max_stack(id).min(64);
-    for s in to.iter_mut() {
+    for (i, s) in to.iter_mut().enumerate() {
         if s.0 == 0 || s.1 <= 0 {
             *s = (id, 1);
-            return true;
+            return Some((i, false));
         }
         if s.0 == id && (s.1 as i64) < cap as i64 {
             s.1 += 1;
-            return true;
+            return Some((i, true));
         }
     }
-    false
+    None
 }
 
 /// THE HOPPER'S OWN PUSH WALK (javap HopperBlockEntity.ejectItems pc
@@ -34600,6 +34615,118 @@ mod tests {
         assert!(
             !hopper_inventory_full(&full5),
             "the below-max slot the false keeps"
+        );
+    }
+
+    #[test]
+    fn the_hopper_move_one_the_index_pair_wears() {
+        // THE HOPPER'S OWN MOVE-ONE'S OWN INDEX (the 438 round — the
+        // furnace_insert_into_face's own (idx, arm) pair the hopper
+        // lanes lend: the split arm the (idx, false) the fresh seat
+        // speaks, the merge arm the (idx, true) the grow law keeps,
+        // the full row the honest None wears, the wrapper the
+        // is_some law the same verdicts banks, the suck lane's own
+        // kind ride the same pair law wears [the furnace + the
+        // brewing suck the wrapper's lane answer])
+        use crate::world::{
+            hopper_insert_into_slot, hopper_move_one, hopper_suck_one_brewing,
+            hopper_suck_one_furnace, BREWING_SLOT_BOTTLE_0, FURNACE_SLOT_RESULT,
+        };
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // THE SPLIT ARM (the empty seat the (idx, false) the fresh
+        // stack speaks — the first free seat the address the pair
+        // names)
+        let mut row = vec![(0i32, 0i32), (dirt, 30), (dirt, 30)];
+        assert_eq!(
+            hopper_insert_into_slot(&mut row, dirt),
+            Some((0, false)),
+            "the empty-first law the pair the split arm speaks"
+        );
+        assert_eq!(row[0], (dirt, 1), "the fresh stack the one item wears");
+        // THE MID-ROW SEED (the taken head the walk skips — the first
+        // free seat the address the pair keeps)
+        let mut row = vec![(stone, 4), (stone, 64), (0, 0), (0, 0)];
+        assert_eq!(
+            hopper_insert_into_slot(&mut row, dirt),
+            Some((2, false)),
+            "the first free seat the pair the address wears"
+        );
+        assert_eq!(row[2], (dirt, 1), "the seated stack the row banks");
+        // THE MERGE ARM (the same-id roomy seat the (idx, true) keeps)
+        let mut row = vec![(stone, 5), (0, 0)];
+        assert_eq!(
+            hopper_insert_into_slot(&mut row, stone),
+            Some((0, true)),
+            "the merge arm the grow law the pair banks"
+        );
+        assert_eq!(row[0], (stone, 6), "the same-item partial the grow wears");
+        // THE FULL ROW'S OWN NONE (the all-max row the honest None
+        // keeps — the caller's own false verdict the wrapper banks)
+        let mut full_row = vec![(dirt, 64); 3];
+        assert_eq!(
+            hopper_insert_into_slot(&mut full_row, dirt),
+            None,
+            "the all-max row the honest None keeps"
+        );
+        assert_eq!(full_row[0], (dirt, 64), "the refused walk the row keeps");
+        // THE ZERO-ID GATE (the empty item the honest None wears)
+        let mut row = vec![(0, 0)];
+        assert_eq!(
+            hopper_insert_into_slot(&mut row, 0),
+            None,
+            "the zero id the None gate keeps"
+        );
+        // THE WRAPPER'S OWN MIRROR LAW (the same verdicts the plain
+        // bool banks — the seed the true wears, the full row the
+        // false keeps)
+        let mut row = vec![(0i32, 0i32)];
+        assert!(hopper_move_one(&mut row, dirt), "the seed the true banks");
+        assert_eq!(row[0], (dirt, 1), "the wrapper the same walk wears");
+        let mut full_row = vec![(dirt, 64); 2];
+        assert!(
+            !hopper_move_one(&mut full_row, dirt),
+            "the full row the false the wrapper banks"
+        );
+        // THE SUCK LANE'S OWN KIND RIDE (the furnace + the brewing
+        // suck the pair-wearing lane answer — the merge arm the
+        // furnace seat grows, the seed arm the stand's bottle row
+        // banks)
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let potion = mc_registry::item_id_by_name("potion").unwrap();
+        let mut hopper = vec![(iron_ingot, 64), (iron_ingot, 2), (0, 0), (0, 0), (0, 0)];
+        let mut furnace = vec![(0i32, 0i32); 3];
+        furnace[FURNACE_SLOT_RESULT] = (iron_ingot, 1);
+        assert!(
+            hopper_suck_one_furnace(&mut hopper, &mut furnace),
+            "the furnace suck the merge arm answers"
+        );
+        assert_eq!(
+            hopper[1],
+            (iron_ingot, 3),
+            "the same-id seat the grow the pair wore"
+        );
+        assert_eq!(
+            furnace[FURNACE_SLOT_RESULT],
+            (0, 0),
+            "the result slot the suck empties"
+        );
+        let mut hopper = vec![(0i32, 0i32); 5];
+        let mut stand = vec![(0i32, 0i32); 5];
+        stand[BREWING_SLOT_BOTTLE_0] = (potion, 1);
+        assert!(
+            hopper_suck_one_brewing(&mut hopper, &mut stand),
+            "the brewing suck the seed arm answers"
+        );
+        assert_eq!(
+            hopper[0],
+            (potion, 1),
+            "the split arm the seat the pair names"
+        );
+        assert_eq!(
+            stand[BREWING_SLOT_BOTTLE_0],
+            (0, 0),
+            "the bottle slot the empty keeps"
         );
     }
 
