@@ -8996,6 +8996,22 @@ pub struct App {
     pub beacon_mirror: Vec<(i32, i32)>,
     pub beacon_primary: Option<i32>,
     pub beacon_secondary: Option<i32>,
+    /// THE BEACON SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the beacon's own
+    /// copy banks — the press walk arms it, the release walk's
+    /// PICKUP_ALL arm the gather speaks through it, the arm's own
+    /// false clears: the autopush-450 round the spread the beacon
+    /// menu answers — the base menu's TRUE the whole 37 keeps [the
+    /// override census the merchant + the craft family alone
+    /// refuses])
+    pub beacon_doubleclick: bool,
+    /// THE BEACON SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the beacon's own copy banks — the menu
+    /// id the beacon numbering keys [0 the payment seat speaks,
+    /// 1..37 the mirror rows the standard inventory banks], the next
+    /// press's flag compute compares it against the new hover, the
+    /// close the reset speaks)
+    pub beacon_last_click_slot: Option<usize>,
     pub beacon_slot_rects: Vec<(i32, i32, i16)>,
     pub beacon_panel: (i32, i32),
     pub beacon_power_rects: Vec<(i32, i32, i32, bool)>,
@@ -13250,6 +13266,8 @@ impl App {
             beacon_mirror: Vec::new(),
             beacon_primary: None,
             beacon_secondary: None,
+            beacon_doubleclick: false,
+            beacon_last_click_slot: None,
             beacon_slot_rects: Vec::new(),
             beacon_panel: (0, 0),
             beacon_power_rects: Vec::new(),
@@ -24280,6 +24298,13 @@ impl App {
             // the whole 45 keeps [the override census the merchant +
             // the craft family alone refuses])
             self.on_dispenser_release_pickup_all()
+        } else if self.screen == ScreenKind::Beacon {
+            // THE BEACON GATHER'S OWN ARM (the 448 dispenser round's
+            // own shape the beacon menu re-wears — the flag the press
+            // armed, the canTakeItemForPickAll the base menu's TRUE
+            // the whole 37 keeps [the override census the merchant +
+            // the craft family alone refuses])
+            self.on_beacon_release_pickup_all()
         } else {
             false
         };
@@ -26156,6 +26181,80 @@ impl App {
                 carried: new_carried,
             },
         ));
+    }
+
+    /// THE BEACON GATHER'S OWN RELEASE ARM (the 448 dispenser round's
+    /// own shape the beacon menu re-wears — the mouseReleased walk
+    /// pcs 64-240 the doubleclick flag the gate keeps, the hovered
+    /// seat's canTakeItemForPickAll the base menu's TRUE the whole
+    /// 37 answers [the override census the merchant + the craft
+    /// family alone refuses], the flag the arm's own clear the
+    /// release speaks, the true the release CONSUMED [the goto 452
+    /// the quickcraft lane the pc 246 verdict never enters]). THE
+    /// OFFLINE LANE the door alone wears — the beacon the wire
+    /// session never opens [no live window the route arm banks], the
+    /// offline walk the gather's whole answer keeps.
+    fn on_beacon_release_pickup_all(&mut self) -> bool {
+        if !self.beacon_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.beacon_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.beacon_doubleclick = false; // pcs 238-240 — the arm's own clear
+        self.on_beacon_pickup_all_offline(slot as usize);
+        true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE BEACON GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
+    /// arm over the beacon menu — [`crate::world_view::
+    /// predict_pickup_all_grid`] the pure walk keeps, the menu's own
+    /// 37 the flat projection feeds [the payment the 0 seat speaks,
+    /// the mirror rows 1..37 the items 9..35 + 0..8 answer]): the
+    /// same-item stacks the gather home pulls, the different-item
+    /// rows the walk never names, the mayPlace the spread never
+    /// consults [the acm_doClick_262.txt the pcs 1754-1791 the gate
+    /// chain speaks]. The every-mutation law the write-through the
+    /// standard rows keeps [the mirror row the inventory cell
+    /// answers, the HUD row the hotbar's own projection follows] —
+    /// the payment seat the gather's own pull the same law drains
+    /// [the vanilla gather the menu's whole spread the payment
+    /// speaks].
+    fn on_beacon_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(37);
+        snapshot.push(self.beacon_payment);
+        snapshot.extend_from_slice(&self.beacon_mirror);
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &snapshot,
+            self.beacon_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in &changed {
+            if *menu_id == 0 {
+                self.beacon_payment = *pair;
+            } else {
+                let idx = *menu_id - 1;
+                if idx < 27 {
+                    self.inventory.items[9 + idx] = *pair;
+                } else {
+                    self.inventory.items[idx - 27] = *pair;
+                }
+                if let Some(cell) = self.beacon_mirror.get_mut(idx) {
+                    *cell = *pair;
+                }
+            }
+        }
+        self.beacon_carried = carried;
+        // THE MIRROR'S OWN SYNC (the every-mutation law — the beacon
+        // click walk's own tail the projection re-speaks, the HUD row
+        // the hotbar's own answer follows)
+        self.hotbar_slots = self.inventory.hotbar();
     }
 
     /// THE WIRE SPREAD'S OWN WALK (the offline walk's twin over the
@@ -32523,6 +32622,13 @@ impl App {
         self.container_stores_load_once();
         self.beacon_payment = (0, 0);
         self.beacon_carried = (0, 0);
+        // THE FRESH SESSION'S OWN RESET (the chest door's own law the
+        // beacon open re-wears — the stale gather pair the open
+        // retires, the vanilla screen the fresh open the whole state
+        // re-arms: the armed flag the gather never rides, the stale
+        // seat the first doubled press never pairs)
+        self.beacon_doubleclick = false;
+        self.beacon_last_click_slot = None;
         // THE BANKED POWERS' OWN SYNC (the BeaconScreen$1.dataChanged
         // walk — the primary the data slot 1 decodes, the secondary
         // the slot 2; the missing cell the fresh menu's zeros keep)
@@ -32602,6 +32708,10 @@ impl App {
             self.spawn_drop_at_player(id, count);
             self.beacon_payment = (0, 0);
         }
+        // THE GATHER PAIR'S OWN DEATH (the removed() walk the whole
+        // state discards — the armed flag the close never rides)
+        self.beacon_doubleclick = false;
+        self.beacon_last_click_slot = None;
         self.beacon_open_cell = None;
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
@@ -37294,6 +37404,19 @@ impl App {
             }
         }
         Some(rows)
+    }
+
+    /// THE BEACON'S OWN HOVER SEAT (the dispenser's own shape the
+    /// 37-seat canvas re-wears — the strict 16x16 predicate the inner
+    /// origins the +1 inset the Slot.x keeps): the payment seat the
+    /// menu 0 speaks, the mirror rows 1..37 the standard inventory
+    /// banks. The find the FIRST match the non-overlapping cells
+    /// keep.
+    fn beacon_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.beacon_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
     }
 
     /// THE DISPENSER'S OWN HOVER SEAT (the 331 round — the same shared
@@ -46275,18 +46398,31 @@ impl App {
             if self.beacon_widget_press(mx, my) {
                 return;
             }
+            // THE DOUBLE-CLICK FLAG (the furnace's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.beacon_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.beacon_doubleclick = self.beacon_last_click_slot.is_some()
+                && self.beacon_last_click_slot == hovered_menu
+                && self.press_doubled;
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory + chest + table +
             // furnace rounds bank — the autopush-323 round the
             // carried-NON-EMPTY press the isQuickCrafting start
             // speaks: NO slot click, NO packet); the carried-empty
-            // press the PICKUP dispatch keeps.
+            // press the PICKUP dispatch keeps [the doubled press the
+            // release's gather serves].
             let held = self.beacon_carried.1 > 0;
             if held {
                 self.qc_arm_beacon(mx, my, 0);
-            } else {
+            } else if !self.beacon_doubleclick {
                 self.beacon_screen_click(mx, my, 0);
             }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.beacon_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Inventory {

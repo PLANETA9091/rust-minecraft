@@ -32195,3 +32195,169 @@ fn the_hopper_door_the_stale_gather_pair_retires() {
         "the second door the stale seat retires"
     );
 }
+
+/// THE BEACON SEATS' OWN GATHER (the autopush-450 round — the doClick
+/// PICKUP_ALL arm the beacon menu answers: the 448 dispenser round's
+/// own shape the 37 re-wears, the release walk the flag the press
+/// arms, the widget precedence the press walk keeps, the write-
+/// through the standard rows the projection keeps): the arms wear —
+/// the release's own walk [the pull the cursor grows, the drained
+/// row the write-through keeps, the different row the walk never
+/// names, the HUD row the sync follows, the arm's own clear the
+/// release speaks], the null hover's own flag keep, the widget's own
+/// precedence [the consumed press the seat walk never reaches], the
+/// press's own arm [the end-to-end double-click walk, the plain
+/// press the flag never arms], the close's own reset, the open's own
+/// reset [every fresh open the pair retires].
+#[test]
+fn the_beacon_seats_the_gather_wears() {
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // THE GEOMETRY THE 322 STAND-IN BANKS (the hand-laid rects the
+    // beacon tests keep — the payment seat the menu 0 speaks, the
+    // mirror rows the menus 1..2 wear, the confirm the widget arm
+    // serves)
+    let panel = ((640 - 230) / 2, (360 - 219) / 2);
+    let pay = (panel.0 + 136 + 1, panel.1 + 110 + 1);
+    let row0 = (panel.0 + 36 + 1, panel.1 + 137 + 1);
+    let row1 = (row0.0 + 18, row0.1);
+
+    // APP ARM A — THE RELEASE'S OWN WALK (the armed flag the gather
+    // serves: the empty seat the pull's own home wears, the partial
+    // row the pull drains, the different row the walk never names)
+    let mut app = App::new(450);
+    app.enter_world();
+    app.open_beacon_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.inventory.items[10] = (lapis, 20);
+    app.inventory.items[0] = (dirt, 2);
+    app.beacon_mirror = app
+        .inventory
+        .items
+        .iter()
+        .skip(9)
+        .take(27)
+        .copied()
+        .chain(app.inventory.items.iter().take(9).copied())
+        .collect();
+    app.beacon_panel = panel;
+    app.beacon_slot_rects = vec![(pay.0, pay.1, 0), (row0.0, row0.1, 1), (row1.0, row1.1, 2)];
+    app.beacon_confirm_rect = (panel.0 + 164, panel.1 + 107);
+    app.beacon_carried = (lapis, 5);
+    app.beacon_doubleclick = true;
+    app.mouse_pos = Some((row0.0 + 8, row0.1 + 8));
+    app.on_left_release();
+    assert_eq!(app.beacon_carried, (lapis, 25), "the pull the cursor grows");
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 2),
+        "the different row the walk never names"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (dirt, 2),
+        "the HUD row the sync follows"
+    );
+    assert!(
+        !app.beacon_doubleclick,
+        "the arm's own clear the release speaks"
+    );
+
+    // APP ARM B — THE NULL HOVER'S OWN FLAG KEEP (the cursor between
+    // the slots the release the spread never serves)
+    app.beacon_doubleclick = true;
+    app.mouse_pos = Some((2, 2));
+    app.on_left_release();
+    assert!(app.beacon_doubleclick, "the null hover the flag keeps");
+
+    // APP ARM C — THE WIDGET'S OWN PRECEDENCE (the consumed press the
+    // seat walk never reaches — the flag compute the widget gate
+    // never serves, the stale seat the widget press never re-banks)
+    app.beacon_last_click_slot = Some(3);
+    app.beacon_doubleclick = false;
+    app.press_doubled = true;
+    let (cx, cy) = app.beacon_confirm_rect;
+    app.mouse_pos = Some((cx + 11, cy + 11));
+    app.on_press(cx + 11, cy + 11);
+    assert_eq!(
+        app.beacon_last_click_slot,
+        Some(3),
+        "the widget the seat never banks"
+    );
+    assert!(!app.beacon_doubleclick, "the widget the flag never arms");
+
+    // APP ARM D — THE PRESS'S OWN ARM (the doubled press the same
+    // seat the flag arms, the click the skip keeps, the release the
+    // gather serves — the end-to-end double-click walk)
+    app.press_doubled = true;
+    app.mouse_pos = Some((row1.0 + 8, row1.1 + 8));
+    app.on_press(row1.0 + 8, row1.1 + 8); // the first press the seat banks
+    assert!(!app.beacon_doubleclick, "the first press the flag keeps");
+    assert_eq!(
+        app.beacon_last_click_slot,
+        Some(2),
+        "the press the seat banks"
+    );
+    app.on_press(row1.0 + 8, row1.1 + 8); // the doubled press the flag arms
+    assert!(
+        app.beacon_doubleclick,
+        "the doubled press the same seat the flag arms"
+    );
+    // THE PULL'S OWN SEED (the second lapis row the gather names)
+    app.inventory.items[11] = (lapis, 7);
+    app.beacon_mirror[2] = (lapis, 7);
+    app.on_left_release();
+    assert_eq!(app.beacon_carried, (lapis, 32), "the pull the cursor grows");
+    assert_eq!(
+        app.inventory.items[11],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    // THE FLAG'S OWN SPEND (the plain press the reset seat the click
+    // keeps — the flag false the dispatch never skips)
+    app.press_doubled = false;
+    app.beacon_last_click_slot = None;
+    app.on_press(row1.0 + 8, row1.1 + 8);
+    assert!(
+        !app.beacon_doubleclick,
+        "the plain press the flag never arms"
+    );
+
+    // APP ARM E — THE CLOSE'S OWN RESET (the vanilla screen the
+    // removed() walk discards whole — the armed flag the close never
+    // rides)
+    app.beacon_doubleclick = true;
+    app.beacon_last_click_slot = Some(1);
+    app.close_beacon(ScreenKind::World);
+    assert!(
+        !app.beacon_doubleclick,
+        "the close the flag the reset wears"
+    );
+    assert!(
+        app.beacon_last_click_slot.is_none(),
+        "the close the seat the reset wears"
+    );
+
+    // APP ARM F — THE OPEN'S OWN RESET (every fresh open the pair
+    // retires — the beacon door's own law the chest's own walk
+    // re-wears)
+    app.beacon_doubleclick = true;
+    app.beacon_last_click_slot = Some(2);
+    app.open_beacon_for((1, 0, 0));
+    assert!(
+        !app.beacon_doubleclick,
+        "the fresh door the stale flag retires"
+    );
+    assert!(
+        app.beacon_last_click_slot.is_none(),
+        "the fresh door the stale seat retires"
+    );
+}
