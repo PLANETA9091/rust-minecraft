@@ -30547,3 +30547,327 @@ fn the_creative_search_the_clipboard_sibling_wears() {
         "the gate the box never wears"
     );
 }
+
+
+
+/// THE LIVE QUICKCRAFT'S OWN STATE-ID RIDE (the four-times-deferred
+/// candidate the wheel banks — the wire folds' believed state id the
+/// sync re-keys: the triple the release walk mints the revision the
+/// sync LAST SPOKE rides, the server's own correction the wholesale
+/// feed banks, the next drag the corrected id re-wears). The arms
+/// wear: the window-0 triple's own ride [the five packets the START
+/// + the three ADDs + the END the believed 7 each ride — the
+/// state-id assertions the wire-split triple never wore], the
+/// correction the sync banks [the re-feed the 8 the store speaks,
+/// the second drag the corrected id the triple re-rides], the chest
+/// pair's own ride [the (id, revision) pair the wholesale walk
+/// re-keys, the second drag the corrected pair the release reads].
+#[test]
+fn the_live_quickcraft_the_state_id_ride_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // ===== ARM A — THE WINDOW-0 DRAG'S OWN BELIEVED RIDE (the sync
+    // the store seeds — the revision 7 the Set Content's last word
+    // spoke, the cursor 32 dirt the wire's own carried speaks) =====
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    app.world_is_network = true;
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+    app.live_inventory_updated(slots, Vec::new(), 7, (dirt, 32));
+    assert_eq!(
+        app.live_inv_state_id, 7,
+        "the sync the believed revision banks"
+    );
+    // THE DRAG over three hotbar rows (the store indices 0..2 — the
+    // menus 36..38): the arm, the paint, the release
+    let (ax, ay) = inventory_slot_origin(app.inv_panel, 0);
+    app.on_press(ax + 8, ay + 8);
+    app.on_mouse_move(ax + 8, ay + 8);
+    let (bx, by) = inventory_slot_origin(app.inv_panel, 1);
+    app.on_mouse_move(bx + 8, by + 8);
+    let (cx, cy) = inventory_slot_origin(app.inv_panel, 2);
+    app.on_mouse_move(cx + 8, cy + 8);
+    assert_eq!(
+        app.qc_slots,
+        vec![36, 37, 38],
+        "the three seats the motion paints"
+    );
+    app.on_left_release();
+    // THE FIVE PACKETS the believed 7 each ride — the START, the
+    // three ADDs, the END: the release walk the sync's last word
+    // reads, the belief's own revision the every packet wears
+    match click_rx.try_recv().expect("the START rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 7, "the START the believed id rides");
+            assert_eq!(c.window_id, 0);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+            assert_eq!(c.changed, Vec::new());
+            assert_eq!(c.carried, (dirt, 32));
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    for menu in [36, 37, 38] {
+        match click_rx.try_recv().expect("the ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.state_id, 7, "the ADD the believed id rides");
+                assert_eq!(c.window_id, 0);
+                assert_eq!(c.slot, menu);
+                assert_eq!(c.button, 1);
+                assert_eq!(c.input, ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+    match click_rx.try_recv().expect("the END rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 7, "the END the believed id rides");
+            assert_eq!(c.window_id, 0);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 2);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+            assert_eq!(
+                c.changed,
+                vec![(36, (dirt, 10)), (37, (dirt, 10)), (38, (dirt, 10))],
+                "the distribution's own deltas"
+            );
+            assert_eq!(c.carried, (dirt, 2), "the remainder the packet keeps");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the lane the tail keeps empty"
+    );
+
+    // ===== ARM B — THE CORRECTION THE SYNC BANKS (the server's own
+    // correction the wholesale feed speaks: the fresh rows the sync's
+    // truth wears, the revision 8 the store re-keys, the drag's own
+    // prediction the server never confirmed the wholesale replaces,
+    // the cursor the wire's own 32 the authoritative pair carries) ==
+    // ==
+    let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+    app.live_inventory_updated(slots, Vec::new(), 8, (dirt, 32));
+    assert_eq!(app.live_inv_state_id, 8, "the correction the store re-keys");
+    assert_eq!(
+        app.live_inv_slots[36],
+        (0, 0),
+        "the wholesale the prediction replaces"
+    );
+    // THE SECOND DRAG the corrected 8 re-rides — the release walk the
+    // re-keyed belief reads, the two-seat half the even split keeps
+    let (ax, ay) = inventory_slot_origin(app.inv_panel, 0);
+    app.on_press(ax + 8, ay + 8);
+    app.on_mouse_move(ax + 8, ay + 8);
+    let (bx, by) = inventory_slot_origin(app.inv_panel, 1);
+    app.on_mouse_move(bx + 8, by + 8);
+    app.on_left_release();
+    match click_rx
+        .try_recv()
+        .expect("the corrected START rode the lane")
+    {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 8, "the correction the START re-rides");
+            assert_eq!(c.window_id, 0);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+            assert_eq!(c.carried, (dirt, 32));
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    for menu in [36, 37] {
+        match click_rx
+            .try_recv()
+            .expect("the corrected ADD rode the lane")
+        {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.state_id, 8, "the correction the ADD re-rides");
+                assert_eq!(c.window_id, 0);
+                assert_eq!(c.slot, menu);
+                assert_eq!(c.button, 1);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+    match click_rx
+        .try_recv()
+        .expect("the corrected END rode the lane")
+    {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 8, "the correction the END re-rides");
+            assert_eq!(c.window_id, 0);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 2);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the lane the tail keeps empty"
+    );
+
+    // ===== ARM C — THE CHEST PAIR'S OWN RIDE + THE CORRECTION (the
+    // foreign window the wholesale walk re-keys — the (id, revision)
+    // pair the tuple banks, the drag the pair's revision rides, the
+    // correction the pair re-keys, the second drag the corrected pair
+    // the release reads) =====
+    let chest = |state: i32| LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+        slots: vec![(0i32, 0i32); 63],
+        bundle_rows: Vec::new(),
+        carried: (dirt, 32),
+        state_id: state,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    };
+    app.live_container_updated(Some(chest(7)));
+    assert!(app.chest_is_live, "the live flag the sync wears");
+    assert_eq!(
+        app.chest_live_window,
+        Some((5, 7)),
+        "the window identity the sync banks"
+    );
+    assert_eq!(app.chest_slots.len(), 27, "the grid the 63-shape wears");
+    app.open(ScreenKind::Chest);
+    let panel = chest_panel_origin(640, 360);
+    app.chest_panel = panel;
+    app.chest_slot_rects = chest_rects_for(panel);
+    let (ax, ay) = chest_container_slot(panel, 4);
+    app.on_press(ax + 9, ay + 9);
+    app.on_mouse_move(ax + 9, ay + 9);
+    let (bx, by) = chest_mirror_slot(panel, 27);
+    app.on_mouse_move(bx + 9, by + 9);
+    let (cx, cy) = chest_mirror_slot(panel, 28);
+    app.on_mouse_move(cx + 9, cy + 9);
+    assert_eq!(
+        app.qc_slots,
+        vec![4, 54, 55],
+        "the three seats the motion paints"
+    );
+    app.on_left_release();
+    // THE CHEST TRIPLE the pair's 7 each rides — the START, the three
+    // ADDs, the END the window's own identity the believed revision
+    // rides
+    match click_rx.try_recv().expect("the chest START rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 7, "the chest START the pair rides");
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 0);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+            assert_eq!(c.carried, (dirt, 32));
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    for menu in [4, 54, 55] {
+        match click_rx.try_recv().expect("the chest ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.state_id, 7, "the chest ADD the pair rides");
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, menu);
+                assert_eq!(c.button, 1);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+    match click_rx.try_recv().expect("the chest END rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 7, "the chest END the pair rides");
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 2);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+            assert_eq!(
+                c.changed,
+                vec![(4, (dirt, 10)), (54, (dirt, 10)), (55, (dirt, 10))],
+                "the distribution's own deltas"
+            );
+            assert_eq!(c.carried, (dirt, 2), "the remainder the packet keeps");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the lane the tail keeps empty"
+    );
+    // THE CHEST'S OWN CORRECTION the wholesale walk re-keys — the
+    // tuple the 8 the fresh sync speaks, the grid the sync's truth
+    // replaces, the cursor the wire's own 32 the authoritative pair
+    app.live_container_updated(Some(chest(8)));
+    assert_eq!(
+        app.chest_live_window,
+        Some((5, 8)),
+        "the correction the pair re-keys"
+    );
+    assert_eq!(
+        app.chest_slots[4],
+        (0, 0),
+        "the wholesale the prediction replaces"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (dirt, 32),
+        "the authoritative cursor the sync banks"
+    );
+    // THE SECOND CHEST DRAG the corrected 8 re-rides
+    let (ax, ay) = chest_container_slot(panel, 4);
+    app.on_press(ax + 9, ay + 9);
+    app.on_mouse_move(ax + 9, ay + 9);
+    let (bx, by) = chest_mirror_slot(panel, 27);
+    app.on_mouse_move(bx + 9, by + 9);
+    app.on_left_release();
+    match click_rx
+        .try_recv()
+        .expect("the chest's corrected START rode the lane")
+    {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 8, "the correction the chest START re-rides");
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.slot, -999);
+            assert_eq!(c.button, 0);
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    for menu in [4, 54] {
+        match click_rx
+            .try_recv()
+            .expect("the chest's corrected ADD rode the lane")
+        {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.state_id, 8, "the correction the chest ADD re-rides");
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, menu);
+                assert_eq!(c.button, 1);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+    match click_rx
+        .try_recv()
+        .expect("the chest's corrected END rode the lane")
+    {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 8, "the correction the chest END re-rides");
+            assert_eq!(c.window_id, 5);
+            assert_eq!(c.button, 2);
+            assert_eq!(c.input, ContainerInput::QuickCraft);
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the lane the tail keeps empty"
+    );
+}
