@@ -10367,6 +10367,21 @@ pub struct App {
     /// compute compares it against the new hover, the close the reset
     /// speaks)
     pub enchant_last_click_slot: Option<usize>,
+    /// THE CHEST SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the chest's own
+    /// copy banks — the press walk arms it, the release walk's
+    /// PICKUP_ALL arm the gather speaks through it, the arm's own
+    /// false clears: the autopush-445 round the spread the chest menu
+    /// answers — the base menu's TRUE the whole 63 keeps [the
+    /// override census the merchant + the craft family alone
+    /// refuses])
+    pub chest_doubleclick: bool,
+    /// THE CHEST SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the chest's own copy banks — the menu id
+    /// the chest numbering keys [0..n the grid rows, n..n+27 the main
+    /// rows, n+27..n+36 the hotbar], the next press's flag compute
+    /// compares it against the new hover, the close the reset speaks)
+    pub chest_last_click_slot: Option<usize>,
     /// THE QUICKCRAFT DRAG'S OWN ARM (the `AbstractContainerScreen.
     /// isQuickCrafting` field — the mouseClicked walk pcs 316-326 the
     /// carried-NON-EMPTY press arms, the mouseReleased walk pcs 246-322
@@ -13369,6 +13384,8 @@ impl App {
             container_removed_rode: false,
             inv_last_click_slot: None,
             enchant_last_click_slot: None,
+            chest_doubleclick: false,
+            chest_last_click_slot: None,
             qc_armed: false,
             qc_type: 0,
             qc_button: 0,
@@ -24181,6 +24198,13 @@ impl App {
             // base menu's TRUE the whole 38 keeps [the override
             // census the merchant + the craft family alone refuses])
             self.on_enchant_release_pickup_all()
+        } else if self.screen == ScreenKind::Chest {
+            // THE CHEST GATHER'S OWN ARM (the 408 enchant round's own
+            // shape the chest menu re-wears — the flag the press
+            // armed, the canTakeItemForPickAll the base menu's TRUE
+            // the whole 63 keeps [the override census the merchant +
+            // the craft family alone refuses])
+            self.on_chest_release_pickup_all()
         } else {
             false
         };
@@ -24188,9 +24212,10 @@ impl App {
         // — the armed drag's button-matched release the distribution
         // or the deferred place speaks, the mismatched release the
         // abort keeps, the pc 452-454 tail the arm always clears). The
-        // CHEST screen the same walk wears (the double-click spread
-        // the Inventory's own lane keeps — the chest's release the
-        // qc walk alone answers); the CRAFTING screen the same base
+        // CHEST screen the same walk wears (the chest's own gather
+        // the 445 round banks — the gather the spread consumes, the
+        // qc walk the spread-less release answers); the CRAFTING
+        // screen the same base
         // walk wears (the table's own lanes the distribution and the
         // deferred place answer); the FURNACE screen the same base
         // walk wears (the furnace's own lanes the distribution and
@@ -25528,6 +25553,136 @@ impl App {
         let mut row = [(0, 0); 9];
         for (i, cell) in row.iter_mut().enumerate() {
             *cell = self.enchant_mirror[27 + i];
+        }
+        self.hotbar_slots = row;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried: new_carried,
+            },
+        ));
+    }
+
+    /// THE CHEST GATHER'S OWN RELEASE ARM (the 408 enchant round's
+    /// own shape the chest menu re-wears — the mouseReleased walk pcs
+    /// 64-240 the doubleclick flag the gate keeps, the hovered seat's
+    /// canTakeItemForPickAll the base menu's TRUE the whole 63
+    /// answers [the override census the merchant + the craft family
+    /// alone refuses], the flag the arm's own clear the release
+    /// speaks, the true the release CONSUMED [the goto 452 the
+    /// quickcraft lane the pc 246 verdict never enters]).
+    fn on_chest_release_pickup_all(&mut self) -> bool {
+        if !self.chest_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.chest_doubleclick = false; // pcs 238-240 — the arm's own clear
+        if self.world_is_network && self.chest_is_live {
+            self.on_chest_pickup_all_wire(slot as usize);
+        } else {
+            self.on_chest_pickup_all_offline(slot as usize);
+        }
+        true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE CHEST GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
+    /// arm over the chest menu — [`crate::world_view::
+    /// predict_pickup_all_grid`] the pure walk keeps, the menu's own
+    /// n+36 the flat projection feeds): the grid 0..n the chest rows
+    /// speak, the main rows n..n+27 the items 9..35 answer, the
+    /// hotbar n+27..n+36 the items 0..8 (the -n-27 shift) — the
+    /// same-item stacks the gather home pulls, the different-item
+    /// rows the walk never names, the mayPlace call the spread never
+    /// consults [the acm_doClick_262.txt the pcs 1754-1791 the gate
+    /// chain speaks — hasItem -> canItemQuickReplace -> mayPickup ->
+    /// canTakeItemForPickAll, no mayPlace the chain keeps, no paint
+    /// arm the spread wears]. The every-mutation law the mirror
+    /// re-syncs.
+    fn on_chest_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let n = self.chest_slots.len();
+        let mut menu_slots: Vec<(i32, i32)> = Vec::with_capacity(n + 36);
+        menu_slots.extend_from_slice(&self.chest_slots);
+        menu_slots.extend_from_slice(&self.inventory.items[9..36]);
+        menu_slots.extend_from_slice(&self.inventory.items[0..9]);
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &menu_slots,
+            self.chest_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in changed {
+            if menu_id < n {
+                self.chest_slots[menu_id] = pair;
+            } else if menu_id < n + 27 {
+                self.inventory.items[9 + menu_id - n] = pair;
+            } else {
+                self.inventory.items[menu_id - n - 27] = pair;
+            }
+        }
+        self.chest_carried = carried;
+        self.chest_mirror_sync_from_inventory();
+    }
+
+    /// THE CHEST GATHER'S OWN WIRE HALF (the 417 enchant round's own
+    /// shape the chest menu re-wears — the offline walk's twin over
+    /// the LIVE belief, the chest gather's own wire shape the menu's
+    /// n+36 wears): the belief the prediction answers (the pair the
+    /// seats speak, the rows the mirror feeds — the wire projection
+    /// the sync lane banks), the packet the command lane speaks
+    /// (`ContainerInput::PickupAll`, the changed map the walk's
+    /// ACTUAL mutations name — the broadcastChanges diff law), the
+    /// no-op gates the ALWAYS-PACKET law the swap round banked keeps,
+    /// the HUD row the sync follows. THE WIRE'S OWN ROWS (the mirror
+    /// the mutation feeds — the local inventory the walk never
+    /// touches: the server's own correction the world lane re-banks,
+    /// the mirror the window's own projection the next sync
+    /// refreshes).
+    fn on_chest_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.chest_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let n = self.chest_slots.len();
+        let mut menu_slots: Vec<(i32, i32)> = Vec::with_capacity(n + 36);
+        menu_slots.extend_from_slice(&self.chest_slots);
+        menu_slots.extend_from_slice(&self.chest_mirror);
+        let (new_carried, changed) = crate::world_view::predict_pickup_all_grid(
+            &menu_slots,
+            self.chest_carried,
+            hovered_menu,
+            0,
+        )
+        .unwrap_or((self.chest_carried, Vec::new()));
+        for (menu_id, pair) in &changed {
+            if *menu_id < n {
+                self.chest_slots[*menu_id] = *pair;
+            } else {
+                self.chest_mirror[*menu_id - n] = *pair;
+            }
+        }
+        self.chest_carried = new_carried;
+        // the HUD row's own sync (the every-mutation law — the hotbar
+        // menu ids n+27..n+36 the row projection feeds)
+        let mut row = [(0, 0); 9];
+        for (i, cell) in row.iter_mut().enumerate() {
+            *cell = self.chest_mirror[27 + i];
         }
         self.hotbar_slots = row;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
@@ -28414,6 +28569,11 @@ impl App {
         // open_chest scene's own verdict the same law keeps)
         self.chest_is_live = false;
         self.chest_mirror.clear();
+        // THE FRESH SESSION'S OWN RESET (the stale gather pair the
+        // open retires — the vanilla screen the fresh open the whole
+        // state re-arms)
+        self.chest_doubleclick = false;
+        self.chest_last_click_slot = None;
         // the shulker's kind row the chest's own door never wears (the
         // container.chest default the family law keeps); the hopper's
         // own canvas the same reset keeps
@@ -40188,6 +40348,10 @@ impl App {
         self.live_chest_title = None; // the title dies with the window
         self.container_carried_returned(was_live);
         self.chest_carried = (0, 0);
+        // THE GATHER PAIR'S OWN DEATH (the removed() walk the whole
+        // state discards — the armed flag the close never rides)
+        self.chest_doubleclick = false;
+        self.chest_last_click_slot = None;
         // the ride home the word spent (the receiving seat the kind
         // banks, the cursor's own emptiness the silence wears)
         self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
@@ -45535,17 +45699,30 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Chest {
+            // THE DOUBLE-CLICK FLAG (the inventory's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.chest_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.chest_doubleclick = self.chest_last_click_slot.is_some()
+                && self.chest_last_click_slot == hovered_menu
+                && self.press_doubled;
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory round banks — the
             // carried-NON-EMPTY press the isQuickCrafting start speaks:
             // NO slot click, NO packet); the carried-empty press the
-            // PICKUP dispatch keeps.
+            // PICKUP dispatch keeps [the doubled press the release's
+            // gather serves].
             let held = self.chest_carried.1 > 0;
             if held {
                 self.qc_arm_chest(mx, my, 0);
-            } else {
+            } else if !self.chest_doubleclick {
                 self.click_chest_slot(mx, my, 0);
             }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.chest_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Furnace {
@@ -79654,6 +79831,11 @@ impl App {
                 // the window's identity rides in: the clicks echo
                 // against THIS id and revision (the stateId lane)
                 self.chest_live_window = Some((c.id, c.state_id));
+                // THE FRESH STATE'S OWN RESET (the open walk's own law
+                // the enchant route wears — the stale gather pair the
+                // window retires)
+                self.chest_doubleclick = false;
+                self.chest_last_click_slot = None;
                 // the AUTHORITATIVE carried lands too: the server's own
                 // cursor replaces whatever the prediction believed (the
                 // correction is the wholesale replacement — the local
@@ -79716,7 +79898,11 @@ impl App {
                     self.open(ScreenKind::World);
                 }
                 self.chest_live_window = None;
+                // the gather pair the window's death retires (the
+                // fresh open the own reset re-arms)
                 self.chest_carried = (0, 0); // no window, no held stack
+                self.chest_doubleclick = false;
+                self.chest_last_click_slot = None;
                 self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE; // the word the window's death retires
                 self.live_chest_title = None; // the title dies with the window
                                               // the store dropped: a LIVE furnace closes back to the
