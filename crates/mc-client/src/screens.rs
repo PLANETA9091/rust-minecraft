@@ -31409,6 +31409,59 @@ impl App {
         }
     }
 
+    /// THE ANVIL FIELD'S OWN BOUNDS PARK (the EditBox keyPressed's
+    /// 268/269 arms the `[0, len]` park serves — the HOME the zero
+    /// wears, the END the len wears, the one-arg form the selection's
+    /// own anchor the collapse wears, the stale screen the gate never
+    /// passes).
+    pub fn on_anvil_caret_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        // the plain park the anchor collapses (the same one-arg law)
+        self.anvil_highlight = None;
+        self.anvil_caret = if end {
+            self.anvil_name.chars().count()
+        } else {
+            0
+        };
+    }
+
+    /// THE SELECTION'S OWN SHIFT PARK (the 268/269 arms the
+    /// `moveCursorTo(0 / len, hasShiftDown())` walk serves — the shift
+    /// the anchor the same law keeps, the no-anchor first ride the old
+    /// cursor the anchor banks, the stale screen the gate never
+    /// passes).
+    pub fn on_anvil_caret_shift_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        let prev = self.anvil_caret.min(self.anvil_name.chars().count());
+        self.anvil_caret = if end {
+            self.anvil_name.chars().count()
+        } else {
+            0
+        };
+        if self.anvil_highlight.is_none() {
+            // the collapsed pair the old seat the anchor wears (the
+            // first shift park the range opens)
+            self.anvil_highlight = Some(prev);
+        }
+    }
+
+    /// THE SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm the
+    /// `Screen.hasControlDown()` branch the `selectAll()` walk serves
+    /// — the cursorPos the value's end wears, the highlightPos the
+    /// zero parks, the [0, len) range the whole value answers, the
+    /// stale screen the gate never passes).
+    pub fn on_anvil_select_all(&mut self) {
+        if self.screen != ScreenKind::Anvil {
+            return;
+        }
+        self.anvil_caret = self.anvil_name.chars().count();
+        self.anvil_highlight = Some(0);
+    }
+
     /// 26.2 BeaconBlock.useWithoutItem the openMenu walk the door
     /// speaks + BeaconMenu ctor the disasm banks: the PaymentSlot the
     /// (136, 110) pos wears, the 3-word beaconData the addDataSlots

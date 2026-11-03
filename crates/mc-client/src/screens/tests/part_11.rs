@@ -29275,3 +29275,135 @@ fn the_anvil_field_the_selection_ride_wears() {
         "the stale screen the anchor never banks"
     );
 }
+
+/// THE ANVIL FIELD'S OWN PARKS THE ALL (the 434 round — the vanilla
+/// EditBox keyPressed's 268/269 arms the `[0, len]` bounds park the
+/// rename field re-wears, the 65 arm the hasControlDown branch the
+/// `selectAll()` walk serves): the plain park the anchor collapses,
+/// the shift park the old cursor the anchor banks, the select-all the
+/// cursorPos the end wears the highlightPos the zero parks, the whole
+/// range the char/backspace walks the deleteSelection first step
+/// removes, the stale screen the gate never passes.
+#[test]
+fn the_anvil_field_the_parks_the_all_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the absent anchor wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 12, "the tail park the walk wears");
+    // THE END'S OWN COLLAPSE (the live anchor the plain park the None
+    // wears — the one-arg moveCursorTo law the 266 sibling wears)
+    app.on_anvil_caret_shift_arrow(true);
+    assert_eq!(app.anvil_highlight, Some(12), "the ride the anchor banks");
+    app.on_anvil_caret_home_end(true);
+    assert_eq!(app.anvil_caret, 12, "the END the len seat wears");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the plain park the anchor collapses"
+    );
+    // THE HOME'S OWN ZERO (the 268 arm the zero seat wears)
+    app.on_anvil_caret_home_end(false);
+    assert_eq!(app.anvil_caret, 0, "the HOME the zero seat wears");
+    app.on_anvil_caret_home_end(true);
+    assert_eq!(app.anvil_caret, 12, "the END the tail re-parks");
+    // THE SHIFT PARK'S OWN BANK (the first shift park the old cursor
+    // the anchor wears, the second the same value keeps)
+    app.on_anvil_caret_shift_home_end(false);
+    assert_eq!(app.anvil_caret, 0, "the shift HOME the zero wears");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the shift park the old seat the anchor banks"
+    );
+    app.on_anvil_caret_shift_home_end(true);
+    assert_eq!(app.anvil_caret, 12, "the shift END the len wears");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the anchor the park never re-seats"
+    );
+    app.on_anvil_caret_shift_home_end(false);
+    assert_eq!(
+        app.anvil_highlight,
+        Some(12),
+        "the whole range the park keeps"
+    );
+    // THE ALL'S OWN WALK (the 65 arm the cursorPos the end the
+    // highlightPos the zero wears — the whole value the range
+    // answers)
+    app.on_anvil_caret_home_end(true); // the plain park the collapse wears
+    assert_eq!(app.anvil_highlight, None, "the pre-all the anchor retires");
+    app.on_anvil_select_all();
+    assert_eq!(app.anvil_caret, 12, "the all the cursor the end wears");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(0),
+        "the all the zero the anchor wears"
+    );
+    // THE ALL'S OWN CHAR (the insertText the deleteSelection first
+    // step answers — the whole range removes, the char the fresh word
+    // wears)
+    app.on_anvil_char('X');
+    assert_eq!(app.anvil_name, "X", "the all the char the replace wears");
+    assert_eq!(app.anvil_caret, 1, "the +1 step the fresh word banks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the replace the anchor collapses"
+    );
+    // THE ALL'S OWN BACKSPACE (the deleteText the whole range the
+    // first step removes — the empty word the walk wears)
+    app.anvil_name.clear();
+    app.anvil_caret = 0;
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    assert_eq!(app.anvil_caret, 12, "the rebuilt word the tail parks");
+    app.on_anvil_select_all();
+    assert_eq!(app.anvil_highlight, Some(0), "the all the range opens");
+    app.on_anvil_backspace();
+    assert_eq!(
+        app.anvil_name, "",
+        "the all the backspace the whole range removes"
+    );
+    assert_eq!(app.anvil_caret, 0, "the lo seat the walk re-parks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the removal the anchor collapses"
+    );
+    // THE ALL'S OWN HOP (the ctrl walk the one-arg law the anchor
+    // resets — the word bound the seat hops)
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    app.on_anvil_select_all();
+    app.on_anvil_ctrl_caret_arrow(true);
+    assert_eq!(app.anvil_caret, 5, "the hop the Bringer start wears");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the hop the all-anchor collapses"
+    );
+    // THE GATE'S OWN SILENCE (the stale screen the parks the all the
+    // walk never moves)
+    app.screen = ScreenKind::World;
+    app.on_anvil_caret_home_end(false);
+    app.on_anvil_caret_shift_home_end(true);
+    app.on_anvil_select_all();
+    assert_eq!(app.anvil_caret, 5, "the stale screen the seat never moves");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the stale screen the anchor never banks"
+    );
+}

@@ -2148,6 +2148,13 @@ pub fn run_gui_app(
         if !app.chat_open && app.screen == crate::screens::ScreenKind::Anvil {
             let anvil_shift =
                 window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
+            // THE SELECTION'S OWN ALL (the 65 arm the hasControlDown
+            // branch the selectAll walk serves — the whole value the
+            // range answers, the entry-forms' own lane the same law
+            // wears)
+            if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
+                app.on_anvil_select_all();
+            }
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
                 if ctrl_down {
                     // THE ANVIL FIELD'S OWN CTRL HOP (the 262 arm the
@@ -2177,6 +2184,28 @@ pub fn run_gui_app(
                     app.on_anvil_caret_shift_arrow(false);
                 } else {
                     app.on_anvil_caret_arrow(false);
+                }
+            }
+            // THE BOUNDS' OWN PARK (the 268/269 arms the Home/End the
+            // [0, len] walk serves — the shift the anchor banks, the
+            // plain park the anchor collapses, the chat lane the same
+            // law the chat input wears)
+            if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
+                if anvil_shift {
+                    // the 268 arm the hasShiftDown branch the anchor
+                    // keeps (the zero park the range opens)
+                    app.on_anvil_caret_shift_home_end(false);
+                } else {
+                    app.on_anvil_caret_home_end(false);
+                }
+            }
+            if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
+                if anvil_shift {
+                    // the 269 arm the hasShiftDown branch the anchor
+                    // keeps (the len park the range opens)
+                    app.on_anvil_caret_shift_home_end(true);
+                } else {
+                    app.on_anvil_caret_home_end(true);
                 }
             }
         }
