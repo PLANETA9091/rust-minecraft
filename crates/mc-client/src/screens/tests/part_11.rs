@@ -32054,3 +32054,144 @@ fn the_dispenser_seats_the_gather_wears() {
         "the fresh window the stale seat retires"
     );
 }
+
+/// THE HOPPER DOOR'S OWN GATHER PAIR RETIRE (the autopush-449 round —
+/// the chest lane's own gather the five-seat door rides, the 41-flat
+/// the menu's own shape wears [the five the 0..5 seats speak, the
+/// main rows 5..32 the items 9..35 answer, the hotbar 32..41 the
+/// items 0..8], the open walk the stale pair retires — the vanilla
+/// fresh-screen law the lastClickSlot the -1 ctor answers): the arms
+/// wear — the open's own reset [the armed flag + the stale seat the
+/// fresh door retires], the fresh door's own first doubled press
+/// [the flag the arm never wears, the plain pickup the press still
+/// speaks], the legit gather's own ride [the end-to-end double-click
+/// walk the five-seat pull serves, the write-through the inventory
+/// keeps, the HUD row the sync follows], the second door's own reset
+/// [every fresh open the pair retires].
+#[test]
+fn the_hopper_door_the_stale_gather_pair_retires() {
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE OPEN'S OWN RESET (the stale gather pair the
+    // fresh door retires — the armed flag the gather never rides,
+    // the stale seat the fresh press never pairs)
+    let mut app = App::new(449);
+    app.enter_world();
+    app.chest_doubleclick = true;
+    app.chest_last_click_slot = Some(3);
+    app.open_hopper_for((0, 0, 0));
+    assert!(
+        !app.chest_doubleclick,
+        "the fresh door the stale flag retires"
+    );
+    assert!(
+        app.chest_last_click_slot.is_none(),
+        "the fresh door the stale seat retires"
+    );
+    assert!(
+        app.chest_window_hopper,
+        "the hopper's own canvas the door wears"
+    );
+    assert_eq!(app.chest_slots.len(), 5, "the five seats the door wears");
+
+    // APP ARM B — THE FRESH DOOR'S OWN FIRST DOUBLED PRESS (the
+    // vanilla fresh-screen law the open's reset serves — the flag
+    // the arm never wears, the plain pickup the press still speaks)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.inventory.items[10] = (lapis, 20);
+    app.chest_mirror_sync_from_inventory();
+    app.chest_slots[0] = (dirt, 4);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let (gx, gy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.press_doubled = true;
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.on_press(gx + 8, gy + 8);
+    assert!(
+        !app.chest_doubleclick,
+        "the first doubled press the fresh door never arms"
+    );
+    assert_eq!(
+        app.chest_last_click_slot,
+        Some(0),
+        "the press the seat banks"
+    );
+    assert_eq!(app.chest_carried, (dirt, 4), "the plain pickup speaks");
+
+    // APP ARM C — THE LEGIT GATHER'S OWN RIDE (the end-to-end
+    // double-click walk the fresh door serves — the reset never
+    // walls the legitimate lane: the empty seat the gather's own
+    // hover wears, the same-item stacks the pull home drains [the
+    // five-seat row + the hotbar row the pull names], the
+    // write-through the inventory keeps, the HUD row the sync
+    // follows)
+    app.chest_slots[1] = (dirt, 6);
+    app.inventory.items[0] = (dirt, 2); // the hotbar row the mirror 27 banks
+    app.chest_mirror_sync_from_inventory();
+    let (sx, sy) = {
+        app.chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2) // the EMPTY seat the gather's own hover wears
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((sx + 8, sy + 8));
+    app.on_press(sx + 8, sy + 8); // the first press the seat banks
+    app.on_press(sx + 8, sy + 8); // the doubled press the flag arms
+    assert!(
+        app.chest_doubleclick,
+        "the doubled press the same seat the flag arms"
+    );
+    app.on_left_release();
+    assert_eq!(app.chest_carried, (dirt, 12), "the pull the cursor grows");
+    assert_eq!(
+        app.chest_slots[1],
+        (0, 0),
+        "the drained seat the gather keeps"
+    );
+    assert_eq!(
+        app.chest_slots[2],
+        (0, 0),
+        "the hovered seat the gather never fills"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the hotbar row the pull drains"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (lapis, 20),
+        "the different row the walk never names"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync follows");
+
+    // APP ARM D — THE SECOND DOOR'S OWN RESET (every fresh open the
+    // pair retires — the hopper door's own law the chest's own walk
+    // re-wears)
+    app.chest_doubleclick = true;
+    app.chest_last_click_slot = Some(2);
+    app.open_hopper_for((1, 0, 0));
+    assert!(
+        !app.chest_doubleclick,
+        "the second door the stale flag retires"
+    );
+    assert!(
+        app.chest_last_click_slot.is_none(),
+        "the second door the stale seat retires"
+    );
+}

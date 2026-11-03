@@ -29449,6 +29449,13 @@ impl App {
         self.chest_carried = (0, 0);
         // the fresh-open pair (the stale word the chest door retires)
         self.chest_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        // THE FRESH SESSION'S OWN RESET (the chest door's own law the
+        // hopper door re-wears — the stale gather pair the open
+        // retires, the vanilla screen the fresh open the whole state
+        // re-arms: the armed flag the gather never rides, the stale
+        // seat the first doubled press never pairs)
+        self.chest_doubleclick = false;
+        self.chest_last_click_slot = None;
         // the player's own rows the REAL inventory projects (the menu's
         // addStandardInventorySlots(8, 51) the mirror rows the same
         // projection keeps)
