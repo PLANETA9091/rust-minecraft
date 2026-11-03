@@ -26285,7 +26285,7 @@ impl App {
             return;
         }
         if !self.creative_search.is_empty() {
-            self.clipboard = self.creative_search.clone();
+            crate::clipboard::store_bank(&mut self.clipboard, &self.creative_search);
         }
     }
 
@@ -26332,7 +26332,7 @@ impl App {
         {
             return;
         }
-        let word = self.clipboard.clone();
+        let word = crate::clipboard::store_load(&self.clipboard);
         if word.is_empty() {
             return; // the empty store the guard the walk never passes
         }
@@ -31655,7 +31655,7 @@ impl App {
             return;
         }
         if !self.anvil_name.is_empty() {
-            self.clipboard = self.anvil_name.clone();
+            crate::clipboard::store_bank(&mut self.clipboard, &self.anvil_name);
         }
     }
 
@@ -31692,7 +31692,7 @@ impl App {
         if self.screen != ScreenKind::Anvil {
             return;
         }
-        let word = self.clipboard.clone();
+        let word = crate::clipboard::store_load(&self.clipboard);
         if word.is_empty() {
             return; // the empty store the guard the walk never passes
         }
@@ -50229,7 +50229,7 @@ impl App {
             return;
         }
         if !self.direct_address.is_empty() {
-            self.clipboard = self.direct_address.clone();
+            crate::clipboard::store_bank(&mut self.clipboard, &self.direct_address);
         }
     }
 
@@ -50274,7 +50274,7 @@ impl App {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
-        let word = self.clipboard.clone();
+        let word = crate::clipboard::store_load(&self.clipboard);
         if word.is_empty() {
             return; // the empty store the guard the walk never passes
         }
@@ -50415,10 +50415,10 @@ impl App {
         }
         if self.es_name_focus {
             if !self.es_name.is_empty() {
-                self.clipboard = self.es_name.clone();
+                crate::clipboard::store_bank(&mut self.clipboard, &self.es_name);
             }
         } else if self.es_address_focus && !self.es_address.is_empty() {
-            self.clipboard = self.es_address.clone();
+            crate::clipboard::store_bank(&mut self.clipboard, &self.es_address);
         }
     }
 
@@ -50478,7 +50478,7 @@ impl App {
         if self.screen != ScreenKind::EditServer {
             return;
         }
-        let word = self.clipboard.clone();
+        let word = crate::clipboard::store_load(&self.clipboard);
         if word.is_empty() {
             return; // the empty store the guard the walk never passes
         }
@@ -58812,7 +58812,7 @@ impl App {
             return;
         }
         if !self.chat_input.is_empty() {
-            self.clipboard = self.chat_input.clone();
+            crate::clipboard::store_bank(&mut self.clipboard, &self.chat_input);
         }
     }
 
@@ -58852,7 +58852,7 @@ impl App {
         if !self.chat_open {
             return;
         }
-        let word = self.clipboard.clone();
+        let word = crate::clipboard::store_load(&self.clipboard);
         if word.is_empty() {
             return; // the empty store the guard the walk never passes
         }
@@ -61121,7 +61121,7 @@ impl App {
             // %.2f %.2f` format the Locale.ROOT walk speaks)
             let cmd = format!("/summon {} {:.2} {:.2} {:.2}", kind.wire_name(), x, y, z);
             if !cmd.is_empty() {
-                self.clipboard = cmd;
+                crate::clipboard::store_bank(&mut self.clipboard, &cmd);
             }
             let word = if !self.shift_down {
                 "Copied client-side entity data to clipboard"
@@ -61157,7 +61157,7 @@ impl App {
             hit.pos.0, hit.pos.1, hit.pos.2, state_name
         );
         if !cmd.is_empty() {
-            self.clipboard = cmd;
+            crate::clipboard::store_bank(&mut self.clipboard, &cmd);
         }
         let word = if !self.shift_down {
             "Copied client-side block data to clipboard"
@@ -61221,7 +61221,7 @@ impl App {
         // THE CLIPBOARD (pc 1158 — the isEmpty gate the empty write
         // refuses, the non-empty command the gate never speaks)
         if !cmd.is_empty() {
-            self.clipboard = cmd;
+            crate::clipboard::store_bank(&mut self.clipboard, &cmd);
         }
         // THE USED FLAG (pc 1161-1162 — the gate-passed walk the bank
         // wears regardless)

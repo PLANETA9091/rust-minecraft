@@ -12,6 +12,10 @@ gpu = []
 # real speaker output (rodio/CPAL). Off by default: CI/headless has no audio
 # device; the code falls back to the deterministic silent backend.
 audio = ["dep:rodio"]
+# real OS clipboard (copypasta). Off by default: CI/headless has no display
+# or clipboard daemon; the code falls back to the deterministic in-memory
+# store the copy/paste walks bank.
+clipboard-os = ["dep:copypasta"]
 
 [dependencies]
 anyhow.workspace = true
@@ -33,6 +37,8 @@ symphonia = { version = "0.5", default-features = false, features = ["ogg", "vor
 # output backend, feature-gated (needs the OS audio stack + ALSA headers on Linux)
 # (rodio 0.20 has playback built in; its features only gate decoder crates)
 rodio = { version = "0.20", optional = true, default-features = false }
+# OS clipboard backend, feature-gated (x11 clipboard daemon on Linux)
+copypasta = { version = "0.10", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 minifb.workspace = true

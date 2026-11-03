@@ -30871,3 +30871,87 @@ fn the_live_quickcraft_the_state_id_ride_wears() {
         "the lane the tail keeps empty"
     );
 }
+
+/// THE OS CLIPBOARD'S OWN BRIDGE (the dev-216 round the audio law
+/// re-wears — the copypasta dep the feature gates, the default build
+/// the deterministic silence keeps, the in-memory store the walks'
+/// own law the tests bank). The arms wear: the copy walk's own ride
+/// [the store the bridge the same word banks], the empty store's own
+/// silence [the OS pull the None the default keeps — the paste guard
+/// the walk never passes], the f3 chord's own bank [the command the
+/// bridge the store banks, the used flag the walk keeps], the
+/// helpers' own contract [the store-first law the load wears, the
+/// bank the same content stores].
+#[test]
+fn the_os_clipboard_the_bridge_the_store_law_wears() {
+    let mut app = App::new(3);
+    // ===== ARM A — THE COPY WALK'S OWN RIDE (the bridge the store
+    // law never moves — the word the store banks the walks' own law
+    // keeps, the OS the same word the feature rides [the default
+    // build the false the silent tail wears]) =====
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    for c in "oak".chars() {
+        app.on_creative_char(c);
+    }
+    app.on_creative_copy();
+    assert_eq!(
+        app.clipboard, "oak",
+        "the bridge the same word the store banks"
+    );
+    // THE PASTE'S OWN STORE-FIRST LAW (the walk the bridge's load
+    // speaks — the non-empty store the word answers)
+    app.creative_search.clear();
+    app.creative_search_cursor = 0;
+    app.on_creative_paste();
+    assert_eq!(
+        app.creative_search, "oak",
+        "the store's word the paste seeds"
+    );
+    // ===== ARM B — THE EMPTY STORE'S OWN SILENCE (the OS pull the
+    // None the default bridge keeps — the load the empty string
+    // answers, the paste guard the walk never passes) =====
+    app.clipboard = String::new();
+    app.creative_search = "keep".to_string();
+    app.creative_search_cursor = 4;
+    app.on_creative_paste();
+    assert_eq!(
+        app.creative_search, "keep",
+        "the empty store the silence keeps [the None the default answers]"
+    );
+    // ===== ARM C — THE F3 CHORD'S OWN BANK (the command the bridge
+    // the store banks — the gate the empty write refuses, the used
+    // flag the walk keeps) =====
+    let mut store = String::new();
+    crate::clipboard::store_bank(&mut store, "/summon minecraft:pig 1.00 2.00 3.00");
+    assert_eq!(
+        store, "/summon minecraft:pig 1.00 2.00 3.00",
+        "the chord's command the bank keeps"
+    );
+    assert_eq!(
+        crate::clipboard::store_load(&store),
+        "/summon minecraft:pig 1.00 2.00 3.00",
+        "the load the store's word speaks"
+    );
+    // ===== ARM D — THE HELPERS' OWN CONTRACT (the bank the same
+    // content stores [the store law the walks wear], the empty store
+    // the load the silence keeps, the OS the default build never
+    // answers) =====
+    let mut store = String::from("stale");
+    crate::clipboard::store_bank(&mut store, "fresh");
+    assert_eq!(store, "fresh", "the bank the stale word replaces");
+    assert_eq!(
+        crate::clipboard::store_load(""),
+        "",
+        "the empty store the default silence keeps"
+    );
+    assert!(
+        !crate::clipboard::os_set("word"),
+        "the default write the false wears"
+    );
+    assert_eq!(
+        crate::clipboard::os_get(),
+        None,
+        "the default read the None keeps"
+    );
+}

@@ -14,6 +14,7 @@ mod brewing_sim;
 mod build_info;
 mod camera;
 mod cart;
+mod clipboard;
 mod colors;
 mod colormap;
 mod dig;
