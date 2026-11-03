@@ -30271,3 +30271,143 @@ fn the_direct_field_the_clipboard_sibling_wears() {
     );
     assert_eq!(app3.direct_address, "", "the gate the field never wears");
 }
+
+// THE EDITSERVER PAIR'S OWN CLIPBOARD SIBLINGS WALK (the autopush-442
+// round — the 441 direct lane's 67/86/88 law the focused dispatch
+// re-wears, the FOCUSED box the whole value the store banks, the
+// empty store the paste guard never passes, the focused box's own
+// cap the tail clamps [the name's 32 / the address's 128], the
+// neither-focus arm the walk never answers, the stale screen the
+// gate never passes).
+#[test]
+fn the_editserver_pair_the_clipboard_siblings_wear() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::EditServer);
+    // THE DOOR'S OWN OPEN (the fresh ctor the defaultName the name
+    // box wears, the focus the name box arms)
+    assert!(app.es_name_focus, "the fresh form the name focus arms");
+    assert!(!app.es_address_focus, "the address box the focus lacks");
+    assert_eq!(
+        app.es_name, "Minecraft Server",
+        "the defaultName the fresh ctor keeps"
+    );
+    // THE COPY'S OWN WHOLE-VALUE LAW (the focused name box the whole
+    // value the store banks)
+    app.on_editserver_copy();
+    assert_eq!(
+        app.clipboard, "Minecraft Server",
+        "the whole value the copy banks"
+    );
+    assert_eq!(
+        app.es_name, "Minecraft Server",
+        "the copy the field never trims"
+    );
+    // THE CUT'S OWN WIPE (the store keeps, the name clears, the
+    // caret parks, the anchor drops)
+    app.on_editserver_cut();
+    assert_eq!(app.es_name, "", "the cut the whole value wipes");
+    assert_eq!(app.es_name_cursor, 0, "the wipe the caret parks");
+    assert_eq!(app.es_name_highlight, None, "the wipe the anchor drops");
+    assert_eq!(
+        app.clipboard, "Minecraft Server",
+        "the cut the store keeps [the copy first step]"
+    );
+    // THE PASTE'S OWN SEAT INSERT (the empty name the store's word
+    // seeds, the caret the tail rides)
+    app.on_editserver_paste();
+    assert_eq!(app.es_name, "Minecraft Server", "the paste the word seeds");
+    assert_eq!(app.es_name_cursor, 16, "the paste the caret rides");
+    // THE NAME'S OWN CAP (the 32 the name box's setMaxLength wears —
+    // the flood the tail clamps)
+    app.es_name.clear();
+    app.es_name_cursor = 0;
+    app.clipboard = "y".repeat(40);
+    app.on_editserver_paste();
+    assert_eq!(
+        app.es_name.chars().count(),
+        32,
+        "the flood the name cap clamps"
+    );
+    // THE FOCUS'S OWN TRANSFER (the address box the focused seat
+    // wears — the pair's exclusivity the flags speak)
+    app.es_name_focus = false;
+    app.es_address_focus = true;
+    // THE ADDRESS ARM'S OWN SEED (the empty box the store's word
+    // wears — the store the name's own value keeps)
+    app.clipboard = "mc.example.net".to_string();
+    app.on_editserver_paste();
+    assert_eq!(
+        app.es_address, "mc.example.net",
+        "the address box the word seeds"
+    );
+    assert_eq!(app.es_address_cursor, 14, "the seed the caret rides");
+    // THE ADDRESS'S OWN COPY + CUT + PASTE (the whole value the
+    // store banks, the wipe the box clears, the re-paste the seat
+    // seeds)
+    app.on_editserver_select_all();
+    app.on_editserver_copy();
+    assert_eq!(
+        app.clipboard, "mc.example.net",
+        "the address whole value the copy banks"
+    );
+    app.on_editserver_cut();
+    assert_eq!(app.es_address, "", "the cut the address wipes");
+    assert_eq!(app.es_address_cursor, 0, "the address wipe the caret parks");
+    app.on_editserver_paste();
+    assert_eq!(
+        app.es_address, "mc.example.net",
+        "the re-paste the word seeds"
+    );
+    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps)
+    app.clipboard = String::new();
+    app.on_editserver_select_all();
+    app.on_editserver_paste();
+    assert_eq!(
+        app.es_address, "mc.example.net",
+        "the empty store the silence keeps"
+    );
+    assert_eq!(
+        app.es_address_highlight,
+        Some(0),
+        "the empty paste the live range keeps"
+    );
+    app.on_editserver_cut();
+    assert_eq!(app.es_address, "", "the empty store the cut still wipes");
+    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty box the
+    // store never overwrites — the address focus the empty arm)
+    app.clipboard = "sentinel".to_string();
+    app.on_editserver_copy();
+    assert_eq!(
+        app.clipboard, "sentinel",
+        "the empty box the store never touches"
+    );
+    // THE NEITHER-FOCUS ARM'S OWN SILENCE (the pair's both-clear
+    // state the three walks never answer)
+    app.es_address_focus = false;
+    app.clipboard = "the neither-focus arm".to_string();
+    app.es_address = "untouched".to_string();
+    app.es_address_cursor = 9;
+    app.on_editserver_copy();
+    app.on_editserver_paste();
+    app.on_editserver_cut();
+    assert_eq!(
+        app.clipboard, "the neither-focus arm",
+        "the neither-focus the store never touches"
+    );
+    assert_eq!(
+        app.es_address, "untouched",
+        "the neither-focus the boxes never wear"
+    );
+    // THE GATE'S OWN SILENCE (the stale screen the three walks the
+    // store and boxes never serve)
+    app.es_address_focus = true;
+    app.screen = ScreenKind::Servers;
+    app.on_editserver_copy();
+    app.on_editserver_paste();
+    app.on_editserver_cut();
+    assert_eq!(
+        app.clipboard, "the neither-focus arm",
+        "the gate the store never touches"
+    );
+    assert_eq!(app.es_address, "untouched", "the gate the boxes never wear");
+}

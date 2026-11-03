@@ -2295,16 +2295,19 @@ pub fn run_gui_app(
             // copy/paste/cut walks serve — the whole value the copy
             // law banks, the empty store the paste guard never
             // passes, the wipe the cut answers, the chat/anvil
-            // rounds' own law the direct box re-wears [the pair
-            // form's own lanes the later round banks])
+            // rounds' own law the direct + editserver boxes re-wear
+            // [the pair's own focused dispatch the 442 round banks])
             if ctrl_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
                 app.on_direct_copy();
+                app.on_editserver_copy();
             }
             if ctrl_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
                 app.on_direct_paste();
+                app.on_editserver_paste();
             }
             if ctrl_down && window.is_key_pressed(Key::X, minifb::KeyRepeat::No) {
                 app.on_direct_cut();
+                app.on_editserver_cut();
             }
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
                 if ctrl_down {

@@ -50310,6 +50310,136 @@ impl App {
         }
     }
 
+    /// THE PAIR'S OWN COPY SEAT (the 441 direct lane's 67 law the
+    /// focused dispatch re-wears — the FOCUSED box the whole value
+    /// the store banks, the empty field the store never touches, the
+    /// neither-focus arm the walk never answers, the stale screen
+    /// the gate never passes; the f3 chords' own debug store the
+    /// same `clipboard` bank wears).
+    pub fn on_editserver_copy(&mut self) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        if self.es_name_focus {
+            if !self.es_name.is_empty() {
+                self.clipboard = self.es_name.clone();
+            }
+        } else if self.es_address_focus && !self.es_address.is_empty() {
+            self.clipboard = self.es_address.clone();
+        }
+    }
+
+    /// THE PAIR'S OWN CUT SEAT (the 441 direct lane's 88 law the
+    /// focused dispatch re-wears — the copy law the store banks
+    /// first, the wipe the focused box's whole value clears, the
+    /// caret the zero parks, the anchor the collapse the None
+    /// wears, the window sync the changed box alone answers [the
+    /// equal-word early-out the idempotent answer keeps], the
+    /// neither-focus arm the walk never answers, the stale screen
+    /// the gate never passes).
+    pub fn on_editserver_cut(&mut self) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        self.on_editserver_copy();
+        if self.es_name_focus {
+            let had_text = !self.es_name.is_empty();
+            self.es_name.clear();
+            self.es_name_cursor = 0;
+            self.es_name_highlight = None;
+            if had_text {
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
+        } else if self.es_address_focus {
+            let had_text = !self.es_address.is_empty();
+            self.es_address.clear();
+            self.es_address_cursor = 0;
+            self.es_address_highlight = None;
+            if had_text {
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
+        }
+    }
+
+    /// THE PAIR'S OWN PASTE SEAT (the 441 direct lane's 86 law the
+    /// focused dispatch re-wears — the empty store the guard the
+    /// walk never enters [the live range the silence keeps], the
+    /// live selection the deleteSelection first step removes, the
+    /// store's word the seat the insert walk answers, the focused
+    /// box's own cap the tail the clamp keeps [the name's 32 / the
+    /// address's 128 the per-char insert the same gate serves], the
+    /// window sync the inserted word alone answers, the
+    /// neither-focus arm the walk never answers, the stale screen
+    /// the gate never passes).
+    pub fn on_editserver_paste(&mut self) {
+        if self.screen != ScreenKind::EditServer {
+            return;
+        }
+        let word = self.clipboard.clone();
+        if word.is_empty() {
+            return; // the empty store the guard the walk never passes
+        }
+        if self.es_name_focus {
+            entry_delete_selection(
+                &mut self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+            );
+            let mut inserted = false;
+            for c in word.chars() {
+                if self.es_name.chars().count() >= 32 {
+                    break; // the cap the tail the clamp keeps
+                }
+                let idx = caret_byte_index(&self.es_name, self.es_name_cursor);
+                self.es_name.insert(idx, c);
+                self.es_name_cursor += 1;
+                inserted = true;
+            }
+            if inserted {
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
+        } else if self.es_address_focus {
+            entry_delete_selection(
+                &mut self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+            );
+            let mut inserted = false;
+            for c in word.chars() {
+                if self.es_address.chars().count() >= 128 {
+                    break; // the cap the tail the clamp keeps
+                }
+                let idx = caret_byte_index(&self.es_address, self.es_address_cursor);
+                self.es_address.insert(idx, c);
+                self.es_address_cursor += 1;
+                inserted = true;
+            }
+            if inserted {
+                display_window_sync(
+                    &self.es_address,
+                    &mut self.es_address_display,
+                    self.es_address_cursor,
+                    ENTRY_BOX_INNER,
+                );
+            }
+        }
+    }
+
     /// THE ENTRY FORM'S OWN BOX CLICK (the EditBox.mouseClicked walk
     /// the TWO-box seat serves — the inside click the `setFocused(true)`
     /// re-arm the TRUE consumed answer wears [the sibling the focus
