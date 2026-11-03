@@ -2290,6 +2290,22 @@ pub fn run_gui_app(
                 app.on_direct_select_all();
                 app.on_editserver_select_all();
             }
+            // THE ENTRY FIELD'S OWN CLIPBOARD CHORD (the EditBox
+            // keyPressed's 67/86/88 arms the hasControlDown branch the
+            // copy/paste/cut walks serve — the whole value the copy
+            // law banks, the empty store the paste guard never
+            // passes, the wipe the cut answers, the chat/anvil
+            // rounds' own law the direct box re-wears [the pair
+            // form's own lanes the later round banks])
+            if ctrl_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
+                app.on_direct_copy();
+            }
+            if ctrl_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
+                app.on_direct_paste();
+            }
+            if ctrl_down && window.is_key_pressed(Key::X, minifb::KeyRepeat::No) {
+                app.on_direct_cut();
+            }
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
                 if ctrl_down {
                     // THE CARET'S OWN CTRL HOP (the 263 arm the

@@ -30122,3 +30122,152 @@ fn the_chat_field_the_clipboard_sibling_wears() {
     assert_eq!(app3.chat_input, "", "the gate the field never wears");
     assert_eq!(app3.chat_cursor, 0, "the gate the caret never moves");
 }
+
+// THE DIRECT FIELD'S OWN CLIPBOARD SIBLING WALK (the autopush-441
+// round — the chat/anvil rounds' 67/86/88 law the entry box
+// re-wears, the whole value the copy banks, the wipe the cut
+// answers, the store's word the paste inserts at the seat, the 128
+// cap the tail clamps, the equal-word early-out the empty walks
+// keep, the unfocused box the stale screen the gate never passes).
+#[test]
+fn the_direct_field_the_clipboard_sibling_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::DirectConnect);
+    // THE DOOR'S OWN OPEN (the fresh form the empty field the focus
+    // arms)
+    assert!(app.direct_focus, "the fresh form the focus arms");
+    for ch in "mc.example.org".chars() {
+        app.on_direct_char(ch);
+    }
+    assert_eq!(
+        app.direct_address, "mc.example.org",
+        "the typed word the seat seeds"
+    );
+    // THE SELECT-ALL'S OWN LIVE RANGE (the [0, len) the field wears)
+    app.on_direct_select_all();
+    assert_eq!(app.direct_highlight, Some(0), "the all the anchor parks");
+    // THE COPY'S OWN WHOLE-VALUE LAW (the live range the copied word
+    // never narrows — the whole value the store banks)
+    app.on_direct_copy();
+    assert_eq!(
+        app.clipboard, "mc.example.org",
+        "the whole value the copy banks [the range never narrows]"
+    );
+    assert_eq!(
+        app.direct_address, "mc.example.org",
+        "the copy the field never trims"
+    );
+    // THE CUT'S OWN WIPE (the store keeps, the value clears, the
+    // caret parks, the anchor drops)
+    app.on_direct_cut();
+    assert_eq!(app.direct_address, "", "the cut the whole value wipes");
+    assert_eq!(app.direct_cursor, 0, "the wipe the caret parks");
+    assert_eq!(app.direct_highlight, None, "the wipe the anchor drops");
+    assert_eq!(
+        app.clipboard, "mc.example.org",
+        "the cut the store keeps [the copy first step]"
+    );
+    // THE PASTE'S OWN SEAT INSERT (the empty field the store's word
+    // seeds, the caret the tail rides)
+    app.on_direct_paste();
+    assert_eq!(
+        app.direct_address, "mc.example.org",
+        "the paste the word seeds"
+    );
+    assert_eq!(app.direct_cursor, 14, "the paste the caret rides");
+    // THE MID-SEAT'S OWN INSERT (the HOME the seat 0 parks, the
+    // paste the head the word wears)
+    app.on_direct_caret_home_end(false);
+    assert_eq!(app.direct_cursor, 0, "the home the seat parks");
+    app.on_direct_paste();
+    assert_eq!(
+        app.direct_address, "mc.example.orgmc.example.org",
+        "the paste the head wears"
+    );
+    assert_eq!(app.direct_cursor, 14, "the insert the caret rides");
+    // THE SELECTION'S OWN REPLACE (the live range the first step
+    // removes, the store's word the range the answer replaces)
+    app.on_direct_select_all();
+    app.on_direct_paste();
+    assert_eq!(
+        app.direct_address, "mc.example.org",
+        "the paste the range replaces"
+    );
+    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps)
+    app.clipboard = String::new();
+    app.on_direct_select_all();
+    app.on_direct_paste();
+    assert_eq!(
+        app.direct_address, "mc.example.org",
+        "the empty store the silence keeps"
+    );
+    assert_eq!(
+        app.direct_highlight,
+        Some(0),
+        "the empty paste the live range keeps"
+    );
+    app.on_direct_cut();
+    assert_eq!(
+        app.direct_address, "",
+        "the empty store the cut still wipes"
+    );
+    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty field the
+    // store never overwrites)
+    app.clipboard = "sentinel".to_string();
+    app.on_direct_copy();
+    assert_eq!(
+        app.clipboard, "sentinel",
+        "the empty field the store never touches"
+    );
+    // THE EMPTY CUT'S OWN EARLY-OUT (the already-empty wipe the
+    // idempotent answer keeps — the parks the walk still answers)
+    app.on_direct_cut();
+    assert_eq!(app.direct_cursor, 0, "the empty wipe the caret keeps");
+    assert_eq!(
+        app.direct_highlight, None,
+        "the empty wipe the anchor keeps"
+    );
+    // THE CAP'S OWN CLAMP (the 128 the entry box's own setMaxLength
+    // wears — the flood the tail clamps, the second paste the cap
+    // re-answers)
+    let flood: String = "x".repeat(150);
+    app.clipboard = flood.clone();
+    app.on_direct_paste();
+    assert_eq!(
+        app.direct_address.chars().count(),
+        128,
+        "the flood the tail clamps"
+    );
+    assert_eq!(app.direct_cursor, 128, "the clamp the caret parks");
+    app.on_direct_paste();
+    assert_eq!(
+        app.direct_address.chars().count(),
+        128,
+        "the second paste the cap re-answers"
+    );
+    // THE FRESH FORM'S OWN SECOND VERDICT (the standalone app the
+    // cap walk re-answers at the empty seed)
+    let mut app2 = App::new(3);
+    app2.open(ScreenKind::DirectConnect);
+    app2.clipboard = flood;
+    app2.on_direct_paste();
+    assert_eq!(
+        app2.direct_address.chars().count(),
+        128,
+        "the fresh seed the cap keeps"
+    );
+    // THE GATE'S OWN SILENCE (the stale screen the three walks the
+    // store and field never serve)
+    let mut app3 = App::new(3);
+    app3.open(ScreenKind::DirectConnect);
+    app3.screen = ScreenKind::Servers;
+    app3.clipboard = "the gate never passes".to_string();
+    app3.on_direct_copy();
+    app3.on_direct_paste();
+    app3.on_direct_cut();
+    assert_eq!(
+        app3.clipboard, "the gate never passes",
+        "the gate the store never touches"
+    );
+    assert_eq!(app3.direct_address, "", "the gate the field never wears");
+}

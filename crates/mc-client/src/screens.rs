@@ -50125,6 +50125,91 @@ impl App {
         );
     }
 
+    /// THE DIRECT FIELD'S OWN COPY SEAT (the chat/anvil rounds' 67 law
+    /// the entry box re-wears — the whole value the store banks [the
+    /// vanilla law the live range never narrows the copied word], the
+    /// empty field the store never touches, the unfocused box the
+    /// stale screen the gate never passes; the f3 chords' own debug
+    /// store the same `clipboard` bank wears).
+    pub fn on_direct_copy(&mut self) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        if !self.direct_address.is_empty() {
+            self.clipboard = self.direct_address.clone();
+        }
+    }
+
+    /// THE DIRECT FIELD'S OWN CUT SEAT (the chat/anvil rounds' 88 law
+    /// the entry box re-wears — the copy law the store banks first,
+    /// the wipe the whole value clears [the mid-string seat the wipe
+    /// never spares], the caret the zero parks, the anchor the
+    /// collapse the None wears, the window sync the changed value
+    /// alone answers [the equal-word early-out the idempotent answer
+    /// keeps], the unfocused box the stale screen the gate never
+    /// passes).
+    pub fn on_direct_cut(&mut self) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        self.on_direct_copy();
+        let had_text = !self.direct_address.is_empty();
+        self.direct_address.clear();
+        self.direct_cursor = 0;
+        self.direct_highlight = None;
+        if had_text {
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
+    }
+
+    /// THE DIRECT FIELD'S OWN PASTE SEAT (the chat/anvil rounds' 86
+    /// law the entry box re-wears — the empty store the guard the
+    /// walk never enters [the live range the silence keeps], the
+    /// live selection the deleteSelection first step removes, the
+    /// store's word the seat the insert walk answers, the 128
+    /// setMaxLength cap the tail the clamp keeps [the typed char's
+    /// own law the paste word wears — the per-char insert the same
+    /// gate serves], the window sync the inserted word alone
+    /// answers, the unfocused box the stale screen the gate never
+    /// passes).
+    pub fn on_direct_paste(&mut self) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        let word = self.clipboard.clone();
+        if word.is_empty() {
+            return; // the empty store the guard the walk never passes
+        }
+        entry_delete_selection(
+            &mut self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+        );
+        let mut inserted = false;
+        for c in word.chars() {
+            if self.direct_address.chars().count() >= 128 {
+                break; // the cap the tail the clamp keeps
+            }
+            let idx = caret_byte_index(&self.direct_address, self.direct_cursor);
+            self.direct_address.insert(idx, c);
+            self.direct_cursor += 1;
+            inserted = true;
+        }
+        if inserted {
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
+        }
+    }
+
     /// THE ENTRY FORM'S OWN SHIFT RIDE (the two-arg walk the FOCUSED
     /// field serves — the name/address pair the same anchor law the
     /// direct box wears, the nothing-focused arm the walk never
