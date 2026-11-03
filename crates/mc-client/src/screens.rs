@@ -10382,6 +10382,22 @@ pub struct App {
     /// rows, n+27..n+36 the hotbar], the next press's flag compute
     /// compares it against the new hover, the close the reset speaks)
     pub chest_last_click_slot: Option<usize>,
+    /// THE FURNACE SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the furnace's own
+    /// copy banks — the press walk arms it, the release walk's
+    /// PICKUP_ALL arm the gather speaks through it, the arm's own
+    /// false clears: the autopush-446 round the spread the furnace
+    /// menu answers — the base menu's TRUE the whole 39 keeps [the
+    /// override census the merchant + the craft family alone
+    /// refuses])
+    pub furnace_doubleclick: bool,
+    /// THE FURNACE SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the furnace's own copy banks — the menu
+    /// id the furnace numbering keys [0..3 the trio rows, 3..30 the
+    /// main rows, 30..39 the hotbar], the next press's flag compute
+    /// compares it against the new hover, the close the reset
+    /// speaks)
+    pub furnace_last_click_slot: Option<usize>,
     /// THE QUICKCRAFT DRAG'S OWN ARM (the `AbstractContainerScreen.
     /// isQuickCrafting` field — the mouseClicked walk pcs 316-326 the
     /// carried-NON-EMPTY press arms, the mouseReleased walk pcs 246-322
@@ -13386,6 +13402,8 @@ impl App {
             enchant_last_click_slot: None,
             chest_doubleclick: false,
             chest_last_click_slot: None,
+            furnace_doubleclick: false,
+            furnace_last_click_slot: None,
             qc_armed: false,
             qc_type: 0,
             qc_button: 0,
@@ -24205,6 +24223,13 @@ impl App {
             // the whole 63 keeps [the override census the merchant +
             // the craft family alone refuses])
             self.on_chest_release_pickup_all()
+        } else if self.screen == ScreenKind::Furnace {
+            // THE FURNACE GATHER'S OWN ARM (the 445 chest round's own
+            // shape the furnace menu re-wears — the flag the press
+            // armed, the canTakeItemForPickAll the base menu's TRUE
+            // the whole 39 keeps [the override census the merchant +
+            // the craft family alone refuses])
+            self.on_furnace_release_pickup_all()
         } else {
             false
         };
@@ -24217,9 +24242,11 @@ impl App {
         // qc walk the spread-less release answers); the CRAFTING
         // screen the same base
         // walk wears (the table's own lanes the distribution and the
-        // deferred place answer); the FURNACE screen the same base
-        // walk wears (the furnace's own lanes the distribution and
-        // the deferred place answer).
+        // deferred place answer); the FURNACE screen the same walk
+        // wears (the furnace's own gather the 446 round banks — the
+        // gather the spread consumes, the qc walk the spread-less
+        // release answers; the furnace's own lanes the distribution
+        // and the deferred place answer).
         if self.screen == ScreenKind::Inventory
             || self.screen == ScreenKind::Chest
             || self.screen == ScreenKind::Dispenser
@@ -25158,6 +25185,10 @@ impl App {
             self.live_furnace_title = None; // the title dies with the window
         }
         self.furnace_live_window = None;
+        // THE GATHER PAIR'S OWN DEATH (the removed() walk the whole
+        // state discards — the armed flag the close never rides)
+        self.furnace_doubleclick = false;
+        self.furnace_last_click_slot = None;
         // the player's OWN close returns the held stack to the
         // inventory server-side (vanilla containerClose): the local
         // belief resets with the window
@@ -25683,6 +25714,124 @@ impl App {
         let mut row = [(0, 0); 9];
         for (i, cell) in row.iter_mut().enumerate() {
             *cell = self.chest_mirror[27 + i];
+        }
+        self.hotbar_slots = row;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried: new_carried,
+            },
+        ));
+    }
+
+    /// THE FURNACE GATHER'S OWN RELEASE ARM (the 445 chest round's
+    /// own shape the furnace menu re-wears — the mouseReleased walk
+    /// pcs 64-240 the doubleclick flag the gate keeps, the hovered
+    /// seat's canTakeItemForPickAll the base menu's TRUE the whole
+    /// 39 answers [the override census the merchant + the craft
+    /// family alone refuses], the flag the arm's own clear the
+    /// release speaks, the true the release CONSUMED [the goto 452
+    /// the quickcraft lane the pc 246 verdict never enters]).
+    fn on_furnace_release_pickup_all(&mut self) -> bool {
+        if !self.furnace_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.furnace_doubleclick = false; // pcs 238-240 — the arm's own clear
+        if self.world_is_network && self.furnace_is_live {
+            self.on_furnace_pickup_all_wire(slot as usize);
+        } else {
+            self.on_furnace_pickup_all_offline(slot as usize);
+        }
+        true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE FURNACE GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
+    /// arm over the furnace menu — [`crate::world_view::
+    /// predict_pickup_all_grid`] the pure walk keeps, the menu's own
+    /// 39 the flat projection feeds [the input/fuel/result trio the
+    /// 0..3 rows speak, the main rows 3..30 the items 9..35 answer,
+    /// the hotbar 30..39 the items 0..8]): the same-item stacks the
+    /// gather home pulls, the different-item rows the walk never
+    /// names, the mayPlace the spread never consults [the
+    /// acm_doClick_262.txt the pcs 1754-1791 the gate chain speaks].
+    /// The every-mutation law the write-through the standard rows
+    /// keeps [the menu slot the inventory cell answers, the HUD row
+    /// the hotbar's own projection follows].
+    fn on_furnace_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &self.furnace_slots,
+            self.furnace_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in changed {
+            self.furnace_slots[menu_id] = pair;
+            if menu_id >= 3 {
+                // THE WRITE-THROUGH (the projection the inventory IS —
+                // the menu slot the inventory cell answers)
+                let idx = if menu_id < 30 {
+                    9 + menu_id - 3
+                } else {
+                    menu_id - 30
+                };
+                self.inventory.items[idx] = pair;
+            }
+        }
+        self.furnace_carried = carried;
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE FURNACE GATHER'S OWN WIRE HALF (the 445 chest round's own
+    /// shape the furnace menu re-wears — the offline walk's twin over
+    /// the LIVE belief, the furnace gather's own wire shape the
+    /// menu's 39 wears): the belief the prediction answers, the
+    /// packet the command lane speaks (`ContainerInput::PickupAll`,
+    /// the changed map the walk's ACTUAL mutations name — the
+    /// broadcastChanges diff law), the no-op gates the ALWAYS-PACKET
+    /// law the swap round banked keeps, the HUD row the sync follows
+    /// [the wire belief the hotbar rows the projection feeds — the
+    /// server's own correction the world lane re-banks].
+    fn on_furnace_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.furnace_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let (new_carried, changed) = crate::world_view::predict_pickup_all_grid(
+            &self.furnace_slots,
+            self.live_furnace_carried,
+            hovered_menu,
+            0,
+        )
+        .unwrap_or((self.live_furnace_carried, Vec::new()));
+        for (menu_id, pair) in &changed {
+            if (*menu_id as usize) < self.furnace_slots.len() {
+                self.furnace_slots[*menu_id] = *pair;
+            }
+        }
+        self.live_furnace_carried = new_carried;
+        // the HUD row's own sync (the every-mutation law — the hotbar
+        // menu ids 30..39 the row projection feeds)
+        let mut row = [(0, 0); 9];
+        for (i, cell) in row.iter_mut().enumerate() {
+            *cell = self.furnace_slots[30 + i];
         }
         self.hotbar_slots = row;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
@@ -28311,6 +28460,11 @@ impl App {
         // carried stack survives a world press (the crafting table's
         // own convention)
         self.furnace_carried = (0, 0);
+        // THE FRESH SESSION'S OWN RESET (the stale gather pair the
+        // open retires — the 445 chest round's own law the furnace
+        // open re-wears)
+        self.furnace_doubleclick = false;
+        self.furnace_last_click_slot = None;
         // THE FRESH-OPEN'S OWN DOOR (the chest's own law — the stale
         // word the open retires)
         self.furnace_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
@@ -45726,17 +45880,30 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Furnace {
+            // THE DOUBLE-CLICK FLAG (the chest's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.furnace_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.furnace_doubleclick = self.furnace_last_click_slot.is_some()
+                && self.furnace_last_click_slot == hovered_menu
+                && self.press_doubled;
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory + chest + table rounds
             // bank — the carried-NON-EMPTY press the isQuickCrafting
             // start speaks: NO slot click, NO packet); the
-            // carried-empty press the PICKUP dispatch keeps.
+            // carried-empty press the PICKUP dispatch keeps [the
+            // doubled press the release's gather serves].
             let held = self.qc_carried().1 > 0;
             if held {
                 self.qc_arm_furnace(mx, my, 0);
-            } else {
+            } else if !self.furnace_doubleclick {
                 self.click_furnace_slot(mx, my, 0);
             }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.furnace_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Beacon {
@@ -79491,6 +79658,11 @@ impl App {
                     // the window's identity rides in: the clicks echo
                     // against THIS id and revision (the stateId lane)
                     self.furnace_live_window = Some((c.id, c.state_id));
+                    // THE FRESH STATE'S OWN RESET (the open walk's own
+                    // law the chest route wears — the stale gather
+                    // pair the window retires)
+                    self.furnace_doubleclick = false;
+                    self.furnace_last_click_slot = None;
                     // the AUTHORITATIVE carried lands too (the chest's
                     // wholesale replacement speaks)
                     self.live_furnace_carried = c.carried;
@@ -79914,7 +80086,11 @@ impl App {
                     self.open(ScreenKind::World);
                 }
                 self.furnace_live_window = None;
+                // the gather pair the window's death retires (the
+                // fresh open the own reset re-arms)
                 self.live_furnace_carried = (0, 0); // no window, no held stack
+                self.furnace_doubleclick = false;
+                self.furnace_last_click_slot = None;
                 self.live_furnace_title = None; // the title dies with the window
                                                 // the store dropped: a LIVE dispenser closes back to the
                                                 // world (the same vanilla closeContainer return — the

@@ -31215,3 +31215,278 @@ fn the_chest_seats_the_gather_wears() {
         "the fresh window the stale seat retires"
     );
 }
+
+/// THE FURNACE SEATS' OWN GATHER (the autopush-446 round — the doClick
+/// PICKUP_ALL arm the furnace menu answers: the 445 chest round's own
+/// shape the 39 re-wears, the release walk the flag the press arms,
+/// the canTakeItemForPickAll the base menu's TRUE the whole 39
+/// answers, the write-through the standard rows the projection keeps):
+/// the arms wear — the release's own walk [the pull the cursor grows,
+/// the drained row the write-through keeps, the different-item row
+/// the walk never names, the HUD row the hotbar follows, the arm's
+/// own clear the release speaks], the null hover's own flag keep, the
+/// press's own arm [the end-to-end double-click walk, the plain press
+/// the flag never arms], the close's own reset, the wire half's own
+/// walk [the route the window opens, the belief the prediction
+/// answers, the packet the command lane speaks, the HUD row the sync
+/// follows, the fresh window the stale gather pair retires].
+#[test]
+fn the_furnace_seats_the_gather_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE RELEASE'S OWN WALK (the armed flag the gather
+    // serves: the empty result seat the pull's own home wears, the
+    // main row the pull drains, the different-item row the walk never
+    // names, the write-through the inventory cell keeps, the HUD row
+    // the hotbar follows, the arm's own clear the release speaks)
+    let mut app = App::new(446);
+    app.enter_world();
+    app.open_furnace((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.inventory.items[10] = (lapis, 20);
+    app.inventory.items[11] = (dirt, 30);
+    for i in 0..27 {
+        app.furnace_slots[3 + i] = app.inventory.items[9 + i];
+    }
+    for i in 0..9 {
+        app.furnace_slots[30 + i] = app.inventory.items[i];
+    }
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE RESULT SEAT'S OWN COORDS (the scoped lookup the mutable
+    // walk keeps — the menu 2 the result cell the EMPTY seat the
+    // gather's own hover wears)
+    let (gx, gy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.furnace_carried = (lapis, 5);
+    app.furnace_doubleclick = true;
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.on_left_release();
+    assert_eq!(
+        app.furnace_carried,
+        (lapis, 25),
+        "the pull the cursor grows"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the drained row the write-through keeps"
+    );
+    assert_eq!(
+        app.inventory.items[11],
+        (dirt, 30),
+        "the different row the walk never names"
+    );
+    assert_eq!(
+        app.furnace_slots[4],
+        (0, 0),
+        "the menu row the gather drains"
+    );
+    assert_eq!(
+        app.hotbar_slots,
+        app.inventory.hotbar(),
+        "the HUD row the hotbar follows"
+    );
+    assert!(
+        !app.furnace_doubleclick,
+        "the arm's own clear the release speaks"
+    );
+
+    // APP ARM B — THE NULL HOVER'S OWN FLAG KEEP (the cursor between
+    // the slots the release the spread never serves)
+    app.furnace_doubleclick = true;
+    app.mouse_pos = Some((2, 2));
+    app.on_left_release();
+    assert!(app.furnace_doubleclick, "the null hover the flag keeps");
+
+    // APP ARM C — THE PRESS'S OWN ARM (the doubled press the same
+    // seat the flag arms, the click the skip keeps, the release the
+    // gather serves — the end-to-end double-click walk)
+    app.furnace_doubleclick = false;
+    app.furnace_last_click_slot = Some(2);
+    app.press_doubled = true;
+    app.inventory.items[10] = (lapis, 7);
+    app.furnace_slots[4] = (lapis, 7);
+    app.furnace_carried = (lapis, 2);
+    app.mouse_pos = Some((gx + 8, gy + 8));
+    app.on_press(gx + 8, gy + 8);
+    assert!(
+        app.furnace_doubleclick,
+        "the doubled press the same seat the flag arms"
+    );
+    app.on_left_release();
+    assert_eq!(app.furnace_carried, (lapis, 9), "the cursor whole");
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    assert!(
+        !app.furnace_doubleclick,
+        "the gather the arm's own clear wears"
+    );
+    // THE FLAG'S OWN SPEND (the plain press the reset seat the click
+    // keeps — the flag false the dispatch never skips)
+    app.press_doubled = false;
+    app.furnace_last_click_slot = None;
+    app.on_press(gx + 8, gy + 8);
+    assert!(
+        !app.furnace_doubleclick,
+        "the plain press the flag never arms"
+    );
+
+    // APP ARM D — THE CLOSE'S OWN RESET (the vanilla screen the
+    // removed() walk discards whole — the armed flag the close never
+    // rides)
+    app.furnace_doubleclick = true;
+    app.furnace_last_click_slot = Some(1);
+    app.close_furnace(ScreenKind::World);
+    assert!(
+        !app.furnace_doubleclick,
+        "the close the flag the reset wears"
+    );
+    assert!(
+        app.furnace_last_click_slot.is_none(),
+        "the close the seat the reset wears"
+    );
+
+    // APP ARM E — THE WIRE HALF'S OWN WALK (the menu type 14 the
+    // window opens — the seats the flat 39 speaks, the identity the
+    // gather echoes against; the gather the release serves, the
+    // packet the command lane carries, the HUD row the sync follows)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    // the menu's own numbering: the trio 0..3, the rows 3..30 the
+    // main grid, 30..39 the hotbar (menu 6 the main row's item 12
+    // answers, menu 30 the hotbar row 0)
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[6] = (lapis, 20);
+    slots[7] = (dirt, 30);
+    slots[30] = (dirt, 7);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Furnace,
+        "the route the furnace window opens"
+    );
+    assert!(app.furnace_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.furnace_live_window,
+        Some((4, 9)),
+        "the window identity the gather echoes against"
+    );
+    assert_eq!(
+        app.furnace_slots[6],
+        (lapis, 20),
+        "the wire row the belief banks"
+    );
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let (gx2, gy2) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2) // the EMPTY result seat the gather's own hover wears
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.live_furnace_carried = (lapis, 5);
+    app.furnace_doubleclick = true;
+    app.mouse_pos = Some((gx2 + 8, gy2 + 8));
+    app.on_left_release();
+    assert_eq!(
+        app.live_furnace_carried,
+        (lapis, 25),
+        "the row the pull grows"
+    );
+    assert_eq!(app.furnace_slots[6], (0, 0), "the wire row the pull drains");
+    assert_eq!(
+        app.furnace_slots[7],
+        (dirt, 30),
+        "the different row the walk never names"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (dirt, 7),
+        "the HUD row the sync follows"
+    );
+    // THE PACKET'S OWN WORD (the command lane the gather's echo
+    // carries)
+    let spoke = rx.try_recv().expect("the gather the command lane speaks");
+    match spoke {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 4, "the window the packet echoes");
+            assert_eq!(click.state_id, 9, "the believed revision the packet rides");
+            assert_eq!(click.slot, 2, "the hovered seat the packet names");
+            assert_eq!(click.button, 0, "the left press the button wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::PickupAll,
+                "the gather the click type wears"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(6, (0, 0))],
+                "the drained row the changed map names"
+            );
+            assert_eq!(
+                click.carried,
+                (lapis, 25),
+                "the gathered cursor the packet carries"
+            );
+        }
+        _ => panic!("the gather the click command speaks"),
+    }
+    // THE FRESH WINDOW'S OWN RESET (the route the stale gather pair
+    // the window retires)
+    app.furnace_doubleclick = true;
+    app.furnace_last_click_slot = Some(3);
+    let slots2 = vec![(0i32, 0i32); 39];
+    app.live_container_updated(Some(LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 10,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert!(
+        !app.furnace_doubleclick,
+        "the fresh window the stale flag retires"
+    );
+    assert!(
+        app.furnace_last_click_slot.is_none(),
+        "the fresh window the stale seat retires"
+    );
+}
