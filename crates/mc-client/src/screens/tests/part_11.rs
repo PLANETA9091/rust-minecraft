@@ -29586,11 +29586,14 @@ fn the_anvil_field_the_click_seat_wears() {
     );
     assert!(app.anvil_drag_armed, "the press the drag arm banks");
     // THE PAST-TAIL'S OWN CLAMP (the band's far side the len parks —
-    // the x the box's own 110-wide bounds the tail seat speaks)
+    // the x the box's own 110-wide bounds the tail seat speaks; the
+    // sleep the plain seek the double window never re-wears)
+    std::thread::sleep(std::time::Duration::from_millis(260));
     assert!(app.on_anvil_box_click(ox + 106, oy));
     assert_eq!(app.anvil_caret, 12, "the past-tail the len parks");
     // THE LEFT EDGE'S OWN CLAMP (the padding strip the window head
     // wears — the rel <= 0 the zero count the head seat answers)
+    std::thread::sleep(std::time::Duration::from_millis(260));
     assert!(app.on_anvil_box_click(100 + 60, oy));
     assert_eq!(app.anvil_caret, 0, "the left edge the head parks");
     // THE OUTSIDE'S OWN REFUSAL (the band's own bounds the FALSE the
@@ -29617,7 +29620,9 @@ fn the_anvil_field_the_click_seat_wears() {
     assert_eq!(app.anvil_caret, 4, "the second ride the seat walks");
     // THE DRAG'S OWN WALK (the armed press's held frames the caret
     // the seat follows — the press place the anchor banks, the range
-    // the walk opens, the outside row the drag never owns)
+    // the walk opens, the outside row the drag never owns; the sleep
+    // the plain seek the double window never re-wears)
+    std::thread::sleep(std::time::Duration::from_millis(260));
     assert!(app.on_anvil_box_click(ox, oy));
     assert_eq!(app.anvil_caret, 0, "the plain click the head parks");
     app.on_anvil_box_drag(ox + w_doom_space, oy);
@@ -29662,6 +29667,7 @@ fn the_anvil_field_the_click_seat_wears() {
         app2.anvil_caret, 5,
         "the crop band the B seat the full field speaks"
     );
+    std::thread::sleep(std::time::Duration::from_millis(260));
     assert!(app2.on_anvil_box_click(ox + 2, oy));
     assert_eq!(app2.anvil_caret, crop, "the '>' strip the crop head parks");
     // THE GATE'S OWN SILENCE (the stale screen the box lanes the walk
@@ -29674,4 +29680,132 @@ fn the_anvil_field_the_click_seat_wears() {
         app2.anvil_caret, crop,
         "the stale screen the seat never moves"
     );
+}
+
+#[test]
+fn the_anvil_field_the_double_climb_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DOOR'S OWN OPEN (the fresh field the tail seat wears)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    app.anvil_slots[0] = (sword, 1);
+    for ch in "Doom Bringer".chars() {
+        app.on_anvil_char(ch);
+    }
+    app.anvil_panel = (100, 80);
+    let ox = 100 + 62; // the text origin the field's own law wears
+    let oy = 80 + 20 + 5; // the 16-tall band's own mid row
+    let w_doom_space = crate::gui::font_text_width("Doom ");
+    let w_do = crate::gui::font_text_width("Do");
+    // THE PLAIN CLICK'S OWN STAMP (the fresh window the press banks —
+    // the caret the seat parks, the anchor the plain walk collapses)
+    assert!(app.on_anvil_box_click(ox + w_doom_space, oy));
+    assert_eq!(app.anvil_caret, 5, "the click the B seat parks");
+    assert_eq!(app.anvil_highlight, None, "the plain the anchor drops");
+    assert!(
+        app.anvil_last_click.is_some(),
+        "the plain press the window stamps"
+    );
+    // THE COLLAPSED PAIR'S OWN WORD SELECT (the <250ms second press
+    // the climb answers — the collapsed pair the word select wears:
+    // the past-tail seat the LAST word the cursor=end/anchor=start
+    // wears)
+    assert!(app.on_anvil_box_click(ox + 106, oy));
+    assert_eq!(app.anvil_caret, 12, "the climb the word end parks");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(5),
+        "the Bringer word the anchor banks"
+    );
+    // THE LIVE SELECTION'S OWN WHOLE CLIMB (the live range the next
+    // click the WHOLE value answers — the selectText(0, len) law the
+    // third press re-wears)
+    assert!(app.on_anvil_box_click(ox + 106, oy));
+    assert_eq!(app.anvil_caret, 12, "the whole climb the tail keeps");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(0),
+        "the whole value the range wears"
+    );
+    // THE STALE WINDOW'S OWN PLAIN SEEK (the 260ms sleep the window
+    // expires — the fresh press the plain seek re-wears, the anchor
+    // the collapse wears)
+    std::thread::sleep(std::time::Duration::from_millis(260));
+    assert!(app.on_anvil_box_click(ox + 106, oy));
+    assert_eq!(app.anvil_caret, 12, "the stale window the seat parks");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the stale window the anchor drops"
+    );
+    // THE MID WORD'S OWN SELECT (the collapsed pair the climb wears —
+    // the 'Doom' run the [0, 4) range the seat-2 click answers)
+    assert!(app.on_anvil_box_click(ox + w_do, oy));
+    assert_eq!(app.anvil_caret, 4, "the word select the end parks");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(0),
+        "the Doom word the anchor banks"
+    );
+    // THE WHOLE CLIMB'S OWN PROGRESSION (the word the next press the
+    // whole value re-answers — the live range the climb wears)
+    assert!(app.on_anvil_box_click(ox, oy));
+    assert_eq!(app.anvil_caret, 12, "the climb the whole tail parks");
+    assert_eq!(
+        app.anvil_highlight,
+        Some(0),
+        "the whole value the range re-wears"
+    );
+    // THE SPACE SEAT'S OWN EMPTY PAIR (the fresh window the stale
+    // walk re-lays — the seat-4 space the collapsed pair the None
+    // anchor keeps, the cursor the seat keeps; the width("Doom") x
+    // the space seat the count wears)
+    let w_doom4 = crate::gui::font_text_width("Doom");
+    std::thread::sleep(std::time::Duration::from_millis(260));
+    assert!(app.on_anvil_box_click(ox + w_doom_space, oy));
+    assert_eq!(app.anvil_caret, 5, "the stale press the B seat parks");
+    assert!(app.on_anvil_box_click(ox + w_doom4, oy));
+    assert_eq!(app.anvil_caret, 4, "the space seat the seat keeps");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the empty word the None anchor keeps"
+    );
+    // THE OUTSIDE'S OWN UNTOUCHED STAMP (the band's own refusal the
+    // window never touches — the inside stamps the honest law keeps)
+    let stamp = app.anvil_last_click;
+    assert!(!app.on_anvil_box_click(100 + 58, oy));
+    assert_eq!(
+        app.anvil_last_click, stamp,
+        "the outside the stamp never moves"
+    );
+    // THE EMPTY FIELD'S OWN PAIR (the empty word the (0, 0) pair
+    // wears — the climb the silence keeps)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    app2.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app2.open_anvil_for(cell);
+    app2.anvil_slots[0] = (sword, 1);
+    app2.anvil_panel = (100, 80);
+    assert!(app2.on_anvil_box_click(ox, oy));
+    assert!(app2.on_anvil_box_click(ox + 50, oy));
+    assert_eq!(app2.anvil_caret, 0, "the empty word the zero keeps");
+    assert_eq!(
+        app2.anvil_highlight, None,
+        "the empty field the None anchor wears"
+    );
+    // THE GATE'S OWN SILENCE (the stale screen the climb the walk
+    // never answers)
+    app2.screen = ScreenKind::World;
+    assert!(!app2.on_anvil_box_click(ox + 5, oy));
 }

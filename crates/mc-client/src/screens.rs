@@ -9855,6 +9855,11 @@ pub struct App {
     /// walk arms, the release the disarm speaks; the 267 chat law the
     /// rename box re-wears).
     pub anvil_drag_armed: bool,
+    /// THE ANVIL FIELD'S OWN LAST CLICK (the EditBox lastClickTime
+    /// law the 250ms window the climb answers — the (millis, seat)
+    /// pair the plain press stamps, the fresh press the window
+    /// expires; the 268 chat law the rename box re-wears).
+    pub anvil_last_click: Option<(u128, usize)>,
     /// THE COST WORD (the AnvilMenu's cost DataSlot the broadcast
     /// rides — the createResult walk's own verdict, the extractLabels
     /// row the >0 gate renders).
@@ -13319,6 +13324,7 @@ impl App {
             anvil_caret: 0,
             anvil_highlight: None,
             anvil_drag_armed: false,
+            anvil_last_click: None,
             anvil_cost: 0,
             anvil_only_renaming: false,
             anvil_repair_item_count: 0,
@@ -31581,6 +31587,15 @@ impl App {
     /// `setDragging(flag && button == 0)` law the entry siblings
     /// wear]; the band the render's own sprite seat wears — the
     /// (59, 20) 110x16 blit the x/y pair answers).
+    ///
+    /// THE DOUBLE'S OWN WINDOW (the 268 chat law the lastClickTime
+    /// climb answers — the <250ms second press the climb wears: the
+    /// live selection the next click the WHOLE value [the
+    /// `selectText(0, len)` law the 65 arm the same park wears], the
+    /// collapsed pair the word select the cursor=end/anchor=start
+    /// wears, the empty word the None anchor keeps, the third click
+    /// the all re-answers, the stale window the plain seek re-wears;
+    /// the word seat the `entry_word_at` helper the trio shares).
     pub fn on_anvil_box_click(&mut self, mx: i32, my: i32) -> bool {
         if self.screen != ScreenKind::Anvil {
             return false;
@@ -31596,6 +31611,31 @@ impl App {
             return false; // the outside click the band never owns
         }
         let seat = self.anvil_click_seat(mx);
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        if let Some((t, _)) = self.anvil_last_click {
+            if now.saturating_sub(t) < 250 {
+                let live = matches!(self.anvil_highlight, Some(h) if h != self.anvil_caret);
+                if live {
+                    // the whole value the climb answers (the 266
+                    // selectAll law the same park wears)
+                    self.anvil_caret = self.anvil_name.chars().count();
+                    self.anvil_highlight = Some(0);
+                } else {
+                    let (ws, we) = entry_word_at(&self.anvil_name, seat);
+                    self.anvil_caret = we;
+                    self.anvil_highlight = if ws == we { None } else { Some(ws) };
+                }
+                self.anvil_last_click = Some((now, seat));
+                return true;
+            }
+        }
+        // the plain click the `moveCursorTo(pos)` one-arg law the
+        // anchor collapses (the 266 law the box wears) — the consumed
+        // press the stamp wears
+        self.anvil_last_click = Some((now, seat));
         self.anvil_highlight = None;
         self.anvil_caret = seat;
         true

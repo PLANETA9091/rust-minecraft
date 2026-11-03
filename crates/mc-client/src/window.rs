@@ -2972,19 +2972,6 @@ pub fn run_gui_app(
                 // the inside click the caret the x-band seats, the
                 // buttons walk the consume skips, the outside the
                 // tab/palette lanes answer)
-            } else if app.screen == crate::screens::ScreenKind::Anvil
-                && (if shift_down {
-                    app.on_anvil_box_shift_click(gmx, gmy)
-                } else {
-                    app.on_anvil_box_click(gmx, gmy)
-                })
-            {
-                // THE ANVIL FIELD'S OWN BOX CONSUME (the same EditBox
-                // mouseClicked law the container's rename box wears —
-                // the inside click the caret the x-band parks, the
-                // consumed press the DRAG ARM banks, the slot walk the
-                // consume skips — the field band the slot cells the
-                // y-overlap never wears)
             } else {
                 if app.screen == crate::screens::ScreenKind::DebugOptions {
                     app.debug_search_focus = false;
@@ -3037,6 +3024,27 @@ pub fn run_gui_app(
                 } else {
                     app.on_chat_box_click(gmx, gmy);
                 }
+            }
+        }
+        // THE ANVIL FIELD'S OWN CLICK RIDE (the EditBox.mouseClicked
+        // walk the rename box answers — the RISING EDGE the field's
+        // own x-band the caret parks: the shift the two-arg walk the
+        // anchor preserves, the plain the one-arg the collapse wears,
+        // the double window the climb answers; the edge gate the held
+        // frames the climb never re-wears — the vanilla mouseClicked
+        // the ONE press the ONE walk keeps, the slot walk the same
+        // edge the doubled verdict wears)
+        if left_down
+            && !was_left_down
+            && !app.chat_open
+            && app.screen == crate::screens::ScreenKind::Anvil
+        {
+            let anvil_shift =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
+            if anvil_shift {
+                app.on_anvil_box_shift_click(gmx, gmy);
+            } else {
+                app.on_anvil_box_click(gmx, gmy);
             }
         }
         // THE SELECTION'S OWN DRAG WALK (the EditBox.onDrag lane — the
