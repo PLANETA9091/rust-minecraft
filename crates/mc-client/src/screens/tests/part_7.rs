@@ -585,6 +585,7 @@ fn the_chest_sync_feeds_the_bundle_rows() {
         state_id: 7,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
@@ -612,6 +613,7 @@ fn the_chest_sync_feeds_the_bundle_rows() {
         state_id: 8,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(
@@ -629,6 +631,7 @@ fn the_chest_sync_feeds_the_bundle_rows() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.bundle_contents[&4].items.len(), 1, "the changed row");
@@ -648,6 +651,7 @@ fn the_chest_sync_feeds_the_bundle_rows() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert!(app.bundle_contents.is_empty(), "the rowless sync");
@@ -787,6 +791,7 @@ fn the_window0_sync_feeds_the_inventory_bundles() {
         state_id: 7,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
@@ -1010,6 +1015,7 @@ fn escape_closes_the_chest_back_to_the_world() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest);

@@ -2429,6 +2429,50 @@ pub struct LiveContainer {
     /// canvas renders). Empty bytes = the wire never spoke — the
     /// default lang row the canvas banks (the honest fallback).
     pub title_nbt: Vec<u8>,
+    /// THE MERCHANT'S OWN BANK (the store's MerchantBank the
+    /// projection feeds — the offers + the level/xp/flag tail the
+    /// handleMerchantOffers walk banked). `None` on every NON-merchant
+    /// window (the instanceof mirror the projection's own type check
+    /// speaks); a live merchant window the SOME keeps — the offers
+    /// the packet never spoke the empty Vec answers (the fresh
+    /// window's own bank).
+    pub merchant: Option<MerchantView>,
+}
+
+/// THE MERCHANT'S OWN VIEW WORDS (the store's bank projected for the
+/// UI — the pairs the canvas draws and the press lane banks): the
+/// offer's `(item_id, count)` pairs the icon lane serves, the
+/// out-of-stock + uses/maxUses scalars the row's honesty keeps.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MerchantOfferView {
+    /// The first buy cost — the `(item_id, count)` pair.
+    pub cost_a: (i32, i32),
+    /// The optional second buy cost — the pair the wire's optional
+    /// lane never spoke the None keeps.
+    pub cost_b: Option<(i32, i32)>,
+    /// The trade's product — the `(item_id, count)` pair.
+    pub result: (i32, i32),
+    /// The out-of-stock word.
+    pub out_of_stock: bool,
+    /// The trade's uses / max-uses pair (the stock's own words).
+    pub uses: i32,
+    pub max_uses: i32,
+}
+
+/// The merchant window's projected bank (the store's MerchantBank
+/// mirror — the offers in wire order + the villager words).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MerchantView {
+    /// The trade offers in wire order.
+    pub offers: Vec<MerchantOfferView>,
+    /// The villager's trading level.
+    pub level: i32,
+    /// The villager's xp.
+    pub xp: i32,
+    /// The show-progress-bar word.
+    pub show_progress: bool,
+    /// The can-restock word.
+    pub can_restock: bool,
 }
 
 /// The click's input modes, the UI-facing mirror of the wire's own
@@ -2598,6 +2642,19 @@ pub enum ContainerCommand {
     SetBeacon {
         primary: Option<i32>,
         secondary: Option<i32>,
+    },
+    /// THE TRADE'S OWN SELECT WIRE (the vanilla
+    /// `MerchantScreen.postButtonClick`'s echo — the
+    /// ServerboundSelectTradePacket the pressed row's offer INDEX the
+    /// VarInt lane carries: the `setSelectionHint(shopItem)` +
+    /// `tryMoveItems(shopItem)` pair the menu's client-local halves
+    /// bank BEFORE the send, the packet the send tail speaks). The
+    /// worker the packet alone speaks (the prediction-free lane —
+    /// the server's own trade apply the input/result seat echoes
+    /// answer, the offers' refresh the packets' own words re-bank).
+    SelectTrade {
+        /// The selected offer's index (the wire's own shopItem word).
+        item: i32,
     },
     /// The use RELEASE (the vanilla gameMode.releaseUsingItem's own
     /// echo — the RELEASE_USE_ITEM action at BlockPos.ZERO / DOWN).
@@ -3958,6 +4015,31 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
         // THE TITLE'S OWN RIDE (the store's verbatim bytes the
         // projection feeds — the decode is the screen's act)
         title_nbt: oc.title_nbt.clone(),
+        // THE MERCHANT'S OWN RIDE (the store's bank the projection
+        // feeds — the SOME the merchant window's own type answers, the
+        // pairs the offer walk flattens, the fresh window's empty bank
+        // the honest zero words keep)
+        merchant: (oc.menu_type_id == crate::world_model::MENU_TYPE_MERCHANT).then(|| {
+            MerchantView {
+                offers: oc
+                    .merchant
+                    .offers
+                    .iter()
+                    .map(|o| MerchantOfferView {
+                        cost_a: (o.cost_a.item_id, o.cost_a.count),
+                        cost_b: o.cost_b.as_ref().map(|b| (b.item_id, b.count)),
+                        result: (o.result.item_id, o.result.count),
+                        out_of_stock: o.out_of_stock,
+                        uses: o.uses,
+                        max_uses: o.max_uses,
+                    })
+                    .collect(),
+                level: oc.merchant.level,
+                xp: oc.merchant.xp,
+                show_progress: oc.merchant.show_progress,
+                can_restock: oc.merchant.can_restock,
+            }
+        }),
     })
 }
 

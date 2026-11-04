@@ -7173,6 +7173,27 @@ pub enum ScreenKind {
     /// (the server's own OpenScreen word owns the container — the
     /// BEACON menu type lane the projection feeds).
     Beacon,
+    /// THE MERCHANT'S OWN TRADE SEAT (javap 26.2 MerchantScreen — the
+    /// 276x166 panel the ctor's sipush pair speaks, the
+    /// `gui/container/villager.png` background the
+    /// extractBackground blit banks [the (0,0) 276x166 region the
+    /// 512x256 master wears], the SEVEN 88x20 TradeOfferButton rows
+    /// the init walk lays at (leftPos+5, topPos+20+i*20), the label
+    /// pair the extractLabels walk keeps [the `merchant.title`
+    /// composite the level 1..5 + showProgressBar gate wears, the
+    /// 49+imageWidth/2 - width/2 centering, the 0x404040 shadowless
+    /// color, the plain-title branch the fresh gate answers; the
+    /// inventory label the inventoryLabelX=107 seat speaks], the
+    /// menu's own numbering — the inputs 0/1 the (136, 37)/(162, 37)
+    /// seats, the result 2 the (220, 37) seat, the standard rows
+    /// 3..38 the addStandardInventorySlots(108, 84) walk lays, the
+    /// offer rows' item pair the extractContents walk banks [the
+    /// costA at button+5/+35/+68 x-lane the row walker speaks, the
+    /// y the topPos+17+row*20+2 lane wears]). The OFFLINE
+    /// deterministic lane the wire route never wears (the server's
+    /// own OpenScreen word owns the container — the MERCHANT menu
+    /// type lane the projection feeds).
+    Merchant,
     /// THE ACCESSIBILITY SCREEN'S OWN SEAT (javap 26.2
     /// AccessibilityOptionsScreen — the OptionsScreen's
     /// `options.accessibility` button the lambda$init$8 walk opens:
@@ -9028,6 +9049,48 @@ pub struct App {
     pub beacon_upgrade_rect: Option<(i32, i32)>,
     pub beacon_confirm_rect: (i32, i32),
     pub beacon_cancel_rect: (i32, i32),
+    /// THE MERCHANT SCREEN'S OWN LIVE FLAG (the beacon route's own law
+    /// the wire route re-wears — the server's OpenScreen word the menu
+    /// type 18 speaks, the wire open the flag wears, the close + the
+    /// death walk the flag retires; the offline stand-in the false
+    /// keeps)
+    pub merchant_is_live: bool,
+    /// THE MERCHANT WINDOW'S OWN IDENTITY (the live window's
+    /// containerId + the stateId revision the echoes answer — the
+    /// beacon's `Some((c.id, c.state_id))` shape the route re-wears)
+    pub merchant_live_window: Option<(i32, i32)>,
+    /// THE TRADES' OWN BANK (the projection's offers the refresh
+    /// re-feeds — the rows the canvas draws, the index the press's
+    /// wire word carries; the fresh window the empty bank keeps)
+    pub merchant_offers: Vec<crate::world_view::MerchantOfferView>,
+    /// THE VILLAGER'S OWN WORDS (the level the 1..5 domain the label
+    /// walk checks, the xp the word keeps, the show-progress +
+    /// can-restock flag pair the handleMerchantOffers setters bank)
+    pub merchant_level: i32,
+    pub merchant_xp: i32,
+    pub merchant_show_progress: bool,
+    pub merchant_can_restock: bool,
+    /// THE TRADES' OWN SELECTION (the shopItem belief the press
+    /// banks — the index the Select Trade packet carries, the
+    /// fresh window the zero seat wears)
+    pub merchant_selected: usize,
+    /// THE MERCHANT'S OWN SEAT BANK (the menu's own numbering — the
+    /// inputs 0/1 the (136, 37)/(162, 37) seats speak, the result 2
+    /// the (220, 37) seat, the standard rows 3..38 the
+    /// addStandardInventorySlots(108, 84) walk lays — the pairs the
+    /// slot lane draws, the wire's own (0, 0) emptiness riding
+    /// verbatim)
+    pub merchant_slots: Vec<(i32, i32)>,
+    /// THE MERCHANT'S OWN CARRIED (the cursor stack the refresh
+    /// re-feeds — the beacon's verbatim pair the route re-wears)
+    pub merchant_carried: (i32, i32),
+    /// THE WINDOW'S OWN TITLE (the OpenScreen word's decode — the
+    /// chest's live_chest_title the same decode_container_title walk
+    /// feeds; the None the wire never spoke keeps)
+    pub merchant_title: Option<String>,
+    pub merchant_slot_rects: Vec<(i32, i32, i16)>,
+    pub merchant_panel: (i32, i32),
+    pub merchant_row_rects: Vec<(i32, i32, usize)>,
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
     /// draws, the cold cow the ColdCowModel's coat, the warm cow the
@@ -13302,6 +13365,20 @@ impl App {
             beacon_upgrade_rect: None,
             beacon_confirm_rect: (0, 0),
             beacon_cancel_rect: (0, 0),
+            merchant_is_live: false,
+            merchant_live_window: None,
+            merchant_offers: Vec::new(),
+            merchant_level: 0,
+            merchant_xp: 0,
+            merchant_show_progress: false,
+            merchant_can_restock: false,
+            merchant_selected: 0,
+            merchant_slots: Vec::new(),
+            merchant_carried: (0, 0),
+            merchant_title: None,
+            merchant_slot_rects: Vec::new(),
+            merchant_panel: (0, 0),
+            merchant_row_rects: Vec::new(),
             chicken_warm_model: None,
             baby_chicken_cold_model: None,
             baby_chicken_warm_model: None,
@@ -25394,6 +25471,7 @@ impl App {
             ScreenKind::Anvil => self.close_anvil(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
+            ScreenKind::Merchant => self.close_merchant(ScreenKind::World),
             _ => {}
         }
     }
@@ -33117,6 +33195,99 @@ impl App {
         self.beacon_doubleclick = false;
         self.beacon_last_click_slot = None;
         self.beacon_open_cell = None;
+        self.container_removed_rode = true; // the removed law rode
+        self.open(back);
+    }
+
+    /// THE MERCHANT'S OWN CLOSE (javap of `MerchantMenu.removed` —
+    /// the super.removed carried home ride + the
+    /// `setTradingPlayer(null)` + the CLIENT-SIDE early return pc
+    /// 19-27 the port's own store never rides [the offline world the
+    /// stand-in's own walk keeps], the alive + disconnected gate the
+    /// input drops serve: the `removeItemNoUpdate(0)` /
+    /// `removeItemNoUpdate(1)` pair the `player.drop` entity spawns —
+    /// the INPUT SEATS the GROUND DROP wears, NOT the inventory
+    /// return; the live session's close echoes the serverbound
+    /// ContainerClose through the send lane, the belief resets with
+    /// the window).
+    pub fn close_merchant(&mut self, back: ScreenKind) {
+        // THE WIRE'S OWN CLOSE (the beacon close's own shape — the
+        // live session's close echoes the serverbound ContainerClose
+        // packet through the live session's send lane, the server's
+        // own close the input drops + the carried return answer — NO
+        // ride-home walk the local fiction never wears)
+        if self.merchant_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.merchant_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.merchant_is_live = false;
+            self.merchant_live_window = None;
+            self.merchant_carried = (0, 0);
+            self.merchant_title = None;
+            self.merchant_slots = Vec::new();
+            self.merchant_offers = Vec::new();
+            self.merchant_level = 0;
+            self.merchant_xp = 0;
+            self.merchant_show_progress = false;
+            self.merchant_can_restock = false;
+            self.merchant_selected = 0;
+            self.container_removed_rode = true; // the removed law rode
+            self.open(back);
+            return;
+        }
+        // THE CARRIED'S OWN HOME RIDE (the super.removed walk — the
+        // close_furnace shape)
+        if self.merchant_carried.1 > 0 {
+            let (id, count) = self.merchant_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.merchant_carried = (0, 0);
+        }
+        // THE INPUT SLOTS' OWN GROUND DROP (javap MerchantMenu.removed
+        // pc 54-… — the `removeItemNoUpdate(0)`/`removeItemNoUpdate(1)`
+        // pair the alive + disconnected gate serves, the
+        // `player.drop(stack, false)` the entity spawns; the OFFLINE
+        // world the spawn_drop_at_player lane the same entity wears)
+        for seat in 0..2usize {
+            if let Some(&(id, count)) = self.merchant_slots.get(seat) {
+                if count > 0 {
+                    self.spawn_drop_at_player(id, count);
+                }
+            }
+        }
+        // THE BANK'S OWN DEATH (the window's own lifetime the fields
+        // ride — the close drops wholesale)
+        self.merchant_slots = Vec::new();
+        self.merchant_title = None;
+        self.merchant_offers = Vec::new();
+        self.merchant_level = 0;
+        self.merchant_xp = 0;
+        self.merchant_show_progress = false;
+        self.merchant_can_restock = false;
+        self.merchant_selected = 0;
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
@@ -40922,6 +41093,202 @@ impl App {
         }
     }
 
+    /// THE MERCHANT'S OWN WIDGET PRESS (javap of the TradeOfferButton
+    /// onPress lambda → `MerchantScreen.postButtonClick` — the pressed
+    /// row's index the shopItem field banks, the `setSelectionHint`
+    /// + `tryMoveItems` pair the menu's client-local halves speak,
+    /// the ServerboundSelectTradePacket the send tail carries [the
+    /// dump's own `new ServerboundSelectTradePacket(shopItem)` the
+    /// ClientPacketListener.send serves]). The prediction-free lane
+    /// the server's own trade apply answers — the client's bank the
+    /// wire never rides; the OFFLINE door the local selection keeps,
+    /// the packet the session never wears. The row's 88x20 seat the
+    /// render's own hit boxes keep; the out-of-stock row the press
+    /// the SERVER's own verdict answers (the active flag the sprite
+    /// round re-lays).
+    fn merchant_widget_press(&mut self, mx: i32, my: i32) -> bool {
+        let Some(&(_, _, idx)) = self
+            .merchant_row_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 88 && my >= y && my < y + 20)
+        else {
+            return false;
+        };
+        self.merchant_selected = idx;
+        if self.merchant_is_live {
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink
+                    .send(crate::world_view::ContainerCommand::SelectTrade { item: idx as i32 });
+            }
+        }
+        true
+    }
+
+    /// THE MERCHANT'S OWN ROUND (javap 26.2 MerchantScreen — the
+    /// 276x166 panel the ctor's sipush pair speaks, the
+    /// `gui/container/villager.png` background the
+    /// extractBackground blit banks [the (0,0) 276x166 region the
+    /// 512x256 master wears], the SEVEN 88x20 TradeOfferButton rows
+    /// the init walk lays at (leftPos+5, topPos+20+i*20), the menu's
+    /// own numbering — the inputs 0/1 the (136, 37)/(162, 37) seats,
+    /// the result 2 the (220, 37) seat, the standard rows 3..38 the
+    /// addStandardInventorySlots(108, 84) walk lays [the main 3..29
+    /// the 18-pitch grid rides, the hotbar 30..38 the y=142 row
+    /// wears], the offer rows' item walk the extractContents dump
+    /// banks — the costA at (leftPos+10, topPos+17+row*20+2) seat the
+    /// row walker speaks, the costB at (leftPos+5+35, y) and the
+    /// result at (leftPos+5+68, y) pair the fakeItem lanes carry).
+    /// THE MINIMAL ROUND the wire route banks: the label pair [the
+    /// plain-title branch the composite the level gate wears — the
+    /// merchant.title arg row the lang table the later text round
+    /// re-lays], the slots, the row items, the carried follow; the
+    /// out-of-stock overlay + the button sprites + the scroller +
+    /// the arrows + the tooltips the later canvas rounds re-lay.
+    fn render_merchant(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = ((w - 276) / 2, (h - 166) / 2);
+        self.merchant_panel = panel;
+        // THE HIT BOXES (the menu's own numbering — the three trade
+        // seats + the standard rows, the 16x16 inner cells the +1
+        // inset the Slot's own hit shape keeps)
+        let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(39);
+        rects.push((panel.0 + 136 + 1, panel.1 + 37 + 1, 0));
+        rects.push((panel.0 + 162 + 1, panel.1 + 37 + 1, 1));
+        rects.push((panel.0 + 220 + 1, panel.1 + 37 + 1, 2));
+        for i in 0..36usize {
+            let row = (i / 9) as i32;
+            let col = (i % 9) as i32;
+            let sx = panel.0 + 108 + col * 18;
+            let sy = panel.1 + 84 + row * 18 + if row == 3 { 58 - 54 } else { 0 };
+            rects.push((sx + 1, sy + 1, (3 + i) as i16));
+        }
+        self.merchant_slot_rects = rects;
+        // THE OFFER ROWS' OWN SEATS (the init walk — the SEVEN 88x20
+        // rows the ≤7 bank keeps; the >7 scroll lane the later round
+        // re-lays)
+        let mut rows: Vec<(i32, i32, usize)> = Vec::with_capacity(7);
+        for i in 0..7usize {
+            rows.push((panel.0 + 5, panel.1 + 20 + i as i32 * 20, i));
+        }
+        self.merchant_row_rects = rows;
+        // THE BACKGROUND (the clinit's VILLAGER_LOCATION — the 276x166
+        // region the 512x256 master wears)
+        g.sprite_file_region(
+            a,
+            "gui/container/villager.png",
+            0,
+            0,
+            276,
+            166,
+            panel.0,
+            panel.1,
+        );
+        // THE LABEL PAIR (the extractLabels walk — the merchant.title
+        // composite the level 1..5 + showProgressBar gate wears, the
+        // 49+imageWidth/2 - width/2 centering the dump speaks, the
+        // 0x404040 shadowless draw; the plain-title branch the fresh
+        // gate answers [the wire's own title the decode rode]; the
+        // inventory label the inventoryLabelX=107 + imageHeight-94
+        // seat speaks)
+        let label = [0.251, 0.251, 0.251]; // 0x404040
+        let show_level =
+            self.merchant_level > 0 && self.merchant_level <= 5 && self.merchant_show_progress;
+        let title_x = panel.0 + 49 + 138;
+        if show_level && tr("merchant.title").is_some() {
+            // the composite's own arg row the lang table keeps — the
+            // decode the later text round re-lays (the row's absence
+            // the plain branch answers)
+        } else if let Some(t) = self
+            .merchant_title
+            .as_deref()
+            .or_else(|| tr("container.villager"))
+        {
+            let tx = title_x - g.text_width(t) / 2;
+            g.text(a, tx, panel.1 + 6, t, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 107, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE OFFER ROWS' OWN ITEMS (the extractContents walk — the
+        // costA at (row+5, y) seat the extractAndDecorateCostA lane
+        // serves, the costB at (row+35, y) + the result at (row+68, y)
+        // pair the fakeItem+itemDecorations lanes carry, the y the
+        // topPos+17+row*20+2 walker wears)
+        for &(rx, ry, idx) in &self.merchant_row_rects {
+            let Some(offer) = self.merchant_offers.get(idx) else {
+                continue;
+            };
+            let iy = ry - 1;
+            let (ca_id, ca_n) = offer.cost_a;
+            if ca_n > 0 {
+                draw_item_icon(g, ca_id, rx + 5, iy);
+                if ca_n > 1 {
+                    let s = ca_n.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, rx + 5 + 16 - tw, iy + 9, &s, WHITE, true);
+                }
+            }
+            if let Some((cb_id, cb_n)) = offer.cost_b {
+                if cb_n > 0 {
+                    draw_item_icon(g, cb_id, rx + 35, iy);
+                    if cb_n > 1 {
+                        let s = cb_n.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, rx + 35 + 16 - tw, iy + 9, &s, WHITE, true);
+                    }
+                }
+            }
+            let (re_id, re_n) = offer.result;
+            if re_n > 0 {
+                draw_item_icon(g, re_id, rx + 68, iy);
+                if re_n > 1 {
+                    let s = re_n.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, rx + 68 + 16 - tw, iy + 9, &s, WHITE, true);
+                }
+            }
+            // THE SELECTION'S OWN WORD (the port's own marker — the
+            // vanilla's hover/selected sprite states the button round
+            // re-lays; the pressed row's identity the buy lane banks)
+            if idx == self.merchant_selected {
+                g.fill(rx - 1, ry - 1, 90, 1, [1.0, 1.0, 1.0, 0.85]);
+                g.fill(rx - 1, ry + 20, 90, 1, [1.0, 1.0, 1.0, 0.85]);
+                g.fill(rx - 1, ry - 1, 1, 22, [1.0, 1.0, 1.0, 0.85]);
+                g.fill(rx + 88, ry - 1, 1, 22, [1.0, 1.0, 1.0, 0.85]);
+            }
+        }
+        // THE SLOT STACKS' OWN DRAW (the extractContents standard walk
+        // — the menu's own numbering the rects keep, the count text
+        // the itemDecorations lane speaks)
+        for &(sx, sy, slot) in &self.merchant_slot_rects {
+            let slot = slot as usize;
+            let Some(&(id, count)) = self.merchant_slots.get(slot) else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the beacon's own shape)
+        if self.merchant_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.merchant_carried.0, mx - 8, my - 8);
+                if self.merchant_carried.1 > 1 {
+                    let s = self.merchant_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+    }
+
     /// THE BEACON'S OWN HOVER-TOOLTIP SEAT (the 324 round — the
     /// extractTooltip pass the beacon the AbstractContainerScreen's
     /// own lane INHERITS, the probe scripts/tooltip_324.py the
@@ -46891,6 +47258,17 @@ impl App {
             // hovered slot the press remembers, the null the None
             // keeps)
             self.beacon_last_click_slot = hovered_menu;
+            return;
+        }
+        if self.screen == ScreenKind::Merchant {
+            // THE WIDGET DISPATCH'S OWN PRECEDENCE (the super.mouseClicked
+            // law the buttons serve FIRST — the SEVEN offer seats the
+            // postButtonClick walk answers, the consumed seat the true
+            // return speaks)
+            self.merchant_widget_press(mx, my);
+            // THE SLOT SEATS' own walk the later round banks (the trade
+            // inputs the doClick family serves) — the press the rows'
+            // lane answered the round keeps
             return;
         }
         if self.screen == ScreenKind::Inventory {
@@ -63016,6 +63394,7 @@ impl App {
             ScreenKind::Anvil => self.close_anvil(back),
             ScreenKind::Furnace => self.close_furnace(back),
             ScreenKind::Beacon => self.close_beacon(back),
+            ScreenKind::Merchant => self.close_merchant(back),
             ScreenKind::Crafting => self.close_crafting_table(back),
             ScreenKind::Creative => self.close_creative_picker(back),
             _ => self.open(back),
@@ -76406,6 +76785,7 @@ impl App {
             ScreenKind::Anvil => self.close_anvil(ScreenKind::World),
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
+            ScreenKind::Merchant => self.close_merchant(ScreenKind::World),
             ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
             ScreenKind::Creative => self.close_creative_picker(ScreenKind::World),
             ScreenKind::Crafting => self.close_crafting_table(ScreenKind::World),
@@ -80870,6 +81250,66 @@ impl App {
                     }
                     return;
                 }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_MERCHANT {
+                    // THE MERCHANT'S OWN WIRE LANE (the beacon's 456
+                    // shape the 458 route re-wears — the menu type 18
+                    // the server's OpenScreen word speaks): the menu's
+                    // own numbering — the inputs 0/1 the (136, 37)/
+                    // (162, 37) seats speak, the result 2 the (220, 37)
+                    // seat, the standard rows 3..38 the
+                    // addStandardInventorySlots(108, 84) walk lays —
+                    // padded to the layout's full shape, the wire's own
+                    // (0, 0) emptiness riding verbatim. THE WALK the
+                    // server owns (the trade's apply the server-side
+                    // moveFromInventoryToPaymentSlot + the result seat
+                    // answer, the echoes the prediction-free lane keeps;
+                    // the offers the handleMerchantOffers walk's own
+                    // packet banks — the fresh window the empty bank
+                    // keeps, the words the wire re-speaks the refresh
+                    // re-lays).
+                    self.merchant_is_live = true;
+                    self.merchant_slots.clear();
+                    for i in 0..39usize {
+                        self.merchant_slots.push(*c.slots.get(i).unwrap_or(&(0, 0)));
+                    }
+                    // the AUTHORITATIVE carried lands too (the chest's
+                    // wholesale replacement speaks)
+                    self.merchant_carried = c.carried;
+                    // THE WINDOW'S OWN TITLE (the chest's decode ride —
+                    // the extractLabels walk's own cargo the screen's
+                    // plain-title branch draws)
+                    self.merchant_title = decode_container_title(&c.title_nbt);
+                    // the window's identity rides in: the echoes answer
+                    // against THIS id and revision
+                    self.merchant_live_window = Some((c.id, c.state_id));
+                    // THE MERCHANT'S OWN BANK (the projection's SOME the
+                    // merchant window's own type answers — the offers +
+                    // the villager words the handleMerchantOffers walk
+                    // banked; the fresh window the zero/empty words
+                    // wear)
+                    if let Some(m) = &c.merchant {
+                        self.merchant_offers = m.offers.clone();
+                        self.merchant_level = m.level;
+                        self.merchant_xp = m.xp;
+                        self.merchant_show_progress = m.show_progress;
+                        self.merchant_can_restock = m.can_restock;
+                    } else {
+                        self.merchant_offers = Vec::new();
+                        self.merchant_level = 0;
+                        self.merchant_xp = 0;
+                        self.merchant_show_progress = false;
+                        self.merchant_can_restock = false;
+                    }
+                    // THE FRESH OPEN'S OWN RESET (the sibling lanes' own
+                    // law the wire open re-wears — the stale selection
+                    // the window retires, the fresh presses the own
+                    // arms re-lay)
+                    self.merchant_selected = 0;
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Merchant);
+                    }
+                    return;
+                }
                 if c.menu_type_id == crate::world_model::MENU_TYPE_ENCHANTMENT {
                     // THE ENCHANT TABLE'S OWN WIRE LANE (the 417 round —
                     // the menu type 13 the OpenScreen word routes, the
@@ -81575,6 +82015,19 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_beacon(&mut g, a, gw, gh);
+            }
+            ScreenKind::Merchant => {
+                // THE MERCHANT'S OWN ROUND (the vanilla MerchantScreen
+                // over the frozen world — the beacon's own shape the
+                // texture-blitted base keeps): world underneath,
+                // dimmed, the REAL 276x166 villager background, the
+                // label pair, the trade seats, the offer rows' item
+                // pair, the carried follow — no mannequin (the
+                // MerchantScreen the vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_merchant(&mut g, a, gw, gh);
             }
             ScreenKind::Inventory => {
                 // the survival inventory's own round (the vanilla

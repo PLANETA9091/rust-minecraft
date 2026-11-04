@@ -3895,6 +3895,7 @@ fn the_table_quickcraft_drag_the_paint_and_the_even_split_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);
@@ -4060,6 +4061,7 @@ fn the_table_quickcraft_drag_the_gates_and_the_aborts_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     // THE RESULT SEAT'S OWN mayPlace: the same-item cursor the
@@ -4291,6 +4293,7 @@ fn the_table_right_drag_the_one_each_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);
@@ -4501,6 +4504,7 @@ fn the_table_right_drag_the_gates_and_the_aborts_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.live_table_carried = (dirt, 8);
@@ -4616,6 +4620,7 @@ fn the_table_quickcraft_drag_the_wire_split_and_the_hud_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);

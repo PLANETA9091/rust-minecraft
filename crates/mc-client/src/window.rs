@@ -590,6 +590,18 @@ fn run_join(
                             // selection keeps)
                             session.set_beacon(primary, secondary)
                         }
+                        crate::world_view::ContainerCommand::SelectTrade { item } => {
+                            // THE TRADE'S OWN SELECT WIRE (the vanilla
+                            // MerchantScreen.postButtonClick walk — the
+                            // Select Trade packet the pressed row's offer
+                            // INDEX the VarInt lane carries, the
+                            // setSelectionHint/tryMoveItems pair the
+                            // client-local halves the screen's own press
+                            // banks, the packet the send tail speaks —
+                            // the prediction-free lane the server's own
+                            // slot echo answers)
+                            session.select_trade(item)
+                        }
                         crate::world_view::ContainerCommand::PickBlock { pos, include_data } => {
                             // THE PICK's wire half (the vanilla
                             // gameMode.handlePickItemFromBlock walk): the

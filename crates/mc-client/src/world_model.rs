@@ -2328,6 +2328,13 @@ pub const MENU_TYPE_ANVIL: i32 = 8;
 /// lane the later round re-lays — the fresh window the zeros keep]).
 pub const MENU_TYPE_BEACON: i32 = 9;
 
+/// `MenuType`'s merchant — the VillagerMenu's registry id (the SAME
+/// clinit order speaks: ... loom 17, MERCHANT lands at 18, shulker_box
+/// 19 — the wire's own word the live trade lane routes on; the
+/// handleMerchantOffers walk's instanceof gate the store's own type
+/// check mirrors).
+pub const MENU_TYPE_MERCHANT: i32 = 18;
+
 /// `MenuType`'s crafting — the CraftingMenu's registry id (the SAME
 /// clinit order speaks: generic_9x6 5, generic_3x3 6, crafter_3x3 7,
 /// anvil 8, beacon 9, blast_furnace 10, brewing_stand 11, CRAFTING
@@ -2446,6 +2453,36 @@ pub struct OpenContainerState {
     /// counter (the data words are progress, not inventory truth) —
     /// the state_id lane never hears of them.
     pub data_slots: Vec<i32>,
+    /// THE MERCHANT'S OWN BANK (the handleMerchantOffers walk's five
+    /// setters the store mirrors — the offers the wire's collection
+    /// carries, the villager level/xp pair, the showProgress/
+    /// canRestock flag pair). The fresh window the EMPTY bank keeps
+    /// (the offers the packet never spoke the zero/empty words wear);
+    /// the bank rides the window's own lifetime — the close drops
+    /// wholesale (the store's own law).
+    pub merchant: MerchantBank,
+}
+
+/// The merchant window's banked word set (the `MerchantMenu`'s own
+/// fields the handleMerchantOffers setters move — javap of the
+/// consumer walk: setOffers, setXp (the packet's villagerXp),
+/// setMerchantLevel (the packet's villagerLevel), setShowProgressBar
+/// (the packet's showProgress), setCanRestock). The store banks the
+/// five words verbatim; the gate (the id match + the menu-type
+/// instanceof mirror) is the apply arm's act.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MerchantBank {
+    /// The trade offers in wire order (the packet's collection).
+    pub offers: Vec<mc_protocol::play::MerchantOffer>,
+    /// The villager's trading level (the 1..5 domain the label walk
+    /// checks).
+    pub level: i32,
+    /// The villager's xp.
+    pub xp: i32,
+    /// The show-progress-bar word.
+    pub show_progress: bool,
+    /// The can-restock word.
+    pub can_restock: bool,
 }
 
 /// `InventoryMenu.isHotbarSlot`'s audited shape — NOTE THE QUIRK: the
@@ -4385,6 +4422,7 @@ impl WorldModel {
                         patch: ComponentPatch::default(),
                     },
                     data_slots: Vec::new(),
+                    merchant: MerchantBank::default(),
                 });
                 true
             }
@@ -4401,6 +4439,39 @@ impl WorldModel {
                 // convention — the assignment would write the same
                 // value).
                 self.open_container.take().is_some()
+            }
+            PlayEvent::MerchantOffers(o) => {
+                // The audited consumer (javap of
+                // handleMerchantOffers): the DOUBLE GATE first — the
+                // packet's containerId compares against
+                // `containerMenu.containerId` (the if_icmpne) AND the
+                // menu must `instanceof MerchantMenu` (the ifeq) — the
+                // mismatched window the silent drop keeps, the fall
+                // through to return the store's false answers. The
+                // match calls the FIVE setters the bank mirrors:
+                // setOffers, setXp (the packet's villagerXp),
+                // setMerchantLevel (the packet's villagerLevel),
+                // setShowProgressBar (the packet's showProgress),
+                // setCanRestock. A non-merchant window with the SAME
+                // id (the instanceof half the id gate never covers)
+                // drops too — the menu-type check the store's own
+                // field mirrors.
+                if let Some(oc) = self
+                    .open_container
+                    .as_mut()
+                    .filter(|oc| oc.id == o.container_id && oc.menu_type_id == MENU_TYPE_MERCHANT)
+                {
+                    oc.merchant.offers = o.offers;
+                    oc.merchant.xp = o.villager_xp;
+                    oc.merchant.level = o.villager_level;
+                    oc.merchant.show_progress = o.show_progress;
+                    oc.merchant.can_restock = o.can_restock;
+                    true
+                } else {
+                    // the mismatched window is DROPPED (the audited
+                    // if_icmpne/ifeq falls through to return)
+                    false
+                }
             }
             PlayEvent::ContainerDataSet(s) => {
                 // The audited consumer (javap of

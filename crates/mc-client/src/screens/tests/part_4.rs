@@ -7162,6 +7162,7 @@ fn the_live_dispenser_window_wears_the_wires_title() {
             "translate".to_string(),
             Nbt::String("container.dropper".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(dropper.clone()));
     assert_eq!(
@@ -7263,6 +7264,7 @@ fn the_live_chest_furnace_and_table_windows_wear_the_wires_title() {
             "text".to_string(),
             Nbt::String("Storage Room".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(3, 1), None, None, Some(chest.clone()));
     assert_eq!(
@@ -7300,6 +7302,7 @@ fn the_live_chest_furnace_and_table_windows_wear_the_wires_title() {
             "translate".to_string(),
             Nbt::String("container.furnace".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(3, 3), None, None, Some(furnace.clone()));
     assert_eq!(
@@ -7334,6 +7337,7 @@ fn the_live_chest_furnace_and_table_windows_wear_the_wires_title() {
             "translate".to_string(),
             Nbt::String("container.crafting".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(3, 5), None, None, Some(table));
     assert_eq!(
@@ -7432,6 +7436,7 @@ fn the_live_chest_furnace_and_table_windows_wear_the_wires_title() {
             "translate".to_string(),
             Nbt::String("container.chest".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(3, 11), None, None, Some(rearm));
     assert!(app.chest_is_live, "the live lane re-took the screen");
@@ -7473,6 +7478,7 @@ fn the_player_s_own_close_kills_the_live_windows_title() {
             "text".to_string(),
             Nbt::String("Named Store".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(4, 1), None, None, Some(chest.clone()));
     assert_eq!(
@@ -7504,6 +7510,7 @@ fn the_player_s_own_close_kills_the_live_windows_title() {
             "text".to_string(),
             Nbt::String("Smeltery".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(4, 2), None, None, Some(furnace));
     assert_eq!(
@@ -7538,6 +7545,7 @@ fn the_player_s_own_close_kills_the_live_windows_title() {
             "text".to_string(),
             Nbt::String("Workbench".to_string()),
         )])),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(4, 3), None, None, Some(table));
     assert_eq!(
@@ -7596,6 +7604,7 @@ fn the_live_container_drives_the_chest_screen() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest.clone()));
     assert_eq!(
@@ -7639,6 +7648,7 @@ fn the_live_container_drives_the_chest_screen() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
     assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
@@ -7723,6 +7733,7 @@ fn the_wire_dispenser_menu_drives_the_3x3_canvas() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(disp.clone()));
     assert_eq!(
@@ -7775,6 +7786,7 @@ fn the_wire_dispenser_menu_drives_the_3x3_canvas() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
     assert_eq!(app.screen, ScreenKind::Dispenser, "the wired screen stays");
@@ -7874,6 +7886,7 @@ fn the_wire_dispenser_clicks_speak_the_window() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(disp));
     // THE RENDER'S OWN LAYOUT (the hit boxes the render pre-lays —
@@ -7984,6 +7997,7 @@ fn the_dispenser_right_press_the_split_and_the_one_each_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(disp));
     assert_eq!(app.screen, ScreenKind::Dispenser);
@@ -8126,6 +8140,7 @@ fn the_wire_crafting_menu_drives_the_table_screen() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table.clone()));
     assert_eq!(
@@ -8184,6 +8199,7 @@ fn the_wire_crafting_menu_drives_the_table_screen() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
     assert_eq!(app.screen, ScreenKind::Crafting, "the wired screen stays");
@@ -8279,6 +8295,7 @@ fn the_wire_furnace_opens_the_progress_words_bank() {
         bundle_rows: Vec::new(),
         data_slots: vec![180, 200, 90, 200], // lit remaining/total, cook progress/total
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace.clone()));
     assert_eq!(
@@ -8342,6 +8359,7 @@ fn the_wire_furnace_opens_the_progress_words_bank() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
     assert_eq!(app.screen, ScreenKind::Furnace, "the wired screen stays");
@@ -8417,6 +8435,7 @@ fn the_wire_furnace_the_shift_click_the_deltas_wear() {
         bundle_rows: Vec::new(),
         data_slots: vec![180, 200, 90, 200],
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     assert_eq!(app.screen, ScreenKind::Furnace);
@@ -8513,6 +8532,7 @@ fn the_wire_furnace_drop_key_the_fuel_the_result_and_the_hud_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
@@ -8610,6 +8630,7 @@ fn the_wire_furnace_drop_key_the_gates_and_the_silences_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     app.furnace_slot_rects = vec![(100, 100, 1)];
@@ -8766,6 +8787,7 @@ fn the_furnace_swap_key_the_table_the_hud_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
@@ -8862,6 +8884,7 @@ fn the_furnace_swap_key_the_split_law_and_the_seat_verdicts_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     app.furnace_slot_rects = vec![(100, 100, 12), (140, 100, 1), (180, 100, 0), (220, 100, 2)];
@@ -8989,6 +9012,7 @@ fn the_furnace_swap_key_the_gates_and_the_always_packet_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     app.furnace_slot_rects = vec![(100, 100, 12), (140, 100, 31)];
@@ -9107,6 +9131,7 @@ fn the_wire_table_clicks_speak_the_window() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     let table2 = table.clone(); // the re-arm's own fresh window
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
@@ -9240,6 +9265,7 @@ fn the_slot_click_rides_the_send_lane() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest);
@@ -9366,6 +9392,7 @@ fn escape_echoes_the_close_packet() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest);
@@ -9418,6 +9445,7 @@ fn the_prediction_believes_and_the_correction_overrules() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest);
@@ -9485,6 +9513,7 @@ fn the_prediction_believes_and_the_correction_overrules() {
         state_id: 12,
         bundle_rows: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 2), None, None, Some(truth));
     assert_eq!(app.chest_slots[9], (0, 0), "the prediction's merge is gone");
@@ -9545,6 +9574,7 @@ fn the_right_press_splits_and_places_one() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest);
@@ -9646,6 +9676,7 @@ fn the_shift_click_moves_the_whole_stack() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
     assert_eq!(app.screen, ScreenKind::Chest);

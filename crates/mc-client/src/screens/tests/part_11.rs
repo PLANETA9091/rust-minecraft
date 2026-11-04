@@ -11430,6 +11430,7 @@ fn the_anvil_wire_route_the_menu_type8_wear() {
         state_id: 7,
         data_slots: Vec::new(),
         title_nbt: nbt,
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Anvil, "the route the anvil opens");
     assert!(app.anvil_is_live, "the live flag the route wears");
@@ -20736,6 +20737,7 @@ fn the_wire_hopper_the_door_the_five_wears() {
             state_id: 9,
             data_slots: Vec::new(),
             title_nbt: Vec::new(),
+            merchant: None,
         }));
     };
     // ARM A — THE DOOR (the OpenScreen word the hopper's own menu the
@@ -20784,6 +20786,7 @@ fn the_wire_hopper_the_door_the_five_wears() {
         state_id: 12,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(!app.chest_window_hopper, "the chest canvas the guard keeps");
     assert_eq!(app.chest_slots.len(), 27, "the 63-law the chest keeps");
@@ -21818,6 +21821,7 @@ fn the_anvil_wire_wholesale_the_kind_landing_wears() {
         state_id: state,
         data_slots: Vec::new(),
         title_nbt: nbt.clone(),
+        merchant: None,
     };
     // the stale words the prior window's own ride left (the trio +
     // the carried the seat store banks, the mirror row the INVENTORY
@@ -22487,6 +22491,7 @@ fn the_furnace_trio_the_kind_bank_wears() {
         state_id: 1,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.furnace_seat_potion_kinds, [none; 3],
@@ -26134,6 +26139,7 @@ fn the_enchant_gather_the_wire_half_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -26337,6 +26343,7 @@ fn the_enchant_gather_the_wire_half_wears() {
         state_id: 3,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.enchant_is_live, "the reopen the live flag wears");
     assert_eq!(app.enchant_live_window, Some((5, 3)), "the fresh identity");
@@ -26385,6 +26392,7 @@ fn the_enchant_costs_the_data_words_wear() {
         state_id: 9,
         data_slots: vec![7, 13, 30, 4660],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Enchanting, "the route opens");
     assert_eq!(
@@ -26433,6 +26441,7 @@ fn the_enchant_costs_the_data_words_wear() {
         state_id: 4,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.enchant_seed, 0, "the stale seed the fresh open retires");
     assert_eq!(
@@ -26459,6 +26468,7 @@ fn the_enchant_costs_the_data_words_wear() {
         state_id: 5,
         data_slots: vec![3, 9, 21, 77],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.enchanting_costs,
@@ -26490,6 +26500,7 @@ fn the_enchant_costs_the_data_words_wear() {
         state_id: 6,
         data_slots: vec![7, 13, 30, 4660],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.enchanting_costs,
@@ -26540,6 +26551,7 @@ fn the_enchant_pickup_the_wire_echo_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Enchanting, "the route opens");
     assert!(app.enchant_is_live, "the live flag the route wears");
@@ -26732,6 +26744,7 @@ fn the_enchant_pickup_the_wire_echo_wears() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.enchant_slots[0],
@@ -26782,6 +26795,7 @@ fn the_enchant_option_the_wire_click_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.enchant_is_live, "the live flag the route wears");
     assert_eq!(
@@ -26913,6 +26927,7 @@ fn the_enchant_option_the_wire_click_wears() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.enchant_slots[0],
@@ -26967,6 +26982,7 @@ fn the_brewing_stand_the_wire_lane_wears() {
         state_id: 9,
         data_slots: vec![400, 20],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.brewing_is_live, "the live flag the route wears");
     assert_eq!(
@@ -27177,6 +27193,7 @@ fn the_brewing_stand_the_wire_lane_wears() {
         state_id: 10,
         data_slots: vec![0, 19],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.brewing_is_live, "the flag the route re-arms");
     assert_eq!(
@@ -27242,6 +27259,7 @@ fn the_brewing_stand_the_wire_title_wears() {
             state_id: 9,
             data_slots: Vec::new(),
             title_nbt: title,
+            merchant: None,
         }
     };
     let mut app = App::new(3);
@@ -27365,6 +27383,7 @@ fn the_brewing_stand_the_swap_key_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.brewing_is_live, "the live flag the route wears");
     assert_eq!(
@@ -27535,6 +27554,7 @@ fn the_hopper_the_wire_title_wears() {
             state_id: 7,
             data_slots: Vec::new(),
             title_nbt: title,
+            merchant: None,
         }
     };
     let mut app = App::new(3);
@@ -27650,6 +27670,7 @@ fn the_brewing_stand_the_wire_throw_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.brewing_is_live, "the live flag the route wears");
     assert_eq!(
@@ -27897,6 +27918,7 @@ fn the_brewing_stand_the_deferred_place_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.brewing_is_live, "the live flag the route wears");
     app.brewing_carried = (dirt, 5);
@@ -28051,6 +28073,7 @@ fn the_enchanting_table_the_deferred_place_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.enchant_is_live, "the live flag the route wears");
     app.enchant_carried = (dirt, 5);
@@ -28199,6 +28222,7 @@ fn the_anvil_the_deferred_place_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.anvil_is_live, "the live flag the route wears");
     app.anvil_carried = (dirt, 5);
@@ -30737,6 +30761,7 @@ fn the_live_quickcraft_the_state_id_ride_wears() {
         state_id: state,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_container_updated(Some(chest(7)));
     assert!(app.chest_is_live, "the live flag the sync wears");
@@ -31126,6 +31151,7 @@ fn the_chest_seats_the_gather_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -31223,6 +31249,7 @@ fn the_chest_seats_the_gather_wears() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(
         !app.chest_doubleclick,
@@ -31407,6 +31434,7 @@ fn the_furnace_seats_the_gather_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -31498,6 +31526,7 @@ fn the_furnace_seats_the_gather_wears() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(
         !app.furnace_doubleclick,
@@ -31682,6 +31711,7 @@ fn the_brewing_seats_the_gather_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -31782,6 +31812,7 @@ fn the_brewing_seats_the_gather_wears() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(
         !app.brewing_doubleclick,
@@ -31966,6 +31997,7 @@ fn the_dispenser_seats_the_gather_wears() {
         state_id: 9,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -32062,6 +32094,7 @@ fn the_dispenser_seats_the_gather_wears() {
         state_id: 10,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(
         !app.dispenser_doubleclick,
@@ -32707,6 +32740,7 @@ fn the_brewing_anvil_windows_the_death_retires() {
         state_id: 5,
         data_slots: vec![100, 3],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -32823,6 +32857,7 @@ fn the_brewing_anvil_windows_the_death_retires() {
         state_id: 6,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.brewing_live_window,
@@ -32862,6 +32897,7 @@ fn the_brewing_anvil_windows_the_death_retires() {
         state_id: 4,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -33130,6 +33166,7 @@ fn the_anvil_wire_open_the_fresh_lay_wears() {
         state_id: 7,
         data_slots: Vec::new(),
         title_nbt: nbt.clone(),
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Anvil, "the route the anvil opens");
     assert_eq!(
@@ -33185,6 +33222,7 @@ fn the_anvil_wire_open_the_fresh_lay_wears() {
         state_id: 11,
         data_slots: Vec::new(),
         title_nbt: nbt,
+        merchant: None,
     }));
     assert_eq!(
         app.anvil_live_window,
@@ -33238,6 +33276,7 @@ fn the_anvil_death_the_field_words_retire() {
         state_id: 4,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -33309,6 +33348,7 @@ fn the_anvil_death_the_field_words_retire() {
         state_id: 7,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert!(app.anvil_is_live, "the fresh window the flag re-wears");
     app.anvil_name = "Second Word".to_string();
@@ -33351,6 +33391,7 @@ fn the_anvil_cost_the_wire_word_wears() {
         state_id: 4,
         data_slots: vec![5],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -33373,6 +33414,7 @@ fn the_anvil_cost_the_wire_word_wears() {
         state_id: 5,
         data_slots: vec![7],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.anvil_cost, 7, "the recomputed word the re-sync banks");
 
@@ -33390,6 +33432,7 @@ fn the_anvil_cost_the_wire_word_wears() {
         state_id: 6,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.anvil_cost, 0, "the absent word the honest zero keeps");
 }
@@ -33428,6 +33471,7 @@ fn the_anvil_close_the_wire_echo_wears() {
         state_id: 4,
         data_slots: vec![5],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Anvil, "the route the window opens");
     assert!(app.anvil_is_live, "the live flag the route wears");
@@ -33820,6 +33864,7 @@ fn the_beacon_wire_route_the_menu_type9_wears() {
         state_id: 7,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Beacon, "the route the beacon opens");
     assert!(app.beacon_is_live, "the live flag the route wears");
@@ -33950,6 +33995,7 @@ fn the_beacon_wire_route_the_menu_type9_wears() {
         state_id: 1,
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -34057,6 +34103,7 @@ fn the_beacon_powers_the_wire_words_wear() {
         state_id: 3,
         data_slots: vec![3, 5, 7],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(app.screen, ScreenKind::Beacon, "the route the beacon opens");
     assert_eq!(
@@ -34086,6 +34133,7 @@ fn the_beacon_powers_the_wire_words_wear() {
         state_id: 1,
         data_slots: vec![2, 0, -1],
         title_nbt: Vec::new(),
+        merchant: None,
     }));
     assert_eq!(
         app.screen,
@@ -34161,5 +34209,320 @@ fn the_beacon_powers_the_wire_words_wear() {
         app2.screen,
         ScreenKind::World,
         "the offline confirm the close tail answers"
+    );
+}
+
+/// THE MERCHANT'S OWN OFFERS WIRE (javap the 26.2 jar — the
+/// ClientboundMerchantOffersPacket the private decode ctor's own
+/// six-lane walk banks, the MerchantOffer.createFromStream the
+/// ItemCost/ItemStack/Optional-Cost triple + the boolean/scalar tail
+/// carries, the handleMerchantOffers consumer the id+instanceof gate
+/// the five setters serve): the arms wear — the WIRE's own byte law
+/// [the offer's triple the decode banks, the scalars the BE lanes
+/// carry, the tails the VarInt/Boolean pair wears], the COLLECTION'S
+/// own refusal [the negative count the Illegal-Capacity lane
+/// speaks], the STORE's own gate [the merchant window the bank
+/// wears, the mismatched id the silent drop keeps, the non-merchant
+/// window the same id the instanceof mirror refuses], the APP's own
+/// walk [the route the menu type 18 opens, the bank the refresh
+/// re-lays, the press's own wire the Select Trade packet speaks,
+/// the close the world answers], the SELECT's own byte law [the
+/// packet id 51 the lead speaks, the index the VarInt lane
+/// carries].
+#[test]
+fn the_merchant_offers_the_wire_words_wear() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    use mc_protocol::varint::write_varint;
+    // THE WIRE'S OWN BYTE LAW (the offer's own payload the hand
+    // lays — the triple the decode banks, the scalars the BE lanes
+    // carry)
+    let mut p = Vec::new();
+    write_varint(&mut p, 52); // the packet's own id
+    write_varint(&mut p, 3); // the container id
+    write_varint(&mut p, 1); // the offers' own count
+
+    // the offer's own triple: costA (5, 2, no predicate words)
+    write_varint(&mut p, 5);
+    write_varint(&mut p, 2);
+    write_varint(&mut p, 0);
+    // the result (the OPTIONAL stack the count leads: 1, item 7,
+    // the empty patch the fresh stack wears)
+    write_varint(&mut p, 1);
+    write_varint(&mut p, 7);
+    write_varint(&mut p, 0); // added
+    write_varint(&mut p, 0); // removed
+
+    // the OPTIONAL costB (the presence Boolean the value precedes)
+    p.push(1);
+    write_varint(&mut p, 9);
+    write_varint(&mut p, 1);
+    write_varint(&mut p, 0);
+    p.push(0); // the out-of-stock word
+    p.extend_from_slice(&3i32.to_be_bytes()); // uses
+    p.extend_from_slice(&4i32.to_be_bytes()); // maxUses
+    p.extend_from_slice(&5i32.to_be_bytes()); // xp
+    p.extend_from_slice(&(-1i32).to_be_bytes()); // specialPriceDiff
+    p.extend_from_slice(&1.0f32.to_be_bytes()); // priceMultiplier
+    p.extend_from_slice(&2i32.to_be_bytes()); // demand
+    write_varint(&mut p, 2); // the villager level
+    write_varint(&mut p, 17); // the villager xp
+    p.push(1); // showProgress
+    p.push(0); // canRestock
+    let pkt = mc_protocol::play::parse_merchant_offers(&p).expect("the payload the parse banks");
+    assert_eq!(pkt.container_id, 3, "the window id the lane banks");
+    assert_eq!(pkt.offers.len(), 1, "the collection the decode banks");
+    let offer = &pkt.offers[0];
+    assert_eq!(
+        (offer.cost_a.item_id, offer.cost_a.count),
+        (5, 2),
+        "the first cost the triple banks"
+    );
+    assert!(
+        offer.cost_a.predicate.is_empty(),
+        "the empty predicate the no-arg list keeps"
+    );
+    assert_eq!(
+        (offer.result.count, offer.result.item_id),
+        (1, 7),
+        "the product the stack lane banks"
+    );
+    assert_eq!(
+        offer.cost_b.as_ref().map(|b| (b.item_id, b.count)),
+        Some((9, 1)),
+        "the optional cost the presence byte answers"
+    );
+    assert!(!offer.out_of_stock, "the stock word the byte keeps");
+    assert_eq!(offer.uses, 3, "the uses the BE lane carries");
+    assert_eq!(offer.max_uses, 4, "the max uses the BE lane carries");
+    assert_eq!(offer.xp, 5, "the xp the BE lane carries");
+    assert_eq!(
+        offer.special_price_diff, -1,
+        "the special diff the SIGNED lane carries"
+    );
+    assert!(
+        (offer.price_multiplier - 1.0).abs() < 1e-6,
+        "the multiplier the float lane carries"
+    );
+    assert_eq!(offer.demand, 2, "the demand the BE lane carries");
+    assert_eq!(pkt.villager_level, 2, "the level the VarInt tail banks");
+    assert_eq!(pkt.villager_xp, 17, "the xp the VarInt tail banks");
+    assert!(pkt.show_progress, "the progress word the byte keeps");
+    assert!(!pkt.can_restock, "the restock word the byte keeps");
+
+    // THE COLLECTION'S OWN REFUSAL (the negative count the
+    // Illegal-Capacity lane speaks — the refusal BEFORE any entry
+    // is read)
+    let mut bad = Vec::new();
+    write_varint(&mut bad, 52);
+    write_varint(&mut bad, 3);
+    write_varint(&mut bad, -1);
+    assert!(
+        mc_protocol::play::parse_merchant_offers(&bad).is_err(),
+        "the negative count the parse refuses"
+    );
+
+    // THE STORE'S OWN GATE (the handleMerchantOffers walk the
+    // model's bank mirrors — the merchant window the five setters
+    // serve, the mismatched id the silent drop keeps, the
+    // non-merchant window the same id the instanceof mirror refuses)
+    let mut m = crate::world_model::WorldModel::new();
+    m.apply(mc_protocol::play::PlayEvent::ScreenOpened(
+        mc_protocol::play::OpenScreen {
+            container_id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+            title_nbt: vec![0x0A, 0x00],
+        },
+    ));
+    assert!(
+        m.apply(mc_protocol::play::PlayEvent::MerchantOffers(pkt.clone())),
+        "the merchant window the packet banks"
+    );
+    {
+        let oc = m.open_container().expect("the window the store keeps");
+        assert_eq!(oc.merchant.offers.len(), 1, "the offers the bank wears");
+        assert_eq!(oc.merchant.level, 2, "the level the setter banks");
+        assert_eq!(oc.merchant.xp, 17, "the xp the setter banks");
+        assert!(oc.merchant.show_progress, "the progress the setter banks");
+        assert!(!oc.merchant.can_restock, "the restock the setter banks");
+    }
+    // THE MISMATCHED ID'S OWN DROP (the id 4 the gate refuses — the
+    // bank the prior word keeps)
+    let mut wrong = pkt.clone();
+    wrong.container_id = 4;
+    assert!(
+        !m.apply(mc_protocol::play::PlayEvent::MerchantOffers(wrong)),
+        "the mismatched window the silent drop keeps"
+    );
+    assert_eq!(
+        m.open_container().unwrap().merchant.level,
+        2,
+        "the bank the drop never moves"
+    );
+    // THE NON-MERCHANT WINDOW'S OWN REFUSAL (the instanceof mirror —
+    // the chest window the same id wears the packet refuses)
+    m.apply(mc_protocol::play::PlayEvent::ContainerClosed(
+        mc_protocol::play::ContainerClose { container_id: 3 },
+    ));
+    m.apply(mc_protocol::play::PlayEvent::ScreenOpened(
+        mc_protocol::play::OpenScreen {
+            container_id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            title_nbt: vec![0x0A, 0x00],
+        },
+    ));
+    let mut chest_id = pkt.clone();
+    chest_id.container_id = 3;
+    assert!(
+        !m.apply(mc_protocol::play::PlayEvent::MerchantOffers(chest_id)),
+        "the non-merchant window the instanceof mirror refuses"
+    );
+
+    // THE APP'S OWN WALK (the route the menu type 18 opens — the
+    // slots the menu's own numbering pads, the bank the refresh
+    // re-lays, the press's own wire the Select Trade packet speaks,
+    // the close the world answers)
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0, 0); 39];
+    slots[0] = (emerald, 4);
+    slots[1] = (0, 0);
+    slots[2] = (bread, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 3,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(crate::world_view::MerchantView {
+            offers: vec![crate::world_view::MerchantOfferView {
+                cost_a: (emerald, 4),
+                cost_b: None,
+                result: (bread, 1),
+                out_of_stock: false,
+                uses: 0,
+                max_uses: 4,
+            }],
+            level: 2,
+            xp: 17,
+            show_progress: true,
+            can_restock: false,
+        }),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Merchant,
+        "the route the merchant opens"
+    );
+    assert_eq!(
+        app.merchant_slots.len(),
+        39,
+        "the layout's own padding wears"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 4),
+        "the input the seat banks"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the result the seat banks"
+    );
+    assert_eq!(app.merchant_offers.len(), 1, "the offers the bank re-lays");
+    assert_eq!(app.merchant_level, 2, "the level the word re-lays");
+    assert!(app.merchant_show_progress, "the progress the word re-lays");
+    assert!(rx.try_recv().is_err(), "the open no echo mints");
+    // THE PRESS'S OWN WIRE (the postButtonClick walk — the row's
+    // index the shopItem banks, the Select Trade packet the send
+    // tail speaks; the SEATS the render's own walk lays the headless
+    // test the same rects keeps)
+    app.merchant_row_rects = vec![(100, 100, 0), (100, 120, 1)];
+    let (rx_x, ry_y, idx) = app.merchant_row_rects[0];
+    assert!(
+        app.merchant_widget_press(rx_x + 4, ry_y + 4),
+        "the row's seat the press consumes"
+    );
+    assert_eq!(app.merchant_selected, idx, "the selection the press banks");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SelectTrade { item } => {
+            assert_eq!(item, 0, "the pressed row's index the packet carries");
+        }
+        other => panic!("the press the Select Trade speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the press no second echo mints");
+    // THE OFFLINE STAND-IN'S OWN WALK (the fields the offline canvas
+    // wears directly — NO wire open the live flag never wears: the
+    // press the local bank keeps, the wire the session never wears,
+    // the close the input drops the removed() walk serves [the
+    // removeItemNoUpdate pair the player.drop entity spawns])
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app2.live_clicks = Some(tx2);
+    app2.screen = ScreenKind::Merchant;
+    app2.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app2.merchant_slots = vec![(emerald, 4), (0, 0), (bread, 1)];
+    app2.merchant_row_rects = vec![(100, 100, 0), (100, 120, 1)];
+    assert!(
+        !app2.merchant_is_live,
+        "the offline canvas the live flag never wears"
+    );
+    let (rx2x, ry2y, _) = app2.merchant_row_rects[1];
+    assert!(app2.merchant_widget_press(rx2x + 4, ry2y + 4));
+    assert_eq!(
+        app2.merchant_selected, 1,
+        "the offline press the bank keeps"
+    );
+    assert!(
+        rx2.try_recv().is_err(),
+        "the offline press no wire word mints"
+    );
+    app2.close_merchant(ScreenKind::World);
+    assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
+    assert_eq!(
+        app2.screen,
+        ScreenKind::World,
+        "the close the world answers"
+    );
+    assert!(app2.merchant_slots.is_empty(), "the bank the close drops");
+    assert_eq!(
+        app2.drops.len(),
+        1,
+        "the emerald input the ground drop wears"
+    );
+    // THE CLOSE'S OWN WALK (the live lane the ContainerClose echo
+    // answers — the belief resets with the window, the world the
+    // open(back) returns)
+    app.close_merchant(ScreenKind::World);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 5, "the window id the echo answers");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+    assert!(!app.merchant_is_live, "the close the live flag retires");
+    assert!(app.merchant_offers.is_empty(), "the bank the close drops");
+
+    // THE SELECT'S OWN BYTE LAW (the encode's own shape the VarInt
+    // pair wears — the packet id 51 the lead speaks, the index the
+    // VarInt lane carries)
+    assert_eq!(
+        mc_protocol::play::encode_select_trade(0),
+        vec![51, 0],
+        "the zero row the bytes wear"
+    );
+    assert_eq!(
+        mc_protocol::play::encode_select_trade(6),
+        vec![51, 6],
+        "the sixth row the bytes wear"
     );
 }

@@ -134,6 +134,7 @@ fn the_wire_table_cake_the_remainders_rid() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);
@@ -198,6 +199,7 @@ fn the_wire_table_cake_the_remainders_rid() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 2), None, None, Some(table2));
     app.on_press(px + 124 + 1 + 8, py + 35 + 1 + 8);
@@ -2466,6 +2468,7 @@ fn the_wire_table_drop_key_the_cells_the_store_the_hud_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -2540,6 +2543,7 @@ fn the_wire_table_drop_key_the_gates_and_the_silences_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);
@@ -2960,6 +2964,7 @@ fn the_container_clone_arm_the_furnace_the_chest_the_table_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -3441,6 +3446,7 @@ fn the_container_f_arm_the_offhand_row_and_the_changed_map_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
@@ -3508,6 +3514,7 @@ fn the_container_f_arm_the_verdicts_and_the_split_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
     app.furnace_slot_rects = vec![(100, 100, 0), (140, 100, 1), (180, 100, 2)];
@@ -3585,6 +3592,7 @@ fn the_container_f_arm_the_verdicts_and_the_split_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -3730,6 +3738,7 @@ fn the_table_swap_key_the_table_the_hud_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -3826,6 +3835,7 @@ fn the_table_swap_key_the_split_law_and_the_result_on_take_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);
@@ -3947,6 +3957,7 @@ fn the_table_swap_key_the_gates_and_the_always_packet_wear() {
         bundle_rows: Vec::new(),
         data_slots: Vec::new(),
         title_nbt: Vec::new(),
+        merchant: None,
     };
     app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
     app.table_panel = inventory_panel_origin(640, 360);

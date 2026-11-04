@@ -109,6 +109,7 @@ pub mod clientbound {
         CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT, CB_SET_HELD_SLOT as SET_HELD_SLOT,
         CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
         CB_CONTAINER_SET_DATA as CONTAINER_SET_DATA,
+        CB_MERCHANT_OFFERS as MERCHANT_OFFERS,
         CB_SET_TIME as SET_TIME,
         CB_GAME_EVENT as GAME_EVENT,
         CB_PLAYER_ABILITIES as PLAYER_ABILITIES,
@@ -159,7 +160,7 @@ pub mod serverbound {
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
-        SB_SET_BEACON as SET_BEACON,
+        SB_SET_BEACON as SET_BEACON, SB_SELECT_TRADE as SELECT_TRADE,
         SB_CHAT as CHAT, SB_CHAT_COMMAND as CHAT_COMMAND,
         SB_COMMAND_SUGGESTION as COMMAND_SUGGESTION,
     };
@@ -9567,6 +9568,199 @@ pub fn parse_set_container_slot(payload: &[u8]) -> Result<ContainerSetSlot> {
     Ok(ContainerSetSlot { container_id, state_id, slot, item })
 }
 
+/// THE MERCHANT'S OWN COST WORD (javap of `ItemCost` — the record's
+/// own STREAM_CODEC composite the static block speaks:
+/// `composite(Item.STREAM_CODEC, ByteBufCodecs.VAR_INT,
+/// DataComponentExactPredicate.STREAM_CODEC, ...)` — the holder
+/// VarInt item id, the VarInt count, and the EXACT-PREDICATE list
+/// the trade's component match wears). The predicate's list lane is
+/// `ByteBufCodecs.list()` — the no-arg VarInt-size list the house
+/// count law keeps — whose ENTRIES ride the `TypedDataComponent`
+/// anonymous StreamCodec walk (javap of `TypedDataComponent$1`): the
+/// `DataComponentType.STREAM_CODEC` VarInt id + the type's own
+/// stream codec value — EXACTLY the pair walk the component patch's
+/// added entries speak, the same [`read_component_value`] dispatch
+/// the honest reuse banks.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ItemCost {
+    /// The item's registry id — the holder VarInt lane (the plain id
+    /// the `ByteBufCodecs.holderRegistry` decode resolves).
+    pub item_id: i32,
+    /// The cost's stack size — the VarInt count lane.
+    pub count: i32,
+    /// The exact-predicate's typed entries in wire order — the
+    /// `(type_id, value)` pairs the component-value dispatch decodes.
+    pub predicate: Vec<(i32, ComponentValue)>,
+}
+
+/// The ItemCost's wire walk (see [`ItemCost`] — the three-lane
+/// composite, the no-arg list's ceiling the predicate keeps).
+fn read_item_cost(c: &mut &[u8]) -> Result<ItemCost> {
+    let item_id = read_varint(c)?;
+    anyhow::ensure!(item_id >= 0, "negative item registry id {item_id}");
+    let count = read_varint(c)?;
+    anyhow::ensure!(count >= 0, "negative item cost count {count}");
+    let n = read_component_count(c, "merchant-cost-predicate")?;
+    let mut predicate = Vec::new();
+    for _ in 0..n {
+        let type_id = read_varint(c)?;
+        anyhow::ensure!(type_id >= 0, "negative component type id {type_id}");
+        let value = read_component_value(type_id, c, 0)?;
+        predicate.push((type_id, value));
+    }
+    Ok(ItemCost {
+        item_id,
+        count,
+        predicate,
+    })
+}
+
+/// THE MERCHANT'S OWN OFFER WORD (javap of `MerchantOffer`
+/// `createFromStream` — the static StreamCodec's decode lambda the
+/// dump banks, the wire order verbatim): the base cost A rides
+/// `ItemCost.STREAM_CODEC`, the RESULT rides the plain
+/// `ItemStack.STREAM_CODEC` (the full optional-stack walk the
+/// container slots speak), the cost B rides
+/// `ItemCost.OPTIONAL_STREAM_CODEC` (the Boolean-prefixed optional
+/// the composite's own apply wears), then the boolean out-of-stock
+/// word and the FIVE int/float scalars the readInt/readFloat lane
+/// carries — uses, maxUses, xp, specialPriceDiff, priceMultiplier,
+/// demand (the ctor's `(ItemCost, Optional, ItemStack, IIIFI)`
+/// shape the bytecode's iload/alloaddance answers).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MerchantOffer {
+    /// The first buy cost — the ItemCost composite the wire leads
+    /// with.
+    pub cost_a: ItemCost,
+    /// The trade's product — the full ItemStack walk (the optional
+    /// stack lane the container slots speak).
+    pub result: ItemStack,
+    /// The optional second buy cost — the Boolean-prefixed
+    /// `ItemCost.OPTIONAL_STREAM_CODEC` cargo.
+    pub cost_b: Option<ItemCost>,
+    /// The out-of-stock word (the boolean the decode reads BEFORE
+    /// the scalars; the vanilla walk calls `setToOutOfStock` when
+    /// set).
+    pub out_of_stock: bool,
+    /// The trade's uses count — the first readInt.
+    pub uses: i32,
+    /// The trade's max uses — the second readInt.
+    pub max_uses: i32,
+    /// The trade's xp reward — the third readInt.
+    pub xp: i32,
+    /// The special-price diff — the fourth readInt.
+    pub special_price_diff: i32,
+    /// The price multiplier — the readFloat.
+    pub price_multiplier: f32,
+    /// The demand word — the last readInt.
+    pub demand: i32,
+}
+
+/// THE MERCHANT'S OWN OFFERS PACKET (clientbound play, generated id
+/// 52 — `minecraft:merchant_offers`): the villager trade window's
+/// own bank ride. javap of the private decode constructor: the
+/// containerId rides `readContainerId` (the VarInt lane), the offers
+/// ride `MerchantOffers.STREAM_CODEC` — whose static block composes
+/// `MerchantOffer.STREAM_CODEC` through `ByteBufCodecs.collection`
+/// (the VarInt-size list the house law keeps) — then the villager
+/// level + xp VarInt pair and the showProgress + canRestock boolean
+/// pair. The CONSUMER's gate (javap of
+/// `ClientPacketListener.handleMerchantOffers`): the packet's id
+/// compares against `containerMenu.containerId` AND the menu must
+/// `instanceof MerchantMenu` — the mismatched window the silent
+/// drop keeps (the if_icmpne/ifeq falls through to return); the
+/// match calls setOffers/setXp/setMerchantLevel/setShowProgressBar/
+/// setCanRestock — the model's bank walk mirrors the five setters.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MerchantOffersPacket {
+    /// The window id the offers belong to — the VarInt lane.
+    pub container_id: i32,
+    /// The trade offers in wire order (the collection's own
+    /// VarInt-size list).
+    pub offers: Vec<MerchantOffer>,
+    /// The villager's trading level (1..5) — the first VarInt tail.
+    pub villager_level: i32,
+    /// The villager's xp — the second VarInt tail.
+    pub villager_xp: i32,
+    /// The show-progress-bar word — the first Boolean tail.
+    pub show_progress: bool,
+    /// The can-restock word — the second Boolean tail.
+    pub can_restock: bool,
+}
+
+/// Merchant Offers' wire walk (see [`MerchantOffersPacket`] — the
+/// id guard, the collection refusal, the six-lane tail).
+pub fn parse_merchant_offers(payload: &[u8]) -> Result<MerchantOffersPacket> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::MERCHANT_OFFERS,
+        "not a merchant offers packet (0x{id:02X})"
+    );
+    let container_id = read_varint(&mut c)?;
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        count >= 0,
+        "collection count {count} is negative — the vanilla collection \
+         constructor refuses (Illegal Capacity) before any entry is read"
+    );
+    let mut offers = Vec::new();
+    for _ in 0..count {
+        let cost_a = read_item_cost(&mut c)?;
+        let result = read_item_stack(&mut c)?;
+        let has_b = read_bool(&mut c)?;
+        let cost_b = if has_b {
+            Some(read_item_cost(&mut c)?)
+        } else {
+            None
+        };
+        let out_of_stock = read_bool(&mut c)?;
+        let uses = read_i32(&mut c)?;
+        let max_uses = read_i32(&mut c)?;
+        let xp = read_i32(&mut c)?;
+        let special_price_diff = read_i32(&mut c)?;
+        let price_multiplier = read_f32(&mut c)?;
+        let demand = read_i32(&mut c)?;
+        offers.push(MerchantOffer {
+            cost_a,
+            result,
+            cost_b,
+            out_of_stock,
+            uses,
+            max_uses,
+            xp,
+            special_price_diff,
+            price_multiplier,
+            demand,
+        });
+    }
+    let villager_level = read_varint(&mut c)?;
+    let villager_xp = read_varint(&mut c)?;
+    let show_progress = read_bool(&mut c)?;
+    let can_restock = read_bool(&mut c)?;
+    Ok(MerchantOffersPacket {
+        container_id,
+        offers,
+        villager_level,
+        villager_xp,
+        show_progress,
+        can_restock,
+    })
+}
+
+/// THE TRADE'S OWN SELECT WIRE (javap of
+/// `ServerboundSelectTradePacket.write` — the record's ONE field the
+/// `writeVarInt` lane carries: the selected offer's INDEX the
+/// `MerchantScreen.postButtonClick` walk sends — the
+/// `setSelectionHint(shopItem)` + `tryMoveItems(shopItem)` pair the
+/// menu's local halves bank, the packet the send tail speaks).
+pub fn encode_select_trade(item: i32) -> Vec<u8> {
+    let mut p = Vec::new();
+    write_varint(&mut p, serverbound::SELECT_TRADE);
+    write_varint(&mut p, item);
+    p
+}
+
 /// Set Held Slot (clientbound play, generated id 105 —
 /// `minecraft:set_held_slot`): the hotbar's SELECTED slot — the
 /// number-keys row's other half (the slot CONTENTS ride the container
@@ -11403,6 +11597,11 @@ pub enum PlayEvent {
     /// bare-VarInt window id (the model consumes it in the
     /// open-container arm).
     ContainerClosed(ContainerClose),
+    /// Merchant Offers: the villager trade window's own bank ride —
+    /// the offers + the level/xp/flag tail (the model consumes it in
+    /// the open-container arm; the id + menu-type gate the
+    /// handleMerchantOffers walk speaks).
+    MerchantOffers(MerchantOffersPacket),
     /// Set Container Data: ONE menu data slot's new value — the
     /// furnace progress family's own wire transport (the ubyte window
     /// + the two BE shorts; NO revision counter — the data words are
@@ -11642,6 +11841,9 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::OPEN_SCREEN => {
                 Ok(PlayEvent::ScreenOpened(parse_open_screen(&pkt)?))
             }
+            clientbound::MERCHANT_OFFERS => {
+                Ok(PlayEvent::MerchantOffers(parse_merchant_offers(&pkt)?))
+            }
             clientbound::CONTAINER_CLOSE => {
                 Ok(PlayEvent::ContainerClosed(parse_container_close(&pkt)?))
             }
@@ -11812,6 +12014,18 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_set_beacon(primary, secondary))
             .context("send set beacon")
+    }
+
+    /// The trade's OWN select word (the vanilla
+    /// `MerchantScreen.postButtonClick`'s echo — the
+    /// ServerboundSelectTradePacket the pressed row's index rides;
+    /// the menu's setSelectionHint/tryMoveItems pair the client-local
+    /// halves bank BEFORE the send, the prediction-free lane the
+    /// server's own slot echo answers).
+    pub fn select_trade(&mut self, item: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_select_trade(item))
+            .context("send select trade")
     }
 
     /// The player's right-mouse USE (the vanilla gameMode.useItem's own
