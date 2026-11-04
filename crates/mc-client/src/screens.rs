@@ -9840,6 +9840,22 @@ pub struct App {
     /// pickup/split predictions mutate — the close's add-back walk
     /// returns it).
     pub anvil_carried: (i32, i32),
+    /// THE ANVIL SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the anvil's own
+    /// copy banks — the press walk arms it, the release walk's
+    /// PICKUP_ALL arm the gather speaks through it, the arm's own
+    /// false clears: the autopush-451 round the spread the repair
+    /// menu answers — the canTakeItemForPickAll the result seat
+    /// alone refuses [the slot.container != resultSlots the vanilla
+    /// override speaks], the whole 38 the rest answers)
+    pub anvil_doubleclick: bool,
+    /// THE ANVIL SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the anvil's own copy banks — the menu
+    /// id the anvil numbering keys [0/1 the inputs speak, 2 the
+    /// result, 3..38 the mirror rows], the next press's flag compute
+    /// compares it against the new hover, the open + the close the
+    /// resets speak)
+    pub anvil_last_click_slot: Option<usize>,
     /// The anvil's slot hit boxes the LAST render laid out: (x, y, the
     /// MENU's own slot number) — the trio (the inputs 0/1 the
     /// (27, 47)/(76, 47) seats the result 2 the (134, 47) seat, the
@@ -13399,6 +13415,8 @@ impl App {
             anvil_result: (0, 0),
             anvil_mirror: Vec::new(),
             anvil_carried: (0, 0),
+            anvil_doubleclick: false,
+            anvil_last_click_slot: None,
             anvil_slot_rects: Vec::new(),
             anvil_panel: (0, 0),
             anvil_name: String::new(),
@@ -24305,6 +24323,13 @@ impl App {
             // the whole 37 keeps [the override census the merchant +
             // the craft family alone refuses])
             self.on_beacon_release_pickup_all()
+        } else if self.screen == ScreenKind::Anvil {
+            // THE ANVIL GATHER'S OWN ARM (the 450 beacon round's own
+            // shape the repair menu re-wears — the flag the press
+            // armed, the canTakeItemForPickAll the RESULT seat alone
+            // refuses [the slot.container != resultSlots the vanilla
+            // override speaks], the whole 38 the rest answers)
+            self.on_anvil_release_pickup_all()
         } else {
             false
         };
@@ -26255,6 +26280,170 @@ impl App {
         // click walk's own tail the projection re-speaks, the HUD row
         // the hotbar's own answer follows)
         self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE ANVIL GATHER'S OWN RELEASE ARM (the 450 beacon round's own
+    /// shape the repair menu re-wears — the mouseReleased walk pcs
+    /// 64-240 the doubleclick flag the gate keeps, the hovered seat's
+    /// canTakeItemForPickAll the anvil's own override the RESULT seat
+    /// alone refuses [the slot.container != resultSlots the vanilla
+    /// verdict speaks], the flag the arm's own clear the release
+    /// speaks, the true the release CONSUMED [the goto 452 the
+    /// quickcraft lane the pc 246 verdict never enters]). THE LIVE
+    /// LANE the door the wire session wears — the anvil the dev-202
+    /// route arm opens [the MENU_TYPE_ANVIL the decode banks], the
+    /// wire walk the belief's own snapshot the prediction feeds.
+    fn on_anvil_release_pickup_all(&mut self) -> bool {
+        if !self.anvil_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.anvil_doubleclick = false; // pcs 238-240 — the arm's own clear
+        if self.world_is_network && self.anvil_is_live {
+            self.on_anvil_pickup_all_wire(slot as usize);
+        } else {
+            self.on_anvil_pickup_all_offline(slot as usize);
+        }
+        true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE ANVIL GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
+    /// arm over the anvil menu — [`crate::world_view::
+    /// predict_pickup_all_grid`] the pure walk keeps, the menu's own
+    /// 39 the flat projection feeds [the inputs 0/1 the (27, 47)/
+    /// (76, 47) seats speak, the result 2 the (134, 47) seat the
+    /// REFUSAL's own zero wears — the canTakeItemForPickAll the
+    /// slot.container != resultSlots law the snapshot's empty seat
+    /// speaks, the mirror rows 3..29 the items 9..35 answer, the
+    /// 30..38 the hotbar row the -30 shift keeps]): the same-item
+    /// stacks the gather home pulls, the different-item rows the
+    /// walk never names, the mayPlace the spread never consults [the
+    /// acm_doClick_262.txt the pcs 1754-1791 the gate chain speaks].
+    /// The every-mutation law the write-through the mirror rows
+    /// keeps [the inventory row the mirror cell answers, the HUD row
+    /// the hotbar's own projection follows] — the input seats the
+    /// gather's own pull the same law drains [the trio lanes the
+    /// drained seat the fresh zeros retire], the inputs' own change
+    /// the slotsChanged walk the createResult re-speaks.
+    fn on_anvil_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(39);
+        snapshot.push(self.anvil_slots[0]);
+        snapshot.push(self.anvil_slots[1]);
+        // THE RESULT'S OWN REFUSAL (the canTakeItemForPickAll verdict
+        // the snapshot's own zero seat speaks — the resultSlots
+        // container the gather never names, the compute's own product
+        // the pull never drains)
+        snapshot.push((0, 0));
+        snapshot.extend_from_slice(&self.inventory.items[9..36]);
+        snapshot.extend_from_slice(&self.inventory.items[0..9]);
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &snapshot,
+            self.anvil_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in &changed {
+            let idx = *menu_id as usize;
+            if idx < 2 {
+                self.anvil_slots[idx] = *pair;
+            } else if let Some(inv) = Self::anvil_menu_to_inventory(idx) {
+                self.inventory.items[inv] = *pair;
+            }
+        }
+        self.anvil_carried = carried;
+        // THE TRIO LANES' OWN RETIRE (the drained input the fresh
+        // zeros wear — the hand-over laws the close walk's own clear
+        // re-wears, the result seat the gather never names)
+        for seat in 0..2usize {
+            if self.anvil_slots[seat].1 <= 0 {
+                self.anvil_names[seat] = None;
+                self.anvil_repair_costs[seat] = 0;
+                self.anvil_enchants[seat].clear();
+                self.anvil_seat_potion_kinds[seat] = crate::brewing_sim::POTION_KIND_NONE;
+            }
+        }
+        // THE INPUTS' OWN CHANGE (the slotsChanged walk — the drained
+        // input the createResult re-speaks, the result the fresh
+        // compute wears)
+        if changed.iter().any(|(m, _)| (*m as usize) < 2) {
+            self.anvil_create_result();
+        }
+        // THE MIRROR'S OWN SYNC (the every-mutation law — the walk's
+        // own tail the projection re-speaks, the HUD row the hotbar's
+        // own answer follows)
+        self.anvil_mirror_sync_from_inventory();
+    }
+
+    /// THE ANVIL GATHER'S OWN WIRE WALK (the offline walk's twin over
+    /// the LIVE belief — the dev-202 route arm's own rows the
+    /// snapshot feeds): the belief the prediction answers, the packet
+    /// the command lane speaks (`ContainerInput::PickupAll`, the
+    /// changed map the walk's ACTUAL mutations name — the
+    /// broadcastChanges diff law), the RESULT's own refusal the same
+    /// zero seat the wire snapshot wears [the server's own override
+    /// the pull never names], the no-op gates the ALWAYS-PACKET law
+    /// the swap round banked keeps: the slotClicked call the release
+    /// arm keeps unconditional once the canTakeItemForPickAll gate
+    /// passed, the untouched belief the empty changed map names, the
+    /// HUD row the sync follows.
+    fn on_anvil_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.anvil_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(39);
+        snapshot.push(self.anvil_slots[0]);
+        snapshot.push(self.anvil_slots[1]);
+        // THE RESULT'S OWN REFUSAL (the canTakeItemForPickAll verdict
+        // the snapshot's own zero seat speaks)
+        snapshot.push((0, 0));
+        snapshot.extend_from_slice(&self.anvil_mirror);
+        let (new_carried, changed) = crate::world_view::predict_pickup_all_grid(
+            &snapshot,
+            self.anvil_carried,
+            hovered_menu,
+            0,
+        )
+        .unwrap_or((self.anvil_carried, Vec::new()));
+        for (menu_id, pair) in &changed {
+            let idx = *menu_id as usize;
+            if idx < 2 {
+                self.anvil_slots[idx] = *pair;
+            } else if idx >= 3 && idx - 3 < self.anvil_mirror.len() {
+                self.anvil_mirror[idx - 3] = *pair;
+            }
+        }
+        self.anvil_carried = new_carried;
+        // the HUD row's own sync (the every-mutation law — the hotbar
+        // menu ids 30..38 the mirror rows 27..35 the projection feeds)
+        let mut row = [(0, 0); 9];
+        for (i, cell) in row.iter_mut().enumerate() {
+            *cell = self.anvil_mirror[27 + i];
+        }
+        self.hotbar_slots = row;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried: new_carried,
+            },
+        ));
     }
 
     /// THE WIRE SPREAD'S OWN WALK (the offline walk's twin over the
@@ -30860,6 +31049,13 @@ impl App {
         // OpenScreen word the live lane routes)
         self.anvil_is_live = false;
         self.anvil_live_window = None;
+        // THE STALE GATHER PAIR'S OWN RETIRE (the vanilla fresh-screen
+        // law the 449 hopper round's own answer wears — the armed flag
+        // the gather never rides, the stale seat the first doubled
+        // press never pairs, the one-early gather the stale pair would
+        // speak)
+        self.anvil_doubleclick = false;
+        self.anvil_last_click_slot = None;
         // THE TRANSIENT TRIO (the ItemCombinerMenu's own SimpleContainer(2)
         // the fresh open lays — the input 0 the input 1 the menu
         // numbering banks, the result the walk computes)
@@ -30948,6 +31144,11 @@ impl App {
         self.anvil_repair_item_count = 0;
         self.anvil_is_live = false;
         self.anvil_live_window = None;
+        // THE GATHER PAIR'S OWN DEATH (the removed() walk the 450
+        // beacon round's own reset re-wears — the armed flag + the
+        // stale seat the closed screen never banks)
+        self.anvil_doubleclick = false;
+        self.anvil_last_click_slot = None;
         self.live_anvil_title = None;
         self.anvil_pos = None;
         self.container_removed_rode = true; // the removed law rode
@@ -46323,18 +46524,31 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Anvil {
+            // THE DOUBLE-CLICK FLAG (the enchanting's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.anvil_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.anvil_doubleclick = self.anvil_last_click_slot.is_some()
+                && self.anvil_last_click_slot == hovered_menu
+                && self.press_doubled;
             // THE REPAIR WALK'S OWN PRESS (the same mouseClicked walk
             // the enchanting's gate shape wears — the carried press
             // the drag arms, the carried-empty press the PICKUP
             // dispatch keeps; the rename field the panel's own box —
             // the field's press the caret lane the round's walk
-            // never needs [the tail-append law the field keeps])
+            // never needs [the tail-append law the field keeps]; the
+            // doubled press the release's gather serves)
             let held = self.anvil_carried.1 > 0;
             if held {
                 self.qc_arm_anvil(mx, my, 0);
-            } else {
+            } else if !self.anvil_doubleclick {
                 self.click_anvil_slot(mx, my, 0);
             }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.anvil_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Chest {

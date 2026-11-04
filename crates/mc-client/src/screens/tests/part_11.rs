@@ -32361,3 +32361,287 @@ fn the_beacon_seats_the_gather_wears() {
         "the fresh door the stale seat retires"
     );
 }
+
+/// THE ANVIL SEATS THE GATHER WEARS (the 450 beacon round's own test
+/// shape the repair menu re-wears — the canTakeItemForPickAll the
+/// RESULT seat alone refuses [the slot.container != resultSlots the
+/// vanilla override speaks], the whole 38 the rest answers): the
+/// release's own walk [the pull the cursor grows, the drained row
+/// the write-through keeps, the different row the walk never names,
+/// the HUD row the sync follows, the result seat the gather never
+/// names, the arm's own clear the release speaks], the input's own
+/// pull [the trio lanes the drained seat retires, the slotsChanged
+/// walk the createResult re-speaks], the fresh door's own first
+/// doubled press [the flag the arm never wears, the plain pickup the
+/// press still speaks, the press the seat banks], the press's own
+/// arm [the end-to-end double-click walk, the first press the flag
+/// keeps, the plain press the flag never arms], the wire's own lane
+/// [the belief the walk drains, the packet the PICKUP_ALL speaks],
+/// the close's own reset, the open's own reset [every fresh open
+/// the pair retires].
+#[test]
+fn the_anvil_seats_the_gather_wears() {
+    use crate::world_view::ContainerCommand;
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // THE GEOMETRY THE 26.2 STAND-IN BANKS (the hand-laid rects the
+    // anvil tests keep — the inputs 0/1 the (27, 47)/(76, 47) seats
+    // the result 2 the (134, 47) seat, the main rows the menus 3/4
+    // wear, the hotbar row the menu 30 speaks)
+    let panel = (100, 100);
+    let in0 = (panel.0 + 27 + 1, panel.1 + 47 + 1);
+    let in1 = (panel.0 + 76 + 1, panel.1 + 47 + 1);
+    let res = (panel.0 + 134 + 1, panel.1 + 47 + 1);
+    let row0 = (panel.0 + 8 + 1, panel.1 + 84 + 1);
+    let row1 = (panel.0 + 26 + 1, panel.1 + 84 + 1);
+    let hot0 = (panel.0 + 8 + 1, panel.1 + 142 + 1);
+
+    // APP ARM A — THE RELEASE'S OWN WALK (the armed flag the gather
+    // serves: the empty seat the pull's own home wears, the partial
+    // row the pull drains, the different row the walk never names,
+    // the result seat the refusal never names)
+    let mut app = App::new(451);
+    app.enter_world();
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.inventory.items[10] = (lapis, 20);
+    app.inventory.items[0] = (dirt, 2);
+    app.anvil_panel = panel;
+    app.anvil_slot_rects = vec![
+        (in0.0, in0.1, 0i16),
+        (in1.0, in1.1, 1i16),
+        (res.0, res.1, 2i16),
+        (row0.0, row0.1, 3i16),
+        (row1.0, row1.1, 4i16),
+        (hot0.0, hot0.1, 30i16),
+    ];
+    app.anvil_result = (lapis, 3); // the compute's own product the refusal keeps
+    app.anvil_carried = (lapis, 5);
+    app.anvil_doubleclick = true;
+    app.mouse_pos = Some((row0.0 + 8, row0.1 + 8)); // the empty seat the pull's own home wears
+    app.on_left_release();
+    assert_eq!(app.anvil_carried, (lapis, 25), "the pull the cursor grows");
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 2),
+        "the different row the walk never names"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (dirt, 2),
+        "the HUD row the sync follows"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (lapis, 3),
+        "the result seat the gather never names"
+    );
+    assert!(
+        !app.anvil_doubleclick,
+        "the arm's own clear the release speaks"
+    );
+
+    // APP ARM B — THE INPUT'S OWN PULL (the drained seat the trio
+    // lanes retire, the slotsChanged walk the createResult re-speaks
+    // — the fresh compute the empty pair wears)
+    app.inventory.items[10] = (lapis, 7);
+    app.anvil_slots = [(0, 0), (lapis, 4)];
+    app.anvil_names[1] = Some("Iron Sword".to_string());
+    app.anvil_repair_costs[1] = 2;
+    app.anvil_enchants[1].push((5, 3));
+    app.anvil_result = (lapis, 2);
+    app.anvil_cost = 5;
+    app.anvil_carried = (lapis, 5);
+    app.anvil_doubleclick = true;
+    app.mouse_pos = Some((row0.0 + 8, row0.1 + 8));
+    app.on_left_release();
+    assert_eq!(app.anvil_carried, (lapis, 16), "the pull the cursor grows");
+    assert_eq!(app.anvil_slots[1], (0, 0), "the input the gather drains");
+    assert!(
+        app.anvil_names[1].is_none(),
+        "the drained seat the name retires"
+    );
+    assert_eq!(
+        app.anvil_repair_costs[1], 0,
+        "the drained seat the cost retires"
+    );
+    assert!(
+        app.anvil_enchants[1].is_empty(),
+        "the drained seat the store retires"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the slotsChanged walk the fresh compute wears"
+    );
+    assert_eq!(app.anvil_cost, 0, "the cost the fresh compute wears");
+
+    // APP ARM C — THE FRESH DOOR'S OWN FIRST DOUBLED PRESS (the open
+    // the stale pair retired — the flag the arm never wears, the
+    // plain pickup the press still speaks, the press the seat banks)
+    app.open_anvil_for((1, 0, 0));
+    app.anvil_panel = panel;
+    app.anvil_slot_rects = vec![
+        (in0.0, in0.1, 0i16),
+        (in1.0, in1.1, 1i16),
+        (res.0, res.1, 2i16),
+        (row0.0, row0.1, 3i16),
+        (row1.0, row1.1, 4i16),
+        (hot0.0, hot0.1, 30i16),
+    ];
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.inventory.items[10] = (lapis, 7);
+    app.anvil_carried = (0, 0);
+    app.press_doubled = true;
+    app.mouse_pos = Some((row1.0 + 8, row1.1 + 8));
+    app.on_press(row1.0 + 8, row1.1 + 8);
+    assert!(!app.anvil_doubleclick, "the fresh door the flag never arms");
+    assert_eq!(
+        app.anvil_carried,
+        (lapis, 7),
+        "the plain pickup the press still speaks"
+    );
+    assert_eq!(app.inventory.items[10], (0, 0), "the seat the press drains");
+    assert_eq!(
+        app.anvil_last_click_slot,
+        Some(4),
+        "the press the seat banks"
+    );
+
+    // APP ARM D — THE PRESS'S OWN ARM (the doubled press the same
+    // seat the flag arms, the click the skip keeps, the release the
+    // gather serves — the end-to-end double-click walk)
+    app.inventory.items[11] = (lapis, 6);
+    app.on_press(row1.0 + 8, row1.1 + 8); // the doubled press the flag arms
+    assert!(
+        app.anvil_doubleclick,
+        "the doubled press the same seat the flag arms"
+    );
+    app.on_left_release();
+    assert_eq!(app.anvil_carried, (lapis, 13), "the pull the cursor grows");
+    assert_eq!(
+        app.inventory.items[11],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    // THE PLAIN PRESS'S OWN RESET (the flag false the dispatch never
+    // skips — the flag the different hover never arms)
+    app.inventory.items[12] = (dirt, 3);
+    app.press_doubled = false;
+    app.on_press(row0.0 + 8, row0.1 + 8);
+    assert!(
+        !app.anvil_doubleclick,
+        "the plain press the flag never arms"
+    );
+    assert_eq!(
+        app.anvil_last_click_slot,
+        Some(3),
+        "the press the seat re-banks"
+    );
+
+    // APP ARM E — THE WIRE'S OWN LANE (the belief the walk drains,
+    // the packet the PICKUP_ALL speaks — the live window the release
+    // arm routes)
+    let mut app = App::new(7);
+    app.enter_world();
+    app.world_is_network = true;
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    app.screen = ScreenKind::Anvil;
+    app.anvil_is_live = true;
+    app.anvil_live_window = Some((5, 7));
+    app.anvil_panel = panel;
+    app.anvil_slots = [(0, 0), (lapis, 4)];
+    app.anvil_mirror = vec![(0, 0); 36];
+    app.anvil_mirror[1] = (lapis, 6); // the main row 1 — the menu 4
+    app.anvil_mirror[27] = (lapis, 3); // the hotbar row 0 — the menu 30
+    app.anvil_slot_rects = vec![
+        (in0.0, in0.1, 0i16),
+        (in1.0, in1.1, 1i16),
+        (res.0, res.1, 2i16),
+        (row0.0, row0.1, 3i16),
+        (row1.0, row1.1, 4i16),
+        (hot0.0, hot0.1, 30i16),
+    ];
+    app.anvil_carried = (lapis, 5);
+    app.anvil_doubleclick = true;
+    app.mouse_pos = Some((row0.0 + 8, row0.1 + 8)); // the empty seat the pull's own home wears
+    app.on_left_release();
+    assert_eq!(
+        app.anvil_carried,
+        (lapis, 18),
+        "the belief the walk drains — the input seat the gather answers too"
+    );
+    assert_eq!(
+        app.anvil_mirror[1],
+        (0, 0),
+        "the drained row the belief keeps"
+    );
+    assert_eq!(
+        app.anvil_mirror[27],
+        (0, 0),
+        "the hotbar row the walk drains"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync follows");
+    match click_rx.try_recv().expect("the packet rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5, "the window the decode armed");
+            assert_eq!(c.state_id, 7, "the revision the feed spoke");
+            assert_eq!(c.slot, 3, "the hovered seat's own menu id");
+            assert_eq!(c.button, 0, "the left release the byte keys");
+            assert_eq!(
+                c.input,
+                crate::world_view::ContainerInput::PickupAll,
+                "the PICKUP_ALL input the release arm speaks"
+            );
+            assert_eq!(
+                c.changed,
+                vec![(1, (0, 0)), (4, (0, 0)), (30, (0, 0))],
+                "the walk's own mutations the changed map names"
+            );
+            assert_eq!(c.carried, (lapis, 18), "the spread's outcome rides");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the single echo the lane exhausts"
+    );
+
+    // APP ARM F — THE CLOSE'S OWN RESET (the vanilla screen the
+    // removed() walk discards whole — the armed flag the close never
+    // rides)
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(1);
+    app.close_anvil(ScreenKind::World);
+    assert!(!app.anvil_doubleclick, "the close the flag the reset wears");
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the close the seat the reset wears"
+    );
+
+    // APP ARM G — THE OPEN'S OWN RESET (every fresh open the pair
+    // retires — the anvil door's own law the 449 hopper round's own
+    // answer re-wears)
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(2);
+    app.open_anvil_for((2, 0, 0));
+    assert!(
+        !app.anvil_doubleclick,
+        "the fresh door the stale flag retires"
+    );
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the fresh door the stale seat retires"
+    );
+}
