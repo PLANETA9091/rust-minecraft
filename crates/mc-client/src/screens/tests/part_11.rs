@@ -34634,7 +34634,12 @@ fn the_merchant_slots_the_walk_family_wears() {
     app.merchant_carried = (0, 0);
 
     // THE RESULT SEAT'S OWN SILENCE (the trade's own apply the
-    // try-move round banks — the plain press the seat never moves)
+    // try-move round banks — the plain press the seat never moves;
+    // the SEED the recompute's own clear retired — the first take-all
+    // walk the stack-A-empty setItem(2, EMPTY) law spoke [the vanilla
+    // updateSellItem pc 72 the payments-gone arm wears], the fresh
+    // seed the click silence the same laws re-observes)
+    app.merchant_slots[2] = (bread, 1);
     app.click_merchant_slot(50, 10, 0);
     assert_eq!(
         app.merchant_slots[2],
@@ -34981,5 +34986,351 @@ fn the_merchant_slots_the_walk_family_wears() {
     assert!(
         rx.try_recv().is_err(),
         "the refusal the add the wire never mints"
+    );
+}
+
+/// THE TRADE'S OWN TRY-MOVE (javap 26.2 MerchantMenu.`tryMoveItems` +
+/// MerchantContainer.`updateSellItem` — the postButtonClick's own
+/// client-local halves the 459 wheel banks): the press the
+/// setSelectionHint + tryMoveItems pair serves — the DRAIN arms the
+/// payment leftovers the rows take back [the reversed order the
+/// hotbar head wears, the FAILED drain the EARLY RETURN speaks], the
+/// FILL arm the both-empty gate the offer's own costs the rows
+/// answers [the forward scan the menu 3 head wears], the SELL item
+/// the seat-0-empty swap + the hint-row search + the out-of-stock
+/// retry the result seat wears. THE LIVE LANE the same prediction
+/// the vanilla client wears — the SelectTrade packet the send tail
+/// carries, the server's own tryMoveItems the echoes re-bank.
+#[test]
+fn the_merchant_try_move_the_trade_walk_wears() {
+    use crate::world_view::{ContainerCommand, LiveContainer, MerchantOfferView, MerchantView};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+
+    // THE OFFLINE CANVAS (the walk-family's own shape — the offers
+    // the round's own bank wears, the row rect the press's own hit
+    // box keeps, the emerald stack the main grid's head feeds)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+    }];
+    app.merchant_row_rects = vec![(100, 100, 0)];
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+
+    // THE FILL'S OWN WALK (the press the postButtonClick walk serves —
+    // the payment the rows take, the result the offer's own match
+    // wears, the write-through the mirror keeps)
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the row's seat the press consumes"
+    );
+    assert_eq!(app.merchant_selected, 0, "the selection the press banks");
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 4),
+        "the payment seat the fill arm loads"
+    );
+    assert_eq!(
+        app.merchant_slots[3],
+        (0, 0),
+        "the source row the fill drains"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the mirror the write-through keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the result the offer's own match wears"
+    );
+
+    // THE SELL'S OWN SWAP ARM (the manual payment the seat 1 wears —
+    // the seat-0-empty read the stack-A swap answers) + THE COUNT
+    // PAIR'S OWN REFUSAL (the short stack the satisfiedBy refuses)
+    app.merchant_slots[0] = (0, 0);
+    app.merchant_slots[1] = (emerald, 4);
+    app.merchant_slots[2] = (0, 0);
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the seat-1 read the swap arm answers"
+    );
+    app.merchant_slots[1] = (emerald, 2);
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_slots[2],
+        (0, 0),
+        "the short stack the count pair refuses"
+    );
+
+    // THE HINT ARM (javap MerchantOffers.getRecipeFor pcs 0-36 — the
+    // in-bounds row the ONLY row the search tests, the wrap the walk
+    // never wears)
+    app.merchant_offers = vec![
+        MerchantOfferView {
+            cost_a: (wheat, 2),
+            cost_b: None,
+            result: (bread, 1),
+            out_of_stock: false,
+            uses: 0,
+            max_uses: 4,
+        },
+        MerchantOfferView {
+            cost_a: (emerald, 4),
+            cost_b: None,
+            result: (bread, 1),
+            out_of_stock: false,
+            uses: 0,
+            max_uses: 4,
+        },
+    ];
+    app.merchant_slots[0] = (emerald, 4);
+    app.merchant_slots[1] = (0, 0);
+    app.merchant_selected = 0;
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_slots[2],
+        (0, 0),
+        "the wheat row the hint arm tests — the emerald the search never wraps to"
+    );
+    app.merchant_selected = 1;
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the emerald row the hint arm answers"
+    );
+
+    // THE TWO-COST SWAP RETRY (javap updateSellItem pcs 128-144 — the
+    // backwards-loaded seats the SWAPPED pair the search re-rides)
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: Some((wheat, 2)),
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+    }];
+    app.merchant_slots[0] = (wheat, 2);
+    app.merchant_slots[1] = (emerald, 4);
+    app.merchant_selected = 0;
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the backwards seats the swapped pair answers"
+    );
+
+    // THE OUT-OF-STOCK FINAL (javap pcs 151-197 — the stale stock the
+    // empty result speaks)
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: true,
+        uses: 4,
+        max_uses: 4,
+    }];
+    app.merchant_slots[0] = (emerald, 4);
+    app.merchant_slots[1] = (0, 0);
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_slots[2],
+        (0, 0),
+        "the stale stock the empty result wears"
+    );
+
+    // THE DRAIN'S OWN RIDE-HOME (javap tryMoveItems pcs 16-91 — the
+    // leftover payment the rows take back [the REVERSED order the
+    // hotbar tail keeps], the both-empty gate the fresh costs the
+    // rows answer, the result the recompute wears)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    app2.screen = ScreenKind::Merchant;
+    app2.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app2.merchant_slots = vec![(0, 0); 39];
+    app2.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+    }];
+    app2.merchant_row_rects = vec![(100, 100, 0)];
+    app2.inventory.items[9] = (emerald, 4);
+    app2.merchant_slots[3] = (emerald, 4);
+    app2.merchant_slots[0] = (bread, 3); // the previous trade's own leftover
+    app2.merchant_widget_press(104, 104);
+    assert_eq!(
+        app2.merchant_slots[0],
+        (emerald, 4),
+        "the fresh cost the fill arm loads"
+    );
+    assert_eq!(
+        app2.merchant_slots[38],
+        (bread, 3),
+        "the leftover the reversed order rides home"
+    );
+    assert_eq!(
+        app2.inventory.items[8],
+        (bread, 3),
+        "the hotbar cell the write-through keeps"
+    );
+    assert_eq!(
+        app2.merchant_slots[3],
+        (0, 0),
+        "the emerald row the fill drains"
+    );
+    assert_eq!(
+        app2.merchant_slots[2],
+        (bread, 1),
+        "the result the recompute wears"
+    );
+
+    // THE DRAIN'S OWN EARLY RETURN (javap pcs 41-44 — the FAILED drain
+    // the walk ends: the full rows the merge never answers, the
+    // remainder the seat keeps, the fill arm the return never rides)
+    let mut app3 = App::new(3);
+    app3.enter_world();
+    app3.screen = ScreenKind::Merchant;
+    app3.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app3.merchant_slots = vec![(0, 0); 39];
+    app3.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+    }];
+    app3.merchant_row_rects = vec![(100, 100, 0)];
+    app3.merchant_slots[0] = (emerald, 4); // the payment pre-loaded
+    for i in 0..36usize {
+        app3.merchant_slots[3 + i] = (wheat, 1);
+        app3.inventory.items[if i < 27 { 9 + i } else { i - 27 }] = (wheat, 1);
+    }
+    app3.merchant_widget_press(104, 104);
+    assert_eq!(
+        app3.merchant_slots[0],
+        (emerald, 4),
+        "the remainder the seat keeps"
+    );
+    assert_eq!(
+        app3.merchant_slots[3],
+        (wheat, 1),
+        "the full rows the drain never moves"
+    );
+    assert_eq!(
+        app3.merchant_slots[2],
+        (bread, 1),
+        "the seats the cost the setSelectionHint recompute still wears"
+    );
+
+    // THE GUARD'S OWN SILENCE (javap pcs 0-15 — the empty offers the
+    // whole walk refuses: no drain, no fill, the seats the bank keeps)
+    let mut app4 = App::new(3);
+    app4.enter_world();
+    app4.screen = ScreenKind::Merchant;
+    app4.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app4.merchant_slots = vec![(0, 0); 39];
+    app4.merchant_slots[0] = (emerald, 4);
+    app4.merchant_slots[2] = (bread, 1);
+    app4.merchant_row_rects = vec![(100, 100, 0)];
+    assert!(
+        app4.merchant_widget_press(104, 104),
+        "the row the press still consumes"
+    );
+    assert_eq!(
+        app4.merchant_slots[0],
+        (emerald, 4),
+        "the guard the drain never arms"
+    );
+    assert_eq!(
+        app4.merchant_slots[2],
+        (bread, 1),
+        "the empty offers the sell recompute never wears"
+    );
+
+    // THE LIVE LANE'S OWN PREDICTION (the walk the vanilla client
+    // wears — the SelectTrade packet the send tail carries, the local
+    // fill the seats answer, the server's own tryMoveItems the echoes
+    // re-bank)
+    let mut app5 = App::new(3);
+    app5.enter_world();
+    app5.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app5.live_clicks = Some(tx);
+    let mut slots = vec![(0, 0); 39];
+    slots[3] = (emerald, 4);
+    app5.live_container_updated(Some(LiveContainer {
+        id: 7,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 2,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(MerchantView {
+            offers: vec![MerchantOfferView {
+                cost_a: (emerald, 4),
+                cost_b: None,
+                result: (bread, 1),
+                out_of_stock: false,
+                uses: 0,
+                max_uses: 4,
+            }],
+            level: 1,
+            xp: 0,
+            show_progress: true,
+            can_restock: false,
+        }),
+    }));
+    assert_eq!(
+        app5.screen,
+        ScreenKind::Merchant,
+        "the route the live open wears"
+    );
+    app5.merchant_row_rects = vec![(100, 100, 0)];
+    assert!(
+        app5.merchant_widget_press(104, 104),
+        "the live row the press consumes"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SelectTrade { item } => {
+            assert_eq!(item, 0, "the pressed row's index the packet carries");
+        }
+        other => panic!("the press the Select Trade speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the press no second echo mints");
+    assert_eq!(
+        app5.merchant_slots[0],
+        (emerald, 4),
+        "the local prediction the fill answers"
+    );
+    assert_eq!(
+        app5.merchant_slots[2],
+        (bread, 1),
+        "the result the local recompute wears"
+    );
+    assert_eq!(
+        app5.merchant_slots[3],
+        (0, 0),
+        "the source row the prediction drains"
     );
 }

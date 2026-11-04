@@ -33434,11 +33434,13 @@ impl App {
             snapshot.extend_from_slice(&self.merchant_slots);
             snapshot[2] = (i32::MAX, i32::MAX); // the result's own mayPlace-false
             let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 3);
+            let mut payment_touched = false;
             for (i, pair) in &changed {
                 if *i < 2 {
                     // the menu's own payment seats — no write-through
                     // (the drained SOURCE the same walk's answer keeps)
                     self.merchant_slots[*i] = *pair;
+                    payment_touched = true;
                 } else {
                     // THE WRITE-THROUGH (the projection the inventory
                     // IS — the menu slot the inventory cell answers;
@@ -33449,6 +33451,12 @@ impl App {
                 }
             }
             self.hotbar_slots = self.inventory.hotbar();
+            if payment_touched {
+                // THE SETITEM'S OWN LAW (the payment write the
+                // quickMoveStack's own moveItemStackTo the Slot.set
+                // walk serves — the update the recompute speaks)
+                self.merchant_update_sell();
+            }
             return;
         }
         if menu < 2 {
@@ -33464,6 +33472,11 @@ impl App {
             };
             self.merchant_slots[menu] = new_slot;
             self.merchant_carried = new_carried;
+            // THE SETITEM'S OWN LAW (javap MerchantContainer.setItem
+            // pc 19-27 — the payment write the isPaymentSlot gate the
+            // update re-speaks: the seats the compute reads, the
+            // result the offer's own match the seat wears)
+            self.merchant_update_sell();
             return;
         }
         // THE STANDARD ROWS' OWN WRITE-THROUGH (the projection the
@@ -33524,6 +33537,139 @@ impl App {
         // THE FALSE OVERRIDE'S OWN VERDICT — the walk never spreads
         // (the canTakeItemForPickAll the whole menu's own FALSE wears)
         true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE MERCHANT'S OWN SELL RE-SPEAK (javap 26.2 MerchantContainer
+    /// — the `updateSellItem` walk the container's own `setItem` law
+    /// wears: every write the PAYMENT seats answer the recompute
+    /// serves [the `isPaymentSlot` gate the `setItem` pc 19-27 speaks],
+    /// the result the offer's own match the seat wears). The hint the
+    /// selection's own bank keeps — the `setSelectionHint` law the
+    /// container field stores.
+    fn merchant_update_sell(&mut self) {
+        if self.merchant_slots.len() < 3 {
+            return; // the bank the fresh window never wears — the seats the walk never reads
+        }
+        let seats = [
+            self.merchant_slots[0],
+            self.merchant_slots[1],
+            self.merchant_slots[2],
+        ];
+        let hint = self.merchant_selected as i32;
+        if let Some(seat2) =
+            crate::world_view::merchant_sell_item(&seats, &self.merchant_offers, hint)
+        {
+            self.merchant_slots[2] = seat2;
+        }
+    }
+
+    /// THE MERCHANT'S OWN PAYMENT FILL-ARM (javap 26.2
+    /// `moveFromInventoryToPaymentSlot` — the try-move's own fill the
+    /// `predict_fill_payment` walk serves): the rows the forward scan
+    /// wears, the cost's own test the id answers, the seat the
+    /// `copyWithCount` walk fills; the rows' own write-through the
+    /// projection the inventory IS — the drained cell the same pair
+    /// the mirror keeps [the walk-family's own law], the HUD row the
+    /// hotbar sync answers. The seat's own write the `setItem` law
+    /// wears — the CALLER's own update-sell the recompute speaks.
+    fn merchant_fill_payment(&mut self, seat: usize, cost: (i32, i32)) {
+        let rows: Vec<(i32, i32)> = (3..39)
+            .map(|i| self.merchant_slots.get(i).copied().unwrap_or((0, 0)))
+            .collect();
+        let believed = self.merchant_slots.get(seat).copied().unwrap_or((0, 0));
+        let (changed, new_seat) = crate::world_view::predict_fill_payment(&rows, believed, cost);
+        for &(i, pair) in &changed {
+            let menu = 3 + i;
+            let idx = if menu < 30 { 9 + menu - 3 } else { menu - 30 };
+            self.merchant_slots[menu] = pair;
+            if idx < 36 {
+                self.inventory.items[idx] = pair;
+            }
+        }
+        self.merchant_slots[seat] = new_seat;
+        if !changed.is_empty() {
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+    }
+
+    /// THE TRADE'S OWN TRY-MOVE (javap 26.2 MerchantMenu.
+    /// `tryMoveItems` — the postButtonClick's own client-local half
+    /// the press walk serves; the vanilla law the 158 bytes speak):
+    /// the guard the offers' own size wears [pcs 0-15 — the
+    /// out-of-range row the walk never enters], the DRAIN arms the
+    /// payment leftovers the rows take back [pcs 16-91 — the
+    /// `moveItemStackTo(3, 39, true)` walk the reversed order wears,
+    /// the FAILED drain the EARLY RETURN speaks — the remainder the
+    /// seat keeps, the setItem the walk never rides, the walk the
+    /// return ends; the FULL drain the `setItem(0, EMPTY)` the
+    /// update re-speaks], the FILL arm the both-empty gate answers
+    /// [pcs 92-154 — the offer's own costs the rows serve, the
+    /// `moveFromInventoryToPaymentSlot` pair the seats fill, the
+    /// cost-B the Optional's own present arm wears, every setItem
+    /// the update re-speaks]. THE LIVE LANE the same prediction the
+    /// vanilla client wears — the server's own tryMoveItems the
+    /// echoes re-bank.
+    fn merchant_try_move(&mut self, idx: usize) {
+        // THE GUARD (pcs 0-15 — the size the walk refuses)
+        if idx >= self.merchant_offers.len() {
+            return;
+        }
+        // THE DRAIN ARMS (pcs 16-91 — the payment leftovers the rows
+        // take back, the reversed order the hotbar head wears)
+        for seat in 0..2usize {
+            if self.merchant_slots.get(seat).copied().unwrap_or((0, 0)).1 <= 0 {
+                continue; // the isEmpty gate — the empty seat the drain never reads
+            }
+            let snapshot: Vec<(i32, i32)> = self.merchant_slots.clone();
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, seat, 3);
+            let Some(&(src, remainder)) = changed.first() else {
+                return; // defensive — the walk's own src-first law
+            };
+            debug_assert_eq!(src, seat, "the changed list the src pair leads");
+            // THE ROWS' OWN WRITE-THROUGH (the projection the inventory IS)
+            for &(i, pair) in changed.iter().skip(1) {
+                if i < 3 {
+                    continue; // the payment seats — the walk's own range never wears
+                }
+                let inv_idx = if i < 30 { 9 + i - 3 } else { i - 30 };
+                self.merchant_slots[i] = pair;
+                if inv_idx < 36 {
+                    self.inventory.items[inv_idx] = pair;
+                }
+            }
+            if remainder.1 > 0 {
+                // THE FAILED DRAIN (pc 44's return — the remainder the
+                // seat keeps, the setItem the walk never rides, the
+                // walk the early return ends)
+                self.merchant_slots[seat] = remainder;
+                self.hotbar_slots = self.inventory.hotbar();
+                return;
+            }
+            // THE FULL DRAIN (pc 45-51 — the setItem(0, EMPTY) the
+            // update re-speaks)
+            self.merchant_slots[seat] = (0, 0);
+            self.hotbar_slots = self.inventory.hotbar();
+            self.merchant_update_sell();
+        }
+        // THE FILL ARM (pcs 92-154 — the both-empty gate the offer's
+        // own costs the rows answer)
+        let seat0 = self.merchant_slots.get(0).copied().unwrap_or((0, 0));
+        let seat1 = self.merchant_slots.get(1).copied().unwrap_or((0, 0));
+        if seat0.1 <= 0 && seat1.1 <= 0 {
+            let Some(offer) = self.merchant_offers.get(idx).cloned() else {
+                return; // defensive — the guard's own verdict
+            };
+            // the cost-A fill (pc 133-140 — the
+            // moveFromInventoryToPaymentSlot(0, costA) walk)
+            self.merchant_fill_payment(0, offer.cost_a);
+            self.merchant_update_sell();
+            // the cost-B fill (pc 143-154 — the Optional's own
+            // ifPresent lambda the seat 1 wears)
+            if let Some(cost_b) = offer.cost_b {
+                self.merchant_fill_payment(1, cost_b);
+                self.merchant_update_sell();
+            }
+        }
     }
 
     /// THE BEACON'S OWN SCREEN CLICK (the autopush-322 round — the
@@ -41355,6 +41501,13 @@ impl App {
                     .send(crate::world_view::ContainerCommand::SelectTrade { item: idx as i32 });
             }
         }
+        // THE CLIENT-LOCAL HALVES (javap pcs 7-27 — the
+        // `setSelectionHint`'s own updateSellItem + the `tryMoveItems`
+        // walk the prediction wears; the LIVE lane the same prediction
+        // the vanilla client wears — the server's own tryMoveItems the
+        // echoes re-bank)
+        self.merchant_update_sell();
+        self.merchant_try_move(idx);
         true
     }
 

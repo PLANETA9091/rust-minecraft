@@ -3659,6 +3659,159 @@ pub fn predict_quick_move_grid(
     changed
 }
 
+/// THE MERCHANT'S OWN PAYMENT FILL (javap 26.2 MerchantMenu.
+/// `moveFromInventoryToPaymentSlot` — the tryMoveItems's own fill arm
+/// the try-move round banks): the FORWARD scan the rows wear, the
+/// cost's own test the id answers, the same-item gate the seat's
+/// current pair keeps, the cap the ROW stack's own max speaks.
+///
+/// `rows` = the menu's 3..38 bank (36 player rows in menu order);
+/// `seat` = the payment seat's current stack; `cost` = the offer's
+/// `(item_id, count)` cost. Returns the changed ROWS as
+/// `(menu_row_relative, stack)` pairs (the shrink the row wears) +
+/// the seat's new stack. The vanilla walk's own laws:
+///
+/// 1. the row's `isEmpty` + the `ItemCost.test` gate (pc 24-38 — the
+///    id the predicate answers, the empty the test refuses);
+/// 2. the `isSameItemSameComponents` gate (pc 51-69 — the seat's
+///    current non-empty the same-item verdict keeps, the different
+///    item the row never feeds);
+/// 3. the cap the row's own max wears (pc 72-95 — the take the
+///    `min(max − current, row)` answers, the seat's own count the
+///    `copyWithCount(current + take)` carries);
+/// 4. the break the seat's own fullness speaks (pc 129-139 — the
+///    `count >= max` the scan ends, the continue the rows ride).
+pub fn predict_fill_payment(
+    rows: &[(i32, i32)],
+    seat: (i32, i32),
+    cost: (i32, i32),
+) -> (Vec<(usize, (i32, i32))>, (i32, i32)) {
+    let mut seat = seat;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    if cost.1 <= 0 {
+        // the degenerate cost — the ItemCost.test the empty never passes
+        return (changed, seat);
+    }
+    for (i, &row) in rows.iter().enumerate() {
+        if row.1 <= 0 || row.0 != cost.0 {
+            continue; // the isEmpty + test gate
+        }
+        if seat.1 > 0 && seat.0 != row.0 {
+            continue; // the isSameItemSameComponents gate
+        }
+        let max = item_max_stack(row.0);
+        let take = (max - seat.1).min(row.1);
+        if take > 0 {
+            seat = (row.0, seat.1 + take);
+            // the shrink the EMPTY sentinel answers (the drained cell
+            // the (0, 0) pair wears — the walk-family's own law the
+            // drained source keeps)
+            let rest = row.1 - take;
+            changed.push((i, if rest > 0 { (row.0, rest) } else { (0, 0) }));
+        }
+        if seat.1 >= max {
+            break; // the seat's own fullness the scan ends
+        }
+    }
+    (changed, seat)
+}
+
+/// THE OFFER'S OWN MATCHER (javap 26.2 MerchantOffer.`satisfiedBy`
+/// — the recipe search's own verdict the 86 bytes speak): the cost-A
+/// arm the test + the count pair answers, the cost-B arm the present
+/// test/count or the absent emptiness wears. `a`/`b` = the trade
+/// container's own stacks (the updateSellItem's own read the pair
+/// wears — the seat-0-empty swap the caller serves).
+pub fn merchant_satisfied_by(offer: &MerchantOfferView, a: (i32, i32), b: (i32, i32)) -> bool {
+    // THE COST-A ARM (pcs 0-27 — the `baseCostA.test(a)` the id
+    // answers, the count the `getModifiedCostCount` pair the base
+    // count wears — the special-price discount the wire word the
+    // later round re-lays)
+    if a.1 <= 0 || a.0 != offer.cost_a.0 || a.1 < offer.cost_a.1 {
+        return false;
+    }
+    // THE COST-B ARM (pcs 28-86 — the present pair the test + count
+    // speaks, the absent the seat's own `isEmpty` the verdict wears)
+    match offer.cost_b {
+        Some((cb_id, cb_n)) => b.1 > 0 && b.0 == cb_id && b.1 >= cb_n,
+        None => b.1 <= 0,
+    }
+}
+
+/// THE OFFER SEARCH'S OWN WALK (javap 26.2 MerchantOffers.
+/// `getRecipeFor` — the 81 bytes the hint arm speaks): the in-bounds
+/// hint row the ONLY row the walk tests (the wrap the walk never
+/// wears), the out-of-bounds hint the full forward scan answers.
+/// Returns the matched offer's index.
+pub fn merchant_recipe_for(
+    offers: &[MerchantOfferView],
+    a: (i32, i32),
+    b: (i32, i32),
+    hint: i32,
+) -> Option<usize> {
+    if hint >= 0 && (hint as usize) < offers.len() {
+        // the hint arm (pcs 0-36 — the row the satisfiedBy tests, the
+        // miss the null the walk returns — no wrap)
+        let o = hint as usize;
+        return if merchant_satisfied_by(&offers[o], a, b) {
+            Some(o)
+        } else {
+            None
+        };
+    }
+    // the full-scan arm (pcs 37-79 — the forward order the walk wears)
+    for (i, o) in offers.iter().enumerate() {
+        if merchant_satisfied_by(o, a, b) {
+            return Some(i);
+        }
+    }
+    None
+}
+
+/// THE SELL ITEM'S OWN COMPUTE (javap 26.2 MerchantContainer.
+/// `updateSellItem` — the 215 bytes the result seat's own law wears):
+/// the seat-0-empty swap arm the (A, B) read answers, the stack-A
+/// empty the `setItem(2, EMPTY)` speaks, the hint-row match the
+/// out-of-stock retry the SWAPPED pair answers, the final match the
+/// offer's own result the seat wears. Returns the seat-2 stack the
+/// walk's own `setItem` names — `None` the offers-empty arm the
+/// seat's own silence keeps (pc 100's goto 200 the setItem never
+/// wears). The `futureXp` the offer's own xp the later canvas round
+/// re-lays.
+pub fn merchant_sell_item(
+    seats: &[(i32, i32); 3],
+    offers: &[MerchantOfferView],
+    hint: i32,
+) -> Option<(i32, i32)> {
+    // THE SWAP ARM (pcs 5-64 — the seat-0 empty the stack-A read the
+    // seat 1 wears, the stack-B the EMPTY the single-cost match keeps)
+    let (a, b) = if seats[0].1 <= 0 {
+        (seats[1], (0, 0))
+    } else {
+        (seats[0], seats[1])
+    };
+    if a.1 <= 0 {
+        return Some((0, 0)); // pc 65-85 — the stack-A empty the setItem(2, EMPTY) speaks
+    }
+    if offers.is_empty() {
+        return None; // pc 96-100 — the offers-empty arm the silence keeps
+    }
+    // THE MATCH + RETRY (pcs 103-144 — the hint pair the first match
+    // answers, the null OR out-of-stock the SWAPPED pair the search
+    // re-rides [the backwards-loaded seats the vanilla law answers])
+    let first = merchant_recipe_for(offers, a, b, hint);
+    let offer = match first {
+        Some(o) if !offers[o].out_of_stock => Some(o),
+        _ => merchant_recipe_for(offers, b, a, hint),
+    };
+    match offer {
+        // pcs 159-184 — the in-stock match the result the seat wears
+        Some(o) if !offers[o].out_of_stock => Some(offers[o].result),
+        // pc 187-197 — the no-match OR the stale stock the empty speaks
+        _ => Some((0, 0)),
+    }
+}
+
 /// The quickMoveStack walk over the player's own store (javap 26.2
 /// `InventoryMenu.quickMoveStack` — the arms the bytecode speaks in
 /// order). The sources are the STORE rows (menu 9..35 the main grid,
