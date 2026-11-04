@@ -11489,13 +11489,19 @@ fn the_anvil_wire_route_the_menu_type8_wear() {
         }
         other => panic!("the rename the command speaks, not {other:?}"),
     }
-    // THE HONEST DROP RETIRED (the route the chest lane never swallows)
+    // THE WINDOW-DEATH'S OWN RETIRE (the dev-217 round — the store's
+    // own drop the chest-family law the anvil lane re-wears: the old
+    // keep-standing verdict the 202 route wore the census retires —
+    // the screen the world seat answers, the live lane the death
+    // retires)
     app.live_container_updated(None);
     assert_eq!(
         app.screen,
-        ScreenKind::Anvil,
-        "the live close the screen keeps"
+        ScreenKind::World,
+        "the drop the world seat answers"
     );
+    assert!(!app.anvil_is_live, "the drop the live flag retires");
+    assert!(app.anvil_live_window.is_none(), "the drop the window dies");
 }
 
 /// THE ANVIL'S OWN TOOLTIP SEAT (the 351 round — the extractTooltip
@@ -32644,4 +32650,264 @@ fn the_anvil_seats_the_gather_wears() {
         app.anvil_last_click_slot.is_none(),
         "the fresh door the stale seat retires"
     );
+}
+
+/// THE WINDOW-DEATH'S OWN BREWING-ANVIL RETIRE (the store's own None
+/// arm the whole census answers — the table/chest/furnace/dispenser/
+/// enchant lanes the death walk retired, the brewing stand and the
+/// anvil the honest gaps the round banks): the menu-type-11 and the
+/// menu-type-8 windows the wire routes, the store's own drop the
+/// whole live lane retires — the flag the death speaks, the window
+/// identity dies, the authoritative cursor retires, the gather pair
+/// the fresh open's own reset re-arms, the title dies with the
+/// window, the screen the world seat answers [the open() tail the
+/// removed() walk serves — the offline carried the home ride the
+/// close walk speaks, the rows the drop never clears, the fresh open
+/// the own re-lay wears].
+#[test]
+fn the_brewing_anvil_windows_the_death_retires() {
+    use crate::world_view::LiveContainer;
+    let glass = mc_registry::item_id_by_name("glass_bottle").unwrap();
+    let nether_wart = mc_registry::item_id_by_name("nether_wart").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+
+    // APP ARM A — THE BREWING WINDOW'S OWN OPEN (the menu type 11 the
+    // OpenScreen word routes — the five the wire banks, the rows the
+    // mirror feeds, the identity the presses echo against)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let mut slots = vec![(0i32, 0i32); 41];
+    slots[0] = (glass, 1);
+    slots[1] = (glass, 1);
+    slots[2] = (glass, 1);
+    slots[3] = (nether_wart, 4);
+    slots[4] = (dirt, 8);
+    slots[5] = (dirt, 30);
+    slots[40] = (dirt, 7);
+    app.live_container_updated(Some(LiveContainer {
+        id: 7,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 5,
+        data_slots: vec![100, 3],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Brewing,
+        "the route the stand window opens"
+    );
+    assert!(app.brewing_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.brewing_live_window,
+        Some((7, 5)),
+        "the window identity the presses echo against"
+    );
+    assert_eq!(
+        app.brewing_slots,
+        vec![
+            (glass, 1),
+            (glass, 1),
+            (glass, 1),
+            (nether_wart, 4),
+            (dirt, 8),
+        ],
+        "the five the wire banks"
+    );
+    assert_eq!(
+        app.brewing_mirror[0],
+        (dirt, 30),
+        "the mirror row the wire's own tail feeds"
+    );
+    assert_eq!(
+        app.brewing_mirror[35],
+        (dirt, 7),
+        "the hotbar row the mirror's own tail answers"
+    );
+    assert_eq!(
+        app.brewing_data,
+        [100, 3, 0],
+        "the wire's own pair the data words bank, the sim's third word the fresh zero keeps"
+    );
+    assert_eq!(
+        app.live_brewing_title, None,
+        "the wordless component the honest None banks"
+    );
+
+    // APP ARM B — THE STORE'S OWN DROP (the None the whole live lane
+    // retires — the flag the death speaks, the window dies, the
+    // cursor retires, the pair clears, the title dies; the open()
+    // tail the close walk's own removed() ride serves — the offline
+    // carried the home ride speaks, the rows the fresh open re-lays)
+    app.brewing_doubleclick = true;
+    app.brewing_last_click_slot = Some(3);
+    app.live_brewing_carried = (dirt, 4);
+    app.live_brewing_title = Some("the custom stand".to_string());
+    app.brewing_carried = (glass, 1); // the offline cursor the ride home wears
+    app.live_container_updated(None);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the drop the world seat answers"
+    );
+    assert!(
+        !app.brewing_is_live,
+        "the server's own drop the live flag retires"
+    );
+    assert!(
+        app.brewing_live_window.is_none(),
+        "the drop the window dies"
+    );
+    assert_eq!(
+        app.live_brewing_carried,
+        (0, 0),
+        "the authoritative cursor the death retires"
+    );
+    assert!(
+        !app.brewing_doubleclick,
+        "the gather flag the death retires"
+    );
+    assert!(
+        app.brewing_last_click_slot.is_none(),
+        "the gather seat the death retires"
+    );
+    assert_eq!(app.live_brewing_title, None, "the title the death retires");
+    assert_eq!(
+        app.brewing_carried,
+        (0, 0),
+        "the offline carried the removed() walk's own ride home serves — the open() tail the close_brewing walk answers"
+    );
+    let glass_home: i32 = app
+        .inventory
+        .items
+        .iter()
+        .filter(|it| it.0 == glass)
+        .map(|it| it.1)
+        .sum();
+    assert!(
+        glass_home >= 1,
+        "the ridden bottle the inventory cell answers — the placeItemBackInInventory law the ride speaks"
+    );
+    assert_eq!(
+        app.brewing_slots[3],
+        (nether_wart, 4),
+        "the rows the drop never clears — the fresh open the own re-lay serves"
+    );
+
+    // APP ARM C — THE FRESH OPEN'S OWN RESET (every fresh window the
+    // pair retires — the open walk's own law the route re-wears)
+    let mut slots2 = vec![(0i32, 0i32); 41];
+    slots2[3] = (nether_wart, 2);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 6,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.brewing_live_window,
+        Some((9, 6)),
+        "the fresh identity the reopen wears"
+    );
+    assert!(
+        !app.brewing_doubleclick,
+        "the fresh window the stale flag retires"
+    );
+    assert!(
+        app.brewing_last_click_slot.is_none(),
+        "the fresh window the stale seat retires"
+    );
+    app.live_container_updated(None);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the second drop the world answers"
+    );
+
+    // APP ARM D — THE ANVIL WINDOW'S OWN OPEN (the menu type 8 the
+    // OpenScreen word routes — the inputs 0/1 + the result 2 the
+    // seats speak, the rows 3..38 the mirror feeds, the carried the
+    // authoritative cursor lands)
+    let mut aslots = vec![(0i32, 0i32); 39];
+    aslots[0] = (sword, 1);
+    aslots[1] = (dirt, 1);
+    aslots[2] = (sword, 1);
+    aslots[3] = (dirt, 30);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots,
+        bundle_rows: Vec::new(),
+        carried: (dirt, 2),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the route the repair window opens"
+    );
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.anvil_live_window,
+        Some((8, 4)),
+        "the window identity the presses echo against"
+    );
+    assert_eq!(
+        app.anvil_carried,
+        (dirt, 2),
+        "the authoritative cursor the wire lands"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (sword, 1),
+        "the result seat the wire's own row banks"
+    );
+
+    // APP ARM E — THE ANVIL'S OWN DROP (the same walk the repair lane
+    // answers — the flag the death speaks, the window dies, the
+    // single carried field retires, the pair clears, the title dies)
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(1);
+    app.live_anvil_title = Some("the repair bench".to_string());
+    app.live_container_updated(None);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the drop the world seat answers"
+    );
+    assert!(
+        !app.anvil_is_live,
+        "the server's own drop the live flag retires"
+    );
+    assert!(app.anvil_live_window.is_none(), "the drop the window dies");
+    assert_eq!(app.anvil_carried, (0, 0), "the cursor the death retires");
+    assert!(!app.anvil_doubleclick, "the gather flag the death retires");
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the gather seat the death retires"
+    );
+    assert_eq!(app.live_anvil_title, None, "the title the death retires");
+
+    // APP ARM F — THE OFFLINE DOOR THE DEATH NEVER WEARS (the fresh
+    // open the own re-lay serves — the live lane stays down)
+    app.open_anvil_for((2, 0, 0));
+    assert!(
+        !app.anvil_is_live,
+        "the offline door the live flag never wears"
+    );
+    assert!(
+        app.anvil_live_window.is_none(),
+        "the offline door no window banks"
+    );
+    assert_eq!(app.screen, ScreenKind::Anvil, "the door the screen opens");
 }

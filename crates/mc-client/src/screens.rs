@@ -80843,6 +80843,40 @@ impl App {
                 self.enchant_live_window = None;
                 self.enchant_carried = (0, 0); // no window, no held stack
                 self.enchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                // the store dropped: a LIVE brewing stand closes back to
+                // the world (the same vanilla closeContainer return — the
+                // chest's own lane the menu-type-11 window mirrors); the
+                // fresh stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Brewing && self.brewing_is_live {
+                    self.brewing_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.brewing_live_window = None;
+                // the gather pair the window's death retires (the
+                // fresh open the own reset re-arms)
+                self.live_brewing_carried = (0, 0); // no window, no held stack
+                self.brewing_doubleclick = false;
+                self.brewing_last_click_slot = None;
+                self.live_brewing_title = None; // the title dies with the window
+
+                // the store dropped: a LIVE anvil closes back to the
+                // world (the same vanilla closeContainer return — the
+                // chest's own lane the menu-type-8 window mirrors); the
+                // fresh stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Anvil && self.anvil_is_live {
+                    self.anvil_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.anvil_live_window = None;
+                // the authoritative cursor the window's death retires
+                // (the single carried field the wire lane banks — the
+                // fresh open the own re-lay serves)
+                self.anvil_carried = (0, 0);
+                // the gather pair the window's death retires (the
+                // fresh open the own reset re-arms)
+                self.anvil_doubleclick = false;
+                self.anvil_last_click_slot = None;
+                self.live_anvil_title = None; // the title dies with the window
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
                 // screen, the next window re-learns from its own sync)
