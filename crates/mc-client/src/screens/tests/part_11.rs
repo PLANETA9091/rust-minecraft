@@ -34526,3 +34526,417 @@ fn the_merchant_offers_the_wire_words_wear() {
         "the sixth row the bytes wear"
     );
 }
+
+/// THE MERCHANT'S OWN SLOT WALK (javap 26.2 AbstractContainerMenu.
+/// doClick the PICKUP arms the payment seats answer — the dev-222
+/// NEXT's own first lane the 458 wheel banks): the trade INPUTS 0/1
+/// the plain Slot's own generic law wears, the standard rows 3..38
+/// the write-through projection the inventory IS, the RESULT seat
+/// the trade's own apply the try-move round banks the honest silence
+/// keeps, the QUICK-MOVE the vanilla quickMoveStack's own routing
+/// the predictor wears, the GATHER the whole-menu FALSE override the
+/// walk never spreads, the THROW the -999 PICKUP the carried's drop
+/// speaks, the LIVE lane the prediction-free echo the wire rides,
+/// the QUICKCRAFT DRAG the family's own arms the paint + distribution
+/// + deferred place answer.
+#[test]
+fn the_merchant_slots_the_walk_family_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+
+    // THE OFFLINE CANVAS (the fields the offline sim wears directly —
+    // the layout the render's own hit boxes keep, the mirror the menu
+    // numbering rides)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2), (10, 40, 3), (10, 60, 30)];
+    app.merchant_panel = (0, 0);
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_slots[0] = (emerald, 4);
+    app.merchant_slots[2] = (bread, 1);
+    app.shift_down = false;
+
+    // THE INPUT'S OWN PICKUP (the empty cursor the whole stack takes)
+    app.click_merchant_slot(10, 10, 0);
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the input the take-all walk empties"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 4),
+        "the carried the stack rides"
+    );
+    // THE INPUT'S OWN PLACE (the held stack the empty seat takes all)
+    app.click_merchant_slot(10, 10, 0);
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 4),
+        "the input the place-all walk fills"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the carried the place clears");
+    // THE INPUT'S OWN SWAP (the different item the vanilla exchange
+    // speaks)
+    app.merchant_carried = (bread, 2);
+    app.click_merchant_slot(10, 10, 0);
+    assert_eq!(
+        app.merchant_slots[0],
+        (bread, 2),
+        "the carried the seat wears"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 4),
+        "the seat the carried wears"
+    );
+    app.click_merchant_slot(10, 10, 0); // the swap rides home
+    assert_eq!(app.merchant_slots[0], (emerald, 4), "the seat restored");
+    assert_eq!(app.merchant_carried, (bread, 2), "the carried restored");
+    app.merchant_carried = (0, 0);
+    // THE RIGHT PRESS'S OWN SPLIT (the empty cursor the ceiling half
+    // takes)
+    app.click_merchant_slot(10, 10, 1);
+    assert_eq!(app.merchant_slots[0], (emerald, 2), "the half the seat keeps");
+    assert_eq!(app.merchant_carried, (emerald, 2), "the half the carried rides");
+    // the RIGHT press's own PLACE-ONE (the held stack the empty seat
+    // the one wears)
+    app.merchant_slots[1] = (0, 0);
+    app.click_merchant_slot(30, 10, 1);
+    assert_eq!(app.merchant_slots[1], (emerald, 1), "the one the seat wears");
+    assert_eq!(app.merchant_carried, (emerald, 1), "the one the carried loses");
+    app.merchant_slots[0] = (emerald, 4);
+    app.merchant_carried = (0, 0);
+
+    // THE RESULT SEAT'S OWN SILENCE (the trade's own apply the
+    // try-move round banks — the plain press the seat never moves)
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the result the silence keeps"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the cursor the silence keeps");
+    app.click_merchant_slot(50, 10, 1);
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the right press the same silence keeps"
+    );
+
+    // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+    // inventory IS — the menu slot the inventory cell answers, the
+    // hotbar row the sync follows)
+    app.inventory.items[9] = (bread, 10);
+    app.merchant_slots[3] = (bread, 10);
+    app.click_merchant_slot(10, 40, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the main row the take-all walk drains"
+    );
+    assert_eq!(app.merchant_slots[3], (0, 0), "the mirror the walk syncs");
+    assert_eq!(
+        app.merchant_carried,
+        (bread, 10),
+        "the carried the row rides"
+    );
+    app.merchant_slots[3] = (0, 0);
+    app.click_merchant_slot(10, 40, 0); // the place-back the write-through keeps
+    assert_eq!(
+        app.inventory.items[9],
+        (bread, 10),
+        "the row the place-back fills"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the carried the place clears");
+    // the HOTBAR row the -30 shift keeps (the HUD row the sync wears)
+    app.inventory.items[0] = (emerald, 1);
+    app.merchant_slots[30] = (emerald, 1);
+    app.click_merchant_slot(10, 60, 0);
+    assert_eq!(app.inventory.items[0], (0, 0), "the hotbar cell the walk drains");
+    assert_eq!(
+        app.hotbar_slots[0],
+        (0, 0),
+        "the HUD row the sync answers"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 1),
+        "the carried the hotbar row rides"
+    );
+    app.merchant_slots[30] = (0, 0);
+    app.click_merchant_slot(10, 60, 0);
+    assert_eq!(app.inventory.items[0], (emerald, 1), "the hotbar restored");
+
+    // THE QUICK-MOVE'S OWN ROUTING (the rows the payment insert the
+    // moveItemStackTo(0, 2) walk serves — the result the blocked
+    // marker the passes never read)
+    app.shift_down = true;
+    app.merchant_slots[0] = (0, 0);
+    app.merchant_slots[1] = (0, 0);
+    app.merchant_slots[4] = (bread, 5);
+    app.inventory.items[10] = (bread, 5);
+    app.merchant_slot_rects.push((30, 40, 4));
+    app.click_merchant_slot(30, 40, 0);
+    assert_eq!(
+        app.merchant_slots[0],
+        (bread, 5),
+        "the payment seat the insert fills"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the source row the insert drains"
+    );
+    assert_eq!(
+        app.merchant_slots[4],
+        (0, 0),
+        "the mirror the insert syncs"
+    );
+    // the INPUT source the rows the moveItemStackTo(3, 39) walk
+    // serves (the reversed order the hotbar head wears — the menu 38
+    // the items 8 answer)
+    app.shift_down = true;
+    app.merchant_slots[1] = (emerald, 3);
+    app.click_merchant_slot(30, 10, 0);
+    assert_eq!(app.merchant_slots[1], (0, 0), "the input the row move drains");
+    assert_eq!(
+        app.merchant_slots[38],
+        (emerald, 3),
+        "the hotbar tail the reversed order fills"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (emerald, 3),
+        "the store row the write-through keeps"
+    );
+    app.shift_down = false;
+    app.merchant_slots[1] = (0, 0);
+    app.merchant_slots[38] = (0, 0);
+    app.inventory.items[8] = (0, 0);
+    // the RESULT source the trade's own take the silence keeps
+    app.shift_down = true;
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the result the quick-move silence keeps"
+    );
+    app.shift_down = false;
+
+    // THE GATHER'S OWN REFUSAL (the whole-menu FALSE override — the
+    // release the arm consumes, the spread the menu never answers)
+    app.merchant_doubleclick = false;
+    assert!(
+        !app.on_merchant_release_pickup_all(),
+        "the un-armed release the gate refuses"
+    );
+    app.mouse_pos = Some((10, 40));
+    app.merchant_doubleclick = true;
+    app.merchant_slots[3] = (emerald, 6);
+    app.inventory.items[9] = (emerald, 6);
+    app.merchant_carried = (emerald, 2);
+    assert!(
+        app.on_merchant_release_pickup_all(),
+        "the armed release the arm consumes"
+    );
+    assert!(
+        !app.merchant_doubleclick,
+        "the flag the arm's own clear wears"
+    );
+    assert_eq!(
+        app.merchant_slots[3],
+        (emerald, 6),
+        "the row the FALSE override never drains"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 2),
+        "the cursor the FALSE override never grows"
+    );
+
+    // THE THROW'S OWN OUTSIDE (the -999 PICKUP the carried's drop
+    // speaks — the whole carried the PRIMARY drops, the ONE the
+    // right wears)
+    let drops_before = app.drops.len();
+    app.merchant_carried = (emerald, 4);
+    app.click_merchant_slot(500, 500, 0);
+    assert_eq!(
+        app.merchant_carried,
+        (0, 0),
+        "the whole carried the primary drop wears"
+    );
+    assert_eq!(app.drops.len(), drops_before + 1, "the entity the drop spawns");
+    app.merchant_carried = (bread, 3);
+    app.click_merchant_slot(500, 500, 1);
+    assert_eq!(
+        app.merchant_carried,
+        (bread, 2),
+        "the one item the right drop wears"
+    );
+
+    // THE DRAG'S OWN ARM + PAINT (the carried-NON-EMPTY press the
+    // isQuickCrafting start speaks — the result seat the paint never
+    // names, the distribution the release answers)
+    app.merchant_carried = (emerald, 4);
+    app.qc_arm_merchant(10, 10, 0);
+    assert!(app.qc_armed, "the press the arm wears");
+    assert!(app.qc_slots.is_empty(), "the fresh arm the set clears");
+    app.qc_paint_merchant(10, 10); // the empty input seat
+    app.qc_paint_merchant(50, 10); // the RESULT seat the refusal keeps
+    assert_eq!(app.qc_slots, vec![0], "the set the refusal keeps clean");
+    app.qc_paint_merchant(10, 40); // the empty row seat
+    assert_eq!(app.qc_slots, vec![0, 3], "the painted set the walk banks");
+    app.qc_release(0);
+    assert!(!app.qc_armed, "the release the arm clears");
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 2),
+        "the type-0 split the first seat wears"
+    );
+    assert_eq!(
+        app.merchant_slots[3],
+        (emerald, 2),
+        "the type-0 split the row seat wears"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (emerald, 2),
+        "the write-through the split keeps"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the split the cursor drains");
+    // THE DEFERRED PLACE (the empty-paint release the PICKUP serves —
+    // the release POSITION the vanilla law reads)
+    app.mouse_pos = Some((30, 10));
+    app.merchant_slots[1] = (0, 0);
+    app.qc_arm_merchant(30, 10, 0);
+    app.qc_release(0);
+    assert_eq!(
+        app.merchant_slots[1],
+        (emerald, 1),
+        "the deferred place the seat fills"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (0, 0),
+        "the deferred place the carried spends"
+    );
+
+    // THE LIVE LANE'S OWN ECHOES (the prediction-free walk — the
+    // plain press the Pickup packet rides, the shift the QuickMove
+    // wears, the result seat the server's own apply answers)
+    let mut live = App::new(3);
+    live.enter_world();
+    live.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    live.live_clicks = Some(tx);
+    let mut slots = vec![(0, 0); 39];
+    slots[0] = (emerald, 4);
+    slots[2] = (bread, 1);
+    live.live_container_updated(Some(LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 3,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    live.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    live.merchant_panel = (0, 0);
+    live.shift_down = false;
+    live.click_merchant_slot(10, 10, 0);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 5, "the window id the echo wears");
+            assert_eq!(click.state_id, 3, "the state id the echo wears");
+            assert_eq!(click.slot, 0, "the input seat the echo speaks");
+            assert!(
+                matches!(click.input, ContainerInput::Pickup),
+                "the pickup mode the plain press wears"
+            );
+            assert!(click.changed.is_empty(), "the prediction-free lane rides");
+        }
+        other => panic!("the click the echo speaks, not {other:?}"),
+    }
+    live.shift_down = true;
+    live.click_merchant_slot(50, 10, 1);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 2, "the result seat the echo speaks");
+            assert!(
+                matches!(click.input, ContainerInput::QuickMove),
+                "the shift press the quick-move mode wears"
+            );
+        }
+        other => panic!("the result click the echo speaks, not {other:?}"),
+    }
+    live.shift_down = false;
+
+    // THE DRAG'S OWN WIRE TRIPLE (the START the mask(0, type) keeps,
+    // the ADDs the per-seat mask(1, type) wear, the END the
+    // mask(2, type) the changed map names)
+    live.merchant_carried = (emerald, 4);
+    live.merchant_slots[0] = (emerald, 4);
+    live.qc_arm_merchant(10, 10, 0);
+    live.qc_paint_merchant(10, 10);
+    live.qc_paint_merchant(50, 10); // the result the paint refuses
+    live.qc_release(0);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, -999, "the start the -999 slot keeps");
+            assert_eq!(click.button, 0, "the mask(0, type) the start wears");
+            assert!(
+                matches!(click.input, ContainerInput::QuickCraft),
+                "the quick-craft mode the drag wears"
+            );
+            assert!(click.changed.is_empty(), "the start the empty map keeps");
+        }
+        other => panic!("the drag the start speaks, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 0, "the painted seat the add speaks");
+            assert_eq!(click.button, 1, "the mask(1, type) the add wears");
+        }
+        other => panic!("the drag the add speaks, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, -999, "the end the -999 slot keeps");
+            assert_eq!(click.button, 2, "the mask(2, type) the end wears");
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (emerald, 4))],
+                "the end the distribution's own mutations names"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the fold the cursor's own remainder keeps"
+            );
+        }
+        other => panic!("the drag the end speaks, not {other:?}"),
+    }
+    assert!(
+        rx.try_recv().is_err(),
+        "the refusal the add the wire never mints"
+    );
+}
+
+    #[test]
+    fn probe_merchant_qm() {
+        let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+        let mut slots = vec![(0, 0); 39];
+        slots[1] = (emerald, 3);
+        let mut snap = slots.clone();
+        snap[2] = (i32::MAX, i32::MAX);
+        let changed = crate::world_view::predict_quick_move_grid(&snap, 1, 3);
+        eprintln!("changed = {changed:?}");
+        eprintln!("emerald id = {emerald}, max = {}", crate::world_view::item_max_stack(emerald));
+    }
+

@@ -9091,6 +9091,15 @@ pub struct App {
     pub merchant_slot_rects: Vec<(i32, i32, i16)>,
     pub merchant_panel: (i32, i32),
     pub merchant_row_rects: Vec<(i32, i32, usize)>,
+    /// THE MERCHANT'S OWN DOUBLE-CLICK FLAG (the gather arm's own
+    /// gate — the chest/furnace family's own shape the press block
+    /// arms, the release's PICKUP_ALL the flag answers; the whole
+    /// menu the FALSE override the walk never spreads)
+    pub merchant_doubleclick: bool,
+    /// THE MERCHANT'S OWN LAST-CLICK SEAT (the chest family's own
+    /// shape — the press the hovered seat remembers, the null the
+    /// None keeps; the double-click the pair's own compare reads)
+    pub merchant_last_click_slot: Option<usize>,
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
     /// draws, the cold cow the ColdCowModel's coat, the warm cow the
@@ -13374,6 +13383,8 @@ impl App {
             merchant_can_restock: false,
             merchant_selected: 0,
             merchant_slots: Vec::new(),
+            merchant_doubleclick: false,
+            merchant_last_click_slot: None,
             merchant_carried: (0, 0),
             merchant_title: None,
             merchant_slot_rects: Vec::new(),
@@ -24419,6 +24430,14 @@ impl App {
             // refuses [the slot.container != resultSlots the vanilla
             // override speaks], the whole 38 the rest answers)
             self.on_anvil_release_pickup_all()
+        } else if self.screen == ScreenKind::Merchant {
+            // THE MERCHANT GATHER'S OWN REFUSAL (the dev-222 NEXT's
+            // own census the 458 wheel wears — the flag the press
+            // armed, the canTakeItemForPickAll the WHOLE menu the
+            // FALSE override keeps [the merchant + the craft family
+            // the census named — the walk the release never spreads],
+            // the arm the release CONSUMES still)
+            self.on_merchant_release_pickup_all()
         } else {
             false
         };
@@ -24445,6 +24464,7 @@ impl App {
             || self.screen == ScreenKind::Crafting
             || self.screen == ScreenKind::Furnace
             || self.screen == ScreenKind::Beacon
+            || self.screen == ScreenKind::Merchant
         {
             // the BEACON screen the same base walk wears (the
             // autopush-323 round — the beacon's own lanes the
@@ -33290,6 +33310,220 @@ impl App {
         self.merchant_selected = 0;
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
+    }
+
+    /// THE MERCHANT'S OWN HOVER SEAT (the chest family's own shape —
+    /// the laid-out rects the render's own hit boxes keep, the 16x16
+    /// inner cells the +1 inset the Slot's own hit shape wears).
+    fn merchant_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.merchant_slot_rects
+            .iter()
+            .copied()
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+    }
+
+    /// THE MERCHANT'S OWN THROW (the beacon's own shape — the
+    /// doClick's -999 PICKUP the carried's drop speaks: the whole
+    /// carried the PRIMARY button drops, the ONE item the right
+    /// wears, the empty cursor the isEmpty guard keeps silent).
+    fn throw_merchant_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.merchant_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.merchant_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
+    /// THE MERCHANT'S OWN SLOT WALK (javap 26.2 AbstractContainerMenu.
+    /// doClick the PICKUP arms the payment seats answer — the dev-222
+    /// NEXT's own first lane the round banks): the trade INPUTS 0/1
+    /// the plain Slot's own generic law wears [the ANY-item mayPlace
+    /// the base Slot's own verdict keeps, the 64 cap the
+    /// getMaxStackSize default speaks — the predict_pickup pair the
+    /// take-all / take-half / place-one / place-all / swap arms
+    /// answer], the standard rows 3..38 the write-through projection
+    /// the inventory IS [the menu 3..29 the items 9..35 the main
+    /// grid rides, the 30..38 the hotbar row the -30 shift keeps —
+    /// the furnace's own shape], the carried the menu's own cursor
+    /// field keeps. THE RESULT SEAT'S OWN SILENCE (the menu 2 — the
+    /// take the trade's own apply the try-move round banks: the
+    /// offer's apply the input seats fill + the result spawn + the
+    /// offer's uses ride, the walk the later round re-lays — the
+    /// offline sim the honest silence wears, the LIVE lane the
+    /// packet the server's own trade apply answers). THE QUICK-MOVE
+    /// LANE (the shift-click — the vanilla quickMoveStack's own
+    /// routing: the inputs 0/1 the rows the moveItemStackTo(3, 39)
+    /// walk serves, the rows the payment insert the
+    /// moveItemStackTo(0, 2) walk answers, the RESULT source the
+    /// trade's own take the onTake apply rides — the same silence
+    /// the seat wears); the result seat's own mayPlace-false the
+    /// (MAX, MAX) blocked marker the snapshot wears (the anvil's own
+    /// law — the blocked cell the prediction's passes never read).
+    /// THE LIVE WINDOW'S OWN ECHOES (the prediction-free lane — the
+    /// empty delta list with the believed cursor the packet rides,
+    /// the server's own corrections the container lane re-banks; the
+    /// ALL slots the packet's own seat carries — the result take the
+    /// server's own trade apply answers).
+    fn click_merchant_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.merchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((_, _, slot)) = self.merchant_hover_seat(mx, my) else {
+            // THE DROP-OUTSIDE LANE (the beacon's own shape — the
+            // laid-out panel the strict rect compare speaks, the
+            // 276x166 chrome the panel origin frames)
+            if self.merchant_panel != (0, 0)
+                && (mx < self.merchant_panel.0
+                    || my < self.merchant_panel.1
+                    || mx >= self.merchant_panel.0 + 276
+                    || my >= self.merchant_panel.1 + 166)
+            {
+                self.throw_merchant_carried_outside(button);
+            }
+            return;
+        };
+        let menu = slot as usize;
+        // THE LIVE WINDOW'S OWN ECHOES (the prediction-free lane —
+        // the empty delta list with the believed cursor the packet
+        // rides, the server's own corrections the container lane
+        // re-banks; the offline sim the local predictions answer)
+        if self.merchant_is_live {
+            let Some(sink) = self.live_clicks.clone() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, state_id)) = self.merchant_live_window else {
+                return; // no window — the belief never armed
+            };
+            let input = if self.shift_down {
+                crate::world_view::ContainerInput::QuickMove
+            } else {
+                crate::world_view::ContainerInput::Pickup
+            };
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button,
+                    input,
+                    changed: Vec::new(),
+                    carried: self.merchant_carried,
+                },
+            ));
+            return;
+        }
+        // THE RESULT SEAT'S OWN SILENCE (the menu 2 — the trade's own
+        // apply the try-move round banks: the offer's apply the input
+        // seats fill, the result the offer's output spawns, the
+        // offer's uses the reward ride; the plain pickup AND the
+        // quick-move the same walk's own take wears — the offline sim
+        // the honest silence keeps, the LIVE lane the echo above the
+        // packet the server's own apply answers)
+        if menu == 2 {
+            return;
+        }
+        // THE QUICK-MOVE LANE (the shift-click — the vanilla
+        // quickMoveStack's own routing the predictor wears: the
+        // inputs 0/1 the rows serve, the rows the payment insert
+        // answers; the result seat the blocked marker the passes
+        // never read)
+        if self.shift_down {
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(39);
+            snapshot.extend_from_slice(&self.merchant_slots);
+            snapshot[2] = (i32::MAX, i32::MAX); // the result's own mayPlace-false
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 3);
+            for (i, pair) in &changed {
+                if *i < 2 {
+                    // the menu's own payment seats — no write-through
+                    // (the drained SOURCE the same walk's answer keeps)
+                    self.merchant_slots[*i] = *pair;
+                } else {
+                    // THE WRITE-THROUGH (the projection the inventory
+                    // IS — the menu slot the inventory cell answers;
+                    // the source row's own drain the same walk names)
+                    let idx = if *i < 30 { 9 + *i - 3 } else { *i - 30 };
+                    self.inventory.items[idx] = *pair;
+                    self.merchant_slots[*i] = *pair;
+                }
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            return;
+        }
+        if menu < 2 {
+            // THE PAYMENT SEATS' OWN PICKUP (the plain Slot's own
+            // generic law — the predict_pickup pair the take-all /
+            // take-half / place-one / place-all / swap arms answer,
+            // the 64 cap the default speaks)
+            let believed = self.merchant_slots[menu];
+            let (new_slot, new_carried) = if button == 0 {
+                crate::world_view::predict_pickup(believed, self.merchant_carried)
+            } else {
+                crate::world_view::predict_pickup_right(believed, self.merchant_carried)
+            };
+            self.merchant_slots[menu] = new_slot;
+            self.merchant_carried = new_carried;
+            return;
+        }
+        // THE STANDARD ROWS' OWN WRITE-THROUGH (the projection the
+        // inventory IS — the menu 3..29 the items 9..35 the main
+        // grid rides, the 30..38 the hotbar row the -30 shift keeps)
+        let idx = if menu < 30 { 9 + menu - 3 } else { menu - 30 };
+        let believed = self.inventory.items[idx];
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.merchant_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.merchant_carried)
+        };
+        self.inventory.items[idx] = new_slot;
+        self.merchant_slots[menu] = new_slot;
+        self.merchant_carried = new_carried;
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE MERCHANT GATHER'S OWN REFUSAL (javap 26.2 MerchantMenu —
+    /// the `canTakeItemForPickAll` override the whole menu's own
+    /// FALSE wears: the doClick PICKUP_ALL arm's own gate the walk
+    /// never passes, the same-item gather the menu never spreads;
+    /// the release the arm CONSUMES [the pc 243's goto 452 the
+    /// vanilla mouseReleased speaks — the qc tail the arm's own
+    /// clear still answers], the flag the arm's own clear speaks).
+    /// THE LIVE LANE the packet the refuse rides (the slotClicked's
+    /// own handleInventoryMouseClick the vanilla ALWAYS speaks — the
+    /// server's own doClick the same override refuses, the empty
+    /// delta the honest echo wears).
+    fn on_merchant_release_pickup_all(&mut self) -> bool {
+        if !self.merchant_doubleclick {
+            return false; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some((_, _, slot)) = self.merchant_hover_seat(mx, my) else {
+            return false; // the hoveredSlot null arm — the cursor between the slots
+        };
+        self.merchant_doubleclick = false; // pcs 238-240 — the arm's own clear
+        if self.world_is_network && self.merchant_is_live {
+            if let (Some(sink), Some((window_id, state_id))) =
+                (self.live_clicks.clone(), self.merchant_live_window)
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                    crate::world_view::ContainerClick {
+                        window_id,
+                        state_id,
+                        slot,
+                        button: 0,
+                        input: crate::world_view::ContainerInput::PickupAll,
+                        changed: Vec::new(),
+                        carried: self.merchant_carried,
+                    },
+                ));
+            }
+        }
+        // THE FALSE OVERRIDE'S OWN VERDICT — the walk never spreads
+        // (the canTakeItemForPickAll the whole menu's own FALSE wears)
+        true // pc 243's goto 452 — the arm the release CONSUMED
     }
 
     /// THE BEACON'S OWN SCREEN CLICK (the autopush-322 round — the
@@ -44578,6 +44812,77 @@ impl App {
         self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
     }
 
+    /// THE MERCHANT DRAG'S OWN ARM (the beacon's own shape — the
+    /// mouseClicked pcs 316-378 base walk the carried-NON-EMPTY press
+    /// answers: the in-flight drag the press never re-arms, the
+    /// on-seat OR outside press the arm wears, the chrome the
+    /// between-space the walk skips).
+    fn qc_arm_merchant(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if self.merchant_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.merchant_panel;
+        let on_seat = self
+            .merchant_slot_rects
+            .iter()
+            .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+        // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
+        // the 276x166 chrome the panel origin frames)
+        let outside = mx < panel.0 || my < panel.1 || mx >= panel.0 + 276 || my >= panel.1 + 166;
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32; // the button's own type (pc 338-347 the left, pc 353-363 the right)
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
+    /// THE MERCHANT DRAG'S OWN COLLECT (the same mouseDragged pcs
+    /// 0-58 the family paints answer — the merchant's own hover the
+    /// rects speak): shouldAdd pc 0-71 the gates wear — the arm, the
+    /// carried non-empty, the count's own `> painted || type 2` law,
+    /// the seat's canItemQuickReplace (the EMPTY seat or the same
+    /// item), the mayPlace — the RESULT seat's own false the paint
+    /// never names [the vanilla ResultSlot's own mayPlace the place
+    /// refusal wears], the plain Slots + the standard rows the base
+    /// Slot's own TRUE keeps, the canDragTo the base menu's
+    /// iconst_1 keeps (the MerchantMenu no override the probe
+    /// banks).
+    fn qc_paint_merchant(&mut self, mx: i32, my: i32) {
+        let Some(&(_, _, slot)) = self
+            .merchant_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.merchant_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        if menu == 2 {
+            return; // shouldAdd pc 47-52 — the result seat's own mayPlace-false
+        }
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
     /// THE CHEST DRAG'S OWN WIRE DISTRIBUTION (the offline walk's twin
     /// over the LIVE chest belief — the free fn
     /// [`wire_chest_quickcraft_distribute`] the disjoint field borrows
@@ -45439,6 +45744,14 @@ impl App {
             }
             return self.beacon_mirror.get(menu - 1).copied().unwrap_or((0, 0));
         }
+        if self.screen == ScreenKind::Merchant {
+            // THE MERCHANT'S OWN NUMBERING (the dev-222 route — the
+            // flat 39-slot belief the wire's own padding rides: the
+            // inputs 0/1, the result 2, the store rows 3..38 the
+            // write-through projection keeps; the paint seat read the
+            // flat mirror answers)
+            return self.merchant_slots.get(menu).copied().unwrap_or((0, 0));
+        }
         if self.screen == ScreenKind::Crafting {
             // THE TABLE'S OWN NUMBERING (the window-1 projection the
             // flat array speaks — result 0, the cells 1..9, the store
@@ -45582,6 +45895,18 @@ impl App {
                 // cap keeps, the standard rows the mirror + the
                 // inventory write-through speak)
                 self.qc_distribute_beacon_offline();
+            } else if self.screen == ScreenKind::Merchant {
+                // THE MERCHANT'S OWN LANES (the dev-222 route's own
+                // split — the wire the window belief rides, the
+                // offline sim the local write-through answer — the
+                // furnace's own flat-mirror lanes the 458 wheel
+                // re-wears: the packets the painted distribution
+                // mints, the belief the same net fold keeps)
+                if self.world_is_network {
+                    self.qc_distribute_merchant_wire();
+                } else {
+                    self.qc_distribute_merchant_offline();
+                }
             } else if self.world_is_network {
                 self.qc_distribute_wire();
             } else {
@@ -46006,6 +46331,30 @@ impl App {
                 && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 230 || my >= panel.1 + 219);
             if on_seat || outside {
                 self.beacon_screen_click(mx, my, self.qc_button as i8);
+            }
+            return;
+        }
+        if self.screen == ScreenKind::Merchant {
+            // THE MERCHANT'S OWN DEFERRED PLACE (the dev-222 route's
+            // own shape the 458 wheel re-wears — the same pc 325-449
+            // walk the beacon geometry answers): the seat the click
+            // walk's own PICKUP serves (the armed button the release
+            // wears — the right drag's deferred place the place-ONE
+            // speaks), the outside the -999 drop the click walk's own
+            // THROW lane serves (the whole carried the PRIMARY drops,
+            // the ONE the right wears), the between the -1 no-op
+            // keeps. THE WIDGET SEATS the release never serves (the
+            // offer rows the press alone answers — the
+            // super.mouseReleased law the family keeps).
+            let on_seat = self
+                .merchant_slot_rects
+                .iter()
+                .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            let panel = self.merchant_panel;
+            let outside = panel != (0, 0)
+                && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 276 || my >= panel.1 + 166);
+            if on_seat || outside {
+                self.click_merchant_slot(mx, my, self.qc_button as i8);
             }
             return;
         }
@@ -46565,6 +46914,101 @@ impl App {
             }
         }
         self.beacon_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE MERCHANT'S OWN OFFLINE DISTRIBUTION (the doClick
+    /// QUICK_CRAFT status-2 arm pcs 298-534 over the flat mirror —
+    /// the beacon's own math the 458 wheel re-wears, the menu's own
+    /// 39 the flat projection feeds: the inputs 0/1 the menu's own
+    /// seats the mirror holds, the store rows 3..38 the write-through
+    /// projection keeps [the menu 3..29 the items 9..35 the main
+    /// grid rides, the 30..38 the hotbar row the -30 shift keeps];
+    /// the RESULT seat the paint's own refusal the set never names —
+    /// the defensive skip the same verdict keeps).
+    fn qc_distribute_merchant_offline(&mut self) {
+        let carried = self.merchant_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            if menu == 2 {
+                continue; // the result seat's own mayPlace-false — the paint never names it
+            }
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor split, the
+            // type-1's own ONE per seat the right drag keeps
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < self.merchant_slots.len() {
+                self.merchant_slots[menu] = new;
+            }
+            if menu >= 3 {
+                // THE WRITE-THROUGH (the projection the inventory IS
+                // — the menu slot the inventory cell answers)
+                let idx = if menu < 30 { 9 + menu - 3 } else { menu - 30 };
+                if let Some(item) = self.inventory.items.get_mut(idx) {
+                    *item = new;
+                }
+            }
+        }
+        // pc 520-530 — the remainder the cursor keeps
+        self.merchant_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE MERCHANT'S WIRE DISTRIBUTION (the offline walk's twin over
+    /// the LIVE merchant belief — the free fn
+    /// [`wire_merchant_quickcraft_distribute`] the disjoint field
+    /// borrows keep, the furnace's own shape the kinds never wear):
+    /// the packet triple the merchant window's own identity rides,
+    /// the place math the same net fold keeps, the write-through the
+    /// caller's own rows speak.
+    fn qc_distribute_merchant_wire(&mut self) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.merchant_live_window else {
+            return; // the stand-in: no window, no echo
+        };
+        let qc_type = self.qc_type;
+        let qc_slots = self.qc_slots.clone();
+        wire_merchant_quickcraft_distribute(
+            sink,
+            &mut self.merchant_slots,
+            qc_type,
+            &qc_slots,
+            window_id,
+            state_id,
+            &mut self.merchant_carried,
+        );
+        // THE WRITE-THROUGH (the projection the inventory IS — the
+        // painted rows the inventory cells answer, the HUD row the
+        // hotbar's own answer follows)
+        for &menu in &qc_slots {
+            if menu >= 3 {
+                if let Some(&new) = self.merchant_slots.get(menu) {
+                    let idx = if menu < 30 { 9 + menu - 3 } else { menu - 30 };
+                    self.inventory.items[idx] = new;
+                }
+            }
+        }
         self.hotbar_slots = self.inventory.hotbar();
     }
 
@@ -47265,10 +47709,35 @@ impl App {
             // law the buttons serve FIRST — the SEVEN offer seats the
             // postButtonClick walk answers, the consumed seat the true
             // return speaks)
-            self.merchant_widget_press(mx, my);
-            // THE SLOT SEATS' own walk the later round banks (the trade
-            // inputs the doClick family serves) — the press the rows'
-            // lane answered the round keeps
+            if self.merchant_widget_press(mx, my) {
+                return;
+            }
+            // THE DOUBLE-CLICK FLAG (the furnace's own shape — the
+            // mouseClicked pcs 61-80 compute the dispatch BEFORE
+            // keeps: the previous press's seat the compare reads, the
+            // doubled tag the window layer feeds)
+            let hovered_menu = self.merchant_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.merchant_doubleclick = self.merchant_last_click_slot.is_some()
+                && self.merchant_last_click_slot == hovered_menu
+                && self.press_doubled;
+            // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
+            // 316-378 base walk the Inventory + chest + table +
+            // furnace + beacon rounds bank — the carried-NON-EMPTY
+            // press the isQuickCrafting start speaks: NO slot click,
+            // NO packet); the carried-empty press the PICKUP dispatch
+            // keeps [the doubled press the release's gather serves —
+            // the merchant's own FALSE override the spread never
+            // answers]
+            let held = self.merchant_carried.1 > 0;
+            if held {
+                self.qc_arm_merchant(mx, my, 0);
+            } else if !self.merchant_doubleclick {
+                self.click_merchant_slot(mx, my, 0);
+            }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None
+            // keeps)
+            self.merchant_last_click_slot = hovered_menu;
             return;
         }
         if self.screen == ScreenKind::Inventory {
@@ -47590,6 +48059,28 @@ impl App {
                 self.qc_arm_beacon(mx, my, 1);
             } else {
                 self.beacon_screen_click(mx, my, 1);
+            }
+            return false;
+        }
+        if self.screen == ScreenKind::Merchant {
+            // THE IN-FLIGHT DRAG'S OWN GATE (the same pc 168-172 walk
+            // the beacon's shape wears); the right press the TYPE-1
+            // DRAG ARMS (the one-each distribution the release
+            // serves); the carried-empty press the secondary dispatch
+            // keeps (the split-pickup the press lane answers — the
+            // widget precedence the offer rows' press the same walk
+            // answers FIRST)
+            if self.qc_armed {
+                return false;
+            }
+            if self.merchant_widget_press(mx, my) {
+                return false;
+            }
+            let held = self.merchant_carried.1 > 0;
+            if held {
+                self.qc_arm_merchant(mx, my, 1);
+            } else {
+                self.click_merchant_slot(mx, my, 1);
             }
             return false;
         }
@@ -49362,6 +49853,12 @@ impl App {
                 // verdict re-keys, the standard rows the base Slot's
                 // plain TRUE keeps)
                 self.qc_paint_beacon(mx, my);
+            } else if self.screen == ScreenKind::Merchant {
+                // THE MERCHANT'S OWN HOVER (the 458 wheel — the same
+                // shouldAdd gates the result seat's own mayPlace-false
+                // re-keys, the plain Slots + the standard rows the
+                // base Slot's own TRUE keeps)
+                self.qc_paint_merchant(mx, my);
             }
         }
     }
@@ -94407,6 +94904,114 @@ fn wire_enchant_quickcraft_distribute(
         },
     ));
 }
+/// THE MERCHANT DRAG'S OWN WIRE DISTRIBUTION (the doClick
+/// QUICK_CRAFT status-2 arm pcs 298-534 over the LIVE merchant
+/// belief, the packet triple `quickCraftToSlots` pcs 0-90 speaks —
+/// the furnace's own shape the kinds never wear): the START packet
+/// the `mask(0, type)` button the slot -999 keeps (the changed map
+/// the state transition's own silence keeps EMPTY), the ADD packets
+/// the `mask(1, type)` button per painted seat ride (the collect's
+/// own no-mutation the EMPTY map names), the END packet the
+/// `mask(2, type)` button the changed map the distribution's own
+/// mutations names. The per-seat place math the same net fold keeps
+/// — the flat 39-slot mirror the fold reads (the inputs 0/1 the
+/// menu's own seats, the result 2 the paint's own refusal the set
+/// never names — the defensive skip the same verdict keeps, the
+/// store rows 3..38 the write-through projection the caller speaks),
+/// the HUD row the caller's own sync answers.
+fn wire_merchant_quickcraft_distribute(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    slots: &mut [(i32, i32)],
+    qc_type: i32,
+    qc_slots: &[usize],
+    window_id: i32,
+    state_id: i32,
+    carried: &mut (i32, i32),
+) {
+    let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
+    let add_button = start_button | 1; // getQuickcraftMask(1, type)
+    let end_button = start_button | 2; // getQuickcraftMask(2, type)
+    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+    // the changed map never names
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: start_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed: Vec::new(),
+            carried: *carried,
+        },
+    ));
+    // THE ADDS (pc 19-68 — slotClicked(slot, slot.index, mask(1, type),
+    // QUICK_CRAFT) per painted seat): the collect's own no-mutation
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if carried.1 > 0 {
+        for &menu in qc_slots {
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button: add_button,
+                    input: crate::world_view::ContainerInput::QuickCraft,
+                    changed: Vec::new(),
+                    carried: *carried,
+                },
+            ));
+        }
+        // THE DISTRIBUTION (doClick pcs 298-534): the per-seat gates +
+        // place math the same fold keeps — the menu's own 39 the
+        // flat mirror feeds
+        let painted = qc_slots.len();
+        let mut k = carried.1;
+        for &menu in qc_slots {
+            if menu == 2 {
+                continue; // the result seat's own mayPlace-false
+            }
+            let (seat_id, seat_count) = slots.get(menu).copied().unwrap_or((0, 0));
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor(count/painted),
+            // the type-1's own ONE per seat (the right drag's answer)
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < slots.len() {
+                slots[menu] = new;
+            }
+            changed.push((menu as i16, new));
+        }
+        *carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+    }
+    // THE END (pc 71-87 — slotClicked(null, -999, mask(2, type),
+    // QUICK_CRAFT)): the distribution's own mutations the changed map
+    // names, the empty-cursor drag the EMPTY map keeps
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: end_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed,
+            carried: *carried,
+        },
+    ));
+}
+
 
 /// THE BREWING DRAG'S OWN WIRE DISTRIBUTION (the same doClick
 /// QUICK_CRAFT status-2 arm pcs 298-534 over the brewing stand's
