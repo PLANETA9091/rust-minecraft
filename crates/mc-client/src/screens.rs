@@ -28879,6 +28879,22 @@ impl App {
     /// floor drop keeps — the close_inventory's own add-back walk the
     /// helper shares).
     pub fn close_creative_picker(&mut self, back: ScreenKind) {
+        // THE PICKER'S OWN WINDOW-0 ECHO (the vanilla
+        // LocalPlayer.closeContainer law the inventory close's own
+        // 453 walk wears — the packet rides unconditionally with the
+        // standing menu's own containerId 0, the picker's own menu
+        // the same client-local 0 the ItemPickerMenu ctor banks, the
+        // wire route the open never speaks the closeContainer law
+        // never asks — the echo the E dispatch + the Escape + the
+        // open(Container) switch + the portal dismiss lanes the four
+        // call sites the census banked all wear, the send the
+        // removed() add-back walk the ride the tail wears; the
+        // offline store the truth the false gate never mints)
+        if self.world_is_network {
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id: 0 });
+            }
+        }
         if self.inv_carried.1 > 0 {
             let (id, count) = self.inv_carried;
             let mut rest = count;

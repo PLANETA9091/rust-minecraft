@@ -33575,3 +33575,80 @@ fn the_inventory_close_the_window0_echo_wears() {
     assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
     assert_eq!(app2.screen, ScreenKind::World, "the door the world answers");
 }
+
+/// THE CREATIVE PICKER'S OWN ECHO CENSUS (the 453 round's own NEXT the
+/// wheel answers — the close-fn census the close_creative_picker
+/// no-echo site named: the creative screen the same
+/// AbstractContainerScreen the sibling closes wear, the vanilla
+/// LocalPlayer.closeContainer law the packet rides unconditionally
+/// with the standing menu's own containerId 0, the picker's own menu
+/// the same client-local 0 the ItemPickerMenu ctor banks, the wire
+/// route the open never speaks the closeContainer law never asks —
+/// the honest vacuous the census retires, the offline store the truth
+/// the false gate never mints).
+#[test]
+fn the_creative_picker_close_the_window0_echo_wears() {
+    use crate::world_view::ContainerCommand;
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+
+    // APP ARM A — THE LIVE SESSION'S OWN ECHO (the window-0 the close
+    // speaks — the echo the add-back's own creative words the walk
+    // banks first, the vanilla closeContainer the send the removed()
+    // walk the tail wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    app.open(ScreenKind::Creative);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Creative,
+        "the screen the open wears"
+    );
+    app.inv_carried = (stone, 4);
+    app.close_creative_picker(ScreenKind::World);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 0, "the window-0 the echo carries");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    // THE ADD-BACK'S OWN WORD (the touched slot the creative write
+    // lane speaks — the empty store the first cell the whole stack
+    // takes, the word the seat the store row wears)
+    match rx.try_recv().unwrap() {
+        ContainerCommand::CreativeSetSlot { slot, item } => {
+            assert_eq!(slot, 36, "the first cell the menu id wears");
+            assert_eq!(
+                item,
+                (stone, 4),
+                "the add-back the store the whole stack keeps"
+            );
+        }
+        other => panic!("the add-back the creative word speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the close no second echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the carried the add-back the store keeps"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (stone, 4),
+        "the first cell the store wears"
+    );
+
+    // APP ARM B — THE OFFLINE STORE THE ECHO NEVER MINTS (the false
+    // gate the offline truth keeps — the recorder the silence wears)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app2.live_clicks = Some(tx2);
+    app2.open(ScreenKind::Creative);
+    app2.close_creative_picker(ScreenKind::World);
+    assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
+    assert_eq!(app2.screen, ScreenKind::World, "the door the world answers");
+}

@@ -6982,7 +6982,10 @@ fn the_creative_picker_the_live_session_the_gate_wears() {
     // walk serves, the touched slots the words speak — the
     // ascending menu ids the BTreeMap orders; the 70 the merge's
     // room the split speaks — the cell takes the 63, the rest the
-    // first empty keeps)
+    // first empty keeps). THE ECHO'S OWN DRAIN (the 454 round's own
+    // walk — the window-0 the close speaks the vanilla
+    // closeContainer law the send the removed() walk wears first,
+    // the add-back's own words the tail rides)
     app.inv_carried = (stone, 70);
     app.on_inventory_key();
     assert_eq!(app.screen, ScreenKind::World, "the close returns");
@@ -7001,6 +7004,7 @@ fn the_creative_picker_the_live_session_the_gate_wears() {
     assert_eq!(
         words,
         vec![
+            crate::world_view::ContainerCommand::Close { window_id: 0 },
             crate::world_view::ContainerCommand::CreativeSetSlot {
                 slot: 36,
                 item: (stone, 7)
@@ -7010,7 +7014,7 @@ fn the_creative_picker_the_live_session_the_gate_wears() {
                 item: (stone, 64)
             },
         ],
-        "the add-back's words the touched slots ride"
+        "the echo + the add-back's words the touched slots ride"
     );
     assert_eq!(
         app.live_held,
