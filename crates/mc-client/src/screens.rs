@@ -80559,6 +80559,15 @@ impl App {
                     self.anvil_cost = 0;
                     self.anvil_only_renaming = false;
                     self.anvil_repair_item_count = 0;
+                    // THE COST'S OWN WIRE WORD (the AnvilMenu's own
+                    // DataSlot the addSlotData registers — the cost the
+                    // wire's data word speaks, the enchant lane's own
+                    // data-words law the sibling walk re-wears: the zero
+                    // the fresh reset banks the real word re-lays, the
+                    // word the wire never spoke the honest zero keeps)
+                    if let Some(&cost_word) = c.data_slots.first() {
+                        self.anvil_cost = cost_word;
+                    }
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Anvil);
                     }

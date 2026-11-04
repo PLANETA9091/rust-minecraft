@@ -33310,3 +33310,74 @@ fn the_anvil_death_the_field_words_retire() {
     assert_eq!(app.anvil_caret, 0, "the second caret the zero park keeps");
     assert_eq!(app.anvil_cost, 0, "the second cost the honest zero keeps");
 }
+
+/// THE ANVIL COST'S OWN WIRE WORD (the 220 round's own NEXT the wheel
+/// answers — the AnvilMenu's own DataSlot the wire's data word speaks,
+/// the fresh reset's honest zero the real word re-lays, the enchant
+/// lane's own data-words law the sibling walk re-wears).
+#[test]
+fn the_anvil_cost_the_wire_word_wears() {
+    use crate::world_view::LiveContainer;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+
+    // APP ARM A — THE WIRE WORD THE FRESH WINDOW RE-LAYS (the menu
+    // type 8 the OpenScreen word routes, the data slot the cost word
+    // speaks — the zero the fresh reset banks the real word re-lays)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let mut aslots = vec![(0i32, 0i32); 39];
+    aslots[0] = (sword, 1);
+    aslots[1] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: vec![5],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the route the repair window opens"
+    );
+    assert_eq!(app.anvil_cost, 5, "the wire's own word the cost lane banks");
+
+    // APP ARM B — THE WORD RIDES EVERY SYNC (the re-sync the window
+    // re-lays — the server's own recomputed word the next sync banks)
+    let mut aslots2 = vec![(0i32, 0i32); 39];
+    aslots2[0] = (sword, 1);
+    aslots2[1] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 5,
+        data_slots: vec![7],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.anvil_cost, 7, "the recomputed word the re-sync banks");
+
+    // APP ARM C — THE WORDLESS WIRE THE HONEST ZERO KEEPS (the data
+    // slot the wire never spoke — the zero the fresh reset banks the
+    // absent word never re-lays)
+    let mut aslots3 = vec![(0i32, 0i32); 39];
+    aslots3[0] = (sword, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots3,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 6,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.anvil_cost, 0, "the absent word the honest zero keeps");
+}
