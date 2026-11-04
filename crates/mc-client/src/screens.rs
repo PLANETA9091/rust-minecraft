@@ -25429,6 +25429,17 @@ impl App {
     /// `Inventory.add` law the touch lane speaks), the screen back to
     /// the world. The offline store IS the truth — no echo rides.
     pub fn close_inventory(&mut self, back: ScreenKind) {
+        // THE WINDOW-0'S OWN ECHO (the vanilla LocalPlayer.closeContainer
+        // law — the packet rides unconditionally with the inventory
+        // menu's own containerId 0, the inventory screen the same
+        // removed() walk the sibling closes wear, the echo the close
+        // dispatch + the portal dismiss lanes the census banked; the
+        // offline store the truth the false gate never mints)
+        if self.world_is_network {
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id: 0 });
+            }
+        }
         if self.inv_carried.1 > 0 {
             let (id, count) = self.inv_carried;
             // THE WORD'S OWN RIDE HOME (the dev-199 law the brewing

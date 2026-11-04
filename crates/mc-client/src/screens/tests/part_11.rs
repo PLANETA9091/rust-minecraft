@@ -30747,6 +30747,18 @@ fn the_live_quickcraft_the_state_id_ride_wears() {
     );
     assert_eq!(app.chest_slots.len(), 27, "the grid the 63-shape wears");
     app.open(ScreenKind::Chest);
+    // THE INVENTORY'S OWN ECHO the switch speaks (the 453 round's own
+    // law — the open(Chest) the standing inventory the close serves,
+    // the window-0 the vanilla closeContainer packet rides)
+    match click_rx
+        .try_recv()
+        .expect("the inventory's own close rode the lane")
+    {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 0, "the window-0 the switch echoes");
+        }
+        other => panic!("expected the window-0 close, got {other:?}"),
+    }
     let panel = chest_panel_origin(640, 360);
     app.chest_panel = panel;
     app.chest_slot_rects = chest_rects_for(panel);
@@ -33509,4 +33521,57 @@ fn the_anvil_close_the_wire_echo_wears() {
         dirt_home >= 2,
         "the ridden dirt the offline ride-home wears"
     );
+}
+
+/// THE INVENTORY CLOSE'S OWN ECHO GATE (the 221 round's own census the
+/// wheel answers — the vanilla LocalPlayer.closeContainer law the
+/// window-0 lane re-wears: the packet rides unconditionally with the
+/// inventory menu's own containerId 0, the sibling closes' own law the
+/// seven walks wear, the offline store the truth the false gate never
+/// mints).
+#[test]
+fn the_inventory_close_the_window0_echo_wears() {
+    use crate::world_view::ContainerCommand;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE LIVE SESSION'S OWN ECHO (the window-0 the close
+    // speaks — the recorder the command answers, the carried the
+    // add-back the store keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    app.open(ScreenKind::Inventory);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Inventory,
+        "the screen the open wears"
+    );
+    app.inv_carried = (dirt, 4);
+    app.close_inventory(ScreenKind::World);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 0, "the window-0 the echo carries");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the close no second echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the carried the add-back the store keeps"
+    );
+
+    // APP ARM B — THE OFFLINE STORE THE ECHO NEVER MINTS (the false
+    // gate the offline truth keeps — the recorder the silence wears)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app2.live_clicks = Some(tx2);
+    app2.open(ScreenKind::Inventory);
+    app2.close_inventory(ScreenKind::World);
+    assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
+    assert_eq!(app2.screen, ScreenKind::World, "the door the world answers");
 }
