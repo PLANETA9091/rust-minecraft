@@ -159,6 +159,7 @@ pub mod serverbound {
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
+        SB_SET_BEACON as SET_BEACON,
         SB_CHAT as CHAT, SB_CHAT_COMMAND as CHAT_COMMAND,
         SB_COMMAND_SUGGESTION as COMMAND_SUGGESTION,
     };
@@ -8088,6 +8089,36 @@ pub fn encode_select_bundle_item(slot_id: i32, selected_item_index: i32) -> Vec<
     p
 }
 
+/// The beacon's OWN effects word (the vanilla
+/// `BeaconConfirmButton.onPress`'s serverbound echo —
+/// ServerboundSetBeaconPacket, generated id 52,
+/// `minecraft:set_beacon`, the javap dump
+/// `beacon_gui_322.txt` the record banks: the
+/// `Optional<Holder<MobEffect>>` pair the confirm speaks BEFORE the
+/// closeContainer tail). THE WIRE (the record's own STREAM_CODEC —
+/// the `holderRegistry(MOB_EFFECT).apply(ByteBufCodecs::optional)`
+/// composition): per effect the presence Boolean the value precedes,
+/// the holder's registry id the VarInt carries; the None the absent
+/// Boolean keeps (the empty selection the confirm's own honest
+/// answer wears). The power buttons the dump's own onPress law the
+/// client-local verdict banks — NO ButtonClick the candidate's guess
+/// wore, the bytes retire it.
+pub fn encode_set_beacon(primary: Option<i32>, secondary: Option<i32>) -> Vec<u8> {
+    let mut p = Vec::with_capacity(4);
+    write_varint(&mut p, serverbound::SET_BEACON);
+    // THE OPTIONAL'S OWN BOOL (the ByteBufCodecs.optional codec — the
+    // presence flag the value precedes)
+    p.push(if primary.is_some() { 1 } else { 0 });
+    if let Some(id) = primary {
+        write_varint(&mut p, id);
+    }
+    p.push(if secondary.is_some() { 1 } else { 0 });
+    if let Some(id) = secondary {
+        write_varint(&mut p, id);
+    }
+    p
+}
+
 /// The right-mouse USE (the vanilla `MultiPlayerGameMode.useItem`'s
 /// serverbound echo — ServerboundUseItemPacket, generated id 67,
 /// `minecraft:use_item`). THE WIRE (javap of the real 26.2 class, its
@@ -11770,6 +11801,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_select_bundle_item(slot_id, selected_item_index))
             .context("send select bundle item")
+    }
+
+    /// The beacon's OWN effects word (the vanilla
+    /// `BeaconConfirmButton.onPress`'s echo — the
+    /// ServerboundSetBeaconPacket the confirm speaks BEFORE the
+    /// closeContainer tail: the Optional<Holder> pair the client's
+    /// own selection carries, the raw MobEffect ids the fields keep).
+    pub fn set_beacon(&mut self, primary: Option<i32>, secondary: Option<i32>) -> Result<()> {
+        self.conn
+            .send_packet(&encode_set_beacon(primary, secondary))
+            .context("send set beacon")
     }
 
     /// The player's right-mouse USE (the vanilla gameMode.useItem's own

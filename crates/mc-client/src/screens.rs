@@ -33358,13 +33358,23 @@ impl App {
     /// verdicts wear — the vanilla press the closeContainer
     /// unconditionally tail speaks.
     fn beacon_confirm_press(&mut self) {
-        // THE LIVE CONFIRM'S OWN CLOSE (the anvil close's own law the
-        // 456 route re-wears — the BeaconConfirmButton's
-        // onClose the closeContainer tail speaks, the effects' commit
-        // + the payment's consume the SERVER's own law answers, the
-        // client's bank the wire never rides — NO ride-home the local
-        // fiction never wears)
+        // THE LIVE CONFIRM'S OWN WIRE (the BeaconConfirmButton.onPress
+        // walk — the ServerboundSetBeaconPacket the confirm speaks
+        // BEFORE the closeContainer tail: the Optional<Holder> pair
+        // the client's own selection carries [the Some the raw
+        // MobEffect id wears, the None the empty selection keeps], the
+        // close the companion echo the close_beacon serves, the
+        // effects' commit the SERVER's own law answers, the client's
+        // bank the wire never rides — NO ride-home the local fiction
+        // never wears; the power buttons the dump's own onPress law
+        // the client-local verdict banks, the ButtonClick word the
+        // candidate's guess the bytes retire)
         if self.beacon_is_live {
+            let (primary, secondary) = (self.beacon_primary, self.beacon_secondary);
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink
+                    .send(crate::world_view::ContainerCommand::SetBeacon { primary, secondary });
+            }
             self.close_beacon(ScreenKind::World);
             return;
         }
@@ -80803,9 +80813,10 @@ impl App {
                     // server owns (the result the beacon's effects the
                     // confirm's own close serves, the payment the
                     // server-side removed() returns, the powers the
-                    // data-word lane the later round re-lays — the
+                    // data-word lane the 457 round re-lays — the
                     // fresh window the zeros keep, the buttons' own
-                    // words the honest silence wears).
+                    // words the dump's onPress law the client-local
+                    // verdict banks).
                     self.beacon_is_live = true;
                     self.beacon_payment = *c.slots.first().unwrap_or(&(0, 0));
                     self.beacon_mirror.clear();
@@ -80834,6 +80845,26 @@ impl App {
                     self.beacon_primary = None;
                     self.beacon_secondary = None;
                     self.beacon_open_cell = None;
+                    // THE POWERS' OWN DATA WORDS (the BeaconBlockEntity's
+                    // own ContainerData the menu's three-word bank
+                    // carries — DATA_LEVELS 0 the activation speaks [no
+                    // consumer the client's canvas wears — the word the
+                    // window carries the later levels round may re-lay],
+                    // DATA_PRIMARY 1 the raw MobEffect id the word
+                    // banks, DATA_SECONDARY 2 the same lane answers;
+                    // the word the fresh window never spoke the None
+                    // keeps, the non-effect word the empty seat answers
+                    // — the VALID_EFFECTS registry's own ids the 1+
+                    // domain speaks, the 0/-1 the none word the honest
+                    // bank keeps; the screen's own updateStatus tail
+                    // the words re-speaks — the server's own truth the
+                    // client's selection re-syncs)
+                    if let Some(&pri) = c.data_slots.get(1) {
+                        self.beacon_primary = if pri > 0 { Some(pri) } else { None };
+                    }
+                    if let Some(&sec) = c.data_slots.get(2) {
+                        self.beacon_secondary = if sec > 0 { Some(sec) } else { None };
+                    }
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Beacon);
                     }

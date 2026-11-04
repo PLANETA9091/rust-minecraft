@@ -34015,3 +34015,151 @@ fn the_beacon_wire_route_the_menu_type9_wears() {
     assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
     assert_eq!(app2.screen, ScreenKind::World, "the door the world answers");
 }
+
+/// THE BEACON POWERS' OWN WIRE WORDS (the 456 NEXT's own lane the wheel
+/// answers — the route's fresh zeros the round re-lays: the
+/// BeaconBlockEntity's own ContainerData the menu's three-word bank
+/// carries [DATA_LEVELS 0 the activation speaks, DATA_PRIMARY 1 the
+/// raw MobEffect id the word banks, DATA_SECONDARY 2 the same lane
+/// answers], the decode arm the primary/secondary the window's own
+/// bank re-lays — the non-effect word the empty seat answers, the
+/// VALID_EFFECTS registry's own ids the 1+ domain speaks — and the
+/// CONFIRM'S OWN WIRE the dump's own bytes answer
+/// (scripts/jar_work/beacon_gui_322.txt — the
+/// BeaconConfirmButton.onPress walk: the ServerboundSetBeaconPacket
+/// the Optional<Holder> pair the confirm speaks BEFORE the
+/// closeContainer tail, the power buttons' own onPress the
+/// client-local verdict banks — NO ButtonClick word the candidate's
+/// guess wore, the bytes retire it). The offline door the recorder
+/// the silence keeps.
+#[test]
+fn the_beacon_powers_the_wire_words_wear() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+
+    // APP ARM A — THE DATA WORDS' OWN RE-LAY (the route's feed the
+    // three-word bank wears — the primary/secondary the raw ids the
+    // window's own bank answers, the levels word the no consumer
+    // keeps)
+    let mut slots = vec![(0, 0); 37];
+    slots[0] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 2,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 3,
+        data_slots: vec![3, 5, 7],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.screen, ScreenKind::Beacon, "the route the beacon opens");
+    assert_eq!(
+        app.beacon_primary,
+        Some(5),
+        "the primary word the bank re-lays"
+    );
+    assert_eq!(
+        app.beacon_secondary,
+        Some(7),
+        "the secondary word the bank re-lays"
+    );
+    assert!(rx.try_recv().is_err(), "the open no echo mints");
+
+    // APP ARM B — THE NONE WORD'S OWN SEAT (the fresh window's own
+    // silence the sync re-answers — the absent word the None keeps,
+    // the non-effect word the empty seat answers: the VALID_EFFECTS
+    // registry's own ids the 1+ domain speaks)
+    let mut slots2 = vec![(0, 0); 37];
+    slots2[0] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 1,
+        data_slots: vec![2, 0, -1],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Beacon,
+        "the second window the route opens"
+    );
+    assert_eq!(
+        app.beacon_primary, None,
+        "the zero word the empty seat answers"
+    );
+    assert_eq!(
+        app.beacon_secondary, None,
+        "the negative word the empty seat answers"
+    );
+
+    // APP ARM C — THE CONFIRM'S OWN WIRE (the Set Beacon packet the
+    // confirm speaks BEFORE the closeContainer tail — the Optional
+    // pair the client's own selection carries, the Close the
+    // companion echo answers)
+    app.beacon_primary = Some(1);
+    app.beacon_secondary = Some(13);
+    app.beacon_confirm_press();
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SetBeacon { primary, secondary } => {
+            assert_eq!(primary, Some(1), "the primary the packet carries");
+            assert_eq!(secondary, Some(13), "the secondary the packet carries");
+        }
+        other => panic!("the confirm the Set Beacon speaks, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 4, "the closeContainer tail the echo answers");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the confirm no second echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+    assert!(!app.beacon_is_live, "the close the live flag retires");
+
+    // THE WIRE'S OWN BYTE LAW (the encode's own shape the VarInt
+    // pair wears — the packet id 52 the lead speaks, the presence
+    // Boolean the value precedes, the None the absent Boolean keeps)
+    assert_eq!(
+        mc_protocol::play::encode_set_beacon(Some(1), None),
+        vec![52, 1, 1, 0],
+        "the primary-only word the bytes wear"
+    );
+    assert_eq!(
+        mc_protocol::play::encode_set_beacon(None, Some(5)),
+        vec![52, 0, 1, 5],
+        "the secondary-only word the bytes wear"
+    );
+
+    // APP ARM D — THE OFFLINE DOOR (the false gate the recorder the
+    // silence wears — the offline confirm the local bank + the
+    // consume the stand-in's own walk keeps, the wire the session
+    // never wears)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app2.live_clicks = Some(tx2);
+    app2.open_beacon_for((2, 0, 0));
+    assert!(
+        !app2.beacon_is_live,
+        "the offline door the live flag never wears"
+    );
+    app2.beacon_confirm_press();
+    assert!(
+        rx2.try_recv().is_err(),
+        "the offline confirm no wire word mints"
+    );
+    assert_eq!(
+        app2.screen,
+        ScreenKind::World,
+        "the offline confirm the close tail answers"
+    );
+}

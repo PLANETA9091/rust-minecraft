@@ -580,6 +580,16 @@ fn run_join(
                             // the two VarInts the record's write speaks.
                             session.select_bundle_item(slot_id, selected_item_index)
                         }
+                        crate::world_view::ContainerCommand::SetBeacon { primary, secondary } => {
+                            // THE BEACON EFFECTS' OWN WIRE (the vanilla
+                            // BeaconConfirmButton.onPress walk — the Set
+                            // Beacon packet the confirm speaks BEFORE the
+                            // closeContainer tail, the Optional pair the
+                            // client's selection carries — the Some the
+                            // raw MobEffect id wears, the None the empty
+                            // selection keeps)
+                            session.set_beacon(primary, secondary)
+                        }
                         crate::world_view::ContainerCommand::PickBlock { pos, include_data } => {
                             // THE PICK's wire half (the vanilla
                             // gameMode.handlePickItemFromBlock walk): the

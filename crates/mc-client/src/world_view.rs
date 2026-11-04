@@ -2584,6 +2584,21 @@ pub enum ContainerCommand {
         cursor: (f32, f32, f32),
         inside: bool,
     },
+    /// THE BEACON EFFECTS' OWN WIRE (the vanilla
+    /// `BeaconConfirmButton.onPress`'s echo — the
+    /// ServerboundSetBeaconPacket the confirm speaks BEFORE the
+    /// closeContainer tail: the `Optional<Holder<MobEffect>>` pair the
+    /// client's own selection carries — the Some the raw MobEffect id
+    /// wears, the None the empty selection keeps; the power buttons
+    /// the dump's own onPress law the client-local verdict banks — NO
+    /// ButtonClick word the candidate's guess wore, the bytes retire
+    /// it). The worker speaks the packet through the session's send
+    /// path (the close the companion command the confirm's own tail
+    /// answers).
+    SetBeacon {
+        primary: Option<i32>,
+        secondary: Option<i32>,
+    },
     /// The use RELEASE (the vanilla gameMode.releaseUsingItem's own
     /// echo — the RELEASE_USE_ITEM action at BlockPos.ZERO / DOWN).
     ReleaseUse,
