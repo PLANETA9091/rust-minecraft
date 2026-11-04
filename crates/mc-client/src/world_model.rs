@@ -2319,6 +2319,15 @@ pub const MENU_TYPE_GENERIC_3X3: i32 = 6;
 /// 47) seat) + the standard 36, the cost DataSlot the word rides).
 pub const MENU_TYPE_ANVIL: i32 = 8;
 
+/// `MenuType`'s beacon — the BeaconMenu's registry id (the SAME clinit
+/// order speaks: anvil 8, BEACON lands at 9, blast_furnace 10 — the
+/// wire's own word the live beacon lane routes on; the menu's own
+/// shape the BeaconMenu ctor banks — the ONE payment slot (0 the
+/// PaymentSlot seat the mayPlace + getMaxStackSize laws keep) + the
+/// standard 36, the powers DataSlots the words ride [the data-word
+/// lane the later round re-lays — the fresh window the zeros keep]).
+pub const MENU_TYPE_BEACON: i32 = 9;
+
 /// `MenuType`'s crafting — the CraftingMenu's registry id (the SAME
 /// clinit order speaks: generic_9x6 5, generic_3x3 6, crafter_3x3 7,
 /// anvil 8, beacon 9, blast_furnace 10, brewing_stand 11, CRAFTING

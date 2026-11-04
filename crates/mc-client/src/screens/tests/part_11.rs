@@ -33775,3 +33775,243 @@ fn the_world_e_open_the_wire_silence_wears() {
     );
     assert!(rx4.try_recv().is_err(), "the offline open no echo mints");
 }
+
+/// THE BEACON'S OWN WIRE ROUTE (the 455 NEXT's own lane the wheel
+/// answers — the anvil's dev-202 shape the 456 route re-wears: the
+/// menu type 9 the server's OpenScreen word speaks, the honest drop
+/// the use arm's unconsumed press the round retires — the decode arm
+/// the open lands [the payment the 0 seat, the mirror rows 1..36,
+/// the carried the authoritative cursor, the window's identity the
+/// clicks echo against], the prediction-free echo the clicks speak,
+/// the gather the belief's own snapshot the wire walk feeds, the
+/// close the window-0 law the echo answers, the death walk the
+/// store's own drop serves, the offline door the offline walk's
+/// whole answer keeps).
+#[test]
+fn the_beacon_wire_route_the_menu_type9_wears() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let mut app = App::new(3);
+    app.enter_world();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE WIRE SESSION'S OWN SEAT (the route the live session wears —
+    // the world_is_network the wire arms demand)
+    app.world_is_network = true;
+    // THE ROUTE'S OWN FEED (the live_container_updated lane — the
+    // window-2 the menu type 9 the projection answers)
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(emerald, 1)];
+    for i in 0..36 {
+        slots.push(if i == 0 {
+            (dirt, 2)
+        } else if i == 5 {
+            (dirt, 3)
+        } else {
+            (0, 0)
+        });
+    }
+    app.live_container_updated(Some(LiveContainer {
+        id: 2,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.screen, ScreenKind::Beacon, "the route the beacon opens");
+    assert!(app.beacon_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.beacon_live_window,
+        Some((2, 7)),
+        "the window identity the clicks echo against"
+    );
+    assert_eq!(
+        app.beacon_payment,
+        (emerald, 1),
+        "the payment seat the feed answers"
+    );
+    assert_eq!(
+        app.beacon_mirror.len(),
+        36,
+        "the mirror rows the padded shape keeps"
+    );
+    assert_eq!(
+        app.beacon_mirror[0],
+        (dirt, 2),
+        "the first mirror row the feed wears"
+    );
+    // THE CLICK'S OWN ECHO (the prediction-free lane — the empty
+    // delta list the packet rides, the local walk the live gate
+    // never enters)
+    app.beacon_slot_rects = vec![(0, 0, 0), (20, 0, 1), (40, 0, 2)];
+    app.beacon_panel = (-300, -220); // the whole screen the seats alone cover
+    app.shift_down = false;
+    app.beacon_screen_click(0, 0, 0);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 2, "the window id the echo wears");
+            assert_eq!(click.state_id, 7, "the state id the echo wears");
+            assert_eq!(click.slot, 0, "the payment seat the echo speaks");
+            assert!(
+                matches!(click.input, crate::world_view::ContainerInput::Pickup),
+                "the pickup mode the plain press wears"
+            );
+            assert!(click.changed.is_empty(), "the prediction-free lane rides");
+        }
+        other => panic!("the click the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.beacon_payment,
+        (emerald, 1),
+        "the payment the local walk never moves — the server's verdict answers"
+    );
+    // THE GATHER'S OWN ECHO (the belief's own snapshot the wire walk
+    // feeds — the carried stack the gather's own law demands [the
+    // empty cursor the arm never walks], the hovered seat the press
+    // emptied the EMPTY predicate keeps, the same-item spread the
+    // gather pulls, the changed cells the write-through banks, the
+    // PickupAll the echo speaks)
+    app.mouse_pos = Some((40, 0)); // the emptied seat the release walk tracks
+    app.beacon_carried = (dirt, 1); // the armed cursor the gather's law keeps
+    app.beacon_doubleclick = true;
+    assert!(
+        app.on_beacon_release_pickup_all(),
+        "the armed gather the release consumes"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (dirt, 6),
+        "the gathered spread the cursor wears"
+    );
+    assert_eq!(
+        app.beacon_mirror[0],
+        (0, 0),
+        "the drained row the write-through retires"
+    );
+    assert_eq!(
+        app.beacon_mirror[5],
+        (0, 0),
+        "the drained spread the write-through retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 2, "the window id the echo wears");
+            assert_eq!(click.slot, 2, "the emptied seat the echo speaks");
+            assert!(
+                matches!(click.input, crate::world_view::ContainerInput::PickupAll),
+                "the gather mode the release wears"
+            );
+            assert_eq!(click.changed.len(), 2, "the drained pair the delta rides");
+            assert_eq!(
+                click.carried,
+                (dirt, 6),
+                "the believed cursor the echo carries"
+            );
+        }
+        other => panic!("the gather the echo speaks, not {other:?}"),
+    }
+    // THE CLOSE'S OWN ECHO (the wire's own law — the Close the
+    // window-2 speaks, the belief resets with the window, the
+    // carried + the payment the server-side removed() returns — the
+    // NO-ride-home the local fiction never wears)
+    app.close_beacon(ScreenKind::World);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 2, "the live window the echo carries");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the close no second echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+    assert!(!app.beacon_is_live, "the close the live flag retires");
+    assert!(
+        app.beacon_live_window.is_none(),
+        "the close the window dies"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (0, 0),
+        "the carried the server's own law returns"
+    );
+    // THE WINDOW-DEATH'S OWN RETIRE (the store's own drop the
+    // chest-family law the beacon lane re-wears — the screen the
+    // world seat answers, the live lane the death retires)
+    let mut slots2 = vec![(0, 0); 37];
+    slots2[0] = (emerald, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 3,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots: slots2,
+        bundle_rows: Vec::new(),
+        carried: (dirt, 4),
+        state_id: 1,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Beacon,
+        "the second window the route opens"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (dirt, 4),
+        "the authoritative carried the second window lands"
+    );
+    app.live_container_updated(None);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the drop the world seat answers"
+    );
+    assert!(!app.beacon_is_live, "the drop the live flag retires");
+    assert!(app.beacon_live_window.is_none(), "the drop the window dies");
+    assert_eq!(
+        app.beacon_payment,
+        (0, 0),
+        "the payment the death's own reset retires"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (0, 0),
+        "the carried the death's own reset retires"
+    );
+    // THE OFFLINE DOOR (the false gate the offline truth keeps — the
+    // offline walk the gather's whole answer keeps, the recorder the
+    // silence wears)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app2.live_clicks = Some(tx2);
+    app2.open_beacon_for((2, 0, 0));
+    assert_eq!(
+        app2.screen,
+        ScreenKind::Beacon,
+        "the offline door the stand-in opens"
+    );
+    assert!(
+        !app2.beacon_is_live,
+        "the offline door the live flag never wears"
+    );
+    app2.beacon_slot_rects = vec![(0, 0, 0)]; // the empty payment seat the hover answers
+    app2.mouse_pos = Some((0, 0));
+    app2.beacon_mirror[1] = (dirt, 2);
+    app2.beacon_carried = (dirt, 1); // the armed cursor the gather's law keeps
+    app2.beacon_doubleclick = true;
+    assert!(
+        app2.on_beacon_release_pickup_all(),
+        "the offline gather the release consumes"
+    );
+    assert_eq!(
+        app2.beacon_carried,
+        (dirt, 3),
+        "the offline gather the cursor wears"
+    );
+    assert!(rx2.try_recv().is_err(), "the offline gather no echo mints");
+    app2.close_beacon(ScreenKind::World);
+    assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
+    assert_eq!(app2.screen, ScreenKind::World, "the door the world answers");
+}

@@ -9012,6 +9012,16 @@ pub struct App {
     /// press's flag compute compares it against the new hover, the
     /// close the reset speaks)
     pub beacon_last_click_slot: Option<usize>,
+    /// THE BEACON SCREEN'S OWN LIVE FLAG (the sibling lanes' own law
+    /// the 456 route banks — the server's OpenScreen word the menu
+    /// type 9 speaks, the wire open the flag wears, the clicks echo
+    /// against the window the identity rides, the close + the death
+    /// walk the flag retires; the offline stand-in the false keeps)
+    pub beacon_is_live: bool,
+    /// THE BEACON WINDOW'S OWN IDENTITY (the live window's containerId
+    /// + the stateId revision the clicks echo against — the anvil's
+    /// `Some((c.id, c.state_id))` shape the beacon route re-wears)
+    pub beacon_live_window: Option<(i32, i32)>,
     pub beacon_slot_rects: Vec<(i32, i32, i16)>,
     pub beacon_panel: (i32, i32),
     pub beacon_power_rects: Vec<(i32, i32, i32, bool)>,
@@ -13284,6 +13294,8 @@ impl App {
             beacon_secondary: None,
             beacon_doubleclick: false,
             beacon_last_click_slot: None,
+            beacon_is_live: false,
+            beacon_live_window: None,
             beacon_slot_rects: Vec::new(),
             beacon_panel: (0, 0),
             beacon_power_rects: Vec::new(),
@@ -26240,9 +26252,10 @@ impl App {
     /// family alone refuses], the flag the arm's own clear the
     /// release speaks, the true the release CONSUMED [the goto 452
     /// the quickcraft lane the pc 246 verdict never enters]). THE
-    /// OFFLINE LANE the door alone wears — the beacon the wire
-    /// session never opens [no live window the route arm banks], the
-    /// offline walk the gather's whole answer keeps.
+    /// LIVE LANE the 456 route arm wears — the beacon the wire
+    /// session opens [the MENU_TYPE_BEACON the decode banks], the
+    /// wire walk the belief's own snapshot the prediction feeds;
+    /// the offline door the offline walk's whole answer keeps.
     fn on_beacon_release_pickup_all(&mut self) -> bool {
         if !self.beacon_doubleclick {
             return false; // pcs 64-68 — the flag the gate keeps
@@ -26254,8 +26267,72 @@ impl App {
             return false; // the hoveredSlot null arm — the cursor between the slots
         };
         self.beacon_doubleclick = false; // pcs 238-240 — the arm's own clear
-        self.on_beacon_pickup_all_offline(slot as usize);
+        if self.world_is_network && self.beacon_is_live {
+            self.on_beacon_pickup_all_wire(slot as usize);
+        } else {
+            self.on_beacon_pickup_all_offline(slot as usize);
+        }
         true // pc 243's goto 452 — the arm the release CONSUMED
+    }
+
+    /// THE BEACON GATHER'S OWN WIRE WALK (the anvil's own shape the
+    /// 456 route re-wears — the belief's own snapshot the prediction
+    /// feeds [the payment the 0 seat speaks, the mirror rows 1..37
+    /// the flat projection answers], the changed cells the local
+    /// write-through banks, the PickupAll echo the server's own
+    /// gather verdict answers).
+    fn on_beacon_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.beacon_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(37);
+        snapshot.push(self.beacon_payment);
+        snapshot.extend_from_slice(&self.beacon_mirror);
+        let Some((carried, changed)) = crate::world_view::predict_pickup_all_grid(
+            &snapshot,
+            self.beacon_carried,
+            hovered_menu,
+            0,
+        ) else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in &changed {
+            if *menu_id == 0 {
+                self.beacon_payment = *pair;
+            } else {
+                let idx = *menu_id - 1;
+                if idx < 27 {
+                    self.inventory.items[9 + idx] = *pair;
+                } else {
+                    self.inventory.items[idx - 27] = *pair;
+                }
+                if let Some(cell) = self.beacon_mirror.get_mut(idx) {
+                    *cell = *pair;
+                }
+            }
+        }
+        self.beacon_carried = carried;
+        // THE MIRROR'S OWN SYNC (the every-mutation law — the beacon
+        // click walk's own tail the projection re-speaks, the HUD row
+        // the hotbar's own answer follows)
+        self.hotbar_slots = self.inventory.hotbar();
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried,
+            },
+        ));
     }
 
     /// THE BEACON GATHER'S OWN OFFLINE WALK (the doClick PICKUP_ALL
@@ -32971,6 +33048,31 @@ impl App {
     /// ground drop the same entity the furnace Q wears), the powers
     /// the bank keeps (the BE's own save the close never clears).
     pub fn close_beacon(&mut self, back: ScreenKind) {
+        // THE WIRE'S OWN CLOSE (the anvil close's own shape — the
+        // live session's close echoes the serverbound ContainerClose
+        // packet through the live session's send lane, the belief
+        // resets with the window, the server's own close returns the
+        // carried stack + the payment server-side — NO ride-home walk
+        // the local fiction never wears)
+        if self.beacon_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.beacon_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.beacon_is_live = false;
+            self.beacon_live_window = None;
+            self.beacon_carried = (0, 0);
+            self.beacon_payment = (0, 0);
+            self.beacon_doubleclick = false;
+            self.beacon_last_click_slot = None;
+            self.beacon_primary = None;
+            self.beacon_secondary = None;
+            self.beacon_open_cell = None;
+            self.container_removed_rode = true; // the removed law rode
+            self.open(back);
+            return;
+        }
         // THE CARRIED'S OWN HOME RIDE (the super.removed walk — the
         // close_furnace shape)
         if self.beacon_carried.1 > 0 {
@@ -33105,6 +33207,37 @@ impl App {
             return;
         };
         let slot = slot as usize;
+        // THE BEACON CLICK'S OWN WIRE ECHO (the enchant's 419 shape the
+        // 456 route re-wears — the prediction-free lane the empty delta
+        // list with the believed cursor the packet rides, the server's
+        // own corrections the container lane re-banks; the payment
+        // seat's mayPlace verdict + the standard rows the server's own
+        // doClick answers, the offline sim the local predictions keep)
+        if self.beacon_is_live {
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, state_id)) = self.beacon_live_window else {
+                return; // no window — the belief never armed
+            };
+            let input = if self.shift_down {
+                crate::world_view::ContainerInput::QuickMove
+            } else {
+                crate::world_view::ContainerInput::Pickup
+            };
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: slot as i16,
+                    button,
+                    input,
+                    changed: Vec::new(),
+                    carried: self.beacon_carried,
+                },
+            ));
+            return;
+        }
         // THE QUICK-MOVE LANE (the shift-click — javap
         // BeaconMenu.quickMoveStack pc 43-242 the routing the walk
         // banks)
@@ -33225,6 +33358,16 @@ impl App {
     /// verdicts wear — the vanilla press the closeContainer
     /// unconditionally tail speaks.
     fn beacon_confirm_press(&mut self) {
+        // THE LIVE CONFIRM'S OWN CLOSE (the anvil close's own law the
+        // 456 route re-wears — the BeaconConfirmButton's
+        // onClose the closeContainer tail speaks, the effects' commit
+        // + the payment's consume the SERVER's own law answers, the
+        // client's bank the wire never rides — NO ride-home the local
+        // fiction never wears)
+        if self.beacon_is_live {
+            self.close_beacon(ScreenKind::World);
+            return;
+        }
         let Some(pos) = self.beacon_open_cell else {
             return;
         };
@@ -80648,6 +80791,54 @@ impl App {
                     }
                     return;
                 }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_BEACON {
+                    // THE BEACON'S OWN WIRE LANE (the anvil's dev-202
+                    // shape the 456 route re-wears — the menu type 9 the
+                    // server's OpenScreen word speaks, the honest drop
+                    // the use arm's unconsumed press the round retires):
+                    // the menu's own numbering — the payment 0 the seat
+                    // the PaymentSlot speaks, the standard rows 1..36 —
+                    // padded to the layout's full shape, the wire's own
+                    // (0, 0) emptiness riding verbatim. THE WALK the
+                    // server owns (the result the beacon's effects the
+                    // confirm's own close serves, the payment the
+                    // server-side removed() returns, the powers the
+                    // data-word lane the later round re-lays — the
+                    // fresh window the zeros keep, the buttons' own
+                    // words the honest silence wears).
+                    self.beacon_is_live = true;
+                    self.beacon_payment = *c.slots.first().unwrap_or(&(0, 0));
+                    self.beacon_mirror.clear();
+                    for i in 0..36 {
+                        self.beacon_mirror
+                            .push(*c.slots.get(1 + i).unwrap_or(&(0, 0)));
+                    }
+                    // the AUTHORITATIVE carried lands too (the chest's
+                    // wholesale replacement speaks)
+                    self.beacon_carried = c.carried;
+                    // the window's identity rides in: the clicks echo
+                    // against THIS id and revision (the stateId lane)
+                    self.beacon_live_window = Some((c.id, c.state_id));
+                    // THE FRESH OPEN'S OWN RESET (the sibling lanes' own
+                    // law the wire open re-wears — the stale gather pair
+                    // the window retires, the one-early gather the stale
+                    // pair would speak, the fresh presses the own arms
+                    // re-lay)
+                    self.beacon_doubleclick = false;
+                    self.beacon_last_click_slot = None;
+                    // THE POS-KEYED BANK the live lane never wears (the
+                    // offline stand-in the pos the bank keys, the wire
+                    // window's own powers the data words speak — the
+                    // fresh window the zeros keep, the cell the None
+                    // seat answers)
+                    self.beacon_primary = None;
+                    self.beacon_secondary = None;
+                    self.beacon_open_cell = None;
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Beacon);
+                    }
+                    return;
+                }
                 if c.menu_type_id == crate::world_model::MENU_TYPE_ENCHANTMENT {
                     // THE ENCHANT TABLE'S OWN WIRE LANE (the 417 round —
                     // the menu type 13 the OpenScreen word routes, the
@@ -81017,6 +81208,25 @@ impl App {
                 self.anvil_only_renaming = false;
                 self.anvil_repair_item_count = 0;
                 self.live_anvil_title = None; // the title dies with the window
+                // the store dropped: a LIVE beacon closes back to the
+                // world (the same vanilla closeContainer return — the
+                // chest's own lane the menu-type-9 window mirrors); the
+                // fresh stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Beacon && self.beacon_is_live {
+                    self.beacon_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.beacon_live_window = None;
+                // the authoritative cursor the window's death retires
+                // (the single carried field the wire lane banks — the
+                // fresh open the own re-lay serves; the payment the
+                // same law the server-side removed() returns)
+                self.beacon_carried = (0, 0);
+                self.beacon_payment = (0, 0);
+                // the gather pair the window's death retires (the
+                // fresh open the own reset re-arms)
+                self.beacon_doubleclick = false;
+                self.beacon_last_click_slot = None;
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
                 // screen, the next window re-learns from its own sync)
