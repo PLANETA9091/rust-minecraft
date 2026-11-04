@@ -32911,3 +32911,158 @@ fn the_brewing_anvil_windows_the_death_retires() {
     );
     assert_eq!(app.screen, ScreenKind::Anvil, "the door the screen opens");
 }
+
+/// THE ANVIL GATHER'S OWN NAME RETIRE (the 217 round's own NEXT the
+/// wheel answers — the drained cells' name lanes the (0,0)
+/// write-through retires, the stale word the honest gap never keeps):
+/// the WIRE gather the offline walk's own trio law re-wears [the
+/// drained input the trio lanes retire, the drained mirror row the
+/// INVENTORY bank's own name cell retires], the OFFLINE gather the
+/// drained inventory row the same cell retires, the kept rows the
+/// words the count speaks.
+#[test]
+fn the_anvil_gather_the_name_retire_wears() {
+    use crate::world_view::ContainerCommand;
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // THE GEOMETRY THE 26.2 STAND-IN BANKS (the hand-laid rects the
+    // anvil tests keep — the inputs 0/1 the (27, 47)/(76, 47) seats,
+    // the result 2 the (134, 47) seat, the main rows the menus 3/4
+    // wear, the hotbar row the menu 30 speaks)
+    let panel = (100, 100);
+    let in0 = (panel.0 + 27 + 1, panel.1 + 47 + 1);
+    let in1 = (panel.0 + 76 + 1, panel.1 + 47 + 1);
+    let res = (panel.0 + 134 + 1, panel.1 + 47 + 1);
+    let row0 = (panel.0 + 8 + 1, panel.1 + 84 + 1);
+    let row1 = (panel.0 + 26 + 1, panel.1 + 84 + 1);
+    let hot0 = (panel.0 + 8 + 1, panel.1 + 142 + 1);
+    let rects = vec![
+        (in0.0, in0.1, 0i16),
+        (in1.0, in1.1, 1i16),
+        (res.0, res.1, 2i16),
+        (row0.0, row0.1, 3i16),
+        (row1.0, row1.1, 4i16),
+        (hot0.0, hot0.1, 30i16),
+    ];
+
+    // APP ARM A — THE WIRE'S OWN RETIRE (the single gather the named
+    // input AND the named mirror row drain — the trio lanes the input
+    // retires, the INVENTORY bank's own name cell the mirror row
+    // retires, the different row the walk never names)
+    let mut app = App::new(7);
+    app.enter_world();
+    app.world_is_network = true;
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    app.screen = ScreenKind::Anvil;
+    app.anvil_is_live = true;
+    app.anvil_live_window = Some((5, 7));
+    app.anvil_panel = panel;
+    app.anvil_slot_rects = rects.clone();
+    app.anvil_slots = [(0, 0), (lapis, 4)];
+    app.anvil_names[1] = Some("Iron Sword".to_string());
+    app.anvil_repair_costs[1] = 2;
+    app.anvil_enchants[1].push((5, 3));
+    app.anvil_seat_potion_kinds[1] = 42;
+    app.anvil_mirror = vec![(0, 0); 36];
+    app.anvil_mirror[1] = (lapis, 6); // the main row 1 — the menu 4
+    app.anvil_mirror[2] = (dirt, 3); // the different row the walk never names
+    app.items_custom_names[10] = Some("Ghost Word".to_string());
+    app.items_custom_names[11] = Some("Keeps".to_string());
+    app.anvil_carried = (lapis, 5);
+    app.anvil_doubleclick = true;
+    app.mouse_pos = Some((in0.0 + 8, in0.1 + 8)); // the empty seat the pull's own home wears
+    app.on_left_release();
+    assert_eq!(app.anvil_carried, (lapis, 15), "the pull the cursor grows");
+    assert_eq!(app.anvil_slots[1], (0, 0), "the input the gather drains");
+    assert!(
+        app.anvil_names[1].is_none(),
+        "the drained seat the name retires"
+    );
+    assert_eq!(
+        app.anvil_repair_costs[1], 0,
+        "the drained seat the cost retires"
+    );
+    assert!(
+        app.anvil_enchants[1].is_empty(),
+        "the drained seat the store retires"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[1],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drained seat the kind wall retires"
+    );
+    assert_eq!(app.anvil_mirror[1], (0, 0), "the row the gather drains");
+    assert!(
+        app.items_custom_names[10].is_none(),
+        "the drained row the name retires"
+    );
+    assert_eq!(
+        app.anvil_mirror[2],
+        (dirt, 3),
+        "the different row the walk never names"
+    );
+    assert!(
+        app.items_custom_names[11].is_some(),
+        "the kept row the word the count speaks"
+    );
+    match click_rx.try_recv().expect("the packet rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5, "the window the decode armed");
+            assert_eq!(c.state_id, 7, "the revision the feed spoke");
+            assert_eq!(c.slot, 0, "the hovered seat's own menu id");
+            assert_eq!(
+                c.changed,
+                vec![(1, (0, 0)), (4, (0, 0))],
+                "the walk's own mutations the changed map names"
+            );
+            assert_eq!(c.carried, (lapis, 15), "the spread's outcome rides");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the single echo the lane exhausts"
+    );
+
+    // APP ARM B — THE OFFLINE'S OWN ROW RETIRE (the drained inventory
+    // row the name cell retires, the different row the walk never
+    // names — the same (0,0) write-through the stale word never keeps)
+    let mut app = App::new(451);
+    app.enter_world();
+    app.open_anvil_for((0, 0, 0));
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the arms read
+    }
+    app.inventory.items[10] = (lapis, 20);
+    app.inventory.items[11] = (dirt, 3);
+    app.items_custom_names[10] = Some("Old Word".to_string());
+    app.items_custom_names[11] = Some("Keeps".to_string());
+    app.anvil_panel = panel;
+    app.anvil_slot_rects = rects;
+    app.anvil_carried = (lapis, 5);
+    app.anvil_doubleclick = true;
+    app.mouse_pos = Some((row0.0 + 8, row0.1 + 8)); // the empty row the pull's own home wears
+    app.on_left_release();
+    assert_eq!(app.anvil_carried, (lapis, 25), "the pull the cursor grows");
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the drained row the gather keeps"
+    );
+    assert!(
+        app.items_custom_names[10].is_none(),
+        "the drained row the name retires"
+    );
+    assert_eq!(
+        app.inventory.items[11],
+        (dirt, 3),
+        "the different row the walk never names"
+    );
+    assert!(
+        app.items_custom_names[11].is_some(),
+        "the kept row the word the count speaks"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync follows");
+}

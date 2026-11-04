@@ -26355,6 +26355,13 @@ impl App {
                 self.anvil_slots[idx] = *pair;
             } else if let Some(inv) = Self::anvil_menu_to_inventory(idx) {
                 self.inventory.items[inv] = *pair;
+                // THE DRAINED ROW'S OWN NAME RETIRE (the (0,0)
+                // write-through the stale word the honest gap keeps —
+                // the inventory bank's own name cell the drained row
+                // retires, the kept row the word the count speaks)
+                if pair.1 <= 0 {
+                    self.items_custom_names[inv] = None;
+                }
             }
         }
         self.anvil_carried = carried;
@@ -26423,6 +26430,25 @@ impl App {
             }
         }
         self.anvil_carried = new_carried;
+        // THE GATHER'S OWN NAME RETIRE (the offline walk's own trio
+        // law the drained cells answer — the (0,0) write-through the
+        // stale word never keeps: the drained input the trio lanes
+        // retire, the drained mirror row the INVENTORY bank's own
+        // name cell retires, the kept row the word the count speaks)
+        for (menu_id, pair) in &changed {
+            if pair.1 > 0 {
+                continue; // the kept row the word the count speaks
+            }
+            let idx = *menu_id as usize;
+            if idx < 2 {
+                self.anvil_names[idx] = None;
+                self.anvil_repair_costs[idx] = 0;
+                self.anvil_enchants[idx].clear();
+                self.anvil_seat_potion_kinds[idx] = crate::brewing_sim::POTION_KIND_NONE;
+            } else if let Some(inv) = Self::anvil_menu_to_inventory(idx) {
+                self.items_custom_names[inv] = None;
+            }
+        }
         // the HUD row's own sync (the every-mutation law — the hotbar
         // menu ids 30..38 the mirror rows 27..35 the projection feeds)
         let mut row = [(0, 0); 9];
