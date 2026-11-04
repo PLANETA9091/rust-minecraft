@@ -33652,3 +33652,126 @@ fn the_creative_picker_close_the_window0_echo_wears() {
     assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
     assert_eq!(app2.screen, ScreenKind::World, "the door the world answers");
 }
+
+/// THE WORLD-E'S OWN OPEN CENSUS (the 454 round's own NEXT the wheel
+/// answers — the open_inventory the E-from-world walk the sibling
+/// echo rounds' own census: the vanilla Minecraft.handleKeybinds
+/// keyInventory lane the dump's own bytes answer
+/// (scripts/jar_work/handlekeybinds_48.txt) — the
+/// isServerControlledInventory arm the sendOpenInventory lane alone
+/// speaks, the normal arm the tutorial + the setScreen walk wears,
+/// NO closeContainer the open asks — the E-from-world open's own
+/// wire silence the honest truth the census banks, the closeContainer
+/// law the sibling closes wear the CLOSE walk alone serves, the
+/// server-controlled inventory arm the surface the client's lane
+/// never wears the honest absence keeps, the death gate the modal
+/// the E never moves).
+#[test]
+fn the_world_e_open_the_wire_silence_wears() {
+    use crate::world_view::ContainerCommand;
+
+    // APP ARM A — THE LIVE SESSION'S OWN SILENCE (the survival E the
+    // world screen wears — the setScreen walk alone the wire never
+    // answers, the store the open never moves; the asymmetry the same
+    // lane the second E proves — the close the window-0 the sibling
+    // law speaks, the open the silence the contrast the verdict wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the walk the world screen starts"
+    );
+    app.on_inventory_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Inventory,
+        "the E the inventory screen answers"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the open the echo never mints — the setScreen walk the silence wears"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the carried the fresh-empty pair the open banks"
+    );
+    app.on_inventory_key();
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 0, "the close the window-0 speaks");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the walk no second echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+
+    // APP ARM B — THE CREATIVE ARM'S OWN SILENCE (the infinite-
+    // materials gate the picker wears — the picker's open the wire
+    // never speaks, the close the 454 law the window-0 echo answers)
+    let mut app2 = App::new(3);
+    app2.enter_world();
+    app2.world_is_network = true;
+    app2.game_mode = GameMode::Creative;
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app2.live_clicks = Some(tx2);
+    app2.on_inventory_key();
+    assert_eq!(
+        app2.screen,
+        ScreenKind::Creative,
+        "the creative gate the picker answers"
+    );
+    assert!(
+        rx2.try_recv().is_err(),
+        "the picker's open the echo never mints"
+    );
+    app2.on_inventory_key();
+    match rx2.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 0, "the picker's close the window-0 speaks");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert!(rx2.try_recv().is_err(), "the walk no second echo mints");
+    assert_eq!(
+        app2.screen,
+        ScreenKind::World,
+        "the close the world answers"
+    );
+
+    // APP ARM C — THE DEATH GATE'S OWN KEEP (the modal the E never
+    // moves — the dead world the walk never opens, the recorder the
+    // silence wears)
+    let mut app3 = App::new(3);
+    app3.enter_world();
+    app3.world_is_network = true;
+    app3.dead = true;
+    let (tx3, rx3) = std::sync::mpsc::channel::<ContainerCommand>();
+    app3.live_clicks = Some(tx3);
+    app3.on_inventory_key();
+    assert_eq!(
+        app3.screen,
+        ScreenKind::World,
+        "the death gate the world keeps"
+    );
+    assert!(rx3.try_recv().is_err(), "the dead walk no echo mints");
+
+    // APP ARM D — THE OFFLINE DOOR (the false gate the recorder the
+    // silence wears — the offline store the open never answers, the
+    // wire the session never wears)
+    let mut app4 = App::new(3);
+    app4.enter_world();
+    let (tx4, rx4) = std::sync::mpsc::channel::<ContainerCommand>();
+    app4.live_clicks = Some(tx4);
+    app4.on_inventory_key();
+    assert_eq!(
+        app4.screen,
+        ScreenKind::Inventory,
+        "the offline E the inventory answers"
+    );
+    assert!(rx4.try_recv().is_err(), "the offline open no echo mints");
+}

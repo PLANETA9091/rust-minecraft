@@ -25398,6 +25398,19 @@ impl App {
     /// rows the live lane feeds; the rows survive the toggle, the
     /// component data the vanilla screen-open never touches).
     pub fn open_inventory(&mut self) {
+        // THE WORLD-E'S OWN OPEN CENSUS (the 454 round's own NEXT the
+        // wheel answers — the vanilla Minecraft.handleKeybinds
+        // keyInventory lane the dump's own bytes answer:
+        // scripts/jar_work/handlekeybinds_48.txt — the
+        // isServerControlledInventory arm the sendOpenInventory lane
+        // alone speaks, the normal arm the tutorial + the setScreen
+        // walk wears: NO closeContainer the open asks, NO packet the
+        // wire hears — the E-from-world open's own silence the honest
+        // truth the census banks, the closeContainer law the sibling
+        // closes wear the CLOSE walk alone serves, the server-
+        // controlled inventory arm the surface the client's lane
+        // never wears the honest absence keeps; the open the window-0
+        // echo never mints, the store the walk never moves)
         // THE CREATIVE ARM (the init's own hasInfiniteMaterials gate —
         // the creative screen the infinite-materials player alone
         // wears, the NETWORK session INCLUDED — the 26.2 init walk the
