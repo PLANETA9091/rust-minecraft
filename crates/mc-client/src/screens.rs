@@ -9084,6 +9084,13 @@ pub struct App {
     /// THE MERCHANT'S OWN CARRIED (the cursor stack the refresh
     /// re-feeds — the beacon's verbatim pair the route re-wears)
     pub merchant_carried: (i32, i32),
+    /// THE ACTIVE OFFER'S OWN BANK (javap 26.2 MerchantContainer —
+    /// the `activeOffer` field the `updateSellItem`'s own match keeps
+    /// [pc 159-162 the in-stock match the store speaks, pc 0-2 the
+    /// null-first law the walk opens with], the `getActiveOffer` read
+    /// the result-slot's onTake wears — the take's own apply the
+    /// index's offer answers, the null the walk never passes)
+    pub merchant_active_offer: Option<usize>,
     /// THE WINDOW'S OWN TITLE (the OpenScreen word's decode — the
     /// chest's live_chest_title the same decode_container_title walk
     /// feeds; the None the wire never spoke keeps)
@@ -13386,6 +13393,7 @@ impl App {
             merchant_doubleclick: false,
             merchant_last_click_slot: None,
             merchant_carried: (0, 0),
+            merchant_active_offer: None,
             merchant_title: None,
             merchant_slot_rects: Vec::new(),
             merchant_panel: (0, 0),
@@ -33248,6 +33256,7 @@ impl App {
             self.merchant_title = None;
             self.merchant_slots = Vec::new();
             self.merchant_offers = Vec::new();
+            self.merchant_active_offer = None;
             self.merchant_level = 0;
             self.merchant_xp = 0;
             self.merchant_show_progress = false;
@@ -33303,6 +33312,7 @@ impl App {
         self.merchant_slots = Vec::new();
         self.merchant_title = None;
         self.merchant_offers = Vec::new();
+        self.merchant_active_offer = None;
         self.merchant_level = 0;
         self.merchant_xp = 0;
         self.merchant_show_progress = false;
@@ -33347,25 +33357,24 @@ impl App {
     /// the inventory IS [the menu 3..29 the items 9..35 the main
     /// grid rides, the 30..38 the hotbar row the -30 shift keeps —
     /// the furnace's own shape], the carried the menu's own cursor
-    /// field keeps. THE RESULT SEAT'S OWN SILENCE (the menu 2 — the
-    /// take the trade's own apply the try-move round banks: the
-    /// offer's apply the input seats fill + the result spawn + the
-    /// offer's uses ride, the walk the later round re-lays — the
-    /// offline sim the honest silence wears, the LIVE lane the
-    /// packet the server's own trade apply answers). THE QUICK-MOVE
-    /// LANE (the shift-click — the vanilla quickMoveStack's own
-    /// routing: the inputs 0/1 the rows the moveItemStackTo(3, 39)
+    /// field keeps. THE RESULT SEAT'S OWN TAKE (the menu 2 — javap
+    /// MerchantResultSlot the take's own walk the 460 round banks:
+    /// the mayPlace's own iconst_0 the held cursor the slot never
+    /// takes, the safeTake the whole result the cursor rides [the
+    /// ceiling half the right wears], the onTake the trade's own
+    /// apply the active offer answers; the SHIFT the quickMoveStack's
+    /// own source walk the moveItemStackTo(3, 39, true) reversed
+    /// order wears — the same take the arm's own onTake rides). THE
+    /// QUICK-MOVE LANE (the shift-click — the vanilla quickMoveStack's
+    /// own routing: the inputs 0/1 the rows the moveItemStackTo(3, 39)
     /// walk serves, the rows the payment insert the
-    /// moveItemStackTo(0, 2) walk answers, the RESULT source the
-    /// trade's own take the onTake apply rides — the same silence
-    /// the seat wears); the result seat's own mayPlace-false the
-    /// (MAX, MAX) blocked marker the snapshot wears (the anvil's own
-    /// law — the blocked cell the prediction's passes never read).
-    /// THE LIVE WINDOW'S OWN ECHOES (the prediction-free lane — the
-    /// empty delta list with the believed cursor the packet rides,
-    /// the server's own corrections the container lane re-banks; the
-    /// ALL slots the packet's own seat carries — the result take the
-    /// server's own trade apply answers).
+    /// moveItemStackTo(0, 2) walk answers; the result source the
+    /// take's own dispatch answered). THE LIVE WINDOW'S OWN ECHOES
+    /// (the plain lanes the prediction-free packet rides — the empty
+    /// delta list with the believed cursor the packet carries, the
+    /// server's own corrections the container lane re-banks; the
+    /// result seat's own take the echo + the local walk the vanilla
+    /// client's own doClick wears).
     fn click_merchant_slot(&mut self, mx: i32, my: i32, button: i8) {
         if self.merchant_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
@@ -33385,10 +33394,23 @@ impl App {
             return;
         };
         let menu = slot as usize;
-        // THE LIVE WINDOW'S OWN ECHOES (the prediction-free lane —
-        // the empty delta list with the believed cursor the packet
-        // rides, the server's own corrections the container lane
-        // re-banks; the offline sim the local predictions answer)
+        // THE RESULT SEAT'S OWN TAKE (javap MerchantResultSlot — the
+        // dispatch the take's own arms serve: the plain pickup the
+        // safeTake walk answers, the shift the quickMoveStack's own
+        // source walk wears; the LIVE lane the echo + the local walk
+        // the vanilla client's own doClick wears)
+        if menu == 2 {
+            if self.shift_down {
+                self.merchant_result_quick_move(button);
+            } else {
+                self.merchant_result_take_click(button);
+            }
+            return;
+        }
+        // THE LIVE WINDOW'S OWN ECHOES (the plain lanes — the
+        // prediction-free packet rides, the server's own corrections
+        // the container lane re-banks; the offline sim the local
+        // predictions answer)
         if self.merchant_is_live {
             let Some(sink) = self.live_clicks.clone() else {
                 return; // no live session — the command dies on the frame thread
@@ -33414,21 +33436,11 @@ impl App {
             ));
             return;
         }
-        // THE RESULT SEAT'S OWN SILENCE (the menu 2 — the trade's own
-        // apply the try-move round banks: the offer's apply the input
-        // seats fill, the result the offer's output spawns, the
-        // offer's uses the reward ride; the plain pickup AND the
-        // quick-move the same walk's own take wears — the offline sim
-        // the honest silence keeps, the LIVE lane the echo above the
-        // packet the server's own apply answers)
-        if menu == 2 {
-            return;
-        }
         // THE QUICK-MOVE LANE (the shift-click — the vanilla
         // quickMoveStack's own routing the predictor wears: the
         // inputs 0/1 the rows serve, the rows the payment insert
-        // answers; the result seat the blocked marker the passes
-        // never read)
+        // answers; the result source the take's own dispatch
+        // answered)
         if self.shift_down {
             let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(39);
             snapshot.extend_from_slice(&self.merchant_slots);
@@ -33543,8 +33555,11 @@ impl App {
     /// — the `updateSellItem` walk the container's own `setItem` law
     /// wears: every write the PAYMENT seats answer the recompute
     /// serves [the `isPaymentSlot` gate the `setItem` pc 19-27 speaks],
-    /// the result the offer's own match the seat wears). The hint the
-    /// selection's own bank keeps — the `setSelectionHint` law the
+    /// the result the offer's own match the seat wears). THE ACTIVE
+    /// OFFER'S OWN BANK (pc 0-2 the null-first law the walk opens
+    /// with, pc 159-162 the in-stock match the field keeps — the
+    /// `getActiveOffer` read the result-slot's onTake wears). The hint
+    /// the selection's own bank keeps — the `setSelectionHint` law the
     /// container field stores.
     fn merchant_update_sell(&mut self) {
         if self.merchant_slots.len() < 3 {
@@ -33556,10 +33571,28 @@ impl App {
             self.merchant_slots[2],
         ];
         let hint = self.merchant_selected as i32;
-        if let Some(seat2) =
-            crate::world_view::merchant_sell_item(&seats, &self.merchant_offers, hint)
-        {
-            self.merchant_slots[2] = seat2;
+        // THE NULL-FIRST LAW (javap updateSellItem pcs 0-2 — the walk
+        // the field never keeps stale)
+        self.merchant_active_offer = None;
+        match crate::world_view::merchant_sell_match(&seats, &self.merchant_offers, hint) {
+            Some((idx, seat2)) => {
+                // THE IN-STOCK MATCH'S OWN BANK (pc 159-162 — the
+                // activeOffer the field keeps, the result the seat
+                // wears, the futureXp the offer's own xp banks)
+                self.merchant_active_offer = Some(idx);
+                self.merchant_slots[2] = seat2;
+            }
+            None => {
+                // THE SEAT'S OWN FALLBACK (pc 72 the stack-A-empty
+                // setItem(2, EMPTY) speaks, pc 187 the no-match the
+                // empty result wears, the offers-empty arm the
+                // silence keeps pc 96-100)
+                if let Some(seat2) =
+                    crate::world_view::merchant_sell_item(&seats, &self.merchant_offers, hint)
+                {
+                    self.merchant_slots[2] = seat2;
+                }
+            }
         }
     }
 
@@ -33670,6 +33703,196 @@ impl App {
                 self.merchant_update_sell();
             }
         }
+    }
+
+    /// THE RESULT SEAT'S OWN TAKE (javap 26.2 MerchantResultSlot —
+    /// the 460 round's own lane the 458 NEXT banked): the mayPlace's
+    /// own iconst_0 the held cursor the slot never takes [the
+    /// place/swap arms the slot refuses, the walk the silence keeps],
+    /// the safeTake the whole result the cursor rides [the
+    /// AbstractContainerMenu's PICKUP arm — the whole stack the
+    /// primary takes, the ceiling half the right wears, the onTake
+    /// the take's own apply rides]. THE LIVE LANE the echo + the
+    /// local walk the vanilla client's own doClick wears — the
+    /// packet the believed cursor rides FIRST, the local prediction
+    /// the ClientSideMerchant's own notifyTrade + overrideXp the
+    /// uses + the xp speak, the server's own corrections the
+    /// container lane re-banks.
+    fn merchant_result_take_click(&mut self, button: i8) {
+        // THE LIVE LANE'S OWN ECHO (the 458 law — the packet the
+        // believed cursor rides, the empty delta list the wire keeps)
+        if self.merchant_is_live {
+            if let (Some(sink), Some((window_id, state_id))) =
+                (self.live_clicks.clone(), self.merchant_live_window)
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                    crate::world_view::ContainerClick {
+                        window_id,
+                        state_id,
+                        slot: 2,
+                        button,
+                        input: crate::world_view::ContainerInput::Pickup,
+                        changed: Vec::new(),
+                        carried: self.merchant_carried,
+                    },
+                ));
+            }
+        }
+        // THE MAY-PLACE'S OWN REFUSAL (javap MerchantResultSlot.
+        // mayPlace — the iconst_0 the walk returns: the held cursor
+        // the slot never takes, the place/swap arms the refusal keeps,
+        // the walk the silence wears)
+        if self.merchant_carried.1 > 0 {
+            return;
+        }
+        // THE SAFE-TAKE'S OWN WALK (javap AbstractContainerMenu.doClick
+        // PICKUP — the carried-empty arm the remove(count) serves, the
+        // whole stack the primary takes, the ceiling half the right
+        // wears, the empty seat the remove never feeds)
+        if self.merchant_slots.len() < 3 {
+            return; // the bank the fresh window never wears
+        }
+        let seat2 = self.merchant_slots[2];
+        if seat2.1 <= 0 {
+            return; // the empty seat the remove never feeds
+        }
+        let (new_seat, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(seat2, self.merchant_carried)
+        } else {
+            crate::world_view::predict_pickup_right(seat2, self.merchant_carried)
+        };
+        self.merchant_slots[2] = new_seat;
+        self.merchant_carried = new_carried;
+        // THE ONTAKE'S OWN APPLY (javap MerchantResultSlot.onTake —
+        // the active offer the container's own bank wears, the take
+        // the costs shrink, the uses the notifyTrade increments, the
+        // xp the reward speaks)
+        self.merchant_result_take();
+    }
+
+    /// THE RESULT SOURCE'S OWN QUICK-MOVE (javap 26.2 MerchantMenu.
+    /// quickMoveStack pcs 43-77 — the source-2 arm the moveItemStackTo(
+    /// 3, 39, true) reversed walk the hotbar head wears, the
+    /// onQuickCraft + the playTradeSound the move's own tail speaks
+    /// [the sound the port's lane never wears — no audio infra], the
+    /// onTake pc 204-209 the SAME trade apply the shift-click arm
+    /// answers). THE LIVE LANE the echo + the local walk the same
+    /// prediction the vanilla client wears.
+    fn merchant_result_quick_move(&mut self, button: i8) {
+        // THE LIVE LANE'S OWN ECHO (the 458 law — the QuickMove packet
+        // the believed cursor rides first)
+        if self.merchant_is_live {
+            if let (Some(sink), Some((window_id, state_id))) =
+                (self.live_clicks.clone(), self.merchant_live_window)
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                    crate::world_view::ContainerClick {
+                        window_id,
+                        state_id,
+                        slot: 2,
+                        button,
+                        input: crate::world_view::ContainerInput::QuickMove,
+                        changed: Vec::new(),
+                        carried: self.merchant_carried,
+                    },
+                ));
+            }
+        }
+        // THE EMPTY SOURCE the walk never enters (javap quickMoveStack
+        // pcs 22-27 — the hasItem gate the walk keeps)
+        if self.merchant_slots.len() < 3 {
+            return; // the bank the fresh window never wears
+        }
+        let seat2 = self.merchant_slots[2];
+        if seat2.1 <= 0 {
+            return; // the empty source the walk never reads
+        }
+        // THE MOVEITEMSTACKTO'S OWN REVERSED WALK (pc 48-55 — the
+        // moveItemStackTo(3, 39, true) the hotbar head wears, the
+        // same walk the try-move's own drain arms serve)
+        let snapshot: Vec<(i32, i32)> = self.merchant_slots.clone();
+        let changed = crate::world_view::predict_quick_move_grid(&snapshot, 2, 3);
+        let Some(&(src, remainder)) = changed.first() else {
+            return; // defensive — the walk's own src-first law
+        };
+        debug_assert_eq!(src, 2, "the changed list the src pair leads");
+        self.merchant_slots[2] = remainder;
+        // THE ROWS' OWN WRITE-THROUGH (the projection the inventory
+        // IS — the mirrored cell the same walk names)
+        for &(i, pair) in changed.iter().skip(1) {
+            if i < 3 {
+                continue; // the payment seats — the walk's own range never wears
+            }
+            let inv_idx = if i < 30 { 9 + i - 3 } else { i - 30 };
+            self.merchant_slots[i] = pair;
+            if inv_idx < 36 {
+                self.inventory.items[inv_idx] = pair;
+            }
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+        // THE ONTAKE'S OWN APPLY (pc 204-209 — the same take the
+        // shift-click arm answers)
+        self.merchant_result_take();
+    }
+
+    /// THE TRADE'S OWN APPLY (javap 26.2 MerchantResultSlot.onTake —
+    /// the 120 bytes the result-slot's take wears): the active offer
+    /// the container's own bank answers [pc 5-14 the getActiveOffer
+    /// read + the ifnull 119 guard — the null the walk never passes],
+    /// the take the direct pair the seats' own order wears [pc 37-45]
+    /// + the swapped pair the backwards seats the retry answers
+    /// [pc 48-56], the notify walk the success the uses increments
+    /// [pc 59-64 — the ClientSideMerchant's own law the
+    /// increaseUses wears, the out-of-stock the re-derived
+    /// isOutOfStock speaks], the setItem walk-back the shrunk stacks
+    /// the seats re-wear [pc 76-93 — the isPaymentSlot gate the
+    /// update re-speaks], THE XP'S OWN REWARD the offer's existence
+    /// rides [pc 96-114 — the overrideXp(getVillagerXp() +
+    /// offer.getXp()) walk even the failed take answers], the stat
+    /// lane the port's word set never wears [pc 69-73 the
+    /// TRADED_WITH_VILLAGER the later round re-lays], the recompute
+    /// the seats' writes re-speaks.
+    fn merchant_result_take(&mut self) {
+        // THE ACTIVE OFFER'S OWN BANK (javap MerchantContainer.
+        // getActiveOffer — the stored field the updateSellItem's own
+        // match keeps; the null the walk never passes — pc 13-14)
+        let Some(idx) = self.merchant_active_offer else {
+            return; // pc 13-14's ifnull 119 — the offerless take the apply never wears
+        };
+        let Some(offer) = self.merchant_offers.get(idx).cloned() else {
+            return; // defensive — the bank the fresh window never wears
+        };
+        // THE TAKE'S OWN PAIRS (javap MerchantOffer.take — the
+        // satisfiedBy gate + the shrink, the direct pair the seats'
+        // own order wears, the swapped pair the retry answers)
+        let seat0 = self.merchant_slots[0];
+        let seat1 = self.merchant_slots[1];
+        if let Some((a2, b2)) = crate::world_view::merchant_offer_take_seats(&offer, seat0, seat1) {
+            // THE NOTIFY-TRADE'S OWN WALK (javap ClientSideMerchant.
+            // notifyTrade — the increaseUses the offer's own count
+            // wears, the out-of-stock the re-derived isOutOfStock
+            // speaks; the demand walk the server's own re-bank answers)
+            let o = &mut self.merchant_offers[idx];
+            o.uses += 1;
+            o.out_of_stock = o.uses >= o.max_uses;
+            // THE SETITEM'S OWN WALK-BACK (pc 76-93 — the shrunk
+            // stacks the seats re-wear, the isPaymentSlot gate the
+            // update re-speaks)
+            self.merchant_slots[0] = a2;
+            self.merchant_slots[1] = b2;
+        }
+        // THE STAT'S OWN RIDE (pc 69-73 — the awardStat
+        // TRADED_WITH_VILLAGER the port's stat lane the later round
+        // re-lays)
+        // THE XP'S OWN REWARD (pc 96-114 — the offer's existence the
+        // overrideXp walk rides — even the failed take the reward
+        // wears, the getVillagerXp + the offer's own xp the sum
+        // speaks)
+        self.merchant_xp += offer.xp;
+        // THE SETITEM'S OWN RECOMPUTE (the seats' writes the
+        // updateSellItem re-speaks — the result the fresh match or
+        // the empty wears)
+        self.merchant_update_sell();
     }
 
     /// THE BEACON'S OWN SCREEN CLICK (the autopush-322 round — the

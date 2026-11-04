@@ -34409,6 +34409,7 @@ fn the_merchant_offers_the_wire_words_wear() {
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
+                xp: 0,
             }],
             level: 2,
             xp: 17,
@@ -34633,26 +34634,31 @@ fn the_merchant_slots_the_walk_family_wears() {
     app.merchant_slots[0] = (emerald, 4);
     app.merchant_carried = (0, 0);
 
-    // THE RESULT SEAT'S OWN SILENCE (the trade's own apply the
-    // try-move round banks — the plain press the seat never moves;
-    // the SEED the recompute's own clear retired — the first take-all
-    // walk the stack-A-empty setItem(2, EMPTY) law spoke [the vanilla
-    // updateSellItem pc 72 the payments-gone arm wears], the fresh
-    // seed the click silence the same laws re-observes)
+    // THE RESULT SEAT'S OWN TAKE (the 460 round's own law — javap
+    // MerchantResultSlot: the plain press the safeTake walk serves —
+    // the whole result the cursor rides, the offerless walk the
+    // apply never wears [the active offer the walk never banks], the
+    // RIGHT press the emptied seat the remove never feeds)
     app.merchant_slots[2] = (bread, 1);
     app.click_merchant_slot(50, 10, 0);
+    assert_eq!(app.merchant_slots[2], (0, 0), "the result the take clears");
     assert_eq!(
-        app.merchant_slots[2],
+        app.merchant_carried,
         (bread, 1),
-        "the result the silence keeps"
+        "the cursor the result rides"
     );
-    assert_eq!(app.merchant_carried, (0, 0), "the cursor the silence keeps");
     app.click_merchant_slot(50, 10, 1);
     assert_eq!(
         app.merchant_slots[2],
-        (bread, 1),
-        "the right press the same silence keeps"
+        (0, 0),
+        "the empty seat the right press keeps"
     );
+    assert_eq!(
+        app.merchant_carried,
+        (bread, 1),
+        "the emptied seat the half-arm never splits"
+    );
+    app.merchant_carried = (0, 0);
 
     // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
     // inventory IS — the menu slot the inventory cell answers, the
@@ -34764,13 +34770,27 @@ fn the_merchant_slots_the_walk_family_wears() {
     app.merchant_slots[1] = (0, 0);
     app.merchant_slots[38] = (0, 0);
     app.inventory.items[8] = (0, 0);
-    // the RESULT source the trade's own take the silence keeps
+    // the RESULT source the rows the quick-move serves (javap
+    // quickMoveStack pc 48-55 — the moveItemStackTo(3, 39, true) the
+    // reversed walk wears: the pass-1 merge the bread row takes, the
+    // source the walk drains; the apply the empty offers never wears)
     app.shift_down = true;
+    app.merchant_slots[2] = (bread, 1);
     app.click_merchant_slot(50, 10, 0);
     assert_eq!(
         app.merchant_slots[2],
-        (bread, 1),
-        "the result the quick-move silence keeps"
+        (0, 0),
+        "the result source the quick-move drains"
+    );
+    assert_eq!(
+        app.merchant_slots[3],
+        (bread, 11),
+        "the pass-1 merge the bread row takes"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (bread, 11),
+        "the merge the write-through keeps"
     );
     app.shift_down = false;
 
@@ -35023,6 +35043,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
+        xp: 0,
     }];
     app.merchant_row_rects = vec![(100, 100, 0)];
     app.inventory.items[9] = (emerald, 4);
@@ -35088,6 +35109,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
             out_of_stock: false,
             uses: 0,
             max_uses: 4,
+            xp: 0,
         },
         MerchantOfferView {
             cost_a: (emerald, 4),
@@ -35096,6 +35118,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
             out_of_stock: false,
             uses: 0,
             max_uses: 4,
+            xp: 0,
         },
     ];
     app.merchant_slots[0] = (emerald, 4);
@@ -35124,6 +35147,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
+        xp: 0,
     }];
     app.merchant_slots[0] = (wheat, 2);
     app.merchant_slots[1] = (emerald, 4);
@@ -35144,6 +35168,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         out_of_stock: true,
         uses: 4,
         max_uses: 4,
+        xp: 0,
     }];
     app.merchant_slots[0] = (emerald, 4);
     app.merchant_slots[1] = (0, 0);
@@ -35170,6 +35195,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
+        xp: 0,
     }];
     app2.merchant_row_rects = vec![(100, 100, 0)];
     app2.inventory.items[9] = (emerald, 4);
@@ -35217,6 +35243,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
+        xp: 0,
     }];
     app3.merchant_row_rects = vec![(100, 100, 0)];
     app3.merchant_slots[0] = (emerald, 4); // the payment pre-loaded
@@ -35294,6 +35321,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
+                xp: 0,
             }],
             level: 1,
             xp: 0,
@@ -35333,4 +35361,447 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         (0, 0),
         "the source row the prediction drains"
     );
+}
+
+/// THE RESULT SEAT'S OWN TAKE (javap 26.2 MerchantResultSlot — the
+/// 460 round's own lane the 459 NEXT banked): the plain press the
+/// safeTake walk serves — the whole result the cursor rides, the
+/// ceiling half the right wears, the mayPlace's own iconst_0 the
+/// held cursor the slot never takes — and the onTake the trade's
+/// own apply rides: the active offer the container's own bank
+/// answers, the take the direct pair the seats' own order wears +
+/// the swapped pair the backwards seats the retry answers, the
+/// notify walk the uses increments + the out-of-stock the
+/// re-derived isOutOfStock speaks, THE XP'S OWN REWARD the offer's
+/// existence rides [even the failed take the reward wears], the
+/// recompute the seats' writes re-speaks. THE QUICK-MOVE the same
+/// take the shift-click arm answers. THE LIVE LANE the echo + the
+/// local walk the vanilla client's own doClick wears.
+#[test]
+fn the_merchant_result_take_the_trade_apply_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, MerchantOfferView};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+
+    // THE OFFLINE CANVAS (the walk-family's own shape — the offer
+    // the round's own bank wears, the press the fill walk serves)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app.merchant_row_rects = vec![(100, 100, 0)];
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+
+    // THE TAKE'S OWN WALK (the press the fill serves, the click the
+    // safeTake answers: the result the cursor rides, the payment
+    // the costs drain, the uses the notifyTrade increments, the xp
+    // the reward speaks, the result the recompute re-speaks)
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the row's seat the press consumes"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the result the offer's own match wears"
+    );
+    assert_eq!(
+        app.merchant_active_offer,
+        Some(0),
+        "the active offer the update's own bank wears"
+    );
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_carried,
+        (bread, 1),
+        "the whole result the cursor rides"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the cost-A the take's own shrink drains"
+    );
+    assert_eq!(app.merchant_xp, 5, "the xp the reward speaks");
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the uses the notify increments"
+    );
+    assert!(
+        !app.merchant_offers[0].out_of_stock,
+        "the fresh stock the re-derived verdict keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (0, 0),
+        "the payments-gone the recompute re-speaks"
+    );
+    assert_eq!(
+        app.merchant_active_offer, None,
+        "the match's own null-first law the failed recompute wears"
+    );
+
+    // THE MAY-PLACE'S OWN REFUSAL (javap MerchantResultSlot.mayPlace —
+    // the iconst_0 the held cursor the slot never takes: the refill's
+    // own result the seat keeps, the walk the silence wears, the
+    // uses the refused click never counts)
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the refill the press serves"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the fresh result the match wears"
+    );
+    app.merchant_carried = (emerald, 2);
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the held cursor the result seat never takes"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 2),
+        "the refusal the cursor keeps"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the refused click the notify never arms"
+    );
+
+    // THE QUICK-MOVE'S OWN ARM (javap quickMoveStack pc 48-77 — the
+    // moveItemStackTo(3, 39, true) reversed walk the hotbar tail
+    // takes, the onTake pc 204-209 the SAME take the shift-click arm
+    // answers: the payment the costs drain, the uses the second
+    // notify speaks, the xp the second reward rides)
+    app.merchant_carried = (0, 0);
+    app.shift_down = true;
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_slots[38],
+        (bread, 1),
+        "the result the reversed walk rides home"
+    );
+    assert_eq!(
+        app.inventory.items[8],
+        (bread, 1),
+        "the hotbar cell the write-through keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the refilled cost the same take drains"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 2,
+        "the uses the shift arm counts"
+    );
+    assert_eq!(app.merchant_xp, 10, "the xp the same take rewards");
+    assert_eq!(
+        app.merchant_slots[2],
+        (0, 0),
+        "the drained seats the recompute clears"
+    );
+    app.shift_down = false;
+
+    // THE RIGHT'S OWN HALF (the ceiling half the result's own take
+    // wears — the 8-result trade the half rides, the remainder the
+    // recompute REPLACES [the payments the take drained, the match
+    // the fresh seats never wears — the honest vanilla walk the
+    // updateSellItem's own setItem(2, ...) law speaks])
+    let mut app8 = App::new(3);
+    app8.enter_world();
+    app8.screen = ScreenKind::Merchant;
+    app8.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app8.merchant_slots = vec![(0, 0); 39];
+    app8.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 8),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app8.merchant_row_rects = vec![(100, 100, 0)];
+    app8.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app8.inventory.items[9] = (emerald, 4);
+    app8.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app8.merchant_widget_press(104, 104),
+        "the press the fill serves"
+    );
+    assert_eq!(
+        app8.merchant_slots[2],
+        (bread, 8),
+        "the 8-result the assemble copy wears"
+    );
+    app8.click_merchant_slot(50, 10, 1);
+    assert_eq!(
+        app8.merchant_carried,
+        (bread, 4),
+        "the ceiling half the right press rides"
+    );
+    assert_eq!(
+        app8.merchant_slots[2],
+        (0, 0),
+        "the remainder the recompute replaces"
+    );
+    assert_eq!(
+        app8.merchant_slots[0],
+        (0, 0),
+        "the one take the costs drain once"
+    );
+    assert_eq!(
+        app8.merchant_offers[0].uses, 1,
+        "the one notify the half counts"
+    );
+
+    // THE STOCK'S OWN EXHAUST (the take the uses ride to the cap —
+    // the re-derived isOutOfStock the stock speaks, the NEXT press's
+    // own fill the stale stock the empty result wears)
+    let mut app4 = App::new(3);
+    app4.enter_world();
+    app4.screen = ScreenKind::Merchant;
+    app4.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app4.merchant_slots = vec![(0, 0); 39];
+    app4.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 3,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app4.merchant_row_rects = vec![(100, 100, 0)];
+    app4.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app4.inventory.items[9] = (emerald, 8);
+    app4.merchant_slots[3] = (emerald, 8);
+    assert!(
+        app4.merchant_widget_press(104, 104),
+        "the press the fill serves"
+    );
+    app4.click_merchant_slot(50, 10, 0);
+    assert_eq!(app4.merchant_offers[0].uses, 4, "the uses the take rides");
+    assert!(
+        app4.merchant_offers[0].out_of_stock,
+        "the cap the re-derived stock speaks"
+    );
+    assert_eq!(app4.merchant_xp, 5, "the first take the reward wears");
+    app4.merchant_slots[3] = (emerald, 4);
+    app4.inventory.items[9] = (emerald, 4);
+    assert!(
+        app4.merchant_widget_press(104, 104),
+        "the refill the press serves"
+    );
+    assert_eq!(
+        app4.merchant_slots[2],
+        (0, 0),
+        "the stale stock the fresh fill the empty result wears"
+    );
+
+    // THE TWO-COST'S OWN PAIR (javap onTake pc 48-56 — the backwards
+    // seats the swapped pair the retry answers, the shrunk stacks the
+    // SEAT order the walk-back never swaps)
+    let mut app5 = App::new(3);
+    app5.enter_world();
+    app5.screen = ScreenKind::Merchant;
+    app5.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app5.merchant_slots = vec![(0, 0); 39];
+    app5.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: Some((wheat, 2)),
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 7,
+    }];
+    app5.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app5.merchant_slots[0] = (wheat, 2);
+    app5.merchant_slots[1] = (emerald, 4);
+    app5.merchant_selected = 0;
+    app5.merchant_update_sell();
+    assert_eq!(
+        app5.merchant_slots[2],
+        (bread, 1),
+        "the backwards seats the swapped pair answers"
+    );
+    app5.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app5.merchant_carried,
+        (bread, 1),
+        "the result the cursor rides"
+    );
+    assert_eq!(
+        app5.merchant_slots[0],
+        (0, 0),
+        "the seat-0 wheat the cost-B shrink drains"
+    );
+    assert_eq!(
+        app5.merchant_slots[1],
+        (0, 0),
+        "the seat-1 emerald the cost-A shrink drains"
+    );
+    assert_eq!(app5.merchant_offers[0].uses, 1, "the uses the notify wears");
+    assert_eq!(app5.merchant_xp, 7, "the two-cost xp the reward wears");
+
+    // THE OFFERLESS SILENCE (javap onTake pc 13-14 — the ifnull 119
+    // guard the offerless take answers: the pickup the remove rides,
+    // the apply the walk never wears — no shrink, no uses, no xp)
+    let mut app6 = App::new(3);
+    app6.enter_world();
+    app6.screen = ScreenKind::Merchant;
+    app6.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app6.merchant_slots = vec![(0, 0); 39];
+    app6.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app6.merchant_slots[2] = (bread, 1);
+    app6.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app6.merchant_carried,
+        (bread, 1),
+        "the pickup the remove first rides"
+    );
+    assert_eq!(
+        app6.merchant_xp, 0,
+        "the offerless take the reward never wears"
+    );
+
+    // THE TAKE'S OWN PAIRS (javap MerchantOffer.take — the direct
+    // pair the seats' own order wears, the swapped pair the retry
+    // re-maps [the returned pair the SEAT order the caller keeps],
+    // the cost-B-absent stack the walk never touches)
+    let offer = MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: Some((wheat, 2)),
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 7,
+    };
+    let (a, b) =
+        crate::world_view::merchant_offer_take_seats(&offer, (emerald, 6), (wheat, 5)).unwrap();
+    assert_eq!(a, (emerald, 2), "the direct pair the cost-A shrink wears");
+    assert_eq!(b, (wheat, 3), "the direct pair the cost-B shrink wears");
+    let (a, b) =
+        crate::world_view::merchant_offer_take_seats(&offer, (wheat, 5), (emerald, 6)).unwrap();
+    assert_eq!(a, (wheat, 3), "the swapped pair the seat-0 position keeps");
+    assert_eq!(
+        b,
+        (emerald, 2),
+        "the swapped pair the seat-1 position keeps"
+    );
+    assert!(
+        crate::world_view::merchant_offer_take(
+            &MerchantOfferView {
+                cost_a: (emerald, 4),
+                cost_b: None,
+                result: (bread, 1),
+                out_of_stock: false,
+                uses: 0,
+                max_uses: 4,
+                xp: 5,
+            },
+            (emerald, 4),
+            (wheat, 3),
+        )
+        .is_none(),
+        "the cost-B-absent the non-empty stack the matcher refuses"
+    );
+
+    // THE LIVE LANE'S OWN PREDICTION (the packet the believed cursor
+    // rides, the local walk the vanilla client's own doClick wears —
+    // the uses the ClientSideMerchant's notifyTrade speaks, the xp
+    // the overrideXp ride, the server's own corrections the
+    // container lane re-banks)
+    let mut live = App::new(3);
+    live.enter_world();
+    live.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    live.live_clicks = Some(tx);
+    let mut slots = vec![(0, 0); 39];
+    slots[3] = (emerald, 4);
+    live.live_container_updated(Some(crate::world_view::LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(crate::world_view::MerchantView {
+            offers: vec![MerchantOfferView {
+                cost_a: (emerald, 4),
+                cost_b: None,
+                result: (bread, 1),
+                out_of_stock: false,
+                uses: 0,
+                max_uses: 4,
+                xp: 5,
+            }],
+            level: 1,
+            xp: 0,
+            show_progress: true,
+            can_restock: false,
+        }),
+    }));
+    live.merchant_row_rects = vec![(100, 100, 0)];
+    live.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    assert!(
+        live.merchant_widget_press(104, 104),
+        "the live press the fill prediction wears"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SelectTrade { item } => {
+            assert_eq!(item, 0, "the pressed row's index the packet carries");
+        }
+        other => panic!("the press the Select Trade speaks, not {other:?}"),
+    }
+    live.click_merchant_slot(50, 10, 0);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 9, "the window id the echo wears");
+            assert_eq!(click.slot, 2, "the result seat the echo speaks");
+            assert!(
+                matches!(click.input, ContainerInput::Pickup),
+                "the pickup mode the plain take wears"
+            );
+            assert!(click.changed.is_empty(), "the prediction-free lane rides");
+        }
+        other => panic!("the take the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        live.merchant_carried,
+        (bread, 1),
+        "the local walk the cursor wears"
+    );
+    assert_eq!(
+        live.merchant_slots[0],
+        (0, 0),
+        "the local take the cost drains"
+    );
+    assert_eq!(
+        live.merchant_offers[0].uses, 1,
+        "the local notify the uses speaks"
+    );
+    assert_eq!(live.merchant_xp, 5, "the local overrideXp the xp wears");
 }

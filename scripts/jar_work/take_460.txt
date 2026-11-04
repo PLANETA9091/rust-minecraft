@@ -1,0 +1,555 @@
+== net/minecraft/world/inventory/MerchantResultSlot.class
+  METHOD <init> (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/trading/Merchant;Lnet/minecraft/world/inventory/MerchantContainer;III)V  (max_stack=5 max_locals=7 code=27)
+    0: aload_0
+    1: aload_3
+    2: iload 4
+    4: iload 5
+    6: iload 6
+    8: invokespecial net/minecraft/world/inventory/Slot.<init>:(Lnet/minecraft/world/Container;III)V
+    11: aload_0
+    12: aload_1
+    13: putfield net/minecraft/world/inventory/MerchantResultSlot.player:Lnet/minecraft/world/entity/player/Player;
+    16: aload_0
+    17: aload_2
+    18: putfield net/minecraft/world/inventory/MerchantResultSlot.merchant:Lnet/minecraft/world/item/trading/Merchant;
+    21: aload_0
+    22: aload_3
+    23: putfield net/minecraft/world/inventory/MerchantResultSlot.slots:Lnet/minecraft/world/inventory/MerchantContainer;
+    26: return
+  METHOD mayPlace (Lnet/minecraft/world/item/ItemStack;)Z  (max_stack=1 max_locals=2 code=2)
+    0: iconst_0
+    1: ireturn
+  METHOD remove (I)Lnet/minecraft/world/item/ItemStack;  (max_stack=4 max_locals=2 code=33)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/inventory/MerchantResultSlot.hasItem:()Z
+    4: ifeq 27
+    7: aload_0
+    8: dup
+    9: getfield net/minecraft/world/inventory/MerchantResultSlot.removeCount:I
+    12: iload_1
+    13: aload_0
+    14: invokevirtual net/minecraft/world/inventory/MerchantResultSlot.getItem:()Lnet/minecraft/world/item/ItemStack;
+    17: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    20: invokestatic java/lang/Math.min:(II)I
+    23: iadd
+    24: putfield net/minecraft/world/inventory/MerchantResultSlot.removeCount:I
+    27: aload_0
+    28: iload_1
+    29: invokespecial net/minecraft/world/inventory/Slot.remove:(I)Lnet/minecraft/world/item/ItemStack;
+    32: areturn
+  METHOD checkTakeAchievements (Lnet/minecraft/world/item/ItemStack;)V  (max_stack=3 max_locals=2 code=18)
+    0: aload_1
+    1: aload_0
+    2: getfield net/minecraft/world/inventory/MerchantResultSlot.player:Lnet/minecraft/world/entity/player/Player;
+    5: aload_0
+    6: getfield net/minecraft/world/inventory/MerchantResultSlot.removeCount:I
+    9: invokevirtual net/minecraft/world/item/ItemStack.onCraftedBy:(Lnet/minecraft/world/entity/player/Player;I)V
+    12: aload_0
+    13: iconst_0
+    14: putfield net/minecraft/world/inventory/MerchantResultSlot.removeCount:I
+    17: return
+  METHOD onTake (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V  (max_stack=3 max_locals=6 code=120)
+    0: aload_0
+    1: aload_2
+    2: invokevirtual net/minecraft/world/inventory/MerchantResultSlot.checkTakeAchievements:(Lnet/minecraft/world/item/ItemStack;)V
+    5: aload_0
+    6: getfield net/minecraft/world/inventory/MerchantResultSlot.slots:Lnet/minecraft/world/inventory/MerchantContainer;
+    9: invokevirtual net/minecraft/world/inventory/MerchantContainer.getActiveOffer:()Lnet/minecraft/world/item/trading/MerchantOffer;
+    12: astore_3
+    13: aload_3
+    14: ifnull 119
+    17: aload_0
+    18: getfield net/minecraft/world/inventory/MerchantResultSlot.slots:Lnet/minecraft/world/inventory/MerchantContainer;
+    21: iconst_0
+    22: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    25: astore 4
+    27: aload_0
+    28: getfield net/minecraft/world/inventory/MerchantResultSlot.slots:Lnet/minecraft/world/inventory/MerchantContainer;
+    31: iconst_1
+    32: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    35: astore 5
+    37: aload_3
+    38: aload 4
+    40: aload 5
+    42: invokevirtual net/minecraft/world/item/trading/MerchantOffer.take:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+    45: ifne 59
+    48: aload_3
+    49: aload 5
+    51: aload 4
+    53: invokevirtual net/minecraft/world/item/trading/MerchantOffer.take:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+    56: ifeq 96
+    59: aload_0
+    60: getfield net/minecraft/world/inventory/MerchantResultSlot.merchant:Lnet/minecraft/world/item/trading/Merchant;
+    63: aload_3
+    64: invokeinterface net/minecraft/world/item/trading/Merchant.notifyTrade:(Lnet/minecraft/world/item/trading/MerchantOffer;)V
+    69: aload_1
+    70: getstatic net/minecraft/stats/Stats.TRADED_WITH_VILLAGER:Lnet/minecraft/resources/Identifier;
+    73: invokevirtual net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/resources/Identifier;)V
+    76: aload_0
+    77: getfield net/minecraft/world/inventory/MerchantResultSlot.slots:Lnet/minecraft/world/inventory/MerchantContainer;
+    80: iconst_0
+    81: aload 4
+    83: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    86: aload_0
+    87: getfield net/minecraft/world/inventory/MerchantResultSlot.slots:Lnet/minecraft/world/inventory/MerchantContainer;
+    90: iconst_1
+    91: aload 5
+    93: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    96: aload_0
+    97: getfield net/minecraft/world/inventory/MerchantResultSlot.merchant:Lnet/minecraft/world/item/trading/Merchant;
+    100: aload_0
+    101: getfield net/minecraft/world/inventory/MerchantResultSlot.merchant:Lnet/minecraft/world/item/trading/Merchant;
+    104: invokeinterface net/minecraft/world/item/trading/Merchant.getVillagerXp:()I
+    109: aload_3
+    110: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getXp:()I
+    113: iadd
+    114: invokeinterface net/minecraft/world/item/trading/Merchant.overrideXp:(I)V
+    119: return
+
+== net/minecraft/world/item/trading/MerchantOffer.class
+  METHOD updateDemand ()V  (max_stack=4 max_locals=1 code=24)
+    0: aload_0
+    1: aload_0
+    2: getfield net/minecraft/world/item/trading/MerchantOffer.demand:I
+    5: aload_0
+    6: getfield net/minecraft/world/item/trading/MerchantOffer.uses:I
+    9: iadd
+    10: aload_0
+    11: getfield net/minecraft/world/item/trading/MerchantOffer.maxUses:I
+    14: aload_0
+    15: getfield net/minecraft/world/item/trading/MerchantOffer.uses:I
+    18: isub
+    19: isub
+    20: putfield net/minecraft/world/item/trading/MerchantOffer.demand:I
+    23: return
+  METHOD assemble ()Lnet/minecraft/world/item/ItemStack;  (max_stack=1 max_locals=1 code=8)
+    0: aload_0
+    1: getfield net/minecraft/world/item/trading/MerchantOffer.result:Lnet/minecraft/world/item/ItemStack;
+    4: invokevirtual net/minecraft/world/item/ItemStack.copy:()Lnet/minecraft/world/item/ItemStack;
+    7: areturn
+  METHOD resetUses ()V  (max_stack=2 max_locals=1 code=6)
+    0: aload_0
+    1: iconst_0
+    2: putfield net/minecraft/world/item/trading/MerchantOffer.uses:I
+    5: return
+  METHOD increaseUses ()V  (max_stack=3 max_locals=1 code=11)
+    0: aload_0
+    1: dup
+    2: getfield net/minecraft/world/item/trading/MerchantOffer.uses:I
+    5: iconst_1
+    6: iadd
+    7: putfield net/minecraft/world/item/trading/MerchantOffer.uses:I
+    10: return
+  METHOD getXp ()I  (max_stack=1 max_locals=1 code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/item/trading/MerchantOffer.xp:I
+    4: ireturn
+  METHOD isOutOfStock ()Z  (max_stack=2 max_locals=1 code=17)
+    0: aload_0
+    1: getfield net/minecraft/world/item/trading/MerchantOffer.uses:I
+    4: aload_0
+    5: getfield net/minecraft/world/item/trading/MerchantOffer.maxUses:I
+    8: if_icmplt 15
+    11: iconst_1
+    12: goto 16
+    15: iconst_0
+    16: ireturn
+  METHOD satisfiedBy (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z  (max_stack=3 max_locals=3 code=86)
+    0: aload_0
+    1: getfield net/minecraft/world/item/trading/MerchantOffer.baseCostA:Lnet/minecraft/world/item/trading/ItemCost;
+    4: aload_1
+    5: invokevirtual net/minecraft/world/item/trading/ItemCost.test:(Lnet/minecraft/world/item/ItemStack;)Z
+    8: ifeq 26
+    11: aload_1
+    12: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    15: aload_0
+    16: aload_0
+    17: getfield net/minecraft/world/item/trading/MerchantOffer.baseCostA:Lnet/minecraft/world/item/trading/ItemCost;
+    20: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getModifiedCostCount:(Lnet/minecraft/world/item/trading/ItemCost;)I
+    23: if_icmpge 28
+    26: iconst_0
+    27: ireturn
+    28: aload_0
+    29: getfield net/minecraft/world/item/trading/MerchantOffer.costB:Ljava/util/Optional;
+    32: invokevirtual java/util/Optional.isPresent:()Z
+    35: ifeq 81
+    38: aload_0
+    39: getfield net/minecraft/world/item/trading/MerchantOffer.costB:Ljava/util/Optional;
+    42: invokevirtual java/util/Optional.get:()Ljava/lang/Object;
+    45: checkcast net/minecraft/world/item/trading/ItemCost
+    48: aload_2
+    49: invokevirtual net/minecraft/world/item/trading/ItemCost.test:(Lnet/minecraft/world/item/ItemStack;)Z
+    52: ifeq 79
+    55: aload_2
+    56: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    59: aload_0
+    60: getfield net/minecraft/world/item/trading/MerchantOffer.costB:Ljava/util/Optional;
+    63: invokevirtual java/util/Optional.get:()Ljava/lang/Object;
+    66: checkcast net/minecraft/world/item/trading/ItemCost
+    69: invokevirtual net/minecraft/world/item/trading/ItemCost.count:()I
+    72: if_icmplt 79
+    75: iconst_1
+    76: goto 80
+    79: iconst_0
+    80: ireturn
+    81: aload_2
+    82: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    85: ireturn
+  METHOD take (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z  (max_stack=3 max_locals=3 code=45)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokevirtual net/minecraft/world/item/trading/MerchantOffer.satisfiedBy:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+    6: ifne 11
+    9: iconst_0
+    10: ireturn
+    11: aload_1
+    12: aload_0
+    13: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostA:()Lnet/minecraft/world/item/ItemStack;
+    16: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    19: invokevirtual net/minecraft/world/item/ItemStack.shrink:(I)V
+    22: aload_0
+    23: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostB:()Lnet/minecraft/world/item/ItemStack;
+    26: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    29: ifne 43
+    32: aload_2
+    33: aload_0
+    34: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostB:()Lnet/minecraft/world/item/ItemStack;
+    37: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    40: invokevirtual net/minecraft/world/item/ItemStack.shrink:(I)V
+    43: iconst_1
+    44: ireturn
+
+== net/minecraft/world/inventory/MerchantMenu.class
+  METHOD quickMoveStack (Lnet/minecraft/world/entity/player/Player;I)Lnet/minecraft/world/item/ItemStack;  (max_stack=5 max_locals=6 code=214)
+    0: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    3: astore_3
+    4: aload_0
+    5: getfield net/minecraft/world/inventory/MerchantMenu.slots:Lnet/minecraft/core/NonNullList;
+    8: iload_2
+    9: invokevirtual net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+    12: checkcast net/minecraft/world/inventory/Slot
+    15: astore 4
+    17: aload 4
+    19: ifnull 212
+    22: aload 4
+    24: invokevirtual net/minecraft/world/inventory/Slot.hasItem:()Z
+    27: ifeq 212
+    30: aload 4
+    32: invokevirtual net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+    35: astore 5
+    37: aload 5
+    39: invokevirtual net/minecraft/world/item/ItemStack.copy:()Lnet/minecraft/world/item/ItemStack;
+    42: astore_3
+    43: iload_2
+    44: iconst_2
+    45: if_icmpne 80
+    48: aload_0
+    49: aload 5
+    51: iconst_3
+    52: bipush 39
+    54: iconst_1
+    55: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveItemStackTo:(Lnet/minecraft/world/item/ItemStack;IIZ)Z
+    58: ifne 65
+    61: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    64: areturn
+    65: aload 4
+    67: aload 5
+    69: aload_3
+    70: invokevirtual net/minecraft/world/inventory/Slot.onQuickCraft:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)V
+    73: aload_0
+    74: invokevirtual net/minecraft/world/inventory/MerchantMenu.playTradeSound:()V
+    77: goto 164
+    80: iload_2
+    81: ifeq 89
+    84: iload_2
+    85: iconst_1
+    86: if_icmpne 106
+    89: aload_0
+    90: aload 5
+    92: iconst_3
+    93: bipush 39
+    95: iconst_0
+    96: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveItemStackTo:(Lnet/minecraft/world/item/ItemStack;IIZ)Z
+    99: ifne 164
+    102: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    105: areturn
+    106: iload_2
+    107: iconst_3
+    108: if_icmplt 135
+    111: iload_2
+    112: bipush 30
+    114: if_icmpge 135
+    117: aload_0
+    118: aload 5
+    120: bipush 30
+    122: bipush 39
+    124: iconst_0
+    125: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveItemStackTo:(Lnet/minecraft/world/item/ItemStack;IIZ)Z
+    128: ifne 164
+    131: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    134: areturn
+    135: iload_2
+    136: bipush 30
+    138: if_icmplt 164
+    141: iload_2
+    142: bipush 39
+    144: if_icmpge 164
+    147: aload_0
+    148: aload 5
+    150: iconst_3
+    151: bipush 30
+    153: iconst_0
+    154: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveItemStackTo:(Lnet/minecraft/world/item/ItemStack;IIZ)Z
+    157: ifne 164
+    160: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    163: areturn
+    164: aload 5
+    166: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    169: ifeq 183
+    172: aload 4
+    174: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    177: invokevirtual net/minecraft/world/inventory/Slot.setByPlayer:(Lnet/minecraft/world/item/ItemStack;)V
+    180: goto 188
+    183: aload 4
+    185: invokevirtual net/minecraft/world/inventory/Slot.setChanged:()V
+    188: aload 5
+    190: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    193: aload_3
+    194: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    197: if_icmpne 204
+    200: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    203: areturn
+    204: aload 4
+    206: aload_1
+    207: aload 5
+    209: invokevirtual net/minecraft/world/inventory/Slot.onTake:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V
+    212: aload_3
+    213: areturn
+  METHOD tryMoveItems (I)V  (max_stack=5 max_locals=5 code=158)
+    0: iload_1
+    1: iflt 15
+    4: aload_0
+    5: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    8: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    11: iload_1
+    12: if_icmpgt 16
+    15: return
+    16: aload_0
+    17: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    20: iconst_0
+    21: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    24: astore_2
+    25: aload_2
+    26: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    29: ifne 54
+    32: aload_0
+    33: aload_2
+    34: iconst_3
+    35: bipush 39
+    37: iconst_1
+    38: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveItemStackTo:(Lnet/minecraft/world/item/ItemStack;IIZ)Z
+    41: ifne 45
+    44: return
+    45: aload_0
+    46: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    49: iconst_0
+    50: aload_2
+    51: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    54: aload_0
+    55: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    58: iconst_1
+    59: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    62: astore_3
+    63: aload_3
+    64: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    67: ifne 92
+    70: aload_0
+    71: aload_3
+    72: iconst_3
+    73: bipush 39
+    75: iconst_1
+    76: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveItemStackTo:(Lnet/minecraft/world/item/ItemStack;IIZ)Z
+    79: ifne 83
+    82: return
+    83: aload_0
+    84: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    87: iconst_1
+    88: aload_3
+    89: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    92: aload_0
+    93: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    96: iconst_0
+    97: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    100: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    103: ifeq 157
+    106: aload_0
+    107: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    110: iconst_1
+    111: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    114: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    117: ifeq 157
+    120: aload_0
+    121: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    124: iload_1
+    125: invokevirtual net/minecraft/world/item/trading/MerchantOffers.get:(I)Ljava/lang/Object;
+    128: checkcast net/minecraft/world/item/trading/MerchantOffer
+    131: astore 4
+    133: aload_0
+    134: iconst_0
+    135: aload 4
+    137: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getItemCostA:()Lnet/minecraft/world/item/trading/ItemCost;
+    140: invokevirtual net/minecraft/world/inventory/MerchantMenu.moveFromInventoryToPaymentSlot:(ILnet/minecraft/world/item/trading/ItemCost;)V
+    143: aload 4
+    145: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getItemCostB:()Ljava/util/Optional;
+    148: aload_0
+    149: invokedynamic dynamic#0:accept
+    154: invokevirtual java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+    157: return
+
+== net/minecraft/world/inventory/MerchantContainer.class
+  METHOD isPaymentSlot (I)Z  (max_stack=2 max_locals=2 code=15)
+    0: iload_1
+    1: ifeq 9
+    4: iload_1
+    5: iconst_1
+    6: if_icmpne 13
+    9: iconst_1
+    10: goto 14
+    13: iconst_0
+    14: ireturn
+  METHOD setItem (ILnet/minecraft/world/item/ItemStack;)V  (max_stack=3 max_locals=3 code=32)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantContainer.itemStacks:Lnet/minecraft/core/NonNullList;
+    4: iload_1
+    5: aload_2
+    6: invokevirtual net/minecraft/core/NonNullList.set:(ILjava/lang/Object;)Ljava/lang/Object;
+    9: pop
+    10: aload_2
+    11: aload_0
+    12: aload_2
+    13: invokevirtual net/minecraft/world/inventory/MerchantContainer.getMaxStackSize:(Lnet/minecraft/world/item/ItemStack;)I
+    16: invokevirtual net/minecraft/world/item/ItemStack.limitSize:(I)V
+    19: aload_0
+    20: iload_1
+    21: invokevirtual net/minecraft/world/inventory/MerchantContainer.isPaymentSlot:(I)Z
+    24: ifeq 31
+    27: aload_0
+    28: invokevirtual net/minecraft/world/inventory/MerchantContainer.updateSellItem:()V
+    31: return
+  METHOD updateSellItem ()V  (max_stack=4 max_locals=5 code=215)
+    0: aload_0
+    1: aconst_null
+    2: putfield net/minecraft/world/inventory/MerchantContainer.activeOffer:Lnet/minecraft/world/item/trading/MerchantOffer;
+    5: aload_0
+    6: getfield net/minecraft/world/inventory/MerchantContainer.itemStacks:Lnet/minecraft/core/NonNullList;
+    9: iconst_0
+    10: invokevirtual net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+    13: checkcast net/minecraft/world/item/ItemStack
+    16: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    19: ifeq 41
+    22: aload_0
+    23: getfield net/minecraft/world/inventory/MerchantContainer.itemStacks:Lnet/minecraft/core/NonNullList;
+    26: iconst_1
+    27: invokevirtual net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+    30: checkcast net/minecraft/world/item/ItemStack
+    33: astore_1
+    34: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    37: astore_2
+    38: goto 65
+    41: aload_0
+    42: getfield net/minecraft/world/inventory/MerchantContainer.itemStacks:Lnet/minecraft/core/NonNullList;
+    45: iconst_0
+    46: invokevirtual net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+    49: checkcast net/minecraft/world/item/ItemStack
+    52: astore_1
+    53: aload_0
+    54: getfield net/minecraft/world/inventory/MerchantContainer.itemStacks:Lnet/minecraft/core/NonNullList;
+    57: iconst_1
+    58: invokevirtual net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+    61: checkcast net/minecraft/world/item/ItemStack
+    64: astore_2
+    65: aload_1
+    66: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    69: ifeq 86
+    72: aload_0
+    73: iconst_2
+    74: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    77: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    80: aload_0
+    81: iconst_0
+    82: putfield net/minecraft/world/inventory/MerchantContainer.futureXp:I
+    85: return
+    86: aload_0
+    87: getfield net/minecraft/world/inventory/MerchantContainer.merchant:Lnet/minecraft/world/item/trading/Merchant;
+    90: invokeinterface net/minecraft/world/item/trading/Merchant.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    95: astore_3
+    96: aload_3
+    97: invokevirtual net/minecraft/world/item/trading/MerchantOffers.isEmpty:()Z
+    100: ifne 200
+    103: aload_3
+    104: aload_1
+    105: aload_2
+    106: aload_0
+    107: getfield net/minecraft/world/inventory/MerchantContainer.selectionHint:I
+    110: invokevirtual net/minecraft/world/item/trading/MerchantOffers.getRecipeFor:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Lnet/minecraft/world/item/trading/MerchantOffer;
+    113: astore 4
+    115: aload 4
+    117: ifnull 128
+    120: aload 4
+    122: invokevirtual net/minecraft/world/item/trading/MerchantOffer.isOutOfStock:()Z
+    125: ifeq 146
+    128: aload_0
+    129: aload 4
+    131: putfield net/minecraft/world/inventory/MerchantContainer.activeOffer:Lnet/minecraft/world/item/trading/MerchantOffer;
+    134: aload_3
+    135: aload_2
+    136: aload_1
+    137: aload_0
+    138: getfield net/minecraft/world/inventory/MerchantContainer.selectionHint:I
+    141: invokevirtual net/minecraft/world/item/trading/MerchantOffers.getRecipeFor:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Lnet/minecraft/world/item/trading/MerchantOffer;
+    144: astore 4
+    146: aload 4
+    148: ifnull 187
+    151: aload 4
+    153: invokevirtual net/minecraft/world/item/trading/MerchantOffer.isOutOfStock:()Z
+    156: ifne 187
+    159: aload_0
+    160: aload 4
+    162: putfield net/minecraft/world/inventory/MerchantContainer.activeOffer:Lnet/minecraft/world/item/trading/MerchantOffer;
+    165: aload_0
+    166: iconst_2
+    167: aload 4
+    169: invokevirtual net/minecraft/world/item/trading/MerchantOffer.assemble:()Lnet/minecraft/world/item/ItemStack;
+    172: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    175: aload_0
+    176: aload 4
+    178: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getXp:()I
+    181: putfield net/minecraft/world/inventory/MerchantContainer.futureXp:I
+    184: goto 200
+    187: aload_0
+    188: iconst_2
+    189: getstatic net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    192: invokevirtual net/minecraft/world/inventory/MerchantContainer.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+    195: aload_0
+    196: iconst_0
+    197: putfield net/minecraft/world/inventory/MerchantContainer.futureXp:I
+    200: aload_0
+    201: getfield net/minecraft/world/inventory/MerchantContainer.merchant:Lnet/minecraft/world/item/trading/Merchant;
+    204: aload_0
+    205: iconst_2
+    206: invokevirtual net/minecraft/world/inventory/MerchantContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    209: invokeinterface net/minecraft/world/item/trading/Merchant.notifyTradeUpdated:(Lnet/minecraft/world/item/ItemStack;)V
+    214: return
+  METHOD getActiveOffer ()Lnet/minecraft/world/item/trading/MerchantOffer;  (max_stack=1 max_locals=1 code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantContainer.activeOffer:Lnet/minecraft/world/item/trading/MerchantOffer;
+    4: areturn
+  METHOD setSelectionHint (I)V  (max_stack=2 max_locals=2 code=10)
+    0: aload_0
+    1: iload_1
+    2: putfield net/minecraft/world/inventory/MerchantContainer.selectionHint:I
+    5: aload_0
+    6: invokevirtual net/minecraft/world/inventory/MerchantContainer.updateSellItem:()V
+    9: return
+

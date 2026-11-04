@@ -2457,6 +2457,11 @@ pub struct MerchantOfferView {
     /// The trade's uses / max-uses pair (the stock's own words).
     pub uses: i32,
     pub max_uses: i32,
+    /// THE TRADE'S OWN XP REWARD (javap 26.2 MerchantOffer.getXp —
+    /// the third readInt the wire's scalar lane carries; the take's
+    /// own `overrideXp(getVillagerXp() + offer.getXp())` walk the
+    /// result-slot round banks)
+    pub xp: i32,
 }
 
 /// The merchant window's projected bank (the store's MerchantBank
@@ -3812,6 +3817,110 @@ pub fn merchant_sell_item(
     }
 }
 
+/// THE ACTIVE OFFER'S OWN SEARCH (javap 26.2 MerchantContainer.
+/// `updateSellItem` — the same walk the sell compute wears, the
+/// matched offer's own bank the field keeps [pc 159-162 the
+/// `activeOffer` store speaks, pc 0-2 the null-first law the walk
+/// opens with, pc 175-181 the `futureXp` the offer's own xp banks]):
+/// the match the `(offer_index, result)` pair answers, the
+/// stack-A-empty + offers-empty + no-match + stale-stock arms the
+/// None the caller's own seat laws wear. The result-slot take's own
+/// `getActiveOffer` law the stored pair banks.
+pub fn merchant_sell_match(
+    seats: &[(i32, i32); 3],
+    offers: &[MerchantOfferView],
+    hint: i32,
+) -> Option<(usize, (i32, i32))> {
+    // THE SWAP ARM (pcs 5-64 — the seat-0 empty the stack-A read the
+    // seat 1 wears, the stack-B the EMPTY the single-cost match keeps)
+    let (a, b) = if seats[0].1 <= 0 {
+        (seats[1], (0, 0))
+    } else {
+        (seats[0], seats[1])
+    };
+    if a.1 <= 0 {
+        return None; // pc 65-85 — the stack-A empty the setItem(2, EMPTY) speaks
+    }
+    if offers.is_empty() {
+        return None; // pc 96-100 — the offers-empty arm the silence keeps
+    }
+    // THE MATCH + RETRY (pcs 103-144 — the hint pair the first match
+    // answers, the null OR out-of-stock the SWAPPED pair the search
+    // re-rides [the backwards-loaded seats the vanilla law answers])
+    let first = merchant_recipe_for(offers, a, b, hint);
+    let offer = match first {
+        Some(o) if !offers[o].out_of_stock => Some(o),
+        _ => merchant_recipe_for(offers, b, a, hint),
+    };
+    match offer {
+        // pcs 159-184 — the in-stock match the offer's own bank wears
+        Some(o) if !offers[o].out_of_stock => Some((o, offers[o].result)),
+        // pc 187-197 — the no-match OR the stale stock the null keeps
+        _ => None,
+    }
+}
+
+/// THE OFFER'S OWN TAKE (javap 26.2 MerchantOffer.`take` — the 45
+/// bytes the result-slot's onTake walk serves): the satisfiedBy gate
+/// the matcher's own verdict answers [pcs 0-10 — the same
+/// `merchant_satisfied_by` law the search wears], the cost-A shrink
+/// the first arg loses [pcs 11-19 — the `getCostA().getCount()` the
+/// `shrink` speaks], the cost-B shrink the second arg loses when the
+/// present pair wears [pcs 22-40 — the absent cost the stack the
+/// walk never touches]. Returns the shrunk pair IN THE PASSED ORDER
+/// — `(first, second)` — the caller's own seat law the positions
+/// keep. The special-price discount the matcher's own comment names
+/// — the base count the port's word set wears, the diff the later
+/// round re-lays.
+pub fn merchant_offer_take(
+    offer: &MerchantOfferView,
+    first: (i32, i32),
+    second: (i32, i32),
+) -> Option<((i32, i32), (i32, i32))> {
+    // THE SATISFIED-BY GATE (pcs 0-10 — the same matcher the search
+    // wears, the false verdict the None the walk returns)
+    if !merchant_satisfied_by(offer, first, second) {
+        return None;
+    }
+    // THE COST-A SHRINK (pcs 11-19 — the matched guarantee the count
+    // never underflows wears, the drained cell the (0, 0) sentinel
+    // keeps)
+    let first = if first.1 > offer.cost_a.1 {
+        (first.0, first.1 - offer.cost_a.1)
+    } else {
+        (0, 0)
+    };
+    // THE COST-B SHRINK (pcs 22-40 — the present pair the second arg
+    // loses, the absent cost the stack the walk never touches)
+    let second = match offer.cost_b {
+        Some((_, n)) if second.1 > n => (second.0, second.1 - n),
+        Some((_, n)) if second.1 == n => (0, 0),
+        _ => second,
+    };
+    Some((first, second))
+}
+
+/// THE TAKE'S OWN PAIRS (javap 26.2 MerchantResultSlot.`onTake` pcs
+/// 37-56 — the direct pair the seats' own order wears [pc 37-45 the
+/// `take(itemA, itemB)` speaks], the swapped pair the backwards
+/// seats the retry answers [pc 48-56 the `take(itemB, itemA)` wears],
+/// the verdict the notify walk rides). Returns the shrunk pair in
+/// SEAT order — `(seat0, seat1)` — the vanilla `setItem(0, itemA) +
+/// setItem(1, itemB)` walk the positions never swap.
+pub fn merchant_offer_take_seats(
+    offer: &MerchantOfferView,
+    seat0: (i32, i32),
+    seat1: (i32, i32),
+) -> Option<((i32, i32), (i32, i32))> {
+    // THE DIRECT PAIR (pc 37-45 — the seats' own order the take wears)
+    if let Some(pair) = merchant_offer_take(offer, seat0, seat1) {
+        return Some(pair);
+    }
+    // THE SWAPPED PAIR (pc 48-56 — the backwards seats the retry
+    // answers, the returned pair the seat order re-maps)
+    merchant_offer_take(offer, seat1, seat0).map(|(second, first)| (first, second))
+}
+
 /// The quickMoveStack walk over the player's own store (javap 26.2
 /// `InventoryMenu.quickMoveStack` — the arms the bytecode speaks in
 /// order). The sources are the STORE rows (menu 9..35 the main grid,
@@ -4185,6 +4294,9 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
                         out_of_stock: o.out_of_stock,
                         uses: o.uses,
                         max_uses: o.max_uses,
+                        // THE XP'S OWN RIDE (the store's third readInt
+                        // the view's reward word wears)
+                        xp: o.xp,
                     })
                     .collect(),
                 level: oc.merchant.level,
