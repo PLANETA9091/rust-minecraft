@@ -80539,6 +80539,26 @@ impl App {
                     // bank the rows read)
                     self.anvil_seat_potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 40];
                     self.anvil_pos = None;
+                    // THE FRESH OPEN'S OWN RESET (the sibling lanes' own
+                    // law the wire open re-wears — the stale gather pair
+                    // the window retires, the one-early gather the stale
+                    // pair would speak, the fresh presses the own arms
+                    // re-lay)
+                    self.anvil_doubleclick = false;
+                    self.anvil_last_click_slot = None;
+                    // THE RENAME FIELD'S OWN FRESH WORD (the vanilla
+                    // fresh-screen law — the AnvilScreen's EditBox the
+                    // setValue("") ctor speaks: the stale word the prior
+                    // session typed the fresh window never wears, the
+                    // caret the fresh field's own zero park keeps, the
+                    // highlight the cost the compute's own words the
+                    // fresh window re-lays)
+                    self.anvil_name.clear();
+                    self.anvil_caret = 0;
+                    self.anvil_highlight = None;
+                    self.anvil_cost = 0;
+                    self.anvil_only_renaming = false;
+                    self.anvil_repair_item_count = 0;
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Anvil);
                     }

@@ -33066,3 +33066,130 @@ fn the_anvil_gather_the_name_retire_wears() {
     );
     assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync follows");
 }
+
+/// THE ANVIL WIRE OPEN'S OWN FRESH LAY (the 218 round's own NEXT the
+/// wheel answers — the 202-era lane the sibling kin's own fresh-open
+/// law the anvil wire open never wore): the stale gather pair the
+/// fresh window retires [the armed flag + the stale seat the one-early
+/// gather the stale pair would speak], the rename field's own fresh
+/// word the vanilla fresh-screen law re-lays [the AnvilScreen's
+/// EditBox the setValue("") ctor speaks — the stale word the prior
+/// session typed the fresh window never wears, the caret the fresh
+/// field's own zero park keeps, the highlight the cost the compute's
+/// own words the fresh window re-lays].
+#[test]
+fn the_anvil_wire_open_the_fresh_lay_wears() {
+    use crate::world_view::LiveContainer;
+    let mut app = App::new(3);
+    app.enter_world();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+
+    // THE STALE SESSION'S OWN WORDS (the prior window the walk banks —
+    // the armed gather pair + the typed rename word + the compute's
+    // own words the stale session keeps)
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    app.anvil_is_live = true;
+    app.anvil_live_window = Some((9, 3));
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(4);
+    app.anvil_name.push_str("Old Word");
+    app.anvil_caret = 3;
+    app.anvil_highlight = Some(7);
+    app.anvil_cost = 5;
+    app.anvil_only_renaming = true;
+    app.anvil_repair_item_count = 2;
+
+    // THE FRESH WINDOW'S OWN WALK (the OpenScreen word the fresh anvil
+    // speaks — the stale words the fresh lay retires)
+    let mut nbt = Vec::new();
+    mc_protocol::nbt::write_network_nbt(
+        &mc_protocol::nbt::Nbt::Compound(vec![(
+            "text".to_string(),
+            mc_protocol::nbt::Nbt::String("Fresh Anvil".to_string()),
+        )]),
+        &mut nbt,
+    );
+    app.live_container_updated(Some(LiveContainer {
+        id: 2,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: vec![(sword, 1), (0, 0), (sword, 1)],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: nbt.clone(),
+    }));
+    assert_eq!(app.screen, ScreenKind::Anvil, "the route the anvil opens");
+    assert_eq!(
+        app.anvil_live_window,
+        Some((2, 7)),
+        "the fresh identity rides in"
+    );
+    // THE GATHER PAIR'S OWN RESET (the sibling lanes' own law — the
+    // armed flag the fresh window retires, the one-early gather the
+    // stale pair would speak)
+    assert!(
+        !app.anvil_doubleclick,
+        "the stale flag the fresh open retires"
+    );
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the stale seat the fresh open retires"
+    );
+    // THE RENAME FIELD'S OWN FRESH WORD (the vanilla fresh-screen law
+    // — the AnvilScreen's EditBox the setValue("") ctor speaks)
+    assert!(
+        app.anvil_name.is_empty(),
+        "the stale word the fresh field retires"
+    );
+    assert_eq!(app.anvil_caret, 0, "the caret the zero park keeps");
+    assert_eq!(
+        app.anvil_highlight, None,
+        "the highlight the fresh field retires"
+    );
+    assert_eq!(app.anvil_cost, 0, "the stale cost the fresh window retires");
+    assert!(
+        !app.anvil_only_renaming,
+        "the rename-only verdict the fresh window retires"
+    );
+    assert_eq!(
+        app.anvil_repair_item_count, 0,
+        "the repair count the fresh window retires"
+    );
+
+    // THE SECOND WINDOW'S OWN WALK (every fresh open the words retire
+    // — the typed word the SECOND session the same law answers, the
+    // standing screen the re-sync the window re-lays)
+    app.anvil_name.push_str("Second Word");
+    app.anvil_caret = 4;
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: vec![(0, 0), (0, 0), (0, 0)],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 11,
+        data_slots: Vec::new(),
+        title_nbt: nbt,
+    }));
+    assert_eq!(
+        app.anvil_live_window,
+        Some((4, 11)),
+        "the second identity rides in"
+    );
+    assert!(
+        app.anvil_name.is_empty(),
+        "the second word the fresh field retires"
+    );
+    assert_eq!(app.anvil_caret, 0, "the caret the zero park re-wears");
+    assert!(
+        !app.anvil_doubleclick,
+        "the stale flag the second open retires"
+    );
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the stale seat the second open retires"
+    );
+}
