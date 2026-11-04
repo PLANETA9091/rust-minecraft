@@ -33193,3 +33193,120 @@ fn the_anvil_wire_open_the_fresh_lay_wears() {
         "the stale seat the second open retires"
     );
 }
+
+/// THE ANVIL DEATH'S OWN FIELD RETIRE (the 219 round's own NEXT the
+/// wheel answers — the server-initiated None walk the rename field's
+/// stale word the death never banks: the same honest zero the close
+/// walk and the fresh opens speak, the death walk the field family
+/// re-lays, the rows the words the count keeps).
+#[test]
+fn the_anvil_death_the_field_words_retire() {
+    use crate::world_view::LiveContainer;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+
+    // APP ARM A — THE STALE WORDS THE LIVE WINDOW BANKS (the menu
+    // type 8 the OpenScreen word routes, the rename field the prior
+    // session's words the walk keeps — the typed word the caret 3
+    // wears, the highlight the cost the verdict the count the walk
+    // banks, the gather pair the title the cursor the walk rides)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let mut aslots = vec![(0i32, 0i32); 39];
+    aslots[0] = (sword, 1);
+    aslots[1] = (dirt, 1);
+    aslots[3] = (dirt, 30);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Anvil,
+        "the route the repair window opens"
+    );
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    app.anvil_name = "Ghost Word".to_string();
+    app.anvil_caret = 3;
+    app.anvil_highlight = Some(1);
+    app.anvil_cost = 5;
+    app.anvil_only_renaming = true;
+    app.anvil_repair_item_count = 2;
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(1);
+    app.live_anvil_title = Some("the repair bench".to_string());
+    app.anvil_carried = (dirt, 2);
+    // the row's own word the death keeps (the mirror the inventory's
+    // own bank speaks — the rows the drop never clears)
+    app.items_custom_names[10] = Some("Keeps".to_string());
+
+    // APP ARM B — THE STORE'S OWN DROP (the None the death walk
+    // speaks — the field family the same honest zero the close walk
+    // re-lays, the stale word the death never banks)
+    app.live_container_updated(None);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the drop the world seat answers"
+    );
+    assert!(
+        !app.anvil_is_live,
+        "the server's own drop the live flag retires"
+    );
+    assert!(app.anvil_live_window.is_none(), "the drop the window dies");
+    assert_eq!(app.anvil_carried, (0, 0), "the cursor the death retires");
+    assert!(!app.anvil_doubleclick, "the gather flag the death retires");
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the gather seat the death retires"
+    );
+    assert_eq!(app.live_anvil_title, None, "the title the death retires");
+    assert!(
+        app.anvil_name.is_empty(),
+        "the stale word the death retires"
+    );
+    assert_eq!(app.anvil_caret, 0, "the caret the zero park keeps");
+    assert_eq!(app.anvil_highlight, None, "the highlight the death retires");
+    assert_eq!(app.anvil_cost, 0, "the cost the honest zero keeps");
+    assert!(!app.anvil_only_renaming, "the verdict the death retires");
+    assert_eq!(app.anvil_repair_item_count, 0, "the count the zero keeps");
+    assert_eq!(
+        app.items_custom_names[10],
+        Some("Keeps".to_string()),
+        "the row's own word the death keeps"
+    );
+
+    // APP ARM C — THE SECOND WINDOW'S OWN DEATH (every drop the same
+    // zero re-lays — the re-typed word the SECOND session the same
+    // walk answers)
+    let mut aslots2 = vec![(0i32, 0i32); 39];
+    aslots2[0] = (sword, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots2,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+    }));
+    assert!(app.anvil_is_live, "the fresh window the flag re-wears");
+    app.anvil_name = "Second Word".to_string();
+    app.anvil_caret = 5;
+    app.anvil_cost = 3;
+    app.live_container_updated(None);
+    assert!(
+        app.anvil_name.is_empty(),
+        "the second word the same death retires"
+    );
+    assert_eq!(app.anvil_caret, 0, "the second caret the zero park keeps");
+    assert_eq!(app.anvil_cost, 0, "the second cost the honest zero keeps");
+}

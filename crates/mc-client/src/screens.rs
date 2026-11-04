@@ -80922,6 +80922,16 @@ impl App {
                 // fresh open the own reset re-arms)
                 self.anvil_doubleclick = false;
                 self.anvil_last_click_slot = None;
+                // THE FIELD'S OWN WORDS THE DEATH RETIRES (the same
+                // honest zero the close walk and the fresh opens speak
+                // — the stale word the death never banks, the fresh
+                // open the own re-lay serves)
+                self.anvil_name.clear();
+                self.anvil_caret = 0;
+                self.anvil_highlight = None;
+                self.anvil_cost = 0;
+                self.anvil_only_renaming = false;
+                self.anvil_repair_item_count = 0;
                 self.live_anvil_title = None; // the title dies with the window
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
