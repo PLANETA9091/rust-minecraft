@@ -94931,9 +94931,9 @@ fn wire_merchant_quickcraft_distribute(
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
     let end_button = start_button | 2; // getQuickcraftMask(2, type)
-    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
-    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
-    // the changed map never names
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -95011,7 +95011,6 @@ fn wire_merchant_quickcraft_distribute(
         },
     ));
 }
-
 
 /// THE BREWING DRAG'S OWN WIRE DISTRIBUTION (the same doClick
 /// QUICK_CRAFT status-2 arm pcs 298-534 over the brewing stand's

@@ -34551,7 +34551,14 @@ fn the_merchant_slots_the_walk_family_wears() {
     let mut app = App::new(3);
     app.enter_world();
     app.screen = ScreenKind::Merchant;
-    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2), (10, 40, 3), (10, 60, 30)];
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slot_rects = vec![
+        (10, 10, 0),
+        (30, 10, 1),
+        (50, 10, 2),
+        (10, 40, 3),
+        (10, 60, 30),
+    ];
     app.merchant_panel = (0, 0);
     app.merchant_slots = vec![(0, 0); 39];
     app.merchant_slots[0] = (emerald, 4);
@@ -34599,14 +34606,30 @@ fn the_merchant_slots_the_walk_family_wears() {
     // THE RIGHT PRESS'S OWN SPLIT (the empty cursor the ceiling half
     // takes)
     app.click_merchant_slot(10, 10, 1);
-    assert_eq!(app.merchant_slots[0], (emerald, 2), "the half the seat keeps");
-    assert_eq!(app.merchant_carried, (emerald, 2), "the half the carried rides");
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 2),
+        "the half the seat keeps"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 2),
+        "the half the carried rides"
+    );
     // the RIGHT press's own PLACE-ONE (the held stack the empty seat
     // the one wears)
     app.merchant_slots[1] = (0, 0);
     app.click_merchant_slot(30, 10, 1);
-    assert_eq!(app.merchant_slots[1], (emerald, 1), "the one the seat wears");
-    assert_eq!(app.merchant_carried, (emerald, 1), "the one the carried loses");
+    assert_eq!(
+        app.merchant_slots[1],
+        (emerald, 1),
+        "the one the seat wears"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 1),
+        "the one the carried loses"
+    );
     app.merchant_slots[0] = (emerald, 4);
     app.merchant_carried = (0, 0);
 
@@ -34655,12 +34678,12 @@ fn the_merchant_slots_the_walk_family_wears() {
     app.inventory.items[0] = (emerald, 1);
     app.merchant_slots[30] = (emerald, 1);
     app.click_merchant_slot(10, 60, 0);
-    assert_eq!(app.inventory.items[0], (0, 0), "the hotbar cell the walk drains");
     assert_eq!(
-        app.hotbar_slots[0],
+        app.inventory.items[0],
         (0, 0),
-        "the HUD row the sync answers"
+        "the hotbar cell the walk drains"
     );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync answers");
     assert_eq!(
         app.merchant_carried,
         (emerald, 1),
@@ -34690,26 +34713,46 @@ fn the_merchant_slots_the_walk_family_wears() {
         (0, 0),
         "the source row the insert drains"
     );
-    assert_eq!(
-        app.merchant_slots[4],
-        (0, 0),
-        "the mirror the insert syncs"
-    );
+    assert_eq!(app.merchant_slots[4], (0, 0), "the mirror the insert syncs");
     // the INPUT source the rows the moveItemStackTo(3, 39) walk
-    // serves (the reversed order the hotbar head wears — the menu 38
-    // the items 8 answer)
+    // serves: the SAME-ITEM MERGE the pass-1 walk answers first (the
+    // hotbar head's own leftover the emerald merge takes — the place-
+    // back arm the seat's own pair wears), the REVERSED ORDER the
+    // empty fill answers after (the menu 38 the items 8 the fresh
+    // store wears)
     app.shift_down = true;
     app.merchant_slots[1] = (emerald, 3);
     app.click_merchant_slot(30, 10, 0);
-    assert_eq!(app.merchant_slots[1], (0, 0), "the input the row move drains");
+    assert_eq!(
+        app.merchant_slots[1],
+        (0, 0),
+        "the input the row move drains"
+    );
+    assert_eq!(
+        app.merchant_slots[30],
+        (emerald, 4),
+        "the hotbar head's own leftover the merge takes"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (emerald, 4),
+        "the merge the write-through keeps"
+    );
+    // the EMPTY FILL the reversed order wears (the merge-less store
+    // the first empty the hotbar tail keeps — the menu 38 the items 8
+    // answer)
+    app.merchant_slots[30] = (0, 0);
+    app.inventory.items[0] = (0, 0);
+    app.merchant_slots[1] = (emerald, 2);
+    app.click_merchant_slot(30, 10, 0);
     assert_eq!(
         app.merchant_slots[38],
-        (emerald, 3),
+        (emerald, 2),
         "the hotbar tail the reversed order fills"
     );
     assert_eq!(
         app.inventory.items[8],
-        (emerald, 3),
+        (emerald, 2),
         "the store row the write-through keeps"
     );
     app.shift_down = false;
@@ -34759,7 +34802,8 @@ fn the_merchant_slots_the_walk_family_wears() {
 
     // THE THROW'S OWN OUTSIDE (the -999 PICKUP the carried's drop
     // speaks — the whole carried the PRIMARY drops, the ONE the
-    // right wears)
+    // right wears; the laid-out panel the strict compare demands)
+    app.merchant_panel = (100, 100);
     let drops_before = app.drops.len();
     app.merchant_carried = (emerald, 4);
     app.click_merchant_slot(500, 500, 0);
@@ -34768,7 +34812,11 @@ fn the_merchant_slots_the_walk_family_wears() {
         (0, 0),
         "the whole carried the primary drop wears"
     );
-    assert_eq!(app.drops.len(), drops_before + 1, "the entity the drop spawns");
+    assert_eq!(
+        app.drops.len(),
+        drops_before + 1,
+        "the entity the drop spawns"
+    );
     app.merchant_carried = (bread, 3);
     app.click_merchant_slot(500, 500, 1);
     assert_eq!(
@@ -34779,7 +34827,12 @@ fn the_merchant_slots_the_walk_family_wears() {
 
     // THE DRAG'S OWN ARM + PAINT (the carried-NON-EMPTY press the
     // isQuickCrafting start speaks — the result seat the paint never
-    // names, the distribution the release answers)
+    // names, the distribution the release answers; the quick-move
+    // arms' own leftovers the fresh seats the reset wears)
+    app.merchant_slots[0] = (0, 0);
+    app.merchant_slots[1] = (0, 0);
+    app.merchant_slots[3] = (0, 0);
+    app.inventory.items[9] = (0, 0);
     app.merchant_carried = (emerald, 4);
     app.qc_arm_merchant(10, 10, 0);
     assert!(app.qc_armed, "the press the arm wears");
@@ -34811,6 +34864,7 @@ fn the_merchant_slots_the_walk_family_wears() {
     // the release POSITION the vanilla law reads)
     app.mouse_pos = Some((30, 10));
     app.merchant_slots[1] = (0, 0);
+    app.merchant_carried = (emerald, 1);
     app.qc_arm_merchant(30, 10, 0);
     app.qc_release(0);
     assert_eq!(
@@ -34847,7 +34901,7 @@ fn the_merchant_slots_the_walk_family_wears() {
         merchant: None,
     }));
     live.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
-    live.merchant_panel = (0, 0);
+    live.merchant_panel = (100, 100);
     live.shift_down = false;
     live.click_merchant_slot(10, 10, 0);
     match rx.try_recv().unwrap() {
@@ -34911,8 +34965,10 @@ fn the_merchant_slots_the_walk_family_wears() {
             assert_eq!(click.button, 2, "the mask(2, type) the end wears");
             assert_eq!(
                 click.changed,
-                vec![(0i16, (emerald, 4))],
-                "the end the distribution's own mutations names"
+                vec![(0i16, (emerald, 8))],
+                "the end the distribution's own mutations names [the same-id
+                seat the merge math wears — the 4 the place count + the
+                4 the seat's own stack the cap keeps]"
             );
             assert_eq!(
                 click.carried,
@@ -34927,16 +34983,3 @@ fn the_merchant_slots_the_walk_family_wears() {
         "the refusal the add the wire never mints"
     );
 }
-
-    #[test]
-    fn probe_merchant_qm() {
-        let emerald = mc_registry::item_id_by_name("emerald").unwrap();
-        let mut slots = vec![(0, 0); 39];
-        slots[1] = (emerald, 3);
-        let mut snap = slots.clone();
-        snap[2] = (i32::MAX, i32::MAX);
-        let changed = crate::world_view::predict_quick_move_grid(&snap, 1, 3);
-        eprintln!("changed = {changed:?}");
-        eprintln!("emerald id = {emerald}, max = {}", crate::world_view::item_max_stack(emerald));
-    }
-
