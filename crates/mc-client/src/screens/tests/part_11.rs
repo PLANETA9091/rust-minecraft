@@ -33381,3 +33381,132 @@ fn the_anvil_cost_the_wire_word_wears() {
     }));
     assert_eq!(app.anvil_cost, 0, "the absent word the honest zero keeps");
 }
+
+/// THE ANVIL CLOSE'S OWN ECHO GATE (the 452 round's own NEXT the wheel
+/// answers — the client-initiated close the serverbound ContainerClose
+/// packet rides, the sibling closes' own law the chest/furnace/
+/// brewing/dispenser/enchanting/crafting walks wear, the anvil the
+/// honest omission the round retires: the live belief resets with the
+/// window, NO ride-home walk the local fiction never wears, the
+/// offline door the echo never mints).
+#[test]
+fn the_anvil_close_the_wire_echo_wears() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+
+    // APP ARM A — THE WIRE CLOSE'S OWN ECHO (the live window the
+    // route opens, the stale words the walk banks — the close the
+    // packet speaks, the belief the window retires, the carried the
+    // server's own law returns, NO ride-home the inventory never wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut aslots = vec![(0i32, 0i32); 39];
+    aslots[0] = (sword, 1);
+    aslots[3] = (dirt, 30);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots: aslots,
+        bundle_rows: Vec::new(),
+        carried: (sword, 2),
+        state_id: 4,
+        data_slots: vec![5],
+        title_nbt: Vec::new(),
+    }));
+    assert_eq!(app.screen, ScreenKind::Anvil, "the route the window opens");
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    let swords_home = app
+        .inventory
+        .items
+        .iter()
+        .filter(|it| it.0 == sword)
+        .map(|it| it.1)
+        .sum::<i32>();
+    app.anvil_name = "Ghost Word".to_string();
+    app.anvil_caret = 3;
+    app.anvil_cost = 5;
+    app.anvil_only_renaming = true;
+    app.anvil_repair_item_count = 2;
+    app.anvil_doubleclick = true;
+    app.anvil_last_click_slot = Some(1);
+    app.live_anvil_title = Some("the repair bench".to_string());
+    app.close_anvil(ScreenKind::World);
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 8, "the close the window id carries");
+        }
+        other => panic!("the close the command speaks, not {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the close no second echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the close the world answers");
+    assert!(!app.anvil_is_live, "the close the live flag retires");
+    assert!(
+        app.anvil_live_window.is_none(),
+        "the close the window drops"
+    );
+    assert_eq!(
+        app.anvil_carried,
+        (0, 0),
+        "the carried the server's own law resets"
+    );
+    let swords_after = app
+        .inventory
+        .items
+        .iter()
+        .filter(|it| it.0 == sword)
+        .map(|it| it.1)
+        .sum::<i32>();
+    assert_eq!(
+        swords_after, swords_home,
+        "NO ride-home the live close never wears — the server returns the carried"
+    );
+    assert_eq!(
+        app.anvil_result,
+        (0, 0),
+        "the result seat the close retires"
+    );
+    assert!(
+        app.anvil_name.is_empty(),
+        "the stale word the close retires"
+    );
+    assert_eq!(app.anvil_caret, 0, "the caret the zero park keeps");
+    assert_eq!(app.anvil_cost, 0, "the cost the honest zero keeps");
+    assert!(!app.anvil_only_renaming, "the verdict the close retires");
+    assert_eq!(app.anvil_repair_item_count, 0, "the count the zero keeps");
+    assert!(!app.anvil_doubleclick, "the gather flag the close retires");
+    assert!(
+        app.anvil_last_click_slot.is_none(),
+        "the gather seat the close retires"
+    );
+    assert_eq!(app.live_anvil_title, None, "the title the close retires");
+
+    // APP ARM B — THE OFFLINE DOOR THE ECHO NEVER MINTS (the fresh
+    // door the offline walk opens — the close the ride-home wears,
+    // the echo the false gate never speaks)
+    let (tx2, rx2) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx2);
+    app.open_anvil_for((2, 0, 0));
+    assert!(
+        !app.anvil_is_live,
+        "the offline door the live flag never wears"
+    );
+    app.anvil_carried = (dirt, 2);
+    app.close_anvil(ScreenKind::World);
+    assert!(rx2.try_recv().is_err(), "the offline close no echo mints");
+    assert_eq!(app.screen, ScreenKind::World, "the door the world answers");
+    let dirt_home: i32 = app
+        .inventory
+        .items
+        .iter()
+        .filter(|it| it.0 == dirt)
+        .map(|it| it.1)
+        .sum();
+    assert!(
+        dirt_home >= 2,
+        "the ridden dirt the offline ride-home wears"
+    );
+}

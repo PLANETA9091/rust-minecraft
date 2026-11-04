@@ -31126,6 +31126,41 @@ impl App {
     /// product the close never banks, the name/cost words the fresh
     /// open re-lays): the screen back to the world.
     pub fn close_anvil(&mut self, back: ScreenKind) {
+        // THE WIRE'S OWN CLOSE (the enchant close's own shape — the
+        // live session's close echoes the serverbound ContainerClose
+        // packet through the live session's send lane, the belief
+        // resets with the window, the server's own close returns the
+        // carried stack server-side — NO ride-home walk the local
+        // fiction never wears; the window-scoped words the same tail
+        // the offline branch and the death walk speak)
+        if self.anvil_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.anvil_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.anvil_is_live = false;
+            self.anvil_live_window = None;
+            self.anvil_carried = (0, 0);
+            self.anvil_result = (0, 0);
+            self.anvil_names[2] = None;
+            self.anvil_repair_costs[2] = 0;
+            self.anvil_enchants[2].clear();
+            self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
+            self.anvil_name.clear();
+            self.anvil_caret = 0;
+            self.anvil_highlight = None;
+            self.anvil_cost = 0;
+            self.anvil_only_renaming = false;
+            self.anvil_repair_item_count = 0;
+            self.anvil_doubleclick = false;
+            self.anvil_last_click_slot = None;
+            self.live_anvil_title = None;
+            self.anvil_pos = None;
+            self.container_removed_rode = true; // the removed law rode
+            self.open(back);
+            return;
+        }
         // THE MIRROR LANES' OWN STORE RIDE FIRST (the write-through
         // projection the rows already keep — the SAME numbering the
         // stores ride: the seat's names the inventory cell answers,
