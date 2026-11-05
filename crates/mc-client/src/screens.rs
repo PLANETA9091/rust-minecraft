@@ -195,6 +195,19 @@ fn entry_click_seat(value: &str, display: usize, mx: i32, bx: i32) -> usize {
     caret_char_index_at(&window, mx - (bx + 4)) + display
 }
 
+/// THE EDIT BOX'S OWN HIGHLIGHTED RANGE (the 470 census's
+/// `getHighlighted` law the jar's own bytes wear — the
+/// value.substring(min(cursor, highlight), max(...)) the pair
+/// answers, the collapsed/absent pair the EMPTY word the walk keeps
+/// [the zero-width range the substring the "" wears — the 26.2 law
+/// the copy/cut arms the unguarded store write serve]).
+fn edit_highlighted(value: &str, cursor: usize, highlight: Option<usize>) -> String {
+    let anchor = highlight.unwrap_or(cursor);
+    let lo = cursor.min(anchor);
+    let hi = cursor.max(anchor);
+    value.chars().skip(lo).take(hi - lo).collect()
+}
+
 /// THE ENTRY BOXES' OWN WORD SEAT (the 268 chat law the
 /// `chat_word_at` helper wears — the non-space seat the [start, end)
 /// run banks, the space seat the empty pair keeps, the past-tail the
@@ -52177,6 +52190,114 @@ impl App {
         self.debug_search_cursor = self.debug_search.chars().count();
         self.debug_search_highlight = Some(0);
         self.debug_search_window_sync();
+    }
+
+    /// THE SEARCH BOX'S OWN COPY SEAT (the 470 census's isCopy arm
+    /// the 26.2 bytes wear — `setClipboard(getHighlighted())` the
+    /// UNGUARDED store write serves: the highlighted range the
+    /// [min, max) substring answers, the collapsed pair the EMPTY
+    /// word the store banks [the getHighlighted substring the
+    /// zero-width range the "" wears — the whole-value fold the
+    /// standing family law wears the 26.2 bytes NEVER speak], the
+    /// unfocused box the isActive/isFocused gate the walk never
+    /// passes; the f3 chords' own debug store the same `clipboard`
+    /// bank wears).
+    pub fn on_debug_options_copy(&mut self) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let word = edit_highlighted(
+            &self.debug_search,
+            self.debug_search_cursor,
+            self.debug_search_highlight,
+        );
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
+    }
+
+    /// THE SEARCH BOX'S OWN CUT SEAT (the 470 census's isCut arm the
+    /// 26.2 bytes wear — the store the range banks first, the
+    /// `insertText("")` walk the range removes [the replace(lo, hi,
+    /// "") the live range alone clears — the whole-value wipe the
+    /// standing family law wears the 26.2 bytes NEVER speak], the
+    /// collapsed pair the no-op keeps [the replace(lo, lo, "") the
+    /// value never moves — the cut the box the value keeps], the
+    /// changed value the rebuild top reset wears [the onValueChange
+    /// responder the port's equal-word early-out consumes], the
+    /// unfocused box the gate never passes).
+    pub fn on_debug_options_cut(&mut self) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        // the store the range banks first (the isCopy arm the same
+        // law wears — the collapsed pair the empty word the store
+        // banks)
+        let word = edit_highlighted(
+            &self.debug_search,
+            self.debug_search_cursor,
+            self.debug_search_highlight,
+        );
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
+        // the insertText("") walk the range removes — the collapsed
+        // pair the no-op keeps (the equal-word early-out the responder
+        // walk consumes)
+        if self.debug_delete_selection() {
+            self.debug_search_window_sync();
+        }
+    }
+
+    /// THE SEARCH BOX'S OWN PASTE SEAT (the 470 census's isPaste arm
+    /// the 26.2 bytes wear — `insertText(getClipboard())` the
+    /// isEditable-gated walk serves: the budget the walk FIRST
+    /// computes [the maxLength - len - (hi - lo) fold the 42/44 bytes
+    /// wear — the at-cap no-op the return keeps], the NO empty guard
+    /// the walk never wears [the standing guard the 26.2 bytes never
+    /// speak — the empty word the live range the removal alone
+    /// serves], the range the replace(lo, hi, s) walk serves, the
+    /// word the seat the insert walk answers, the 50 setMaxLength cap
+    /// the budget tail clamps, the responder walk the changed value
+    /// alone answers [the equal-word early-out the no-op walk
+    /// consumes], the unfocused box the gate never passes).
+    pub fn on_debug_options_paste(&mut self) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let word = crate::clipboard::store_load(&self.clipboard);
+        // the budget the walk first computes (the at-cap no-op the
+        // return keeps — the live range the removal the budget frees)
+        let anchor = self
+            .debug_search_highlight
+            .unwrap_or(self.debug_search_cursor);
+        let lo = self.debug_search_cursor.min(anchor);
+        let hi = self.debug_search_cursor.max(anchor);
+        let range_len = hi - lo;
+        let budget = 50isize - self.debug_search.chars().count() as isize + range_len as isize;
+        if budget <= 0 {
+            return; // the at-cap no-op the walk never enters
+        }
+        // the range the replace(lo, hi, s) walk serves — the
+        // deleteSelection first step the removal wears (the empty
+        // word the live range the removal alone answers)
+        self.debug_delete_selection();
+        // the word the seat the insert walk answers — the per-char
+        // walk the budget tail clamps
+        let mut inserted = 0usize;
+        for c in word.chars() {
+            if inserted >= budget as usize {
+                break; // the budget the tail clamps
+            }
+            let len = self.debug_search.chars().count();
+            let seat = self.debug_search_cursor.min(len);
+            let byte = caret_byte_index(&self.debug_search, seat);
+            self.debug_search.insert(byte, c);
+            self.debug_search_cursor = seat + 1;
+            inserted += 1;
+        }
+        if inserted > 0 || range_len > 0 {
+            // the onValueChange responder the changed value alone
+            // answers (the equal-word early-out the no-op consumes)
+            self.debug_scroll = 0.0;
+            self.debug_search_window_sync();
+        }
     }
 
     /// THE DIRECT CONNECTION'S OWN ENTER RIDE (javap 26.2

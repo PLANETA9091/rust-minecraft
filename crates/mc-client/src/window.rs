@@ -2433,6 +2433,22 @@ pub fn run_gui_app(
             if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
                 app.on_debug_options_select_all();
             }
+            // THE SEARCH BOX'S OWN CLIPBOARD CHORD (the 470 census's
+            // isCopy/isPaste/isCut arms the 26.2 bytes wear — the
+            // highlighted range the store the unguarded write banks,
+            // the cut the range the insertText("") walk removes, the
+            // paste the budget the walk first computes, the 441/442
+            // entry lanes' chord seat the debug box re-wears — the
+            // range law the family re-wear the NEXT banks)
+            if ctrl_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
+                app.on_debug_options_copy();
+            }
+            if ctrl_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
+                app.on_debug_options_paste();
+            }
+            if ctrl_down && window.is_key_pressed(Key::X, minifb::KeyRepeat::No) {
+                app.on_debug_options_cut();
+            }
             // THE SELECTION'S OWN SHIFT SEAT (the hasShiftDown query
             // the two-arg branches — the 266 chat law the box wears,
             // the ride the anchor keeps)

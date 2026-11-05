@@ -30578,7 +30578,183 @@ fn the_creative_search_the_clipboard_sibling_wears() {
     );
 }
 
-
+/// THE DEBUG SEARCH BOX'S OWN CLIPBOARD TRIO (the 470 census's
+/// isCopy/isPaste/isCut arms the 26.2 bytes wear — the debug options
+/// search box the trio the wheel never banked, the range law the
+/// standing family folds the bytes refuse). The arms wear: the copy's
+/// own range law [the highlighted [min, max) substring the store the
+/// unguarded write banks — the collapsed pair the EMPTY word the
+/// store wears, the whole-value fold the family law the bytes never
+/// speak], the cut's own range removal [the store the range banks
+/// first, the insertText("") walk the live range alone clears — the
+/// collapsed pair the value the no-op keeps, the rebuild the scroll
+/// top wears], the paste's own budget walk [the at-cap no-op the
+/// return keeps, the no-empty-guard the live range the removal alone
+/// serves, the store's word the seat the insert walk answers, the 50
+/// cap the budget tail clamps, the live range the store's word the
+/// answer replaces], the unfocused gate's own silence [the trio the
+/// unfocused box the store and value never serve].
+#[test]
+fn the_debug_search_the_clipboard_trio_wears() {
+    let mut app = App::new(3);
+    // THE DOOR'S OWN OPEN (the debug options screen the world lane
+    // arms — the fresh ctor the focused box the seat keeps)
+    app.enter_world();
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        crate::screens::ScreenKind::DebugOptions,
+        "the debug options screen the seat wears"
+    );
+    assert!(app.debug_search_focus, "the fresh ctor the box focuses");
+    for c in "stone".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "stone", "the typed word the seat seeds");
+    // THE COPY'S OWN RANGE LAW (the highlighted substring the store
+    // banks — the [0, 2) seat the Home + the shift ride opens, the
+    // whole-value fold the family law the range never wears)
+    app.on_debug_options_caret_home_end(false);
+    app.on_debug_options_caret_shift_arrow(false);
+    app.on_debug_options_caret_shift_arrow(false);
+    assert_eq!(
+        (app.debug_search_cursor, app.debug_search_highlight),
+        (2, Some(0)),
+        "the shift ride the [0, 2) range opens"
+    );
+    app.on_debug_options_copy();
+    assert_eq!(
+        app.clipboard, "st",
+        "the highlighted range the copy banks [the whole-value fold the range never wears]"
+    );
+    assert_eq!(app.debug_search, "stone", "the copy the box never trims");
+    // THE COLLAPSED PAIR'S OWN EMPTY BANK (the unguarded write the
+    // empty word the store wears — the getHighlighted the zero-width
+    // range the "" speaks)
+    app.on_debug_options_caret_arrow(false);
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the plain ride the anchor collapses"
+    );
+    app.on_debug_options_copy();
+    assert_eq!(
+        app.clipboard, "",
+        "the collapsed pair the empty word the store banks [the unguarded write]"
+    );
+    // THE CUT'S OWN RANGE REMOVAL (the store the range banks first,
+    // the insertText("") walk the live range alone clears — the
+    // whole-value wipe the family law the box never wears)
+    app.on_debug_options_caret_shift_arrow(true);
+    assert_eq!(
+        (app.debug_search_cursor, app.debug_search_highlight),
+        (2, Some(3)),
+        "the shift ride the [2, 3) range opens"
+    );
+    app.debug_scroll = 48.0; // the pre-cut wheel the rebuild retires
+    app.on_debug_options_cut();
+    assert_eq!(app.clipboard, "o", "the cut the range the store banks");
+    assert_eq!(
+        app.debug_search, "stne",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
+    );
+    assert_eq!(
+        (app.debug_search_cursor, app.debug_search_highlight),
+        (2, None),
+        "the removal the lo seat parks, the anchor drops"
+    );
+    assert_eq!(app.debug_scroll, 0.0, "the rebuild the top wears");
+    // THE COLLAPSED CUT'S OWN NO-OP (the replace(lo, lo, "") the
+    // value never moves — the cut the box the value keeps, the store
+    // the empty word re-banks)
+    app.on_debug_options_cut();
+    assert_eq!(app.clipboard, "", "the collapsed cut the store empties");
+    assert_eq!(
+        app.debug_search, "stne",
+        "the collapsed cut the value keeps [the whole-value wipe the box never wears]"
+    );
+    // THE PASTE'S OWN SEAT INSERT (the store's word the seat the
+    // insert walk answers, the caret the tail rides)
+    app.clipboard = "fps".to_string();
+    app.on_debug_options_paste();
+    assert_eq!(app.debug_search, "stfpsne", "the paste the seat wears");
+    assert_eq!(app.debug_search_cursor, 5, "the insert the caret rides");
+    assert_eq!(
+        app.debug_search_highlight, None,
+        "the insert the anchor collapses"
+    );
+    // THE HEAD SEAT'S OWN INSERT (the HOME the seat 0 parks, the
+    // paste the head the word wears)
+    app.on_debug_options_caret_home_end(false);
+    app.on_debug_options_paste();
+    assert_eq!(app.debug_search, "fpsstfpsne", "the paste the head wears");
+    assert_eq!(app.debug_search_cursor, 3, "the insert the caret rides");
+    // THE EMPTY STORE'S OWN WALK (the no-empty-guard the 26.2 bytes
+    // speak — the collapsed pair the no-op the value keeps, the live
+    // range the removal alone serves)
+    app.clipboard = String::new();
+    app.on_debug_options_paste();
+    assert_eq!(
+        app.debug_search, "fpsstfpsne",
+        "the empty store the collapsed pair never touches [the guard the bytes never speak]"
+    );
+    assert_eq!(app.debug_search_cursor, 3, "the no-op the seat keeps");
+    app.on_debug_options_caret_shift_arrow(false);
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(3),
+        "the shift ride the [3, 4) range opens"
+    );
+    app.on_debug_options_paste();
+    assert_eq!(
+        app.debug_search, "fpstfpsne",
+        "the empty store the live range alone removes"
+    );
+    assert_eq!(app.debug_search_cursor, 3, "the removal the lo seat parks");
+    // THE LIVE RANGE'S OWN REPLACE (the store's word the range the
+    // answer replaces — the replace(lo, hi, s) walk the pair serves)
+    app.clipboard = "zz".to_string();
+    app.on_debug_options_select_all();
+    app.on_debug_options_paste();
+    assert_eq!(app.debug_search, "zz", "the paste the range replaces");
+    assert_eq!(app.debug_search_cursor, 2, "the insert the caret rides");
+    // THE CAP'S OWN BUDGET (the 50 the setMaxLength wears — the flood
+    // the tail clamps, the at-cap paste the no-op the return keeps)
+    let flood: String = "z".repeat(60);
+    app.clipboard = flood;
+    app.on_debug_options_paste();
+    assert_eq!(
+        app.debug_search.chars().count(),
+        50,
+        "the flood the budget clamps"
+    );
+    assert_eq!(app.debug_search_cursor, 50, "the clamp the caret parks");
+    app.on_debug_options_paste();
+    assert_eq!(
+        app.debug_search.chars().count(),
+        50,
+        "the at-cap paste the no-op the budget keeps"
+    );
+    assert_eq!(app.debug_search_cursor, 50, "the no-op the seat keeps");
+    // THE UNFOCUSED GATE'S OWN SILENCE (the trio the unfocused box
+    // the store and value never serve — the focus transfer the
+    // outside click the vanilla walk arms)
+    app.debug_search_focus = false;
+    app.clipboard = "the gate never passes".to_string();
+    app.debug_search = "untouched".to_string();
+    app.debug_search_cursor = 9;
+    app.on_debug_options_copy();
+    app.on_debug_options_paste();
+    app.on_debug_options_cut();
+    assert_eq!(
+        app.clipboard, "the gate never passes",
+        "the gate the store never touches"
+    );
+    assert_eq!(
+        app.debug_search, "untouched",
+        "the gate the box never wears"
+    );
+    assert_eq!(app.debug_search_cursor, 9, "the gate the caret keeps");
+}
 
 /// THE LIVE QUICKCRAFT'S OWN STATE-ID RIDE (the four-times-deferred
 /// candidate the wheel banks — the wire folds' believed state id the
