@@ -34471,6 +34471,24 @@ fn the_merchant_offers_the_wire_words_wear() {
     app2.screen = ScreenKind::Merchant;
     app2.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
     app2.merchant_slots = vec![(emerald, 4), (0, 0), (bread, 1)];
+    app2.merchant_slots.resize(39, (0, 0));
+    // THE BANK THE ROWS WEAR (the 464 clamp the press opens with —
+    // the extractContents visible verdict the empty bank the rows
+    // never answers [the birth-visible=false the ctor keeps, the
+    // early return the re-wear never rides]: the two rows the bank
+    // keeps the press answers)
+    app2.merchant_offers = vec![
+        crate::world_view::MerchantOfferView {
+            cost_a: (emerald, 4),
+            cost_b: None,
+            result: (bread, 1),
+            out_of_stock: false,
+            uses: 0,
+            max_uses: 4,
+            xp: 0,
+        };
+        2
+    ];
     app2.merchant_row_rects = vec![(100, 100, 0), (100, 120, 1)];
     assert!(
         !app2.merchant_is_live,
@@ -35269,7 +35287,11 @@ fn the_merchant_try_move_the_trade_walk_wears() {
     );
 
     // THE GUARD'S OWN SILENCE (javap pcs 0-15 — the empty offers the
-    // whole walk refuses: no drain, no fill, the seats the bank keeps)
+    // whole walk refuses: no drain, no fill, the seats the bank
+    // keeps; THE 464 CLAMP the press itself the empty bank never
+    // answers [the extractContents empty-offer early return the
+    // birth-invisible rows keep, the isActive gate the press never
+    // opens])
     let mut app4 = App::new(3);
     app4.enter_world();
     app4.screen = ScreenKind::Merchant;
@@ -35279,8 +35301,8 @@ fn the_merchant_try_move_the_trade_walk_wears() {
     app4.merchant_slots[2] = (bread, 1);
     app4.merchant_row_rects = vec![(100, 100, 0)];
     assert!(
-        app4.merchant_widget_press(104, 104),
-        "the row the press still consumes"
+        !app4.merchant_widget_press(104, 104),
+        "the empty bank the press never answers"
     );
     assert_eq!(
         app4.merchant_slots[0],
@@ -36418,4 +36440,161 @@ fn the_merchant_echo_gate_the_selection_keeps() {
         1,
         "the shrunken bank the walk wears"
     );
+}
+
+/// THE MERCHANT'S OWN SELECTION CLAMP (autopush-464 — the visible law
+/// the press wears: the `extractContents` pcs 439-467 verdict the
+/// render's own row walk re-wears [`button.visible = button.index <
+/// offers.size()` the census speaks], the AbstractWidget.isActive
+/// gate the press opens with [the `visible && active` pair the field
+/// walk keeps, the mouseClicked pc 0-8 the !isActive return speaks]
+/// — the row the bank retires the press NEVER answers, the false
+/// return the slot walk the click re-serves; the RAW row the gate
+/// reads, the scrolled seat the press still banks [the getIndex() +
+/// scrollOff fold the lambda walk wears]).
+#[test]
+fn the_merchant_visible_gate_the_press_clamps() {
+    use crate::world_view::{ContainerCommand, LiveContainer, MerchantOfferView, MerchantView};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let offer = |ca: i32, n: i32| MerchantOfferView {
+        cost_a: (ca, n),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 0,
+    };
+
+    // THE OFFLINE CANVAS (the try-move round's own shape — the three
+    // offer rows the bank wears, the seven seats the fresh window
+    // lays)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![offer(emerald, 1), offer(wheat, 2), offer(emerald, 3)];
+    app.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, row))
+        .collect();
+
+    // ARM A — THE VISIBLE ROW'S OWN ANSWER (the row the bank keeps
+    // the press consumes — the selection the seat banks)
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the banked row the press answers"
+    );
+    assert_eq!(app.merchant_selected, 0, "the seat the press banks");
+
+    // ARM B — THE DEAD ROW'S OWN SILENCE (the row the bank retires
+    // the press NEVER answers — the false return the slot walk the
+    // click re-serves, the selection the old row keeps)
+    app.merchant_selected = 1;
+    assert!(
+        !app.merchant_widget_press(104, 104 + 5 * 20),
+        "the retired row the press never answers"
+    );
+    assert_eq!(
+        app.merchant_selected, 1,
+        "the selection the dead press keeps"
+    );
+
+    // ARM C — THE SCROLLED SEAT'S OWN BANK (the raw row the gate
+    // reads, the getIndex() + scrollOff seat the press banks — the
+    // fresh window's scroll the fold wears)
+    app.merchant_scroll = 2;
+    app.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, 2 + row))
+        .collect();
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the scrolled row the press answers"
+    );
+    assert_eq!(
+        app.merchant_selected, 2,
+        "the scrolled seat the press banks"
+    );
+
+    // ARM D — THE SHRUNKEN BANK'S OWN CLAMP (the 463 refresh the bank
+    // shrinks — the stale selection the walk keeps [the 463 law], the
+    // dead seat the press NEVER re-answers, the banked row the press
+    // still answers)
+    app.merchant_offers = vec![offer(emerald, 1)];
+    app.merchant_selected = 2;
+    app.merchant_scroll = 0;
+    app.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, row))
+        .collect();
+    assert!(
+        !app.merchant_widget_press(104, 104 + 2 * 20),
+        "the shrunken bank the stale row retires — the press never answers"
+    );
+    assert_eq!(
+        app.merchant_selected, 2,
+        "the 463 law the stale selection keeps"
+    );
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the banked row the press still answers"
+    );
+    assert_eq!(
+        app.merchant_selected, 0,
+        "the fresh press the seat re-banks"
+    );
+
+    // THE LIVE LANE'S OWN WIRE (the world_is_network door the packets
+    // ride — the dead row the wire NEVER sees, the banked row the
+    // Select Trade speaks)
+    let mut live = App::new(3);
+    live.enter_world();
+    live.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    live.live_clicks = Some(tx);
+    let mut slots = vec![(0, 0); 39];
+    slots[3] = (emerald, 4);
+    live.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(MerchantView {
+            offers: vec![offer(emerald, 4)],
+            level: 1,
+            xp: 0,
+            show_progress: true,
+            can_restock: false,
+        }),
+    }));
+    live.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, row))
+        .collect();
+    // THE DEAD ROW THE WIRE NEVER SEES (the one-offer bank the rows
+    // 1..7 retires — the press the false return speaks, the channel
+    // the packet never wears)
+    assert!(
+        !live.merchant_widget_press(104, 104 + 4 * 20),
+        "the live dead row the press never answers"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the dead press the wire never rides"
+    );
+    // THE BANKED ROW THE PACKET SPEAKS
+    assert!(
+        live.merchant_widget_press(104, 104),
+        "the live banked row the press answers"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SelectTrade { item } => {
+            assert_eq!(item, 0, "the pressed row's index the packet carries");
+        }
+        other => panic!("the press the Select Trade speaks, not {other:?}"),
+    }
 }

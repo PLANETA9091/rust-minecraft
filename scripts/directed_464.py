@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""autopush-463 — THE DIRECTED FAMILIES (the dev-222 record's own law
-the round re-wears): the trade's own echo gate the round answers
-[the selection the refresh ride keeps the level words the lang table wears,
-the %s interleave the TranslatableContents walk serves, the range gate
-the 0/6 walks the None keeps, the cold-cache lane the plain branch
-answers], the directed filters the round's own walk runs, the restore
-the finally the walk keeps. Usage: python3 scripts/directed_464.py"""
+"""autopush-464 — THE DIRECTED FAMILIES (the dev-222 record's own law
+the round re-wears): the merchant's own selection clamp the round
+answers [the visible law the press wears, the raw row the gate reads,
+the scrolled seat the press banks, the dead row the wire never sees,
+the 463 law the stale selection keeps], the directed filters the
+round's own walk runs, the restore the finally the walk keeps. Usage:
+python3 scripts/directed_464.py"""
 import importlib.util
 import subprocess
 import sys
@@ -14,7 +14,9 @@ spec = importlib.util.spec_from_file_location("pg", "scripts/part_gate_205.py")
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 FILTERS = [
-    # the round's own test (the trade's own echo gate the walk wears)
+    # the round's own test (the press's own visible gate the walk wears)
+    "the_merchant_visible_gate_the_press_clamps",
+    # the 463 kin the trade's own echo gate the walk wears
     "the_merchant_echo_gate_the_selection_keeps",
     # the 462 kin the merchant title's own arg row the walk wears
     "the_merchant_title_row_the_level_words_wear",

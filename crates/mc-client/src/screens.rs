@@ -41751,15 +41751,33 @@ impl App {
     /// the packet the session never wears. The row's 88x20 seat the
     /// render's own hit boxes keep; the out-of-stock row the press
     /// the SERVER's own verdict answers (the active flag the sprite
-    /// round re-lays).
+    /// round re-lays). THE SELECTION CLAMP the 464 round banks: the
+    /// visible law the press wears — the `extractContents` pcs 439-467
+    /// verdict + the AbstractWidget.isActive gate the row the bank
+    /// retires the press never answers (the raw row the gate reads,
+    /// the scrolled seat the press still banks).
     fn merchant_widget_press(&mut self, mx: i32, my: i32) -> bool {
-        let Some(&(_, _, idx)) = self
+        let Some((row, &(_, _, idx))) = self
             .merchant_row_rects
             .iter()
-            .find(|&&(x, y, _)| mx >= x && mx < x + 88 && my >= y && my < y + 20)
+            .enumerate()
+            .find(|&(_, &(x, y, _))| mx >= x && mx < x + 88 && my >= y && my < y + 20)
         else {
             return false;
         };
+        // THE VISIBLE LAW'S OWN GATE (javap 26.2 extractContents pcs
+        // 439-467 — the `button.visible = button.index < offers.size()`
+        // verdict the render's own row walk re-wears; the
+        // AbstractWidget.isActive walk the press opens with [the
+        // `visible && active` pair the field walk keeps, the
+        // mouseClicked's pc 0-8 the !isActive return speaks]: the row
+        // the bank retires the press NEVER answers — the false return
+        // the slot walk the click re-serves; the RAW row the gate
+        // reads, the scrolled seat the press still banks [the
+        // getIndex() + scrollOff fold the lambda walk wears])
+        if row >= self.merchant_offers.len() {
+            return false;
+        }
         self.merchant_selected = idx;
         if self.merchant_is_live {
             if let Some(sink) = self.live_clicks.as_ref() {

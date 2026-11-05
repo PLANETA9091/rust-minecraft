@@ -1,0 +1,36 @@
+  METHOD isMouseOver (DD)Z  (code=22)
+    0: aload_0
+    1: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isActive:()Z
+    4: ifeq 20
+    7: aload_0
+    8: op_27
+    9: op_29
+    10: invokevirtual net/minecraft/client/gui/components/AbstractWidget.areCoordinatesInRectangle:(DD)Z
+    13: ifeq 20
+    16: iconst_1
+    17: goto 21
+    20: iconst_0
+    21: ireturn
+  METHOD isHoveredOrFocused ()Z  (code=20)
+    0: aload_0
+    1: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isHovered:()Z
+    4: ifne 14
+    7: aload_0
+    8: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isFocused:()Z
+    11: ifeq 18
+    14: iconst_1
+    15: goto 19
+    18: iconst_0
+    19: ireturn
+  METHOD isActive ()Z  (code=20)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/AbstractWidget.visible:Z
+    4: ifeq 18
+    7: aload_0
+    8: getfield net/minecraft/client/gui/components/AbstractWidget.active:Z
+    11: ifeq 18
+    14: iconst_1
+    15: goto 19
+    18: iconst_0
+    19: ireturn
+

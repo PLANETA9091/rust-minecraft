@@ -5,10 +5,9 @@ hunks the original text applies — the round's own regions the fix
 wears, the OTHER regions the drift never touches.
 
 Regions:
-  screens.rs  — the fresh/state-id gate in the merchant arm's re-key
-                + the fresh-window reset's own gate (the selection the
-                refresh keeps).
-  part_11.rs  — the round's own test (the echo gate walk wears, EOF
+  screens.rs  — the widget press's own visible gate (the raw row the
+                selection clamp reads, the doc the law wears).
+  part_11.rs  — the round's own test (the press clamp walk wears, EOF
                 the end the round keeps).
 Usage: python3 scripts/fmt_fix_464.py"""
 import difflib
@@ -19,22 +18,17 @@ import sys
 RUSTFMT = os.path.expanduser("~/.cargo/bin/rustfmt")
 
 SCREENS = [
-    # the re-key's own gate (the fresh window the id change speaks)
+    # the press's own visible gate (the raw row the clamp reads)
     (
-        "the window's identity rides in: the echoes answer",
-        "THE MERCHANT'S OWN BANK (the projection's SOME the",
-    ),
-    # the reset's own gate (the selection the refresh keeps)
-    (
-        "THE FRESH WINDOW'S OWN RESET (javap 26.2",
-        "if self.screen == ScreenKind::World {",
+        "THE MERCHANT'S OWN WIDGET PRESS (javap of the TradeOfferButton",
+        "THE MERCHANT'S OWN ROUND (javap 26.2 MerchantScreen",
     ),
 ]
 
 PART11 = [
-    # the round's own test (the echo gate walk wears — EOF the end keeps)
+    # the round's own test (the press clamp walk wears — EOF the end keeps)
     (
-        "THE TRADE'S OWN ECHO GATE (javap 26.2 handleMerchantOffers",
+        "THE MERCHANT'S OWN SELECTION CLAMP (autopush-464",
         None,
     ),
 ]

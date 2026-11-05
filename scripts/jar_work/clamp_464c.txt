@@ -1,0 +1,46 @@
+  METHOD mouseClicked (Lnet/minecraft/client/input/MouseButtonEvent;Z)Z  (code=57)
+    0: aload_0
+    1: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isActive:()Z
+    4: ifne 9
+    7: iconst_0
+    8: ireturn
+    9: aload_0
+    10: aload_1
+    11: invokevirtual net/minecraft/client/input/MouseButtonEvent.buttonInfo:()Lnet/minecraft/client/input/MouseButtonInfo;
+    14: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isValidClickButton:(Lnet/minecraft/client/input/MouseButtonInfo;)Z
+    17: ifeq 55
+    20: aload_0
+    21: aload_1
+    22: invokevirtual net/minecraft/client/input/MouseButtonEvent.x:()D
+    25: aload_1
+    26: invokevirtual net/minecraft/client/input/MouseButtonEvent.y:()D
+    29: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isMouseOver:(DD)Z
+    32: istore_3
+    33: iload_3
+    34: ifeq 55
+    37: aload_0
+    38: invokestatic net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+    41: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    44: invokevirtual net/minecraft/client/gui/components/AbstractWidget.playDownSound:(Lnet/minecraft/client/sounds/SoundManager;)V
+    47: aload_0
+    48: aload_1
+    49: iload_2
+    50: invokevirtual net/minecraft/client/gui/components/AbstractWidget.onClick:(Lnet/minecraft/client/input/MouseButtonEvent;Z)V
+    53: iconst_1
+    54: ireturn
+    55: iconst_0
+    56: ireturn
+  METHOD mouseReleased (Lnet/minecraft/client/input/MouseButtonEvent;)Z  (code=20)
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/client/input/MouseButtonEvent.buttonInfo:()Lnet/minecraft/client/input/MouseButtonInfo;
+    5: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isValidClickButton:(Lnet/minecraft/client/input/MouseButtonInfo;)Z
+    8: ifeq 18
+    11: aload_0
+    12: aload_1
+    13: invokevirtual net/minecraft/client/gui/components/AbstractWidget.onRelease:(Lnet/minecraft/client/input/MouseButtonEvent;)V
+    16: iconst_1
+    17: ireturn
+    18: iconst_0
+    19: ireturn
+

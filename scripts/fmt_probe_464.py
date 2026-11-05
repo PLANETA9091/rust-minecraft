@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""autopush-463 — THE FMT REGION WALK (the 462 record's own law the
+"""autopush-464 — THE FMT REGION WALK (the 463 record's own law the
 round wears): the whole-file rustfmt the ORIGINAL text the formatted
 stdout the diff answers — the MY-REGIONS verdict the marker ranges
 keep (no hunk may touch the round's own edits).
 
 Regions:
-  screens.rs  — the fresh/state-id gate in the merchant arm's re-key
-                + the fresh-window reset's own gate (the selection the
-                refresh keeps).
-  part_11.rs  — the round's own test (the echo gate walk wears, EOF
+  screens.rs  — the widget press's own visible gate (the raw row the
+                selection clamp reads, the doc the law wears).
+  part_11.rs  — the round's own test (the press clamp walk wears, EOF
                 the end the round keeps).
 Usage: python3 scripts/fmt_probe_464.py"""
 import difflib
@@ -19,22 +18,17 @@ import sys
 RUSTFMT = os.path.expanduser("~/.cargo/bin/rustfmt")
 
 SCREENS = [
-    # the re-key's own gate (the fresh window the id change speaks)
+    # the press's own visible gate (the raw row the clamp reads)
     (
-        "the window's identity rides in: the echoes answer",
-        "THE MERCHANT'S OWN BANK (the projection's SOME the",
-    ),
-    # the reset's own gate (the selection the refresh keeps)
-    (
-        "THE FRESH WINDOW'S OWN RESET (javap 26.2",
-        "if self.screen == ScreenKind::World {",
+        "THE MERCHANT'S OWN WIDGET PRESS (javap of the TradeOfferButton",
+        "THE MERCHANT'S OWN ROUND (javap 26.2 MerchantScreen",
     ),
 ]
 
 PART11 = [
-    # the round's own test (the echo gate walk wears — EOF the end keeps)
+    # the round's own test (the press clamp walk wears — EOF the end keeps)
     (
-        "THE TRADE'S OWN ECHO GATE (javap 26.2 handleMerchantOffers",
+        "THE MERCHANT'S OWN SELECTION CLAMP (autopush-464",
         None,
     ),
 ]
