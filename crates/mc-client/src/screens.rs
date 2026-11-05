@@ -2977,6 +2977,10 @@ fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
         crate::mob::MobKind::Wolf => "minecraft:wolf",
         crate::mob::MobKind::Creeper => "minecraft:creeper",
         crate::mob::MobKind::Warden => "minecraft:warden",
+        // THE WANDERER'S OWN ID (the talk arm the kind rides — the
+        // type filter's predicate the same ten-plus-one table the
+        // selector reads)
+        crate::mob::MobKind::WanderingTrader => "minecraft:wandering_trader",
     }
 }
 
@@ -49333,6 +49337,36 @@ impl App {
                         self.swing.start();
                         return true;
                     }
+                    if let crate::mob::MobInteract::Talk = verdict {
+                        // THE WANDERER'S OWN TALK AWARD (javap
+                        // `WanderingTrader.mobInteract` 44-48 — the
+                        // `player.awardStat(Stats.TALKED_TO_VILLAGER)`
+                        // the isClientSide door pc 51-58 PRECEDES: the
+                        // BOTH-sides arm the client's own predicted
+                        // walk the +1 banks, the server's AwardStats
+                        // packet the SET law the counter re-banks [the
+                        // 472 round's own wire law the
+                        // `talked_to_villager` lane keeps — the merge
+                        // the SET word the prediction overwrites
+                        // answers]; the SUCCESS return pc 90-93 the
+                        // CLIENT swing the verdict starts). The
+                        // openTradingScreen tail pc 75-87 the
+                        // prediction NEVER walks — the merchant menu
+                        // the wire's own OpenScreen word the authority
+                        // keeps (the MERCHANT menu type the 456 route
+                        // banks), the offers-empty CONSUME pc 71-74
+                        // the offline offers-less lane never reaches
+                        // (the offers table the wire arm alone
+                        // carries — the integrated walk the NEXT the
+                        // merchant lane may re-lay). NO voice (the
+                        // vanilla talk the sound never names — the
+                        // villager's hum the ambient lane the idle
+                        // walk speaks), NO consume (the award the
+                        // stack never reads).
+                        self.stats.talked_to_villager += 1;
+                        self.swing.start();
+                        return true;
+                    }
                     entity_pass = true;
                 } else {
                     // THE WIRE ARM (the 26.2's own gameMode.interact
@@ -86345,6 +86379,26 @@ impl App {
                 Vec<crate::avatar::AvatarQuad>,
                 Box<dyn Fn(f32, f32) -> [u8; 4] + '_>,
             ) = match mob.kind {
+                crate::mob::MobKind::WanderingTrader => {
+                    // THE WANDERER'S OWN UNDRAWN LAW — the villager
+                    // robe the port's render lane never wears yet
+                    // (javap `VillagerModel.createBodyModel` the 26.2
+                    // bytecode keeps the mesh the quad walk owes: the
+                    // head 8x10x8, the hat +0.51, the hat_rim the
+                    // rotX -π/2 rim, the nose the (0,-2) offset, the
+                    // robe 8x20x6 +0.5 the body's own inflate, the
+                    // crossed arms the rotX -0.75 hold, the 4x12x4
+                    // legs — the villager texture layout (0,0)/(32,0)
+                    // /(30,47)/(24,0)/(16,20)/(0,38)/(44,22)/(40,38)
+                    // /(0,22) the wander_475 census banks). The body
+                    // the honest lane never draws (the mob's own
+                    // sha1-failure continue the renderer must not lie
+                    // about its data) — the wire body the talk arm
+                    // the interaction semantics alone answer, the
+                    // VillagerModel quad walk the NEXT the render
+                    // lane may re-lay.
+                    continue;
+                }
                 crate::mob::MobKind::Sheep => {
                     // THE COLOR WORD (SheepRenderState.getWoolColor's
                     // own law): the jeb_ name the checkMagicName gate
@@ -87210,6 +87264,14 @@ impl App {
                 crate::mob::MobKind::Warden => (
                     crate::sculk::WARDEN_MOB_WIDTH,
                     crate::sculk::WARDEN_MOB_HEIGHT,
+                ),
+                // THE WANDERER'S OWN SIZED PAIR (javap the EntityTypes
+                // clinit's WANDERING_TRADER registration pc 6578 — the
+                // sized(0.6f, 1.95f) the ldc pair the builder chain
+                // speaks, the same consts the box_for arm banks)
+                crate::mob::MobKind::WanderingTrader => (
+                    crate::mob::WANDERING_TRADER_WIDTH as f32,
+                    crate::mob::WANDERING_TRADER_HEIGHT as f32,
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {

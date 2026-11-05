@@ -1057,6 +1057,27 @@ pub enum MobInteract {
     /// The `jumping = false` the client's no-jump-field law
     /// honest-skips (the field the body's jump lane never carries).
     SitToggle,
+    /// THE WANDERER'S OWN TALK ARM (javap `WanderingTrader.mobInteract`
+    /// 37-48 — the 26.2 bytecode the BOTH-sides arm the talk census
+    /// `talk2_474.txt` banks: the MAIN_HAND gate pc 37-41 the award
+    /// `player.awardStat(Stats.TALKED_TO_VILLAGER)` pc 44-48 PRECEDES
+    /// the `level.isClientSide()` door pc 51-58 — the client's own
+    /// predicted walk the +1 banks, the server the AwardStats packet
+    /// the SET law the counter re-banks; the SUCCESS return pc 90-93
+    /// the CLIENT swing the verdict carries). The gates the arm's own
+    /// order keeps: the VILLAGER_SPAWN_EGG stack pc 6-13 the super's
+    /// chain the walk falls to (the caller's held word the
+    /// `villager_spawn_egg` the arm refuses — the offline lane no
+    /// villager food table the super keeps, the PASS the fall
+    /// answers), the `isAlive()` pc 16-20 the port's own dead-mob
+    /// removal the corpse never right-clicks, the `isTrading()` pc
+    /// 23-27 the single-player law the concurrent trader never
+    /// wears, the `isBaby()` pc 30-34 the wanderer's own adult law
+    /// the baby form never carries. The server's own tail the caller
+    /// never predicts — the `setTradingPlayer` + `openTradingScreen`
+    /// pc 75-87 the wire's own OpenScreen word the merchant menu
+    /// arms (the screen the server the authority keeps).
+    Talk,
 }
 
 impl MobInteract {
@@ -1204,6 +1225,18 @@ pub enum MobKind {
     /// sculk lane keeps — the live pos the refresh pass's own
     /// warden views serve).
     Warden,
+    /// THE WANDERER'S OWN BODY (javap
+    /// `WanderingTrader extends AbstractVillager` the 26.2 jar
+    /// speaks — the robe the villager family wears, the
+    /// mobInteract code=101 the BOTH-sides arm the talk census
+    /// `talk2_474.txt` banks: the MAIN_HAND gate pc 37-41 the
+    /// award pc 44-48 precedes the isClientSide door pc 51-58,
+    /// the client's own predicted walk the +1 banks, the server
+    /// the AwardStats packet the SET law re-banks). The spawn the
+    /// wire's own Add Entity name arms — the
+    /// `minecraft:wandering_trader` word the
+    /// from_wire_name lane draws.
+    WanderingTrader,
 }
 
 /// THE MOB CATEGORY'S OWN CENSUS SLICE (javap the 26.2 jar the
@@ -1273,6 +1306,11 @@ impl MobKind {
             | MobKind::Warden => MobCategory::Monster,
             MobKind::Pig | MobKind::Cow | MobKind::Sheep | MobKind::Chicken
             | MobKind::Wolf => MobCategory::Creature,
+            // THE WANDERER'S OWN CREATURE WORD (the villager family
+            // the registration arms — the AbstractVillager chain the
+            // CREATURE category keeps, the wanderer the same word
+            // the spawn cap the creature lane answers)
+            MobKind::WanderingTrader => MobCategory::Creature,
         }
     }
 }
@@ -1285,6 +1323,12 @@ impl MobKind {
     pub fn from_wire_name(name: &str) -> Self {
         if name == "minecraft:pig" {
             MobKind::Pig
+        } else if name == "minecraft:wandering_trader" {
+            // THE WANDERER'S OWN ADMISSION (the talk arm the kind
+            // rides — the Add Entity name the wire's own
+            // `minecraft:wandering_trader` word the both-sides
+            // merchant the merge draws)
+            MobKind::WanderingTrader
         } else if name == "minecraft:cow" {
             MobKind::Cow
         } else if name == "minecraft:sheep" {
@@ -1330,6 +1374,7 @@ impl MobKind {
             MobKind::Wolf => "minecraft:wolf",
             MobKind::Creeper => "minecraft:creeper",
             MobKind::Warden => "minecraft:warden",
+            MobKind::WanderingTrader => "minecraft:wandering_trader",
         }
     }
 
@@ -1410,6 +1455,13 @@ impl MobKind {
             // EntityDimensions.defaultEyeHeight's own f * 0.85 the pig's
             // arm keeps: 1.7 * 0.85
             MobKind::Creeper => CREEPER_HEIGHT * 0.85,
+            // THE WANDERER'S OWN EXPLICIT WORD (javap the EntityTypes
+            // clinit's WANDERING_TRADER registration pc 6584 — the
+            // eyeHeight(1.6200000047683716f) call the builder chain
+            // speaks, the explicit word the scalable default never
+            // folds: the villager family's own sight line the
+            // eye-to-eye rays and the light gate read)
+            MobKind::WanderingTrader => 1.6200000047683716,
         }
     }
 
@@ -1444,6 +1496,15 @@ impl MobKind {
             // writes), the RangedAttribute's registered default 20.0
             // the zombie's arm doc pins the base value both speak
             MobKind::Creeper => CREEPER_MAX_HEALTH,
+            // THE WANDERER'S REGISTERED DEFAULT — the
+            // Villager.createAttributes chain the MOVEMENT_SPEED add
+            // ALONE makes (javap the 26.2 jar: the
+            // Mob.createMobAttributes() base + the add(MOVEMENT_SPEED,
+            // 0.5) the ldc2_w keeps, no MAX_HEALTH add the chain ever
+            // writes — the AbstractVillager family the same word the
+            // trader's registration inherits), the RangedAttribute's
+            // registered default 20.0 the zombie's arm doc pins
+            MobKind::WanderingTrader => 20.0,
         }
     }
 
@@ -1478,6 +1539,12 @@ impl MobKind {
             // HURT-driven flee the client's panic lane wears the tag
             // never arms — the None the honest word keeps
             MobKind::Wolf => None,
+            // THE WANDERER'S OWN PANIC WORD (javap
+            // `WanderingTrader.registerGoals` pc 284-299 the 26.2
+            // bytecode speaks — the `addGoal(1, new PanicGoal(this,
+            // 0.5))` the ldc2_w the walk keeps, the trader's own flee
+            // the 0.5 modifier rides)
+            MobKind::WanderingTrader => Some(0.5),
         }
     }
 
@@ -1511,6 +1578,12 @@ impl MobKind {
             // _MOVEMENT_SPEED f32 the same value widens — 0.3f32
             // IS the 0.30000001192092896 f64 the attribute keeps)
             MobKind::Warden => crate::sculk::WARDEN_MOVEMENT_SPEED as f64,
+            // THE WANDERER'S OWN ADD (javap `Villager.createAttributes`
+            // the 26.2 jar speaks — the add(Attributes.MOVEMENT_SPEED,
+            // 0.5) the ldc2_w the builder chain keeps, the
+            // AbstractVillager family the same word the trader's
+            // registration inherits)
+            MobKind::WanderingTrader => 0.5,
         }
     }
 
@@ -1552,6 +1625,12 @@ impl MobKind {
             // WardenAi's own GetRandomPos walk serves, the modifier
             // the goal API never reads)
             MobKind::Warden => 1.0,
+            // THE WANDERER'S OWN 0.35 (javap
+            // `WanderingTrader.registerGoals` pc 361-377 — the
+            // WaterAvoidingRandomStrollGoal(this, 0.35) the prio-8
+            // walk keeps, the MoveTowardsRestrictionGoal's own 0.35
+            // the prio-4 lane the same modifier wears)
+            MobKind::WanderingTrader => 0.35,
         }
     }
 
@@ -1639,6 +1718,19 @@ impl MobKind {
             (MobKind::Warden, VoiceSlot::Ambient) => "entity.warden.ambient",
             (MobKind::Warden, VoiceSlot::Hurt) => "entity.warden.hurt",
             (MobKind::Warden, VoiceSlot::Death) => "entity.warden.death",
+            // THE WANDERER'S OWN ROWS (javap `WanderingTrader
+            // .getAmbientSound` / `getHurtSound` / `getDeathSound` the
+            // 26.2 bytecode keeps — the WANDERING_TRADER_AMBIENT the
+            // getstatic the isTrading gate speaks [the TRADE word the
+            // active trade arms — the ambient the idle lane plays],
+            // the WANDERING_TRADER_HURT / WANDERING_TRADER_DEATH the
+            // getters return). The trading arm the port's own wire
+            // lane never banks (the merchant menu the wire state the
+            // mob body never reads) — the ambient the honest idle row
+            // keeps.
+            (MobKind::WanderingTrader, VoiceSlot::Ambient) => "entity.wandering_trader.ambient",
+            (MobKind::WanderingTrader, VoiceSlot::Hurt) => "entity.wandering_trader.hurt",
+            (MobKind::WanderingTrader, VoiceSlot::Death) => "entity.wandering_trader.death",
         }
     }
 
@@ -1717,6 +1809,18 @@ impl MobKind {
             // never tracks (the step the warden's own walk voice the
             // sculk lane serves) — the row the exhaustiveness keeps.
             MobKind::Warden => Some(("entity.warden.step", 10.0, 1.0)),
+            // THE WANDERER'S BASE LAW — the playStepSound override
+            // NEITHER the WanderingTrader nor the AbstractVillager
+            // carries (javap the 26.2 classfiles the method tables
+            // name it not), the Entity.playStepSound(pos, state) base
+            // impl the Sheep/Creeper arm's block walk keeps
+            MobKind::WanderingTrader => {
+                use mc_registry::generated::block_sounds as bs;
+                let idx = bs::sound_index(under?)?;
+                let (volume, pitch) =
+                    crate::sound::Lane::Step.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+                Some((crate::sound::Lane::Step.event_of(idx), volume, pitch))
+            }
         }
     }
 }
@@ -1969,6 +2073,12 @@ pub const SPIDER_MAX_HEALTH: f32 = 16.0;
 /// the Builder.of names, the clientTrackingRange(8) the tail banks).
 pub const CREEPER_WIDTH: f64 = 0.6;
 pub const CREEPER_HEIGHT: f64 = 1.7;
+/// THE WANDERER'S OWN SIZED PAIR (javap the EntityTypes clinit's
+/// WANDERING_TRADER registration pc 6578 — the sized(0.6f, 1.95f)
+/// the ldc pair the builder chain speaks, the villager family the
+/// same box the robe body wears).
+pub const WANDERING_TRADER_WIDTH: f64 = 0.6;
+pub const WANDERING_TRADER_HEIGHT: f64 = 1.95;
 /// `Creeper.createAttributes` — MOVEMENT_SPEED 0.25 (the add the
 /// ldc2_w keeps, the f64 the builder chain banks).
 pub const CREEPER_MOVEMENT_SPEED: f64 = 0.25;
@@ -5438,6 +5548,13 @@ impl Zombie {
                 crate::sculk::WARDEN_MOB_WIDTH as f64,
                 crate::sculk::WARDEN_MOB_HEIGHT as f64,
             ),
+            // THE WANDERER'S OWN SIZED LAW (javap the EntityTypes
+            // clinit's WANDERING_TRADER registration pc 6578 — the
+            // sized(0.6f, 1.95f) the ldc pair the builder chain
+            // speaks, the villager family the same box the robe body
+            // wears, the CREATURE category the same registration
+            // arms)
+            MobKind::WanderingTrader => (WANDERING_TRADER_WIDTH, WANDERING_TRADER_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -8334,6 +8451,31 @@ impl Zombie {
             {
                 MobInteract::Saddle
             }
+            // THE WANDERER'S OWN TALK ARM (javap `WanderingTrader
+            // .mobInteract` 37-48 — the MAIN_HAND gate pc 37-41 the
+            // award pc 44-48 the isClientSide door pc 51-58 PRECEDES:
+            // the BOTH-sides arm the client's own predicted walk the
+            // +1 banks, the server the AwardStats the SET law
+            // re-banks; the SUCCESS return pc 90-93 the CLIENT swing
+            // the verdict carries — the openTradingScreen tail pc
+            // 75-87 the wire's own OpenScreen word arms, the
+            // prediction the screen never opens). The gates the
+            // arm's own order keeps: the VILLAGER_SPAWN_EGG stack pc
+            // 6-13 the held word the arm refuses — the super's chain
+            // the PASS the offline lane answers (no villager food
+            // table the port keeps); the `isAlive()` pc 16-20 the
+            // port's own dead-mob removal the corpse never
+            // right-clicks; the `isTrading()` pc 23-27 the
+            // single-player law the concurrent trader never wears
+            // (the modal screen the second press never reaches); the
+            // `isBaby()` pc 30-34 the wanderer's own adult law the
+            // baby form never carries. The MAIN_HAND word the port's
+            // own interaction lane keeps (the right-press the primary
+            // hand alone speaks — the offhand stack the lane never
+            // walks).
+            _ if self.kind == MobKind::WanderingTrader && held_item != "villager_spawn_egg" => {
+                MobInteract::Talk
+            }
             // the miss arms: the wrong stack, the wrong body, the
             // already-sheared wool (readyForShearing's own false), the
             // food the monster's chain never reaches — the super's
@@ -8504,6 +8646,12 @@ impl Zombie {
             MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => false,
             MobKind::Wolf => false,
             MobKind::Warden => false,
+            // THE WANDERER'S OWN REFUSAL (the AbstractVillager chain
+            // the Animal.mobInteract super never reaches — the
+            // villager family the food arm the monster chain's own
+            // honest false keeps: the talk the mobInteract's own arm
+            // answers, the stack the walk never reads)
+            MobKind::WanderingTrader => false,
         }
     }
 
@@ -8698,6 +8846,19 @@ impl Zombie {
             // AgeableMob arm never reaches (no baby the brain monster
             // wears)
             MobKind::Warden => false,
+            // THE WANDERER'S OWN ALWAYS-PASS (javap the jar's own
+            // data/minecraft/tags/entity_type/cannot_be_age_locked.json
+            // the values speak — zombie_horse/skeleton_horse/villager
+            // the trio the tag names, the WANDERING_TRADER the json
+            // never carries: the villager's cousin the lock the zoo's
+            // kinds the same always-pass rides — the wanderer's own
+            // adult law the baby form never wears [the
+            // WanderingTrader.mobInteract's own isBaby gate pc 30-34
+            // the talk census banks], the gate the vanilla's own tag
+            // walk the lock the trader's body never takes)
+            MobKind::WanderingTrader => {
+                held_item == "golden_dandelion" && self.age < 0 && self.age_lock_particle_timer == 0
+            }
         }
     }
 
@@ -9014,6 +9175,16 @@ impl Zombie {
                 // sequence file for, the EMPTY pool the absent rows
                 // speak — the canine's death nothing drops, the
                 // honest zero-word the pool keeps
+            }
+            MobKind::WanderingTrader => {
+                // THE WANDERER'S OWN EMPTY LAW (the jar's
+                // data/minecraft/loot_table/entities/wandering_trader
+                // .json the verbatim read — the `random_sequence`
+                // reference "minecraft:entities/wandering_trader" the
+                // TYPE header alone keeps, the pools array the entity
+                // table never banks: the vanilla trader's death the
+                // loot never drops, the same honest zero-word the
+                // wolf's empty pool speaks)
             }
             MobKind::Creeper => {
                 // creeper.json's own pools (the jar's
@@ -18069,6 +18240,7 @@ mod tests {
                 crate::sculk::WARDEN_MOB_WIDTH as f64,
                 crate::sculk::WARDEN_MOB_HEIGHT as f64,
             ),
+            MobKind::WanderingTrader => (WANDERING_TRADER_WIDTH, WANDERING_TRADER_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);
@@ -19158,6 +19330,99 @@ mod tests {
         assert_eq!(sheep_wool_tint(13), 0x00BF00, "the green's own fold");
         // ORANGE 0xFF681F: (191, 78, 23) the floor walk speaks
         assert_eq!(sheep_wool_tint(1), 0xBF4E17, "the orange's three floors");
+    }
+
+    /// THE WANDERER'S OWN TALK WALK (javap `WanderingTrader.mobInteract`
+    /// code=101 the 26.2 bytecode the talk census `talk2_474.txt`
+    /// banks — the MAIN_HAND gate pc 37-41 the award pc 44-48 the
+    /// isClientSide door pc 51-58 PRECEDES, the BOTH-sides arm the
+    /// client's own predicted walk the +1 banks): the empty hand the
+    /// talk verdict speaks, the spawn-egg stack the super's chain the
+    /// PASS the offline lane answers, the wire round trip the name
+    /// the kind the registration values the table wears.
+    #[test]
+    fn the_wanderer_talk_arm_the_wire_kind_wears() {
+        // THE TALK ARM (the empty hand the MAIN_HAND gate the port's
+        // own interaction lane keeps — the award the caller's stats
+        // lane banks, the verdict the SUCCESS the swing starts)
+        let mut trader = Zombie::new(1, 10.0, 5.0, 10.0, 7);
+        trader.kind = MobKind::WanderingTrader;
+        assert_eq!(
+            trader.mob_interact("", &mut Lcg::new(1)),
+            MobInteract::Talk,
+            "the empty hand the talk verdict speaks"
+        );
+        // THE NON-EGG STACK (the VILLAGER_SPAWN_EGG gate pc 6-13 the
+        // held word alone arms — any other stack the talk the award
+        // never reads)
+        assert_eq!(
+            trader.mob_interact("wheat", &mut Lcg::new(1)),
+            MobInteract::Talk,
+            "the non-egg stack the talk verdict speaks"
+        );
+        // THE SPAWN-EGG GATE (pc 6-13 the super's chain the walk
+        // falls to — the offline lane no villager food table the
+        // PASS the fall answers)
+        assert_eq!(
+            trader.mob_interact("villager_spawn_egg", &mut Lcg::new(1)),
+            MobInteract::Pass,
+            "the spawn-egg stack the super's chain the PASS falls"
+        );
+        // THE WIRE ROUND TRIP (the Add Entity name the kind the merge
+        // draws, the kind the name the summon command banks)
+        assert_eq!(trader.kind.wire_name(), "minecraft:wandering_trader");
+        assert_eq!(
+            MobKind::from_wire_name("minecraft:wandering_trader"),
+            MobKind::WanderingTrader,
+            "the wire name the kind the merge draws"
+        );
+        // THE REGISTRATION VALUES (javap the EntityTypes clinit's
+        // WANDERING_TRADER registration pc 6570-6592 +
+        // `Villager.createAttributes` + `WanderingTrader.registerGoals`
+        // the 26.2 jar speaks — the CREATURE category, the explicit
+        // eyeHeight 1.62, the default-20 health the chain never adds,
+        // the 0.5 walk, the 0.35 stroll, the 0.5 panic)
+        assert_eq!(
+            trader.kind.mob_category(),
+            MobCategory::Creature,
+            "the villager family the CREATURE registration keeps"
+        );
+        assert_eq!(
+            trader.kind.eye_height(),
+            1.6200000047683716,
+            "the explicit eyeHeight the builder chain speaks"
+        );
+        assert_eq!(trader.kind.max_health(), 20.0, "the Mob base default");
+        assert_eq!(trader.kind.movement_speed(), 0.5, "the villager walk");
+        assert_eq!(trader.kind.stroll_speed(), 0.35, "the stroll modifier");
+        assert_eq!(trader.kind.panic_speed(), Some(0.5), "the panic flee");
+        // THE SIZED BOX (the box_for the registration dims the same
+        // pair reads — the 0.6x1.95 the robe body wears)
+        let (bx0, by0, _, bx1, by1, _) = trader.box_for();
+        assert!(((bx1 - bx0) - WANDERING_TRADER_WIDTH).abs() < 1e-9);
+        assert!(((by1 - by0) - WANDERING_TRADER_HEIGHT).abs() < 1e-9);
+        // THE VOICES (javap the getAmbientSound/getHurtSound/
+        // getDeathSound getters the 26.2 bytecode keeps — the ambient
+        // the idle lane plays, the trade word the active trade arms
+        // the port's wire state never banks)
+        assert_eq!(
+            trader.kind.voice_event(VoiceSlot::Ambient),
+            "entity.wandering_trader.ambient"
+        );
+        assert_eq!(
+            trader.kind.voice_event(VoiceSlot::Hurt),
+            "entity.wandering_trader.hurt"
+        );
+        assert_eq!(
+            trader.kind.voice_event(VoiceSlot::Death),
+            "entity.wandering_trader.death"
+        );
+        // THE LOOT'S OWN EMPTY LAW (the jar's wandering_trader.json
+        // the TYPE header alone keeps — the death nothing drops)
+        assert!(
+            trader.death_loot(false).is_empty(),
+            "the vanilla trader's death the loot never drops"
+        );
     }
 
     /// THE UNDERCOAT'S OWN GATE (javap SheepWoolUndercoatLayer.submit's

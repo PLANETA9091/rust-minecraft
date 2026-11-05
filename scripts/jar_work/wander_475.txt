@@ -1,0 +1,73 @@
+class net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader
+
+=== getAmbientSound()Lnet/minecraft/sounds/SoundEvent; ===
+     1 invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isTrading()Z  ()
+    10 return net/minecraft/sounds/SoundEvents.WANDERING_TRADER_TRADE
+    14 return net/minecraft/sounds/SoundEvents.WANDERING_TRADER_AMBIENT
+
+=== getDeathSound()Lnet/minecraft/sounds/SoundEvent; ===
+     3 return net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DEATH
+
+=== getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent; ===
+     3 return net/minecraft/sounds/SoundEvents.WANDERING_TRADER_HURT
+
+=== registerGoals()V ===
+     1 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+    10 invokespecial net/minecraft/world/entity/ai/goal/FloatGoal.<init>(Lnet/minecraft/world/entity/Mob;)V  (loc0)
+    13 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (0, net/minecraft/world/entity/ai/goal/FloatGoal(loc0))
+    17 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+    32 invokestatic net/minecraft/world/item/alchemy/PotionContents.createItemStack(Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;  (net/minecraft/world/item/Items.POTION, net/minecraft/world/item/alchemy/Potions.INVISIBILITY)
+    44 invokespecial net/minecraft/world/entity/ai/goal/UseItemGoal.<init>(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/sounds/SoundEvent;Ljava/util/function/Predicate;)V  (loc0, PotionContents.createItemStack(net/minecraft/world/item/Items.POTION, net/minecraft/world/item/alchemy/Potions.INVISIBILITY), net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DISAPPEARED, loc0)
+    47 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (0, net/minecraft/world/entity/ai/goal/UseItemGoal(loc0, PotionContents.createItemStack(net/minecraft/world/item/Items.POTION, net/minecraft/world/item/alchemy/Potions.INVISIBILITY), net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DISAPPEARED, loc0))
+    51 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+    67 invokespecial net/minecraft/world/item/ItemStack.<init>(Lnet/minecraft/world/level/ItemLike;)V  (net/minecraft/world/item/Items.MILK_BUCKET)
+    79 invokespecial net/minecraft/world/entity/ai/goal/UseItemGoal.<init>(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/sounds/SoundEvent;Ljava/util/function/Predicate;)V  (loc0, net/minecraft/world/item/ItemStack(net/minecraft/world/item/Items.MILK_BUCKET), net/minecraft/sounds/SoundEvents.WANDERING_TRADER_REAPPEARED, loc0)
+    82 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (0, net/minecraft/world/entity/ai/goal/UseItemGoal(loc0, net/minecraft/world/item/ItemStack(net/minecraft/world/item/Items.MILK_BUCKET), net/minecraft/sounds/SoundEvents.WANDERING_TRADER_REAPPEARED, loc0))
+    86 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+    95 invokespecial net/minecraft/world/entity/ai/goal/TradeWithPlayerGoal.<init>(Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)V  (loc0)
+    98 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (1, net/minecraft/world/entity/ai/goal/TradeWithPlayerGoal(loc0))
+   102 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   121 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 8.0, 0.5, 0.5)
+   124 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   128 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   147 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 12.0, 0.5, 0.5)
+   150 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   154 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   173 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 8.0, 0.5, 0.5)
+   176 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   180 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   199 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 8.0, 0.5, 0.5)
+   202 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   206 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   225 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 15.0, 0.5, 0.5)
+   228 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   232 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   251 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 12.0, 0.5, 0.5)
+   254 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   258 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   277 invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V  (new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, new net/minecraft/world/entity/ai/goal/AvoidEntityGoal, loc0, cp, 10.0, 0.5, 0.5)
+   280 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   284 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   296 invokespecial net/minecraft/world/entity/ai/goal/PanicGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;D)V  (new net/minecraft/world/entity/ai/goal/PanicGoal, loc0, 0.5)
+   299 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (1, net/minecraft/world/entity/ai/goal/PanicGoal(new net/minecraft/world/entity/ai/goal/PanicGoal, loc0, 0.5))
+   303 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   312 invokespecial net/minecraft/world/entity/ai/goal/LookAtTradingPlayerGoal.<init>(Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)V  (loc0)
+   315 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (1, net/minecraft/world/entity/ai/goal/LookAtTradingPlayerGoal(loc0))
+   319 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   335 invokespecial net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader$WanderToPositionGoal.<init>(Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;DD)V  (new net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader$WanderToPositionGoal, new net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader$WanderToPositionGoal, loc0, loc0, 2.0, 0.35)
+   338 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (?, loc0.goalSelector)
+   342 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   354 invokespecial net/minecraft/world/entity/ai/goal/MoveTowardsRestrictionGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;D)V  (new net/minecraft/world/entity/ai/goal/MoveTowardsRestrictionGoal, loc0, 0.35)
+   357 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (4, net/minecraft/world/entity/ai/goal/MoveTowardsRestrictionGoal(new net/minecraft/world/entity/ai/goal/MoveTowardsRestrictionGoal, loc0, 0.35))
+   361 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   374 invokespecial net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal.<init>(Lnet/minecraft/world/entity/PathfinderMob;D)V  (new net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal, loc0, 0.35)
+   377 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (8, net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal(new net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal, loc0, 0.35))
+   381 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   396 invokespecial net/minecraft/world/entity/ai/goal/InteractGoal.<init>(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;FF)V  (loc0, cp, 3.0, 1.0)
+   399 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (9, net/minecraft/world/entity/ai/goal/InteractGoal(loc0, cp, 3.0, 1.0))
+   403 getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector  (loc0)
+   417 invokespecial net/minecraft/world/entity/ai/goal/LookAtPlayerGoal.<init>(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;F)V  (loc0, cp, 8.0)
+   420 invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V  (10, net/minecraft/world/entity/ai/goal/LookAtPlayerGoal(loc0, cp, 8.0))
+   423 return
+class net/minecraft/world/entity/npc/villager/AbstractVillager
+class net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader
