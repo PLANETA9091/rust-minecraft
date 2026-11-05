@@ -37979,3 +37979,75 @@ fn the_talked_stat_the_wire_lane_wears() {
         "the zero counts the sparse law the custom category never writes"
     );
 }
+
+/// THE WANDERER'S OWN WINDOW (javap `WanderingTrader.updateTrades` +
+/// `openTradingScreen` the offline lane the offers bank answers): the
+/// projection the views wear, the take's own notify walk the mob's
+/// own offers re-banks [the uses the same count the view speaks],
+/// the fresh window the zero-stock law keeps.
+#[test]
+fn the_wanderer_window_the_take_sync_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE TRADER THE WORLD KEEPS (the id the voice seed banks — the
+    // ensure walk the nine offers arms)
+    let mut trader = crate::mob::Zombie::new(777, 20.5, 30.0, 20.5, 5);
+    trader.kind = crate::mob::MobKind::WanderingTrader;
+    trader.ensure_trader_offers();
+    assert_eq!(
+        trader.trader_offers.len(),
+        9,
+        "the ensure the nine offers arms"
+    );
+    let trader_id = trader.id;
+    app.mobs.push(trader);
+    // THE WINDOW'S OWN BIRTH (the offline talk walk's own shape — the
+    // views the projection wears, the trader id the window arms, the
+    // fresh seats the empty pairs keep)
+    let views = crate::mob::wandering_trader_offer_views(&app.mobs[0].trader_offers);
+    assert_eq!(views.len(), 9, "the 97-id cross-check the drop never arms");
+    app.merchant_is_live = false;
+    app.merchant_offers = views;
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_active_offer = Some(0);
+    app.merchant_trader_id = Some(trader_id);
+    // THE PAYMENT SEAT THE COST CARRIES (the active offer the first
+    // row keeps — the buying set the item the wants pair speaks)
+    let cost = app.merchant_offers[0].cost_a;
+    app.merchant_slots[0] = cost;
+    assert!(cost.1 > 0, "the cost the count wears");
+    // THE TAKE (the notify walk the mob's own offers re-banks — the
+    // uses the same count the view speaks)
+    app.merchant_result_take();
+    assert_eq!(
+        app.mobs[0].trader_offers[0].uses, 1,
+        "the mob's own offer the uses re-banks"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the view the same count wears"
+    );
+    // THE SECOND TAKE the stock the cap answers (the max-uses 2
+    // buying rows the exhaust word wears)
+    let max_uses = app.merchant_offers[0].max_uses;
+    for expect in 2..=max_uses {
+        // THE FRESH SELECTION (the update_sell recompute the seats'
+        // emptying clears — the row the user's own pick re-arms, the
+        // active offer the window's own walk keeps)
+        app.merchant_slots[0] = cost;
+        app.merchant_active_offer = Some(0);
+        app.merchant_result_take();
+        assert_eq!(app.mobs[0].trader_offers[0].uses, expect);
+        assert_eq!(app.merchant_offers[0].uses, expect);
+    }
+    assert_eq!(
+        app.merchant_offers[0].out_of_stock,
+        app.merchant_offers[0].uses >= app.merchant_offers[0].max_uses,
+        "the stock the re-derived word wears"
+    );
+    // THE CLOSE'S OWN DISARM (the offline lane the bank death keeps —
+    // the trader id the honest None wears)
+    app.close_merchant(crate::screens::ScreenKind::World);
+    assert_eq!(app.merchant_trader_id, None, "the close the trader disarms");
+    assert!(app.merchant_offers.is_empty(), "the close the bank drops");
+}

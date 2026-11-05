@@ -9097,6 +9097,11 @@ pub struct App {
     /// death walk the flag retires; the offline stand-in the false
     /// keeps)
     pub merchant_is_live: bool,
+    /// THE WANDERER'S OWN TRADER (the offline window's own entity —
+    /// the open walk arms, the take's own uses the mob's offers
+    /// re-banks, the close the honest disarm keeps; the wire lane the
+    /// server's own offers the bank answers)
+    pub merchant_trader_id: Option<i32>,
     /// THE MERCHANT WINDOW'S OWN IDENTITY (the live window's
     /// containerId + the stateId revision the echoes answer — the
     /// beacon's `Some((c.id, c.state_id))` shape the route re-wears)
@@ -13435,6 +13440,7 @@ impl App {
             beacon_confirm_rect: (0, 0),
             beacon_cancel_rect: (0, 0),
             merchant_is_live: false,
+            merchant_trader_id: None,
             merchant_live_window: None,
             merchant_offers: Vec::new(),
             merchant_level: 0,
@@ -33372,6 +33378,7 @@ impl App {
             }
             self.merchant_is_live = false;
             self.merchant_live_window = None;
+            self.merchant_trader_id = None;
             self.merchant_carried = (0, 0);
             self.merchant_title = None;
             self.merchant_slots = Vec::new();
@@ -33440,6 +33447,7 @@ impl App {
         self.merchant_show_progress = false;
         self.merchant_can_restock = false;
         self.merchant_selected = 0;
+        self.merchant_trader_id = None; // the offline trader's disarm
         self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
@@ -34013,6 +34021,18 @@ impl App {
             let o = &mut self.merchant_offers[idx];
             o.uses += 1;
             o.out_of_stock = o.uses >= o.max_uses;
+            // THE WANDERER'S OWN RE-BANK (the offline window's own
+            // entity the stock word answers — the mob's own offer the
+            // same uses the view re-banks, the stock the re-derived
+            // word wears; the wire lane the server's own truth the
+            // bank answers, the id the None keeps)
+            if let Some(tid) = self.merchant_trader_id {
+                if let Some(mob) = self.mobs.iter_mut().find(|m| m.id == tid) {
+                    if let Some(own) = mob.trader_offers.get_mut(idx) {
+                        own.uses = o.uses;
+                    }
+                }
+            }
             // THE STAT'S OWN RIDE (pc 69-73 — the awardStat
             // TRADED_WITH_VILLAGER the success arm wears — the notify
             // pc 59-64 the award speaks BEFORE the setItem pc 76-93
@@ -49373,6 +49393,44 @@ impl App {
                         // stack never reads).
                         self.stats.talked_to_villager += 1;
                         self.swing.start();
+                        // THE WANDERER'S OWN TRADE WINDOW (the
+                        // openTradingScreen tail pc 75-87 the OFFLINE
+                        // lane the offers bank answers — the mob's own
+                        // offers the ensure walk generated, the
+                        // projection the views wear, the window the
+                        // merchant fields the fresh birth keeps; the
+                        // NETWORKED session the prediction NEVER
+                        // opens — the server's own OpenScreen word
+                        // the authority keeps, the both-sides award
+                        // the only walk the prediction runs; the
+                        // offers-empty lane the window never opens —
+                        // the pc 71-74 CONSUME the award-only answer
+                        // wears)
+                        if self.mobs[i].kind == crate::mob::MobKind::WanderingTrader
+                            && !self.world_is_network
+                            && !self.mobs[i].trader_offers.is_empty()
+                        {
+                            let trader_id = self.mobs[i].id;
+                            let title = self.mobs[i].custom_name.clone();
+                            let offers = self.mobs[i].trader_offers.clone();
+                            self.merchant_is_live = false;
+                            self.merchant_live_window = None;
+                            self.merchant_slots = vec![(0, 0); 39];
+                            self.merchant_carried = (0, 0);
+                            self.merchant_title = title;
+                            self.merchant_offers =
+                                crate::mob::wandering_trader_offer_views(&offers);
+                            self.merchant_level = 1;
+                            self.merchant_xp = 0;
+                            self.merchant_show_progress = false;
+                            self.merchant_can_restock = false;
+                            self.merchant_active_offer = None;
+                            self.merchant_selected = 0;
+                            self.merchant_scroll = 0;
+                            self.merchant_scroll_drag = false;
+                            self.merchant_trader_id = Some(trader_id);
+                            self.open(ScreenKind::Merchant);
+                        }
                         return true;
                     }
                     entity_pass = true;
@@ -60629,6 +60687,10 @@ impl App {
                 // server's own metadata word the None arm the ctor
                 // answers)
                 m.health = m.kind.max_health();
+                // THE WANDERER'S OWN OFFERS (the updateTrades walk the
+                // merge arms — the trader kind the pools the ensure
+                // walk generates, the non-traders the no-op keeps)
+                m.ensure_trader_offers();
                 m.yaw = w.yaw;
                 let mut off = w.head_yaw - w.yaw;
                 while off > 180.0 {

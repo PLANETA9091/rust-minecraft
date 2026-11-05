@@ -1,0 +1,100 @@
+=== trade_set/wandering_trader/buying.json — amount 2.0, allow_duplicates False, random_sequence minecraft:trade_set/wandering_trader/buying
+  [ 0] wants potion x1 -> gives emerald x1 max_uses 2 xp 1 discount 0.05
+  [ 1] wants water_bucket x1 -> gives emerald x2 max_uses 2 xp 1 discount 0.05
+  [ 2] wants milk_bucket x1 -> gives emerald x2 max_uses 2 xp 1 discount 0.05
+  [ 3] wants fermented_spider_eye x1 -> gives emerald x3 max_uses 2 xp 1 discount 0.05
+  [ 4] wants baked_potato x4 -> gives emerald x1 max_uses 2 xp 1 discount 0.05
+  [ 5] wants hay_block x1 -> gives emerald x1 max_uses 2 xp 1 discount 0.05
+=== trade_set/wandering_trader/uncommon.json — amount 2.0, allow_duplicates False, random_sequence minecraft:trade_set/wandering_trader/uncommon
+  [ 0] wants emerald x1 -> gives packed_ice x1 max_uses 6 xp 1 discount 0.05
+  [ 1] wants emerald x6 -> gives blue_ice x1 max_uses 6 xp 1 discount 0.05
+  [ 2] wants emerald x1 -> gives gunpowder x4 max_uses 2 xp 1 discount 0.05
+  [ 3] wants emerald x3 -> gives podzol x3 max_uses 6 xp 1 discount 0.05
+  [ 4] wants emerald x1 -> gives acacia_log x8 max_uses 4 xp 1 discount 0.05
+  [ 5] wants emerald x1 -> gives birch_log x8 max_uses 4 xp 1 discount 0.05
+  [ 6] wants emerald x1 -> gives dark_oak_log x8 max_uses 4 xp 1 discount 0.05
+  [ 7] wants emerald x1 -> gives jungle_log x8 max_uses 4 xp 1 discount 0.05
+  [ 8] wants emerald x1 -> gives oak_log x8 max_uses 4 xp 1 discount 0.05
+  [ 9] wants emerald x1 -> gives spruce_log x8 max_uses 4 xp 1 discount 0.05
+  [10] wants emerald x1 -> gives cherry_log x8 max_uses 4 xp 1 discount 0.05
+  [11] wants emerald x1 -> gives mangrove_log x8 max_uses 4 xp 1 discount 0.05
+  [12] wants emerald x1 -> gives pale_oak_log x8 max_uses 4 xp 1 discount 0.05
+  [13] wants emerald x1 -> gives iron_pickaxe x1 max_uses 1 xp 1 discount 0.2
+  [14] wants emerald x5 -> gives potion x1 max_uses 1 xp 1 discount 0.05
+=== trade_set/wandering_trader/common.json — amount 5.0, allow_duplicates False, random_sequence minecraft:trade_set/wandering_trader/common
+  [ 0] wants emerald x1 -> gives white_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 1] wants emerald x1 -> gives orange_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 2] wants emerald x1 -> gives magenta_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 3] wants emerald x1 -> gives light_blue_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 4] wants emerald x1 -> gives yellow_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 5] wants emerald x1 -> gives lime_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 6] wants emerald x1 -> gives pink_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 7] wants emerald x1 -> gives gray_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 8] wants emerald x1 -> gives light_gray_dye x3 max_uses 12 xp 1 discount 0.05
+  [ 9] wants emerald x1 -> gives cyan_dye x3 max_uses 12 xp 1 discount 0.05
+  [10] wants emerald x1 -> gives purple_dye x3 max_uses 12 xp 1 discount 0.05
+  [11] wants emerald x1 -> gives blue_dye x3 max_uses 12 xp 1 discount 0.05
+  [12] wants emerald x1 -> gives brown_dye x3 max_uses 12 xp 1 discount 0.05
+  [13] wants emerald x1 -> gives green_dye x3 max_uses 12 xp 1 discount 0.05
+  [14] wants emerald x1 -> gives red_dye x3 max_uses 12 xp 1 discount 0.05
+  [15] wants emerald x1 -> gives black_dye x3 max_uses 12 xp 1 discount 0.05
+  [16] wants emerald x3 -> gives tropical_fish_bucket x1 max_uses 4 xp 1 discount 0.05
+  [17] wants emerald x3 -> gives pufferfish_bucket x1 max_uses 4 xp 1 discount 0.05
+  [18] wants emerald x2 -> gives sea_pickle x1 max_uses 5 xp 1 discount 0.05
+  [19] wants emerald x4 -> gives slime_ball x1 max_uses 5 xp 1 discount 0.05
+  [20] wants emerald x2 -> gives glowstone x1 max_uses 5 xp 1 discount 0.05
+  [21] wants emerald x5 -> gives nautilus_shell x1 max_uses 5 xp 1 discount 0.05
+  [22] wants emerald x1 -> gives fern x1 max_uses 12 xp 1 discount 0.05
+  [23] wants emerald x1 -> gives sugar_cane x1 max_uses 8 xp 1 discount 0.05
+  [24] wants emerald x1 -> gives pumpkin x1 max_uses 4 xp 1 discount 0.05
+  [25] wants emerald x3 -> gives kelp x1 max_uses 12 xp 1 discount 0.05
+  [26] wants emerald x3 -> gives cactus x1 max_uses 8 xp 1 discount 0.05
+  [27] wants emerald x1 -> gives dandelion x1 max_uses 12 xp 1 discount 0.05
+  [28] wants emerald x1 -> gives poppy x1 max_uses 12 xp 1 discount 0.05
+  [29] wants emerald x1 -> gives blue_orchid x1 max_uses 8 xp 1 discount 0.05
+  [30] wants emerald x1 -> gives allium x1 max_uses 12 xp 1 discount 0.05
+  [31] wants emerald x1 -> gives azure_bluet x1 max_uses 12 xp 1 discount 0.05
+  [32] wants emerald x1 -> gives red_tulip x1 max_uses 12 xp 1 discount 0.05
+  [33] wants emerald x1 -> gives orange_tulip x1 max_uses 12 xp 1 discount 0.05
+  [34] wants emerald x1 -> gives white_tulip x1 max_uses 12 xp 1 discount 0.05
+  [35] wants emerald x1 -> gives pink_tulip x1 max_uses 12 xp 1 discount 0.05
+  [36] wants emerald x1 -> gives oxeye_daisy x1 max_uses 12 xp 1 discount 0.05
+  [37] wants emerald x1 -> gives cornflower x1 max_uses 12 xp 1 discount 0.05
+  [38] wants emerald x1 -> gives lily_of_the_valley x1 max_uses 7 xp 1 discount 0.05
+  [39] wants emerald x1 -> gives open_eyeblossom x1 max_uses 7 xp 1 discount 0.05
+  [40] wants emerald x1 -> gives wheat_seeds x1 max_uses 12 xp 1 discount 0.05
+  [41] wants emerald x1 -> gives beetroot_seeds x1 max_uses 12 xp 1 discount 0.05
+  [42] wants emerald x1 -> gives pumpkin_seeds x1 max_uses 12 xp 1 discount 0.05
+  [43] wants emerald x1 -> gives melon_seeds x1 max_uses 12 xp 1 discount 0.05
+  [44] wants emerald x5 -> gives acacia_sapling x1 max_uses 8 xp 1 discount 0.05
+  [45] wants emerald x5 -> gives birch_sapling x1 max_uses 8 xp 1 discount 0.05
+  [46] wants emerald x5 -> gives dark_oak_sapling x1 max_uses 8 xp 1 discount 0.05
+  [47] wants emerald x5 -> gives jungle_sapling x1 max_uses 8 xp 1 discount 0.05
+  [48] wants emerald x5 -> gives oak_sapling x1 max_uses 8 xp 1 discount 0.05
+  [49] wants emerald x5 -> gives spruce_sapling x1 max_uses 8 xp 1 discount 0.05
+  [50] wants emerald x5 -> gives cherry_sapling x1 max_uses 8 xp 1 discount 0.05
+  [51] wants emerald x5 -> gives pale_oak_sapling x1 max_uses 8 xp 1 discount 0.05
+  [52] wants emerald x5 -> gives mangrove_propagule x1 max_uses 8 xp 1 discount 0.05
+  [53] wants emerald x3 -> gives brain_coral_block x1 max_uses 8 xp 1 discount 0.05
+  [54] wants emerald x3 -> gives bubble_coral_block x1 max_uses 8 xp 1 discount 0.05
+  [55] wants emerald x3 -> gives fire_coral_block x1 max_uses 8 xp 1 discount 0.05
+  [56] wants emerald x3 -> gives horn_coral_block x1 max_uses 8 xp 1 discount 0.05
+  [57] wants emerald x3 -> gives tube_coral_block x1 max_uses 8 xp 1 discount 0.05
+  [58] wants emerald x1 -> gives vine x3 max_uses 4 xp 1 discount 0.05
+  [59] wants emerald x1 -> gives pale_hanging_moss x3 max_uses 4 xp 1 discount 0.05
+  [60] wants emerald x1 -> gives brown_mushroom x3 max_uses 4 xp 1 discount 0.05
+  [61] wants emerald x1 -> gives red_mushroom x3 max_uses 4 xp 1 discount 0.05
+  [62] wants emerald x1 -> gives lily_pad x5 max_uses 2 xp 1 discount 0.05
+  [63] wants emerald x1 -> gives small_dripleaf x2 max_uses 5 xp 1 discount 0.05
+  [64] wants emerald x1 -> gives sand x8 max_uses 8 xp 1 discount 0.05
+  [65] wants emerald x1 -> gives red_sand x4 max_uses 6 xp 1 discount 0.05
+  [66] wants emerald x1 -> gives pointed_dripstone x2 max_uses 5 xp 1 discount 0.05
+  [67] wants emerald x1 -> gives sulfur_spike x2 max_uses 5 xp 1 discount 0.05
+  [68] wants emerald x1 -> gives rooted_dirt x2 max_uses 5 xp 1 discount 0.05
+  [69] wants emerald x1 -> gives moss_block x2 max_uses 5 xp 1 discount 0.05
+  [70] wants emerald x1 -> gives pale_moss_block x2 max_uses 5 xp 1 discount 0.05
+  [71] wants emerald x1 -> gives wildflowers x1 max_uses 12 xp 1 discount 0.05
+  [72] wants emerald x1 -> gives tall_dry_grass x1 max_uses 12 xp 1 discount 0.05
+  [73] wants emerald x3 -> gives firefly_bush x1 max_uses 12 xp 1 discount 0.05
+  [74] wants emerald x2 -> gives golden_dandelion x1 max_uses 12 xp 1 discount 0.05
+  [75] wants emerald x1 -> gives name_tag x1 max_uses 5 xp 1 discount 0.05

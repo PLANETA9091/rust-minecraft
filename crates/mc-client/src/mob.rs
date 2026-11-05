@@ -2079,6 +2079,224 @@ pub const CREEPER_HEIGHT: f64 = 1.7;
 /// same box the robe body wears).
 pub const WANDERING_TRADER_WIDTH: f64 = 0.6;
 pub const WANDERING_TRADER_HEIGHT: f64 = 1.95;
+/// THE WANDERER'S OWN BUYING POOL (the trade_set/wandering_trader/buying the jar's data speaks — amount 2.0, the allow_duplicates the codec's iconst_0 default keeps, the tag's own order the census banks): the (wants, wants_count, gives, gives_count, max_uses, xp) rows the villager_trade jsons wear, the codec defaults the absent words wear (max_uses 4, xp 1, count 1).
+pub static WANDER_BUYING_POOL: [(&str, i32, &str, i32, i32, i32); 6] = [
+    ("potion", 1, "emerald", 1, 2, 1),
+    ("water_bucket", 1, "emerald", 2, 2, 1),
+    ("milk_bucket", 1, "emerald", 2, 2, 1),
+    ("fermented_spider_eye", 1, "emerald", 3, 2, 1),
+    ("baked_potato", 4, "emerald", 1, 2, 1),
+    ("hay_block", 1, "emerald", 1, 2, 1),
+];
+
+/// THE WANDERER'S OWN UNCOMMON POOL (the trade_set/wandering_trader/uncommon the jar's data speaks — amount 2.0, the allow_duplicates the codec's iconst_0 default keeps, the tag's own order the census banks): the (wants, wants_count, gives, gives_count, max_uses, xp) rows the villager_trade jsons wear, the codec defaults the absent words wear (max_uses 4, xp 1, count 1).
+pub static WANDER_UNCOMMON_POOL: [(&str, i32, &str, i32, i32, i32); 15] = [
+    ("emerald", 1, "packed_ice", 1, 6, 1),
+    ("emerald", 6, "blue_ice", 1, 6, 1),
+    ("emerald", 1, "gunpowder", 4, 2, 1),
+    ("emerald", 3, "podzol", 3, 6, 1),
+    ("emerald", 1, "acacia_log", 8, 4, 1),
+    ("emerald", 1, "birch_log", 8, 4, 1),
+    ("emerald", 1, "dark_oak_log", 8, 4, 1),
+    ("emerald", 1, "jungle_log", 8, 4, 1),
+    ("emerald", 1, "oak_log", 8, 4, 1),
+    ("emerald", 1, "spruce_log", 8, 4, 1),
+    ("emerald", 1, "cherry_log", 8, 4, 1),
+    ("emerald", 1, "mangrove_log", 8, 4, 1),
+    ("emerald", 1, "pale_oak_log", 8, 4, 1),
+    ("emerald", 1, "iron_pickaxe", 1, 1, 1),
+    ("emerald", 5, "potion", 1, 1, 1),
+];
+
+/// THE WANDERER'S OWN COMMON POOL (the trade_set/wandering_trader/common the jar's data speaks — amount 5.0, the allow_duplicates the codec's iconst_0 default keeps, the tag's own order the census banks): the (wants, wants_count, gives, gives_count, max_uses, xp) rows the villager_trade jsons wear, the codec defaults the absent words wear (max_uses 4, xp 1, count 1).
+pub static WANDER_COMMON_POOL: [(&str, i32, &str, i32, i32, i32); 76] = [
+    ("emerald", 1, "white_dye", 3, 12, 1),
+    ("emerald", 1, "orange_dye", 3, 12, 1),
+    ("emerald", 1, "magenta_dye", 3, 12, 1),
+    ("emerald", 1, "light_blue_dye", 3, 12, 1),
+    ("emerald", 1, "yellow_dye", 3, 12, 1),
+    ("emerald", 1, "lime_dye", 3, 12, 1),
+    ("emerald", 1, "pink_dye", 3, 12, 1),
+    ("emerald", 1, "gray_dye", 3, 12, 1),
+    ("emerald", 1, "light_gray_dye", 3, 12, 1),
+    ("emerald", 1, "cyan_dye", 3, 12, 1),
+    ("emerald", 1, "purple_dye", 3, 12, 1),
+    ("emerald", 1, "blue_dye", 3, 12, 1),
+    ("emerald", 1, "brown_dye", 3, 12, 1),
+    ("emerald", 1, "green_dye", 3, 12, 1),
+    ("emerald", 1, "red_dye", 3, 12, 1),
+    ("emerald", 1, "black_dye", 3, 12, 1),
+    ("emerald", 3, "tropical_fish_bucket", 1, 4, 1),
+    ("emerald", 3, "pufferfish_bucket", 1, 4, 1),
+    ("emerald", 2, "sea_pickle", 1, 5, 1),
+    ("emerald", 4, "slime_ball", 1, 5, 1),
+    ("emerald", 2, "glowstone", 1, 5, 1),
+    ("emerald", 5, "nautilus_shell", 1, 5, 1),
+    ("emerald", 1, "fern", 1, 12, 1),
+    ("emerald", 1, "sugar_cane", 1, 8, 1),
+    ("emerald", 1, "pumpkin", 1, 4, 1),
+    ("emerald", 3, "kelp", 1, 12, 1),
+    ("emerald", 3, "cactus", 1, 8, 1),
+    ("emerald", 1, "dandelion", 1, 12, 1),
+    ("emerald", 1, "poppy", 1, 12, 1),
+    ("emerald", 1, "blue_orchid", 1, 8, 1),
+    ("emerald", 1, "allium", 1, 12, 1),
+    ("emerald", 1, "azure_bluet", 1, 12, 1),
+    ("emerald", 1, "red_tulip", 1, 12, 1),
+    ("emerald", 1, "orange_tulip", 1, 12, 1),
+    ("emerald", 1, "white_tulip", 1, 12, 1),
+    ("emerald", 1, "pink_tulip", 1, 12, 1),
+    ("emerald", 1, "oxeye_daisy", 1, 12, 1),
+    ("emerald", 1, "cornflower", 1, 12, 1),
+    ("emerald", 1, "lily_of_the_valley", 1, 7, 1),
+    ("emerald", 1, "open_eyeblossom", 1, 7, 1),
+    ("emerald", 1, "wheat_seeds", 1, 12, 1),
+    ("emerald", 1, "beetroot_seeds", 1, 12, 1),
+    ("emerald", 1, "pumpkin_seeds", 1, 12, 1),
+    ("emerald", 1, "melon_seeds", 1, 12, 1),
+    ("emerald", 5, "acacia_sapling", 1, 8, 1),
+    ("emerald", 5, "birch_sapling", 1, 8, 1),
+    ("emerald", 5, "dark_oak_sapling", 1, 8, 1),
+    ("emerald", 5, "jungle_sapling", 1, 8, 1),
+    ("emerald", 5, "oak_sapling", 1, 8, 1),
+    ("emerald", 5, "spruce_sapling", 1, 8, 1),
+    ("emerald", 5, "cherry_sapling", 1, 8, 1),
+    ("emerald", 5, "pale_oak_sapling", 1, 8, 1),
+    ("emerald", 5, "mangrove_propagule", 1, 8, 1),
+    ("emerald", 3, "brain_coral_block", 1, 8, 1),
+    ("emerald", 3, "bubble_coral_block", 1, 8, 1),
+    ("emerald", 3, "fire_coral_block", 1, 8, 1),
+    ("emerald", 3, "horn_coral_block", 1, 8, 1),
+    ("emerald", 3, "tube_coral_block", 1, 8, 1),
+    ("emerald", 1, "vine", 3, 4, 1),
+    ("emerald", 1, "pale_hanging_moss", 3, 4, 1),
+    ("emerald", 1, "brown_mushroom", 3, 4, 1),
+    ("emerald", 1, "red_mushroom", 3, 4, 1),
+    ("emerald", 1, "lily_pad", 5, 2, 1),
+    ("emerald", 1, "small_dripleaf", 2, 5, 1),
+    ("emerald", 1, "sand", 8, 8, 1),
+    ("emerald", 1, "red_sand", 4, 6, 1),
+    ("emerald", 1, "pointed_dripstone", 2, 5, 1),
+    ("emerald", 1, "sulfur_spike", 2, 5, 1),
+    ("emerald", 1, "rooted_dirt", 2, 5, 1),
+    ("emerald", 1, "moss_block", 2, 5, 1),
+    ("emerald", 1, "pale_moss_block", 2, 5, 1),
+    ("emerald", 1, "wildflowers", 1, 12, 1),
+    ("emerald", 1, "tall_dry_grass", 1, 12, 1),
+    ("emerald", 3, "firefly_bush", 1, 12, 1),
+    ("emerald", 2, "golden_dandelion", 1, 12, 1),
+    ("emerald", 1, "name_tag", 1, 5, 1),
+];
+
+/// THE TRADE SETS' OWN AMOUNTS (the trade_set jsons the jar carries —
+/// buying 2.0 / uncommon 2.0 / common 5.0 the calculateNumberOfTrades
+/// walk evaluates; the allow_duplicates the codec's iconst_0 default
+/// keeps — the WITHOUT-duplicates pick the three sets answer).
+pub const WANDER_BUYING_AMOUNT: usize = 2;
+pub const WANDER_UNCOMMON_AMOUNT: usize = 2;
+pub const WANDER_COMMON_AMOUNT: usize = 5;
+
+/// THE WANDERER'S OWN OFFER (the MerchantOffer's own words the port's
+/// offer lane wears — the (item, count) pair level the view speaks,
+/// the uses the notify walk banks, the stock the re-derived word
+/// answers).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WanderingTraderOffer {
+    /// the trade's buy cost (the wants cost the TradeCost codec
+    /// reads — the count the absent word's 1.0 default wears)
+    pub cost_a: (&'static str, i32),
+    /// the trade's product (the gives template the ItemStackTemplate
+    /// codec reads — the count the absent word's 1.0 default keeps)
+    pub result: (&'static str, i32),
+    /// the max-uses word (the codec's 4.0 default the absent wears,
+    /// the max(x, 1) floor the getOffer's own guard keeps)
+    pub max_uses: i32,
+    /// the trade's xp reward (the codec's 1.0 default the absent
+    /// wears, the max(x, 0) floor the getOffer guard keeps)
+    pub xp: i32,
+    /// the uses the notify walk banks (the fresh offer the 0 keeps)
+    pub uses: i32,
+}
+
+impl WanderingTraderOffer {
+    /// THE STOCK'S OWN WORD (the isOutOfStock re-derive the notify
+    /// walk speaks — the uses the cap crossing wears)
+    pub fn out_of_stock(&self) -> bool {
+        self.uses >= self.max_uses
+    }
+}
+
+/// THE WANDERER'S OWN OFFER GENERATION (javap `WanderingTrader.
+/// updateTrades` pc 5-32 the 26.2 jar speaks — the buying set the
+/// FIRST pair answers, the uncommon the second, the common the last
+/// five: the window's own row order the walk lays; the census
+/// scripts/jar_work/tradepool_477.txt the pools bank). THE WITHOUT-
+/// DUPLICATES WALK (javap `AbstractVillager.
+/// addOffersFromItemListingsWithoutDuplicates` the three sets' own
+/// allow_duplicates=false answer): the pool copy the remove-random
+/// pick serves [the picked entry the list loses — the pick never
+/// repeats], the amount the picks the loop caps, the exhausted pool
+/// the walk stops. THE GETOFFER'S OWN GUARDS (javap
+/// `VillagerTrade.getOffer` — the max(x, 1) the max_uses floor wears,
+/// the max(x, 0) the xp floor keeps, the uses the fresh 0 the ctor
+/// speaks; the offerless retry the modifiers' null the vanilla lane
+/// keeps — the port's own pool the predicate-free entries the guard
+/// never arms).
+pub fn wandering_trader_generate_offers(rng: &mut Lcg) -> Vec<WanderingTraderOffer> {
+    let mut out =
+        Vec::with_capacity(WANDER_BUYING_AMOUNT + WANDER_UNCOMMON_AMOUNT + WANDER_COMMON_AMOUNT);
+    let sets: [(&[(&str, i32, &str, i32, i32, i32)], usize); 3] = [
+        (&WANDER_BUYING_POOL, WANDER_BUYING_AMOUNT),
+        (&WANDER_UNCOMMON_POOL, WANDER_UNCOMMON_AMOUNT),
+        (&WANDER_COMMON_POOL, WANDER_COMMON_AMOUNT),
+    ];
+    for (pool, amount) in sets {
+        // the pool copy (the vanilla Lists.newArrayList the walk
+        // keeps — the remove-random pick the copy serves)
+        let mut rest: Vec<(&str, i32, &str, i32, i32, i32)> = pool.to_vec();
+        let mut picked = 0;
+        while picked < amount && !rest.is_empty() {
+            // the remove-random pick (the nextInt(size) draw the
+            // RandomSource law keeps — the picked entry the list
+            // loses, the remaining order the next pick never reads)
+            let idx = rng.next_int(rest.len() as u64) as usize;
+            let (w, wc, g, gc, mu, xp) = rest.remove(idx);
+            out.push(WanderingTraderOffer {
+                cost_a: (w, wc),
+                result: (g, gc),
+                max_uses: mu.max(1),
+                xp: xp.max(0),
+                uses: 0,
+            });
+            picked += 1;
+        }
+    }
+    out
+}
+
+/// THE OFFER VIEW'S OWN PROJECTION (the MerchantOfferView's own words
+/// the window wears — the item ids the registry's reverse lookup
+/// resolves, the unresolved name the offer the honest drop keeps
+/// [the census cross-check the 97 ids the registry answers — the
+/// drop the drift lane never arms]).
+pub fn wandering_trader_offer_views(
+    offers: &[WanderingTraderOffer],
+) -> Vec<crate::world_view::MerchantOfferView> {
+    offers
+        .iter()
+        .filter_map(|o| {
+            Some(crate::world_view::MerchantOfferView {
+                cost_a: (mc_registry::item_id_by_name(o.cost_a.0)?, o.cost_a.1),
+                cost_b: None,
+                result: (mc_registry::item_id_by_name(o.result.0)?, o.result.1),
+                out_of_stock: o.out_of_stock(),
+                uses: o.uses,
+                max_uses: o.max_uses,
+                xp: o.xp,
+            })
+        })
+        .collect()
+}
 /// `Creeper.createAttributes` — MOVEMENT_SPEED 0.25 (the add the
 /// ldc2_w keeps, the f64 the builder chain banks).
 pub const CREEPER_MOVEMENT_SPEED: f64 = 0.25;
@@ -5022,6 +5240,11 @@ pub struct Zombie {
     /// keeps (the vanilla client's own ctor default the silence
     /// answers).
     pub farm_sound_variant: Option<String>,
+    /// THE WANDERER'S OWN OFFERS (the trade_set pools the ensure walk
+    /// arms — the kind the WanderingTrader word answers, the
+    /// non-traders the empty vec the honest zero wears; the offer's
+    /// own uses the notify walk re-banks)
+    pub trader_offers: Vec<WanderingTraderOffer>,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
     /// drains, the handleEntityEvent(10) the client copy re-arms: the
@@ -5427,6 +5650,10 @@ impl Zombie {
             wool_color: 0,
             farm_variant: None,
             farm_sound_variant: None,
+            // THE WANDERER'S OWN OFFERS (the trade_set pools the kind
+            // the ensure helper arms — the non-traders the empty vec
+            // the honest zero wears)
+            trader_offers: Vec::new(),
             eat_animation_tick: 0,
             effects: crate::effects::EffectsStore::new(),
             custom_name: None,
@@ -5499,6 +5726,19 @@ impl Zombie {
             scan_unseen_ticks: 0,
             leap_airborne: false,
         }
+    }
+
+    /// THE WANDERER'S OWN OFFER ARM (the `updateTrades` walk the
+    /// spawn the port's own seed rides — the entity_voice_seed the
+    /// same stream the wire id banks, the generation the census
+    /// pools answer; the non-trader the honest empty keeps, the
+    /// already-armed the walk never re-rolls).
+    pub fn ensure_trader_offers(&mut self) {
+        if self.kind != MobKind::WanderingTrader || !self.trader_offers.is_empty() {
+            return;
+        }
+        let mut rng = Lcg::new(entity_voice_seed(self.id));
+        self.trader_offers = wandering_trader_generate_offers(&mut rng);
     }
 
     /// The zombie's feet-anchored bbox (the registration's own dims).
@@ -9465,6 +9705,10 @@ pub fn try_spawn(
             // chains the jars speak — the spider's 16.0 the other kinds
             // the shared 20.0 base keeps)
             mob.health = kind.max_health();
+            // THE WANDERER'S OWN OFFERS (the updateTrades walk the
+            // spawn arms — the trader kind the pools the ensure walk
+            // generates, the non-traders the honest no-op keeps)
+            mob.ensure_trader_offers();
             // THE SKELETON'S OWN EQUIPMENT (the unconditional BOW the
             // no-draw law keeps — the populate's own pair the hand
             // always wears)
@@ -19423,6 +19667,208 @@ mod tests {
             trader.death_loot(false).is_empty(),
             "the vanilla trader's death the loot never drops"
         );
+    }
+
+    /// THE WANDERER'S OWN OFFER POOL (the tradepool_477 census the
+    /// jar's data files bank): the three pools' row counts the tags
+    /// speak, the amounts the trade_set jsons wear, the spot rows the
+    /// entries' own words answer, the codec defaults the absent words
+    /// wear (max_uses 4, xp 1, count 1).
+    #[test]
+    fn the_wanderer_pools_the_tradesets_wear() {
+        // THE POOL CENSUS (the tag's own order the sets bank)
+        assert_eq!(WANDER_BUYING_POOL.len(), 6, "the buying tag's own rows");
+        assert_eq!(
+            WANDER_UNCOMMON_POOL.len(),
+            15,
+            "the uncommon tag's own rows"
+        );
+        assert_eq!(WANDER_COMMON_POOL.len(), 76, "the common tag's own rows");
+        // THE AMOUNTS (the trade_set jsons — buying 2.0 / uncommon 2.0
+        // / common 5.0 the calculateNumberOfTrades walk evaluates)
+        assert_eq!(WANDER_BUYING_AMOUNT, 2);
+        assert_eq!(WANDER_UNCOMMON_AMOUNT, 2);
+        assert_eq!(WANDER_COMMON_AMOUNT, 5);
+        // THE SPOT ROWS (the entries' own words the census speaks):
+        // the water-bucket buy [wants 1 -> 2 emeralds, max_uses 2],
+        // the baked-potato buy [x4 -> 1 emerald], the acacia log
+        // [1 emerald -> 8 logs, the codec's 4 max_uses default the
+        // absent word wears], the enchanted pickaxe [the 1-use rare]
+        let wb = WANDER_BUYING_POOL
+            .iter()
+            .find(|r| r.0 == "water_bucket")
+            .unwrap();
+        assert_eq!((wb.1, wb.2, wb.3, wb.4, wb.5), (1, "emerald", 2, 2, 1));
+        let bp = WANDER_BUYING_POOL
+            .iter()
+            .find(|r| r.0 == "baked_potato")
+            .unwrap();
+        assert_eq!((bp.1, bp.3, bp.4), (4, 1, 2));
+        let acacia = WANDER_UNCOMMON_POOL
+            .iter()
+            .find(|r| r.2 == "acacia_log")
+            .unwrap();
+        assert_eq!(
+            (acacia.0, acacia.1, acacia.3, acacia.4, acacia.5),
+            ("emerald", 1, 8, 4, 1)
+        );
+        let pick = WANDER_UNCOMMON_POOL
+            .iter()
+            .find(|r| r.2 == "iron_pickaxe")
+            .unwrap();
+        assert_eq!((pick.1, pick.4, pick.5), (1, 1, 1));
+        // THE TAG'S OWN ORDER (the census arrays the jsons' value
+        // order wears — the first uncommon row the packed ice speaks)
+        assert_eq!(WANDER_UNCOMMON_POOL[0].2, "packed_ice");
+        assert_eq!(WANDER_COMMON_POOL[0].2, "white_dye");
+    }
+
+    /// THE GENERATION'S OWN WALK (javap `WanderingTrader.updateTrades`
+    /// + `addOffersFromItemListingsWithoutDuplicates`): the nine
+    /// offers the three amounts bank, the ORDER the updateTrades walk
+    /// lays [buying 0..2, uncommon 2..4, common 4..9], the
+    /// no-repeat law the without-duplicates sets keep, the guards
+    /// [max_uses >= 1, xp >= 0, the fresh uses 0], the determinism
+    /// the same seed keeps.
+    #[test]
+    fn the_wanderer_generation_the_updatetrades_order_wears() {
+        let offers = wandering_trader_generate_offers(&mut Lcg::new(42));
+        // THE NINE (the 2 + 2 + 5 the amounts bank)
+        assert_eq!(offers.len(), 9, "the three sets the nine offers wear");
+        // THE ORDER (the updateTrades pc 5-32 walk — the buying set
+        // the first pair answers, the uncommon the second, the common
+        // the last five)
+        for o in &offers[..2] {
+            assert!(
+                WANDER_BUYING_POOL.iter().any(|r| r.0 == o.cost_a.0),
+                "the first pair the buying pool wears"
+            );
+            assert_eq!(
+                o.result.0, "emerald",
+                "the buying set the emerald gives wears"
+            );
+        }
+        for o in &offers[2..4] {
+            assert!(
+                WANDER_UNCOMMON_POOL.iter().any(|r| r.2 == o.result.0),
+                "the second pair the uncommon pool wears"
+            );
+        }
+        for o in &offers[4..] {
+            assert!(
+                WANDER_COMMON_POOL.iter().any(|r| r.2 == o.result.0),
+                "the last five the common pool wears"
+            );
+        }
+        // THE NO-REPEAT LAW (the without-duplicates walk — the picked
+        // entry the list loses, the set the repeats never wears; the
+        // FULL row the entry's own identity keys — the pools the
+        // wants side the repeats share [the common set the emerald
+        // x1 wants the dozens the distinct gives speak], the row
+        // tuple the data's own uniqueness answers)
+        for span in [0..2usize, 2..4, 4..9] {
+            let mut rows: Vec<(&str, i32, &str, i32, i32, i32)> = offers[span.clone()]
+                .iter()
+                .map(|o| {
+                    (
+                        o.cost_a.0, o.cost_a.1, o.result.0, o.result.1, o.max_uses, o.xp,
+                    )
+                })
+                .collect();
+            rows.sort_unstable();
+            let count = rows.len();
+            rows.dedup();
+            assert_eq!(rows.len(), count, "the set the no-repeat law keeps");
+        }
+        // THE GUARDS (the getOffer's own floors + the fresh uses)
+        for o in &offers {
+            assert!(o.max_uses >= 1, "the max_uses the max(x, 1) floor keeps");
+            assert!(o.xp >= 0, "the xp the max(x, 0) floor keeps");
+            assert_eq!(o.uses, 0, "the fresh offer the uses the 0 keeps");
+            assert!(!o.out_of_stock(), "the fresh offer the stock wears");
+        }
+        // THE DETERMINISM (the same seed the same picks)
+        let again = wandering_trader_generate_offers(&mut Lcg::new(42));
+        assert_eq!(offers, again, "the same seed the same offers");
+        // THE DIFFERENT SEED the different picks the pool's own
+        // spread wears (the 6-pick buying pool the pair the seed
+        // varies — the C(6,2)=15 distinct pairs the spread speaks)
+        let other = wandering_trader_generate_offers(&mut Lcg::new(43));
+        let a: Vec<_> = offers[..2].iter().map(|o| o.cost_a.0).collect();
+        let b: Vec<_> = other[..2].iter().map(|o| o.cost_a.0).collect();
+        assert!(a != b || offers[4] != other[4], "the seed the picks vary");
+    }
+
+    /// THE ENSURE'S OWN ARM (the spawn/merge sites the walk serves):
+    /// the trader kind the nine offers wear, the id the same seed the
+    /// same offers bank, the already-armed the walk never re-rolls,
+    /// the non-trader the honest empty keeps.
+    #[test]
+    fn the_wanderer_ensure_the_seed_the_wire_banks() {
+        let mut trader = Zombie::new(77, 0.0, 64.0, 0.0, 9000);
+        trader.kind = MobKind::WanderingTrader;
+        trader.ensure_trader_offers();
+        assert_eq!(
+            trader.trader_offers.len(),
+            9,
+            "the ensure the nine offers arms"
+        );
+        // THE ID THE SEED BANKS (the entity_voice_seed the same
+        // stream the wire id speaks — the position the seed never is)
+        let mut twin = Zombie::new(77, 123.5, 64.0, -7.0, 1);
+        twin.kind = MobKind::WanderingTrader;
+        twin.ensure_trader_offers();
+        assert_eq!(
+            trader.trader_offers, twin.trader_offers,
+            "the id the seed keeps"
+        );
+        // THE ALREADY-ARMED (the walk never re-rolls — the uses the
+        // notify walk banked the ensure preserves)
+        trader.trader_offers[0].uses = 3;
+        trader.ensure_trader_offers();
+        assert_eq!(
+            trader.trader_offers[0].uses, 3,
+            "the armed walk never re-rolls"
+        );
+        // THE NON-TRADER (the honest empty keeps)
+        let mut zombie = Zombie::new(5, 0.0, 64.0, 0.0, 1);
+        zombie.ensure_trader_offers();
+        assert!(
+            zombie.trader_offers.is_empty(),
+            "the zombie the empty keeps"
+        );
+    }
+
+    /// THE VIEW'S OWN PROJECTION (the MerchantOfferView the window
+    /// wears): the item ids the registry's reverse lookup resolves —
+    /// the NINE the census's own cross-check the drop never arms,
+    /// the (id, count) pairs the rows' own words answer.
+    #[test]
+    fn the_wanderer_views_the_registry_ids_wear() {
+        let offers = wandering_trader_generate_offers(&mut Lcg::new(7));
+        let views = wandering_trader_offer_views(&offers);
+        assert_eq!(views.len(), 9, "the 97-id cross-check the drop never arms");
+        for (o, v) in offers.iter().zip(views.iter()) {
+            let want_id = mc_registry::item_id_by_name(o.cost_a.0).unwrap();
+            let give_id = mc_registry::item_id_by_name(o.result.0).unwrap();
+            assert_eq!(
+                v.cost_a,
+                (want_id, o.cost_a.1),
+                "the cost the pair resolves"
+            );
+            assert_eq!(v.cost_b, None, "the second cost the None keeps");
+            assert_eq!(
+                v.result,
+                (give_id, o.result.1),
+                "the result the pair resolves"
+            );
+            assert_eq!((v.uses, v.max_uses, v.xp), (o.uses, o.max_uses, o.xp));
+            assert_eq!(v.out_of_stock, o.out_of_stock());
+        }
+        // THE EMERALD'S OWN ID (the buying set the emerald gives —
+        // the registry id the wire's own item order wears)
+        let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+        assert!(views[..2].iter().all(|v| v.result.0 == emerald));
     }
 
     /// THE UNDERCOAT'S OWN GATE (javap SheepWoolUndercoatLayer.submit's
