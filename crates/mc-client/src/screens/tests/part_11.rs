@@ -37650,3 +37650,96 @@ fn the_container_correction_the_instant_ship_wears() {
     }
     assert!(rx.try_recv().is_err(), "the lane the tail keeps empty");
 }
+
+/// THE MERCHANT'S OWN TRADE-SOUND SILENCE (javap 26.2 MerchantMenu.
+/// playTradeSound — the 470 census scripts/jar_work/tradesound_472.txt
+/// the jar's own bytes speak): the quickMoveStack pc 74 tail the ONLY
+/// call site the class wears, the guard `trader.isClientSide()`
+/// ifne 54 the client's own predicted walk the early return keeps
+/// [the ClientSideMerchant.isClientSide the source player's level
+/// word reads — always true on the client], the server's own body
+/// the Level.playLocalSound(DDD…) base the EMPTY code=1 `return`
+/// wears [the ServerLevel the override never declares] — the sound
+/// the vanilla bytes THEMSELVES never play. THE PIN: the full trade
+/// family the port's walks serve (the row press + the take click +
+/// the shift-click quick-move the result rides home) the ui_sounds
+/// lane the EMPTY law keeps — the silence the exact fidelity wears,
+/// the trade the walks the same bytes apply (the uses the notify
+/// increments, the costs the take drains, the result the hotbar cell
+/// re-speaks — the walks the sound never broke).
+#[test]
+fn the_merchant_trade_sound_the_dead_code_silence_wears() {
+    use crate::world_view::MerchantOfferView;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+
+    // THE OFFLINE CANVAS (the trade-family's own shape — the offer
+    // the round's own bank wears, the press the fill walk serves)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app.merchant_row_rects = vec![(100, 100, 0)];
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+
+    // ===== ARM A — THE PLAIN TAKE'S OWN SILENCE (the row press the
+    // fill walk serves, the take click the safeTake answers — the
+    // trade the same bytes apply, the ui_sounds lane the EMPTY law
+    // keeps: no push the walk's own tail speaks) =====
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the row's seat the press consumes"
+    );
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the trade the notify's own walk applies — the silence no broken walk wears"
+    );
+    assert_eq!(app.merchant_xp, 5, "the xp the reward speaks");
+    assert!(
+        app.ui_sounds.is_empty(),
+        "the take's own walk the trade sound never pushes — the vanilla dead code the port's lane keeps"
+    );
+
+    // ===== ARM B — THE QUICK-MOVE'S OWN SILENCE (the playTradeSound
+    // tail pc 74 the vanilla bytes never let speak: the guard the
+    // client's own walk returns, the empty base the server's own
+    // body never overrides — the refill's press the fresh result
+    // wears, the shift-click the result rides home, the ui_sounds
+    // lane the EMPTY law keeps) =====
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the refill the press serves — the fresh result the match wears"
+    );
+    app.merchant_carried = (0, 0);
+    app.shift_down = true;
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_slots[38],
+        (bread, 1),
+        "the second trade the quick-move rides home — the silence no broken walk wears"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 2,
+        "the uses the second notify speaks"
+    );
+    assert!(
+        app.ui_sounds.is_empty(),
+        "the quick-move's own tail the dead code never speaks — the ui_sounds lane the press walk alone wears"
+    );
+    app.shift_down = false;
+}

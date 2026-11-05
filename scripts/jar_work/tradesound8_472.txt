@@ -1,0 +1,23 @@
+== net/minecraft/world/entity/npc/ClientSideMerchant.class
+== net/minecraft/client/multiplayer/ClientPacketListener.class
+== net/minecraft/world/entity/npc/villager/AbstractVillager.class
+  METHOD isClientSide ()Z  (code=11)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/ClientSideMerchant.source:Lnet/minecraft/world/entity/player/Player;
+    4: invokevirtual net/minecraft/world/entity/player/Player.level:()Lnet/minecraft/world/level/Level;
+    7: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    10: ireturn
+  METHOD getNotifyTradeSound ()Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_YES:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+
+
+  METHOD getNotifyTradeSound ()Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_YES:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+  METHOD isClientSide ()Z  (code=8)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/AbstractVillager.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    7: ireturn
+

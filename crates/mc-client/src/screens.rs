@@ -33866,7 +33866,20 @@ impl App {
     /// quickMoveStack pcs 43-77 — the source-2 arm the moveItemStackTo(
     /// 3, 39, true) reversed walk the hotbar head wears, the
     /// onQuickCraft + the playTradeSound the move's own tail speaks
-    /// [the sound the port's lane never wears — no audio infra], the
+    /// [the DEAD-CODE SILENCE the 470 census scripts/jar_work/
+    /// tradesound_472.txt the jar's own bytes speak: the call site
+    /// quickMoveStack pc 74 the ONLY one the class wears, the guard
+    /// `trader.isClientSide()` ifne 54 the client's own predicted
+    /// walk the early return keeps — the ClientSideMerchant the
+    /// source player's level the word reads, always true on the
+    /// client — and the server's own body the Level.playLocalSound
+    /// (DDD…) base the EMPTY code=1 `return` wears, the ServerLevel
+    /// the override never declares: the sound the vanilla bytes
+    /// THEMSELVES never play, the port's silence the exact fidelity
+    /// keeps; the real post-trade voice the server's own
+    /// AbstractVillager.notifyTrade ambientSoundTime reset the
+    /// ambient tick the soon voice arms, the entity-sound packet the
+    /// port's drains already bank], the
     /// onTake pc 204-209 the SAME trade apply the shift-click arm
     /// answers). THE LIVE LANE the echo + the local walk the same
     /// prediction the vanilla client wears.

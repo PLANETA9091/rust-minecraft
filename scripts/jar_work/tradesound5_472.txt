@@ -1,0 +1,62 @@
+== net/minecraft/world/level/Level.class
+== net/minecraft/world/entity/npc/villager/AbstractVillager.class
+== net/minecraft/world/entity/npc/villager/Villager.class
+== net/minecraft/world/entity/npc/WanderingTrader.class: ABSENT
+  METHOD playLocalSound (Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (code=40)
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    5: i2d
+    6: ldc2_w 0.5
+    9: dadd
+    10: aload_1
+    11: invokevirtual net/minecraft/core/BlockPos.getY:()I
+    14: i2d
+    15: ldc2_w 0.5
+    18: dadd
+    19: aload_1
+    20: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    23: i2d
+    24: ldc2_w 0.5
+    27: dadd
+    28: aload_2
+    29: aload_3
+    30: op_17 4
+    32: op_17 5
+    34: iload 6
+    36: invokevirtual net/minecraft/world/level/Level.playLocalSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    39: return
+  METHOD playLocalSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=1)
+    0: return
+  METHOD playLocalSound (DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (code=1)
+    0: return
+
+  METHOD notifyTrade (Lnet/minecraft/world/item/trading/MerchantOffer;)V  (code=47)
+    0: aload_1
+    1: invokevirtual net/minecraft/world/item/trading/MerchantOffer.increaseUses:()V
+    4: aload_0
+    5: aload_0
+    6: invokevirtual net/minecraft/world/entity/npc/villager/AbstractVillager.getAmbientSoundInterval:()I
+    9: ineg
+    10: putfield net/minecraft/world/entity/npc/villager/AbstractVillager.ambientSoundTime:I
+    13: aload_0
+    14: aload_1
+    15: invokevirtual net/minecraft/world/entity/npc/villager/AbstractVillager.rewardTradeXp:(Lnet/minecraft/world/item/trading/MerchantOffer;)V
+    18: aload_0
+    19: getfield net/minecraft/world/entity/npc/villager/AbstractVillager.tradingPlayer:Lnet/minecraft/world/entity/player/Player;
+    22: instanceof net/minecraft/server/level/ServerPlayer
+    25: ifeq 46
+    28: getstatic net/minecraft/advancements/triggers/CriteriaTriggers.TRADE:Lnet/minecraft/advancements/triggers/TradeTrigger;
+    31: aload_0
+    32: getfield net/minecraft/world/entity/npc/villager/AbstractVillager.tradingPlayer:Lnet/minecraft/world/entity/player/Player;
+    35: checkcast net/minecraft/server/level/ServerPlayer
+    38: aload_0
+    39: aload_1
+    40: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getResult:()Lnet/minecraft/world/item/ItemStack;
+    43: invokevirtual net/minecraft/advancements/triggers/TradeTrigger.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;Lnet/minecraft/world/item/ItemStack;)V
+    46: return
+  METHOD getNotifyTradeSound ()Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_YES:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+
+

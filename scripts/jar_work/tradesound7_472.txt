@@ -1,0 +1,284 @@
+== net/minecraft/world/level/Level.class
+== net/minecraft/client/multiplayer/ClientLevel.class
+  FIELD soundSeedGenerator:Lnet/minecraft/util/RandomSource; flags=0x12
+  METHOD playSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=40)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    6: i2d
+    7: ldc2_w 0.5
+    10: dadd
+    11: aload_2
+    12: invokevirtual net/minecraft/core/BlockPos.getY:()I
+    15: i2d
+    16: ldc2_w 0.5
+    19: dadd
+    20: aload_2
+    21: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    24: i2d
+    25: ldc2_w 0.5
+    28: dadd
+    29: aload_3
+    30: aload 4
+    32: op_17 5
+    34: op_17 6
+    36: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    39: return
+  METHOD playSeededSound (Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFJ)V  (code=29)
+    0: aload_0
+    1: aload_1
+    2: op_28
+    3: op_18 4
+    5: op_18 6
+    7: getstatic net/minecraft/core/registries/BuiltInRegistries.SOUND_EVENT:Lnet/minecraft/core/Registry;
+    10: aload 8
+    12: invokeinterface net/minecraft/core/Registry.wrapAsHolder:(Ljava/lang/Object;)Lnet/minecraft/core/Holder;
+    17: aload 9
+    19: op_17 10
+    21: op_17 11
+    23: lload 12
+    25: invokevirtual net/minecraft/world/level/Level.playSeededSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FFJ)V
+    28: return
+  METHOD playSound (Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;)V  (code=17)
+    0: aload_0
+    1: aload_1
+    2: op_28
+    3: op_18 4
+    5: op_18 6
+    7: aload 8
+    9: aload 9
+    11: op_0c
+    12: op_0c
+    13: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    16: return
+  METHOD playSound (Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=28)
+    0: aload_0
+    1: aload_1
+    2: op_28
+    3: op_18 4
+    5: op_18 6
+    7: aload 8
+    9: aload 9
+    11: op_17 10
+    13: op_17 11
+    15: aload_0
+    16: getfield net/minecraft/world/level/Level.soundSeedGenerator:Lnet/minecraft/util/RandomSource;
+    19: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+    24: invokevirtual net/minecraft/world/level/Level.playSeededSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFJ)V
+    27: return
+  METHOD playSound (Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FF)V  (code=28)
+    0: aload_0
+    1: aload_1
+    2: op_28
+    3: op_18 4
+    5: op_18 6
+    7: aload 8
+    9: aload 9
+    11: op_17 10
+    13: op_17 11
+    15: aload_0
+    16: getfield net/minecraft/world/level/Level.soundSeedGenerator:Lnet/minecraft/util/RandomSource;
+    19: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+    24: invokevirtual net/minecraft/world/level/Level.playSeededSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FFJ)V
+    27: return
+  METHOD playSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=31)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: getstatic net/minecraft/core/registries/BuiltInRegistries.SOUND_EVENT:Lnet/minecraft/core/Registry;
+    6: aload_3
+    7: invokeinterface net/minecraft/core/Registry.wrapAsHolder:(Ljava/lang/Object;)Lnet/minecraft/core/Holder;
+    12: aload 4
+    14: op_17 5
+    16: op_17 6
+    18: aload_0
+    19: getfield net/minecraft/world/level/Level.soundSeedGenerator:Lnet/minecraft/util/RandomSource;
+    22: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+    27: invokevirtual net/minecraft/world/level/Level.playSeededSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FFJ)V
+    30: return
+  METHOD playLocalSound (Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (code=40)
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    5: i2d
+    6: ldc2_w 0.5
+    9: dadd
+    10: aload_1
+    11: invokevirtual net/minecraft/core/BlockPos.getY:()I
+    14: i2d
+    15: ldc2_w 0.5
+    18: dadd
+    19: aload_1
+    20: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    23: i2d
+    24: ldc2_w 0.5
+    27: dadd
+    28: aload_2
+    29: aload_3
+    30: op_17 4
+    32: op_17 5
+    34: iload 6
+    36: invokevirtual net/minecraft/world/level/Level.playLocalSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    39: return
+  METHOD playLocalSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=1)
+    0: return
+  METHOD playLocalSound (DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (code=1)
+    0: return
+  METHOD playPlayerSound (Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=1)
+    0: return
+
+  FIELD rainSoundTime:I flags=0x2
+  METHOD playSeededSound (Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FFJ)V  (code=40)
+    0: aload_1
+    1: aload_0
+    2: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    5: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    8: if_acmpne 39
+    11: aload_0
+    12: op_28
+    13: op_18 4
+    15: op_18 6
+    17: aload 8
+    19: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    24: checkcast net/minecraft/sounds/SoundEvent
+    27: aload 9
+    29: op_17 10
+    31: op_17 11
+    33: iconst_0
+    34: lload 12
+    36: invokevirtual net/minecraft/client/multiplayer/ClientLevel.playSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZJ)V
+    39: return
+  METHOD playSeededSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FFJ)V  (code=48)
+    0: aload_1
+    1: aload_0
+    2: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    5: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    8: if_acmpne 47
+    11: aload_0
+    12: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    15: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    18: new net/minecraft/client/resources/sounds/EntityBoundSoundInstance
+    21: dup
+    22: aload_3
+    23: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    28: checkcast net/minecraft/sounds/SoundEvent
+    31: aload 4
+    33: op_17 5
+    35: op_17 6
+    37: aload_2
+    38: lload 7
+    40: invokespecial net/minecraft/client/resources/sounds/EntityBoundSoundInstance.<init>:(Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFLnet/minecraft/world/entity/Entity;J)V
+    43: invokevirtual net/minecraft/client/sounds/SoundManager.play:(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;
+    46: pop
+    47: return
+  METHOD playLocalSound (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=35)
+    0: aload_0
+    1: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    4: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    7: new net/minecraft/client/resources/sounds/EntityBoundSoundInstance
+    10: dup
+    11: aload_2
+    12: aload_3
+    13: op_17 4
+    15: op_17 5
+    17: aload_1
+    18: aload_0
+    19: getfield net/minecraft/client/multiplayer/ClientLevel.random:Lnet/minecraft/util/RandomSource;
+    22: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+    27: invokespecial net/minecraft/client/resources/sounds/EntityBoundSoundInstance.<init>:(Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFLnet/minecraft/world/entity/Entity;J)V
+    30: invokevirtual net/minecraft/client/sounds/SoundManager.play:(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;
+    33: pop
+    34: return
+  METHOD playPlayerSound (Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V  (code=50)
+    0: aload_0
+    1: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    4: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    7: ifnull 49
+    10: aload_0
+    11: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    14: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    17: new net/minecraft/client/resources/sounds/EntityBoundSoundInstance
+    20: dup
+    21: aload_1
+    22: aload_2
+    23: op_25
+    24: op_17 4
+    26: aload_0
+    27: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    30: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    33: aload_0
+    34: getfield net/minecraft/client/multiplayer/ClientLevel.random:Lnet/minecraft/util/RandomSource;
+    37: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+    42: invokespecial net/minecraft/client/resources/sounds/EntityBoundSoundInstance.<init>:(Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFLnet/minecraft/world/entity/Entity;J)V
+    45: invokevirtual net/minecraft/client/sounds/SoundManager.play:(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;
+    48: pop
+    49: return
+  METHOD playLocalSound (DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (code=28)
+    0: aload_0
+    1: op_27
+    2: op_29
+    3: op_18 5
+    5: aload 7
+    7: aload 8
+    9: op_17 9
+    11: op_17 10
+    13: iload 11
+    15: aload_0
+    16: getfield net/minecraft/client/multiplayer/ClientLevel.random:Lnet/minecraft/util/RandomSource;
+    19: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+    24: invokevirtual net/minecraft/client/multiplayer/ClientLevel.playSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZJ)V
+    27: return
+  METHOD playSound (DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZJ)V  (code=109)
+    0: aload_0
+    1: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    4: getfield net/minecraft/client/Minecraft.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+    7: invokevirtual net/minecraft/client/renderer/GameRenderer.mainCamera:()Lnet/minecraft/client/Camera;
+    10: invokevirtual net/minecraft/client/Camera.position:()Lnet/minecraft/world/phys/Vec3;
+    13: op_27
+    14: op_29
+    15: op_18 5
+    17: invokevirtual net/minecraft/world/phys/Vec3.distanceToSqr:(DDD)D
+    20: dstore 14
+    22: new net/minecraft/client/resources/sounds/SimpleSoundInstance
+    25: dup
+    26: aload 7
+    28: aload 8
+    30: op_17 9
+    32: op_17 10
+    34: lload 12
+    36: invokestatic net/minecraft/util/RandomSource.create:(J)Lnet/minecraft/util/RandomSource;
+    39: op_27
+    40: op_29
+    41: op_18 5
+    43: invokespecial net/minecraft/client/resources/sounds/SimpleSoundInstance.<init>:(Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFLnet/minecraft/util/RandomSource;DDD)V
+    46: astore 16
+    48: iload 11
+    50: ifeq 95
+    53: op_18 14
+    55: ldc2_w 100.0
+    58: dcmpl
+    59: ifle 95
+    62: op_18 14
+    64: invokestatic java/lang/Math.sqrt:(D)D
+    67: ldc2_w 40.0
+    70: op_6f
+    71: dstore 17
+    73: aload_0
+    74: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    77: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    80: aload 16
+    82: op_18 17
+    84: ldc2_w 20.0
+    87: dmul
+    88: d2i
+    89: invokevirtual net/minecraft/client/sounds/SoundManager.playDelayed:(Lnet/minecraft/client/resources/sounds/SoundInstance;I)V
+    92: goto 108
+    95: aload_0
+    96: getfield net/minecraft/client/multiplayer/ClientLevel.minecraft:Lnet/minecraft/client/Minecraft;
+    99: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    102: aload 16
+    104: invokevirtual net/minecraft/client/sounds/SoundManager.play:(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;
+    107: pop
+    108: return
+

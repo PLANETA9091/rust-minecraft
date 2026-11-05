@@ -1,0 +1,25 @@
+== net/minecraft/client/gui/screens/inventory/MerchantScreen.class
+  METHOD postButtonClick ()V  (code=50)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    4: checkcast net/minecraft/world/inventory/MerchantMenu
+    7: aload_0
+    8: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    11: invokevirtual net/minecraft/world/inventory/MerchantMenu.setSelectionHint:(I)V
+    14: aload_0
+    15: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    18: checkcast net/minecraft/world/inventory/MerchantMenu
+    21: aload_0
+    22: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    25: invokevirtual net/minecraft/world/inventory/MerchantMenu.tryMoveItems:(I)V
+    28: aload_0
+    29: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.minecraft:Lnet/minecraft/client/Minecraft;
+    32: invokevirtual net/minecraft/client/Minecraft.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+    35: new net/minecraft/network/protocol/game/ServerboundSelectTradePacket
+    38: dup
+    39: aload_0
+    40: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    43: invokespecial net/minecraft/network/protocol/game/ServerboundSelectTradePacket.<init>:(I)V
+    46: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.send:(Lnet/minecraft/network/protocol/Packet;)V
+    49: return
+
