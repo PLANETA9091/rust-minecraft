@@ -1,0 +1,2 @@
+== assets/minecraft/lang/en_us.json: 1 traded keys
+   stat.minecraft.traded_with_villager = Traded with Villagers

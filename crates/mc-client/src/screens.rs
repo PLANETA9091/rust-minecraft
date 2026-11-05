@@ -261,6 +261,14 @@ pub struct StatsCounter {
     pub jump: i64,
     /// `stat.deaths` — the die walk the actually_hurt verdict banks
     pub deaths: i64,
+    /// `stat.minecraft.traded_with_villager` — the trade takes the
+    /// result slot's own onTake awardStat ride banks (the 471 census
+    /// scripts/jar_work/traded_473.txt the pc 69-73 the SUCCESS arm
+    /// speaks — the notify pc 59-64 the award wears BEFORE the
+    /// setItem pc 76-93 walk-back answers, the failed take the ifeq
+    /// 96 arm the silence keeps; the DEFAULT formatter the plain
+    /// count wears)
+    pub traded_with_villager: i64,
     /// `stat_type.minecraft.mined` — the block kinds the survival dig
     /// banks (the vanilla Stats.MINED the Block-keyed map wears; the
     /// BTreeMap the rows' stable order keeps)
@@ -33954,8 +33962,11 @@ impl App {
     /// update re-speaks], THE XP'S OWN REWARD the offer's existence
     /// rides [pc 96-114 — the overrideXp(getVillagerXp() +
     /// offer.getXp()) walk even the failed take answers], the stat
-    /// lane the port's word set never wears [pc 69-73 the
-    /// TRADED_WITH_VILLAGER the later round re-lays], the recompute
+    /// lane the success arm's own award wears [pc 69-73 the
+    /// TRADED_WITH_VILLAGER the 471 round re-lays — the notify
+    /// pc 59-64 the award wears BEFORE the setItem pc 76-93
+    /// walk-back answers, the failed take the ifeq 96 arm the
+    /// silence keeps], the recompute
     /// the seats' writes re-speaks.
     fn merchant_result_take(&mut self) {
         // THE ACTIVE OFFER'S OWN BANK (javap MerchantContainer.
@@ -33980,15 +33991,18 @@ impl App {
             let o = &mut self.merchant_offers[idx];
             o.uses += 1;
             o.out_of_stock = o.uses >= o.max_uses;
+            // THE STAT'S OWN RIDE (pc 69-73 — the awardStat
+            // TRADED_WITH_VILLAGER the success arm wears — the notify
+            // pc 59-64 the award speaks BEFORE the setItem pc 76-93
+            // walk-back answers, the failed take the ifeq 96 arm the
+            // award never wears)
+            self.stats.traded_with_villager += 1;
             // THE SETITEM'S OWN WALK-BACK (pc 76-93 — the shrunk
             // stacks the seats re-wear, the isPaymentSlot gate the
             // update re-speaks)
             self.merchant_slots[0] = a2;
             self.merchant_slots[1] = b2;
         }
-        // THE STAT'S OWN RIDE (pc 69-73 — the awardStat
-        // TRADED_WITH_VILLAGER the port's stat lane the later round
-        // re-lays)
         // THE XP'S OWN REWARD (pc 96-114 — the offer's existence the
         // overrideXp walk rides — even the failed take the reward
         // wears, the getVillagerXp + the offer's own xp the sum
@@ -91491,6 +91505,12 @@ impl App {
                 self.stats.deaths.to_string(),
             ));
         }
+        if self.stats.traded_with_villager > 0 {
+            rows.push((
+                tr("stat.minecraft.traded_with_villager").unwrap_or("Traded with Villagers"),
+                self.stats.traded_with_villager.to_string(),
+            ));
+        }
         rows
     }
 
@@ -91562,14 +91582,14 @@ impl App {
     /// .handleAwardStats`'s walk — `this.stats.setValue(entry.getKey(),
     /// entry.getValue())` the SET law the wire's own map speaks, the
     /// client's own counters the server's truth REPLACES): the custom
-    /// category the seven own lanes set, the combat pairs the entity
+    /// category the eight own lanes set, the combat pairs the entity
     /// name resolves, the mined/crafted the block/item registry orders
     /// answer. The unknown words the honest skip keeps — the merge
     /// never guesses.
     pub fn merge_award_stats(&mut self, entries: &[mc_protocol::play::AwardStatEntry]) {
         for e in entries {
             match e.category.as_str() {
-                // THE CUSTOM STATS' OWN SET (the seven the General tab
+                // THE CUSTOM STATS' OWN SET (the eight the General tab
                 // serves — the wire's word the counter's own field
                 // replaces, the unknown customs the skip keeps)
                 "custom" => match e.value.as_str() {
@@ -91580,6 +91600,7 @@ impl App {
                     "swim_one_cm" => self.stats.swim_cm = e.count as i64,
                     "jump" => self.stats.jump = e.count as i64,
                     "deaths" => self.stats.deaths = e.count as i64,
+                    "traded_with_villager" => self.stats.traded_with_villager = e.count as i64,
                     _ => {}
                 },
                 // THE COMBAT PAIRS' OWN RESOLVE (the killed map the
@@ -91698,10 +91719,10 @@ impl App {
                 root.insert("minecraft:killed_by".into(), serde_json::Value::Object(m));
             }
         }
-        // THE CUSTOM CATEGORY (the seven the counter's own fields
+        // THE CUSTOM CATEGORY (the eight the counter's own fields
         // keep — the nonzero the sparse law writes)
         let mut m = serde_json::Map::new();
-        let customs: [(&str, i64); 7] = [
+        let customs: [(&str, i64); 8] = [
             ("play_time", s.play_time),
             ("sneak_time", s.sneak_time),
             ("walk_one_cm", s.walk_cm),
@@ -91709,6 +91730,7 @@ impl App {
             ("swim_one_cm", s.swim_cm),
             ("jump", s.jump),
             ("deaths", s.deaths),
+            ("traded_with_villager", s.traded_with_villager),
         ];
         for (word, count) in customs {
             if count == 0 {
@@ -91728,7 +91750,7 @@ impl App {
     /// keeps: the mined the NAME_OF position inverse answers, the
     /// crafted the item id inverse banks, the killed the static id
     /// walk resolves, the killed-by the display tr the SAME resolve
-    /// the wire merge wears, the custom the seven words the fields
+    /// the wire merge wears, the custom the eight words the fields
     /// speak). THE NESTED GUARD the modern shape only wears — the
     /// `stats` object the file keeps, the absent object the legacy
     /// flat rows the 1.12 decode answers.
@@ -91782,6 +91804,7 @@ impl App {
                     "swim_one_cm" => s.swim_cm = count,
                     "jump" => s.jump = count,
                     "deaths" => s.deaths = count,
+                    "traded_with_villager" => s.traded_with_villager = count,
                     _ => {}
                 }
             }

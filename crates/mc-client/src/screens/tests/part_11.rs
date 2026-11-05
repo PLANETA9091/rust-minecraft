@@ -37743,3 +37743,140 @@ fn the_merchant_trade_sound_the_dead_code_silence_wears() {
     );
     app.shift_down = false;
 }
+
+/// THE TRADED STAT'S OWN ON-TAKE RIDE (javap 26.2 MerchantResultSlot
+/// .onTake — the 120 bytes the 471 census scripts/jar_work/
+/// traded_473.txt the jar's own bytes speak): the awardStat
+/// TRADED_WITH_VILLAGER pc 69-73 the SUCCESS arm wears — the take's
+/// direct pair pc 37-45 the notify pc 59-64 speaks, the award the
+/// setItem pc 76-93 walk-back wears BEFORE, the swapped pair pc 48-56
+/// the same arm answers, the failed take the ifeq 96 arm the award
+/// never wears, the XP pc 96-114 the unconditional tail keeps. The
+/// DEFAULT formatter the plain count wears — the General tab the
+/// nonzero row serves, the wire merge the SET law answers, the file
+/// the sparse law speaks.
+#[test]
+fn the_traded_stat_the_on_take_ride_wears() {
+    use crate::world_view::MerchantOfferView;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+
+    // THE OFFLINE CANVAS (the trade-family's own shape — the fresh
+    // session the traded counter the zero keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app.merchant_row_rects = vec![(100, 100, 0)];
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    assert_eq!(
+        app.stats.traded_with_villager, 0,
+        "the fresh session the counter the zero wears"
+    );
+
+    // ===== ARM A — THE SUCCESS ARM'S OWN AWARD (pc 69-73 — the
+    // direct pair's take the notify pc 59-64 speaks, the award the
+    // setItem pc 76-93 walk-back wears BEFORE: the plain take the
+    // counter the +1 banks, the uses the same notify wears) =====
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the row's seat the press consumes"
+    );
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.stats.traded_with_villager, 1,
+        "the take's own walk the awardStat ride banks — the success arm the +1 wears"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the notify walk the same take wears"
+    );
+
+    // ===== ARM B — THE FAILED TAKE'S OWN SILENCE (pc 56's ifeq arm —
+    // the unsatisfied costs the row press the EMPTY result wears, the
+    // take click the empty seat the walk never enters: the counter
+    // the same 1 keeps, the uses the same count wears) =====
+    app.merchant_carried = (0, 0);
+    app.merchant_widget_press(104, 104);
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.stats.traded_with_villager, 1,
+        "the failed take the award never wears — the ifeq 96 arm the silence keeps"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the failed take the notify never speaks"
+    );
+
+    // ===== ARM C — THE QUICK-MOVE'S OWN AWARD (the same onTake the
+    // shift-click arm answers — the refill's press the fresh result
+    // wears, the ride home the +1 banks) =====
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the refill the press serves — the fresh result the match wears"
+    );
+    app.merchant_carried = (0, 0);
+    app.shift_down = true;
+    app.click_merchant_slot(50, 10, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.stats.traded_with_villager, 2,
+        "the quick-move's own onTake the same award banks"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 2,
+        "the uses the second notify speaks"
+    );
+
+    // ===== ARM D — THE LANES' OWN SERVE (the General row the nonzero
+    // count the tab wears, the wire merge the SET law answers, the
+    // file the round trip the same count re-banks, the zero the
+    // sparse law never writes) =====
+    let rows = app.stats_general_rows();
+    assert!(
+        rows.iter()
+            .any(|(k, v)| *k == "Traded with Villagers" && v == "2"),
+        "the General tab the traded row the plain count wears"
+    );
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "custom".to_string(),
+        value: "traded_with_villager".to_string(),
+        value_id: 0,
+        count: 7,
+    }]);
+    assert_eq!(
+        app.stats.traded_with_villager, 7,
+        "the wire's own word the SET law the field replaces"
+    );
+    let v = app.stats_save_json();
+    assert_eq!(
+        v["stats"]["minecraft:custom"]["minecraft:traded_with_villager"], 7,
+        "the file the counter's own word speaks"
+    );
+    let mut fresh = App::new(3);
+    fresh.stats_load_json(&v);
+    assert_eq!(
+        fresh.stats.traded_with_villager, 7,
+        "the restart the same count the field re-banks"
+    );
+    let empty = App::new(3);
+    let ev = empty.stats_save_json();
+    assert!(
+        ev["stats"]["minecraft:custom"].is_null(),
+        "the zero count the sparse law the custom category never writes"
+    );
+}
