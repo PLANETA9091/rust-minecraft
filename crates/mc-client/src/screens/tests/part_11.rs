@@ -36278,3 +36278,144 @@ fn the_merchant_title_row_the_level_words_wear() {
         "the custom name the arg0 seat wears"
     );
 }
+
+/// THE TRADE'S OWN ECHO GATE (javap 26.2 handleMerchantOffers — the
+/// DOUBLE GATE the five setters alone answer: setOffers + the
+/// xp/level/progress/restock words the refresh re-banks, the
+/// selection the walk NEVER touches [the pc 86 the return speaks];
+/// the reset the FRESH WINDOW's own birth rides — the id change the
+/// gate keeps, the state_id the refresh re-keys [the next click's
+/// echo the new revision answers]).
+#[test]
+fn the_merchant_echo_gate_the_selection_keeps() {
+    use crate::world_view::LiveContainer;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let mut app = App::new(399);
+    app.enter_world();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    let feed = |id: i32, state: i32, slots: Vec<(i32, i32)>, carried: (i32, i32), uses: i32| {
+        LiveContainer {
+            id,
+            menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+            slots,
+            bundle_rows: Vec::new(),
+            carried,
+            state_id: state,
+            data_slots: Vec::new(),
+            title_nbt: Vec::new(),
+            merchant: Some(crate::world_view::MerchantView {
+                offers: vec![crate::world_view::MerchantOfferView {
+                    cost_a: (emerald, 1),
+                    cost_b: None,
+                    result: (bread, 2),
+                    out_of_stock: uses >= 4,
+                    uses,
+                    max_uses: 4,
+                    xp: 0,
+                }],
+                level: 3,
+                xp: 5,
+                show_progress: true,
+                can_restock: false,
+            }),
+        }
+    };
+
+    // ARM A — THE FRESH WINDOW'S OWN RESET (the first ride the gate's
+    // None arm answers — the stale selection the window's own birth
+    // retires, the words the fresh bank lays)
+    app.merchant_selected = 3;
+    let mut slots = vec![(emerald, 1), (0, 0), (0, 0)];
+    slots.resize(39, (0, 0));
+    app.live_container_updated(Some(feed(9, 5, slots.clone(), (0, 0), 0)));
+    assert!(app.merchant_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.merchant_selected, 0,
+        "the fresh window the selection retires"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 1),
+        "the seat the bank lays"
+    );
+    assert_eq!(app.merchant_level, 3, "the level word the bank lays");
+    assert_eq!(app.merchant_xp, 5, "the xp word the bank lays");
+
+    // ARM B — THE REFRESH RIDE'S OWN KEEP (javap handleMerchantOffers
+    // — the five setters the words re-bank, the selection the walk
+    // NEVER touches: the user's own row the drift the seats re-bank
+    // keeps, the state_id the revision re-keys, the offer words the
+    // refresh re-lays [the uses the trade's own echo wears])
+    app.merchant_selected = 2;
+    let mut drifted = vec![(0, 0), (0, 0), (bread, 1)];
+    drifted.resize(39, (0, 0));
+    app.live_container_updated(Some(feed(9, 7, drifted, (emerald, 2), 1)));
+    assert_eq!(
+        app.merchant_selected, 2,
+        "the refresh ride the selection keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the drifted seat the correction re-banks"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the result seat the correction wears"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 2),
+        "the carried the correction lands"
+    );
+    assert_eq!(
+        app.merchant_live_window,
+        Some((9, 7)),
+        "the revision the refresh re-keys"
+    );
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the offer words the refresh re-lays"
+    );
+    assert!(
+        !app.merchant_offers[0].out_of_stock,
+        "the stock verdict the refreshed words speak"
+    );
+
+    // ARM C — THE WINDOW SWAP'S OWN RETIRE (the id change the fresh
+    // gate speaks — the old window's selection the new window's own
+    // birth retires)
+    app.live_container_updated(Some(feed(10, 3, slots.clone(), (0, 0), 4)));
+    assert_eq!(
+        app.merchant_selected, 0,
+        "the window swap the selection retires"
+    );
+    assert_eq!(
+        app.merchant_live_window,
+        Some((10, 3)),
+        "the new window the identity wears"
+    );
+    assert!(
+        app.merchant_offers[0].out_of_stock,
+        "the stale stock the new window's own words wear"
+    );
+
+    // ARM D — THE SHRUNKEN BANK'S OWN KEEP (the offers the refresh
+    // shrinks, the selection the walk never touches — the render's
+    // own .get() guards the honest silence answers)
+    app.merchant_selected = 2;
+    let mut shrunken = vec![(0, 0), (0, 0), (0, 0)];
+    shrunken.resize(39, (0, 0));
+    app.live_container_updated(Some(feed(10, 9, shrunken, (0, 0), 4)));
+    assert_eq!(
+        app.merchant_selected, 2,
+        "the shrunken bank the selection keeps"
+    );
+    assert_eq!(
+        app.merchant_offers.len(),
+        1,
+        "the shrunken bank the walk wears"
+    );
+}

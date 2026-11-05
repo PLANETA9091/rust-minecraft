@@ -82361,7 +82361,12 @@ impl App {
                     // plain-title branch draws)
                     self.merchant_title = decode_container_title(&c.title_nbt);
                     // the window's identity rides in: the echoes answer
-                    // against THIS id and revision
+                    // against THIS id and revision — the state_id the
+                    // refresh re-keys [the next click's echo the new
+                    // revision answers], the FRESH WINDOW the id change
+                    // speaks [the reset's own gate reads the PREVIOUS
+                    // id before the re-key]
+                    let fresh = self.merchant_live_window.is_none_or(|(id, _)| id != c.id);
                     self.merchant_live_window = Some((c.id, c.state_id));
                     // THE MERCHANT'S OWN BANK (the projection's SOME the
                     // merchant window's own type answers — the offers +
@@ -82381,11 +82386,20 @@ impl App {
                         self.merchant_show_progress = false;
                         self.merchant_can_restock = false;
                     }
-                    // THE FRESH OPEN'S OWN RESET (the sibling lanes' own
-                    // law the wire open re-wears — the stale selection
-                    // the window retires, the fresh presses the own
-                    // arms re-lay)
-                    self.merchant_selected = 0;
+                    // THE FRESH WINDOW'S OWN RESET (javap 26.2
+                    // handleMerchantOffers — the DOUBLE GATE the five
+                    // setters alone answer: setOffers + the xp/level/
+                    // progress/restock words the refresh re-banks, the
+                    // selection the walk NEVER touches [the pc 86 the
+                    // return speaks — the offer words the refresh
+                    // re-banks, the seat the user's own row keeps];
+                    // the reset the FRESH WINDOW's own birth rides [the
+                    // id change the open walk's own law keeps] — the
+                    // stale selection the window retires, the refresh
+                    // ride the selection keeps)
+                    if fresh {
+                        self.merchant_selected = 0;
+                    }
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Merchant);
                     }

@@ -1,0 +1,150 @@
+== net/minecraft/client/multiplayer/ClientPacketListener.class
+  METHOD handleMerchantOffers (Lnet/minecraft/network/protocol/game/ClientboundMerchantOffersPacket;)V  (code=87)
+    0: aload_1
+    1: aload_0
+    2: aload_0
+    3: getfield net/minecraft/client/multiplayer/ClientPacketListener.minecraft:Lnet/minecraft/client/Minecraft;
+    6: invokevirtual net/minecraft/client/Minecraft.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+    9: invokestatic net/minecraft/network/protocol/PacketUtils.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+    12: aload_0
+    13: getfield net/minecraft/client/multiplayer/ClientPacketListener.minecraft:Lnet/minecraft/client/Minecraft;
+    16: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    19: getfield net/minecraft/client/player/LocalPlayer.containerMenu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    22: astore_2
+    23: aload_1
+    24: invokevirtual net/minecraft/network/protocol/game/ClientboundMerchantOffersPacket.getContainerId:()I
+    27: aload_2
+    28: getfield net/minecraft/world/inventory/AbstractContainerMenu.containerId:I
+    31: if_icmpne 86
+    34: aload_2
+    35: instanceof net/minecraft/world/inventory/MerchantMenu
+    38: ifeq 86
+    41: aload_2
+    42: checkcast net/minecraft/world/inventory/MerchantMenu
+    45: astore_3
+    46: aload_3
+    47: aload_1
+    48: invokevirtual net/minecraft/network/protocol/game/ClientboundMerchantOffersPacket.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    51: invokevirtual net/minecraft/world/inventory/MerchantMenu.setOffers:(Lnet/minecraft/world/item/trading/MerchantOffers;)V
+    54: aload_3
+    55: aload_1
+    56: invokevirtual net/minecraft/network/protocol/game/ClientboundMerchantOffersPacket.getVillagerXp:()I
+    59: invokevirtual net/minecraft/world/inventory/MerchantMenu.setXp:(I)V
+    62: aload_3
+    63: aload_1
+    64: invokevirtual net/minecraft/network/protocol/game/ClientboundMerchantOffersPacket.getVillagerLevel:()I
+    67: invokevirtual net/minecraft/world/inventory/MerchantMenu.setMerchantLevel:(I)V
+    70: aload_3
+    71: aload_1
+    72: invokevirtual net/minecraft/network/protocol/game/ClientboundMerchantOffersPacket.showProgress:()Z
+    75: invokevirtual net/minecraft/world/inventory/MerchantMenu.setShowProgressBar:(Z)V
+    78: aload_3
+    79: aload_1
+    80: invokevirtual net/minecraft/network/protocol/game/ClientboundMerchantOffersPacket.canRestock:()Z
+    83: invokevirtual net/minecraft/world/inventory/MerchantMenu.setCanRestock:(Z)V
+    86: return
+
+== net/minecraft/client/gui/screens/inventory/MerchantScreen.class
+  FIELD MERCHANT_MENU_PART_X:I flags=0x1a
+  FIELD tradeOfferButtons:[Lnet/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton; flags=0x12
+  METHOD init ()V  (code=89)
+    0: aload_0
+    1: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.init:()V
+    4: aload_0
+    5: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.width:I
+    8: aload_0
+    9: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageWidth:I
+    12: isub
+    13: iconst_2
+    14: idiv
+    15: istore_1
+    16: aload_0
+    17: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.height:I
+    20: aload_0
+    21: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageHeight:I
+    24: isub
+    25: iconst_2
+    26: idiv
+    27: istore_2
+    28: iload_2
+    29: bipush 16
+    31: iadd
+    32: iconst_2
+    33: iadd
+    34: istore_3
+    35: iconst_0
+    36: istore 4
+    38: iload 4
+    40: bipush 7
+    42: if_icmpge 88
+    45: aload_0
+    46: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.tradeOfferButtons:[Lnet/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton;
+    49: iload 4
+    51: aload_0
+    52: new net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton
+    55: dup
+    56: aload_0
+    57: iload_1
+    58: iconst_5
+    59: iadd
+    60: iload_3
+    61: iload 4
+    63: aload_0
+    64: invokedynamic dynamic#0:onPress
+    69: invokespecial net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.<init>:(Lnet/minecraft/client/gui/screens/inventory/MerchantScreen;IIILnet/minecraft/client/gui/components/Button$OnPress;)V
+    72: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.addRenderableWidget:(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+    75: checkcast net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton
+    78: aastore
+    79: iinc 3 20
+    82: iinc 4 1
+    85: goto 38
+    88: return
+
+== net/minecraft/world/inventory/MerchantMenu.class
+  METHOD setShowProgressBar (Z)V  (code=6)
+    0: aload_0
+    1: iload_1
+    2: putfield net/minecraft/world/inventory/MerchantMenu.showProgressBar:Z
+    5: return
+  METHOD setSelectionHint (I)V  (code=9)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantMenu.tradeContainer:Lnet/minecraft/world/inventory/MerchantContainer;
+    4: iload_1
+    5: invokevirtual net/minecraft/world/inventory/MerchantContainer.setSelectionHint:(I)V
+    8: return
+  METHOD setXp (I)V  (code=11)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantMenu.trader:Lnet/minecraft/world/item/trading/Merchant;
+    4: iload_1
+    5: invokeinterface net/minecraft/world/item/trading/Merchant.overrideXp:(I)V
+    10: return
+  METHOD getTraderLevel ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantMenu.merchantLevel:I
+    4: ireturn
+  METHOD setMerchantLevel (I)V  (code=6)
+    0: aload_0
+    1: iload_1
+    2: putfield net/minecraft/world/inventory/MerchantMenu.merchantLevel:I
+    5: return
+  METHOD setCanRestock (Z)V  (code=6)
+    0: aload_0
+    1: iload_1
+    2: putfield net/minecraft/world/inventory/MerchantMenu.canRestock:Z
+    5: return
+  METHOD setOffers (Lnet/minecraft/world/item/trading/MerchantOffers;)V  (code=11)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantMenu.trader:Lnet/minecraft/world/item/trading/Merchant;
+    4: aload_1
+    5: invokeinterface net/minecraft/world/item/trading/Merchant.overrideOffers:(Lnet/minecraft/world/item/trading/MerchantOffers;)V
+    10: return
+  METHOD getOffers ()Lnet/minecraft/world/item/trading/MerchantOffers;  (code=10)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantMenu.trader:Lnet/minecraft/world/item/trading/Merchant;
+    4: invokeinterface net/minecraft/world/item/trading/Merchant.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    9: areturn
+  METHOD showProgressBar ()Z  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/MerchantMenu.showProgressBar:Z
+    4: ireturn
+
