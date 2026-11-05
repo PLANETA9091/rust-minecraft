@@ -1,0 +1,128 @@
+== net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.class
+== net/minecraft/client/gui/screens/inventory/MerchantScreen.class
+  METHOD getIndex ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.index:I
+    4: ireturn
+
+  METHOD postButtonClick ()V  (code=50)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    4: checkcast net/minecraft/world/inventory/MerchantMenu
+    7: aload_0
+    8: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    11: invokevirtual net/minecraft/world/inventory/MerchantMenu.setSelectionHint:(I)V
+    14: aload_0
+    15: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    18: checkcast net/minecraft/world/inventory/MerchantMenu
+    21: aload_0
+    22: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    25: invokevirtual net/minecraft/world/inventory/MerchantMenu.tryMoveItems:(I)V
+    28: aload_0
+    29: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.minecraft:Lnet/minecraft/client/Minecraft;
+    32: invokevirtual net/minecraft/client/Minecraft.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+    35: new net/minecraft/network/protocol/game/ServerboundSelectTradePacket
+    38: dup
+    39: aload_0
+    40: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    43: invokespecial net/minecraft/network/protocol/game/ServerboundSelectTradePacket.<init>:(I)V
+    46: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.send:(Lnet/minecraft/network/protocol/Packet;)V
+    49: return
+  METHOD mouseClicked (Lnet/minecraft/client/input/MouseButtonEvent;Z)Z  (code=120)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.width:I
+    4: aload_0
+    5: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageWidth:I
+    8: isub
+    9: iconst_2
+    10: idiv
+    11: istore_3
+    12: aload_0
+    13: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.height:I
+    16: aload_0
+    17: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageHeight:I
+    20: isub
+    21: iconst_2
+    22: idiv
+    23: istore 4
+    25: aload_0
+    26: aload_0
+    27: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    30: checkcast net/minecraft/world/inventory/MerchantMenu
+    33: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    36: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    39: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.canScroll:(I)Z
+    42: ifeq 113
+    45: aload_1
+    46: invokevirtual net/minecraft/client/input/MouseButtonEvent.x:()D
+    49: iload_3
+    50: bipush 94
+    52: iadd
+    53: i2d
+    54: dcmpl
+    55: ifle 113
+    58: aload_1
+    59: invokevirtual net/minecraft/client/input/MouseButtonEvent.x:()D
+    62: iload_3
+    63: bipush 94
+    65: iadd
+    66: bipush 6
+    68: iadd
+    69: i2d
+    70: dcmpg
+    71: ifge 113
+    74: aload_1
+    75: invokevirtual net/minecraft/client/input/MouseButtonEvent.y:()D
+    78: iload 4
+    80: bipush 18
+    82: iadd
+    83: i2d
+    84: dcmpl
+    85: ifle 113
+    88: aload_1
+    89: invokevirtual net/minecraft/client/input/MouseButtonEvent.y:()D
+    92: iload 4
+    94: bipush 18
+    96: iadd
+    97: sipush 139
+    100: iadd
+    101: iconst_1
+    102: iadd
+    103: i2d
+    104: dcmpg
+    105: ifgt 113
+    108: aload_0
+    109: iconst_1
+    110: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen.isDragging:Z
+    113: aload_0
+    114: aload_1
+    115: iload_2
+    116: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseClicked:(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+    119: ireturn
+  METHOD lambda$init$0 (Lnet/minecraft/client/gui/components/Button;)V  (code=30)
+    0: aload_1
+    1: instanceof net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton
+    4: ifeq 29
+    7: aload_1
+    8: checkcast net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton
+    11: astore_2
+    12: aload_0
+    13: aload_2
+    14: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.getIndex:()I
+    17: aload_0
+    18: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    21: iadd
+    22: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    25: aload_0
+    26: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.postButtonClick:()V
+    29: return
+
+VERDICT [ok] the TradeOfferButton class the census wears (the index getter)
+VERDICT [ok] the press the mouseClicked gate opens (isActive)
+VERDICT [ok] the postButtonClick walk the lambda serves
+VERDICT [ok] the getIndex invoke the fold speaks
+VERDICT [ok] the scrollOff field the fold reads
+VERDICT [ok] the fold the shopItem field banks (putfield)
+VERDICT [ok] the negative seat the fold never guards (no bounds word)
+VERDICT [ok] the shopItem walk the client-local halves serve
+VERDICT [ok] the Select Trade packet the send tail carries

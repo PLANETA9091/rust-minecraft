@@ -37088,3 +37088,142 @@ fn the_merchant_mid_drag_shrink_the_max_fold_banks() {
     app.on_merchant_scroll_drag(88);
     assert_eq!(app.merchant_scroll, 3, "the unarmed call the silence keeps");
 }
+
+/// THE NEGATIVE SCROLL'S OWN PRESS FOLD (dev-223 — the 467 NEXT's own
+/// first lane the round answers: the press fold the jar census wears
+/// [scripts/jar_work/press_468.txt]: the lambda$init$0 the
+/// TradeOfferButton's own press serves — the `getIndex() + scrollOff`
+/// IADD the shopItem field banks, the UNGUARDED fold the bounds word
+/// never wears [no arraylength, no size read — the -1 band the 467
+/// weird band wore the shopItem the -1 seat banks, the
+/// offers.get(-1) tail the 466 crash arm speaks], the postButtonClick
+/// the shopItem ride serves [setSelectionHint + tryMoveItems pair the
+/// client-local halves speak, the ServerboundSelectTradePacket the
+/// send tail carries]; the PORT'S OWN RAW ROW the quirk keeps: the
+/// rects' usize seat the negative never crosses [the 467 honest zero
+/// the drag the re-lay the raw rows wear], the 464 clamp the dead
+/// rows the press refuses, the stale seat the packet still banks).
+#[test]
+fn the_negative_scroll_the_press_fold_banks() {
+    use crate::world_view::{ContainerCommand, LiveContainer, MerchantOfferView, MerchantView};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let offer = |n: i32| MerchantOfferView {
+        cost_a: (emerald, n),
+        cost_b: None,
+        result: (mc_registry::item_id_by_name("bread").unwrap(), 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 0,
+    };
+
+    // ARM A — THE FOLD'S OWN SEAT (the pure walk the render lays: row
+    // r the seat the scroll + r the third element banks — the
+    // scrolled seat the >7 bank wears)
+    assert_eq!(
+        merchant_row_seat((10, 20), 0, 3),
+        (15, 38, 3),
+        "the scrolled head the seat banks"
+    );
+    assert_eq!(
+        merchant_row_seat((10, 20), 2, 3),
+        (15, 78, 5),
+        "the scrolled row the seat carries"
+    );
+
+    // ARM B — THE ZERO BAND'S OWN SEAT (the weird band the port never
+    // wears: the 467 honest zero the drag answers, the re-lay the raw
+    // rows wear — the fold's seat the row's own index keeps, the -1
+    // the usize never crosses)
+    assert_eq!(
+        merchant_scroll_drag_offset(88, 0, 5),
+        0,
+        "the shrunk bank the drag the zero keeps"
+    );
+    assert_eq!(
+        merchant_row_seat((0, 0), 4, 0),
+        (5, 98, 4),
+        "the re-lay the raw row the fold banks"
+    );
+
+    // ARM C — THE LIVE LANE'S OWN FOLD (the stale rects the scrolled
+    // seat the packet banks, the echo shrink + the zero re-bank the
+    // re-lay the raw rows wear, the negative seat the port never
+    // mints)
+    let mut live = App::new(3);
+    live.enter_world();
+    live.world_is_network = true;
+    live.screen = ScreenKind::Merchant;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    live.live_clicks = Some(tx);
+    live.merchant_slots = vec![(0, 0); 39];
+    live.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots: vec![(0, 0); 39],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(MerchantView {
+            offers: vec![offer(1); 10],
+            level: 1,
+            xp: 0,
+            show_progress: true,
+            can_restock: false,
+        }),
+    }));
+    live.merchant_offers = vec![offer(1); 10];
+    live.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, 3 + row))
+        .collect();
+    assert!(
+        live.merchant_widget_press(104, 104),
+        "the visible row the press answers"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SelectTrade { item } => {
+            assert_eq!(item, 3, "the stale rect's seat the packet carries");
+        }
+        other => panic!("the press the Select Trade speaks, not {other:?}"),
+    }
+    // THE ECHO SHRINK + THE 467 ZERO (the drag the honest zero
+    // re-banks — the scroll word the raw rows the re-lay feeds)
+    live.merchant_offers = vec![offer(1); 5];
+    live.on_merchant_scroll_drag(88);
+    assert_eq!(
+        live.merchant_scroll, 0,
+        "the shrunk bank the armed walk the zero re-banks"
+    );
+    // THE DEAD ROWS the 464 clamp retires (the stale rects the rows
+    // past the shrunken bank the press refuses — the wire the packet
+    // never rides)
+    assert!(
+        !live.merchant_widget_press(104, 104 + 5 * 20),
+        "the dead row the press refuses"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the refused press the wire never rides"
+    );
+    // THE RE-LAY the raw rows wear (the fresh render the scroll-0
+    // seat lays — the press the row's own index mints, the negative
+    // seat the fold never speaks)
+    live.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, row))
+        .collect();
+    assert!(
+        live.merchant_widget_press(104, 104),
+        "the re-laid row the press answers"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::SelectTrade { item } => {
+            assert_eq!(
+                item, 0,
+                "the raw row's seat the packet carries — the negative never mints"
+            );
+        }
+        other => panic!("the press the Select Trade speaks, not {other:?}"),
+    }
+}
