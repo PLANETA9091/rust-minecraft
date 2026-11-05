@@ -9074,6 +9074,16 @@ pub struct App {
     /// banks — the index the Select Trade packet carries, the
     /// fresh window the zero seat wears)
     pub merchant_selected: usize,
+    /// THE SCROLLER'S OWN OFFSET (javap 26.2 MerchantScreen.scrollOff
+    /// — the wheel the subtract walk serves, the drag the fraction
+    /// fold answers, the window the [0, size-7] clamp keeps, the
+    /// fresh window the zero seat wears)
+    pub merchant_scroll: usize,
+    /// THE DRAG'S OWN ARM (javap 26.2 MerchantScreen.isDragging — the
+    /// bar band's press the flag arms, the held frames the walk
+    /// feeds, the release the disarm speaks, the fresh window the
+    /// false default keeps)
+    pub merchant_scroll_drag: bool,
     /// THE MERCHANT'S OWN SEAT BANK (the menu's own numbering — the
     /// inputs 0/1 the (136, 37)/(162, 37) seats speak, the result 2
     /// the (220, 37) seat, the standard rows 3..38 the
@@ -13389,6 +13399,8 @@ impl App {
             merchant_show_progress: false,
             merchant_can_restock: false,
             merchant_selected: 0,
+            merchant_scroll: 0,
+            merchant_scroll_drag: false,
             merchant_slots: Vec::new(),
             merchant_doubleclick: false,
             merchant_last_click_slot: None,
@@ -24379,6 +24391,10 @@ impl App {
         // press-select the tab lane never rides, the flag the release
         // alone clears)
         self.creative_scroll_drag = false;
+        // THE MERCHANT BAR'S OWN DISARM (javap 26.2 mouseReleased — the
+        // iconst_0 the isDragging field the unconditional false speaks
+        // BEFORE the super walk; the armed drag the release alone ends)
+        self.merchant_scroll_drag = false;
         // THE DOUBLE-CLICK'S OWN RELEASE (the mouseReleased walk pcs
         // 64-240 — the doubleclick flag the PRESS armed, the PICKUP_ALL
         // the release speaks: the hovered seat's canTakeItemForPickAll
@@ -27160,6 +27176,31 @@ impl App {
         let next = (my as f32 - y1 as f32 - 7.5) / ((y2 - y1) as f32 - 15.0);
         self.creative_scroll = next.clamp(0.0, 1.0);
         self.creative_scroll_to(self.creative_scroll);
+    }
+
+    /// THE MERCHANT'S OWN WHEEL (javap 26.2 mouseScrolled — the
+    /// canScroll gate the ≤7 bank keeps [the super's own lane the
+    /// container screens share the vanilla always-true verdict the
+    /// early tail answers], the `(int)((double) scrollOff - delta)`
+    /// fold the f2i truncation wears, the [0, size-7] clamp the
+    /// window keeps — the wheel-up the delta +1 the toward-top walk
+    /// speaks, the wheel-down the toward-bottom ride answers)
+    pub fn on_merchant_scroll(&mut self, delta_y: f64) {
+        self.merchant_scroll =
+            merchant_scroll_wheel(self.merchant_scroll, delta_y, self.merchant_offers.len());
+    }
+
+    /// THE MERCHANT'S OWN SCROLL DRAG (javap 26.2 mouseDragged — the
+    /// armed lane the [`merchant_scroll_drag_offset`] walk serves,
+    /// the RECT the armed lane never re-checks — the once-armed drag
+    /// the track's outside rides, the unarmed call the silence keeps)
+    pub fn on_merchant_scroll_drag(&mut self, my: i32) {
+        if !self.merchant_scroll_drag {
+            return;
+        }
+        self.merchant_scroll =
+            merchant_scroll_drag_offset(my, self.merchant_panel.1, self.merchant_offers.len())
+                as usize;
     }
 
     /// THE SEARCH BOX'S OWN WINDOW SYNC (the same `setCursorPos` law
@@ -33262,6 +33303,8 @@ impl App {
             self.merchant_show_progress = false;
             self.merchant_can_restock = false;
             self.merchant_selected = 0;
+            self.merchant_scroll = 0;
+            self.merchant_scroll_drag = false;
             self.container_removed_rode = true; // the removed law rode
             self.open(back);
             return;
@@ -41739,21 +41782,26 @@ impl App {
     /// `gui/container/villager.png` background the
     /// extractBackground blit banks [the (0,0) 276x166 region the
     /// 512x256 master wears], the SEVEN 88x20 TradeOfferButton rows
-    /// the init walk lays at (leftPos+5, topPos+20+i*20), the menu's
-    /// own numbering — the inputs 0/1 the (136, 37)/(162, 37) seats,
-    /// the result 2 the (220, 37) seat, the standard rows 3..38 the
+    /// the init walk lays at (leftPos+5, topPos+18+i*20) [the
+    /// `topPos + 16 + 2` walker the dump speaks], the menu's own
+    /// numbering — the inputs 0/1 the (136, 37)/(162, 37) seats, the
+    /// result 2 the (220, 37) seat, the standard rows 3..38 the
     /// addStandardInventorySlots(108, 84) walk lays [the main 3..29
     /// the 18-pitch grid rides, the hotbar 30..38 the y=142 row
     /// wears], the offer rows' item walk the extractContents dump
-    /// banks — the costA at (leftPos+10, topPos+17+row*20+2) seat the
-    /// row walker speaks, the costB at (leftPos+5+35, y) and the
-    /// result at (leftPos+5+68, y) pair the fakeItem lanes carry).
-    /// THE MINIMAL ROUND the wire route banks: the label pair [the
-    /// plain-title branch the composite the level gate wears — the
-    /// merchant.title arg row the lang table the later text round
-    /// re-lays], the slots, the row items, the carried follow; the
-    /// out-of-stock overlay + the button sprites + the scroller +
-    /// the arrows + the tooltips the later canvas rounds re-lay.
+    /// banks — the costA at (leftPos+10, topPos+19+row*20) seat the
+    /// row walker speaks, the costB at (leftPos+40, y) and the
+    /// result at (leftPos+73, y) pair the fakeItem lanes carry).
+    /// THE SPRITE ROUND the button states re-lays: the
+    /// widget/button sprite the hovered frame answers, the arrows
+    /// the extractButtonArrows walk speaks [the in-stock
+    /// TRADE_ARROW + the stale TRADE_ARROW_OUT_OF_STOCK pair, the
+    /// (row+60, y+3) 10x9 seat], the out-of-stock overlay the
+    /// extractBackground tail wears [the SELECTED offer's own
+    /// verdict, the (182, 35) 28x21 seat], the scroller the
+    /// extractScroller lane serves [the >7 bank the enabled handle
+    /// keeps, the offset the scroll window folds], the row +
+    /// deprecated tooltips the band walks answer.
     fn render_merchant(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         let panel = ((w - 276) / 2, (h - 166) / 2);
@@ -41773,12 +41821,14 @@ impl App {
             rects.push((sx + 1, sy + 1, (3 + i) as i16));
         }
         self.merchant_slot_rects = rects;
-        // THE OFFER ROWS' OWN SEATS (the init walk — the SEVEN 88x20
-        // rows the ≤7 bank keeps; the >7 scroll lane the later round
-        // re-lays)
+        // THE OFFER ROWS' OWN SEATS (javap init — the SEVEN 88x20
+        // rows the `topPos + 16 + 2` walker lays, the press's own
+        // offer the `getIndex() + scrollOff` fold the press lambda
+        // banks — the scroll window the idx carries, the >7 bank the
+        // window shift serves)
         let mut rows: Vec<(i32, i32, usize)> = Vec::with_capacity(7);
         for i in 0..7usize {
-            rows.push((panel.0 + 5, panel.1 + 20 + i as i32 * 20, i));
+            rows.push(merchant_row_seat(panel, i, self.merchant_scroll));
         }
         self.merchant_row_rects = rows;
         // THE BACKGROUND (the clinit's VILLAGER_LOCATION — the 276x166
@@ -41793,6 +41843,23 @@ impl App {
             panel.0,
             panel.1,
         );
+        // THE OUT-OF-STOCK OVERLAY (javap extractBackground tail — the
+        // SELECTED offer's own stock verdict the sprite band answers:
+        // the shopItem the press banks, the 28x21 seat the (182, 35)
+        // offset wears, the bounds guard the offerless window keeps)
+        if let Some(offer) = self.merchant_offers.get(self.merchant_selected) {
+            if offer.out_of_stock {
+                g.sprite_at_tinted(
+                    a,
+                    MERCHANT_OUT_OF_STOCK,
+                    panel.0 + 182,
+                    panel.1 + 35,
+                    28,
+                    21,
+                    [1.0, 1.0, 1.0, 1.0],
+                );
+            }
+        }
         // THE LABEL PAIR (the extractLabels walk — the merchant.title
         // composite the level 1..5 + showProgressBar gate wears, the
         // 49+imageWidth/2 - width/2 centering the dump speaks, the
@@ -41819,16 +41886,60 @@ impl App {
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 107, panel.1 + 166 - 94, t, label, false);
         }
-        // THE OFFER ROWS' OWN ITEMS (the extractContents walk — the
-        // costA at (row+5, y) seat the extractAndDecorateCostA lane
-        // serves, the costB at (row+35, y) + the result at (row+68, y)
-        // pair the fakeItem+itemDecorations lanes carry, the y the
-        // topPos+17+row*20+2 walker wears)
-        for &(rx, ry, idx) in &self.merchant_row_rects {
+        // THE SCROLLER'S OWN LANE (javap extractScroller — the >7 bank
+        // the enabled handle keeps, the offset the scroll window
+        // folds, the ≤7 bank the disabled sprite at the track's head
+        // answers; the 6x27 seat the (94, 18 + offset) pair wears)
+        if self.merchant_offers.len() > 7 {
+            let off = merchant_scroller_offset(self.merchant_offers.len(), self.merchant_scroll);
+            g.sprite_at_tinted(
+                a,
+                MERCHANT_SCROLLER,
+                panel.0 + 94,
+                panel.1 + 18 + off,
+                6,
+                27,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        } else {
+            g.sprite_at_tinted(
+                a,
+                MERCHANT_SCROLLER_DISABLED,
+                panel.0 + 94,
+                panel.1 + 18,
+                6,
+                27,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+        // THE OFFER ROWS' OWN SPRITES + ITEMS (the extractContents
+        // walk — the button sprite the generic widget pass serves [the
+        // hovered frame the highlighted sprite answers, the raw seat
+        // the visible law keeps], the costA at (row+10, y) seat the
+        // extractAndDecorateCostA lane serves, the costB at (row+40,
+        // y) + the result at (row+73, y) pair the fakeItem lanes
+        // carry, the arrow the extractButtonArrows walk speaks, the y
+        // the topPos+19+row*20 walker wears [the icons the walker+2
+        // seat keeps, the arrow the walker+3 seat wears])
+        for (row, &(rx, ry, idx)) in self.merchant_row_rects.iter().enumerate() {
+            // THE BUTTON'S OWN VISIBLE LAW (javap extractContents tail
+            // — the RAW seat the size compare answers, the scrolled-
+            // out seat the bare button keeps)
+            if row < self.merchant_offers.len() {
+                let hovered = self
+                    .mouse_pos
+                    .is_some_and(|(mx, my)| mx >= rx && mx < rx + 88 && my >= ry && my < ry + 20);
+                let sprite = if hovered {
+                    "widget/button_highlighted"
+                } else {
+                    "widget/button"
+                };
+                g.sprite_9slice(a, sprite, rx, ry, 88, 20);
+            }
             let Some(offer) = self.merchant_offers.get(idx) else {
                 continue;
             };
-            let iy = ry - 1;
+            let iy = ry + 1;
             let (ca_id, ca_n) = offer.cost_a;
             if ca_n > 0 {
                 draw_item_icon(g, ca_id, rx + 5, iy);
@@ -41848,6 +41959,16 @@ impl App {
                     }
                 }
             }
+            // THE ARROW'S OWN PAIR (javap extractButtonArrows — the
+            // out-of-stock the stale sprite wears, the in-stock the
+            // fresh pair answers; the seat (row+60, y+3) the 10x9
+            // blit keeps — the walker+3 y the +2 offset speaks)
+            let arrow = if offer.out_of_stock {
+                MERCHANT_TRADE_ARROW_OUT_OF_STOCK
+            } else {
+                MERCHANT_TRADE_ARROW
+            };
+            g.sprite_at_tinted(a, arrow, rx + 55, ry + 2, 10, 9, [1.0, 1.0, 1.0, 1.0]);
             let (re_id, re_n) = offer.result;
             if re_n > 0 {
                 draw_item_icon(g, re_id, rx + 68, iy);
@@ -41856,15 +41977,6 @@ impl App {
                     let tw = g.text_width(&s);
                     g.text(a, rx + 68 + 16 - tw, iy + 9, &s, WHITE, true);
                 }
-            }
-            // THE SELECTION'S OWN WORD (the port's own marker — the
-            // vanilla's hover/selected sprite states the button round
-            // re-lays; the pressed row's identity the buy lane banks)
-            if idx == self.merchant_selected {
-                g.fill(rx - 1, ry - 1, 90, 1, [1.0, 1.0, 1.0, 0.85]);
-                g.fill(rx - 1, ry + 20, 90, 1, [1.0, 1.0, 1.0, 0.85]);
-                g.fill(rx - 1, ry - 1, 1, 22, [1.0, 1.0, 1.0, 0.85]);
-                g.fill(rx + 88, ry - 1, 1, 22, [1.0, 1.0, 1.0, 0.85]);
             }
         }
         // THE SLOT STACKS' OWN DRAW (the extractContents standard walk
@@ -41894,6 +42006,54 @@ impl App {
                     let s = self.merchant_carried.1.to_string();
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        // THE TOOLTIPS' OWN TAIL (the vanilla's setTooltipForNextFrame
+        // order the last set wins — the deprecated row FIRST, the row
+        // band's own stack LAST; the mouse the headless scene's None
+        // the silence keeps)
+        if let Some((mx, my)) = self.mouse_pos {
+            // THE DEPRECATED ROW (javap extractContents tail — the
+            // selected offer's own stock verdict + the (186, 35)
+            // 22x21 band + the canRestock word the
+            // merchant.deprecated row answers)
+            if self.merchant_can_restock
+                && self
+                    .merchant_offers
+                    .get(self.merchant_selected)
+                    .is_some_and(|o| o.out_of_stock)
+                && merchant_deprecated_hover(mx, my, panel)
+            {
+                if let Some(t) = tr("merchant.deprecated") {
+                    self.paint_item_tooltip(g, a, mx, my, vec![(t.to_string(), [1.0, 1.0, 1.0])]);
+                }
+            }
+            // THE ROW BAND'S OWN STACK (javap TradeOfferButton.
+            // extractToolTip — the hovered row's x band the offer's
+            // own stack answers: the costA the [0,20) seat wears, the
+            // costB the (30,50) seat the empty check keeps, the result
+            // the (65,88] seat answers; the no-break walk the LAST
+            // hovered row serves)
+            for &(rx, ry, idx) in &self.merchant_row_rects {
+                if mx >= rx && mx < rx + 88 && my >= ry && my < ry + 20 {
+                    if let Some(offer) = self.merchant_offers.get(idx) {
+                        let (id, count) = match merchant_row_tooltip_band(rx, mx) {
+                            0 => offer.cost_a,
+                            1 => offer.cost_b.unwrap_or((0, 0)),
+                            2 => offer.result,
+                            _ => (0, 0),
+                        };
+                        if count > 0 {
+                            self.paint_item_tooltip(
+                                g,
+                                a,
+                                mx,
+                                my,
+                                Self::item_tooltip_rows(id, self.advanced_item_tooltips),
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -48081,6 +48241,22 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Merchant {
+            // THE SCROLLER'S OWN DRAG ARM (javap mouseClicked head —
+            // the canScroll gate the disabled bar's press never
+            // answers, the bar band the strict (94, 100) x (18, 158]
+            // pairs keep, the isDragging flag the arm's own TRUE
+            // speaks, the CONSUMED verdict the row dispatch never
+            // re-answers)
+            let (px, py) = self.merchant_panel;
+            if self.merchant_offers.len() > 7
+                && mx > px + 94
+                && mx < px + 100
+                && my > py + 18
+                && my <= py + 18 + 140
+            {
+                self.merchant_scroll_drag = true;
+                return;
+            }
             // THE WIDGET DISPATCH'S OWN PRECEDENCE (the super.mouseClicked
             // law the buttons serve FIRST — the SEVEN offer seats the
             // postButtonClick walk answers, the consumed seat the true
@@ -48439,6 +48615,19 @@ impl App {
             return false;
         }
         if self.screen == ScreenKind::Merchant {
+            // THE SCROLLER'S OWN DRAG ARM (javap mouseClicked head — the
+            // button-blind walk the ANY press the bar band arms, the
+            // canScroll gate the disabled bar's press never answers)
+            let (px, py) = self.merchant_panel;
+            if self.merchant_offers.len() > 7
+                && mx > px + 94
+                && mx < px + 100
+                && my > py + 18
+                && my <= py + 18 + 140
+            {
+                self.merchant_scroll_drag = true;
+                return false;
+            }
             // THE IN-FLIGHT DRAG'S OWN GATE (the same pc 168-172 walk
             // the beacon's shape wears); the right press the TYPE-1
             // DRAG ARMS (the one-each distribution the release
@@ -97978,6 +98167,108 @@ pub const CREATIVE_TAB_SPRITES: [[&str; 7]; 4] = [
 pub const CREATIVE_SCROLLER: &str = "gui/sprites/container/creative_inventory/scroller.png";
 pub const CREATIVE_SCROLLER_DISABLED: &str =
     "gui/sprites/container/creative_inventory/scroller_disabled.png";
+
+/// THE MERCHANT'S OWN SPRITE BANK (javap 26.2 MerchantScreen <clinit>
+/// — the `container/villager/*` sprites the atlas lane carries, the
+/// generated defs the exact dimensions keep: the trade_arrow pair the
+/// 10x9 seat wears, the out_of_stock overlay the 28x21 band speaks,
+/// the scroller pair the 6x27 handle answers)
+pub const MERCHANT_TRADE_ARROW: &str = "container/villager/trade_arrow";
+pub const MERCHANT_TRADE_ARROW_OUT_OF_STOCK: &str = "container/villager/trade_arrow_out_of_stock";
+pub const MERCHANT_OUT_OF_STOCK: &str = "container/villager/out_of_stock";
+pub const MERCHANT_SCROLLER: &str = "container/villager/scroller";
+pub const MERCHANT_SCROLLER_DISABLED: &str = "container/villager/scroller_disabled";
+
+/// THE MERCHANT'S OWN OFFER ROW (javap 26.2 MerchantScreen.init — the
+/// SEVEN 88x20 TradeOfferButton rows the `y = topPos + 16 + 2` walker
+/// lays [local3 the topPos+18 base keeps, the iinc 3 20 pitch rides],
+/// the leftPos+5 x the iconst_5 add speaks; the press's own offer the
+/// `getIndex() + scrollOff` fold the lambda$init$0 banks — the
+/// visible row the scroll window maps, the raw seat the packet's own
+/// index never wears). The vanilla's no-selection state the fresh
+/// `shopItem = 0` default answers — the port's usize selection the
+/// same zero seat wears.
+pub fn merchant_row_seat(panel: (i32, i32), row: usize, scroll: usize) -> (i32, i32, usize) {
+    (panel.0 + 5, panel.1 + 18 + row as i32 * 20, scroll + row)
+}
+
+/// THE SCROLLER'S OWN OFFSET (javap 26.2 extractScroller — the
+/// scrollable count the `size + 1 - 7` walk speaks, the travel the
+/// `139 - 27 - (139 * (i - 1)) / i` pair banks, the step the
+/// `1 + j / i + 139 / i` fold answers, the offset the
+/// `min(113, scrollOff * k)` clamp wears, the max-scroll seat the
+/// `scrollOff == i - 1` force speaks [the 113 the bottom ride keeps];
+/// the disabled seat the zero offset answers — the canScroll-false
+/// bar the disabled sprite at the track's head wears)
+pub fn merchant_scroller_offset(offers: usize, scroll_off: usize) -> i32 {
+    let i = offers as i64 + 1 - 7;
+    if i <= 1 {
+        return 0; // the disabled seat the offset never wears
+    }
+    let j = 139 - 27 - (139 * (i - 1)) / i;
+    let k = 1 + j / i + 139 / i;
+    let mut n = (113i64).min(scroll_off as i64 * k);
+    if scroll_off as i64 == i - 1 {
+        n = 113; // the max-scroll force the bottom ride wears
+    }
+    n as i32
+}
+
+/// THE DRAG'S OWN OFFSET (javap 26.2 mouseDragged — the armed lane's
+/// fraction the `(event.y() - (topPos + 18) - 13.5f) / (139f - 27f)`
+/// walk speaks [the 13.5 the 27-high thumb's own half keeps, the 112
+/// travel the bar's own span answers], the scroll the `f * max + 0.5`
+/// fold + the f2i rounding wears, the clamp the [0, size-7] band
+/// keeps; the canScroll-false walk the zero keeps)
+pub fn merchant_scroll_drag_offset(my: i32, top: i32, offers: usize) -> i32 {
+    if offers <= 7 {
+        return 0; // the canScroll law the disabled bar keeps
+    }
+    let max = (offers - 7) as i32;
+    let y1 = (top + 18) as f32;
+    let f = (my as f32 - y1 - 13.5) / 112.0;
+    let v = (f * max as f32 + 0.5) as i32;
+    v.clamp(0, max)
+}
+
+/// THE WHEEL'S OWN OFFSET (javap 26.2 mouseScrolled — the canScroll
+/// gate the ≤7 bank keeps, the `(int)((double) scrollOff - delta)`
+/// fold the f2i truncation wears, the [0, size-7] clamp the window
+/// keeps)
+pub fn merchant_scroll_wheel(scroll_off: usize, delta_y: f64, offers: usize) -> usize {
+    if offers <= 7 {
+        return scroll_off; // the canScroll law the small bank keeps
+    }
+    let next = (scroll_off as f64 - delta_y) as i64;
+    next.clamp(0, (offers - 7) as i64) as usize
+}
+
+/// THE ROW TOOLTIP'S OWN BAND (javap 26.2 TradeOfferButton.extractToolTip
+/// — the x walk the three bands banks: the [0, 20) seat the costA
+/// stack answers, the (30, 50) seat the costB stack wears [the
+/// isEmpty guard the absent cost's silence keeps], the (65, 88]
+/// seat the result stack answers — the 20..30 and 50..65 gaps the
+/// arrow lanes the silence keeps; the bx the button's own x speaks)
+pub fn merchant_row_tooltip_band(bx: i32, mx: i32) -> u8 {
+    if mx < bx + 20 {
+        0 // the costA band
+    } else if mx > bx + 30 && mx < bx + 50 {
+        1 // the costB band (the empty check the caller wears)
+    } else if mx > bx + 65 {
+        2 // the result band
+    } else {
+        3 // the silent gaps the arrow lanes keep
+    }
+}
+
+/// THE DEPRECATED TOOLTIP'S OWN HOVER (javap 26.2 extractContents tail
+/// — the `isHovering(186, 35, 22, 21)` band the out-of-stock result
+/// area wears, the canRestock word the gate keeps [the caller's own
+/// stock + restock checks the walk serves]; the band the strict
+/// [186, 208) x [35, 56) pairs answers)
+pub fn merchant_deprecated_hover(mx: i32, my: i32, panel: (i32, i32)) -> bool {
+    mx >= panel.0 + 186 && mx < panel.0 + 186 + 22 && my >= panel.1 + 35 && my < panel.1 + 35 + 21
+}
 
 /// THE PICKER'S PANEL ORIGIN (the AbstractContainerScreen's own
 /// centered law — `leftPos = (width - imageWidth) / 2` over the

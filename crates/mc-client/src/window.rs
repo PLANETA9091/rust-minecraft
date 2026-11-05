@@ -3166,6 +3166,16 @@ pub fn run_gui_app(
         if left_down && app.creative_scroll_drag {
             app.on_creative_scroll_drag(gmy);
         }
+        // THE MERCHANT BAR'S OWN SCROLL DRAG (the mouseDragged walk's
+        // armed lane — the bar band's press armed the flag, the HELD
+        // button's every frame the fraction fold answers ((y - top -
+        // 18 - 13.5) / 112 the max-row ride keeps), the release the
+        // disarm speaks below; the armed lane the RECT never
+        // re-checks — the vanilla's own once-armed drag the track's
+        // outside rides)
+        if left_down && app.merchant_scroll_drag {
+            app.on_merchant_scroll_drag(gmy);
+        }
         // THE SENSITIVITY SLIDER'S OWN DRAG (the AbstractSliderButton's
         // armed lane — the press inside the track armed the flag, the
         // held frames the value's own seat the cursor's x follows, the
@@ -3978,6 +3988,12 @@ pub fn run_gui_app(
                 // creative arm — the delta / scrollableRows subtraction
                 // the scrollTo refill rides)
                 app.on_creative_scroll(fdy);
+            } else if app.screen == crate::screens::ScreenKind::Merchant {
+                // THE MERCHANT'S OWN SCROLL (the mouseScrolled walk's
+                // villager arm — the `(int)((double) scrollOff - delta)`
+                // fold the [0, size-7] clamp wears, the canScroll gate
+                // the ≤7 bank keeps)
+                app.on_merchant_scroll(fdy);
             } else if app.screen == crate::screens::ScreenKind::KeyBinds {
                 // THE KEY BINDS LIST'S OWN SCROLL (the mouseScrolled
                 // walk the AbstractScrollArea serves — the amount the

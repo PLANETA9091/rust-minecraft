@@ -35805,3 +35805,378 @@ fn the_merchant_result_take_the_trade_apply_wears() {
     );
     assert_eq!(live.merchant_xp, 5, "the local overrideXp the xp wears");
 }
+
+/// THE MERCHANT ROWS' OWN SPRITES (autopush-461 — the offer rows' own
+/// widget states the jar's own extract walks bank: the scroller the
+/// extractScroller lane serves, the arrows the extractButtonArrows
+/// pair speaks, the out-of-stock overlay the extractBackground tail
+/// wears, the row + deprecated tooltips the band walks answer, the
+/// scroll window the wheel + drag arms shift, the press the
+/// `getIndex() + scrollOff` fold the offer banks).
+#[test]
+fn the_merchant_rows_own_sprites_the_button_states_wear() {
+    use crate::screens::{
+        merchant_deprecated_hover, merchant_row_seat, merchant_row_tooltip_band,
+        merchant_scroll_drag_offset, merchant_scroll_wheel, merchant_scroller_offset,
+        MERCHANT_OUT_OF_STOCK, MERCHANT_SCROLLER, MERCHANT_SCROLLER_DISABLED, MERCHANT_TRADE_ARROW,
+        MERCHANT_TRADE_ARROW_OUT_OF_STOCK,
+    };
+    use crate::world_view::MerchantOfferView;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let iron = mc_registry::item_id_by_name("iron_ingot").unwrap();
+
+    // THE SPRITE BANK'S OWN WORDS (javap <clinit> — the
+    // container/villager/* atlas names the render's blits wear, the
+    // generated defs the exact dimensions keep: the arrow pair the
+    // 10x9 seat, the overlay the 28x21 band, the scroller pair the
+    // 6x27 handle)
+    for (name, w, h) in [
+        (MERCHANT_TRADE_ARROW, 10, 9),
+        (MERCHANT_TRADE_ARROW_OUT_OF_STOCK, 10, 9),
+        (MERCHANT_OUT_OF_STOCK, 28, 21),
+        (MERCHANT_SCROLLER, 6, 27),
+        (MERCHANT_SCROLLER_DISABLED, 6, 27),
+    ] {
+        let def = mc_registry::generated::gui::sprite(name)
+            .unwrap_or_else(|| panic!("the {name} def the atlas bank keeps"));
+        assert_eq!(
+            (def.w, def.h),
+            (w, h),
+            "the {name} dims the generated def wears"
+        );
+    }
+
+    // THE SCROLLER'S OWN MATH (javap extractScroller — the travel
+    // `139 - 27 - (139*(i-1))/i` + the step `1 + j/i + 139/i` pair
+    // the size+1-7 walk banks: the 8-offer bar the 91 step wears [the
+    // (43, 91) pair], the min(113) clamp the mid ride keeps, the
+    // max-scroll seat the 113 force speaks, the 9-offer bar the 53
+    // step answers [the (20, 53) pair], the ≤7 bank the zero keeps)
+    assert_eq!(
+        merchant_scroller_offset(7, 0),
+        0,
+        "the disabled seat the zero keeps"
+    );
+    assert_eq!(
+        merchant_scroller_offset(8, 0),
+        0,
+        "the top seat the zero offset wears"
+    );
+    assert_eq!(
+        merchant_scroller_offset(8, 1),
+        113,
+        "the 8-offer max-scroll the force speaks"
+    );
+    assert_eq!(
+        merchant_scroller_offset(9, 1),
+        53,
+        "the 9-offer mid seat the 53 step wears"
+    );
+    assert_eq!(
+        merchant_scroller_offset(9, 2),
+        113,
+        "the 9-offer max-scroll the force speaks"
+    );
+    assert_eq!(
+        merchant_scroller_offset(9, 0),
+        0,
+        "the fresh window the top seat wears"
+    );
+
+    // THE WHEEL'S OWN OFFSET (javap mouseScrolled — the
+    // `(int)((double) scrollOff - delta)` fold the [0, size-7] clamp
+    // wears: the wheel-down the toward-bottom ride, the wheel-up the
+    // toward-top walk, the edges the clamp keeps, the ≤7 bank the
+    // same seat wears)
+    assert_eq!(
+        merchant_scroll_wheel(0, -1.0, 9),
+        1,
+        "the wheel-down the +1 ride wears"
+    );
+    assert_eq!(
+        merchant_scroll_wheel(1, -1.0, 9),
+        2,
+        "the second ride the max reaches"
+    );
+    assert_eq!(
+        merchant_scroll_wheel(2, -1.0, 9),
+        2,
+        "the max clamp the ride keeps"
+    );
+    assert_eq!(
+        merchant_scroll_wheel(1, 1.0, 9),
+        0,
+        "the wheel-up the toward-top walk wears"
+    );
+    assert_eq!(
+        merchant_scroll_wheel(0, 1.0, 9),
+        0,
+        "the top clamp the walk keeps"
+    );
+    assert_eq!(
+        merchant_scroll_wheel(3, -1.0, 7),
+        3,
+        "the small bank the same seat wears"
+    );
+
+    // THE DRAG'S OWN OFFSET (javap mouseDragged — the
+    // `(y - top - 18 - 13.5) / 112` fraction the `f * max + 0.5`
+    // fold + the f2i rounding wears, the clamp the [0, size-7] band
+    // keeps, the ≤7 bank the zero keeps)
+    let top = 97i32; // the 640x360 frame's own (360-166)/2 panel top
+    assert_eq!(
+        merchant_scroll_drag_offset(top + 18, top, 9),
+        0,
+        "the track head the zero offset wears"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(top + 88, top, 9),
+        1,
+        "the track mid the 0.5 rounding wears"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(top + 300, top, 9),
+        2,
+        "the below-track ride the clamp keeps"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(top, top, 9),
+        0,
+        "the above-track ride the clamp keeps"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(top + 88, top, 7),
+        0,
+        "the disabled bar the zero keeps"
+    );
+
+    // THE ROW SEAT'S OWN WALK (javap init — the `topPos + 18` base +
+    // the 20 pitch the SEVEN rows wear, the press's own offer the
+    // `getIndex() + scrollOff` fold the lambda$init$0 banks)
+    let panel = ((640 - 276) / 2, (360 - 166) / 2);
+    assert_eq!(
+        merchant_row_seat(panel, 0, 0),
+        (panel.0 + 5, panel.1 + 18, 0),
+        "the fresh window the top row the zero offer wears"
+    );
+    assert_eq!(
+        merchant_row_seat(panel, 6, 0),
+        (panel.0 + 5, panel.1 + 138, 6),
+        "the seventh row the 138 seat wears"
+    );
+    assert_eq!(
+        merchant_row_seat(panel, 0, 2),
+        (panel.0 + 5, panel.1 + 18, 2),
+        "the scrolled window the offer index folds"
+    );
+
+    // THE BANDS' OWN WALK (javap TradeOfferButton.extractToolTip — the
+    // [0,20) costA / (30,50) costB / (65,88] result bands the x walk
+    // banks, the 20..30 + 50..65 gaps the arrow lanes the silence
+    // keeps)
+    let bx = panel.0 + 5;
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx),
+        0,
+        "the left edge the costA wears"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 19),
+        0,
+        "the costA band's tail wears"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 20),
+        3,
+        "the first gap the silence keeps"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 30),
+        3,
+        "the 30 seat the silence keeps"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 31),
+        1,
+        "the costB band's head wears"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 49),
+        1,
+        "the costB band's tail wears"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 50),
+        3,
+        "the second gap the silence keeps"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 65),
+        3,
+        "the 65 seat the silence keeps"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 66),
+        2,
+        "the result band's head wears"
+    );
+    assert_eq!(
+        merchant_row_tooltip_band(bx, bx + 87),
+        2,
+        "the result band's tail wears"
+    );
+
+    // THE DEPRECATED BAND'S OWN HOVER (javap extractContents tail —
+    // the strict [186, 208) x [35, 56) pairs the isHovering walk
+    // answers)
+    assert!(
+        merchant_deprecated_hover(panel.0 + 186, panel.1 + 35, panel),
+        "the head seat the inclusive-low pair wears"
+    );
+    assert!(
+        merchant_deprecated_hover(panel.0 + 187, panel.1 + 36, panel),
+        "the inner seat the band wears"
+    );
+    assert!(
+        merchant_deprecated_hover(panel.0 + 207, panel.1 + 55, panel),
+        "the tail seat the band wears"
+    );
+    assert!(
+        !merchant_deprecated_hover(panel.0 + 208, panel.1 + 36, panel),
+        "the 208 seat the strict pair refuses"
+    );
+    assert!(
+        !merchant_deprecated_hover(panel.0 + 187, panel.1 + 56, panel),
+        "the 56 seat the strict pair refuses"
+    );
+
+    // THE APP'S OWN WALK (the wheel the offset fn serves, the press
+    // the bar band the drag arm speaks, the drag the fraction fold
+    // feeds, the release the disarm speaks — the unarmed call the
+    // silence keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = (0..9)
+        .map(|i| MerchantOfferView {
+            cost_a: (emerald, 1),
+            cost_b: None,
+            result: (bread, 1),
+            out_of_stock: i == 8,
+            uses: 0,
+            max_uses: 4,
+            xp: 0,
+        })
+        .collect();
+    app.merchant_panel = panel;
+    app.merchant_row_rects = (0..7)
+        .map(|i| merchant_row_seat(panel, i, app.merchant_scroll))
+        .collect();
+    // THE WHEEL'S OWN RIDE (the canScroll gate the 9-offer bank
+    // answers, the clamp the [0, 2] window keeps, the ≤7 bank the
+    // same seat wears)
+    app.on_merchant_scroll(-1.0);
+    assert_eq!(app.merchant_scroll, 1, "the wheel-down the +1 ride wears");
+    app.on_merchant_scroll(-9.0);
+    assert_eq!(app.merchant_scroll, 2, "the max clamp the ride keeps");
+    app.on_merchant_scroll(9.0);
+    assert_eq!(app.merchant_scroll, 0, "the wheel-up the top ride wears");
+    // THE SMALL BANK'S OWN SILENCE (the 7-offer window the wheel
+    // never rides)
+    app.merchant_offers.truncate(7);
+    app.on_merchant_scroll(-1.0);
+    assert_eq!(app.merchant_scroll, 0, "the ≤7 bank the same seat wears");
+    app.merchant_offers = (0..9)
+        .map(|i| MerchantOfferView {
+            cost_a: (emerald, 1),
+            cost_b: None,
+            result: (bread, 1),
+            out_of_stock: i == 8,
+            uses: 0,
+            max_uses: 4,
+            xp: 0,
+        })
+        .collect();
+    // THE BAR BAND'S OWN DRAG ARM (javap mouseClicked head — the
+    // strict (94, 100) x (18, 158] pairs the armed flag speaks, the
+    // row seat the arm never reaches, the disabled bar the arm never
+    // answers)
+    app.on_press(panel.0 + 96, panel.1 + 100);
+    assert!(
+        app.merchant_scroll_drag,
+        "the bar band's press the drag arm wears"
+    );
+    assert_eq!(app.merchant_scroll, 0, "the arm the offset never rides");
+    app.on_left_release();
+    assert!(!app.merchant_scroll_drag, "the release the disarm speaks");
+    app.on_merchant_scroll_drag(panel.1 + 200);
+    assert_eq!(app.merchant_scroll, 0, "the unarmed drag the silence keeps");
+    // THE ARMED DRAG'S OWN FOLD (the fraction walk the offset feeds —
+    // the track head the zero keeps, the below-track ride the max
+    // clamp wears; the once-armed drag the RECT never re-checks)
+    app.on_press(panel.0 + 96, panel.1 + 100);
+    app.on_merchant_scroll_drag(panel.1 + 88);
+    assert_eq!(
+        app.merchant_scroll, 1,
+        "the track mid the 0.5 rounding wears"
+    );
+    app.on_merchant_scroll_drag(panel.1 + 400);
+    assert_eq!(
+        app.merchant_scroll, 2,
+        "the below-track ride the clamp wears"
+    );
+    app.on_left_release();
+    // THE SCROLLED WINDOW'S OWN PRESS (the render's row seats the
+    // scroll idx carries — the press the OFFER index the Select
+    // Trade packet's word banks, the scrolled-out offer the fold
+    // reaches)
+    app.merchant_row_rects = (0..7)
+        .map(|i| merchant_row_seat(panel, i, app.merchant_scroll))
+        .collect();
+    let (rx, ry, idx) = app.merchant_row_rects[0];
+    assert_eq!(idx, 2, "the scrolled window the offer index folds");
+    assert!(
+        app.merchant_widget_press(rx + 4, ry + 4),
+        "the scrolled row's seat the press consumes"
+    );
+    assert_eq!(
+        app.merchant_selected, 2,
+        "the press the offer index banks — the fold the vanilla lambda wears"
+    );
+    assert_eq!(
+        app.merchant_offers[2].result,
+        (bread, 1),
+        "the folded offer the sell match wears"
+    );
+    // THE SCROLLED-OUT OFFER'S OWN IRON COST (the window the 9-bank
+    // serves — the last offer's own row the fold answers, the stale
+    // stock the overlay's own verdict wears)
+    app.merchant_offers[8] = MerchantOfferView {
+        cost_a: (iron, 2),
+        cost_b: None,
+        result: (bread, 3),
+        out_of_stock: true,
+        uses: 4,
+        max_uses: 4,
+        xp: 0,
+    };
+    app.on_merchant_scroll(-9.0);
+    assert_eq!(app.merchant_scroll, 2, "the max clamp the scroll keeps");
+    app.merchant_row_rects = (0..7)
+        .map(|i| merchant_row_seat(panel, i, app.merchant_scroll))
+        .collect();
+    let (rx9, ry9, idx9) = app.merchant_row_rects[6];
+    assert_eq!(idx9, 8, "the seventh seat the ninth offer folds");
+    assert!(
+        app.merchant_widget_press(rx9 + 4, ry9 + 4),
+        "the last offer's row the press serves"
+    );
+    assert_eq!(app.merchant_selected, 8, "the ninth offer the press banks");
+    assert!(
+        app.merchant_offers[8].out_of_stock,
+        "the stale stock the overlay's own verdict wears"
+    );
+}
