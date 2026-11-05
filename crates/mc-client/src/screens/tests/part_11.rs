@@ -36180,3 +36180,101 @@ fn the_merchant_rows_own_sprites_the_button_states_wear() {
         "the stale stock the overlay's own verdict wears"
     );
 }
+
+/// THE MERCHANT TITLE'S OWN COMPOSITE ROW (javap 26.2
+/// MerchantScreen.extractLabels — the `merchant.title` format the
+/// lang table answers, the five level words the `merchant.level.N`
+/// keys wear, the %s interleave the TranslatableContents walk serves,
+/// the range gate the 0/6 walks the None keeps, the cold-cache lane
+/// the None answers [the plain branch the caller wears]).
+#[test]
+fn the_merchant_title_row_the_level_words_wear() {
+    use crate::screens::{format_translatable, merchant_title_row, tr};
+
+    // THE %S WALK (the TranslatableContents decomposition — the
+    // sequential interleave the args consume, the exhausted arg the
+    // literal token keeps, the tail the raw remainder answers)
+    assert_eq!(
+        format_translatable("%s - %s", &["Villager", "Journeyman"]),
+        "Villager - Journeyman",
+        "the composite the interleave wears"
+    );
+    assert_eq!(
+        format_translatable("%s", &["Solo"]),
+        "Solo",
+        "the one-arg row the single seat wears"
+    );
+    assert_eq!(
+        format_translatable("no args here", &["X"]),
+        "no args here",
+        "the argless row the silence keeps"
+    );
+    assert_eq!(
+        format_translatable("%s then %s then %s", &["A", "B"]),
+        "A then B then %s",
+        "the exhausted arg the literal token keeps"
+    );
+    assert_eq!(
+        format_translatable("%s%s", &["a", "b"]),
+        "ab",
+        "the adjacent tokens the order keeps"
+    );
+
+    // THE COMPOSITE'S OWN ROWS (the en_us rows the lang table banks —
+    // the five level words the 1..5 keys wear, the `%s - %s` format
+    // the composite answers; the range gate the 0 and 6 walks the
+    // None keeps [the plain branch the caller's fresh gate wears])
+    if tr("merchant.title").is_none() {
+        // THE COLD-CACHE LANE (the assets-cache the recovery walks
+        // rebuild) — the composite the None keeps, the plain branch
+        // the render's own law wears
+        assert_eq!(
+            merchant_title_row("Villager", 3),
+            None,
+            "the cold lane the None keeps"
+        );
+        return;
+    }
+    assert_eq!(
+        merchant_title_row("Villager", 1).as_deref(),
+        Some("Villager - Novice"),
+        "the novice tier the first word wears"
+    );
+    assert_eq!(
+        merchant_title_row("Villager", 2).as_deref(),
+        Some("Villager - Apprentice"),
+        "the apprentice tier the second word wears"
+    );
+    assert_eq!(
+        merchant_title_row("Villager", 3).as_deref(),
+        Some("Villager - Journeyman"),
+        "the journeyman tier the third word wears"
+    );
+    assert_eq!(
+        merchant_title_row("Villager", 4).as_deref(),
+        Some("Villager - Expert"),
+        "the expert tier the fourth word wears"
+    );
+    assert_eq!(
+        merchant_title_row("Villager", 5).as_deref(),
+        Some("Villager - Master"),
+        "the master tier the fifth word wears"
+    );
+    assert_eq!(
+        merchant_title_row("Villager", 0),
+        None,
+        "the level-zero walk the None keeps"
+    );
+    assert_eq!(
+        merchant_title_row("Villager", 6),
+        None,
+        "the level-six walk the None keeps"
+    );
+    // THE WIRE'S OWN TITLE the arg0 lane wears (the custom name the
+    // decode rode — the composite the name row speaks)
+    assert_eq!(
+        merchant_title_row("Bob", 5).as_deref(),
+        Some("Bob - Master"),
+        "the custom name the arg0 seat wears"
+    );
+}

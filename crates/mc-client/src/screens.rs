@@ -41871,10 +41871,29 @@ impl App {
         let show_level =
             self.merchant_level > 0 && self.merchant_level <= 5 && self.merchant_show_progress;
         let title_x = panel.0 + 49 + 138;
-        if show_level && tr("merchant.title").is_some() {
-            // the composite's own arg row the lang table keeps — the
-            // decode the later text round re-lays (the row's absence
-            // the plain branch answers)
+        // THE COMPOSITE'S OWN ARG ROW (javap extractLabels — the
+        // `Component.translatable("merchant.title", title,
+        // translatable("merchant.level." + level))` walk the census
+        // 36-65 speaks, the `merchant.level.\u0001` recipe the
+        // concat's own bootstrap keeps; the row's absence the plain
+        // branch answers [the cold-cache lane the port's own law
+        // wears], the arg0 the wire's own title the decode rode [the
+        // fallback the plain branch's own lane shares])
+        let composite = if show_level {
+            match self
+                .merchant_title
+                .as_deref()
+                .or_else(|| tr("container.villager"))
+            {
+                Some(t) => merchant_title_row(t, self.merchant_level),
+                None => None,
+            }
+        } else {
+            None
+        };
+        if let Some(c) = composite {
+            let tx = title_x - g.text_width(&c) / 2;
+            g.text(a, tx, panel.1 + 6, &c, label, false);
         } else if let Some(t) = self
             .merchant_title
             .as_deref()
@@ -98268,6 +98287,53 @@ pub fn merchant_row_tooltip_band(bx: i32, mx: i32) -> u8 {
 /// [186, 208) x [35, 56) pairs answers)
 pub fn merchant_deprecated_hover(mx: i32, my: i32, panel: (i32, i32)) -> bool {
     mx >= panel.0 + 186 && mx < panel.0 + 186 + 22 && my >= panel.1 + 35 && my < panel.1 + 35 + 21
+}
+
+/// THE TRANSLATABLE'S OWN %S WALK (the TranslatableContents
+/// decomposition the composite title wears — the `%s` tokens the
+/// args consume in order, the exhausted arg the literal token keeps
+/// [the walk the vanilla formatter speaks], the tail the raw
+/// remainder answers). The positional `%n$s` + the `%%` escape forms
+/// the walk never serves (the jar's own `merchant.title` row the
+/// sequential `%s - %s` form alone wears — the forms the later
+/// rounds re-lay).
+pub fn format_translatable(fmt: &str, args: &[&str]) -> String {
+    let mut out = String::with_capacity(fmt.len() + 16);
+    let mut rest = fmt;
+    let mut idx = 0usize;
+    while let Some(pos) = rest.find("%s") {
+        out.push_str(&rest[..pos]);
+        rest = &rest[pos + 2..];
+        match args.get(idx) {
+            Some(a) => out.push_str(a),
+            None => out.push_str("%s"),
+        }
+        idx += 1;
+    }
+    out.push_str(rest);
+    out
+}
+
+/// THE MERCHANT TITLE'S OWN COMPOSITE ROW (javap 26.2
+/// MerchantScreen.extractLabels — the `1 <= getTraderLevel() <= 5`
+/// gate the range walk speaks, the `merchant.title` row the lang
+/// table answers [`%s - %s` the en_us row keeps], the level word the
+/// `merchant.level.\u0001` recipe's own key construction wears
+/// [translatable("merchant.level." + level) — the Novice..Master
+/// five the en_us table banks], the missing level row the key
+/// itself answers [the getOrDefault law the decode's own walk
+/// keeps]); the cold-cache lane the None answers [the row's absence
+/// the plain branch wears — the port's own law the render's stub
+/// keeps]. The showProgressBar gate the CALLER wears (the field's
+/// own state the menu banks).
+pub fn merchant_title_row(title: &str, level: i32) -> Option<String> {
+    let fmt = tr("merchant.title")?;
+    if !(1..=5).contains(&level) {
+        return None;
+    }
+    let key = format!("merchant.level.{level}");
+    let word = tr(&key).unwrap_or(key.as_str());
+    Some(format_translatable(fmt, &[title, word]))
 }
 
 /// THE PICKER'S PANEL ORIGIN (the AbstractContainerScreen's own
