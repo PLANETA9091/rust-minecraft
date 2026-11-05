@@ -29859,8 +29859,10 @@ fn the_anvil_field_the_clipboard_walk_wears() {
     for ch in "Doom Bringer".chars() {
         app.on_anvil_char(ch);
     }
-    // THE COPY'S OWN WHOLE-VALUE LAW (the 67 arm the [0, 2) live range
-    // the copy never narrows — the WHOLE value the store banks)
+    // THE COPY'S OWN RANGE LAW (the 471 re-wear the 470 isCopy arm's
+    // law the family answers — the [0, 2) live range the "Do" the
+    // store banks, the whole-value fold the standing law the box
+    // never wears)
     app.on_anvil_caret_home_end(false);
     app.on_anvil_caret_shift_arrow(false); // the right walk the seat-1 rides
     app.on_anvil_caret_shift_arrow(false); // the second step the seat-2 banks
@@ -29868,50 +29870,55 @@ fn the_anvil_field_the_clipboard_walk_wears() {
     assert_eq!(app.anvil_highlight, Some(0), "the range the anchor banks");
     app.on_anvil_copy();
     assert_eq!(
-        app.clipboard, "Doom Bringer",
-        "the copy the whole value banks"
+        app.clipboard, "Do",
+        "the highlighted range the copy banks [the whole-value fold the box never wears]"
     );
-    // THE CUT'S OWN WIPE (the 88 arm the copy law the store banks
-    // first — the setValue("") walk the whole value wipes, the caret
-    // the zero parks, the anchor the collapse wears)
+    assert_eq!(
+        app.anvil_name, "Doom Bringer",
+        "the copy the field never trims"
+    );
+    assert_eq!(app.anvil_caret, 2, "the copy the caret never moves");
+    // THE CUT'S OWN RANGE REMOVAL (the store the range banks first,
+    // the insertText("") walk the live range alone clears — the
+    // whole-value wipe the standing law the box never wears)
     app.on_anvil_cut();
-    assert_eq!(app.anvil_name, "", "the cut the whole value wipes");
-    assert_eq!(app.anvil_caret, 0, "the wipe the caret parks");
-    assert_eq!(app.anvil_highlight, None, "the wipe the anchor drops");
-    assert_eq!(app.clipboard, "Doom Bringer", "the cut the store banks");
-    // THE PASTE'S OWN SEAT INSERT (the 86 arm the empty field the
-    // store's word seeds — the caret the inserted walk the tail wears)
+    assert_eq!(app.clipboard, "Do", "the cut the range the store banks");
+    assert_eq!(
+        app.anvil_name, "om Bringer",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
+    );
+    assert_eq!(app.anvil_caret, 0, "the removal the lo seat parks");
+    assert_eq!(app.anvil_highlight, None, "the removal the anchor drops");
+    // THE COLLAPSED CUT'S OWN NO-OP (the replace(lo, lo, "") the value
+    // never moves — the cut the box the value keeps, the store the
+    // empty word re-banks)
+    app.on_anvil_cut();
+    assert_eq!(app.clipboard, "", "the collapsed cut the store empties");
+    assert_eq!(
+        app.anvil_name, "om Bringer",
+        "the collapsed cut the value keeps"
+    );
+    assert_eq!(app.anvil_caret, 0, "the no-op the seat keeps");
+    // THE SELECTION'S OWN REPLACE (the select-all the [0, len) range
+    // opens — the store's word the range the answer replaces, the
+    // caret the inserted walk the tail rides)
     app.clipboard = "Doom Bringer".to_string();
+    app.on_anvil_select_all();
     app.on_anvil_paste();
     assert_eq!(
         app.anvil_name, "Doom Bringer",
-        "the paste the empty field seeds"
+        "the paste the range replaces"
     );
-    assert_eq!(app.anvil_caret, 12, "the paste the caret banks");
-    assert_eq!(app.anvil_highlight, None, "the paste the anchor keeps");
-    // THE EMPTY-COPY'S OWN SILENCE (the fresh door the empty field the
-    // store never touches — the copy + the cut the idempotent pair the
-    // sentinel keeps)
-    let mut app3 = App::new(3);
-    app3.enter_world();
-    app3.offline_world
-        .as_mut()
-        .unwrap()
-        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
-    app3.open_anvil_for(cell);
-    app3.anvil_slots[0] = (sword, 1);
-    app3.clipboard = "the empty field the store never touches".to_string();
-    app3.on_anvil_copy();
+    assert_eq!(app.anvil_caret, 12, "the replace the caret rides");
+    assert_eq!(app.anvil_highlight, None, "the replace the anchor drops");
+    // THE EMPTY-COPY'S OWN UNGUARDED BANK (the collapsed pair the
+    // EMPTY word the store wears — the whole-value fold the box
+    // never wears)
+    app.clipboard = "sentinel".to_string();
+    app.on_anvil_copy();
     assert_eq!(
-        app3.clipboard, "the empty field the store never touches",
-        "the empty copy the store keeps"
-    );
-    app3.on_anvil_cut();
-    assert_eq!(app3.anvil_name, "", "the empty cut the word keeps");
-    assert_eq!(app3.anvil_caret, 0, "the empty cut the zero parks");
-    assert_eq!(
-        app3.clipboard, "the empty field the store never touches",
-        "the empty cut the store keeps"
+        app.clipboard, "",
+        "the collapsed copy the store empties [the unguarded write]"
     );
     // THE MID-SEAT'S OWN INSERT (the second door the word the seat-1
     // the walk answers — the caret the +1 step banks)
@@ -29943,19 +29950,20 @@ fn the_anvil_field_the_clipboard_walk_wears() {
     assert_eq!(app2.anvil_name, "Qoom", "the range the Q replaces");
     assert_eq!(app2.anvil_caret, 1, "the replace the lo seat banks");
     assert_eq!(app2.anvil_highlight, None, "the replace the anchor drops");
-    // THE EMPTY STORE'S OWN SILENCE (the guard the walk never enters —
-    // the live range the silence keeps, the word the store wears)
+    // THE EMPTY STORE'S OWN WALK (the no-empty-guard the 26.2 bytes
+    // speak — the live range the removal alone serves, the word the
+    // store the silence keeps)
     app2.on_anvil_caret_home_end(false);
-    app2.on_anvil_caret_shift_arrow(false); // the range the silence guards
+    app2.on_anvil_caret_shift_arrow(false); // the range the removal answers
     app2.on_anvil_caret_shift_arrow(false);
     app2.clipboard = String::new();
     app2.on_anvil_paste();
-    assert_eq!(app2.anvil_name, "Qoom", "the empty store the word keeps");
     assert_eq!(
-        app2.anvil_highlight,
-        Some(0),
-        "the silence the live range keeps"
+        app2.anvil_name, "om",
+        "the empty store the live range alone removes"
     );
+    assert_eq!(app2.anvil_caret, 0, "the removal the lo seat parks");
+    assert_eq!(app2.anvil_highlight, None, "the removal the anchor drops");
     // THE CAP'S OWN CLAMP (the 60-char flood the tail appends — the
     // 50-tail the walk wears, the second paste the cap re-answers)
     app2.on_anvil_caret_home_end(true);
@@ -29974,17 +29982,31 @@ fn the_anvil_field_the_clipboard_walk_wears() {
         "the second flood the cap re-answers"
     );
     assert_eq!(app2.anvil_caret, 50, "the re-answer the caret keeps");
-    // THE RESPONDER'S OWN STRIP RIDE (the empty door the DEL char the
-    // filter re-shapes — the AB the head the walk seeds, the seat the
-    // fresh bounds the clamp keeps)
+    // THE STRIP + THE IDENTITY'S OWN DOOR (the third door the fresh
+    // field the walks wear)
+    let mut app3 = App::new(3);
+    app3.enter_world();
+    app3.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app3.open_anvil_for(cell);
+    app3.anvil_slots[0] = (sword, 1);
+    // THE RESPONDER'S OWN STRIP RIDE (the DEL char the filter
+    // re-shapes — the AB the head the walk seeds, the seat the fresh
+    // bounds the clamp keeps)
     app3.clipboard = "A\u{7f}B".to_string();
     app3.on_anvil_paste();
     assert_eq!(app3.anvil_name, "AB", "the strip the AB the seeds");
     assert_eq!(app3.anvil_caret, 2, "the strip the clamp re-keys");
-    // THE IDENTITY RESET'S OWN RIDE (the cut the field wipes [the AB
-    // the store banks], the display-name word the paste the plain
-    // stack's own hover law answers — the empty word the reset wears)
+    // THE IDENTITY RESET'S OWN RIDE (the select-all the [0, 2) range
+    // opens — the cut the range alone removes, the display word the
+    // paste the plain stack's own hover law answers — the empty word
+    // the reset wears)
+    app3.on_anvil_select_all();
     app3.on_anvil_cut();
+    assert_eq!(app3.clipboard, "AB", "the cut the range the store banks");
+    assert_eq!(app3.anvil_name, "", "the cut the whole range removes");
     app3.clipboard = "Iron Sword".to_string();
     app3.on_anvil_paste();
     assert_eq!(app3.anvil_name, "", "the display word the reset wears");
@@ -30003,12 +30025,14 @@ fn the_anvil_field_the_clipboard_walk_wears() {
     assert_eq!(app3.anvil_name, "", "the gate the word never wears");
 }
 
-// THE CHAT FIELD'S OWN CLIPBOARD SIBLING WALK (the autopush-440 round
-// — the anvil round's 67/86/88 law the chat lane re-wears, the whole
-// value the copy banks, the wipe the cut answers, the store's word
-// the paste inserts at the seat, the 256 cap the tail clamps, the
-// is_control refusal the paste word wears, the equal-word early-out
-// the empty walks keep, the closed chat the gate never passes).
+// THE CHAT FIELD'S OWN CLIPBOARD SIBLING WALK (the 471 re-wear the
+// 470 census's isCopy/isPaste/isCut arms the 26.2 bytes speak — the
+// 468 debug law the family re-wears: the highlighted range the copy
+// banks [the collapsed pair the EMPTY word the unguarded write
+// wears], the insertText("") walk the live range alone removes, the
+// no-empty-guard the paste walk wears, the 256 cap the tail clamps,
+// the is_control refusal the paste word wears, the closed chat the
+// gate never passes).
 #[test]
 fn the_chat_field_the_clipboard_sibling_wears() {
     let mut app = App::new(3);
@@ -30025,26 +30049,29 @@ fn the_chat_field_the_clipboard_sibling_wears() {
     // THE SELECT-ALL'S OWN LIVE RANGE (the [0, len) the field wears)
     app.on_chat_select_all();
     assert_eq!(app.chat_highlight, Some(0), "the all the anchor parks");
-    // THE COPY'S OWN WHOLE-VALUE LAW (the live range the copied word
-    // never narrows — the whole value the store banks)
+    // THE COPY'S OWN RANGE LAW (the [0, 8) range the whole value the
+    // store banks — the range law the walk answers)
     app.on_chat_copy();
     assert_eq!(
         app.clipboard, "hi there",
-        "the whole value the copy banks [the range never narrows]"
+        "the [0, 8) range the copy banks [the range law the walk answers]"
     );
     assert_eq!(app.chat_input, "hi there", "the copy the field never trims");
     assert_eq!(app.chat_cursor, 8, "the copy the caret never moves");
-    // THE CUT'S OWN WIPE (the store keeps, the value clears, the
-    // caret parks, the anchor drops, the draft disclaims)
+    // THE CUT'S OWN RANGE REMOVAL (the [0, 8) range the whole value
+    // clears, the caret the lo seat parks, the draft disclaims)
     app.chat_input_is_draft = true;
     app.on_chat_cut();
-    assert_eq!(app.chat_input, "", "the cut the whole value wipes");
-    assert_eq!(app.chat_cursor, 0, "the wipe the caret parks");
-    assert_eq!(app.chat_highlight, None, "the wipe the anchor drops");
     assert_eq!(
         app.clipboard, "hi there",
-        "the cut the store keeps [the copy first step]"
+        "the cut the range the store banks"
     );
+    assert_eq!(
+        app.chat_input, "",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
+    );
+    assert_eq!(app.chat_cursor, 0, "the removal the lo seat parks");
+    assert_eq!(app.chat_highlight, None, "the removal the anchor drops");
     assert!(!app.chat_input_is_draft, "the edit the draft disclaims");
     // THE PASTE'S OWN SEAT INSERT (the empty field the store's word
     // seeds, the caret the tail rides)
@@ -30067,36 +30094,33 @@ fn the_chat_field_the_clipboard_sibling_wears() {
     app.on_chat_paste();
     assert_eq!(app.chat_input, "hi there", "the paste the range replaces");
     assert_eq!(app.chat_cursor, 8, "the replace the caret rides");
-    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps —
-    // the store's own empty the walk never enters)
+    // THE EMPTY STORE'S OWN WALK (the no-empty-guard the 26.2 bytes
+    // speak — the live range the removal alone serves)
     app.clipboard = String::new();
     app.on_chat_select_all();
     app.on_chat_paste();
     assert_eq!(
-        app.chat_input, "hi there",
-        "the empty store the silence keeps"
+        app.chat_input, "",
+        "the empty store the live range alone removes"
     );
-    assert_eq!(
-        app.chat_highlight,
-        Some(0),
-        "the empty paste the live range keeps"
-    );
-    app.on_chat_cut();
-    assert_eq!(app.chat_input, "", "the empty store the cut still wipes");
-    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty field the
-    // store never overwrites)
+    assert_eq!(app.chat_cursor, 0, "the removal the lo seat parks");
+    assert_eq!(app.chat_highlight, None, "the removal the anchor drops");
+    // THE EMPTY COPY'S OWN UNGUARDED BANK (the collapsed pair the
+    // EMPTY word the store wears)
     app.clipboard = "sentinel".to_string();
     app.on_chat_copy();
     assert_eq!(
-        app.clipboard, "sentinel",
-        "the empty field the store never touches"
+        app.clipboard, "",
+        "the collapsed copy the store empties [the unguarded write]"
     );
-    // THE EMPTY CUT'S OWN EARLY-OUT (the already-empty wipe the
-    // idempotent answer keeps — the parks the walk still answers)
+    // THE COLLAPSED CUT'S OWN NO-OP (the value the no-op keeps, the
+    // store the empty word re-banks, the draft the responder keeps)
     app.chat_input_is_draft = true;
     app.on_chat_cut();
-    assert_eq!(app.chat_cursor, 0, "the empty wipe the caret keeps");
-    assert_eq!(app.chat_highlight, None, "the empty wipe the anchor keeps");
+    assert_eq!(app.clipboard, "", "the collapsed cut the store empties");
+    assert_eq!(app.chat_input, "", "the collapsed cut the value keeps");
+    assert_eq!(app.chat_cursor, 0, "the no-op the seat keeps");
+    assert_eq!(app.chat_highlight, None, "the re-park the anchor drops");
     assert!(
         app.chat_input_is_draft,
         "the equal word the responder never fires [the draft stays]"
@@ -30153,12 +30177,13 @@ fn the_chat_field_the_clipboard_sibling_wears() {
     assert_eq!(app3.chat_cursor, 0, "the gate the caret never moves");
 }
 
-// THE DIRECT FIELD'S OWN CLIPBOARD SIBLING WALK (the autopush-441
-// round — the chat/anvil rounds' 67/86/88 law the entry box
-// re-wears, the whole value the copy banks, the wipe the cut
-// answers, the store's word the paste inserts at the seat, the 128
-// cap the tail clamps, the equal-word early-out the empty walks
-// keep, the unfocused box the stale screen the gate never passes).
+// THE DIRECT FIELD'S OWN CLIPBOARD SIBLING WALK (the 471 re-wear the
+// 470 census's isCopy/isPaste/isCut arms the 26.2 bytes speak — the
+// 468 debug law the family re-wears: the highlighted range the copy
+// banks [the collapsed pair the EMPTY word the unguarded write
+// wears], the insertText("") walk the live range alone removes, the
+// no-empty-guard the paste walk wears, the 128 cap the tail clamps,
+// the unfocused box the stale screen the gate never passes).
 #[test]
 fn the_direct_field_the_clipboard_sibling_wears() {
     let mut app = App::new(3);
@@ -30176,27 +30201,30 @@ fn the_direct_field_the_clipboard_sibling_wears() {
     // THE SELECT-ALL'S OWN LIVE RANGE (the [0, len) the field wears)
     app.on_direct_select_all();
     assert_eq!(app.direct_highlight, Some(0), "the all the anchor parks");
-    // THE COPY'S OWN WHOLE-VALUE LAW (the live range the copied word
-    // never narrows — the whole value the store banks)
+    // THE COPY'S OWN RANGE LAW (the [0, 14) range the whole value the
+    // store banks — the range law the walk answers)
     app.on_direct_copy();
     assert_eq!(
         app.clipboard, "mc.example.org",
-        "the whole value the copy banks [the range never narrows]"
+        "the [0, 14) range the copy banks [the range law the walk answers]"
     );
     assert_eq!(
         app.direct_address, "mc.example.org",
         "the copy the field never trims"
     );
-    // THE CUT'S OWN WIPE (the store keeps, the value clears, the
-    // caret parks, the anchor drops)
+    // THE CUT'S OWN RANGE REMOVAL (the [0, 14) range the whole value
+    // clears, the caret the lo seat parks, the anchor drops)
     app.on_direct_cut();
-    assert_eq!(app.direct_address, "", "the cut the whole value wipes");
-    assert_eq!(app.direct_cursor, 0, "the wipe the caret parks");
-    assert_eq!(app.direct_highlight, None, "the wipe the anchor drops");
     assert_eq!(
         app.clipboard, "mc.example.org",
-        "the cut the store keeps [the copy first step]"
+        "the cut the range the store banks"
     );
+    assert_eq!(
+        app.direct_address, "",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
+    );
+    assert_eq!(app.direct_cursor, 0, "the removal the lo seat parks");
+    assert_eq!(app.direct_highlight, None, "the removal the anchor drops");
     // THE PASTE'S OWN SEAT INSERT (the empty field the store's word
     // seeds, the caret the tail rides)
     app.on_direct_paste();
@@ -30223,40 +30251,32 @@ fn the_direct_field_the_clipboard_sibling_wears() {
         app.direct_address, "mc.example.org",
         "the paste the range replaces"
     );
-    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps)
+    // THE EMPTY STORE'S OWN WALK (the no-empty-guard the 26.2 bytes
+    // speak — the live range the removal alone serves)
     app.clipboard = String::new();
     app.on_direct_select_all();
     app.on_direct_paste();
     assert_eq!(
-        app.direct_address, "mc.example.org",
-        "the empty store the silence keeps"
-    );
-    assert_eq!(
-        app.direct_highlight,
-        Some(0),
-        "the empty paste the live range keeps"
-    );
-    app.on_direct_cut();
-    assert_eq!(
         app.direct_address, "",
-        "the empty store the cut still wipes"
+        "the empty store the live range alone removes"
     );
-    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty field the
-    // store never overwrites)
+    assert_eq!(app.direct_cursor, 0, "the removal the lo seat parks");
+    assert_eq!(app.direct_highlight, None, "the removal the anchor drops");
+    // THE EMPTY COPY'S OWN UNGUARDED BANK (the collapsed pair the
+    // EMPTY word the store wears)
     app.clipboard = "sentinel".to_string();
     app.on_direct_copy();
     assert_eq!(
-        app.clipboard, "sentinel",
-        "the empty field the store never touches"
+        app.clipboard, "",
+        "the collapsed copy the store empties [the unguarded write]"
     );
-    // THE EMPTY CUT'S OWN EARLY-OUT (the already-empty wipe the
-    // idempotent answer keeps — the parks the walk still answers)
+    // THE COLLAPSED CUT'S OWN NO-OP (the value the no-op keeps, the
+    // store the empty word re-banks)
     app.on_direct_cut();
-    assert_eq!(app.direct_cursor, 0, "the empty wipe the caret keeps");
-    assert_eq!(
-        app.direct_highlight, None,
-        "the empty wipe the anchor keeps"
-    );
+    assert_eq!(app.clipboard, "", "the collapsed cut the store empties");
+    assert_eq!(app.direct_address, "", "the collapsed cut the value keeps");
+    assert_eq!(app.direct_cursor, 0, "the no-op the seat keeps");
+    assert_eq!(app.direct_highlight, None, "the re-park the anchor drops");
     // THE CAP'S OWN CLAMP (the 128 the entry box's own setMaxLength
     // wears — the flood the tail clamps, the second paste the cap
     // re-answers)
@@ -30302,13 +30322,14 @@ fn the_direct_field_the_clipboard_sibling_wears() {
     assert_eq!(app3.direct_address, "", "the gate the field never wears");
 }
 
-// THE EDITSERVER PAIR'S OWN CLIPBOARD SIBLINGS WALK (the autopush-442
-// round — the 441 direct lane's 67/86/88 law the focused dispatch
-// re-wears, the FOCUSED box the whole value the store banks, the
-// empty store the paste guard never passes, the focused box's own
-// cap the tail clamps [the name's 32 / the address's 128], the
-// neither-focus arm the walk never answers, the stale screen the
-// gate never passes).
+// THE EDITSERVER PAIR'S OWN CLIPBOARD SIBLINGS WALK (the 471 re-wear
+// the 470 census's isCopy/isPaste/isCut arms the 26.2 bytes speak —
+// the 468 debug law the pair re-wears: the focused box the
+// highlighted range the copy banks [the collapsed pair the EMPTY
+// word the unguarded write wears], the insertText("") walk the live
+// range alone removes, the no-empty-guard the paste walk wears, the
+// name's 32 / the address's 128 caps the tail clamps, the
+// neither-focus arm the walk never answers).
 #[test]
 fn the_editserver_pair_the_clipboard_siblings_wear() {
     let mut app = App::new(3);
@@ -30321,27 +30342,32 @@ fn the_editserver_pair_the_clipboard_siblings_wear() {
         app.es_name, "Minecraft Server",
         "the defaultName the fresh ctor keeps"
     );
-    // THE COPY'S OWN WHOLE-VALUE LAW (the focused name box the whole
-    // value the store banks)
+    // THE COPY'S OWN RANGE LAW (the select-all the [0, 16) range
+    // opens — the whole value the store banks, the range law the
+    // walk answers)
+    app.on_editserver_select_all();
     app.on_editserver_copy();
     assert_eq!(
         app.clipboard, "Minecraft Server",
-        "the whole value the copy banks"
+        "the [0, 16) range the copy banks [the range law the walk answers]"
     );
     assert_eq!(
         app.es_name, "Minecraft Server",
         "the copy the field never trims"
     );
-    // THE CUT'S OWN WIPE (the store keeps, the name clears, the
-    // caret parks, the anchor drops)
+    // THE CUT'S OWN RANGE REMOVAL (the [0, 16) range the whole value
+    // clears, the caret the lo seat parks, the anchor drops)
     app.on_editserver_cut();
-    assert_eq!(app.es_name, "", "the cut the whole value wipes");
-    assert_eq!(app.es_name_cursor, 0, "the wipe the caret parks");
-    assert_eq!(app.es_name_highlight, None, "the wipe the anchor drops");
     assert_eq!(
         app.clipboard, "Minecraft Server",
-        "the cut the store keeps [the copy first step]"
+        "the cut the range the store banks"
     );
+    assert_eq!(
+        app.es_name, "",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
+    );
+    assert_eq!(app.es_name_cursor, 0, "the removal the lo seat parks");
+    assert_eq!(app.es_name_highlight, None, "the removal the anchor drops");
     // THE PASTE'S OWN SEAT INSERT (the empty name the store's word
     // seeds, the caret the tail rides)
     app.on_editserver_paste();
@@ -30371,46 +30397,54 @@ fn the_editserver_pair_the_clipboard_siblings_wear() {
         "the address box the word seeds"
     );
     assert_eq!(app.es_address_cursor, 14, "the seed the caret rides");
-    // THE ADDRESS'S OWN COPY + CUT + PASTE (the whole value the
-    // store banks, the wipe the box clears, the re-paste the seat
-    // seeds)
+    // THE ADDRESS'S OWN RANGE COPY + CUT + PASTE (the [0, 14) range
+    // the store banks, the range the cut alone removes, the
+    // re-paste the seat seeds)
     app.on_editserver_select_all();
     app.on_editserver_copy();
     assert_eq!(
         app.clipboard, "mc.example.net",
-        "the address whole value the copy banks"
+        "the address [0, 14) range the copy banks"
     );
     app.on_editserver_cut();
-    assert_eq!(app.es_address, "", "the cut the address wipes");
-    assert_eq!(app.es_address_cursor, 0, "the address wipe the caret parks");
+    assert_eq!(
+        app.es_address, "",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
+    );
+    assert_eq!(app.es_address_cursor, 0, "the removal the lo seat parks");
     app.on_editserver_paste();
     assert_eq!(
         app.es_address, "mc.example.net",
         "the re-paste the word seeds"
     );
-    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps)
+    // THE EMPTY STORE'S OWN WALK (the no-empty-guard the 26.2 bytes
+    // speak — the live range the removal alone serves)
     app.clipboard = String::new();
     app.on_editserver_select_all();
     app.on_editserver_paste();
     assert_eq!(
-        app.es_address, "mc.example.net",
-        "the empty store the silence keeps"
+        app.es_address, "",
+        "the empty store the live range alone removes"
     );
+    assert_eq!(app.es_address_cursor, 0, "the removal the lo seat parks");
     assert_eq!(
-        app.es_address_highlight,
-        Some(0),
-        "the empty paste the live range keeps"
+        app.es_address_highlight, None,
+        "the removal the anchor drops"
     );
-    app.on_editserver_cut();
-    assert_eq!(app.es_address, "", "the empty store the cut still wipes");
-    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty box the
-    // store never overwrites — the address focus the empty arm)
+    // THE EMPTY COPY'S OWN UNGUARDED BANK (the collapsed pair the
+    // EMPTY word the store wears — the address focus the empty arm)
     app.clipboard = "sentinel".to_string();
     app.on_editserver_copy();
     assert_eq!(
-        app.clipboard, "sentinel",
-        "the empty box the store never touches"
+        app.clipboard, "",
+        "the collapsed copy the store empties [the unguarded write]"
     );
+    // THE COLLAPSED CUT'S OWN NO-OP (the value the no-op keeps, the
+    // store the empty word re-banks)
+    app.on_editserver_cut();
+    assert_eq!(app.clipboard, "", "the collapsed cut the store empties");
+    assert_eq!(app.es_address, "", "the collapsed cut the value keeps");
+    assert_eq!(app.es_address_cursor, 0, "the no-op the seat keeps");
     // THE NEITHER-FOCUS ARM'S OWN SILENCE (the pair's both-clear
     // state the three walks never answer)
     app.es_address_focus = false;
@@ -30442,12 +30476,14 @@ fn the_editserver_pair_the_clipboard_siblings_wear() {
     assert_eq!(app.es_address, "untouched", "the gate the boxes never wear");
 }
 
-// THE CREATIVE SEARCH'S OWN CLIPBOARD SIBLING WALK (the autopush-443
-// round — the 441/442 entry lanes' 67/86/88 law the search box
-// re-wears, the whole value the copy banks, the wipe the cut answers
-// [the refresh + the scroll reset the same tails the backspace
-// wears], the store's word the paste inserts at the seat, the 50 cap
-// the tail clamps, the non-search tab the gate never passes).
+// THE CREATIVE SEARCH'S OWN CLIPBOARD SIBLING WALK (the 471 re-wear
+// the 470 census's isCopy/isPaste/isCut arms the 26.2 bytes speak —
+// the 468 debug law the box re-wears: the highlighted range the copy
+// banks [the collapsed pair the EMPTY word the unguarded write
+// wears], the insertText("") walk the live range alone removes [the
+// refresh + the scroll reset the same tails the backspace wears],
+// the no-empty-guard the paste walk wears, the 50 cap the tail
+// clamps, the non-search tab the gate never passes).
 #[test]
 fn the_creative_search_the_clipboard_sibling_wears() {
     let mut app = App::new(3);
@@ -30470,26 +30506,35 @@ fn the_creative_search_the_clipboard_sibling_wears() {
         Some(0),
         "the all the anchor parks"
     );
-    // THE COPY'S OWN WHOLE-VALUE LAW (the live range the copied word
-    // never narrows — the whole value the store banks)
+    // THE COPY'S OWN RANGE LAW (the [0, 5) range the whole value the
+    // store banks — the range law the walk answers)
     app.on_creative_copy();
     assert_eq!(
         app.clipboard, "stone",
-        "the whole value the copy banks [the range never narrows]"
+        "the [0, 5) range the copy banks [the range law the walk answers]"
     );
     assert_eq!(app.creative_search, "stone", "the copy the box never trims");
-    // THE CUT'S OWN WIPE (the store keeps, the value clears, the
-    // caret parks, the anchor drops)
+    // THE CUT'S OWN RANGE REMOVAL (the [0, 5) range the whole value
+    // clears, the caret the lo seat parks, the anchor drops, the
+    // rebuild the scroll top wears)
+    app.creative_scroll = 48.0; // the pre-cut wheel the rebuild retires
     app.on_creative_cut();
-    assert_eq!(app.creative_search, "", "the cut the whole value wipes");
-    assert_eq!(app.creative_search_cursor, 0, "the wipe the caret parks");
+    assert_eq!(app.clipboard, "stone", "the cut the range the store banks");
     assert_eq!(
-        app.creative_search_highlight, None,
-        "the wipe the anchor drops"
+        app.creative_search, "",
+        "the cut the range alone removes [the whole-value wipe the box never wears]"
     );
     assert_eq!(
-        app.clipboard, "stone",
-        "the cut the store keeps [the copy first step]"
+        app.creative_search_cursor, 0,
+        "the removal the lo seat parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the removal the anchor drops"
+    );
+    assert_eq!(
+        app.creative_scroll, 0.0,
+        "the rebuild the top wears [the responder the changed value answers]"
     );
     // THE PASTE'S OWN SEAT INSERT (the empty box the store's word
     // seeds, the caret the tail rides)
@@ -30511,32 +30556,37 @@ fn the_creative_search_the_clipboard_sibling_wears() {
     app.on_creative_select_all();
     app.on_creative_paste();
     assert_eq!(app.creative_search, "stone", "the paste the range replaces");
-    // THE EMPTY STORE'S OWN SILENCE (the live range the guard keeps)
+    // THE EMPTY STORE'S OWN WALK (the no-empty-guard the 26.2 bytes
+    // speak — the live range the removal alone serves)
     app.clipboard = String::new();
     app.on_creative_select_all();
     app.on_creative_paste();
     assert_eq!(
-        app.creative_search, "stone",
-        "the empty store the silence keeps"
-    );
-    assert_eq!(
-        app.creative_search_highlight,
-        Some(0),
-        "the empty paste the live range keeps"
-    );
-    app.on_creative_cut();
-    assert_eq!(
         app.creative_search, "",
-        "the empty store the cut still wipes"
+        "the empty store the live range alone removes"
     );
-    // THE EMPTY COPY'S OWN SILENCE (the sentinel the empty box the
-    // store never overwrites)
+    assert_eq!(
+        app.creative_search_cursor, 0,
+        "the removal the lo seat parks"
+    );
+    assert_eq!(
+        app.creative_search_highlight, None,
+        "the removal the anchor drops"
+    );
+    // THE EMPTY COPY'S OWN UNGUARDED BANK (the collapsed pair the
+    // EMPTY word the store wears)
     app.clipboard = "sentinel".to_string();
     app.on_creative_copy();
     assert_eq!(
-        app.clipboard, "sentinel",
-        "the empty box the store never touches"
+        app.clipboard, "",
+        "the collapsed copy the store empties [the unguarded write]"
     );
+    // THE COLLAPSED CUT'S OWN NO-OP (the value the no-op keeps, the
+    // store the empty word re-banks)
+    app.on_creative_cut();
+    assert_eq!(app.clipboard, "", "the collapsed cut the store empties");
+    assert_eq!(app.creative_search, "", "the collapsed cut the value keeps");
+    assert_eq!(app.creative_search_cursor, 0, "the no-op the seat keeps");
     // THE CAP'S OWN CLAMP (the 50 the search box's setMaxLength wears
     // — the flood the tail clamps, the second paste the cap
     // re-answers)
@@ -31113,6 +31163,12 @@ fn the_os_clipboard_the_bridge_the_store_law_wears() {
     for c in "oak".chars() {
         app.on_creative_char(c);
     }
+    // THE RANGE LAW'S OWN SEAT (the 471 re-wear the copy the
+    // highlighted range the store banks — the select-all the [0, 3)
+    // range the walk banks, the collapsed pair the EMPTY word the
+    // store wears [the whole-value fold the standing law the box
+    // never wears — the 468 debug law the family re-wears])
+    app.on_creative_select_all();
     app.on_creative_copy();
     assert_eq!(
         app.clipboard, "oak",

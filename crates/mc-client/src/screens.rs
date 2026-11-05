@@ -27459,10 +27459,12 @@ impl App {
         self.creative_search_window_sync();
     }
 
-    /// THE SEARCH BOX'S OWN COPY SEAT (the 441/442 entry lanes' 67 law
-    /// the search box re-wears — the whole value the store banks [the
-    /// vanilla law the live range never narrows the copied word], the
-    /// empty box the store never touches, the stale screen the
+    /// THE SEARCH BOX'S OWN COPY SEAT (the 471 re-wear the 470
+    /// census's isCopy arm the 26.2 bytes wear — the highlighted
+    /// range the [min, max) substring the store banks, the UNGUARDED
+    /// write the collapsed pair the EMPTY word wears [the whole-value
+    /// fold the standing family law the bytes NEVER speak — the 468
+    /// debug law the family re-wears], the stale screen the
     /// non-search tab the gate never passes; the f3 chords' own debug
     /// store the same `clipboard` bank wears).
     pub fn on_creative_copy(&mut self) {
@@ -27471,31 +27473,47 @@ impl App {
         {
             return;
         }
-        if !self.creative_search.is_empty() {
-            crate::clipboard::store_bank(&mut self.clipboard, &self.creative_search);
-        }
+        let word = edit_highlighted(
+            &self.creative_search,
+            self.creative_search_cursor,
+            self.creative_search_highlight,
+        );
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
     }
 
-    /// THE SEARCH BOX'S OWN CUT SEAT (the 441/442 entry lanes' 88 law
-    /// the search box re-wears — the copy law the store banks first,
-    /// the wipe the whole value clears, the caret the zero parks, the
-    /// anchor the collapse the None wears, the responder walk the
-    /// changed value alone answers [the equal-word early-out the
-    /// idempotent answer keeps — the refresh + the scroll reset the
-    /// same tails the backspace wears], the stale screen the
-    /// non-search tab the gate never passes).
+    /// THE SEARCH BOX'S OWN CUT SEAT (the 471 re-wear the 470
+    /// census's isCut arm the 26.2 bytes wear — the store the range
+    /// banks first, the `insertText("")` walk the live range alone
+    /// removes [the replace(lo, hi, "") the range answers — the
+    /// whole-value wipe the standing family law the bytes NEVER
+    /// speak], the collapsed pair the no-op keeps [the value the box
+    /// keeps], the responder walk the changed value alone answers
+    /// [the refresh + the scroll reset the same tails the backspace
+    /// wears], the stale screen the non-search tab the gate never
+    /// passes).
     pub fn on_creative_cut(&mut self) {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
         {
             return;
         }
-        self.on_creative_copy();
-        let had_text = !self.creative_search.is_empty();
-        self.creative_search.clear();
-        self.creative_search_cursor = 0;
-        self.creative_search_highlight = None;
-        if had_text {
+        // the store the range banks first (the isCopy arm the same
+        // law wears — the collapsed pair the empty word the store
+        // banks)
+        let word = edit_highlighted(
+            &self.creative_search,
+            self.creative_search_cursor,
+            self.creative_search_highlight,
+        );
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
+        // the insertText("") walk the live range alone removes — the
+        // collapsed pair the no-op keeps (the equal-word early-out
+        // the responder walk consumes)
+        if entry_delete_selection(
+            &mut self.creative_search,
+            &mut self.creative_search_cursor,
+            &mut self.creative_search_highlight,
+        ) {
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
@@ -27503,16 +27521,18 @@ impl App {
         }
     }
 
-    /// THE SEARCH BOX'S OWN PASTE SEAT (the 441/442 entry lanes' 86
-    /// law the search box re-wears — the empty store the guard the
-    /// walk never enters [the live range the silence keeps], the
-    /// live selection the deleteSelection first step removes, the
-    /// store's word the seat the insert walk answers, the 50
-    /// setMaxLength cap the tail the clamp keeps [the typed char's
-    /// own law the paste word wears], the responder walk the
-    /// inserted word alone answers [the refresh + the scroll reset
-    /// the same tails the char walk wears], the stale screen the
-    /// non-search tab the gate never passes).
+    /// THE SEARCH BOX'S OWN PASTE SEAT (the 471 re-wear the 470
+    /// census's isPaste arm the 26.2 bytes wear — the NO empty guard
+    /// the walk never wears [the standing guard the bytes never
+    /// speak — the empty word the live range the removal alone
+    /// serves, the collapsed pair the no-op keeps], the live
+    /// selection the deleteSelection first step removes, the store's
+    /// word the seat the insert walk answers, the 50 setMaxLength
+    /// cap the tail the clamp keeps [the typed char's own law the
+    /// paste word wears], the responder walk the changed value alone
+    /// answers [the refresh + the scroll reset the same tails the
+    /// char walk wears], the stale screen the non-search tab the
+    /// gate never passes).
     pub fn on_creative_paste(&mut self) {
         if self.screen != ScreenKind::Creative
             || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
@@ -27520,10 +27540,10 @@ impl App {
             return;
         }
         let word = crate::clipboard::store_load(&self.clipboard);
-        if word.is_empty() {
-            return; // the empty store the guard the walk never passes
-        }
-        entry_delete_selection(
+        // the NO empty guard the 26.2 bytes speak — the empty word
+        // the live range the removal alone answers (the deleteSelection
+        // first step the insertText walk wears)
+        let deleted = entry_delete_selection(
             &mut self.creative_search,
             &mut self.creative_search_cursor,
             &mut self.creative_search_highlight,
@@ -27544,7 +27564,9 @@ impl App {
             self.creative_search_cursor = seat + 1;
             inserted = true;
         }
-        if inserted {
+        if inserted || deleted {
+            // the onValueChange responder the changed value alone
+            // answers (the equal-word early-out the no-op consumes)
             self.refresh_creative_search();
             self.creative_scroll = 0.0;
             self.creative_scroll_to(0.0);
@@ -32930,61 +32952,75 @@ impl App {
         self.anvil_highlight = Some(0);
     }
 
-    /// THE ANVIL FIELD'S OWN COPY SEAT (the EditBox keyPressed's 67 arm
-    /// the hasControlDown branch the `copy()` walk serves — the WHOLE
-    /// value the store banks [the vanilla law the live range never
-    /// narrows the copied word], the empty field the store never
-    /// touches, the stale screen the gate never passes; the f3 chords'
-    /// own debug store the same `clipboard` bank wears).
+    /// THE ANVIL FIELD'S OWN COPY SEAT (the 471 re-wear the 470
+    /// census's isCopy arm the 26.2 bytes wear — the highlighted
+    /// range the [min, max) substring the store banks, the UNGUARDED
+    /// write the collapsed pair the EMPTY word wears [the whole-value
+    /// fold the standing family law the bytes NEVER speak — the 468
+    /// debug law the family re-wears], the stale screen the gate
+    /// never passes; the f3 chords' own debug store the same
+    /// `clipboard` bank wears).
     pub fn on_anvil_copy(&mut self) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
-        if !self.anvil_name.is_empty() {
-            crate::clipboard::store_bank(&mut self.clipboard, &self.anvil_name);
-        }
+        let word = edit_highlighted(&self.anvil_name, self.anvil_caret, self.anvil_highlight);
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
     }
 
-    /// THE ANVIL FIELD'S OWN CUT SEAT (the EditBox keyPressed's 88 arm
-    /// the `cut()` walk serves — the copy law the store banks first,
-    /// the `setValue("")` walk the whole value wipes [the mid-string
-    /// seat the wipe never spares], the caret the zero parks, the
-    /// anchor the collapse the None wears, the responder the empty
-    /// word consumes [the equal-word early-out the idempotent answer
-    /// keeps], the empty field the same walk the store never touches,
-    /// the stale screen the gate never passes).
+    /// THE ANVIL FIELD'S OWN CUT SEAT (the 471 re-wear the 470
+    /// census's isCut arm the 26.2 bytes wear — the store the range
+    /// banks first, the `insertText("")` walk the live range alone
+    /// removes [the replace(lo, hi, "") the range answers — the
+    /// whole-value wipe the standing family law the bytes NEVER
+    /// speak], the collapsed pair the no-op keeps [the value the box
+    /// keeps], the responder the changed value alone answers [the
+    /// filter strip / the identity reset the walk re-shapes — the
+    /// caret the fresh bounds the clamp re-keys], the stale screen
+    /// the gate never passes).
     pub fn on_anvil_cut(&mut self) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
-        self.on_anvil_copy();
-        self.anvil_caret = 0;
-        self.anvil_highlight = None;
-        self.on_anvil_name_changed("");
-        self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+        // the store the range banks first (the isCopy arm the same
+        // law wears — the collapsed pair the empty word the store
+        // banks)
+        let word = edit_highlighted(&self.anvil_name, self.anvil_caret, self.anvil_highlight);
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
+        // the insertText("") walk the live range alone removes — the
+        // collapsed pair the no-op keeps (the equal-word early-out
+        // the responder walk consumes)
+        if self.anvil_delete_selection() {
+            self.on_anvil_name_changed(&self.anvil_name.clone());
+            // the responder's own re-key (the filter strip / the
+            // identity reset the word the walk re-shapes)
+            self.anvil_caret = self.anvil_caret.min(self.anvil_name.chars().count());
+        }
     }
 
-    /// THE ANVIL FIELD'S OWN PASTE SEAT (the EditBox keyPressed's 86
-    /// arm the `insertText(getClipboard())` walk serves — the EMPTY
-    /// store the guard the walk never enters [the live range the
-    /// silence keeps], the live selection the deleteSelection first
-    /// step removes, the store's word the seat the insert walk
-    /// answers, the 50-char cap the tail the clamp keeps [the typed
-    /// char's own law the paste word wears], the responder the pasted
-    /// word consumes [the filter strip / the identity reset the walk
-    /// re-shapes — the caret the fresh bounds the clamp re-keys], the
-    /// stale screen the gate never passes).
+    /// THE ANVIL FIELD'S OWN PASTE SEAT (the 471 re-wear the EditBox
+    /// keyPressed's 86 arm the `insertText(getClipboard())` walk
+    /// serves — the NO empty guard the 26.2 bytes speak [the
+    /// standing guard the bytes never wear — the empty word the live
+    /// range the removal alone serves, the collapsed pair the
+    /// equal-word early-out the no-op keeps], the live selection the
+    /// deleteSelection first step removes, the store's word the seat
+    /// the insert walk answers, the 50-char cap the tail the clamp
+    /// keeps [the typed char's own law the paste word wears], the
+    /// responder the pasted word consumes [the filter strip / the
+    /// identity reset the walk re-shapes — the caret the fresh
+    /// bounds the clamp re-keys], the stale screen the gate never
+    /// passes).
     pub fn on_anvil_paste(&mut self) {
         if self.screen != ScreenKind::Anvil {
             return;
         }
         let word = crate::clipboard::store_load(&self.clipboard);
-        if word.is_empty() {
-            return; // the empty store the guard the walk never passes
-        }
         // THE SELECTION'S OWN FIRST STEP (the insertText the
         // deleteSelection walk the live range removes — the cursor the
-        // lo seat re-parks, the anchor the collapse the None wears)
+        // lo seat re-parks, the anchor the collapse the None wears;
+        // the NO empty guard the 26.2 bytes speak — the empty word
+        // the live range the removal alone answers)
         self.anvil_delete_selection();
         let mut w = self.anvil_name.clone();
         let mut seat = self.anvil_caret.min(self.anvil_name.chars().count());
@@ -53139,39 +53175,56 @@ impl App {
         );
     }
 
-    /// THE DIRECT FIELD'S OWN COPY SEAT (the chat/anvil rounds' 67 law
-    /// the entry box re-wears — the whole value the store banks [the
-    /// vanilla law the live range never narrows the copied word], the
-    /// empty field the store never touches, the unfocused box the
-    /// stale screen the gate never passes; the f3 chords' own debug
-    /// store the same `clipboard` bank wears).
+    /// THE DIRECT FIELD'S OWN COPY SEAT (the 471 re-wear the 470
+    /// census's isCopy arm the 26.2 bytes wear — the highlighted
+    /// range the [min, max) substring the store banks, the UNGUARDED
+    /// write the collapsed pair the EMPTY word wears [the whole-value
+    /// fold the standing family law the bytes NEVER speak — the 468
+    /// debug law the family re-wears], the unfocused box the stale
+    /// screen the gate never passes; the f3 chords' own debug store
+    /// the same `clipboard` bank wears).
     pub fn on_direct_copy(&mut self) {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
-        if !self.direct_address.is_empty() {
-            crate::clipboard::store_bank(&mut self.clipboard, &self.direct_address);
-        }
+        let word = edit_highlighted(
+            &self.direct_address,
+            self.direct_cursor,
+            self.direct_highlight,
+        );
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
     }
 
-    /// THE DIRECT FIELD'S OWN CUT SEAT (the chat/anvil rounds' 88 law
-    /// the entry box re-wears — the copy law the store banks first,
-    /// the wipe the whole value clears [the mid-string seat the wipe
-    /// never spares], the caret the zero parks, the anchor the
-    /// collapse the None wears, the window sync the changed value
-    /// alone answers [the equal-word early-out the idempotent answer
-    /// keeps], the unfocused box the stale screen the gate never
-    /// passes).
+    /// THE DIRECT FIELD'S OWN CUT SEAT (the 471 re-wear the 470
+    /// census's isCut arm the 26.2 bytes wear — the store the range
+    /// banks first, the `insertText("")` walk the live range alone
+    /// removes [the replace(lo, hi, "") the range answers — the
+    /// whole-value wipe the standing family law the bytes NEVER
+    /// speak], the collapsed pair the no-op keeps [the value the box
+    /// keeps], the window sync the changed value alone answers [the
+    /// equal-word early-out the idempotent answer keeps], the
+    /// unfocused box the stale screen the gate never passes).
     pub fn on_direct_cut(&mut self) {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
-        self.on_direct_copy();
-        let had_text = !self.direct_address.is_empty();
-        self.direct_address.clear();
-        self.direct_cursor = 0;
-        self.direct_highlight = None;
-        if had_text {
+        // the store the range banks first (the isCopy arm the same
+        // law wears — the collapsed pair the empty word the store
+        // banks)
+        let word = edit_highlighted(
+            &self.direct_address,
+            self.direct_cursor,
+            self.direct_highlight,
+        );
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
+        // the insertText("") walk the live range alone removes — the
+        // collapsed pair the no-op keeps (the equal-word early-out
+        // the responder walk consumes)
+        if entry_delete_selection(
+            &mut self.direct_address,
+            &mut self.direct_cursor,
+            &mut self.direct_highlight,
+        ) {
             display_window_sync(
                 &self.direct_address,
                 &mut self.direct_display,
@@ -53181,25 +53234,26 @@ impl App {
         }
     }
 
-    /// THE DIRECT FIELD'S OWN PASTE SEAT (the chat/anvil rounds' 86
-    /// law the entry box re-wears — the empty store the guard the
-    /// walk never enters [the live range the silence keeps], the
-    /// live selection the deleteSelection first step removes, the
-    /// store's word the seat the insert walk answers, the 128
-    /// setMaxLength cap the tail the clamp keeps [the typed char's
-    /// own law the paste word wears — the per-char insert the same
-    /// gate serves], the window sync the inserted word alone
-    /// answers, the unfocused box the stale screen the gate never
-    /// passes).
+    /// THE DIRECT FIELD'S OWN PASTE SEAT (the 471 re-wear the 470
+    /// census's isPaste arm the 26.2 bytes wear — the NO empty guard
+    /// the walk never wears [the standing guard the bytes never
+    /// speak — the empty word the live range the removal alone
+    /// serves, the collapsed pair the no-op keeps], the live
+    /// selection the deleteSelection first step removes, the store's
+    /// word the seat the insert walk answers, the 128 setMaxLength
+    /// cap the tail the clamp keeps [the typed char's own law the
+    /// paste word wears — the per-char insert the same gate
+    /// serves], the window sync the changed value alone answers,
+    /// the unfocused box the stale screen the gate never passes).
     pub fn on_direct_paste(&mut self) {
         if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
             return;
         }
         let word = crate::clipboard::store_load(&self.clipboard);
-        if word.is_empty() {
-            return; // the empty store the guard the walk never passes
-        }
-        entry_delete_selection(
+        // the NO empty guard the 26.2 bytes speak — the empty word
+        // the live range the removal alone answers (the
+        // deleteSelection first step the insertText walk wears)
+        let deleted = entry_delete_selection(
             &mut self.direct_address,
             &mut self.direct_cursor,
             &mut self.direct_highlight,
@@ -53214,7 +53268,9 @@ impl App {
             self.direct_cursor += 1;
             inserted = true;
         }
-        if inserted {
+        if inserted || deleted {
+            // the onValueChange responder the changed value alone
+            // answers (the equal-word early-out the no-op consumes)
             display_window_sync(
                 &self.direct_address,
                 &mut self.direct_display,
@@ -53324,9 +53380,12 @@ impl App {
         }
     }
 
-    /// THE PAIR'S OWN COPY SEAT (the 441 direct lane's 67 law the
-    /// focused dispatch re-wears — the FOCUSED box the whole value
-    /// the store banks, the empty field the store never touches, the
+    /// THE PAIR'S OWN COPY SEAT (the 471 re-wear the 470 census's
+    /// isCopy arm the 26.2 bytes wear — the FOCUSED box the
+    /// highlighted range the [min, max) substring the store banks,
+    /// the UNGUARDED write the collapsed pair the EMPTY word wears
+    /// [the whole-value fold the standing family law the bytes NEVER
+    /// speak — the 468 debug law the family re-wears], the
     /// neither-focus arm the walk never answers, the stale screen
     /// the gate never passes; the f3 chords' own debug store the
     /// same `clipboard` bank wears).
@@ -53335,19 +53394,25 @@ impl App {
             return;
         }
         if self.es_name_focus {
-            if !self.es_name.is_empty() {
-                crate::clipboard::store_bank(&mut self.clipboard, &self.es_name);
-            }
-        } else if self.es_address_focus && !self.es_address.is_empty() {
-            crate::clipboard::store_bank(&mut self.clipboard, &self.es_address);
+            let word = edit_highlighted(&self.es_name, self.es_name_cursor, self.es_name_highlight);
+            crate::clipboard::store_bank(&mut self.clipboard, &word);
+        } else if self.es_address_focus {
+            let word = edit_highlighted(
+                &self.es_address,
+                self.es_address_cursor,
+                self.es_address_highlight,
+            );
+            crate::clipboard::store_bank(&mut self.clipboard, &word);
         }
     }
 
-    /// THE PAIR'S OWN CUT SEAT (the 441 direct lane's 88 law the
-    /// focused dispatch re-wears — the copy law the store banks
-    /// first, the wipe the focused box's whole value clears, the
-    /// caret the zero parks, the anchor the collapse the None
-    /// wears, the window sync the changed box alone answers [the
+    /// THE PAIR'S OWN CUT SEAT (the 471 re-wear the 470 census's
+    /// isCut arm the 26.2 bytes wear — the store the focused box's
+    /// range banks first, the `insertText("")` walk the live range
+    /// alone removes [the replace(lo, hi, "") the range answers —
+    /// the whole-value wipe the standing family law the bytes NEVER
+    /// speak], the collapsed pair the no-op keeps [the value the box
+    /// keeps], the window sync the changed box alone answers [the
     /// equal-word early-out the idempotent answer keeps], the
     /// neither-focus arm the walk never answers, the stale screen
     /// the gate never passes).
@@ -53357,11 +53422,11 @@ impl App {
         }
         self.on_editserver_copy();
         if self.es_name_focus {
-            let had_text = !self.es_name.is_empty();
-            self.es_name.clear();
-            self.es_name_cursor = 0;
-            self.es_name_highlight = None;
-            if had_text {
+            if entry_delete_selection(
+                &mut self.es_name,
+                &mut self.es_name_cursor,
+                &mut self.es_name_highlight,
+            ) {
                 display_window_sync(
                     &self.es_name,
                     &mut self.es_name_display,
@@ -53370,11 +53435,11 @@ impl App {
                 );
             }
         } else if self.es_address_focus {
-            let had_text = !self.es_address.is_empty();
-            self.es_address.clear();
-            self.es_address_cursor = 0;
-            self.es_address_highlight = None;
-            if had_text {
+            if entry_delete_selection(
+                &mut self.es_address,
+                &mut self.es_address_cursor,
+                &mut self.es_address_highlight,
+            ) {
                 display_window_sync(
                     &self.es_address,
                     &mut self.es_address_display,
@@ -53385,26 +53450,27 @@ impl App {
         }
     }
 
-    /// THE PAIR'S OWN PASTE SEAT (the 441 direct lane's 86 law the
-    /// focused dispatch re-wears — the empty store the guard the
-    /// walk never enters [the live range the silence keeps], the
-    /// live selection the deleteSelection first step removes, the
-    /// store's word the seat the insert walk answers, the focused
-    /// box's own cap the tail the clamp keeps [the name's 32 / the
-    /// address's 128 the per-char insert the same gate serves], the
-    /// window sync the inserted word alone answers, the
-    /// neither-focus arm the walk never answers, the stale screen
-    /// the gate never passes).
+    /// THE PAIR'S OWN PASTE SEAT (the 471 re-wear the 470 census's
+    /// isPaste arm the 26.2 bytes wear — the NO empty guard the walk
+    /// never wears [the standing guard the bytes never speak — the
+    /// empty word the live range the removal alone serves, the
+    /// collapsed pair the no-op keeps], the live selection the
+    /// deleteSelection first step removes, the store's word the seat
+    /// the insert walk answers, the focused box's own cap the tail
+    /// the clamp keeps [the name's 32 / the address's 128 the
+    /// per-char insert the same gate serves], the window sync the
+    /// changed box alone answers, the neither-focus arm the walk
+    /// never answers, the stale screen the gate never passes).
     pub fn on_editserver_paste(&mut self) {
         if self.screen != ScreenKind::EditServer {
             return;
         }
         let word = crate::clipboard::store_load(&self.clipboard);
-        if word.is_empty() {
-            return; // the empty store the guard the walk never passes
-        }
+        // the NO empty guard the 26.2 bytes speak — the empty word
+        // the live range the removal alone answers (the
+        // deleteSelection first step the insertText walk wears)
         if self.es_name_focus {
-            entry_delete_selection(
+            let deleted = entry_delete_selection(
                 &mut self.es_name,
                 &mut self.es_name_cursor,
                 &mut self.es_name_highlight,
@@ -53419,7 +53485,7 @@ impl App {
                 self.es_name_cursor += 1;
                 inserted = true;
             }
-            if inserted {
+            if inserted || deleted {
                 display_window_sync(
                     &self.es_name,
                     &mut self.es_name_display,
@@ -53428,7 +53494,7 @@ impl App {
                 );
             }
         } else if self.es_address_focus {
-            entry_delete_selection(
+            let deleted = entry_delete_selection(
                 &mut self.es_address,
                 &mut self.es_address_cursor,
                 &mut self.es_address_highlight,
@@ -53443,7 +53509,7 @@ impl App {
                 self.es_address_cursor += 1;
                 inserted = true;
             }
-            if inserted {
+            if inserted || deleted {
                 display_window_sync(
                     &self.es_address,
                     &mut self.es_address_display,
@@ -61722,62 +61788,72 @@ impl App {
         self.chat_window_sync();
     }
 
-    /// THE CHAT FIELD'S OWN COPY SEAT (the anvil round's copy law the
-    /// chat lane re-wears — the whole value the store banks [the
-    /// vanilla law the live range never narrows the copied word], the
-    /// empty field the store never touches, the closed chat the gate
+    /// THE CHAT FIELD'S OWN COPY SEAT (the 471 re-wear the 470
+    /// census's isCopy arm the 26.2 bytes wear — the highlighted
+    /// range the [min, max) substring the store banks, the UNGUARDED
+    /// write the collapsed pair the EMPTY word wears [the whole-value
+    /// fold the standing family law the bytes NEVER speak — the 468
+    /// debug law the family re-wears], the closed chat the gate
     /// never passes; the f3 chords' own debug store the same
     /// `clipboard` bank wears).
     pub fn on_chat_copy(&mut self) {
         if !self.chat_open {
             return;
         }
-        if !self.chat_input.is_empty() {
-            crate::clipboard::store_bank(&mut self.clipboard, &self.chat_input);
-        }
+        let word = edit_highlighted(&self.chat_input, self.chat_cursor, self.chat_highlight);
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
     }
 
-    /// THE CHAT FIELD'S OWN CUT SEAT (the anvil round's cut law the
-    /// chat lane re-wears — the copy law the store banks first, the
-    /// wipe the whole value clears [the mid-string seat the wipe
-    /// never spares], the caret the zero parks, the anchor the
-    /// collapse the None wears, the responder walk the changed value
-    /// alone answers [the equal-word early-out the idempotent
-    /// answer keeps], the closed chat the gate never passes).
+    /// THE CHAT FIELD'S OWN CUT SEAT (the 471 re-wear the 470
+    /// census's isCut arm the 26.2 bytes wear — the store the range
+    /// banks first, the `insertText("")` walk the live range alone
+    /// removes [the replace(lo, hi, "") the range answers — the
+    /// whole-value wipe the standing family law the bytes NEVER
+    /// speak], the collapsed pair the no-op keeps [the value the box
+    /// keeps], the responder walk the changed value alone answers
+    /// [the draft disclaims + the suggestions the same tails the
+    /// backspace wears — the sync the deleteSelection walk its own
+    /// tail wears], the closed chat the gate never passes).
     pub fn on_chat_cut(&mut self) {
         if !self.chat_open {
             return;
         }
-        self.on_chat_copy();
-        let had_text = !self.chat_input.is_empty();
-        self.chat_input.clear();
-        self.chat_cursor = 0;
-        self.chat_highlight = None;
-        if had_text {
-            self.chat_window_sync();
+        // the store the range banks first (the isCopy arm the same
+        // law wears — the collapsed pair the empty word the store
+        // banks)
+        let word = edit_highlighted(&self.chat_input, self.chat_cursor, self.chat_highlight);
+        crate::clipboard::store_bank(&mut self.clipboard, &word);
+        // the insertText("") walk the live range alone removes — the
+        // collapsed pair the no-op keeps (the equal-word early-out
+        // the responder walk consumes; the sync the helper's own
+        // tail wears)
+        if self.chat_delete_selection() {
             self.chat_input_is_draft = false;
             self.refresh_command_suggestions();
         }
     }
 
-    /// THE CHAT FIELD'S OWN PASTE SEAT (the anvil law the chat lane
-    /// re-wears — the empty store the guard the walk never enters
-    /// [the live range the silence keeps], the live selection the
+    /// THE CHAT FIELD'S OWN PASTE SEAT (the 471 re-wear the anvil
+    /// law's 86 arm the chat lane re-wears — the NO empty guard the
+    /// 26.2 bytes speak [the standing guard the bytes never wear —
+    /// the empty word the live range the removal alone serves, the
+    /// collapsed pair the no-op keeps], the live selection the
     /// deleteSelection first step removes, the store's word the seat
     /// the insert walk answers, the 256 setMaxLength cap the tail
     /// the clamp keeps [the typed char's own law the paste wears —
     /// the is_control refusal the same gate serves], the responder
-    /// walk the inserted word alone answers, the closed chat the
+    /// walk the changed value alone answers, the closed chat the
     /// gate never passes).
     pub fn on_chat_paste(&mut self) {
         if !self.chat_open {
             return;
         }
         let word = crate::clipboard::store_load(&self.clipboard);
-        if word.is_empty() {
-            return; // the empty store the guard the walk never passes
-        }
-        self.chat_delete_selection();
+        // the NO empty guard the 26.2 bytes speak — the empty word
+        // the live range the removal alone answers (the
+        // deleteSelection first step the insertText walk wears; the
+        // sync the helper's own tail wears)
+        let deleted = self.chat_delete_selection();
         let mut inserted = false;
         for c in word.chars() {
             if c.is_control() {
@@ -61793,6 +61869,12 @@ impl App {
         }
         if inserted {
             self.chat_window_sync();
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
+        } else if deleted {
+            // the cap-blocked insert the removal alone wears (the
+            // vanilla insertText the deleteSelection first step the
+            // separate walk serves — the isDraft the same edit fires)
             self.chat_input_is_draft = false;
             self.refresh_command_suggestions();
         }
