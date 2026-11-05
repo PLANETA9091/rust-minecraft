@@ -37227,3 +37227,194 @@ fn the_negative_scroll_the_press_fold_banks() {
         other => panic!("the press the Select Trade speaks, not {other:?}"),
     }
 }
+
+/// THE CORRECTION'S OWN INSTANT SHIP (the eight-times-deferred
+/// state-id ride's own cadence fold the wheel banks — the 469 census
+/// stateid_469.txt the 26.2 bytes speak: the setItem + the
+/// initializeContents walk the EXACT set the believed revision wears
+/// [the putfield the packet's own word banks, the Math.max fold the
+/// 26.2 bytes never speak — the store's exact-set lanes the census
+/// keeps], the handleContainerSetSlot/handleContainerContent walk
+/// the PacketUtils.ensureRunningOnSameThread thread hop the SAME
+/// walk serves — the menu's re-key the packet's own arrival answers,
+/// the view cadence the GUI's believed pair never waits for). The
+/// arms wear: the container word's own verdict [the SetSlot + the
+/// SetContent the instant ship answers, the close + the chart lane's
+/// own pong the cadence keeps], the dropped container word the ship
+/// refuses [the mismatched window's if_icmpne the store never hears
+/// — the applied + word conjunction the pre-read and the apply
+/// wear], the merchant fold's own ride [the wholesale feed the
+/// corrected revision re-keys, the payment press the echo the
+/// believed pair answers — the FIRST click the armed 5 speaks, the
+/// correction the pair re-keys, the SECOND click the corrected 7 the
+/// wire rides — the dev-215 chest arm's sibling the merchant wire
+/// fold re-wears].
+#[test]
+fn the_container_correction_the_instant_ship_wears() {
+    use crate::world_view::{container_correction_word, ContainerCommand, ContainerInput};
+    use mc_protocol::{ComponentPatch, ContainerContent, ContainerSetSlot, ItemStack};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+
+    let stack = |count| ItemStack {
+        count,
+        item_id: emerald,
+        patch: ComponentPatch::default(),
+    };
+
+    // ===== ARM A — THE CONTAINER WORD'S OWN VERDICT (the pump gate's
+    // pure walk: the SetSlot + the SetContent the instant ship
+    // answers, the close + the chart lane's own pong the cadence the
+    // world walks keeps) =====
+    let set_slot = mc_protocol::PlayEvent::ContainerSlotSet(ContainerSetSlot {
+        container_id: 0,
+        state_id: 1,
+        slot: 36,
+        item: stack(4),
+    });
+    assert!(
+        container_correction_word(&set_slot),
+        "the SetSlot word the instant ship answers"
+    );
+    let set_content = mc_protocol::PlayEvent::ContainerFilled(ContainerContent {
+        container_id: 0,
+        state_id: 1,
+        items: vec![stack(4)],
+        carried_item: stack(0),
+    });
+    assert!(
+        container_correction_word(&set_content),
+        "the SetContent word the instant ship answers"
+    );
+    let close =
+        mc_protocol::PlayEvent::ContainerClosed(mc_protocol::ContainerClose { container_id: 9 });
+    assert!(
+        !container_correction_word(&close),
+        "the close the cadence keeps"
+    );
+    let pong = mc_protocol::PlayEvent::PongResponse(7);
+    assert!(
+        !container_correction_word(&pong),
+        "the chart lane's own word the cadence keeps"
+    );
+
+    // ===== ARM B — THE DROPPED WORD THE SHIP REFUSES (the mismatched
+    // window's if_icmpne the store never hears — the applied + word
+    // conjunction the pump wears: the pre-read the verdict speaks,
+    // the apply the drop returns, the ship the conjunction refuses,
+    // the believed revision the drop keeps) =====
+    let mut m = crate::world_model::WorldModel::new();
+    m.apply(mc_protocol::PlayEvent::ScreenOpened(
+        mc_protocol::OpenScreen {
+            container_id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            title_nbt: vec![0x0A, 0x00],
+        },
+    ));
+    m.apply(mc_protocol::PlayEvent::ContainerFilled(ContainerContent {
+        container_id: 5,
+        state_id: 11,
+        items: vec![stack(2)],
+        carried_item: stack(0),
+    }));
+    let stale = mc_protocol::PlayEvent::ContainerSlotSet(ContainerSetSlot {
+        container_id: 6, // the mismatched window the store never hears
+        state_id: 3,
+        slot: 0,
+        item: stack(9),
+    });
+    let word = container_correction_word(&stale);
+    let applied = m.apply(stale);
+    assert!(word, "the container word the pre-read speaks");
+    assert!(!applied, "the mismatched window the store drops");
+    assert!(
+        !(applied && word),
+        "the dropped word the ship refuses — the cadence the world keeps"
+    );
+    assert_eq!(
+        m.open_container().unwrap().state_id,
+        11,
+        "the believed revision the drop keeps"
+    );
+
+    // ===== ARM C — THE MERCHANT FOLD'S OWN RIDE (the wholesale feed
+    // the corrected revision re-keys — the 463 echo gate's own law —
+    // the payment press the echo the believed pair answers: the
+    // FIRST click the armed 5 speaks, the correction the pair
+    // re-keys, the SECOND click the corrected 7 the wire rides — the
+    // feed's own arrival the same frame the believed pair wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let feed = |state: i32, carried: (i32, i32)| crate::world_view::LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots: {
+            let mut s = vec![(emerald, 4), (0, 0), (0, 0)];
+            s.resize(39, (0, 0));
+            s
+        },
+        bundle_rows: Vec::new(),
+        carried,
+        state_id: state,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(crate::world_view::MerchantView {
+            offers: vec![crate::world_view::MerchantOfferView {
+                cost_a: (emerald, 1),
+                cost_b: None,
+                result: (mc_registry::item_id_by_name("bread").unwrap(), 2),
+                out_of_stock: false,
+                uses: 0,
+                max_uses: 4,
+                xp: 0,
+            }],
+            level: 3,
+            xp: 5,
+            show_progress: true,
+            can_restock: false,
+        }),
+    };
+    app.live_container_updated(Some(feed(5, (0, 0))));
+    assert_eq!(
+        app.merchant_live_window,
+        Some((9, 5)),
+        "the armed pair the wholesale feed banks"
+    );
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app.merchant_panel = (0, 0);
+    app.shift_down = false;
+    // THE FIRST CLICK the believed 5 the wire echoes
+    app.click_merchant_slot(10, 10, 0);
+    match rx.try_recv().expect("the first click rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.state_id, 5, "the armed revision the echo wears");
+            assert_eq!(c.window_id, 9, "the window the echo names");
+            assert_eq!(c.slot, 0, "the payment seat the echo names");
+            assert_eq!(c.input, ContainerInput::Pickup, "the plain press rides");
+            assert_eq!(c.carried, (0, 0), "the empty cursor rides");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CORRECTION the wholesale feed speaks (the revision 7 the
+    // pair re-keys — the 463 law the same feed wears)
+    app.live_container_updated(Some(feed(7, (emerald, 2))));
+    assert_eq!(
+        app.merchant_live_window,
+        Some((9, 7)),
+        "the corrected revision the pair re-keys"
+    );
+    // THE SECOND CLICK the corrected 7 the wire rides — the stale
+    // echo the re-key never wears
+    app.click_merchant_slot(10, 10, 0);
+    match rx.try_recv().expect("the corrected click rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(
+                c.state_id, 7,
+                "the corrected revision the echo wears — the stale 5 never rides"
+            );
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    assert!(rx.try_recv().is_err(), "the lane the tail keeps empty");
+}

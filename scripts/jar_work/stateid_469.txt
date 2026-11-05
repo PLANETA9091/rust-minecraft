@@ -1,0 +1,128 @@
+== net/minecraft/world/inventory/AbstractContainerMenu.class
+  METHOD broadcastChanges ()V  (code=127)
+    0: iconst_0
+    1: istore_1
+    2: iload_1
+    3: aload_0
+    4: getfield net/minecraft/world/inventory/AbstractContainerMenu.slots:Lnet/minecraft/core/NonNullList;
+    7: invokevirtual net/minecraft/core/NonNullList.size:()I
+    10: if_icmpge 63
+    13: aload_0
+    14: getfield net/minecraft/world/inventory/AbstractContainerMenu.slots:Lnet/minecraft/core/NonNullList;
+    17: iload_1
+    18: invokevirtual net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+    21: checkcast net/minecraft/world/inventory/Slot
+    24: invokevirtual net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+    27: astore_2
+    28: aload_2
+    29: dup
+    30: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+    33: pop
+    34: invokedynamic dynamic#4:get
+    39: invokestatic com/google/common/base/Suppliers.memoize:(Lcom/google/common/base/Supplier;)Lcom/google/common/base/Supplier;
+    42: astore_3
+    43: aload_0
+    44: iload_1
+    45: aload_2
+    46: aload_3
+    47: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.triggerSlotListeners:(ILnet/minecraft/world/item/ItemStack;Ljava/util/function/Supplier;)V
+    50: aload_0
+    51: iload_1
+    52: aload_2
+    53: aload_3
+    54: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.synchronizeSlotToRemote:(ILnet/minecraft/world/item/ItemStack;Ljava/util/function/Supplier;)V
+    57: iinc 1 1
+    60: goto 2
+    63: aload_0
+    64: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.synchronizeCarriedToRemote:()V
+    67: iconst_0
+    68: istore_1
+    69: iload_1
+    70: aload_0
+    71: getfield net/minecraft/world/inventory/AbstractContainerMenu.dataSlots:Ljava/util/List;
+    74: invokeinterface java/util/List.size:()I
+    79: if_icmpge 126
+    82: aload_0
+    83: getfield net/minecraft/world/inventory/AbstractContainerMenu.dataSlots:Ljava/util/List;
+    86: iload_1
+    87: invokeinterface java/util/List.get:(I)Ljava/lang/Object;
+    92: checkcast net/minecraft/world/inventory/DataSlot
+    95: astore_2
+    96: aload_2
+    97: invokevirtual net/minecraft/world/inventory/DataSlot.get:()I
+    100: istore_3
+    101: aload_2
+    102: invokevirtual net/minecraft/world/inventory/DataSlot.checkAndClearUpdateFlag:()Z
+    105: ifeq 114
+    108: aload_0
+    109: iload_1
+    110: iload_3
+    111: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.updateDataSlotListeners:(II)V
+    114: aload_0
+    115: iload_1
+    116: iload_3
+    117: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.synchronizeDataSlotToRemote:(II)V
+    120: iinc 1 1
+    123: goto 69
+    126: return
+  METHOD setItem (IILnet/minecraft/world/item/ItemStack;)V  (code=15)
+    0: aload_0
+    1: iload_1
+    2: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.getSlot:(I)Lnet/minecraft/world/inventory/Slot;
+    5: aload_3
+    6: invokevirtual net/minecraft/world/inventory/Slot.set:(Lnet/minecraft/world/item/ItemStack;)V
+    9: aload_0
+    10: iload_2
+    11: putfield net/minecraft/world/inventory/AbstractContainerMenu.stateId:I
+    14: return
+  METHOD initializeContents (ILjava/util/List;Lnet/minecraft/world/item/ItemStack;)V  (code=51)
+    0: iconst_0
+    1: istore 4
+    3: iload 4
+    5: aload_2
+    6: invokeinterface java/util/List.size:()I
+    11: if_icmpge 40
+    14: aload_0
+    15: iload 4
+    17: invokevirtual net/minecraft/world/inventory/AbstractContainerMenu.getSlot:(I)Lnet/minecraft/world/inventory/Slot;
+    20: aload_2
+    21: iload 4
+    23: invokeinterface java/util/List.get:(I)Ljava/lang/Object;
+    28: checkcast net/minecraft/world/item/ItemStack
+    31: invokevirtual net/minecraft/world/inventory/Slot.set:(Lnet/minecraft/world/item/ItemStack;)V
+    34: iinc 4 1
+    37: goto 3
+    40: aload_0
+    41: aload_3
+    42: putfield net/minecraft/world/inventory/AbstractContainerMenu.carried:Lnet/minecraft/world/item/ItemStack;
+    45: aload_0
+    46: iload_1
+    47: putfield net/minecraft/world/inventory/AbstractContainerMenu.stateId:I
+    50: return
+  METHOD getStateId ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/inventory/AbstractContainerMenu.stateId:I
+    4: ireturn
+  METHOD incrementStateId ()I  (code=19)
+    0: aload_0
+    1: aload_0
+    2: getfield net/minecraft/world/inventory/AbstractContainerMenu.stateId:I
+    5: iconst_1
+    6: iadd
+    7: sipush 32767
+    10: iand
+    11: putfield net/minecraft/world/inventory/AbstractContainerMenu.stateId:I
+    14: aload_0
+    15: getfield net/minecraft/world/inventory/AbstractContainerMenu.stateId:I
+    18: ireturn
+
+VERDICT [ok] the setItem walk the census wears (the II ItemStack shape)
+VERDICT [ok] the setItem the slot write serves (getSlot + Slot.set)
+VERDICT [ok] the setItem the EXACT set banks (putfield stateId)
+VERDICT [ok] the setItem the Math.max fold never wears (the 26.2 bytes)
+VERDICT [ok] the initializeContents walk the census wears
+VERDICT [ok] the bulk the slot walk the List loop wears
+VERDICT [ok] the bulk the exact set banks (putfield, no Math.max)
+VERDICT [ok] the broadcastChanges walk the census wears (code=127)
+VERDICT [ok] the broadcastChanges the stateId walk never touches (the counter the packets alone move)
+VERDICT [ok] the getStateId getter the census wears

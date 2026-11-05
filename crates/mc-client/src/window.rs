@@ -1084,14 +1084,29 @@ fn run_join(
                             }
                             _ => {}
                         }
-                        if view.apply(event) || ping_changed || bw_changed || tick_changed {
+                        // THE CORRECTION'S OWN INSTANT SHIP the same
+                        // gate wears: the applied SetSlot/SetContent
+                        // word the cadence never waits for (the
+                        // 469 census stateid_469.txt the 26.2 bytes
+                        // speak — the handleContainerSetSlot/
+                        // handleContainerContent walk the packet's
+                        // own arrival the menu's setItem/
+                        // initializeContents serves; the GUI's
+                        // believed (id, state_id) pair the same
+                        // frame re-keys, the wire folds' next click
+                        // the corrected revision echoes). The word
+                        // rides BEFORE the apply — the apply the event
+                        // consumes, the verdict the pre-read speaks.
+                        let correction_word = crate::world_view::container_correction_word(&event);
+                        let applied = view.apply(event);
+                        if applied || ping_changed || bw_changed || tick_changed {
                             // THE SHIP GATE (the cadence the world
                             // updates ride — a logged ping or bandwidth
                             // sample ALONE paces its refresh too, the
                             // charts' columns stream while the world
                             // sleeps; the snapshots ride EVERY ship, the
                             // beliefs the newest one keeps)
-                            if last_ship.elapsed() >= VIEW_CADENCE {
+                            if applied && correction_word || last_ship.elapsed() >= VIEW_CADENCE {
                                 let ping_snapshot: Vec<i64> = ping_ring.iter().copied().collect();
                                 let bw_snapshot: Vec<i64> = bw_ring.iter().copied().collect();
                                 let tick_snapshot: Vec<[i64; 4]> =

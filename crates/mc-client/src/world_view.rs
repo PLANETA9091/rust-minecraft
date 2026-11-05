@@ -4314,6 +4314,26 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
 /// constants' audited layout).
 pub const INVENTORY_MENU_SLOTS: usize = crate::world_model::SHIELD_SLOT + 1;
 
+/// THE CORRECTION'S OWN INSTANT SHIP (the pump gate's own pure word —
+/// the 469 census `stateid_469.txt` the 26.2 bytes speak: the
+/// `handleContainerSetSlot`/`handleContainerContent` walk the
+/// PacketUtils.ensureRunningOnSameThread thread hop the SAME walk
+/// serves — the menu's setItem/initializeContents the packet's own
+/// arrival answers, the GUI's believed `(id, state_id)` pair the
+/// correction the SAME frame re-keys, the view cadence the world
+/// lanes keep the wire fold's believed revision never waits for).
+/// The verdict speaks the CONTAINER word alone (the caller's applied
+/// gate the pump wears: the dropped container packet — the
+/// mismatched window's `if_icmpne` the store never hears — the ship
+/// refuses, and a non-container event — the chart lanes' own pings
+/// and samples — the cadence the world walks keeps).
+pub fn container_correction_word(event: &PlayEvent) -> bool {
+    matches!(
+        event,
+        PlayEvent::ContainerSlotSet(_) | PlayEvent::ContainerFilled(_)
+    )
+}
+
 /// THE WIRE STACK'S OWN KIND EXTRACTION (the autopush-343 round —
 /// the POTION_CONTENTS component the patch carries the kind the
 /// client's own table answers): the added list's potion_contents
