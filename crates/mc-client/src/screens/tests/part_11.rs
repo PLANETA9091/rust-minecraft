@@ -36801,3 +36801,162 @@ fn the_merchant_stale_scroll_the_shrunken_bank_retires() {
         );
     }
 }
+
+/// THE MERCHANT'S OWN STALE-SELECTION CRASH ARM (autopush-466 — the
+/// item walk's own tail the jar census wears [scripts/jar_work/
+/// stale_466.txt]: the extractContents pcs 299-315 the row loop's
+/// ifeq tail answers — the `getfield shopItem` + the `iload 11` pair
+/// the MerchantOffers.get:(I) the walk feeds, the ARRAYLENGTH BOUND
+/// the tail never wears — the stale selection the shrunken bank wears
+/// the vanilla RENDER CRASH speaks [the IndexOutOfBoundsException the
+/// render thread dies of; the refresh ride the selection keeps — the
+/// handleMerchantOffers pc 86 the walk never touches], the port's own
+/// .get() silence the quirk the round banks: the recipe walk's own
+/// hint bound the full-scan arm answers, the sell compute's own arms
+/// the silence keeps, the app's own walks the stale seat never
+/// panic).
+#[test]
+fn the_merchant_stale_selection_the_silence_the_crash_arm_banks() {
+    use crate::world_view::{
+        merchant_recipe_for, merchant_sell_item, merchant_sell_match, LiveContainer,
+        MerchantOfferView, MerchantView,
+    };
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let offer = |ca: i32, n: i32| MerchantOfferView {
+        cost_a: (ca, n),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 0,
+    };
+
+    // ARM A — THE HINT WALK'S OWN BOUND (the stale seat the full-scan
+    // arm answers — the wrap the hint arm never wears: the in-bounds
+    // miss the ONLY row tests [pcs 0-36 the walk wears], the
+    // out-of-bounds hint the forward scan answers [pcs 37-79 — the
+    // bound the vanilla `get(shopItem)` render tail never wears])
+    let bank = vec![offer(emerald, 4), offer(wheat, 1)];
+    assert_eq!(
+        merchant_recipe_for(&bank, (wheat, 1), (0, 0), 0),
+        None,
+        "the in-bounds hint the ONLY row tests — the wrap the walk never wears"
+    );
+    assert_eq!(
+        merchant_recipe_for(&bank, (wheat, 1), (0, 0), 5),
+        Some(1),
+        "the stale hint the full-scan arm answers — the bound the render tail never wears"
+    );
+    assert_eq!(
+        merchant_recipe_for(&bank, (bread, 1), (0, 0), 5),
+        None,
+        "the stale hint the no-match the silence keeps"
+    );
+
+    // ARM B — THE SELL COMPUTE'S OWN SILENCE (the stale hint the same
+    // arms the fresh walk wears — the match the full scan answers,
+    // the offers-empty arm the silence keeps [pc 96-100])
+    let seats = [(wheat, 1), (0, 0), (0, 0)];
+    assert_eq!(
+        merchant_sell_item(&seats, &bank, 5),
+        Some((bread, 1)),
+        "the stale hint the sell compute the full-scan match wears"
+    );
+    assert_eq!(
+        merchant_sell_match(&seats, &bank, 5),
+        Some((1, (bread, 1))),
+        "the stale hint the active-offer pair the match banks"
+    );
+    assert_eq!(
+        merchant_sell_item(&seats, &[], 5),
+        None,
+        "the offers-empty arm the silence keeps"
+    );
+
+    // ARM C — THE APP'S OWN STALE SEAT (the shrunken bank the stale
+    // selection wears — the update walk the silence answers, the
+    // vanilla crash the port never speaks)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![offer(emerald, 4), offer(wheat, 1)];
+    app.merchant_selected = 5; // the stale seat the shrink retired
+    app.merchant_slots[0] = (wheat, 1);
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_active_offer,
+        Some(1),
+        "the stale seat the full-scan match the active-offer bank wears"
+    );
+    // THE ECHO SHRINK (the re-bank the seat staler wears — the walk
+    // the silence keeps, the no-match the null-first law answers)
+    app.merchant_offers = vec![offer(emerald, 4)];
+    app.merchant_update_sell();
+    assert_eq!(
+        app.merchant_active_offer, None,
+        "the shrunken bank the no-match the silence keeps"
+    );
+
+    // ARM D — THE LIVE LANE'S OWN DRIFT (the echo re-bank the stale
+    // selection wears [the refresh ride the selection keeps — the
+    // 463 law the walk re-wears], the emptied bank the stale seat
+    // rides, the update walk the silence answers)
+    let mut live = App::new(3);
+    live.enter_world();
+    live.world_is_network = true;
+    live.screen = ScreenKind::Merchant;
+    let slots = vec![(0, 0); 39];
+    let view = |offers: Vec<MerchantOfferView>| MerchantView {
+        offers,
+        level: 1,
+        xp: 0,
+        show_progress: true,
+        can_restock: false,
+    };
+    live.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots: slots.clone(),
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(view(vec![offer(emerald, 4); 3])),
+    }));
+    // THE PRESS the selection banks (row 0 the packet mints)
+    live.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, row))
+        .collect();
+    assert!(
+        live.merchant_widget_press(104, 104),
+        "the banked row the press answers"
+    );
+    // THE DRIFT (the echo the bank empties — the stale seat the walk
+    // keeps, the crash the port never speaks)
+    live.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(view(vec![])),
+    }));
+    assert_eq!(
+        live.merchant_selected, 0,
+        "the refresh ride the selection keeps — the stale seat the walk banks"
+    );
+    live.merchant_update_sell();
+    assert_eq!(
+        live.merchant_active_offer, None,
+        "the drifted bank the stale seat the silence wears"
+    );
+}
