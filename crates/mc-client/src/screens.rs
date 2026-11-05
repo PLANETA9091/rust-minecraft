@@ -269,6 +269,16 @@ pub struct StatsCounter {
     /// 96 arm the silence keeps; the DEFAULT formatter the plain
     /// count wears)
     pub traded_with_villager: i64,
+    /// `stat.minecraft.talked_to_villager` — the villager talk the
+    /// server's own mobInteract arm banks (the 472 census
+    /// scripts/jar_work/talk_474.txt + talk2_474.txt the jar's own
+    /// bytes speak — the Villager's award pc 87-91 the isClientSide
+    /// arm keeps SERVER-side, the client's own counter the wire's
+    /// AwardStats SET law re-banks; the WanderingTrader's pc 44-48
+    /// arm the isClientSide gate the BOTH sides speaks — the port's
+    /// walk no wanderer body ever wears; the DEFAULT formatter the
+    /// plain count wears)
+    pub talked_to_villager: i64,
     /// `stat_type.minecraft.mined` — the block kinds the survival dig
     /// banks (the vanilla Stats.MINED the Block-keyed map wears; the
     /// BTreeMap the rows' stable order keeps)
@@ -91505,6 +91515,12 @@ impl App {
                 self.stats.deaths.to_string(),
             ));
         }
+        if self.stats.talked_to_villager > 0 {
+            rows.push((
+                tr("stat.minecraft.talked_to_villager").unwrap_or("Talked to Villagers"),
+                self.stats.talked_to_villager.to_string(),
+            ));
+        }
         if self.stats.traded_with_villager > 0 {
             rows.push((
                 tr("stat.minecraft.traded_with_villager").unwrap_or("Traded with Villagers"),
@@ -91582,14 +91598,14 @@ impl App {
     /// .handleAwardStats`'s walk — `this.stats.setValue(entry.getKey(),
     /// entry.getValue())` the SET law the wire's own map speaks, the
     /// client's own counters the server's truth REPLACES): the custom
-    /// category the eight own lanes set, the combat pairs the entity
+    /// category the nine own lanes set, the combat pairs the entity
     /// name resolves, the mined/crafted the block/item registry orders
     /// answer. The unknown words the honest skip keeps — the merge
     /// never guesses.
     pub fn merge_award_stats(&mut self, entries: &[mc_protocol::play::AwardStatEntry]) {
         for e in entries {
             match e.category.as_str() {
-                // THE CUSTOM STATS' OWN SET (the eight the General tab
+                // THE CUSTOM STATS' OWN SET (the nine the General tab
                 // serves — the wire's word the counter's own field
                 // replaces, the unknown customs the skip keeps)
                 "custom" => match e.value.as_str() {
@@ -91601,6 +91617,7 @@ impl App {
                     "jump" => self.stats.jump = e.count as i64,
                     "deaths" => self.stats.deaths = e.count as i64,
                     "traded_with_villager" => self.stats.traded_with_villager = e.count as i64,
+                    "talked_to_villager" => self.stats.talked_to_villager = e.count as i64,
                     _ => {}
                 },
                 // THE COMBAT PAIRS' OWN RESOLVE (the killed map the
@@ -91719,10 +91736,10 @@ impl App {
                 root.insert("minecraft:killed_by".into(), serde_json::Value::Object(m));
             }
         }
-        // THE CUSTOM CATEGORY (the eight the counter's own fields
+        // THE CUSTOM CATEGORY (the nine the counter's own fields
         // keep — the nonzero the sparse law writes)
         let mut m = serde_json::Map::new();
-        let customs: [(&str, i64); 8] = [
+        let customs: [(&str, i64); 9] = [
             ("play_time", s.play_time),
             ("sneak_time", s.sneak_time),
             ("walk_one_cm", s.walk_cm),
@@ -91730,6 +91747,7 @@ impl App {
             ("swim_one_cm", s.swim_cm),
             ("jump", s.jump),
             ("deaths", s.deaths),
+            ("talked_to_villager", s.talked_to_villager),
             ("traded_with_villager", s.traded_with_villager),
         ];
         for (word, count) in customs {
@@ -91750,7 +91768,7 @@ impl App {
     /// keeps: the mined the NAME_OF position inverse answers, the
     /// crafted the item id inverse banks, the killed the static id
     /// walk resolves, the killed-by the display tr the SAME resolve
-    /// the wire merge wears, the custom the eight words the fields
+    /// the wire merge wears, the custom the nine words the fields
     /// speak). THE NESTED GUARD the modern shape only wears — the
     /// `stats` object the file keeps, the absent object the legacy
     /// flat rows the 1.12 decode answers.
@@ -91804,6 +91822,7 @@ impl App {
                     "swim_one_cm" => s.swim_cm = count,
                     "jump" => s.jump = count,
                     "deaths" => s.deaths = count,
+                    "talked_to_villager" => s.talked_to_villager = count,
                     "traded_with_villager" => s.traded_with_villager = count,
                     _ => {}
                 }

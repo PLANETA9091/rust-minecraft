@@ -1,0 +1,22 @@
+== net/minecraft/world/entity/npc/villager/Villager.class
+== net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.class
+  METHOD setTradingPlayer (Lnet/minecraft/world/entity/player/Player;)V  (code=31)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getTradingPlayer:()Lnet/minecraft/world/entity/player/Player;
+    4: ifnull 15
+    7: aload_1
+    8: ifnonnull 15
+    11: iconst_1
+    12: goto 16
+    15: iconst_0
+    16: istore_2
+    17: aload_0
+    18: aload_1
+    19: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.setTradingPlayer:(Lnet/minecraft/world/entity/player/Player;)V
+    22: iload_2
+    23: ifeq 30
+    26: aload_0
+    27: invokevirtual net/minecraft/world/entity/npc/villager/Villager.stopTrading:()V
+    30: return
+
+

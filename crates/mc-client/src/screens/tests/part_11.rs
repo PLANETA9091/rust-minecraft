@@ -37880,3 +37880,102 @@ fn the_traded_stat_the_on_take_ride_wears() {
         "the zero count the sparse law the custom category never writes"
     );
 }
+
+/// THE TALKED STAT'S OWN WIRE LANE (javap 26.2 Villager.mobInteract +
+/// WanderingTrader.mobInteract — the 472 census scripts/jar_work/
+/// talk_474.txt + talk2_474.txt the jar's own bytes speak): the
+/// Villager's award pc 87-91 the isClientSide arm keeps SERVER-side
+/// [pc 52-59 the ifne 108 gate the client's own predicted walk never
+/// passes — the MAIN_HAND gate pc 71-75 the award speaks within],
+/// the client's own counter the wire's AwardStats SET law re-banks
+/// [the merge walk the 471 record's own lanes wear], the
+/// WanderingTrader's award pc 44-48 the isClientSide gate pc 51-58
+/// the BOTH sides speaks — the port's walk no wanderer body ever
+/// wears [the MobKind the villager kinds the enum never banks]. The
+/// DEFAULT formatter the plain count wears — the General tab the
+/// nonzero row serves, the file the sparse law speaks.
+#[test]
+fn the_talked_stat_the_wire_lane_wears() {
+    // THE FRESH COUNTER (the zero the fresh session keeps — the
+    // talk the port's own walks never award, the wire the truth
+    // banks)
+    let mut app = App::new(3);
+    app.enter_world();
+    assert_eq!(
+        app.stats.talked_to_villager, 0,
+        "the fresh session the talked counter the zero wears"
+    );
+    assert_eq!(
+        app.stats.traded_with_villager, 0,
+        "the fresh session the traded sibling the zero wears"
+    );
+
+    // ===== ARM A — THE WIRE'S OWN SET (the AwardStats entry the
+    // custom word the counter's own field replaces — the server's
+    // own mobInteract arm the client lane re-banks, the sibling the
+    // same law wears, each the lane's own word alone) =====
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "custom".to_string(),
+        value: "talked_to_villager".to_string(),
+        value_id: 0,
+        count: 3,
+    }]);
+    assert_eq!(
+        app.stats.talked_to_villager, 3,
+        "the wire's own word the SET law the talked field replaces"
+    );
+    app.merge_award_stats(&[mc_protocol::play::AwardStatEntry {
+        category: "custom".to_string(),
+        value: "traded_with_villager".to_string(),
+        value_id: 0,
+        count: 5,
+    }]);
+    assert_eq!(
+        app.stats.traded_with_villager, 5,
+        "the sibling the same SET law the traded field wears"
+    );
+    assert_eq!(
+        app.stats.talked_to_villager, 3,
+        "the SET law the lane's own word alone replaces — the sibling the talked count keeps"
+    );
+
+    // ===== ARM B — THE GENERAL TAB'S OWN ORDER (the clinit the rows
+    // speak — deaths pc 457 the talked pc 517 precedes, the traded
+    // pc 529 the same tab follows, the nonzero the filter serves) =====
+    let rows = app.stats_general_rows();
+    let idx_talked = rows.iter().position(|(k, _)| *k == "Talked to Villagers");
+    let idx_traded = rows.iter().position(|(k, _)| *k == "Traded with Villagers");
+    assert!(
+        idx_talked.is_some() && idx_traded.is_some(),
+        "the General tab the talked + the traded rows the nonzero counts wear"
+    );
+    assert!(
+        idx_talked.unwrap() < idx_traded.unwrap(),
+        "the clinit order the talked row the traded precedes — pc 517 the pc 529 speaks"
+    );
+
+    // ===== ARM C — THE FILE'S OWN ROUND TRIP (the sparse law the
+    // nonzero words write, the fresh counter the counts re-bank, the
+    // zero the custom category never carries) =====
+    let v = app.stats_save_json();
+    assert_eq!(
+        v["stats"]["minecraft:custom"]["minecraft:talked_to_villager"], 3,
+        "the file the talked word the plain count speaks"
+    );
+    let mut fresh = App::new(3);
+    fresh.stats_load_json(&v);
+    assert_eq!(
+        fresh.stats.talked_to_villager, 3,
+        "the restart the talked count the field re-banks"
+    );
+    assert_eq!(
+        fresh.stats.traded_with_villager, 5,
+        "the restart the traded sibling the same file re-banks"
+    );
+    let empty = App::new(3);
+    let ev = empty.stats_save_json();
+    assert!(
+        ev["stats"]["minecraft:custom"].is_null(),
+        "the zero counts the sparse law the custom category never writes"
+    );
+}

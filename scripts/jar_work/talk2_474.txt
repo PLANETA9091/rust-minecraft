@@ -1,0 +1,2616 @@
+== net/minecraft/world/entity/npc/villager/Villager.class
+== net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.class
+  FIELD LOGGER:Lorg/slf4j/Logger; flags=0x1a
+  FIELD DATA_VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataAccessor; flags=0x1a
+  FIELD DATA_VILLAGER_DATA_FINALIZED:Lnet/minecraft/network/syncher/EntityDataAccessor; flags=0x1a
+  FIELD BREEDING_FOOD_THRESHOLD:I flags=0x19
+  FIELD FOOD_POINTS:Ljava/util/Map; flags=0x19
+  FIELD MAX_GOSSIP_TOPICS:I flags=0x1a
+  FIELD GOSSIP_COOLDOWN:I flags=0x1a
+  FIELD GOSSIP_DECAY_INTERVAL:I flags=0x1a
+  FIELD HOW_FAR_AWAY_TO_TALK_TO_OTHER_VILLAGERS_ABOUT_GOLEMS:I flags=0x1a
+  FIELD HOW_MANY_VILLAGERS_NEED_TO_AGREE_TO_SPAWN_A_GOLEM:I flags=0x1a
+  FIELD TIME_SINCE_SLEEPING_FOR_GOLEM_SPAWNING:J flags=0x1a
+  FIELD SPEED_MODIFIER:F flags=0x19
+  FIELD DEFAULT_XP:I flags=0x1a
+  FIELD DEFAULT_FOOD_LEVEL:B flags=0x1a
+  FIELD DEFAULT_LAST_RESTOCK:I flags=0x1a
+  FIELD DEFAULT_LAST_GOSSIP_DECAY:I flags=0x1a
+  FIELD DEFAULT_RESTOCKS_TODAY:I flags=0x1a
+  FIELD DEFAULT_ASSIGN_PROFESSION_WHEN_SPAWNED:Z flags=0x1a
+  FIELD BABY_DIMENSIONS:Lnet/minecraft/world/entity/EntityDimensions; flags=0x1a
+  FIELD updateMerchantTimer:I flags=0x2
+  FIELD increaseProfessionLevelOnUpdate:Z flags=0x2
+  FIELD lastTradedPlayer:Lnet/minecraft/world/entity/player/Player; flags=0x2
+  FIELD foodLevel:I flags=0x2
+  FIELD gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer; flags=0x12
+  FIELD lastGossipTime:J flags=0x2
+  FIELD lastGossipDecayTime:J flags=0x2
+  FIELD villagerXp:I flags=0x2
+  FIELD lastRestockGameTime:J flags=0x2
+  FIELD numberOfRestocksToday:I flags=0x2
+  FIELD lastRestockCheckDay:J flags=0x2
+  FIELD assignProfessionWhenSpawned:Z flags=0x2
+  FIELD BRAIN_PROVIDER:Lnet/minecraft/world/entity/ai/Brain$Provider; flags=0x1a
+  FIELD POI_MEMORIES:Ljava/util/Map; flags=0x19
+  METHOD <init> (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V  (code=78)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.<init>:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
+    6: aload_0
+    7: iconst_0
+    8: putfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    11: aload_0
+    12: new net/minecraft/world/entity/ai/gossip/GossipContainer
+    15: dup
+    16: invokespecial net/minecraft/world/entity/ai/gossip/GossipContainer.<init>:()V
+    19: putfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    22: aload_0
+    23: lconst_0
+    24: putfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    27: aload_0
+    28: iconst_0
+    29: putfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    32: aload_0
+    33: lconst_0
+    34: putfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    37: aload_0
+    38: iconst_0
+    39: putfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    42: aload_0
+    43: iconst_0
+    44: putfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    47: aload_0
+    48: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getNavigation:()Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    51: iconst_1
+    52: invokevirtual net/minecraft/world/entity/ai/navigation/PathNavigation.setCanOpenDoors:(Z)V
+    55: aload_0
+    56: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getNavigation:()Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    59: iconst_1
+    60: invokevirtual net/minecraft/world/entity/ai/navigation/PathNavigation.setCanFloat:(Z)V
+    63: aload_0
+    64: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getNavigation:()Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    67: ldc 2.37660219549489e-41f
+    69: invokevirtual net/minecraft/world/entity/ai/navigation/PathNavigation.setRequiredPathLength:(F)V
+    72: aload_0
+    73: iconst_1
+    74: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setCanPickUpLoot:(Z)V
+    77: return
+  METHOD getBrain ()Lnet/minecraft/world/entity/ai/Brain;  (code=5)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.getBrain:()Lnet/minecraft/world/entity/ai/Brain;
+    4: areturn
+  METHOD makeBrain (Lnet/minecraft/world/entity/ai/Brain$Packed;)Lnet/minecraft/world/entity/ai/Brain;  (code=16)
+    0: getstatic net/minecraft/world/entity/npc/villager/Villager.BRAIN_PROVIDER:Lnet/minecraft/world/entity/ai/Brain$Provider;
+    3: aload_0
+    4: aload_1
+    5: invokevirtual net/minecraft/world/entity/ai/Brain$Provider.makeBrain:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/ai/Brain$Packed;)Lnet/minecraft/world/entity/ai/Brain;
+    8: astore_2
+    9: aload_0
+    10: aload_2
+    11: invokevirtual net/minecraft/world/entity/npc/villager/Villager.registerBrainGoals:(Lnet/minecraft/world/entity/ai/Brain;)V
+    14: aload_2
+    15: areturn
+  METHOD refreshBrain (Lnet/minecraft/server/level/ServerLevel;)V  (code=35)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getBrain:()Lnet/minecraft/world/entity/ai/Brain;
+    4: astore_2
+    5: aload_2
+    6: aload_1
+    7: aload_0
+    8: invokevirtual net/minecraft/world/entity/ai/Brain.stopAll:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)V
+    11: aload_0
+    12: getstatic net/minecraft/world/entity/npc/villager/Villager.BRAIN_PROVIDER:Lnet/minecraft/world/entity/ai/Brain$Provider;
+    15: aload_0
+    16: aload_2
+    17: invokevirtual net/minecraft/world/entity/ai/Brain.pack:()Lnet/minecraft/world/entity/ai/Brain$Packed;
+    20: invokevirtual net/minecraft/world/entity/ai/Brain$Provider.makeBrain:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/ai/Brain$Packed;)Lnet/minecraft/world/entity/ai/Brain;
+    23: putfield net/minecraft/world/entity/npc/villager/Villager.brain:Lnet/minecraft/world/entity/ai/Brain;
+    26: aload_0
+    27: aload_0
+    28: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getBrain:()Lnet/minecraft/world/entity/ai/Brain;
+    31: invokevirtual net/minecraft/world/entity/npc/villager/Villager.registerBrainGoals:(Lnet/minecraft/world/entity/ai/Brain;)V
+    34: return
+  METHOD registerBrainGoals (Lnet/minecraft/world/entity/ai/Brain;)V  (code=47)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isBaby:()Z
+    4: ifeq 17
+    7: aload_1
+    8: getstatic net/minecraft/world/attribute/EnvironmentAttributes.BABY_VILLAGER_ACTIVITY:Lnet/minecraft/world/attribute/EnvironmentAttribute;
+    11: invokevirtual net/minecraft/world/entity/ai/Brain.setSchedule:(Lnet/minecraft/world/attribute/EnvironmentAttribute;)V
+    14: goto 24
+    17: aload_1
+    18: getstatic net/minecraft/world/attribute/EnvironmentAttributes.VILLAGER_ACTIVITY:Lnet/minecraft/world/attribute/EnvironmentAttribute;
+    21: invokevirtual net/minecraft/world/entity/ai/Brain.setSchedule:(Lnet/minecraft/world/attribute/EnvironmentAttribute;)V
+    24: aload_1
+    25: aload_0
+    26: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    29: invokevirtual net/minecraft/world/level/Level.environmentAttributes:()Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;
+    32: aload_0
+    33: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    36: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    39: aload_0
+    40: invokevirtual net/minecraft/world/entity/npc/villager/Villager.position:()Lnet/minecraft/world/phys/Vec3;
+    43: invokevirtual net/minecraft/world/entity/ai/Brain.updateActivityFromSchedule:(Lnet/minecraft/world/attribute/EnvironmentAttributeSystem;JLnet/minecraft/world/phys/Vec3;)V
+    46: return
+  METHOD ageBoundaryReached ()V  (code=26)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.ageBoundaryReached:()V
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    8: instanceof net/minecraft/server/level/ServerLevel
+    11: ifeq 25
+    14: aload_0
+    15: aload_0
+    16: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    19: checkcast net/minecraft/server/level/ServerLevel
+    22: invokevirtual net/minecraft/world/entity/npc/villager/Villager.refreshBrain:(Lnet/minecraft/server/level/ServerLevel;)V
+    25: return
+  METHOD createAttributes ()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;  (code=13)
+    0: invokestatic net/minecraft/world/entity/Mob.createMobAttributes:()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;
+    3: getstatic net/minecraft/world/entity/ai/attributes/Attributes.MOVEMENT_SPEED:Lnet/minecraft/core/Holder;
+    6: ldc2_w 0.5
+    9: invokevirtual net/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder.add:(Lnet/minecraft/core/Holder;D)Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;
+    12: areturn
+  METHOD assignProfessionWhenSpawned ()Z  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    4: ireturn
+  METHOD customServerAiStep (Lnet/minecraft/server/level/ServerLevel;)V  (code=227)
+    0: invokestatic net/minecraft/util/profiling/Profiler.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+    3: astore_2
+    4: aload_2
+    5: ldc "villagerBrain"
+    7: invokeinterface net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+    12: aload_0
+    13: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getBrain:()Lnet/minecraft/world/entity/ai/Brain;
+    16: aload_1
+    17: aload_0
+    18: invokevirtual net/minecraft/world/entity/ai/Brain.tick:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)V
+    21: aload_2
+    22: invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop:()V
+    27: aload_0
+    28: getfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    31: ifeq 39
+    34: aload_0
+    35: iconst_0
+    36: putfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    39: aload_0
+    40: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isTrading:()Z
+    43: ifne 106
+    46: aload_0
+    47: getfield net/minecraft/world/entity/npc/villager/Villager.updateMerchantTimer:I
+    50: ifle 106
+    53: aload_0
+    54: dup
+    55: getfield net/minecraft/world/entity/npc/villager/Villager.updateMerchantTimer:I
+    58: iconst_1
+    59: isub
+    60: putfield net/minecraft/world/entity/npc/villager/Villager.updateMerchantTimer:I
+    63: aload_0
+    64: getfield net/minecraft/world/entity/npc/villager/Villager.updateMerchantTimer:I
+    67: ifgt 106
+    70: aload_0
+    71: getfield net/minecraft/world/entity/npc/villager/Villager.increaseProfessionLevelOnUpdate:Z
+    74: ifeq 87
+    77: aload_0
+    78: aload_1
+    79: invokevirtual net/minecraft/world/entity/npc/villager/Villager.increaseMerchantCareer:(Lnet/minecraft/server/level/ServerLevel;)V
+    82: aload_0
+    83: iconst_0
+    84: putfield net/minecraft/world/entity/npc/villager/Villager.increaseProfessionLevelOnUpdate:Z
+    87: aload_0
+    88: new net/minecraft/world/effect/MobEffectInstance
+    91: dup
+    92: getstatic net/minecraft/world/effect/MobEffects.REGENERATION:Lnet/minecraft/core/Holder;
+    95: sipush 200
+    98: iconst_0
+    99: invokespecial net/minecraft/world/effect/MobEffectInstance.<init>:(Lnet/minecraft/core/Holder;II)V
+    102: invokevirtual net/minecraft/world/entity/npc/villager/Villager.addEffect:(Lnet/minecraft/world/effect/MobEffectInstance;)Z
+    105: pop
+    106: aload_0
+    107: getfield net/minecraft/world/entity/npc/villager/Villager.lastTradedPlayer:Lnet/minecraft/world/entity/player/Player;
+    110: ifnull 137
+    113: aload_1
+    114: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.TRADE:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    117: aload_0
+    118: getfield net/minecraft/world/entity/npc/villager/Villager.lastTradedPlayer:Lnet/minecraft/world/entity/player/Player;
+    121: aload_0
+    122: invokevirtual net/minecraft/server/level/ServerLevel.onReputationEvent:(Lnet/minecraft/world/entity/ai/village/ReputationEventType;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/ReputationEventHandler;)V
+    125: aload_1
+    126: aload_0
+    127: bipush 14
+    129: invokevirtual net/minecraft/server/level/ServerLevel.broadcastEntityEvent:(Lnet/minecraft/world/entity/Entity;B)V
+    132: aload_0
+    133: aconst_null
+    134: putfield net/minecraft/world/entity/npc/villager/Villager.lastTradedPlayer:Lnet/minecraft/world/entity/player/Player;
+    137: aload_0
+    138: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isNoAi:()Z
+    141: ifne 192
+    144: aload_0
+    145: getfield net/minecraft/world/entity/npc/villager/Villager.random:Lnet/minecraft/util/RandomSource;
+    148: bipush 100
+    150: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    155: ifne 192
+    158: aload_1
+    159: aload_0
+    160: invokevirtual net/minecraft/world/entity/npc/villager/Villager.blockPosition:()Lnet/minecraft/core/BlockPos;
+    163: invokevirtual net/minecraft/server/level/ServerLevel.getRaidAt:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/entity/raid/Raid;
+    166: astore_3
+    167: aload_3
+    168: ifnull 192
+    171: aload_3
+    172: invokevirtual net/minecraft/world/entity/raid/Raid.isActive:()Z
+    175: ifeq 192
+    178: aload_3
+    179: invokevirtual net/minecraft/world/entity/raid/Raid.isOver:()Z
+    182: ifne 192
+    185: aload_1
+    186: aload_0
+    187: bipush 42
+    189: invokevirtual net/minecraft/server/level/ServerLevel.broadcastEntityEvent:(Lnet/minecraft/world/entity/Entity;B)V
+    192: aload_0
+    193: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    196: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    199: getstatic net/minecraft/world/entity/npc/villager/VillagerProfession.NONE:Lnet/minecraft/resources/ResourceKey;
+    202: invokeinterface net/minecraft/core/Holder.is:(Lnet/minecraft/resources/ResourceKey;)Z
+    207: ifeq 221
+    210: aload_0
+    211: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isTrading:()Z
+    214: ifeq 221
+    217: aload_0
+    218: invokevirtual net/minecraft/world/entity/npc/villager/Villager.stopTrading:()V
+    221: aload_0
+    222: aload_1
+    223: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.customServerAiStep:(Lnet/minecraft/server/level/ServerLevel;)V
+    226: return
+  METHOD tick ()V  (code=26)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.tick:()V
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getUnhappyCounter:()I
+    8: ifle 21
+    11: aload_0
+    12: aload_0
+    13: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getUnhappyCounter:()I
+    16: iconst_1
+    17: isub
+    18: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setUnhappyCounter:(I)V
+    21: aload_0
+    22: invokevirtual net/minecraft/world/entity/npc/villager/Villager.maybeDecayGossip:()V
+    25: return
+  METHOD mobInteract (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;  (code=119)
+    0: aload_1
+    1: aload_2
+    2: invokevirtual net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+    5: astore_3
+    6: aload_3
+    7: getstatic net/minecraft/world/item/Items.VILLAGER_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    10: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    13: ifne 112
+    16: aload_0
+    17: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isAlive:()Z
+    20: ifeq 112
+    23: aload_0
+    24: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isTrading:()Z
+    27: ifne 112
+    30: aload_0
+    31: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isSleeping:()Z
+    34: ifne 112
+    37: aload_0
+    38: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isBaby:()Z
+    41: ifeq 52
+    44: aload_0
+    45: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setUnhappy:()V
+    48: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    51: areturn
+    52: aload_0
+    53: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    56: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    59: ifne 108
+    62: aload_0
+    63: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    66: invokevirtual net/minecraft/world/item/trading/MerchantOffers.isEmpty:()Z
+    69: istore 4
+    71: aload_2
+    72: getstatic net/minecraft/world/InteractionHand.MAIN_HAND:Lnet/minecraft/world/InteractionHand;
+    75: if_acmpne 94
+    78: iload 4
+    80: ifeq 87
+    83: aload_0
+    84: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setUnhappy:()V
+    87: aload_1
+    88: getstatic net/minecraft/stats/Stats.TALKED_TO_VILLAGER:Lnet/minecraft/resources/Identifier;
+    91: invokevirtual net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/resources/Identifier;)V
+    94: iload 4
+    96: ifeq 103
+    99: getstatic net/minecraft/world/InteractionResult.CONSUME:Lnet/minecraft/world/InteractionResult$Success;
+    102: areturn
+    103: aload_0
+    104: aload_1
+    105: invokevirtual net/minecraft/world/entity/npc/villager/Villager.startTrading:(Lnet/minecraft/world/entity/player/Player;)V
+    108: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    111: areturn
+    112: aload_0
+    113: aload_1
+    114: aload_2
+    115: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.mobInteract:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;
+    118: areturn
+  METHOD setUnhappy ()V  (code=24)
+    0: aload_0
+    1: bipush 40
+    3: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setUnhappyCounter:(I)V
+    6: aload_0
+    7: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    10: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    13: ifne 23
+    16: aload_0
+    17: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_NO:Lnet/minecraft/sounds/SoundEvent;
+    20: invokevirtual net/minecraft/world/entity/npc/villager/Villager.makeSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    23: return
+  METHOD startTrading (Lnet/minecraft/world/entity/player/Player;)V  (code=27)
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.updateSpecialPrices:(Lnet/minecraft/world/entity/player/Player;)V
+    5: aload_0
+    6: aload_1
+    7: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setTradingPlayer:(Lnet/minecraft/world/entity/player/Player;)V
+    10: aload_0
+    11: aload_1
+    12: aload_0
+    13: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getDisplayName:()Lnet/minecraft/network/chat/Component;
+    16: aload_0
+    17: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    20: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.level:()I
+    23: invokevirtual net/minecraft/world/entity/npc/villager/Villager.openTradingScreen:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;I)V
+    26: return
+  METHOD setTradingPlayer (Lnet/minecraft/world/entity/player/Player;)V  (code=31)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getTradingPlayer:()Lnet/minecraft/world/entity/player/Player;
+    4: ifnull 15
+    7: aload_1
+    8: ifnonnull 15
+    11: iconst_1
+    12: goto 16
+    15: iconst_0
+    16: istore_2
+    17: aload_0
+    18: aload_1
+    19: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.setTradingPlayer:(Lnet/minecraft/world/entity/player/Player;)V
+    22: iload_2
+    23: ifeq 30
+    26: aload_0
+    27: invokevirtual net/minecraft/world/entity/npc/villager/Villager.stopTrading:()V
+    30: return
+  METHOD stopTrading ()V  (code=9)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.stopTrading:()V
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.resetSpecialPrices:()V
+    8: return
+  METHOD resetSpecialPrices ()V  (code=46)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    7: ifeq 11
+    10: return
+    11: aload_0
+    12: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    15: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    18: astore_1
+    19: aload_1
+    20: invokeinterface java/util/Iterator.hasNext:()Z
+    25: ifeq 45
+    28: aload_1
+    29: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    34: checkcast net/minecraft/world/item/trading/MerchantOffer
+    37: astore_2
+    38: aload_2
+    39: invokevirtual net/minecraft/world/item/trading/MerchantOffer.resetSpecialPriceDiff:()V
+    42: goto 19
+    45: return
+  METHOD getDefaultDimensions (Lnet/minecraft/world/entity/Pose;)Lnet/minecraft/world/entity/EntityDimensions;  (code=19)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isBaby:()Z
+    4: ifeq 13
+    7: getstatic net/minecraft/world/entity/npc/villager/Villager.BABY_DIMENSIONS:Lnet/minecraft/world/entity/EntityDimensions;
+    10: goto 18
+    13: aload_0
+    14: aload_1
+    15: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.getDefaultDimensions:(Lnet/minecraft/world/entity/Pose;)Lnet/minecraft/world/entity/EntityDimensions;
+    18: areturn
+  METHOD canRestock ()Z  (code=2)
+    0: iconst_1
+    1: ireturn
+  METHOD restock ()V  (code=64)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.updateDemand:()V
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    8: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    11: astore_1
+    12: aload_1
+    13: invokeinterface java/util/Iterator.hasNext:()Z
+    18: ifeq 38
+    21: aload_1
+    22: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    27: checkcast net/minecraft/world/item/trading/MerchantOffer
+    30: astore_2
+    31: aload_2
+    32: invokevirtual net/minecraft/world/item/trading/MerchantOffer.resetUses:()V
+    35: goto 12
+    38: aload_0
+    39: invokevirtual net/minecraft/world/entity/npc/villager/Villager.resendOffersToTradingPlayer:()V
+    42: aload_0
+    43: aload_0
+    44: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    47: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    50: putfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    53: aload_0
+    54: dup
+    55: getfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    58: iconst_1
+    59: iadd
+    60: putfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    63: return
+  METHOD resendOffersToTradingPlayer ()V  (code=53)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    4: astore_1
+    5: aload_0
+    6: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getTradingPlayer:()Lnet/minecraft/world/entity/player/Player;
+    9: astore_2
+    10: aload_2
+    11: ifnull 52
+    14: aload_1
+    15: invokevirtual net/minecraft/world/item/trading/MerchantOffers.isEmpty:()Z
+    18: ifne 52
+    21: aload_2
+    22: aload_2
+    23: getfield net/minecraft/world/entity/player/Player.containerMenu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    26: getfield net/minecraft/world/inventory/AbstractContainerMenu.containerId:I
+    29: aload_1
+    30: aload_0
+    31: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    34: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.level:()I
+    37: aload_0
+    38: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerXp:()I
+    41: aload_0
+    42: invokevirtual net/minecraft/world/entity/npc/villager/Villager.showProgressBar:()Z
+    45: aload_0
+    46: invokevirtual net/minecraft/world/entity/npc/villager/Villager.canRestock:()Z
+    49: invokevirtual net/minecraft/world/entity/player/Player.sendMerchantOffers:(ILnet/minecraft/world/item/trading/MerchantOffers;IIZZ)V
+    52: return
+  METHOD needsToRestock ()Z  (code=41)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    4: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    7: astore_1
+    8: aload_1
+    9: invokeinterface java/util/Iterator.hasNext:()Z
+    14: ifeq 39
+    17: aload_1
+    18: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    23: checkcast net/minecraft/world/item/trading/MerchantOffer
+    26: astore_2
+    27: aload_2
+    28: invokevirtual net/minecraft/world/item/trading/MerchantOffer.needsRestock:()Z
+    31: ifeq 36
+    34: iconst_1
+    35: ireturn
+    36: goto 8
+    39: iconst_0
+    40: ireturn
+  METHOD allowedToRestock ()Z  (code=40)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    4: ifeq 34
+    7: aload_0
+    8: getfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    11: iconst_2
+    12: if_icmpge 38
+    15: aload_0
+    16: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    19: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    22: aload_0
+    23: getfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    26: ldc2_w 2400
+    29: ladd
+    30: lcmp
+    31: ifle 38
+    34: iconst_1
+    35: goto 39
+    38: iconst_0
+    39: ireturn
+  METHOD shouldRestock (Lnet/minecraft/server/level/ServerLevel;)Z  (code=142)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    4: ldc2_w 12000
+    7: ladd
+    8: lstore_2
+    9: aload_0
+    10: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    13: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    16: lstore 4
+    18: lload 4
+    20: op_20
+    21: lcmp
+    22: ifle 29
+    25: iconst_1
+    26: goto 30
+    29: iconst_0
+    30: istore 6
+    32: aload_0
+    33: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    36: invokevirtual net/minecraft/world/level/Level.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+    39: getstatic net/minecraft/world/timeline/Timelines.OVERWORLD_DAY:Lnet/minecraft/resources/ResourceKey;
+    42: invokeinterface net/minecraft/core/RegistryAccess.get:(Lnet/minecraft/resources/ResourceKey;)Ljava/util/Optional;
+    47: aload_1
+    48: invokedynamic dynamic#0:apply
+    53: invokevirtual java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+    56: iconst_0
+    57: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    60: invokevirtual java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+    63: checkcast java/lang/Integer
+    66: invokevirtual java/lang/Integer.intValue:()I
+    69: i2l
+    70: lstore 7
+    72: iload 6
+    74: aload_0
+    75: getfield net/minecraft/world/entity/npc/villager/Villager.lastRestockCheckDay:J
+    78: lconst_0
+    79: lcmp
+    80: ifle 97
+    83: lload 7
+    85: aload_0
+    86: getfield net/minecraft/world/entity/npc/villager/Villager.lastRestockCheckDay:J
+    89: lcmp
+    90: ifle 97
+    93: iconst_1
+    94: goto 98
+    97: iconst_0
+    98: ior
+    99: istore 6
+    101: aload_0
+    102: lload 7
+    104: putfield net/minecraft/world/entity/npc/villager/Villager.lastRestockCheckDay:J
+    107: iload 6
+    109: ifeq 122
+    112: aload_0
+    113: lload 4
+    115: putfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    118: aload_0
+    119: invokevirtual net/minecraft/world/entity/npc/villager/Villager.resetNumberOfRestocks:()V
+    122: aload_0
+    123: invokevirtual net/minecraft/world/entity/npc/villager/Villager.allowedToRestock:()Z
+    126: ifeq 140
+    129: aload_0
+    130: invokevirtual net/minecraft/world/entity/npc/villager/Villager.needsToRestock:()Z
+    133: ifeq 140
+    136: iconst_1
+    137: goto 141
+    140: iconst_0
+    141: ireturn
+  METHOD catchUpDemand ()V  (code=67)
+    0: iconst_2
+    1: aload_0
+    2: getfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    5: isub
+    6: istore_1
+    7: iload_1
+    8: ifle 45
+    11: aload_0
+    12: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    15: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    18: astore_2
+    19: aload_2
+    20: invokeinterface java/util/Iterator.hasNext:()Z
+    25: ifeq 45
+    28: aload_2
+    29: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    34: checkcast net/minecraft/world/item/trading/MerchantOffer
+    37: astore_3
+    38: aload_3
+    39: invokevirtual net/minecraft/world/item/trading/MerchantOffer.resetUses:()V
+    42: goto 19
+    45: iconst_0
+    46: istore_2
+    47: iload_2
+    48: iload_1
+    49: if_icmpge 62
+    52: aload_0
+    53: invokevirtual net/minecraft/world/entity/npc/villager/Villager.updateDemand:()V
+    56: iinc 2 1
+    59: goto 47
+    62: aload_0
+    63: invokevirtual net/minecraft/world/entity/npc/villager/Villager.resendOffersToTradingPlayer:()V
+    66: return
+  METHOD updateDemand ()V  (code=35)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    4: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    7: astore_1
+    8: aload_1
+    9: invokeinterface java/util/Iterator.hasNext:()Z
+    14: ifeq 34
+    17: aload_1
+    18: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    23: checkcast net/minecraft/world/item/trading/MerchantOffer
+    26: astore_2
+    27: aload_2
+    28: invokevirtual net/minecraft/world/item/trading/MerchantOffer.updateDemand:()V
+    31: goto 8
+    34: return
+  METHOD updateSpecialPrices (Lnet/minecraft/world/entity/player/Player;)V  (code=160)
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getPlayerReputation:(Lnet/minecraft/world/entity/player/Player;)I
+    5: istore_2
+    6: iload_2
+    7: ifeq 58
+    10: aload_0
+    11: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    14: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    17: astore_3
+    18: aload_3
+    19: invokeinterface java/util/Iterator.hasNext:()Z
+    24: ifeq 58
+    27: aload_3
+    28: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    33: checkcast net/minecraft/world/item/trading/MerchantOffer
+    36: astore 4
+    38: aload 4
+    40: iload_2
+    41: i2f
+    42: aload 4
+    44: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getPriceMultiplier:()F
+    47: fmul
+    48: invokestatic net/minecraft/util/Mth.floor:(F)I
+    51: ineg
+    52: invokevirtual net/minecraft/world/item/trading/MerchantOffer.addToSpecialPriceDiff:(I)V
+    55: goto 18
+    58: aload_1
+    59: getstatic net/minecraft/world/effect/MobEffects.HERO_OF_THE_VILLAGE:Lnet/minecraft/core/Holder;
+    62: invokevirtual net/minecraft/world/entity/player/Player.hasEffect:(Lnet/minecraft/core/Holder;)Z
+    65: ifeq 159
+    68: aload_1
+    69: getstatic net/minecraft/world/effect/MobEffects.HERO_OF_THE_VILLAGE:Lnet/minecraft/core/Holder;
+    72: invokevirtual net/minecraft/world/entity/player/Player.getEffect:(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/effect/MobEffectInstance;
+    75: astore_3
+    76: aload_3
+    77: invokevirtual net/minecraft/world/effect/MobEffectInstance.getAmplifier:()I
+    80: istore 4
+    82: aload_0
+    83: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    86: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    89: astore 5
+    91: aload 5
+    93: invokeinterface java/util/Iterator.hasNext:()Z
+    98: ifeq 159
+    101: aload 5
+    103: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    108: checkcast net/minecraft/world/item/trading/MerchantOffer
+    111: astore 6
+    113: ldc2_w 0.3
+    116: ldc2_w 0.0625
+    119: iload 4
+    121: i2d
+    122: dmul
+    123: dadd
+    124: dstore 7
+    126: op_18 7
+    128: aload 6
+    130: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getBaseCostA:()Lnet/minecraft/world/item/ItemStack;
+    133: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    136: i2d
+    137: dmul
+    138: invokestatic java/lang/Math.floor:(D)D
+    141: d2i
+    142: istore 9
+    144: aload 6
+    146: iload 9
+    148: iconst_1
+    149: invokestatic java/lang/Math.max:(II)I
+    152: ineg
+    153: invokevirtual net/minecraft/world/item/trading/MerchantOffer.addToSpecialPriceDiff:(I)V
+    156: goto 91
+    159: return
+  METHOD defineSynchedData (Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V  (code=29)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.defineSynchedData:(Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V
+    5: aload_1
+    6: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    9: invokestatic net/minecraft/world/entity/npc/villager/Villager.createDefaultVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    12: invokevirtual net/minecraft/network/syncher/SynchedEntityData$Builder.define:(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;
+    15: pop
+    16: aload_1
+    17: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA_FINALIZED:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    20: iconst_0
+    21: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    24: invokevirtual net/minecraft/network/syncher/SynchedEntityData$Builder.define:(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;
+    27: pop
+    28: return
+  METHOD createDefaultVillagerData ()Lnet/minecraft/world/entity/npc/villager/VillagerData;  (code=31)
+    0: new net/minecraft/world/entity/npc/villager/VillagerData
+    3: dup
+    4: getstatic net/minecraft/core/registries/BuiltInRegistries.VILLAGER_TYPE:Lnet/minecraft/core/DefaultedRegistry;
+    7: getstatic net/minecraft/world/entity/npc/villager/VillagerData.DEFAULT_TYPE:Lnet/minecraft/resources/ResourceKey;
+    10: invokeinterface net/minecraft/core/DefaultedRegistry.getOrThrow:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Holder$Reference;
+    15: getstatic net/minecraft/core/registries/BuiltInRegistries.VILLAGER_PROFESSION:Lnet/minecraft/core/DefaultedRegistry;
+    18: getstatic net/minecraft/world/entity/npc/villager/VillagerProfession.NONE:Lnet/minecraft/resources/ResourceKey;
+    21: invokeinterface net/minecraft/core/DefaultedRegistry.getOrThrow:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Holder$Reference;
+    26: iconst_1
+    27: invokespecial net/minecraft/world/entity/npc/villager/VillagerData.<init>:(Lnet/minecraft/core/Holder;Lnet/minecraft/core/Holder;I)V
+    30: areturn
+  METHOD addAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueOutput;)V  (code=134)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.addAdditionalSaveData:(Lnet/minecraft/world/level/storage/ValueOutput;)V
+    5: aload_1
+    6: ldc_w "VillagerData"
+    9: getstatic net/minecraft/world/entity/npc/villager/VillagerData.CODEC:Lcom/mojang/serialization/Codec;
+    12: aload_0
+    13: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    16: invokeinterface net/minecraft/world/level/storage/ValueOutput.store:(Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V
+    21: aload_1
+    22: ldc_w "VillagerDataFinalized"
+    25: aload_0
+    26: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerDataFinalized:()Z
+    29: invokeinterface net/minecraft/world/level/storage/ValueOutput.putBoolean:(Ljava/lang/String;Z)V
+    34: aload_1
+    35: ldc_w "FoodLevel"
+    38: aload_0
+    39: getfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    42: d2f
+    43: invokeinterface net/minecraft/world/level/storage/ValueOutput.putByte:(Ljava/lang/String;B)V
+    48: aload_1
+    49: ldc_w "Gossips"
+    52: getstatic net/minecraft/world/entity/ai/gossip/GossipContainer.CODEC:Lcom/mojang/serialization/Codec;
+    55: aload_0
+    56: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    59: invokeinterface net/minecraft/world/level/storage/ValueOutput.store:(Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V
+    64: aload_1
+    65: ldc_w "Xp"
+    68: aload_0
+    69: getfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    72: invokeinterface net/minecraft/world/level/storage/ValueOutput.putInt:(Ljava/lang/String;I)V
+    77: aload_1
+    78: ldc_w "LastRestock"
+    81: aload_0
+    82: getfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    85: invokeinterface net/minecraft/world/level/storage/ValueOutput.putLong:(Ljava/lang/String;J)V
+    90: aload_1
+    91: ldc_w "LastGossipDecay"
+    94: aload_0
+    95: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    98: invokeinterface net/minecraft/world/level/storage/ValueOutput.putLong:(Ljava/lang/String;J)V
+    103: aload_1
+    104: ldc_w "RestocksToday"
+    107: aload_0
+    108: getfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    111: invokeinterface net/minecraft/world/level/storage/ValueOutput.putInt:(Ljava/lang/String;I)V
+    116: aload_0
+    117: getfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    120: ifeq 133
+    123: aload_1
+    124: ldc_w "AssignProfessionWhenSpawned"
+    127: iconst_1
+    128: invokeinterface net/minecraft/world/level/storage/ValueOutput.putBoolean:(Ljava/lang/String;Z)V
+    133: return
+  METHOD readAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueInput;)V  (code=209)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.readAdditionalSaveData:(Lnet/minecraft/world/level/storage/ValueInput;)V
+    5: aload_1
+    6: ldc_w "VillagerData"
+    9: getstatic net/minecraft/world/entity/npc/villager/VillagerData.CODEC:Lcom/mojang/serialization/Codec;
+    12: invokeinterface net/minecraft/world/level/storage/ValueInput.read:(Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+    17: astore_2
+    18: aload_1
+    19: ldc_w "VillagerDataFinalized"
+    22: iconst_0
+    23: invokeinterface net/minecraft/world/level/storage/ValueInput.getBooleanOr:(Ljava/lang/String;Z)Z
+    28: ifne 38
+    31: aload_2
+    32: invokevirtual java/util/Optional.isPresent:()Z
+    35: ifeq 67
+    38: aload_0
+    39: iconst_1
+    40: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerDataFinalized:(Z)V
+    43: aload_2
+    44: invokedynamic dynamic#1:get
+    49: invokevirtual java/util/Optional.orElseGet:(Ljava/util/function/Supplier;)Ljava/lang/Object;
+    52: checkcast net/minecraft/world/entity/npc/villager/VillagerData
+    55: astore_3
+    56: aload_0
+    57: getfield net/minecraft/world/entity/npc/villager/Villager.entityData:Lnet/minecraft/network/syncher/SynchedEntityData;
+    60: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    63: aload_3
+    64: invokevirtual net/minecraft/network/syncher/SynchedEntityData.set:(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)V
+    67: aload_0
+    68: aload_1
+    69: ldc_w "FoodLevel"
+    72: iconst_0
+    73: invokeinterface net/minecraft/world/level/storage/ValueInput.getByteOr:(Ljava/lang/String;B)B
+    78: putfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    81: aload_0
+    82: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    85: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.clear:()V
+    88: aload_1
+    89: ldc_w "Gossips"
+    92: getstatic net/minecraft/world/entity/ai/gossip/GossipContainer.CODEC:Lcom/mojang/serialization/Codec;
+    95: invokeinterface net/minecraft/world/level/storage/ValueInput.read:(Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+    100: aload_0
+    101: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    104: dup
+    105: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+    108: pop
+    109: invokedynamic dynamic#2:accept
+    114: invokevirtual java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+    117: aload_0
+    118: aload_1
+    119: ldc_w "Xp"
+    122: iconst_0
+    123: invokeinterface net/minecraft/world/level/storage/ValueInput.getIntOr:(Ljava/lang/String;I)I
+    128: putfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    131: aload_0
+    132: aload_1
+    133: ldc_w "LastRestock"
+    136: lconst_0
+    137: invokeinterface net/minecraft/world/level/storage/ValueInput.getLongOr:(Ljava/lang/String;J)J
+    142: putfield net/minecraft/world/entity/npc/villager/Villager.lastRestockGameTime:J
+    145: aload_0
+    146: aload_1
+    147: ldc_w "LastGossipDecay"
+    150: lconst_0
+    151: invokeinterface net/minecraft/world/level/storage/ValueInput.getLongOr:(Ljava/lang/String;J)J
+    156: putfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    159: aload_0
+    160: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    163: instanceof net/minecraft/server/level/ServerLevel
+    166: ifeq 180
+    169: aload_0
+    170: aload_0
+    171: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    174: checkcast net/minecraft/server/level/ServerLevel
+    177: invokevirtual net/minecraft/world/entity/npc/villager/Villager.refreshBrain:(Lnet/minecraft/server/level/ServerLevel;)V
+    180: aload_0
+    181: aload_1
+    182: ldc_w "RestocksToday"
+    185: iconst_0
+    186: invokeinterface net/minecraft/world/level/storage/ValueInput.getIntOr:(Ljava/lang/String;I)I
+    191: putfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    194: aload_0
+    195: aload_1
+    196: ldc_w "AssignProfessionWhenSpawned"
+    199: iconst_0
+    200: invokeinterface net/minecraft/world/level/storage/ValueInput.getBooleanOr:(Ljava/lang/String;Z)Z
+    205: putfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    208: return
+  METHOD removeWhenFarAway (D)Z  (code=2)
+    0: iconst_0
+    1: ireturn
+  METHOD getAmbientSound ()Lnet/minecraft/sounds/SoundEvent;  (code=24)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isSleeping:()Z
+    4: ifeq 9
+    7: aconst_null
+    8: areturn
+    9: aload_0
+    10: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isTrading:()Z
+    13: ifeq 20
+    16: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_TRADE:Lnet/minecraft/sounds/SoundEvent;
+    19: areturn
+    20: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_AMBIENT:Lnet/minecraft/sounds/SoundEvent;
+    23: areturn
+  METHOD getHurtSound (Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_HURT:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+  METHOD getDeathSound ()Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.VILLAGER_DEATH:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+  METHOD playWorkSound ()V  (code=23)
+    0: aload_0
+    1: aload_0
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    5: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    8: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    13: checkcast net/minecraft/world/entity/npc/villager/VillagerProfession
+    16: invokevirtual net/minecraft/world/entity/npc/villager/VillagerProfession.workSound:()Lnet/minecraft/sounds/SoundEvent;
+    19: invokevirtual net/minecraft/world/entity/npc/villager/Villager.makeSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    22: return
+  METHOD setVillagerData (Lnet/minecraft/world/entity/npc/villager/VillagerData;)V  (code=38)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    4: astore_2
+    5: aload_2
+    6: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    9: aload_1
+    10: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    13: invokeinterface net/minecraft/core/Holder.equals:(Ljava/lang/Object;)Z
+    18: ifne 26
+    21: aload_0
+    22: aconst_null
+    23: putfield net/minecraft/world/entity/npc/villager/Villager.offers:Lnet/minecraft/world/item/trading/MerchantOffers;
+    26: aload_0
+    27: getfield net/minecraft/world/entity/npc/villager/Villager.entityData:Lnet/minecraft/network/syncher/SynchedEntityData;
+    30: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    33: aload_1
+    34: invokevirtual net/minecraft/network/syncher/SynchedEntityData.set:(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)V
+    37: return
+  METHOD getVillagerDataFinalized ()Z  (code=17)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.entityData:Lnet/minecraft/network/syncher/SynchedEntityData;
+    4: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA_FINALIZED:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    7: invokevirtual net/minecraft/network/syncher/SynchedEntityData.get:(Lnet/minecraft/network/syncher/EntityDataAccessor;)Ljava/lang/Object;
+    10: checkcast java/lang/Boolean
+    13: invokevirtual java/lang/Boolean.booleanValue:()Z
+    16: ireturn
+  METHOD setVillagerDataFinalized (Z)V  (code=15)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.entityData:Lnet/minecraft/network/syncher/SynchedEntityData;
+    4: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA_FINALIZED:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    7: iload_1
+    8: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    11: invokevirtual net/minecraft/network/syncher/SynchedEntityData.set:(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)V
+    14: return
+  METHOD getVillagerData ()Lnet/minecraft/world/entity/npc/villager/VillagerData;  (code=14)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.entityData:Lnet/minecraft/network/syncher/SynchedEntityData;
+    4: getstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    7: invokevirtual net/minecraft/network/syncher/SynchedEntityData.get:(Lnet/minecraft/network/syncher/EntityDataAccessor;)Ljava/lang/Object;
+    10: checkcast net/minecraft/world/entity/npc/villager/VillagerData
+    13: areturn
+  METHOD rewardTradeXp (Lnet/minecraft/world/item/trading/MerchantOffer;)V  (code=99)
+    0: iconst_3
+    1: aload_0
+    2: getfield net/minecraft/world/entity/npc/villager/Villager.random:Lnet/minecraft/util/RandomSource;
+    5: iconst_4
+    6: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    11: iadd
+    12: istore_2
+    13: aload_0
+    14: dup
+    15: getfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    18: aload_1
+    19: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getXp:()I
+    22: iadd
+    23: putfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    26: aload_0
+    27: aload_0
+    28: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getTradingPlayer:()Lnet/minecraft/world/entity/player/Player;
+    31: putfield net/minecraft/world/entity/npc/villager/Villager.lastTradedPlayer:Lnet/minecraft/world/entity/player/Player;
+    34: aload_0
+    35: invokevirtual net/minecraft/world/entity/npc/villager/Villager.shouldIncreaseLevel:()Z
+    38: ifeq 55
+    41: aload_0
+    42: bipush 40
+    44: putfield net/minecraft/world/entity/npc/villager/Villager.updateMerchantTimer:I
+    47: aload_0
+    48: iconst_1
+    49: putfield net/minecraft/world/entity/npc/villager/Villager.increaseProfessionLevelOnUpdate:Z
+    52: iinc 2 5
+    55: aload_1
+    56: invokevirtual net/minecraft/world/item/trading/MerchantOffer.shouldRewardExp:()Z
+    59: ifeq 98
+    62: aload_0
+    63: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    66: new net/minecraft/world/entity/ExperienceOrb
+    69: dup
+    70: aload_0
+    71: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    74: aload_0
+    75: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getX:()D
+    78: aload_0
+    79: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getY:()D
+    82: ldc2_w 0.5
+    85: dadd
+    86: aload_0
+    87: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getZ:()D
+    90: iload_2
+    91: invokespecial net/minecraft/world/entity/ExperienceOrb.<init>:(Lnet/minecraft/world/level/Level;DDDI)V
+    94: invokevirtual net/minecraft/world/level/Level.addFreshEntity:(Lnet/minecraft/world/entity/Entity;)Z
+    97: pop
+    98: return
+  METHOD setLastHurtByMob (Lnet/minecraft/world/entity/LivingEntity;)V  (code=59)
+    0: aload_1
+    1: ifnull 53
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    8: instanceof net/minecraft/server/level/ServerLevel
+    11: ifeq 53
+    14: aload_0
+    15: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    18: checkcast net/minecraft/server/level/ServerLevel
+    21: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.VILLAGER_HURT:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    24: aload_1
+    25: aload_0
+    26: invokevirtual net/minecraft/server/level/ServerLevel.onReputationEvent:(Lnet/minecraft/world/entity/ai/village/ReputationEventType;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/ReputationEventHandler;)V
+    29: aload_0
+    30: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isAlive:()Z
+    33: ifeq 53
+    36: aload_1
+    37: instanceof net/minecraft/world/entity/player/Player
+    40: ifeq 53
+    43: aload_0
+    44: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    47: aload_0
+    48: bipush 13
+    50: invokevirtual net/minecraft/world/level/Level.broadcastEntityEvent:(Lnet/minecraft/world/entity/Entity;B)V
+    53: aload_0
+    54: aload_1
+    55: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.setLastHurtByMob:(Lnet/minecraft/world/entity/LivingEntity;)V
+    58: return
+  METHOD die (Lnet/minecraft/world/damagesource/DamageSource;)V  (code=46)
+    0: getstatic net/minecraft/world/entity/npc/villager/Villager.LOGGER:Lorg/slf4j/Logger;
+    3: ldc_w "Villager {} died, message: '{}'"
+    6: aload_0
+    7: aload_1
+    8: aload_0
+    9: invokevirtual net/minecraft/world/damagesource/DamageSource.getLocalizedDeathMessage:(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/network/chat/Component;
+    12: invokeinterface net/minecraft/network/chat/Component.getString:()Ljava/lang/String;
+    17: invokeinterface org/slf4j/Logger.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    22: aload_1
+    23: invokevirtual net/minecraft/world/damagesource/DamageSource.getEntity:()Lnet/minecraft/world/entity/Entity;
+    26: astore_2
+    27: aload_2
+    28: ifnull 36
+    31: aload_0
+    32: aload_2
+    33: invokevirtual net/minecraft/world/entity/npc/villager/Villager.tellWitnessesThatIWasMurdered:(Lnet/minecraft/world/entity/Entity;)V
+    36: aload_0
+    37: invokevirtual net/minecraft/world/entity/npc/villager/Villager.releaseAllPois:()V
+    40: aload_0
+    41: aload_1
+    42: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.die:(Lnet/minecraft/world/damagesource/DamageSource;)V
+    45: return
+  METHOD releaseAllPois ()V  (code=29)
+    0: aload_0
+    1: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.HOME:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    4: invokevirtual net/minecraft/world/entity/npc/villager/Villager.releasePoi:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)V
+    7: aload_0
+    8: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.JOB_SITE:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    11: invokevirtual net/minecraft/world/entity/npc/villager/Villager.releasePoi:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)V
+    14: aload_0
+    15: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.POTENTIAL_JOB_SITE:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    18: invokevirtual net/minecraft/world/entity/npc/villager/Villager.releasePoi:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)V
+    21: aload_0
+    22: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.MEETING_POINT:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    25: invokevirtual net/minecraft/world/entity/npc/villager/Villager.releasePoi:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)V
+    28: return
+  METHOD tellWitnessesThatIWasMurdered (Lnet/minecraft/world/entity/Entity;)V  (code=76)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    4: astore_3
+    5: aload_3
+    6: instanceof net/minecraft/server/level/ServerLevel
+    9: ifeq 20
+    12: aload_3
+    13: checkcast net/minecraft/server/level/ServerLevel
+    16: astore_2
+    17: goto 21
+    20: return
+    21: aload_0
+    22: getfield net/minecraft/world/entity/npc/villager/Villager.brain:Lnet/minecraft/world/entity/ai/Brain;
+    25: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    28: invokevirtual net/minecraft/world/entity/ai/Brain.getMemory:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)Ljava/util/Optional;
+    31: astore_3
+    32: aload_3
+    33: invokevirtual java/util/Optional.isEmpty:()Z
+    36: ifeq 40
+    39: return
+    40: aload_3
+    41: invokevirtual java/util/Optional.get:()Ljava/lang/Object;
+    44: checkcast net/minecraft/world/entity/ai/memory/NearestVisibleLivingEntities
+    47: ldc_w net/minecraft/world/entity/ReputationEventHandler
+    50: dup
+    51: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+    54: pop
+    55: invokedynamic dynamic#3:test
+    60: invokevirtual net/minecraft/world/entity/ai/memory/NearestVisibleLivingEntities.findAll:(Ljava/util/function/Predicate;)Ljava/lang/Iterable;
+    63: aload_2
+    64: aload_1
+    65: invokedynamic dynamic#4:accept
+    70: invokeinterface java/lang/Iterable.forEach:(Ljava/util/function/Consumer;)V
+    75: return
+  METHOD releasePoi (Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)V  (code=42)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    4: instanceof net/minecraft/server/level/ServerLevel
+    7: ifne 11
+    10: return
+    11: aload_0
+    12: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    15: checkcast net/minecraft/server/level/ServerLevel
+    18: invokevirtual net/minecraft/server/level/ServerLevel.getServer:()Lnet/minecraft/server/MinecraftServer;
+    21: astore_2
+    22: aload_0
+    23: getfield net/minecraft/world/entity/npc/villager/Villager.brain:Lnet/minecraft/world/entity/ai/Brain;
+    26: aload_1
+    27: invokevirtual net/minecraft/world/entity/ai/Brain.getMemory:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)Ljava/util/Optional;
+    30: aload_0
+    31: aload_2
+    32: aload_1
+    33: invokedynamic dynamic#5:accept
+    38: invokevirtual java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+    41: return
+  METHOD canBreed ()Z  (code=34)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.countFoodPointsInInventory:()I
+    8: iadd
+    9: bipush 12
+    11: if_icmplt 32
+    14: aload_0
+    15: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isSleeping:()Z
+    18: ifne 32
+    21: aload_0
+    22: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getAge:()I
+    25: ifne 32
+    28: iconst_1
+    29: goto 33
+    32: iconst_0
+    33: ireturn
+  METHOD hungry ()Z  (code=15)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    4: bipush 12
+    6: if_icmpge 13
+    9: iconst_1
+    10: goto 14
+    13: iconst_0
+    14: ireturn
+  METHOD eatUntilFull ()V  (code=123)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.hungry:()Z
+    4: ifeq 14
+    7: aload_0
+    8: invokevirtual net/minecraft/world/entity/npc/villager/Villager.countFoodPointsInInventory:()I
+    11: ifne 15
+    14: return
+    15: iconst_0
+    16: istore_1
+    17: iload_1
+    18: aload_0
+    19: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getInventory:()Lnet/minecraft/world/SimpleContainer;
+    22: invokevirtual net/minecraft/world/SimpleContainer.getContainerSize:()I
+    25: if_icmpge 122
+    28: aload_0
+    29: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getInventory:()Lnet/minecraft/world/SimpleContainer;
+    32: iload_1
+    33: invokevirtual net/minecraft/world/SimpleContainer.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    36: astore_2
+    37: aload_2
+    38: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    41: ifne 116
+    44: getstatic net/minecraft/world/entity/npc/villager/Villager.FOOD_POINTS:Ljava/util/Map;
+    47: aload_2
+    48: invokevirtual net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+    51: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+    56: checkcast java/lang/Integer
+    59: astore_3
+    60: aload_3
+    61: ifnull 116
+    64: aload_2
+    65: invokevirtual net/minecraft/world/item/ItemStack.getCount:()I
+    68: istore 4
+    70: iload 4
+    72: istore 5
+    74: iload 5
+    76: ifle 116
+    79: aload_0
+    80: dup
+    81: getfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    84: aload_3
+    85: invokevirtual java/lang/Integer.intValue:()I
+    88: iadd
+    89: putfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    92: aload_0
+    93: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getInventory:()Lnet/minecraft/world/SimpleContainer;
+    96: iload_1
+    97: iconst_1
+    98: invokevirtual net/minecraft/world/SimpleContainer.removeItem:(II)Lnet/minecraft/world/item/ItemStack;
+    101: pop
+    102: aload_0
+    103: invokevirtual net/minecraft/world/entity/npc/villager/Villager.hungry:()Z
+    106: ifne 110
+    109: return
+    110: iinc 5 -1
+    113: goto 74
+    116: iinc 1 1
+    119: goto 17
+    122: return
+  METHOD getPlayerReputation (Lnet/minecraft/world/entity/player/Player;)I  (code=17)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    4: aload_1
+    5: invokevirtual net/minecraft/world/entity/player/Player.getUUID:()Ljava/util/UUID;
+    8: invokedynamic dynamic#6:test
+    13: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.getReputation:(Ljava/util/UUID;Ljava/util/function/Predicate;)I
+    16: ireturn
+  METHOD digestFood (I)V  (code=11)
+    0: aload_0
+    1: dup
+    2: getfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    5: iload_1
+    6: isub
+    7: putfield net/minecraft/world/entity/npc/villager/Villager.foodLevel:I
+    10: return
+  METHOD eatAndDigestFood ()V  (code=11)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.eatUntilFull:()V
+    4: aload_0
+    5: bipush 12
+    7: invokevirtual net/minecraft/world/entity/npc/villager/Villager.digestFood:(I)V
+    10: return
+  METHOD setOffers (Lnet/minecraft/world/item/trading/MerchantOffers;)V  (code=6)
+    0: aload_0
+    1: aload_1
+    2: putfield net/minecraft/world/entity/npc/villager/Villager.offers:Lnet/minecraft/world/item/trading/MerchantOffers;
+    5: return
+  METHOD shouldIncreaseLevel ()Z  (code=32)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    4: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.level:()I
+    7: istore_1
+    8: iload_1
+    9: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.canLevelUp:(I)Z
+    12: ifeq 30
+    15: aload_0
+    16: getfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    19: iload_1
+    20: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.getMaxXpPerLevel:(I)I
+    23: if_icmplt 30
+    26: iconst_1
+    27: goto 31
+    30: iconst_0
+    31: ireturn
+  METHOD increaseMerchantCareer (Lnet/minecraft/server/level/ServerLevel;)V  (code=26)
+    0: aload_0
+    1: aload_0
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    5: aload_0
+    6: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    9: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.level:()I
+    12: iconst_1
+    13: iadd
+    14: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.withLevel:(I)Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    17: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerData:(Lnet/minecraft/world/entity/npc/villager/VillagerData;)V
+    20: aload_0
+    21: aload_1
+    22: invokevirtual net/minecraft/world/entity/npc/villager/Villager.updateTrades:(Lnet/minecraft/server/level/ServerLevel;)V
+    25: return
+  METHOD getTypeName ()Lnet/minecraft/network/chat/Component;  (code=19)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    4: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    7: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    12: checkcast net/minecraft/world/entity/npc/villager/VillagerProfession
+    15: invokevirtual net/minecraft/world/entity/npc/villager/VillagerProfession.name:()Lnet/minecraft/network/chat/Component;
+    18: areturn
+  METHOD handleEntityEvent (B)V  (code=70)
+    0: iload_1
+    1: bipush 12
+    3: if_icmpne 16
+    6: aload_0
+    7: getstatic net/minecraft/core/particles/ParticleTypes.HEART:Lnet/minecraft/core/particles/SimpleParticleType;
+    10: invokevirtual net/minecraft/world/entity/npc/villager/Villager.addParticlesAroundSelf:(Lnet/minecraft/core/particles/ParticleOptions;)V
+    13: goto 69
+    16: iload_1
+    17: bipush 13
+    19: if_icmpne 32
+    22: aload_0
+    23: getstatic net/minecraft/core/particles/ParticleTypes.ANGRY_VILLAGER:Lnet/minecraft/core/particles/SimpleParticleType;
+    26: invokevirtual net/minecraft/world/entity/npc/villager/Villager.addParticlesAroundSelf:(Lnet/minecraft/core/particles/ParticleOptions;)V
+    29: goto 69
+    32: iload_1
+    33: bipush 14
+    35: if_icmpne 48
+    38: aload_0
+    39: getstatic net/minecraft/core/particles/ParticleTypes.HAPPY_VILLAGER:Lnet/minecraft/core/particles/SimpleParticleType;
+    42: invokevirtual net/minecraft/world/entity/npc/villager/Villager.addParticlesAroundSelf:(Lnet/minecraft/core/particles/ParticleOptions;)V
+    45: goto 69
+    48: iload_1
+    49: bipush 42
+    51: if_icmpne 64
+    54: aload_0
+    55: getstatic net/minecraft/core/particles/ParticleTypes.SPLASH:Lnet/minecraft/core/particles/SimpleParticleType;
+    58: invokevirtual net/minecraft/world/entity/npc/villager/Villager.addParticlesAroundSelf:(Lnet/minecraft/core/particles/ParticleOptions;)V
+    61: goto 69
+    64: aload_0
+    65: iload_1
+    66: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.handleEntityEvent:(B)V
+    69: return
+  METHOD finalizeSpawn (Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/world/entity/SpawnGroupData;)Lnet/minecraft/world/entity/SpawnGroupData;  (code=58)
+    0: aload_3
+    1: getstatic net/minecraft/world/entity/EntitySpawnReason.BREEDING:Lnet/minecraft/world/entity/EntitySpawnReason;
+    4: if_acmpne 27
+    7: aload_0
+    8: aload_0
+    9: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    12: aload_1
+    13: invokeinterface net/minecraft/world/level/ServerLevelAccessor.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+    18: getstatic net/minecraft/world/entity/npc/villager/VillagerProfession.NONE:Lnet/minecraft/resources/ResourceKey;
+    21: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.withProfession:(Lnet/minecraft/core/HolderGetter$Provider;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    24: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerData:(Lnet/minecraft/world/entity/npc/villager/VillagerData;)V
+    27: aload_0
+    28: aload_1
+    29: aload_0
+    30: invokevirtual net/minecraft/world/entity/npc/villager/Villager.blockPosition:()Lnet/minecraft/core/BlockPos;
+    33: invokevirtual net/minecraft/world/entity/npc/villager/Villager.finalizeVillagerType:(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/core/BlockPos;)V
+    36: aload_3
+    37: getstatic net/minecraft/world/entity/EntitySpawnReason.STRUCTURE:Lnet/minecraft/world/entity/EntitySpawnReason;
+    40: if_acmpne 48
+    43: aload_0
+    44: iconst_1
+    45: putfield net/minecraft/world/entity/npc/villager/Villager.assignProfessionWhenSpawned:Z
+    48: aload_0
+    49: aload_1
+    50: aload_2
+    51: aload_3
+    52: aload 4
+    54: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.finalizeSpawn:(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/world/entity/SpawnGroupData;)Lnet/minecraft/world/entity/SpawnGroupData;
+    57: areturn
+  METHOD getBreedOffspring (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/AgeableMob;)Lnet/minecraft/world/entity/npc/villager/Villager;  (code=121)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.random:Lnet/minecraft/util/RandomSource;
+    4: invokeinterface net/minecraft/util/RandomSource.nextDouble:()D
+    9: dstore 4
+    11: op_18 4
+    13: ldc2_w 0.5
+    16: dcmpg
+    17: ifge 44
+    20: aload_1
+    21: invokevirtual net/minecraft/server/level/ServerLevel.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+    24: aload_1
+    25: aload_0
+    26: invokevirtual net/minecraft/world/entity/npc/villager/Villager.blockPosition:()Lnet/minecraft/core/BlockPos;
+    29: invokevirtual net/minecraft/server/level/ServerLevel.getBiome:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/Holder;
+    32: invokestatic net/minecraft/world/entity/npc/villager/VillagerType.byBiome:(Lnet/minecraft/core/Holder;)Lnet/minecraft/resources/ResourceKey;
+    35: invokeinterface net/minecraft/core/RegistryAccess.getOrThrow:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Holder$Reference;
+    40: astore_3
+    41: goto 75
+    44: op_18 4
+    46: ldc2_w 0.75
+    49: dcmpg
+    50: ifge 64
+    53: aload_0
+    54: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    57: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.type:()Lnet/minecraft/core/Holder;
+    60: astore_3
+    61: goto 75
+    64: aload_2
+    65: checkcast net/minecraft/world/entity/npc/villager/Villager
+    68: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    71: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.type:()Lnet/minecraft/core/Holder;
+    74: astore_3
+    75: new net/minecraft/world/entity/npc/villager/Villager
+    78: dup
+    79: getstatic net/minecraft/world/entity/EntityTypes.VILLAGER:Lnet/minecraft/world/entity/EntityType;
+    82: aload_1
+    83: invokespecial net/minecraft/world/entity/npc/villager/Villager.<init>:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
+    86: astore 6
+    88: aload 6
+    90: aload 6
+    92: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    95: aload_3
+    96: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.withType:(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    99: aload_1
+    100: invokevirtual net/minecraft/server/level/ServerLevel.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+    103: getstatic net/minecraft/world/entity/npc/villager/VillagerProfession.NONE:Lnet/minecraft/resources/ResourceKey;
+    106: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.withProfession:(Lnet/minecraft/core/HolderGetter$Provider;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    109: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerData:(Lnet/minecraft/world/entity/npc/villager/VillagerData;)V
+    112: aload 6
+    114: iconst_1
+    115: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerDataFinalized:(Z)V
+    118: aload 6
+    120: areturn
+  METHOD thunderHit (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LightningBolt;)V  (code=67)
+    0: aload_1
+    1: invokevirtual net/minecraft/server/level/ServerLevel.getDifficulty:()Lnet/minecraft/world/Difficulty;
+    4: getstatic net/minecraft/world/Difficulty.PEACEFUL:Lnet/minecraft/world/Difficulty;
+    7: if_acmpeq 60
+    10: getstatic net/minecraft/world/entity/npc/villager/Villager.LOGGER:Lorg/slf4j/Logger;
+    13: ldc_w "Villager {} was struck by lightning {}."
+    16: aload_0
+    17: aload_2
+    18: invokeinterface org/slf4j/Logger.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    23: aload_0
+    24: getstatic net/minecraft/world/entity/EntityTypes.WITCH:Lnet/minecraft/world/entity/EntityType;
+    27: aload_0
+    28: iconst_0
+    29: iconst_0
+    30: invokestatic net/minecraft/world/entity/ConversionParams.single:(Lnet/minecraft/world/entity/Mob;ZZ)Lnet/minecraft/world/entity/ConversionParams;
+    33: aload_0
+    34: aload_1
+    35: invokedynamic dynamic#7:finalizeConversion
+    40: invokevirtual net/minecraft/world/entity/npc/villager/Villager.convertTo:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/ConversionParams;Lnet/minecraft/world/entity/ConversionParams$AfterConversion;)Lnet/minecraft/world/entity/Mob;
+    43: checkcast net/minecraft/world/entity/monster/Witch
+    46: astore_3
+    47: aload_3
+    48: ifnonnull 57
+    51: aload_0
+    52: aload_1
+    53: aload_2
+    54: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.thunderHit:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LightningBolt;)V
+    57: goto 66
+    60: aload_0
+    61: aload_1
+    62: aload_2
+    63: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.thunderHit:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LightningBolt;)V
+    66: return
+  METHOD pickUpItem (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/item/ItemEntity;)V  (code=8)
+    0: aload_1
+    1: aload_0
+    2: aload_0
+    3: aload_2
+    4: invokestatic net/minecraft/world/entity/npc/InventoryCarrier.pickUpItem:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/entity/npc/InventoryCarrier;Lnet/minecraft/world/entity/item/ItemEntity;)V
+    7: return
+  METHOD wantsToPickUp (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;)Z  (code=57)
+    0: aload_2
+    1: invokevirtual net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+    4: astore_3
+    5: aload_2
+    6: getstatic net/minecraft/tags/ItemTags.VILLAGER_PICKS_UP:Lnet/minecraft/tags/TagKey;
+    9: invokevirtual net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+    12: ifne 40
+    15: aload_0
+    16: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    19: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    22: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    27: checkcast net/minecraft/world/entity/npc/villager/VillagerProfession
+    30: invokevirtual net/minecraft/world/entity/npc/villager/VillagerProfession.requestedItems:()Lcom/google/common/collect/ImmutableSet;
+    33: aload_3
+    34: invokevirtual com/google/common/collect/ImmutableSet.contains:(Ljava/lang/Object;)Z
+    37: ifeq 55
+    40: aload_0
+    41: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getInventory:()Lnet/minecraft/world/SimpleContainer;
+    44: aload_2
+    45: invokevirtual net/minecraft/world/SimpleContainer.canAddItem:(Lnet/minecraft/world/item/ItemStack;)Z
+    48: ifeq 55
+    51: iconst_1
+    52: goto 56
+    55: iconst_0
+    56: ireturn
+  METHOD hasExcessFood ()Z  (code=15)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.countFoodPointsInInventory:()I
+    4: bipush 24
+    6: if_icmplt 13
+    9: iconst_1
+    10: goto 14
+    13: iconst_0
+    14: ireturn
+  METHOD wantsMoreFood ()Z  (code=15)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.countFoodPointsInInventory:()I
+    4: bipush 12
+    6: if_icmpge 13
+    9: iconst_1
+    10: goto 14
+    13: iconst_0
+    14: ireturn
+  METHOD countFoodPointsInInventory ()I  (code=35)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getInventory:()Lnet/minecraft/world/SimpleContainer;
+    4: astore_1
+    5: getstatic net/minecraft/world/entity/npc/villager/Villager.FOOD_POINTS:Ljava/util/Map;
+    8: invokeinterface java/util/Map.entrySet:()Ljava/util/Set;
+    13: invokeinterface java/util/Set.stream:()Ljava/util/stream/Stream;
+    18: aload_1
+    19: invokedynamic dynamic#8:applyAsInt
+    24: invokeinterface java/util/stream/Stream.mapToInt:(Ljava/util/function/ToIntFunction;)Ljava/util/stream/IntStream;
+    29: invokeinterface java/util/stream/IntStream.sum:()I
+    34: ireturn
+  METHOD hasFarmSeeds ()Z  (code=13)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getInventory:()Lnet/minecraft/world/SimpleContainer;
+    4: invokedynamic dynamic#9:test
+    9: invokevirtual net/minecraft/world/SimpleContainer.hasAnyMatching:(Ljava/util/function/Predicate;)Z
+    12: ireturn
+  METHOD updateTrades (Lnet/minecraft/server/level/ServerLevel;)V  (code=65)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    4: astore_2
+    5: aload_2
+    6: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    9: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    14: checkcast net/minecraft/world/entity/npc/villager/VillagerProfession
+    17: astore_3
+    18: aload_3
+    19: aload_2
+    20: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.level:()I
+    23: invokevirtual net/minecraft/world/entity/npc/villager/VillagerProfession.getTrades:(I)Lnet/minecraft/resources/ResourceKey;
+    26: astore 4
+    28: aload 4
+    30: ifnonnull 34
+    33: return
+    34: aload_0
+    35: aload_1
+    36: aload_0
+    37: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    40: aload 4
+    42: invokevirtual net/minecraft/world/entity/npc/villager/Villager.addOffersFromTradeSet:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/trading/MerchantOffers;Lnet/minecraft/resources/ResourceKey;)V
+    45: getstatic net/minecraft/SharedConstants.DEBUG_UNLOCK_ALL_TRADES:Z
+    48: ifeq 64
+    51: aload_2
+    52: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.level:()I
+    55: iconst_5
+    56: if_icmpge 64
+    59: aload_0
+    60: aload_1
+    61: invokevirtual net/minecraft/world/entity/npc/villager/Villager.increaseMerchantCareer:(Lnet/minecraft/server/level/ServerLevel;)V
+    64: return
+  METHOD gossip (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/npc/villager/Villager;J)V  (code=80)
+    0: op_21
+    1: aload_0
+    2: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipTime:J
+    5: lcmp
+    6: iflt 22
+    9: op_21
+    10: aload_0
+    11: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipTime:J
+    14: ldc2_w 1200
+    17: ladd
+    18: lcmp
+    19: iflt 44
+    22: op_21
+    23: aload_2
+    24: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipTime:J
+    27: lcmp
+    28: iflt 45
+    31: op_21
+    32: aload_2
+    33: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipTime:J
+    36: ldc2_w 1200
+    39: ladd
+    40: lcmp
+    41: ifge 45
+    44: return
+    45: aload_0
+    46: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    49: aload_2
+    50: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    53: aload_0
+    54: getfield net/minecraft/world/entity/npc/villager/Villager.random:Lnet/minecraft/util/RandomSource;
+    57: bipush 10
+    59: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.transferFrom:(Lnet/minecraft/world/entity/ai/gossip/GossipContainer;Lnet/minecraft/util/RandomSource;I)V
+    62: aload_0
+    63: op_21
+    64: putfield net/minecraft/world/entity/npc/villager/Villager.lastGossipTime:J
+    67: aload_2
+    68: op_21
+    69: putfield net/minecraft/world/entity/npc/villager/Villager.lastGossipTime:J
+    72: aload_0
+    73: aload_1
+    74: op_21
+    75: iconst_5
+    76: invokevirtual net/minecraft/world/entity/npc/villager/Villager.spawnGolemIfNeeded:(Lnet/minecraft/server/level/ServerLevel;JI)V
+    79: return
+  METHOD maybeDecayGossip ()V  (code=50)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    7: lstore_1
+    8: aload_0
+    9: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    12: lconst_0
+    13: lcmp
+    14: ifne 23
+    17: aload_0
+    18: lload_1
+    19: putfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    22: return
+    23: lload_1
+    24: aload_0
+    25: getfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    28: ldc2_w 24000
+    31: ladd
+    32: lcmp
+    33: ifge 37
+    36: return
+    37: aload_0
+    38: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    41: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.decay:()V
+    44: aload_0
+    45: lload_1
+    46: putfield net/minecraft/world/entity/npc/villager/Villager.lastGossipDecayTime:J
+    49: return
+  METHOD spawnGolemIfNeeded (Lnet/minecraft/server/level/ServerLevel;JI)V  (code=127)
+    0: aload_0
+    1: op_20
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.wantsToSpawnGolem:(J)Z
+    5: ifne 9
+    8: return
+    9: aload_0
+    10: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    13: ldc2_w 10.0
+    16: ldc2_w 10.0
+    19: ldc2_w 10.0
+    22: invokevirtual net/minecraft/world/phys/AABB.inflate:(DDD)Lnet/minecraft/world/phys/AABB;
+    25: astore 5
+    27: aload_1
+    28: ldc net/minecraft/world/entity/npc/villager/Villager
+    30: aload 5
+    32: invokevirtual net/minecraft/server/level/ServerLevel.getEntitiesOfClass:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+    35: astore 6
+    37: aload 6
+    39: invokeinterface java/util/List.stream:()Ljava/util/stream/Stream;
+    44: op_20
+    45: invokedynamic dynamic#10:test
+    50: invokeinterface java/util/stream/Stream.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+    55: ldc2_w 5
+    58: invokeinterface java/util/stream/Stream.limit:(J)Ljava/util/stream/Stream;
+    63: invokeinterface java/util/stream/Stream.toList:()Ljava/util/List;
+    68: astore 7
+    70: aload 7
+    72: invokeinterface java/util/List.size:()I
+    77: iload 4
+    79: if_icmpge 83
+    82: return
+    83: getstatic net/minecraft/world/entity/EntityTypes.IRON_GOLEM:Lnet/minecraft/world/entity/EntityType;
+    86: getstatic net/minecraft/world/entity/EntitySpawnReason.MOB_SUMMONED:Lnet/minecraft/world/entity/EntitySpawnReason;
+    89: aload_1
+    90: aload_0
+    91: invokevirtual net/minecraft/world/entity/npc/villager/Villager.blockPosition:()Lnet/minecraft/core/BlockPos;
+    94: bipush 10
+    96: bipush 8
+    98: bipush 6
+    100: getstatic net/minecraft/util/SpawnUtil$Strategy.LEGACY_IRON_GOLEM:Lnet/minecraft/util/SpawnUtil$Strategy;
+    103: iconst_0
+    104: invokestatic net/minecraft/util/SpawnUtil.trySpawnMob:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;IIILnet/minecraft/util/SpawnUtil$Strategy;Z)Ljava/util/Optional;
+    107: invokevirtual java/util/Optional.isEmpty:()Z
+    110: ifeq 114
+    113: return
+    114: aload 6
+    116: invokedynamic dynamic#11:accept
+    121: invokeinterface java/util/List.forEach:(Ljava/util/function/Consumer;)V
+    126: return
+  METHOD wantsToSpawnGolem (J)Z  (code=35)
+    0: aload_0
+    1: aload_0
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    5: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    8: invokevirtual net/minecraft/world/entity/npc/villager/Villager.golemSpawnConditionsMet:(J)Z
+    11: ifne 16
+    14: iconst_0
+    15: ireturn
+    16: aload_0
+    17: getfield net/minecraft/world/entity/npc/villager/Villager.brain:Lnet/minecraft/world/entity/ai/Brain;
+    20: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.GOLEM_DETECTED_RECENTLY:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    23: invokevirtual net/minecraft/world/entity/ai/Brain.hasMemoryValue:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)Z
+    26: ifne 33
+    29: iconst_1
+    30: goto 34
+    33: iconst_0
+    34: ireturn
+  METHOD onReputationEventFrom (Lnet/minecraft/world/entity/ai/village/ReputationEventType;Lnet/minecraft/world/entity/Entity;)V  (code=117)
+    0: aload_1
+    1: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.ZOMBIE_VILLAGER_CURED:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    4: if_acmpne 42
+    7: aload_0
+    8: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    11: aload_2
+    12: invokevirtual net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+    15: getstatic net/minecraft/world/entity/ai/gossip/GossipType.MAJOR_POSITIVE:Lnet/minecraft/world/entity/ai/gossip/GossipType;
+    18: bipush 20
+    20: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.add:(Ljava/util/UUID;Lnet/minecraft/world/entity/ai/gossip/GossipType;I)V
+    23: aload_0
+    24: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    27: aload_2
+    28: invokevirtual net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+    31: getstatic net/minecraft/world/entity/ai/gossip/GossipType.MINOR_POSITIVE:Lnet/minecraft/world/entity/ai/gossip/GossipType;
+    34: bipush 25
+    36: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.add:(Ljava/util/UUID;Lnet/minecraft/world/entity/ai/gossip/GossipType;I)V
+    39: goto 116
+    42: aload_1
+    43: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.TRADE:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    46: if_acmpne 67
+    49: aload_0
+    50: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    53: aload_2
+    54: invokevirtual net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+    57: getstatic net/minecraft/world/entity/ai/gossip/GossipType.TRADING:Lnet/minecraft/world/entity/ai/gossip/GossipType;
+    60: iconst_2
+    61: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.add:(Ljava/util/UUID;Lnet/minecraft/world/entity/ai/gossip/GossipType;I)V
+    64: goto 116
+    67: aload_1
+    68: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.VILLAGER_HURT:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    71: if_acmpne 93
+    74: aload_0
+    75: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    78: aload_2
+    79: invokevirtual net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+    82: getstatic net/minecraft/world/entity/ai/gossip/GossipType.MINOR_NEGATIVE:Lnet/minecraft/world/entity/ai/gossip/GossipType;
+    85: bipush 25
+    87: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.add:(Ljava/util/UUID;Lnet/minecraft/world/entity/ai/gossip/GossipType;I)V
+    90: goto 116
+    93: aload_1
+    94: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.VILLAGER_KILLED:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    97: if_acmpne 116
+    100: aload_0
+    101: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    104: aload_2
+    105: invokevirtual net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+    108: getstatic net/minecraft/world/entity/ai/gossip/GossipType.MAJOR_NEGATIVE:Lnet/minecraft/world/entity/ai/gossip/GossipType;
+    111: bipush 25
+    113: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.add:(Ljava/util/UUID;Lnet/minecraft/world/entity/ai/gossip/GossipType;I)V
+    116: return
+  METHOD getVillagerXp ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    4: ireturn
+  METHOD setVillagerXp (I)V  (code=6)
+    0: aload_0
+    1: iload_1
+    2: putfield net/minecraft/world/entity/npc/villager/Villager.villagerXp:I
+    5: return
+  METHOD resetNumberOfRestocks ()V  (code=10)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.catchUpDemand:()V
+    4: aload_0
+    5: iconst_0
+    6: putfield net/minecraft/world/entity/npc/villager/Villager.numberOfRestocksToday:I
+    9: return
+  METHOD getGossips ()Lnet/minecraft/world/entity/ai/gossip/GossipContainer;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    4: areturn
+  METHOD setGossips (Lnet/minecraft/world/entity/ai/gossip/GossipContainer;)V  (code=9)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.gossips:Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+    4: aload_1
+    5: invokevirtual net/minecraft/world/entity/ai/gossip/GossipContainer.putAll:(Lnet/minecraft/world/entity/ai/gossip/GossipContainer;)V
+    8: return
+  METHOD stopSleeping ()V  (code=25)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.stopSleeping:()V
+    4: aload_0
+    5: getfield net/minecraft/world/entity/npc/villager/Villager.brain:Lnet/minecraft/world/entity/ai/Brain;
+    8: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.LAST_WOKEN:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    11: aload_0
+    12: invokevirtual net/minecraft/world/entity/npc/villager/Villager.level:()Lnet/minecraft/world/level/Level;
+    15: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    18: invokestatic java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    21: invokevirtual net/minecraft/world/entity/ai/Brain.setMemory:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;Ljava/lang/Object;)V
+    24: return
+  METHOD golemSpawnConditionsMet (J)Z  (code=25)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/villager/Villager.brain:Lnet/minecraft/world/entity/ai/Brain;
+    4: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.LAST_SLEPT:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    7: invokevirtual net/minecraft/world/entity/ai/Brain.getMemory:(Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;)Ljava/util/Optional;
+    10: astore_3
+    11: aload_3
+    12: lload_1
+    13: invokedynamic dynamic#12:test
+    18: invokevirtual java/util/Optional.filter:(Ljava/util/function/Predicate;)Ljava/util/Optional;
+    21: invokevirtual java/util/Optional.isPresent:()Z
+    24: ireturn
+  METHOD get (Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;  (code=25)
+    0: aload_1
+    1: getstatic net/minecraft/core/component/DataComponents.VILLAGER_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    4: if_acmpne 19
+    7: aload_1
+    8: aload_0
+    9: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    12: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.type:()Lnet/minecraft/core/Holder;
+    15: invokestatic net/minecraft/world/entity/npc/villager/Villager.castComponentValue:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+    18: areturn
+    19: aload_0
+    20: aload_1
+    21: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.get:(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+    24: areturn
+  METHOD applyImplicitComponents (Lnet/minecraft/core/component/DataComponentGetter;)V  (code=15)
+    0: aload_0
+    1: aload_1
+    2: getstatic net/minecraft/core/component/DataComponents.VILLAGER_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    5: invokevirtual net/minecraft/world/entity/npc/villager/Villager.applyImplicitComponentIfPresent:(Lnet/minecraft/core/component/DataComponentGetter;Lnet/minecraft/core/component/DataComponentType;)Z
+    8: pop
+    9: aload_0
+    10: aload_1
+    11: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.applyImplicitComponents:(Lnet/minecraft/core/component/DataComponentGetter;)V
+    14: return
+  METHOD applyImplicitComponent (Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Z  (code=44)
+    0: aload_1
+    1: getstatic net/minecraft/core/component/DataComponents.VILLAGER_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    4: if_acmpne 37
+    7: getstatic net/minecraft/core/component/DataComponents.VILLAGER_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    10: aload_2
+    11: invokestatic net/minecraft/world/entity/npc/villager/Villager.castComponentValue:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+    14: checkcast net/minecraft/core/Holder
+    17: astore_3
+    18: aload_0
+    19: aload_0
+    20: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    23: aload_3
+    24: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.withType:(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    27: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerData:(Lnet/minecraft/world/entity/npc/villager/VillagerData;)V
+    30: aload_0
+    31: iconst_1
+    32: invokevirtual net/minecraft/world/entity/npc/villager/Villager.setVillagerDataFinalized:(Z)V
+    35: iconst_1
+    36: ireturn
+    37: aload_0
+    38: aload_1
+    39: aload_2
+    40: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.applyImplicitComponent:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Z
+    43: ireturn
+  METHOD getBreedOffspring (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/AgeableMob;)Lnet/minecraft/world/entity/AgeableMob;  (code=7)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getBreedOffspring:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/AgeableMob;)Lnet/minecraft/world/entity/npc/villager/Villager;
+    6: areturn
+  METHOD lambda$golemSpawnConditionsMet$0 (JLjava/lang/Long;)Z  (code=19)
+    0: lload_0
+    1: aload_2
+    2: invokevirtual java/lang/Long.longValue:()J
+    5: op_65
+    6: ldc2_w 24000
+    9: lcmp
+    10: ifge 17
+    13: iconst_1
+    14: goto 18
+    17: iconst_0
+    18: ireturn
+  METHOD lambda$spawnGolemIfNeeded$0 (JLnet/minecraft/world/entity/npc/villager/Villager;)Z  (code=6)
+    0: aload_2
+    1: lload_0
+    2: invokevirtual net/minecraft/world/entity/npc/villager/Villager.wantsToSpawnGolem:(J)Z
+    5: ireturn
+  METHOD lambda$hasFarmSeeds$0 (Lnet/minecraft/world/item/ItemStack;)Z  (code=8)
+    0: aload_0
+    1: getstatic net/minecraft/tags/ItemTags.VILLAGER_PLANTABLE_SEEDS:Lnet/minecraft/tags/TagKey;
+    4: invokevirtual net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+    7: ireturn
+  METHOD lambda$countFoodPointsInInventory$0 (Lnet/minecraft/world/SimpleContainer;Ljava/util/Map$Entry;)I  (code=27)
+    0: aload_0
+    1: aload_1
+    2: invokeinterface java/util/Map$Entry.getKey:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/Item
+    10: invokevirtual net/minecraft/world/SimpleContainer.countItem:(Lnet/minecraft/world/item/Item;)I
+    13: aload_1
+    14: invokeinterface java/util/Map$Entry.getValue:()Ljava/lang/Object;
+    19: checkcast java/lang/Integer
+    22: invokevirtual java/lang/Integer.intValue:()I
+    25: imul
+    26: ireturn
+  METHOD lambda$thunderHit$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/Witch;)V  (code=27)
+    0: aload_2
+    1: aload_1
+    2: aload_1
+    3: aload_2
+    4: invokevirtual net/minecraft/world/entity/monster/Witch.blockPosition:()Lnet/minecraft/core/BlockPos;
+    7: invokevirtual net/minecraft/server/level/ServerLevel.getCurrentDifficultyAt:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/DifficultyInstance;
+    10: getstatic net/minecraft/world/entity/EntitySpawnReason.CONVERSION:Lnet/minecraft/world/entity/EntitySpawnReason;
+    13: aconst_null
+    14: invokevirtual net/minecraft/world/entity/monster/Witch.finalizeSpawn:(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/world/entity/SpawnGroupData;)Lnet/minecraft/world/entity/SpawnGroupData;
+    17: pop
+    18: aload_2
+    19: invokevirtual net/minecraft/world/entity/monster/Witch.setPersistenceRequired:()V
+    22: aload_0
+    23: invokevirtual net/minecraft/world/entity/npc/villager/Villager.releaseAllPois:()V
+    26: return
+  METHOD lambda$getPlayerReputation$0 (Lnet/minecraft/world/entity/ai/gossip/GossipType;)Z  (code=2)
+    0: iconst_1
+    1: ireturn
+  METHOD lambda$releasePoi$0 (Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;Lnet/minecraft/core/GlobalPos;)V  (code=98)
+    0: aload_1
+    1: aload_3
+    2: invokevirtual net/minecraft/core/GlobalPos.dimension:()Lnet/minecraft/resources/ResourceKey;
+    5: invokevirtual net/minecraft/server/MinecraftServer.getLevel:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/server/level/ServerLevel;
+    8: astore 4
+    10: aload 4
+    12: ifnonnull 16
+    15: return
+    16: aload 4
+    18: invokevirtual net/minecraft/server/level/ServerLevel.getPoiManager:()Lnet/minecraft/world/entity/ai/village/poi/PoiManager;
+    21: astore 5
+    23: aload 5
+    25: aload_3
+    26: invokevirtual net/minecraft/core/GlobalPos.pos:()Lnet/minecraft/core/BlockPos;
+    29: invokevirtual net/minecraft/world/entity/ai/village/poi/PoiManager.getType:(Lnet/minecraft/core/BlockPos;)Ljava/util/Optional;
+    32: astore 6
+    34: getstatic net/minecraft/world/entity/npc/villager/Villager.POI_MEMORIES:Ljava/util/Map;
+    37: aload_2
+    38: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+    43: checkcast java/util/function/BiPredicate
+    46: astore 7
+    48: aload 6
+    50: invokevirtual java/util/Optional.isPresent:()Z
+    53: ifeq 97
+    56: aload 7
+    58: aload_0
+    59: aload 6
+    61: invokevirtual java/util/Optional.get:()Ljava/lang/Object;
+    64: checkcast net/minecraft/core/Holder
+    67: invokeinterface java/util/function/BiPredicate.test:(Ljava/lang/Object;Ljava/lang/Object;)Z
+    72: ifeq 97
+    75: aload 5
+    77: aload_3
+    78: invokevirtual net/minecraft/core/GlobalPos.pos:()Lnet/minecraft/core/BlockPos;
+    81: invokevirtual net/minecraft/world/entity/ai/village/poi/PoiManager.release:(Lnet/minecraft/core/BlockPos;)Z
+    84: pop
+    85: aload 4
+    87: invokevirtual net/minecraft/server/level/ServerLevel.debugSynchronizers:()Lnet/minecraft/util/debug/LevelDebugSynchronizers;
+    90: aload_3
+    91: invokevirtual net/minecraft/core/GlobalPos.pos:()Lnet/minecraft/core/BlockPos;
+    94: invokevirtual net/minecraft/util/debug/LevelDebugSynchronizers.updatePoi:(Lnet/minecraft/core/BlockPos;)V
+    97: return
+  METHOD lambda$tellWitnessesThatIWasMurdered$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/LivingEntity;)V  (code=13)
+    0: aload_0
+    1: getstatic net/minecraft/world/entity/ai/village/ReputationEventType.VILLAGER_KILLED:Lnet/minecraft/world/entity/ai/village/ReputationEventType;
+    4: aload_1
+    5: aload_2
+    6: checkcast net/minecraft/world/entity/ReputationEventHandler
+    9: invokevirtual net/minecraft/server/level/ServerLevel.onReputationEvent:(Lnet/minecraft/world/entity/ai/village/ReputationEventType;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/ReputationEventHandler;)V
+    12: return
+  METHOD lambda$shouldRestock$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/Holder$Reference;)Ljava/lang/Integer;  (code=18)
+    0: aload_1
+    1: invokevirtual net/minecraft/core/Holder$Reference.value:()Ljava/lang/Object;
+    4: checkcast net/minecraft/world/timeline/Timeline
+    7: aload_0
+    8: invokevirtual net/minecraft/server/level/ServerLevel.clockManager:()Lnet/minecraft/world/clock/ServerClockManager;
+    11: invokevirtual net/minecraft/world/timeline/Timeline.getPeriodCount:(Lnet/minecraft/world/clock/ClockManager;)I
+    14: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    17: areturn
+  METHOD lambda$static$4 (Lnet/minecraft/world/entity/npc/villager/Villager;Lnet/minecraft/core/Holder;)Z  (code=10)
+    0: aload_1
+    1: getstatic net/minecraft/world/entity/ai/village/poi/PoiTypes.MEETING:Lnet/minecraft/resources/ResourceKey;
+    4: invokeinterface net/minecraft/core/Holder.is:(Lnet/minecraft/resources/ResourceKey;)Z
+    9: ireturn
+  METHOD lambda$static$3 (Lnet/minecraft/world/entity/npc/villager/Villager;Lnet/minecraft/core/Holder;)Z  (code=10)
+    0: getstatic net/minecraft/world/entity/npc/villager/VillagerProfession.ALL_ACQUIRABLE_JOBS:Ljava/util/function/Predicate;
+    3: aload_1
+    4: invokeinterface java/util/function/Predicate.test:(Ljava/lang/Object;)Z
+    9: ireturn
+  METHOD lambda$static$2 (Lnet/minecraft/world/entity/npc/villager/Villager;Lnet/minecraft/core/Holder;)Z  (code=25)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    4: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    7: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    12: checkcast net/minecraft/world/entity/npc/villager/VillagerProfession
+    15: invokevirtual net/minecraft/world/entity/npc/villager/VillagerProfession.heldJobSite:()Ljava/util/function/Predicate;
+    18: aload_1
+    19: invokeinterface java/util/function/Predicate.test:(Ljava/lang/Object;)Z
+    24: ireturn
+  METHOD lambda$static$1 (Lnet/minecraft/world/entity/npc/villager/Villager;Lnet/minecraft/core/Holder;)Z  (code=10)
+    0: aload_1
+    1: getstatic net/minecraft/world/entity/ai/village/poi/PoiTypes.HOME:Lnet/minecraft/resources/ResourceKey;
+    4: invokeinterface net/minecraft/core/Holder.is:(Lnet/minecraft/resources/ResourceKey;)Z
+    9: ireturn
+  METHOD lambda$static$0 (Lnet/minecraft/world/entity/npc/villager/Villager;)Ljava/util/List;  (code=244)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/villager/Villager.getVillagerData:()Lnet/minecraft/world/entity/npc/villager/VillagerData;
+    4: invokevirtual net/minecraft/world/entity/npc/villager/VillagerData.profession:()Lnet/minecraft/core/Holder;
+    7: astore_1
+    8: new java/util/ArrayList
+    11: dup
+    12: invokespecial java/util/ArrayList.<init>:()V
+    15: astore_2
+    16: aload_0
+    17: invokevirtual net/minecraft/world/entity/npc/villager/Villager.isBaby:()Z
+    20: ifeq 45
+    23: aload_2
+    24: getstatic net/minecraft/world/entity/schedule/Activity.PLAY:Lnet/minecraft/world/entity/schedule/Activity;
+    27: ldc_w 2.260014163263065e-41f
+    30: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getPlayPackage:(F)Lcom/google/common/collect/ImmutableList;
+    33: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    36: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    41: pop
+    42: goto 77
+    45: aload_2
+    46: getstatic net/minecraft/world/entity/schedule/Activity.WORK:Lnet/minecraft/world/entity/schedule/Activity;
+    49: aload_1
+    50: ldc_w 2.260014163263065e-41f
+    53: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getWorkPackage:(Lnet/minecraft/core/Holder;F)Lcom/google/common/collect/ImmutableList;
+    56: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.JOB_SITE:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    59: getstatic net/minecraft/world/entity/ai/memory/MemoryStatus.VALUE_PRESENT:Lnet/minecraft/world/entity/ai/memory/MemoryStatus;
+    62: invokestatic com/mojang/datafixers/util/Pair.of:(Ljava/lang/Object;Ljava/lang/Object;)Lcom/mojang/datafixers/util/Pair;
+    65: invokestatic com/google/common/collect/ImmutableSet.of:(Ljava/lang/Object;)Lcom/google/common/collect/ImmutableSet;
+    68: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;Ljava/util/Set;)Lnet/minecraft/world/entity/ai/ActivityData;
+    71: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    76: pop
+    77: aload_2
+    78: getstatic net/minecraft/world/entity/schedule/Activity.CORE:Lnet/minecraft/world/entity/schedule/Activity;
+    81: aload_1
+    82: ldc_w 2.260014163263065e-41f
+    85: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getCorePackage:(Lnet/minecraft/core/Holder;F)Lcom/google/common/collect/ImmutableList;
+    88: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    91: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    96: pop
+    97: aload_2
+    98: getstatic net/minecraft/world/entity/schedule/Activity.MEET:Lnet/minecraft/world/entity/schedule/Activity;
+    101: ldc_w 2.260014163263065e-41f
+    104: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getMeetPackage:(F)Lcom/google/common/collect/ImmutableList;
+    107: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.MEETING_POINT:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    110: getstatic net/minecraft/world/entity/ai/memory/MemoryStatus.VALUE_PRESENT:Lnet/minecraft/world/entity/ai/memory/MemoryStatus;
+    113: invokestatic com/mojang/datafixers/util/Pair.of:(Ljava/lang/Object;Ljava/lang/Object;)Lcom/mojang/datafixers/util/Pair;
+    116: invokestatic com/google/common/collect/ImmutableSet.of:(Ljava/lang/Object;)Lcom/google/common/collect/ImmutableSet;
+    119: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;Ljava/util/Set;)Lnet/minecraft/world/entity/ai/ActivityData;
+    122: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    127: pop
+    128: aload_2
+    129: getstatic net/minecraft/world/entity/schedule/Activity.REST:Lnet/minecraft/world/entity/schedule/Activity;
+    132: ldc_w 2.260014163263065e-41f
+    135: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getRestPackage:(F)Lcom/google/common/collect/ImmutableList;
+    138: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    141: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    146: pop
+    147: aload_2
+    148: getstatic net/minecraft/world/entity/schedule/Activity.IDLE:Lnet/minecraft/world/entity/schedule/Activity;
+    151: ldc_w 2.260014163263065e-41f
+    154: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getIdlePackage:(F)Lcom/google/common/collect/ImmutableList;
+    157: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    160: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    165: pop
+    166: aload_2
+    167: getstatic net/minecraft/world/entity/schedule/Activity.PANIC:Lnet/minecraft/world/entity/schedule/Activity;
+    170: ldc_w 2.260014163263065e-41f
+    173: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getPanicPackage:(F)Lcom/google/common/collect/ImmutableList;
+    176: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    179: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    184: pop
+    185: aload_2
+    186: getstatic net/minecraft/world/entity/schedule/Activity.PRE_RAID:Lnet/minecraft/world/entity/schedule/Activity;
+    189: ldc_w 2.260014163263065e-41f
+    192: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getPreRaidPackage:(F)Lcom/google/common/collect/ImmutableList;
+    195: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    198: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    203: pop
+    204: aload_2
+    205: getstatic net/minecraft/world/entity/schedule/Activity.RAID:Lnet/minecraft/world/entity/schedule/Activity;
+    208: ldc_w 2.260014163263065e-41f
+    211: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getRaidPackage:(F)Lcom/google/common/collect/ImmutableList;
+    214: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    217: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    222: pop
+    223: aload_2
+    224: getstatic net/minecraft/world/entity/schedule/Activity.HIDE:Lnet/minecraft/world/entity/schedule/Activity;
+    227: ldc_w 2.260014163263065e-41f
+    230: invokestatic net/minecraft/world/entity/ai/behavior/VillagerGoalPackages.getHidePackage:(F)Lcom/google/common/collect/ImmutableList;
+    233: invokestatic net/minecraft/world/entity/ai/ActivityData.create:(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;)Lnet/minecraft/world/entity/ai/ActivityData;
+    236: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    241: pop
+    242: aload_2
+    243: areturn
+  METHOD <clinit> ()V  (code=160)
+    0: invokestatic com/mojang/logging/LogUtils.getLogger:()Lorg/slf4j/Logger;
+    3: putstatic net/minecraft/world/entity/npc/villager/Villager.LOGGER:Lorg/slf4j/Logger;
+    6: ldc net/minecraft/world/entity/npc/villager/Villager
+    8: getstatic net/minecraft/network/syncher/EntityDataSerializers.VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataSerializer;
+    11: invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    14: putstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    17: ldc net/minecraft/world/entity/npc/villager/Villager
+    19: getstatic net/minecraft/network/syncher/EntityDataSerializers.BOOLEAN:Lnet/minecraft/network/syncher/EntityDataSerializer;
+    22: invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    25: putstatic net/minecraft/world/entity/npc/villager/Villager.DATA_VILLAGER_DATA_FINALIZED:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    28: getstatic net/minecraft/world/item/Items.BREAD:Lnet/minecraft/world/item/Item;
+    31: iconst_4
+    32: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    35: getstatic net/minecraft/world/item/Items.POTATO:Lnet/minecraft/world/item/Item;
+    38: iconst_1
+    39: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    42: getstatic net/minecraft/world/item/Items.CARROT:Lnet/minecraft/world/item/Item;
+    45: iconst_1
+    46: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    49: getstatic net/minecraft/world/item/Items.BEETROOT:Lnet/minecraft/world/item/Item;
+    52: iconst_1
+    53: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    56: invokestatic com/google/common/collect/ImmutableMap.of:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableMap;
+    59: putstatic net/minecraft/world/entity/npc/villager/Villager.FOOD_POINTS:Ljava/util/Map;
+    62: ldc_w 2.25917338418447e-41f
+    65: ldc_w 2.2771100045278277e-41f
+    68: invokestatic net/minecraft/world/entity/EntityDimensions.scalable:(FF)Lnet/minecraft/world/entity/EntityDimensions;
+    71: ldc_w 2.2646384481953369e-41f
+    74: invokevirtual net/minecraft/world/entity/EntityDimensions.withEyeHeight:(F)Lnet/minecraft/world/entity/EntityDimensions;
+    77: putstatic net/minecraft/world/entity/npc/villager/Villager.BABY_DIMENSIONS:Lnet/minecraft/world/entity/EntityDimensions;
+    80: getstatic net/minecraft/world/entity/ai/sensing/SensorType.NEAREST_LIVING_ENTITIES:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    83: getstatic net/minecraft/world/entity/ai/sensing/SensorType.NEAREST_PLAYERS:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    86: getstatic net/minecraft/world/entity/ai/sensing/SensorType.NEAREST_ITEMS:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    89: getstatic net/minecraft/world/entity/ai/sensing/SensorType.NEAREST_BED:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    92: getstatic net/minecraft/world/entity/ai/sensing/SensorType.HURT_BY:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    95: getstatic net/minecraft/world/entity/ai/sensing/SensorType.VILLAGER_HOSTILES:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    98: getstatic net/minecraft/world/entity/ai/sensing/SensorType.VILLAGER_BABIES:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    101: getstatic net/minecraft/world/entity/ai/sensing/SensorType.SECONDARY_POIS:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    104: getstatic net/minecraft/world/entity/ai/sensing/SensorType.GOLEM_DETECTED:Lnet/minecraft/world/entity/ai/sensing/SensorType;
+    107: invokestatic java/util/List.of:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/List;
+    110: invokedynamic dynamic#13:createActivities
+    115: invokestatic net/minecraft/world/entity/ai/Brain.provider:(Ljava/util/Collection;Lnet/minecraft/world/entity/ai/Brain$ActivitySupplier;)Lnet/minecraft/world/entity/ai/Brain$Provider;
+    118: putstatic net/minecraft/world/entity/npc/villager/Villager.BRAIN_PROVIDER:Lnet/minecraft/world/entity/ai/Brain$Provider;
+    121: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.HOME:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    124: invokedynamic dynamic#14:test
+    129: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.JOB_SITE:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    132: invokedynamic dynamic#15:test
+    137: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.POTENTIAL_JOB_SITE:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    140: invokedynamic dynamic#16:test
+    145: getstatic net/minecraft/world/entity/ai/memory/MemoryModuleType.MEETING_POINT:Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;
+    148: invokedynamic dynamic#17:test
+    153: invokestatic com/google/common/collect/ImmutableMap.of:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableMap;
+    156: putstatic net/minecraft/world/entity/npc/villager/Villager.POI_MEMORIES:Ljava/util/Map;
+    159: return
+
+  FIELD DEFAULT_DESPAWN_DELAY:I flags=0x1a
+  FIELD wanderTarget:Lnet/minecraft/core/BlockPos; flags=0x2
+  FIELD despawnDelay:I flags=0x2
+  METHOD <init> (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V  (code=12)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.<init>:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
+    6: aload_0
+    7: iconst_0
+    8: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    11: return
+  METHOD registerGoals ()V  (code=424)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    4: iconst_0
+    5: new net/minecraft/world/entity/ai/goal/FloatGoal
+    8: dup
+    9: aload_0
+    10: invokespecial net/minecraft/world/entity/ai/goal/FloatGoal.<init>:(Lnet/minecraft/world/entity/Mob;)V
+    13: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    16: aload_0
+    17: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    20: iconst_0
+    21: new net/minecraft/world/entity/ai/goal/UseItemGoal
+    24: dup
+    25: aload_0
+    26: getstatic net/minecraft/world/item/Items.POTION:Lnet/minecraft/world/item/Item;
+    29: getstatic net/minecraft/world/item/alchemy/Potions.INVISIBILITY:Lnet/minecraft/core/Holder;
+    32: invokestatic net/minecraft/world/item/alchemy/PotionContents.createItemStack:(Lnet/minecraft/world/item/Item;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/item/ItemStack;
+    35: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DISAPPEARED:Lnet/minecraft/sounds/SoundEvent;
+    38: aload_0
+    39: invokedynamic dynamic#0:test
+    44: invokespecial net/minecraft/world/entity/ai/goal/UseItemGoal.<init>:(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/sounds/SoundEvent;Ljava/util/function/Predicate;)V
+    47: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    50: aload_0
+    51: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    54: iconst_0
+    55: new net/minecraft/world/entity/ai/goal/UseItemGoal
+    58: dup
+    59: aload_0
+    60: new net/minecraft/world/item/ItemStack
+    63: dup
+    64: getstatic net/minecraft/world/item/Items.MILK_BUCKET:Lnet/minecraft/world/item/Item;
+    67: invokespecial net/minecraft/world/item/ItemStack.<init>:(Lnet/minecraft/world/level/ItemLike;)V
+    70: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_REAPPEARED:Lnet/minecraft/sounds/SoundEvent;
+    73: aload_0
+    74: invokedynamic dynamic#1:test
+    79: invokespecial net/minecraft/world/entity/ai/goal/UseItemGoal.<init>:(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/sounds/SoundEvent;Ljava/util/function/Predicate;)V
+    82: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    85: aload_0
+    86: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    89: iconst_1
+    90: new net/minecraft/world/entity/ai/goal/TradeWithPlayerGoal
+    93: dup
+    94: aload_0
+    95: invokespecial net/minecraft/world/entity/ai/goal/TradeWithPlayerGoal.<init>:(Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)V
+    98: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    101: aload_0
+    102: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    105: iconst_1
+    106: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    109: dup
+    110: aload_0
+    111: ldc net/minecraft/world/entity/monster/zombie/Zombie
+    113: ldc 2.3317606446364956e-41f
+    115: ldc2_w 0.5
+    118: ldc2_w 0.5
+    121: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    124: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    127: aload_0
+    128: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    131: iconst_1
+    132: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    135: dup
+    136: aload_0
+    137: ldc net/minecraft/world/entity/monster/illager/Evoker
+    139: ldc 2.3407289548081744e-41f
+    141: ldc2_w 0.5
+    144: ldc2_w 0.5
+    147: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    150: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    153: aload_0
+    154: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    157: iconst_1
+    158: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    161: dup
+    162: aload_0
+    163: ldc net/minecraft/world/entity/monster/illager/Vindicator
+    165: ldc 2.3317606446364956e-41f
+    167: ldc2_w 0.5
+    170: ldc2_w 0.5
+    173: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    176: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    179: aload_0
+    180: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    183: iconst_1
+    184: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    187: dup
+    188: aload_0
+    189: ldc net/minecraft/world/entity/monster/Vex
+    191: ldc 2.3317606446364956e-41f
+    193: ldc2_w 0.5
+    196: ldc2_w 0.5
+    199: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    202: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    205: aload_0
+    206: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    209: iconst_1
+    210: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    213: dup
+    214: aload_0
+    215: ldc net/minecraft/world/entity/monster/illager/Pillager
+    217: ldc 2.3474551874369336e-41f
+    219: ldc2_w 0.5
+    222: ldc2_w 0.5
+    225: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    228: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    231: aload_0
+    232: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    235: iconst_1
+    236: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    239: dup
+    240: aload_0
+    241: ldc net/minecraft/world/entity/monster/illager/Illusioner
+    243: ldc 2.3407289548081744e-41f
+    245: ldc2_w 0.5
+    248: ldc2_w 0.5
+    251: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    254: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    257: aload_0
+    258: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    261: iconst_1
+    262: new net/minecraft/world/entity/ai/goal/AvoidEntityGoal
+    265: dup
+    266: aload_0
+    267: ldc net/minecraft/world/entity/monster/Zoglin
+    269: ldc 2.336244799722335e-41f
+    271: ldc2_w 0.5
+    274: ldc2_w 0.5
+    277: invokespecial net/minecraft/world/entity/ai/goal/AvoidEntityGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;Ljava/lang/Class;FDD)V
+    280: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    283: aload_0
+    284: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    287: iconst_1
+    288: new net/minecraft/world/entity/ai/goal/PanicGoal
+    291: dup
+    292: aload_0
+    293: ldc2_w 0.5
+    296: invokespecial net/minecraft/world/entity/ai/goal/PanicGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;D)V
+    299: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    302: aload_0
+    303: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    306: iconst_1
+    307: new net/minecraft/world/entity/ai/goal/LookAtTradingPlayerGoal
+    310: dup
+    311: aload_0
+    312: invokespecial net/minecraft/world/entity/ai/goal/LookAtTradingPlayerGoal.<init>:(Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)V
+    315: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    318: aload_0
+    319: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    322: iconst_2
+    323: new net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader$WanderToPositionGoal
+    326: dup
+    327: aload_0
+    328: aload_0
+    329: ldc2_w 2.0
+    332: ldc2_w 0.35
+    335: invokespecial net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader$WanderToPositionGoal.<init>:(Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;DD)V
+    338: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    341: aload_0
+    342: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    345: iconst_4
+    346: new net/minecraft/world/entity/ai/goal/MoveTowardsRestrictionGoal
+    349: dup
+    350: aload_0
+    351: ldc2_w 0.35
+    354: invokespecial net/minecraft/world/entity/ai/goal/MoveTowardsRestrictionGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;D)V
+    357: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    360: aload_0
+    361: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    364: bipush 8
+    366: new net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal
+    369: dup
+    370: aload_0
+    371: ldc2_w 0.35
+    374: invokespecial net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;D)V
+    377: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    380: aload_0
+    381: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    384: bipush 9
+    386: new net/minecraft/world/entity/ai/goal/InteractGoal
+    389: dup
+    390: aload_0
+    391: ldc net/minecraft/world/entity/player/Player
+    393: ldc 2.304855714121459e-41f
+    395: op_0c
+    396: invokespecial net/minecraft/world/entity/ai/goal/InteractGoal.<init>:(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;FF)V
+    399: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    402: aload_0
+    403: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    406: bipush 10
+    408: new net/minecraft/world/entity/ai/goal/LookAtPlayerGoal
+    411: dup
+    412: aload_0
+    413: ldc net/minecraft/world/entity/Mob
+    415: ldc 2.3317606446364956e-41f
+    417: invokespecial net/minecraft/world/entity/ai/goal/LookAtPlayerGoal.<init>:(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;F)V
+    420: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    423: return
+  METHOD getBreedOffspring (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/AgeableMob;)Lnet/minecraft/world/entity/AgeableMob;  (code=2)
+    0: aconst_null
+    1: areturn
+  METHOD showProgressBar ()Z  (code=2)
+    0: iconst_0
+    1: ireturn
+  METHOD mobInteract (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;  (code=101)
+    0: aload_1
+    1: aload_2
+    2: invokevirtual net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+    5: astore_3
+    6: aload_3
+    7: getstatic net/minecraft/world/item/Items.VILLAGER_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    10: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    13: ifne 94
+    16: aload_0
+    17: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isAlive:()Z
+    20: ifeq 94
+    23: aload_0
+    24: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isTrading:()Z
+    27: ifne 94
+    30: aload_0
+    31: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isBaby:()Z
+    34: ifne 94
+    37: aload_2
+    38: getstatic net/minecraft/world/InteractionHand.MAIN_HAND:Lnet/minecraft/world/InteractionHand;
+    41: if_acmpne 51
+    44: aload_1
+    45: getstatic net/minecraft/stats/Stats.TALKED_TO_VILLAGER:Lnet/minecraft/resources/Identifier;
+    48: invokevirtual net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/resources/Identifier;)V
+    51: aload_0
+    52: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.level:()Lnet/minecraft/world/level/Level;
+    55: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    58: ifne 90
+    61: aload_0
+    62: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    65: invokevirtual net/minecraft/world/item/trading/MerchantOffers.isEmpty:()Z
+    68: ifeq 75
+    71: getstatic net/minecraft/world/InteractionResult.CONSUME:Lnet/minecraft/world/InteractionResult$Success;
+    74: areturn
+    75: aload_0
+    76: aload_1
+    77: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.setTradingPlayer:(Lnet/minecraft/world/entity/player/Player;)V
+    80: aload_0
+    81: aload_1
+    82: aload_0
+    83: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getDisplayName:()Lnet/minecraft/network/chat/Component;
+    86: iconst_1
+    87: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.openTradingScreen:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;I)V
+    90: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    93: areturn
+    94: aload_0
+    95: aload_1
+    96: aload_2
+    97: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.mobInteract:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;
+    100: areturn
+  METHOD updateTrades (Lnet/minecraft/server/level/ServerLevel;)V  (code=33)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    4: astore_2
+    5: aload_0
+    6: aload_1
+    7: aload_2
+    8: getstatic net/minecraft/world/item/trading/TradeSets.WANDERING_TRADER_BUYING:Lnet/minecraft/resources/ResourceKey;
+    11: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.addOffersFromTradeSet:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/trading/MerchantOffers;Lnet/minecraft/resources/ResourceKey;)V
+    14: aload_0
+    15: aload_1
+    16: aload_2
+    17: getstatic net/minecraft/world/item/trading/TradeSets.WANDERING_TRADER_UNCOMMON:Lnet/minecraft/resources/ResourceKey;
+    20: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.addOffersFromTradeSet:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/trading/MerchantOffers;Lnet/minecraft/resources/ResourceKey;)V
+    23: aload_0
+    24: aload_1
+    25: aload_2
+    26: getstatic net/minecraft/world/item/trading/TradeSets.WANDERING_TRADER_COMMON:Lnet/minecraft/resources/ResourceKey;
+    29: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.addOffersFromTradeSet:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/trading/MerchantOffers;Lnet/minecraft/resources/ResourceKey;)V
+    32: return
+  METHOD addAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueOutput;)V  (code=33)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.addAdditionalSaveData:(Lnet/minecraft/world/level/storage/ValueOutput;)V
+    5: aload_1
+    6: ldc "DespawnDelay"
+    8: aload_0
+    9: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    12: invokeinterface net/minecraft/world/level/storage/ValueOutput.putInt:(Ljava/lang/String;I)V
+    17: aload_1
+    18: ldc "wander_target"
+    20: getstatic net/minecraft/core/BlockPos.CODEC:Lcom/mojang/serialization/Codec;
+    23: aload_0
+    24: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.wanderTarget:Lnet/minecraft/core/BlockPos;
+    27: invokeinterface net/minecraft/world/level/storage/ValueOutput.storeNullable:(Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V
+    32: return
+  METHOD readAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueInput;)V  (code=53)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.readAdditionalSaveData:(Lnet/minecraft/world/level/storage/ValueInput;)V
+    5: aload_0
+    6: aload_1
+    7: ldc "DespawnDelay"
+    9: iconst_0
+    10: invokeinterface net/minecraft/world/level/storage/ValueInput.getIntOr:(Ljava/lang/String;I)I
+    15: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    18: aload_0
+    19: aload_1
+    20: ldc "wander_target"
+    22: getstatic net/minecraft/core/BlockPos.CODEC:Lcom/mojang/serialization/Codec;
+    25: invokeinterface net/minecraft/world/level/storage/ValueInput.read:(Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+    30: aconst_null
+    31: invokevirtual java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+    34: checkcast net/minecraft/core/BlockPos
+    37: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.wanderTarget:Lnet/minecraft/core/BlockPos;
+    40: aload_0
+    41: iconst_0
+    42: aload_0
+    43: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getAge:()I
+    46: invokestatic java/lang/Math.max:(II)I
+    49: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.setAge:(I)V
+    52: return
+  METHOD removeWhenFarAway (D)Z  (code=2)
+    0: iconst_0
+    1: ireturn
+  METHOD rewardTradeXp (Lnet/minecraft/world/item/trading/MerchantOffer;)V  (code=57)
+    0: aload_1
+    1: invokevirtual net/minecraft/world/item/trading/MerchantOffer.shouldRewardExp:()Z
+    4: ifeq 56
+    7: iconst_3
+    8: aload_0
+    9: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.random:Lnet/minecraft/util/RandomSource;
+    12: iconst_4
+    13: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    18: iadd
+    19: istore_2
+    20: aload_0
+    21: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.level:()Lnet/minecraft/world/level/Level;
+    24: new net/minecraft/world/entity/ExperienceOrb
+    27: dup
+    28: aload_0
+    29: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.level:()Lnet/minecraft/world/level/Level;
+    32: aload_0
+    33: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getX:()D
+    36: aload_0
+    37: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getY:()D
+    40: ldc2_w 0.5
+    43: dadd
+    44: aload_0
+    45: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.getZ:()D
+    48: iload_2
+    49: invokespecial net/minecraft/world/entity/ExperienceOrb.<init>:(Lnet/minecraft/world/level/Level;DDDI)V
+    52: invokevirtual net/minecraft/world/level/Level.addFreshEntity:(Lnet/minecraft/world/entity/Entity;)Z
+    55: pop
+    56: return
+  METHOD getAmbientSound ()Lnet/minecraft/sounds/SoundEvent;  (code=15)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isTrading:()Z
+    4: ifeq 11
+    7: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_TRADE:Lnet/minecraft/sounds/SoundEvent;
+    10: areturn
+    11: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_AMBIENT:Lnet/minecraft/sounds/SoundEvent;
+    14: areturn
+  METHOD getHurtSound (Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_HURT:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+  METHOD getDeathSound ()Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DEATH:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+  METHOD getConsumeSound (Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/sounds/SoundEvent;  (code=18)
+    0: aload_1
+    1: getstatic net/minecraft/world/item/Items.MILK_BUCKET:Lnet/minecraft/world/item/Item;
+    4: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    7: ifeq 14
+    10: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DRINK_MILK:Lnet/minecraft/sounds/SoundEvent;
+    13: areturn
+    14: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_DRINK_POTION:Lnet/minecraft/sounds/SoundEvent;
+    17: areturn
+  METHOD getTradeUpdatedSound (Z)Lnet/minecraft/sounds/SoundEvent;  (code=14)
+    0: iload_1
+    1: ifeq 10
+    4: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_YES:Lnet/minecraft/sounds/SoundEvent;
+    7: goto 13
+    10: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_NO:Lnet/minecraft/sounds/SoundEvent;
+    13: areturn
+  METHOD getNotifyTradeSound ()Lnet/minecraft/sounds/SoundEvent;  (code=4)
+    0: getstatic net/minecraft/sounds/SoundEvents.WANDERING_TRADER_YES:Lnet/minecraft/sounds/SoundEvent;
+    3: areturn
+  METHOD setDespawnDelay (I)V  (code=6)
+    0: aload_0
+    1: iload_1
+    2: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    5: return
+  METHOD getDespawnDelay ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    4: ireturn
+  METHOD aiStep ()V  (code=19)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/npc/villager/AbstractVillager.aiStep:()V
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.level:()Lnet/minecraft/world/level/Level;
+    8: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    11: ifne 18
+    14: aload_0
+    15: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.maybeDespawn:()V
+    18: return
+  METHOD maybeDespawn ()V  (code=33)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    4: ifle 32
+    7: aload_0
+    8: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isTrading:()Z
+    11: ifne 32
+    14: aload_0
+    15: dup
+    16: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    19: iconst_1
+    20: isub
+    21: dup_x1
+    22: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.despawnDelay:I
+    25: ifne 32
+    28: aload_0
+    29: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.discard:()V
+    32: return
+  METHOD setWanderTarget (Lnet/minecraft/core/BlockPos;)V  (code=6)
+    0: aload_0
+    1: aload_1
+    2: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.wanderTarget:Lnet/minecraft/core/BlockPos;
+    5: return
+  METHOD getWanderTarget ()Lnet/minecraft/core/BlockPos;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.wanderTarget:Lnet/minecraft/core/BlockPos;
+    4: areturn
+  METHOD access$000 (Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;)Lnet/minecraft/world/entity/ai/navigation/PathNavigation;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.navigation:Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    4: areturn
+  METHOD access$100 (Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;)Lnet/minecraft/world/entity/ai/navigation/PathNavigation;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.navigation:Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    4: areturn
+  METHOD access$200 (Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;)Lnet/minecraft/world/entity/ai/navigation/PathNavigation;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.navigation:Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    4: areturn
+  METHOD access$300 (Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;)Lnet/minecraft/world/entity/ai/navigation/PathNavigation;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.navigation:Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    4: areturn
+  METHOD lambda$registerGoals$1 (Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;)Z  (code=23)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.isBrightOutside:()Z
+    7: ifeq 21
+    10: aload_1
+    11: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isInvisible:()Z
+    14: ifeq 21
+    17: iconst_1
+    18: goto 22
+    21: iconst_0
+    22: ireturn
+  METHOD lambda$registerGoals$0 (Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;)Z  (code=23)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.isDarkOutside:()Z
+    7: ifeq 21
+    10: aload_1
+    11: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.isInvisible:()Z
+    14: ifne 21
+    17: iconst_1
+    18: goto 22
+    21: iconst_0
+    22: ireturn
+

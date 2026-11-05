@@ -1,0 +1,2 @@
+== assets/minecraft/lang/en_us.json: 1 talked keys
+   stat.minecraft.talked_to_villager = Talked to Villagers
