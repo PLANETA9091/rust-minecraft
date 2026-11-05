@@ -41958,7 +41958,7 @@ impl App {
         // carry, the arrow the extractButtonArrows walk speaks, the y
         // the topPos+19+row*20 walker wears [the icons the walker+2
         // seat keeps, the arrow the walker+3 seat wears])
-        for (row, &(rx, ry, idx)) in self.merchant_row_rects.iter().enumerate() {
+        for (row, &(rx, ry, _)) in self.merchant_row_rects.iter().enumerate() {
             // THE BUTTON'S OWN VISIBLE LAW (javap extractContents tail
             // — the RAW seat the size compare answers, the scrolled-
             // out seat the bare button keeps)
@@ -41973,6 +41973,19 @@ impl App {
                 };
                 g.sprite_9slice(a, sprite, rx, ry, 88, 20);
             }
+            // THE ITEM WALK'S OWN WINDOW (javap extractContents pcs
+            // 117-153 — the canScroll verdict the walk opens with,
+            // the >7 bank the scrolled seat the window filters, the
+            // ≤7 bank the window NEVER filters [the full bank the
+            // head re-lays, the STALE scroll the walk ignores — the
+            // shrunken bank the quirk the round retires]; the rect's
+            // own folded seat the press + the tooltip walks keep —
+            // the canScroll arm the ITEM walk alone wears)
+            let Some(idx) =
+                merchant_item_index(self.merchant_offers.len(), row, self.merchant_scroll)
+            else {
+                continue;
+            };
             let Some(offer) = self.merchant_offers.get(idx) else {
                 continue;
             };
@@ -98292,6 +98305,28 @@ pub fn merchant_scroll_wheel(scroll_off: usize, delta_y: f64, offers: usize) -> 
     }
     let next = (scroll_off as f64 - delta_y) as i64;
     next.clamp(0, (offers - 7) as i64) as usize
+}
+
+/// THE ITEM WALK'S OWN WINDOW (javap 26.2 extractContents pcs 117-153
+/// — the canScroll verdict the item walk opens with [the `iload_1
+/// bipush 7 if_icmple` pair the 464b canScroll census speaks], the
+/// >7 bank the window walk filters [the `i10 < scrollOff` skip + the
+/// `i10 < 7 + scrollOff` draw pair the pcs 129-147 speak — the
+/// scrolled seat the window banks], the ≤7 bank the window NEVER
+/// filters [the pc 126 ifeq the EVERY-offer walk answers — the full
+/// bank the head re-lays, the STALE scroll the walk ignores: the
+/// shrunken bank the re-bank the scroll word never re-clamps, the
+/// quirk the 464 NEXT's own lane banks]; the iterator's own live
+/// list the [0, offers) bound keeps — the seat the row walk banks)
+pub fn merchant_item_index(offers: usize, row: usize, scroll: usize) -> Option<usize> {
+    if offers > 7 {
+        let idx = scroll + row;
+        (idx < offers).then_some(idx)
+    } else if row < offers {
+        Some(row) // the ≤7 bank the window never filters — the row's own offer
+    } else {
+        None
+    }
 }
 
 /// THE ROW TOOLTIP'S OWN BAND (javap 26.2 TradeOfferButton.extractToolTip

@@ -1,0 +1,472 @@
+== net/minecraft/client/gui/screens/inventory/MerchantScreen.class
+  METHOD extractScroller (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIILnet/minecraft/world/item/trading/MerchantOffers;)V  (code=202)
+    0: aload 6
+    2: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    5: iconst_1
+    6: iadd
+    7: bipush 7
+    9: isub
+    10: istore 7
+    12: iload 7
+    14: iconst_1
+    15: if_icmple 179
+    18: sipush 139
+    21: bipush 27
+    23: iload 7
+    25: iconst_1
+    26: isub
+    27: sipush 139
+    30: imul
+    31: iload 7
+    33: idiv
+    34: iadd
+    35: isub
+    36: istore 8
+    38: iconst_1
+    39: iload 8
+    41: iload 7
+    43: idiv
+    44: iadd
+    45: sipush 139
+    48: iload 7
+    50: idiv
+    51: iadd
+    52: istore 9
+    54: bipush 113
+    56: istore 10
+    58: bipush 113
+    60: aload_0
+    61: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    64: iload 9
+    66: imul
+    67: invokestatic java/lang/Math.min:(II)I
+    70: istore 11
+    72: aload_0
+    73: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    76: iload 7
+    78: iconst_1
+    79: isub
+    80: if_icmpne 87
+    83: bipush 113
+    85: istore 11
+    87: iload_2
+    88: bipush 94
+    90: iadd
+    91: istore 12
+    93: iload_3
+    94: bipush 18
+    96: iadd
+    97: iload 11
+    99: iadd
+    100: istore 13
+    102: aload_1
+    103: getstatic net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    106: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.SCROLLER_SPRITE:Lnet/minecraft/resources/Identifier;
+    109: iload 12
+    111: iload 13
+    113: bipush 6
+    115: bipush 27
+    117: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    120: iload 4
+    122: iload 12
+    124: if_icmplt 176
+    127: iload 4
+    129: iload_2
+    130: bipush 94
+    132: iadd
+    133: bipush 6
+    135: iadd
+    136: if_icmpge 176
+    139: iload 5
+    141: iload 13
+    143: if_icmplt 176
+    146: iload 5
+    148: iload 13
+    150: bipush 27
+    152: iadd
+    153: if_icmpgt 176
+    156: aload_1
+    157: aload_0
+    158: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.isDragging:Z
+    161: ifeq 170
+    164: getstatic com/mojang/blaze3d/platform/cursor/CursorTypes.RESIZE_NS:Lcom/mojang/blaze3d/platform/cursor/CursorType;
+    167: goto 173
+    170: getstatic com/mojang/blaze3d/platform/cursor/CursorTypes.POINTING_HAND:Lcom/mojang/blaze3d/platform/cursor/CursorType;
+    173: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.requestCursor:(Lcom/mojang/blaze3d/platform/cursor/CursorType;)V
+    176: goto 201
+    179: aload_1
+    180: getstatic net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    183: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.SCROLLER_DISABLED_SPRITE:Lnet/minecraft/resources/Identifier;
+    186: iload_2
+    187: bipush 94
+    189: iadd
+    190: iload_3
+    191: bipush 18
+    193: iadd
+    194: bipush 6
+    196: bipush 27
+    198: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    201: return
+  METHOD extractContents (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V  (code=477)
+    0: aload_0
+    1: aload_1
+    2: iload_2
+    3: iload_3
+    4: op_17 4
+    6: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.extractContents:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+    9: aload_0
+    10: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    13: checkcast net/minecraft/world/inventory/MerchantMenu
+    16: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    19: astore 5
+    21: aload 5
+    23: invokevirtual net/minecraft/world/item/trading/MerchantOffers.isEmpty:()Z
+    26: ifne 476
+    29: aload_0
+    30: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.width:I
+    33: aload_0
+    34: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageWidth:I
+    37: isub
+    38: iconst_2
+    39: idiv
+    40: istore 6
+    42: aload_0
+    43: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.height:I
+    46: aload_0
+    47: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageHeight:I
+    50: isub
+    51: iconst_2
+    52: idiv
+    53: istore 7
+    55: iload 7
+    57: bipush 16
+    59: iadd
+    60: iconst_1
+    61: iadd
+    62: istore 8
+    64: iload 6
+    66: iconst_5
+    67: iadd
+    68: iconst_5
+    69: iadd
+    70: istore 9
+    72: aload_0
+    73: aload_1
+    74: iload 6
+    76: iload 7
+    78: iload_2
+    79: iload_3
+    80: aload 5
+    82: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractScroller:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIILnet/minecraft/world/item/trading/MerchantOffers;)V
+    85: iconst_0
+    86: istore 10
+    88: aload 5
+    90: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    93: astore 11
+    95: aload 11
+    97: invokeinterface java/util/Iterator.hasNext:()Z
+    102: ifeq 299
+    105: aload 11
+    107: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    112: checkcast net/minecraft/world/item/trading/MerchantOffer
+    115: astore 12
+    117: aload_0
+    118: aload 5
+    120: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    123: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.canScroll:(I)Z
+    126: ifeq 156
+    129: iload 10
+    131: aload_0
+    132: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    135: if_icmplt 150
+    138: iload 10
+    140: bipush 7
+    142: aload_0
+    143: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    146: iadd
+    147: if_icmplt 156
+    150: iinc 10 1
+    153: goto 95
+    156: aload 12
+    158: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getBaseCostA:()Lnet/minecraft/world/item/ItemStack;
+    161: astore 13
+    163: aload 12
+    165: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostA:()Lnet/minecraft/world/item/ItemStack;
+    168: astore 14
+    170: aload 12
+    172: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostB:()Lnet/minecraft/world/item/ItemStack;
+    175: astore 15
+    177: aload 12
+    179: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getResult:()Lnet/minecraft/world/item/ItemStack;
+    182: astore 16
+    184: iload 8
+    186: iconst_2
+    187: iadd
+    188: istore 17
+    190: aload_0
+    191: aload_1
+    192: aload 14
+    194: aload 13
+    196: iload 9
+    198: iload 17
+    200: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractAndDecorateCostA:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;II)V
+    203: aload 15
+    205: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    208: ifne 245
+    211: aload_1
+    212: aload 15
+    214: iload 6
+    216: iconst_5
+    217: iadd
+    218: bipush 35
+    220: iadd
+    221: iload 17
+    223: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fakeItem:(Lnet/minecraft/world/item/ItemStack;II)V
+    226: aload_1
+    227: aload_0
+    228: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.font:Lnet/minecraft/client/gui/Font;
+    231: aload 15
+    233: iload 6
+    235: iconst_5
+    236: iadd
+    237: bipush 35
+    239: iadd
+    240: iload 17
+    242: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.itemDecorations:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V
+    245: aload_0
+    246: aload_1
+    247: aload 12
+    249: iload 6
+    251: iload 17
+    253: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractButtonArrows:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/item/trading/MerchantOffer;II)V
+    256: aload_1
+    257: aload 16
+    259: iload 6
+    261: iconst_5
+    262: iadd
+    263: bipush 68
+    265: iadd
+    266: iload 17
+    268: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fakeItem:(Lnet/minecraft/world/item/ItemStack;II)V
+    271: aload_1
+    272: aload_0
+    273: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.font:Lnet/minecraft/client/gui/Font;
+    276: aload 16
+    278: iload 6
+    280: iconst_5
+    281: iadd
+    282: bipush 68
+    284: iadd
+    285: iload 17
+    287: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.itemDecorations:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V
+    290: iinc 8 20
+    293: iinc 10 1
+    296: goto 95
+    299: aload_0
+    300: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    303: istore 11
+    305: aload 5
+    307: iload 11
+    309: invokevirtual net/minecraft/world/item/trading/MerchantOffers.get:(I)Ljava/lang/Object;
+    312: checkcast net/minecraft/world/item/trading/MerchantOffer
+    315: astore 12
+    317: aload_0
+    318: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    321: checkcast net/minecraft/world/inventory/MerchantMenu
+    324: invokevirtual net/minecraft/world/inventory/MerchantMenu.showProgressBar:()Z
+    327: ifeq 341
+    330: aload_0
+    331: aload_1
+    332: iload 6
+    334: iload 7
+    336: aload 12
+    338: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractProgressBar:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/item/trading/MerchantOffer;)V
+    341: aload 12
+    343: invokevirtual net/minecraft/world/item/trading/MerchantOffer.isOutOfStock:()Z
+    346: ifeq 395
+    349: aload_0
+    350: sipush 186
+    353: bipush 35
+    355: bipush 22
+    357: bipush 21
+    359: iload_2
+    360: i2d
+    361: iload_3
+    362: i2d
+    363: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.isHovering:(IIIIDD)Z
+    366: ifeq 395
+    369: aload_0
+    370: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    373: checkcast net/minecraft/world/inventory/MerchantMenu
+    376: invokevirtual net/minecraft/world/inventory/MerchantMenu.canRestock:()Z
+    379: ifeq 395
+    382: aload_1
+    383: aload_0
+    384: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.font:Lnet/minecraft/client/gui/Font;
+    387: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.DEPRECATED_TOOLTIP:Lnet/minecraft/network/chat/Component;
+    390: iload_2
+    391: iload_3
+    392: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.setTooltipForNextFrame:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;II)V
+    395: aload_0
+    396: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.tradeOfferButtons:[Lnet/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton;
+    399: astore 13
+    401: aload 13
+    403: arraylength
+    404: istore 14
+    406: iconst_0
+    407: istore 15
+    409: iload 15
+    411: iload 14
+    413: if_icmpge 476
+    416: aload 13
+    418: iload 15
+    420: aaload
+    421: astore 16
+    423: aload 16
+    425: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.isHoveredOrFocused:()Z
+    428: ifeq 439
+    431: aload 16
+    433: aload_1
+    434: iload_2
+    435: iload_3
+    436: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.extractToolTip:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V
+    439: aload 16
+    441: aload 16
+    443: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.index:I
+    446: aload_0
+    447: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    450: checkcast net/minecraft/world/inventory/MerchantMenu
+    453: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    456: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    459: if_icmpge 466
+    462: iconst_1
+    463: goto 467
+    466: iconst_0
+    467: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.visible:Z
+    470: iinc 15 1
+    473: goto 409
+    476: return
+  METHOD canScroll (I)Z  (code=12)
+    0: iload_1
+    1: bipush 7
+    3: if_icmple 10
+    6: iconst_1
+    7: goto 11
+    10: iconst_0
+    11: ireturn
+  METHOD mouseScrolled (DDDD)Z  (code=67)
+    0: aload_0
+    1: op_27
+    2: op_29
+    3: op_18 5
+    5: op_18 7
+    7: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseScrolled:(DDDD)Z
+    10: ifeq 15
+    13: iconst_1
+    14: ireturn
+    15: aload_0
+    16: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    19: checkcast net/minecraft/world/inventory/MerchantMenu
+    22: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    25: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    28: istore 9
+    30: aload_0
+    31: iload 9
+    33: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.canScroll:(I)Z
+    36: ifeq 65
+    39: iload 9
+    41: bipush 7
+    43: isub
+    44: istore 10
+    46: aload_0
+    47: aload_0
+    48: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    51: i2d
+    52: op_18 7
+    54: dsub
+    55: d2i
+    56: iconst_0
+    57: iload 10
+    59: invokestatic net/minecraft/util/Mth.clamp:(III)I
+    62: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    65: iconst_1
+    66: ireturn
+  METHOD mouseDragged (Lnet/minecraft/client/input/MouseButtonEvent;DD)Z  (code=108)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    4: checkcast net/minecraft/world/inventory/MerchantMenu
+    7: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    10: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    13: istore 6
+    15: aload_0
+    16: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.isDragging:Z
+    19: ifeq 99
+    22: aload_0
+    23: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.topPos:I
+    26: bipush 18
+    28: iadd
+    29: istore 7
+    31: iload 7
+    33: sipush 139
+    36: iadd
+    37: istore 8
+    39: iload 6
+    41: bipush 7
+    43: isub
+    44: istore 9
+    46: aload_1
+    47: invokevirtual net/minecraft/client/input/MouseButtonEvent.y:()D
+    50: op_90
+    51: iload 7
+    53: i2f
+    54: fsub
+    55: ldc_w 2.344092071122554e-41f
+    58: fsub
+    59: iload 8
+    61: iload 7
+    63: isub
+    64: i2f
+    65: ldc_w 2.3620286914659117e-41f
+    68: fsub
+    69: fdiv
+    70: fstore 10
+    72: op_17 10
+    74: iload 9
+    76: i2f
+    77: fmul
+    78: ldc_w 2.260014163263065e-41f
+    81: fadd
+    82: fstore 10
+    84: aload_0
+    85: op_17 10
+    87: f2i
+    88: iconst_0
+    89: iload 9
+    91: invokestatic net/minecraft/util/Mth.clamp:(III)I
+    94: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    97: iconst_1
+    98: ireturn
+    99: aload_0
+    100: aload_1
+    101: op_28
+    102: op_18 4
+    104: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseDragged:(Lnet/minecraft/client/input/MouseButtonEvent;DD)Z
+    107: ireturn
+  METHOD mouseReleased (Lnet/minecraft/client/input/MouseButtonEvent;)Z  (code=11)
+    0: aload_0
+    1: iconst_0
+    2: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen.isDragging:Z
+    5: aload_0
+    6: aload_1
+    7: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseReleased:(Lnet/minecraft/client/input/MouseButtonEvent;)Z
+    10: ireturn
+
+VERDICT [ok] the window walk the extractContents census wears
+VERDICT [ok] the window skip pair the >7 bank wears (if_icmplt)
+VERDICT [ok] the window draw pair the scrolled seat banks (7 + scrollOff)
+VERDICT [ok] the ≤7 bank the window never wears (the ifeq tail)
+VERDICT [ok] the y walker the drawn rows advance (iinc 8 20)
+VERDICT [ok] the canScroll `size > 7` verdict the census wears
+VERDICT [ok] the mouseScrolled clamp the scrollable bank alone answers
+VERDICT [ok] the drag's max fold the live size wears (isub)
+VERDICT [ok] the release's own disarm the iconst_0 speaks

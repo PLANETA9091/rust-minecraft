@@ -36598,3 +36598,206 @@ fn the_merchant_visible_gate_the_press_clamps() {
         other => panic!("the press the Select Trade speaks, not {other:?}"),
     }
 }
+
+/// THE MERCHANT'S OWN STALE-SCROLL RETIRE (autopush-465 — the item
+/// walk's own window: the canScroll verdict the extractContents pcs
+/// 117-153 census wears [the `i10 < scrollOff` skip + the
+/// `i10 < 7 + scrollOff` draw pair the pcs speak], the ≤7 bank the
+/// window NEVER filters [the pc 126 ifeq the full bank the head
+/// re-lays — the STALE scroll the walk ignores, the shrunken bank
+/// the re-bank the scroll word never re-clamps], the >7 bank the
+/// scrolled seat the window filters [the stale tail the bare rows
+/// answer]; the press fold the scrolled seat the 464 law keeps [the
+/// canScroll arm the ITEM walk alone wears], the wheel the stale
+/// word the canScroll gate banks [the 464b mouseScrolled census the
+/// pc 36 ifeq wears], the drag the zero the canScroll law keeps).
+#[test]
+fn the_merchant_stale_scroll_the_shrunken_bank_retires() {
+    use crate::world_view::{ContainerCommand, LiveContainer, MerchantOfferView, MerchantView};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let offer = |ca: i32, n: i32| MerchantOfferView {
+        cost_a: (ca, n),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 0,
+    };
+
+    // ARM A — THE ≤7 BANK'S OWN RE-LAY (the shrunken bank the stale
+    // scroll wears — the window the walk never filters, the full
+    // bank the head re-lays: row r the offer r the seat banks, the
+    // stale scroll the walk ignores)
+    let bank: Vec<MerchantOfferView> = (0..5usize)
+        .map(|i| {
+            if i % 2 == 0 {
+                offer(emerald, i as i32 + 1)
+            } else {
+                offer(wheat, i as i32 + 1)
+            }
+        })
+        .collect();
+    for row in 0..5usize {
+        assert_eq!(
+            merchant_item_index(bank.len(), row, 3),
+            Some(row),
+            "the ≤7 bank the row's own offer wears"
+        );
+    }
+    for row in 5..7usize {
+        assert_eq!(
+            merchant_item_index(bank.len(), row, 3),
+            None,
+            "the bank's own tail the seat retires"
+        );
+    }
+
+    // ARM B — THE >7 BANK'S OWN WINDOW (the stale scroll the window
+    // filters — the scrolled seat the walk wears, the stale tail the
+    // bare rows answer)
+    let big: Vec<MerchantOfferView> = (0..9usize)
+        .map(|i| offer(if i % 2 == 0 { emerald } else { wheat }, i as i32 + 1))
+        .collect();
+    for row in 0..6usize {
+        assert_eq!(
+            merchant_item_index(big.len(), row, 3),
+            Some(3 + row),
+            "the >7 bank the scrolled seat wears"
+        );
+    }
+    assert_eq!(
+        merchant_item_index(big.len(), 6, 3),
+        None,
+        "the window's stale tail the seat retires"
+    );
+
+    // ARM C — THE EIGHT-OFFER EDGE (the max the shrink retired —
+    // the stale scroll the window keeps, the [0, offers) bound the
+    // tail answers)
+    let edge: Vec<MerchantOfferView> = (0..8usize)
+        .map(|i| offer(if i % 2 == 0 { emerald } else { wheat }, i as i32 + 1))
+        .collect();
+    for row in 0..5usize {
+        assert_eq!(
+            merchant_item_index(edge.len(), row, 3),
+            Some(3 + row),
+            "the edge bank the scrolled seat wears"
+        );
+    }
+    for row in 5..7usize {
+        assert_eq!(
+            merchant_item_index(edge.len(), row, 3),
+            None,
+            "the edge bank the tail retires"
+        );
+    }
+
+    // ARM D — THE FRESH ≤7 WALK (the scroll the fresh bank never
+    // wears — the same full-head walk the zero seat answers)
+    for row in 0..5usize {
+        assert_eq!(
+            merchant_item_index(bank.len(), row, 0),
+            Some(row),
+            "the fresh ≤7 walk the row's own offer wears"
+        );
+    }
+
+    // ARM E — THE APP'S OWN WALK (the shrunken bank the wheel the
+    // stale word keeps [the canScroll gate the clamp refuses], the
+    // drag the zero the canScroll law keeps, the press fold the
+    // scrolled seat still banks [the canScroll arm the ITEM walk
+    // alone wears — the 464 law the round keeps])
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![offer(emerald, 1); 10];
+    app.merchant_scroll = 3;
+    // THE SHRUNKEN RIDE (the refresh the bank shrinks — the stale
+    // scroll the walk keeps)
+    app.merchant_offers = bank.clone();
+    app.on_merchant_scroll(1.0);
+    assert_eq!(
+        app.merchant_scroll, 3,
+        "the ≤7 bank the wheel the stale word keeps"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(60, 0, bank.len()),
+        0,
+        "the ≤7 bank the drag the zero keeps"
+    );
+    // THE PRESS FOLD'S OWN UNGATED WALK (the press the scrolled seat
+    // still banks — the canScroll arm the ITEM walk alone wears)
+    app.merchant_row_rects = (0..7usize)
+        .map(|row| (100, 100 + row as i32 * 20, 3 + row))
+        .collect();
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the visible row the press answers"
+    );
+    assert_eq!(
+        app.merchant_selected, 3,
+        "the scrolled seat the press banks — the fold the item walk alone gates"
+    );
+
+    // ARM F — THE LIVE LANE'S OWN RIDE (the echo re-bank the stale
+    // scroll keeps — the 463 law the walk re-wears, the re-laid bank
+    // the item walk the full head answers)
+    let mut live = App::new(3);
+    live.enter_world();
+    live.world_is_network = true;
+    let (tx, _rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    live.live_clicks = Some(tx);
+    let mut slots = vec![(0, 0); 39];
+    slots[3] = (emerald, 4);
+    let view = |offers: Vec<MerchantOfferView>| MerchantView {
+        offers,
+        level: 1,
+        xp: 0,
+        show_progress: true,
+        can_restock: false,
+    };
+    live.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots: slots.clone(),
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 4,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(view(vec![offer(emerald, 4); 10])),
+    }));
+    live.merchant_scroll = 3;
+    live.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: Some(view(bank.clone())),
+    }));
+    assert_eq!(
+        live.merchant_offers.len(),
+        5,
+        "the refresh the shrunken bank re-lays"
+    );
+    assert_eq!(
+        live.merchant_scroll, 3,
+        "the refresh ride the stale scroll keeps — the re-bank never re-clamps"
+    );
+    for row in 0..5usize {
+        assert_eq!(
+            merchant_item_index(live.merchant_offers.len(), row, live.merchant_scroll),
+            Some(row),
+            "the live ≤7 bank the row's own offer wears"
+        );
+    }
+}
