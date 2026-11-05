@@ -8950,6 +8950,13 @@ pub struct App {
     /// stay unseen while the other bodies keep drawing (each model's
     /// honesty is its own lane).
     pub sheep_model: Option<crate::avatar::SheepModel>,
+    /// THE WANDERER'S own villager robe (the VillagerModel mesh the
+    /// talk arm's own body wears — the wandering_trader.png the load
+    /// gate verifies, the census scripts/jar_work/wander_model_475.txt
+    /// the mesh banks) — loaded lazily beside the other bodies, `None`
+    /// = the TRADER stays unseen while the other bodies keep drawing
+    /// (the same honesty every lane speaks).
+    pub wandering_trader_model: Option<crate::avatar::WanderingTraderModel>,
     /// THE FOURTH MOB's own WOOL (the SheepFurModel inflate-mesh over
     /// the sheep_wool.png texture — the SheepWoolLayer's own overlay,
     /// the dye tint the DyeColor table multiplies) — loaded lazily
@@ -13395,6 +13402,7 @@ impl App {
             pig_model: None,
             cow_model: None,
             sheep_model: None,
+            wandering_trader_model: None,
             sheep_wool_model: None,
             sheep_wool_undercoat_model: None,
             baby_sheep_model: None,
@@ -86107,6 +86115,12 @@ impl App {
         if self.baby_chicken_model.is_none() {
             self.baby_chicken_model = crate::avatar::BabyChickenModel::load(&jar_root);
         }
+        // THE WANDERER'S own lazy load (the villager robe the talk
+        // arm's own body wears — the same honesty: a failed trader
+        // skin keeps only the TRADERS unseen)
+        if self.wandering_trader_model.is_none() {
+            self.wandering_trader_model = crate::avatar::WanderingTraderModel::load(&jar_root);
+        }
         // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
         // same cache keeps — each load's sha1 verdict its own lane,
         // the failed variant the honest unseen keeps while the others
@@ -86230,6 +86244,7 @@ impl App {
         // keeps only the birds unseen, the other bodies keep drawing
         let chicken_model = self.chicken_model.as_ref();
         let baby_chicken_model = self.baby_chicken_model.as_ref();
+        let wandering_trader_model = self.wandering_trader_model.as_ref();
         // the variants' honesty is ITS OWN lane: a failed variant skin
         // keeps only that variant's birds unseen, the temperate keeps
         // drawing
@@ -86380,24 +86395,34 @@ impl App {
                 Box<dyn Fn(f32, f32) -> [u8; 4] + '_>,
             ) = match mob.kind {
                 crate::mob::MobKind::WanderingTrader => {
-                    // THE WANDERER'S OWN UNDRAWN LAW — the villager
-                    // robe the port's render lane never wears yet
-                    // (javap `VillagerModel.createBodyModel` the 26.2
-                    // bytecode keeps the mesh the quad walk owes: the
-                    // head 8x10x8, the hat +0.51, the hat_rim the
-                    // rotX -π/2 rim, the nose the (0,-2) offset, the
-                    // robe 8x20x6 +0.5 the body's own inflate, the
-                    // crossed arms the rotX -0.75 hold, the 4x12x4
-                    // legs — the villager texture layout (0,0)/(32,0)
-                    // /(30,47)/(24,0)/(16,20)/(0,38)/(44,22)/(40,38)
-                    // /(0,22) the wander_475 census banks). The body
-                    // the honest lane never draws (the mob's own
-                    // sha1-failure continue the renderer must not lie
-                    // about its data) — the wire body the talk arm
-                    // the interaction semantics alone answer, the
-                    // VillagerModel quad walk the NEXT the render
-                    // lane may re-lay.
-                    continue;
+                    // THE WANDERER'S OWN VILLAGER WALK (javap
+                    // `VillagerModel.createBodyModel` the 26.2
+                    // bytecode's mesh the wander_model_475 census
+                    // banks — the head 8x10x8, the hat +0.51, the
+                    // hat_rim the rotX -π/2 rim, the nose the (0,-2)
+                    // offset, the robe 8x20x6 +0.5 the body's own
+                    // inflate, the crossed arms the rotX -0.75 hold,
+                    // the 4x12x4 legs — the villager texture layout
+                    // (0,0)/(32,0)/(30,47)/(24,0)/(16,20)/(0,38)/
+                    // (44,22)/(40,38)/(0,22) the same census banks).
+                    // The ADULT law the talk census keeps (the baby
+                    // form the wanderer never carries) — the one
+                    // state the lane wears, the SAME entity chain
+                    // fold every living body rides.
+                    let Some(trader) = wandering_trader_model else {
+                        continue; // the trader skin failed its sha1 — this body stays unseen
+                    };
+                    let state = crate::avatar::WanderingTraderState {
+                        yaw_deg: mob.yaw,
+                        head_yaw_off_deg: head_yaw,
+                        head_pitch_deg: head_pitch,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let quads = trader.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| trader.pixel(u, v)))
                 }
                 crate::mob::MobKind::Sheep => {
                     // THE COLOR WORD (SheepRenderState.getWoolColor's

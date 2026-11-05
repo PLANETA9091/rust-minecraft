@@ -2458,6 +2458,306 @@ fn build_baby_cow_parts(state: &QuadrupedState) -> Vec<Part> {
 }
 
 // ===========================================================================
+// THE WANDERING TRADER (the villager robe the talk arm's own body wears)
+// ===========================================================================
+
+/// The wanderer's pose inputs — the 26.2 `VillagerModel.setupAnim`'s
+/// own field list: the head the netHeadYaw/headPitch pair the lerp
+/// extraction banks, the legs the walk pair the standard biped fold
+/// reads, the death clock the shared flip law wears. THE ADULT LAW
+/// (the talk census: the wanderer's own adult form the baby lane
+/// never carries — `isBaby` the port's own talk arm never meets) —
+/// no age scale the state ever wears.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WanderingTraderState {
+    /// vanilla yaw degrees (the body's own)
+    pub yaw_deg: f32,
+    /// the head's yaw offset from the body (the netHeadYaw clamp —
+    /// the yRot the villager head's own state read speaks)
+    pub head_yaw_off_deg: f32,
+    /// vanilla head pitch degrees, positive = DOWN (the headPitch
+    /// word the head's xRot multiply wears)
+    pub head_pitch_deg: f32,
+    /// walkAnimationPos (the backward-extrapolated walk phase)
+    pub walk_pos: f32,
+    /// walkAnimationSpeed (the min(abs, 1) blend)
+    pub walk_speed: f32,
+    /// ageInTicks (the villager pose owns no idle bob — carried for
+    /// parity with the other living states)
+    pub age_ticks: f32,
+    /// `LivingEntityRenderState.deathTime` (the same flip law's clock
+    /// the avatar fold speaks — one chain, every living model)
+    pub death_time: f32,
+}
+
+/// THE WANDERING TRADER TEXTURE'S OWN SHA1 (the 26.2 jar's verbatim
+/// bytes, hashed by scripts over the extracted
+/// `entity/wandering_trader/wandering_trader.png`) — the load gate
+/// every other model speaks (a drifted extract keeps the trader
+/// unseen, the honest missing-asset law). The minecart precedent: the
+/// post-jar additions the runtime root's own bytes answer.
+const WANDERING_TRADER_PNG_SHA1: &str = "7fa97eab975ca7675d357cef46cbc148403afdce";
+
+/// The villager-shaped trader model — the 26.2 `VillagerModel.
+/// createBodyModel`'s own numbers, bytecode-proven off the official
+/// jar (scripts/jar_work/wander_model_475.txt the census banks): the
+/// head 8x10x8 (uv 0,0) at PartPose.ZERO, the hat 8x10x8 +0.51 (uv
+/// 32,0) the head's child, the hat_rim 16x16x1 (uv 30,47) the rotX
+/// -π/2 rim the head's child, the nose 2x4x2 (uv 24,0) the (0,-2)
+/// offset the head's child, the body 8x12x6 (uv 16,20) at ZERO, the
+/// jacket 8x20x6 +0.5 (uv 0,38) the body's child, the crossed arms
+/// the 4x8x4 pair + the 8x4x4 hands (uv 44,22 the mirrored right box,
+/// 40,38 the hands) at offset (0,3,-1) rotX -0.75, the 4x12x4 legs
+/// (uv 0,22) at (±2, 12, 0) — the LEFT leg the mirror builder wears.
+/// `LayerDefinition.create(64, 64)` — the wanderer's own square
+/// layout the load verifies.
+pub struct WanderingTraderModel {
+    rgba: Vec<u8>,
+}
+
+impl WanderingTraderModel {
+    /// Load + sha1-verify the trader's skin (the WanderingTraderRenderer's
+    /// own texture location — the single wandering_trader.png, no biome
+    /// variants). `None` = the trader never renders (the same honesty
+    /// the pig/cow/sheep paths speak: the renderer must not lie about
+    /// its data).
+    pub fn load(root: &Path) -> Option<WanderingTraderModel> {
+        let bytes =
+            std::fs::read(root.join("entity/wandering_trader/wandering_trader.png")).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != WANDERING_TRADER_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(WanderingTraderModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x64 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [
+            self.rgba[o],
+            self.rgba[o + 1],
+            self.rgba[o + 2],
+            self.rgba[o + 3],
+        ]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the trader
+    /// at `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the villager's own parts the census
+    /// walk lays. The crossed arms the walk never swings (the fixed
+    /// -0.75 hold the createBodyModel's own PartPose speaks — the
+    /// setupAnim the legs and the head alone pose).
+    pub fn quads(
+        &self,
+        state: &WanderingTraderState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_wandering_trader_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        // 5 top-level parts + the head's three children: 7 cubes' own
+        // 6-face walk + the 2 extra body/arms cubes' rows = 66 quads.
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(66);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(
+                part,
+                &ident,
+                &fold_point,
+                &fold_normal,
+                cam_yaw,
+                cam_pitch,
+                &mut out,
+            );
+        }
+        out
+    }
+}
+
+/// The villager's parts, posed by `state` — the javap-proven mesh: the
+/// head the census's PartPose.ZERO speaks (the hat/rim/nose the head's
+/// OWN children ride — the head's rot the hat trio carries), the body
+/// the jacket's +0.5 robe the body's own fold shares, the arms the
+/// fixed crossed rotX -0.75 hold, the legs the standard biped fold the
+/// setupAnim speaks (0.6662 the phase, 1.4 the swing, +π the pair —
+/// the same words the humanoid's own walk banks).
+fn build_wandering_trader_parts(state: &WanderingTraderState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_r = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_l = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    let head_x = state.head_pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    vec![
+        // head (the hat +0.51, the rotX -π/2 rim and the (0,-2) nose
+        // the head's own children — the rot the trio rides)
+        Part {
+            pivot: [0.0, 0.0, 0.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-4.0, -10.0, -4.0],
+                size: [8.0, 10.0, 8.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![
+                // hat (the +0.51 deformation the census's own ctor
+                // word wears)
+                Part {
+                    pivot: [0.0, 0.0, 0.0],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (32.0, 0.0),
+                        origin: [-4.0, -10.0, -4.0],
+                        size: [8.0, 10.0, 8.0],
+                        inflate: 0.5099999904632568,
+                        mirror: false,
+                    }],
+                    children: vec![],
+                },
+                // hat_rim (the rotX -π/2 rim — the 16x16x1 brim the
+                // PartPose.rotation(-1.5707963705062866, 0, 0) speaks)
+                Part {
+                    pivot: [0.0, 0.0, 0.0],
+                    x_rot: -std::f32::consts::FRAC_PI_2,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (30.0, 47.0),
+                        origin: [-8.0, -8.0, -6.0],
+                        size: [16.0, 16.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }],
+                    children: vec![],
+                },
+                // nose (the (0,-2) offset — the 2x4x2 proboscis the
+                // PartPose.offset(0.0, -2.0, 0.0) speaks)
+                Part {
+                    pivot: [0.0, -2.0, 0.0],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (24.0, 0.0),
+                        origin: [-1.0, -1.0, -6.0],
+                        size: [2.0, 4.0, 2.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }],
+                    children: vec![],
+                },
+            ],
+        },
+        // body + jacket (the +0.5 inflate the robe's own overlayer
+        // wears — both the ZERO pose the body's fold shares, the
+        // vanilla body's child the identical transform keeps)
+        Part {
+            pivot: [0.0, 0.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (16.0, 20.0),
+                    origin: [-4.0, 0.0, -3.0],
+                    size: [8.0, 12.0, 6.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (0.0, 38.0),
+                    origin: [-4.0, 0.0, -3.0],
+                    size: [8.0, 20.0, 6.0],
+                    inflate: 0.5,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // the crossed arms (the fixed rotX -0.75 hold — the 4x8x4 pair
+        // + the 8x4x4 hands the census's three addBox walk speaks, the
+        // right box the mirror builder wears)
+        Part {
+            pivot: [0.0, 3.0, -1.0],
+            x_rot: -0.75,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (44.0, 22.0),
+                    origin: [-8.0, -2.0, -2.0],
+                    size: [4.0, 8.0, 4.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (44.0, 22.0),
+                    origin: [4.0, -2.0, -2.0],
+                    size: [4.0, 8.0, 4.0],
+                    inflate: 0.0,
+                    mirror: true,
+                },
+                Cube {
+                    tex: (40.0, 38.0),
+                    origin: [-4.0, 2.0, -2.0],
+                    size: [8.0, 4.0, 4.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // right leg (the plain builder)
+        Part {
+            pivot: [-2.0, 12.0, 0.0],
+            x_rot: leg_r,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 22.0),
+                origin: [-2.0, 0.0, -2.0],
+                size: [4.0, 12.0, 4.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // left leg (the MIRRORED builder — the census's own .mirror()
+        // word the left leg wears)
+        Part {
+            pivot: [2.0, 12.0, 0.0],
+            x_rot: leg_l,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 22.0),
+                origin: [-2.0, 0.0, -2.0],
+                size: [4.0, 12.0, 4.0],
+                inflate: 0.0,
+                mirror: true,
+            }],
+            children: vec![],
+        },
+    ]
+}
+
+// ===========================================================================
 // THE CHICKEN (the fifth drawn body — the avian's own chain)
 // ===========================================================================
 
@@ -18670,4 +18970,346 @@ mod tests {
         assert_eq!(WardenLayer::Tendrils.runtime_path(), None);
     }
 
+    /// THE WANDERER'S OWN MESH WALK (the VillagerModel.createBodyModel
+    /// census scripts/jar_work/wander_model_475.txt banks): the parts'
+    /// pivots/boxes/uv rects the bytecode's fluent chains speak, the
+    /// head the hat/rim/nose children the rot carries, the robe the
+    /// +0.5 inflate wears, the arms the fixed crossed hold keeps, the
+    /// legs the (±2, 12, 0) pivots the mirror word arms.
+    #[test]
+    fn the_wanderer_mesh_the_villager_census_wears() {
+        let state = WanderingTraderState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            head_pitch_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 0.0,
+            death_time: 0.0,
+        };
+        let parts = build_wandering_trader_parts(&state);
+        // 5 top-level parts: head, body, arms, right leg, left leg
+        assert_eq!(parts.len(), 5, "the census the five top parts keeps");
+        // the head (PartPose.ZERO — one cube, three children)
+        let head = &parts[0];
+        assert_eq!(head.pivot, [0.0, 0.0, 0.0], "the head the ZERO pose keeps");
+        assert_eq!(head.cubes.len(), 1, "the head the single cube wears");
+        assert_eq!(head.cubes[0].tex, (0.0, 0.0), "the head the (0,0) uv wears");
+        assert_eq!(
+            head.cubes[0].origin,
+            [-4.0, -10.0, -4.0],
+            "the head box the origin keeps"
+        );
+        assert_eq!(
+            head.cubes[0].size,
+            [8.0, 10.0, 8.0],
+            "the head box the size keeps"
+        );
+        assert_eq!(
+            head.children.len(),
+            3,
+            "the head the hat/rim/nose trio carries"
+        );
+        // the hat +0.51 (uv 32,0)
+        assert_eq!(
+            head.children[0].cubes[0].tex,
+            (32.0, 0.0),
+            "the hat the (32,0) uv wears"
+        );
+        assert!(
+            (head.children[0].cubes[0].inflate - 0.5099999904632568).abs() < 1e-9,
+            "the hat the +0.51 deformation wears"
+        );
+        assert_eq!(
+            head.children[0].cubes[0].size,
+            [8.0, 10.0, 8.0],
+            "the hat the same head box wears"
+        );
+        // the hat_rim (uv 30,47, the rotX -π/2 rim, the 16x16x1 brim)
+        assert_eq!(
+            head.children[1].cubes[0].tex,
+            (30.0, 47.0),
+            "the rim the (30,47) uv wears"
+        );
+        assert!(
+            (head.children[1].x_rot + std::f32::consts::FRAC_PI_2).abs() < 1e-6,
+            "the rim the rotX -π/2 wears"
+        );
+        assert_eq!(
+            head.children[1].cubes[0].size,
+            [16.0, 16.0, 1.0],
+            "the rim the brim keeps"
+        );
+        // the nose (uv 24,0, the (0,-2) offset, the 2x4x2 proboscis)
+        assert_eq!(
+            head.children[2].cubes[0].tex,
+            (24.0, 0.0),
+            "the nose the (24,0) uv wears"
+        );
+        assert_eq!(
+            head.children[2].pivot,
+            [0.0, -2.0, 0.0],
+            "the nose the (0,-2) offset wears"
+        );
+        assert_eq!(
+            head.children[2].cubes[0].size,
+            [2.0, 4.0, 2.0],
+            "the nose the size keeps"
+        );
+        // the body + the jacket's +0.5 robe
+        let body = &parts[1];
+        assert_eq!(body.cubes.len(), 2, "the body the jacket pair wears");
+        assert_eq!(
+            body.cubes[0].tex,
+            (16.0, 20.0),
+            "the body the (16,20) uv wears"
+        );
+        assert_eq!(
+            body.cubes[0].size,
+            [8.0, 12.0, 6.0],
+            "the body the 8x12x6 keeps"
+        );
+        assert_eq!(
+            body.cubes[1].tex,
+            (0.0, 38.0),
+            "the jacket the (0,38) uv wears"
+        );
+        assert_eq!(
+            body.cubes[1].size,
+            [8.0, 20.0, 6.0],
+            "the jacket the 8x20x6 robe wears"
+        );
+        assert!(
+            (body.cubes[1].inflate - 0.5).abs() < 1e-9,
+            "the jacket the +0.5 wears"
+        );
+        // the crossed arms at (0,3,-1) rotX -0.75, the three boxes
+        let arms = &parts[2];
+        assert_eq!(arms.pivot, [0.0, 3.0, -1.0], "the arms the offset wears");
+        assert!(
+            (arms.x_rot + 0.75).abs() < 1e-9,
+            "the arms the -0.75 hold keeps"
+        );
+        assert_eq!(arms.cubes.len(), 3, "the arms the trio the census wears");
+        assert_eq!(
+            arms.cubes[0].tex,
+            (44.0, 22.0),
+            "the left arm the (44,22) uv wears"
+        );
+        assert_eq!(
+            arms.cubes[0].origin,
+            [-8.0, -2.0, -2.0],
+            "the left arm the origin keeps"
+        );
+        assert!(
+            !arms.cubes[0].mirror,
+            "the left arm the plain builder wears"
+        );
+        assert_eq!(
+            arms.cubes[1].origin,
+            [4.0, -2.0, -2.0],
+            "the right arm the origin keeps"
+        );
+        assert!(
+            arms.cubes[1].mirror,
+            "the right arm the mirror builder wears"
+        );
+        assert_eq!(
+            arms.cubes[2].tex,
+            (40.0, 38.0),
+            "the hands the (40,38) uv wears"
+        );
+        assert_eq!(
+            arms.cubes[2].size,
+            [8.0, 4.0, 4.0],
+            "the hands the 8x4x4 keeps"
+        );
+        // the legs at (±2, 12, 0), the left the mirror wears
+        assert_eq!(
+            parts[3].pivot,
+            [-2.0, 12.0, 0.0],
+            "the right leg the pivot wears"
+        );
+        assert_eq!(
+            parts[4].pivot,
+            [2.0, 12.0, 0.0],
+            "the left leg the pivot wears"
+        );
+        assert_eq!(
+            parts[3].cubes[0].tex,
+            (0.0, 22.0),
+            "the legs the (0,22) uv share"
+        );
+        assert!(
+            !parts[3].cubes[0].mirror,
+            "the right leg the plain builder wears"
+        );
+        assert!(
+            parts[4].cubes[0].mirror,
+            "the left leg the mirror builder wears"
+        );
+        assert_eq!(
+            parts[4].cubes[0].size,
+            [4.0, 12.0, 4.0],
+            "the legs the 4x12x4 keeps"
+        );
+    }
+
+    /// THE WALK FOLD + THE HEAD POSE (the setupAnim words): the legs
+    /// the 0.6662 phase / 1.4 swing / +π pair the standard biped fold
+    /// speaks, the speed-0 the still legs keep, the head the
+    /// netHeadYaw/headPitch radians the lerp extraction wears, the
+    /// crossed arms the walk never swings.
+    #[test]
+    fn the_wanderer_walk_the_head_pose_the_setupanim_wears() {
+        let state = WanderingTraderState {
+            yaw_deg: 47.0,
+            head_yaw_off_deg: 30.0,
+            head_pitch_deg: 22.5,
+            walk_pos: 3.0,
+            walk_speed: 1.0,
+            age_ticks: 0.0,
+            death_time: 0.0,
+        };
+        let parts = build_wandering_trader_parts(&state);
+        let head = &parts[0];
+        assert!(
+            (head.y_rot - 30.0f32.to_radians()).abs() < 1e-6,
+            "the head the netHeadYaw radians wears"
+        );
+        assert!(
+            (head.x_rot - 22.5f32.to_radians()).abs() < 1e-6,
+            "the head the headPitch radians wears"
+        );
+        let phase = 3.0f32 * 0.6662;
+        assert!(
+            (parts[3].x_rot - mth_cos(phase) * 1.4).abs() < 1e-6,
+            "the right leg the cos phase wears"
+        );
+        assert!(
+            (parts[4].x_rot - mth_cos(phase + std::f32::consts::PI) * 1.4).abs() < 1e-6,
+            "the left leg the +π pair wears"
+        );
+        assert!(
+            (parts[2].x_rot + 0.75).abs() < 1e-9,
+            "the crossed arms the walk never swings"
+        );
+        // the speed-0 the still legs keep (the min(abs,1) blend's own
+        // zero word)
+        let still = build_wandering_trader_parts(&WanderingTraderState {
+            walk_pos: 3.0,
+            walk_speed: 0.0,
+            ..state
+        });
+        assert!(
+            still[3].x_rot.abs() < 1e-9 && still[4].x_rot.abs() < 1e-9,
+            "the speed-0 the legs the rest keeps"
+        );
+    }
+
+    /// THE QUADS' OWN SHAPE (the synthetic 64x64 the hermetic test
+    /// wears): the 66 quads the 9-cube walk keeps, the feet ground the
+    /// legs' own bottom the 1.501 fold rides, the sampler the clamp
+    /// the layout's nine rects in-bounds keeps, the load the real
+    /// asset's sha1 the gate answers (the asset present the Some
+    /// verdict wears — the honest missing-asset law the None keeps).
+    #[test]
+    fn the_wanderer_quads_the_sampler_the_load_gate_keeps() {
+        // the synthetic texture (the opaque filler — every texel the
+        // row-major word the pixel fn reads)
+        let mut rgba = vec![0u8; 64 * 64 * 4];
+        for (i, b) in rgba.iter_mut().enumerate() {
+            *b = (i % 251) as u8;
+        }
+        let model = WanderingTraderModel { rgba };
+        // the sampler the clamp the corners keep (the out-of-bounds u/v
+        // the edge texels never panic)
+        for (u, v) in [
+            (0.0, 0.0),
+            (32.0, 0.0),
+            (30.0, 47.0),
+            (24.0, 0.0),
+            (16.0, 20.0),
+            (0.0, 38.0),
+            (44.0, 22.0),
+            (40.0, 38.0),
+            (0.0, 22.0),
+            (63.9, 63.9),
+            (-1.0, 100.0),
+        ] {
+            let px = model.pixel(u, v);
+            assert_eq!(px.len(), 4, "the sampler the RGBA word keeps");
+        }
+        // the (u,v)=(0,0) the row-major first texel reads
+        assert_eq!(
+            model.pixel(0.0, 0.0),
+            [0, 1, 2, 3],
+            "the (0,0) the first word reads"
+        );
+        // the quads the pose keeps: 9 cubes x 6 faces = 66
+        let state = WanderingTraderState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            head_pitch_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 0.0,
+            death_time: 0.0,
+        };
+        let quads = model.quads(&state, Vec3::new(10.0, 64.0, 10.0), 0.0, 0.0);
+        assert_eq!(quads.len(), 66, "the 9-cube walk the 66 quads keeps");
+        // the feet ground: the legs' own bottom (y=24 texels = 1.5
+        // blocks) the 1.501 fold rides — the lowest vertex the feet
+        // level + the fold's own 0.001 wears
+        let min_y = quads
+            .iter()
+            .flat_map(|q| q.pts.iter())
+            .map(|p| p[1])
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (min_y - 64.001).abs() < 2e-3,
+            "the legs' bottom the feet ground rides (min_y {min_y})"
+        );
+        // the head top the HAT's own inflate wears (the +0.51 cube's
+        // top the head's plain box rides): y=-10.51 texels the fold
+        // wears — 1.501 + 0.656875 the blocks the fold speaks
+        let max_y = quads
+            .iter()
+            .flat_map(|q| q.pts.iter())
+            .map(|p| p[1])
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (max_y - (64.0 + 1.501 + 10.51 / 16.0)).abs() < 2e-3,
+            "the hat top the inflate rides (max_y {max_y})"
+        );
+        // THE DEATH FLIP's own clock (the shared fold law the avatar
+        // speaks): the dying body the ZP roll wears — at the full
+        // flip (deathTime 20 the 90° keeps) the y extent the model's
+        // own x width answers (the arms' ±8 texels the widest row
+        // speaks): min_y = 64 + 1.501 − 0.5 = 65.001, the living
+        // 64.001 the flip REPLACES
+        let dying = WanderingTraderState {
+            death_time: 20.0,
+            ..state
+        };
+        let dead_quads = model.quads(&dying, Vec3::new(10.0, 64.0, 10.0), 0.0, 0.0);
+        let dead_min_y = dead_quads
+            .iter()
+            .flat_map(|q| q.pts.iter())
+            .map(|p| p[1])
+            .fold(f32::MAX, f32::min);
+        assert!(
+            (dead_min_y - (64.0 + 1.501 - 0.5)).abs() < 2e-3,
+            "the death flip the x-width the y extent wears (min_y {dead_min_y})"
+        );
+        // the load gate the real asset answers (the asset present the
+        // sha1-verified Some wears — the honest missing-asset law the
+        // None the sandbox copy keeps)
+        let root = jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        if let Some(loaded) = WanderingTraderModel::load(&root) {
+            // the real texture the (0,0) word the decode keeps — the
+            // alpha row the villager layout's opaque body wears
+            let _px = loaded.pixel(0.0, 0.0);
+        }
+    }
 }
