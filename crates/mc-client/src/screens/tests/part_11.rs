@@ -36960,3 +36960,131 @@ fn the_merchant_stale_selection_the_silence_the_crash_arm_banks() {
         "the drifted bank the stale seat the silence wears"
     );
 }
+
+/// THE MERCHANT'S OWN MID-DRAG SHRINK MAX FOLD (autopush-467 — the
+/// armed drag's own max the jar census wears [scripts/jar_work/
+/// drag_467.txt]: the mouseDragged arm the isDragging gate opens —
+/// the LIVE size the getOffers().size() pair re-reads, the `size - 7`
+/// MAX FOLD the canScroll gate NEVER guards [the isub the armed arm
+/// computes unguarded — the shrunken bank the negative max wears],
+/// the Mth.clamp the branchless max/min fold the negative band
+/// answers [the 26.2 clamp the `min(max(value, min), max)` fold wears
+/// — clamp(0, 0, -1) the Math.min tail the -1 speaks — the weird
+/// band the scrollOff wears], the putfield scrollOff the drag tail
+/// banks; the PORT'S OWN HONEST ZERO the quirk keeps: the press's
+/// own canScroll gate the >7 bank the arm alone wears, the drag walk
+/// the ≤7 gate the zero answers — the negative band the port never
+/// speaks).
+#[test]
+fn the_merchant_mid_drag_shrink_the_max_fold_banks() {
+    use crate::world_view::MerchantOfferView;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let offer = |n: i32| MerchantOfferView {
+        cost_a: (emerald, n),
+        cost_b: None,
+        result: (mc_registry::item_id_by_name("bread").unwrap(), 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 0,
+    };
+
+    // ARM A — THE >7 BANK'S OWN DRAG (the ten-offer bank the [0, 3]
+    // band wears — the head seat the walk opens with, the mid seat
+    // the fraction banks, the max seat + the BELOW-track ride the
+    // clamp the band keeps)
+    assert_eq!(
+        merchant_scroll_drag_offset(32, 0, 10),
+        0,
+        "the track head the walk opens with"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(88, 0, 10),
+        2,
+        "the mid seat the fraction banks"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(144, 0, 10),
+        3,
+        "the max seat the clamp keeps"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(200, 0, 10),
+        3,
+        "the below-track ride the band the max keeps"
+    );
+
+    // ARM B — THE SHRUNKEN BANK'S OWN ZERO (the weird band the port
+    // never wears: the ≤7 bank the armed drag the zero answers — the
+    // negative max the vanilla fold speaks [clamp(0, 0, size-7) the
+    // size-7 tail wears] the port's own gate the silence keeps)
+    assert_eq!(
+        merchant_scroll_drag_offset(88, 0, 5),
+        0,
+        "the shrunken bank the honest zero wears"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(88, 0, 7),
+        0,
+        "the seven-offer edge the zero keeps"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(200, 0, 0),
+        0,
+        "the drifted-empty bank the zero answers"
+    );
+
+    // ARM C — THE EIGHT-BANK'S OWN EDGE (the max=1 band the walk
+    // wears — the head the zero speaks, the mid + the max the 1 seat
+    // the clamp keeps)
+    assert_eq!(
+        merchant_scroll_drag_offset(32, 0, 8),
+        0,
+        "the eight-bank head the zero speaks"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(88, 0, 8),
+        1,
+        "the eight-bank mid the 1 seat wears"
+    );
+    assert_eq!(
+        merchant_scroll_drag_offset(144, 0, 8),
+        1,
+        "the eight-bank max the clamp keeps"
+    );
+
+    // ARM D — THE APP'S OWN ARMED DRIFT (the press the >7 bank the
+    // drag arms [the scroller band's own press the arm speaks], the
+    // mid seat the drag banks, the ECHO SHRINK the armed walk the
+    // zero re-banks — the negative band the port never wears — the
+    // unarmed call the silence keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![offer(1); 10];
+    app.merchant_panel = (0, 0);
+    app.on_press(97, 30);
+    assert!(
+        app.merchant_scroll_drag,
+        "the >7 bank the scroller press the drag arms"
+    );
+    app.on_merchant_scroll_drag(88);
+    assert_eq!(app.merchant_scroll, 2, "the armed drag the mid seat banks");
+    // THE ECHO SHRINK (the re-bank the armed drag the shrunken bank
+    // wears — the vanilla negative the scrollOff the weird band
+    // speaks, the port the honest zero re-banks)
+    app.merchant_offers = vec![offer(1); 5];
+    app.on_merchant_scroll_drag(88);
+    assert_eq!(
+        app.merchant_scroll, 0,
+        "the shrunk bank the armed walk the honest zero re-banks"
+    );
+    // THE UNARMED CALL'S OWN SILENCE (the flag the release disarms —
+    // the walk the scroll never touches)
+    app.merchant_scroll_drag = false;
+    app.merchant_scroll = 3;
+    app.on_merchant_scroll_drag(88);
+    assert_eq!(app.merchant_scroll, 3, "the unarmed call the silence keeps");
+}

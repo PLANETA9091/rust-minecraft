@@ -1,0 +1,111 @@
+== net/minecraft/client/gui/screens/inventory/MerchantScreen.class
+== net/minecraft/util/Mth.class
+  METHOD mouseDragged (Lnet/minecraft/client/input/MouseButtonEvent;DD)Z  (code=108)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    4: checkcast net/minecraft/world/inventory/MerchantMenu
+    7: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    10: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    13: istore 6
+    15: aload_0
+    16: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.isDragging:Z
+    19: ifeq 99
+    22: aload_0
+    23: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.topPos:I
+    26: bipush 18
+    28: iadd
+    29: istore 7
+    31: iload 7
+    33: sipush 139
+    36: iadd
+    37: istore 8
+    39: iload 6
+    41: bipush 7
+    43: isub
+    44: istore 9
+    46: aload_1
+    47: invokevirtual net/minecraft/client/input/MouseButtonEvent.y:()D
+    50: op_90
+    51: iload 7
+    53: i2f
+    54: fsub
+    55: ldc_w 2.344092071122554e-41f
+    58: fsub
+    59: iload 8
+    61: iload 7
+    63: isub
+    64: i2f
+    65: ldc_w 2.3620286914659117e-41f
+    68: fsub
+    69: fdiv
+    70: fstore 10
+    72: op_17 10
+    74: iload 9
+    76: i2f
+    77: fmul
+    78: ldc_w 2.260014163263065e-41f
+    81: fadd
+    82: fstore 10
+    84: aload_0
+    85: op_17 10
+    87: f2i
+    88: iconst_0
+    89: iload 9
+    91: invokestatic net/minecraft/util/Mth.clamp:(III)I
+    94: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    97: iconst_1
+    98: ireturn
+    99: aload_0
+    100: aload_1
+    101: op_28
+    102: op_18 4
+    104: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseDragged:(Lnet/minecraft/client/input/MouseButtonEvent;DD)Z
+    107: ireturn
+
+  METHOD clamp (III)I  (code=10)
+    0: iload_0
+    1: iload_1
+    2: invokestatic java/lang/Math.max:(II)I
+    5: iload_2
+    6: invokestatic java/lang/Math.min:(II)I
+    9: ireturn
+  METHOD clamp (JJJ)J  (code=11)
+    0: lload_0
+    1: op_20
+    2: invokestatic java/lang/Math.max:(JJ)J
+    5: lload 4
+    7: invokestatic java/lang/Math.min:(JJ)J
+    10: lreturn
+  METHOD clamp (FFF)F  (code=14)
+    0: op_22
+    1: op_23
+    2: fcmpg
+    3: ifge 8
+    6: op_23
+    7: freturn
+    8: op_22
+    9: op_24
+    10: invokestatic java/lang/Math.min:(FF)F
+    13: freturn
+  METHOD clamp (DDD)D  (code=15)
+    0: op_26
+    1: op_28
+    2: dcmpg
+    3: ifge 8
+    6: op_28
+    7: op_af
+    8: op_26
+    9: op_18 4
+    11: invokestatic java/lang/Math.min:(DD)D
+    14: op_af
+
+VERDICT [ok] the drag arm the mouseDragged census wears
+VERDICT [ok] the armed gate the isDragging field speaks
+VERDICT [ok] the live size the walk re-reads
+VERDICT [ok] the max fold the armed arm computes (isub 7)
+VERDICT [ok] the canScroll gate the drag arm never wears
+VERDICT [ok] the clamp the [0, size-7] band wears (Mth.clamp:(III))
+VERDICT [ok] the int clamp the (III)I overload the census wears
+VERDICT [ok] the max/min fold the clamp wears (Math.max + Math.min)
+VERDICT [ok] the branchless fold the negative band answers (no if_)
+VERDICT [ok] the scrollOff the drag tail banks (putfield)
