@@ -1,0 +1,439 @@
+== net/minecraft/client/model/geom/ModelPart$Cube.class
+  METHOD <init> (IIFFFFFFFFFZFFLjava/util/Set;)V  (code=787)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: aload_0
+    5: op_25
+    6: putfield net/minecraft/client/model/geom/ModelPart$Cube.minX:F
+    9: aload_0
+    10: op_17 4
+    12: putfield net/minecraft/client/model/geom/ModelPart$Cube.minY:F
+    15: aload_0
+    16: op_17 5
+    18: putfield net/minecraft/client/model/geom/ModelPart$Cube.minZ:F
+    21: aload_0
+    22: op_25
+    23: op_17 6
+    25: fadd
+    26: putfield net/minecraft/client/model/geom/ModelPart$Cube.maxX:F
+    29: aload_0
+    30: op_17 4
+    32: op_17 7
+    34: fadd
+    35: putfield net/minecraft/client/model/geom/ModelPart$Cube.maxY:F
+    38: aload_0
+    39: op_17 5
+    41: op_17 8
+    43: fadd
+    44: putfield net/minecraft/client/model/geom/ModelPart$Cube.maxZ:F
+    47: aload_0
+    48: aload 15
+    50: invokeinterface java/util/Set.size:()I
+    55: anewarray net/minecraft/client/model/geom/ModelPart$Polygon
+    58: putfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    61: op_25
+    62: op_17 6
+    64: fadd
+    65: fstore 16
+    67: op_17 4
+    69: op_17 7
+    71: fadd
+    72: fstore 17
+    74: op_17 5
+    76: op_17 8
+    78: fadd
+    79: fstore 18
+    81: op_25
+    82: op_17 9
+    84: fsub
+    85: fstore_3
+    86: op_17 4
+    88: op_17 10
+    90: fsub
+    91: fstore 4
+    93: op_17 5
+    95: op_17 11
+    97: fsub
+    98: fstore 5
+    100: op_17 16
+    102: op_17 9
+    104: fadd
+    105: fstore 16
+    107: op_17 17
+    109: op_17 10
+    111: fadd
+    112: fstore 17
+    114: op_17 18
+    116: op_17 11
+    118: fadd
+    119: fstore 18
+    121: iload 12
+    123: ifeq 136
+    126: op_17 16
+    128: fstore 19
+    130: op_25
+    131: fstore 16
+    133: op_17 19
+    135: fstore_3
+    136: new net/minecraft/client/model/geom/ModelPart$Vertex
+    139: dup
+    140: op_25
+    141: op_17 4
+    143: op_17 5
+    145: op_0b
+    146: op_0b
+    147: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    150: astore 19
+    152: new net/minecraft/client/model/geom/ModelPart$Vertex
+    155: dup
+    156: op_17 16
+    158: op_17 4
+    160: op_17 5
+    162: op_0b
+    163: ldc 8.0f
+    165: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    168: astore 20
+    170: new net/minecraft/client/model/geom/ModelPart$Vertex
+    173: dup
+    174: op_17 16
+    176: op_17 17
+    178: op_17 5
+    180: ldc 8.0f
+    182: ldc 8.0f
+    184: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    187: astore 21
+    189: new net/minecraft/client/model/geom/ModelPart$Vertex
+    192: dup
+    193: op_25
+    194: op_17 17
+    196: op_17 5
+    198: ldc 8.0f
+    200: op_0b
+    201: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    204: astore 22
+    206: new net/minecraft/client/model/geom/ModelPart$Vertex
+    209: dup
+    210: op_25
+    211: op_17 4
+    213: op_17 18
+    215: op_0b
+    216: op_0b
+    217: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    220: astore 23
+    222: new net/minecraft/client/model/geom/ModelPart$Vertex
+    225: dup
+    226: op_17 16
+    228: op_17 4
+    230: op_17 18
+    232: op_0b
+    233: ldc 8.0f
+    235: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    238: astore 24
+    240: new net/minecraft/client/model/geom/ModelPart$Vertex
+    243: dup
+    244: op_17 16
+    246: op_17 17
+    248: op_17 18
+    250: ldc 8.0f
+    252: ldc 8.0f
+    254: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    257: astore 25
+    259: new net/minecraft/client/model/geom/ModelPart$Vertex
+    262: dup
+    263: op_25
+    264: op_17 17
+    266: op_17 18
+    268: ldc 8.0f
+    270: op_0b
+    271: invokespecial net/minecraft/client/model/geom/ModelPart$Vertex.<init>:(FFFFF)V
+    274: astore 26
+    276: iload_1
+    277: i2f
+    278: fstore 27
+    280: iload_1
+    281: i2f
+    282: op_17 8
+    284: fadd
+    285: fstore 28
+    287: iload_1
+    288: i2f
+    289: op_17 8
+    291: fadd
+    292: op_17 6
+    294: fadd
+    295: fstore 29
+    297: iload_1
+    298: i2f
+    299: op_17 8
+    301: fadd
+    302: op_17 6
+    304: fadd
+    305: op_17 6
+    307: fadd
+    308: fstore 30
+    310: iload_1
+    311: i2f
+    312: op_17 8
+    314: fadd
+    315: op_17 6
+    317: fadd
+    318: op_17 8
+    320: fadd
+    321: fstore 31
+    323: iload_1
+    324: i2f
+    325: op_17 8
+    327: fadd
+    328: op_17 6
+    330: fadd
+    331: op_17 8
+    333: fadd
+    334: op_17 6
+    336: fadd
+    337: fstore 32
+    339: iload_2
+    340: i2f
+    341: fstore 33
+    343: iload_2
+    344: i2f
+    345: op_17 8
+    347: fadd
+    348: fstore 34
+    350: iload_2
+    351: i2f
+    352: op_17 8
+    354: fadd
+    355: op_17 7
+    357: fadd
+    358: fstore 35
+    360: iconst_0
+    361: istore 36
+    363: aload 15
+    365: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+    368: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+    373: ifeq 434
+    376: aload_0
+    377: getfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    380: iload 36
+    382: iinc 36 1
+    385: new net/minecraft/client/model/geom/ModelPart$Polygon
+    388: dup
+    389: iconst_4
+    390: anewarray net/minecraft/client/model/geom/ModelPart$Vertex
+    393: dup
+    394: iconst_0
+    395: aload 24
+    397: aastore
+    398: dup
+    399: iconst_1
+    400: aload 23
+    402: aastore
+    403: dup
+    404: iconst_2
+    405: aload 19
+    407: aastore
+    408: dup
+    409: iconst_3
+    410: aload 20
+    412: aastore
+    413: op_17 28
+    415: op_17 33
+    417: op_17 29
+    419: op_17 34
+    421: op_17 13
+    423: op_17 14
+    425: iload 12
+    427: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+    430: invokespecial net/minecraft/client/model/geom/ModelPart$Polygon.<init>:([Lnet/minecraft/client/model/geom/ModelPart$Vertex;FFFFFFZLnet/minecraft/core/Direction;)V
+    433: aastore
+    434: aload 15
+    436: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+    439: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+    444: ifeq 505
+    447: aload_0
+    448: getfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    451: iload 36
+    453: iinc 36 1
+    456: new net/minecraft/client/model/geom/ModelPart$Polygon
+    459: dup
+    460: iconst_4
+    461: anewarray net/minecraft/client/model/geom/ModelPart$Vertex
+    464: dup
+    465: iconst_0
+    466: aload 21
+    468: aastore
+    469: dup
+    470: iconst_1
+    471: aload 22
+    473: aastore
+    474: dup
+    475: iconst_2
+    476: aload 26
+    478: aastore
+    479: dup
+    480: iconst_3
+    481: aload 25
+    483: aastore
+    484: op_17 29
+    486: op_17 34
+    488: op_17 30
+    490: op_17 33
+    492: op_17 13
+    494: op_17 14
+    496: iload 12
+    498: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+    501: invokespecial net/minecraft/client/model/geom/ModelPart$Polygon.<init>:([Lnet/minecraft/client/model/geom/ModelPart$Vertex;FFFFFFZLnet/minecraft/core/Direction;)V
+    504: aastore
+    505: aload 15
+    507: getstatic net/minecraft/core/Direction.WEST:Lnet/minecraft/core/Direction;
+    510: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+    515: ifeq 576
+    518: aload_0
+    519: getfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    522: iload 36
+    524: iinc 36 1
+    527: new net/minecraft/client/model/geom/ModelPart$Polygon
+    530: dup
+    531: iconst_4
+    532: anewarray net/minecraft/client/model/geom/ModelPart$Vertex
+    535: dup
+    536: iconst_0
+    537: aload 19
+    539: aastore
+    540: dup
+    541: iconst_1
+    542: aload 23
+    544: aastore
+    545: dup
+    546: iconst_2
+    547: aload 26
+    549: aastore
+    550: dup
+    551: iconst_3
+    552: aload 22
+    554: aastore
+    555: op_17 27
+    557: op_17 34
+    559: op_17 28
+    561: op_17 35
+    563: op_17 13
+    565: op_17 14
+    567: iload 12
+    569: getstatic net/minecraft/core/Direction.WEST:Lnet/minecraft/core/Direction;
+    572: invokespecial net/minecraft/client/model/geom/ModelPart$Polygon.<init>:([Lnet/minecraft/client/model/geom/ModelPart$Vertex;FFFFFFZLnet/minecraft/core/Direction;)V
+    575: aastore
+    576: aload 15
+    578: getstatic net/minecraft/core/Direction.NORTH:Lnet/minecraft/core/Direction;
+    581: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+    586: ifeq 647
+    589: aload_0
+    590: getfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    593: iload 36
+    595: iinc 36 1
+    598: new net/minecraft/client/model/geom/ModelPart$Polygon
+    601: dup
+    602: iconst_4
+    603: anewarray net/minecraft/client/model/geom/ModelPart$Vertex
+    606: dup
+    607: iconst_0
+    608: aload 20
+    610: aastore
+    611: dup
+    612: iconst_1
+    613: aload 19
+    615: aastore
+    616: dup
+    617: iconst_2
+    618: aload 22
+    620: aastore
+    621: dup
+    622: iconst_3
+    623: aload 21
+    625: aastore
+    626: op_17 28
+    628: op_17 34
+    630: op_17 29
+    632: op_17 35
+    634: op_17 13
+    636: op_17 14
+    638: iload 12
+    640: getstatic net/minecraft/core/Direction.NORTH:Lnet/minecraft/core/Direction;
+    643: invokespecial net/minecraft/client/model/geom/ModelPart$Polygon.<init>:([Lnet/minecraft/client/model/geom/ModelPart$Vertex;FFFFFFZLnet/minecraft/core/Direction;)V
+    646: aastore
+    647: aload 15
+    649: getstatic net/minecraft/core/Direction.EAST:Lnet/minecraft/core/Direction;
+    652: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+    657: ifeq 718
+    660: aload_0
+    661: getfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    664: iload 36
+    666: iinc 36 1
+    669: new net/minecraft/client/model/geom/ModelPart$Polygon
+    672: dup
+    673: iconst_4
+    674: anewarray net/minecraft/client/model/geom/ModelPart$Vertex
+    677: dup
+    678: iconst_0
+    679: aload 24
+    681: aastore
+    682: dup
+    683: iconst_1
+    684: aload 20
+    686: aastore
+    687: dup
+    688: iconst_2
+    689: aload 21
+    691: aastore
+    692: dup
+    693: iconst_3
+    694: aload 25
+    696: aastore
+    697: op_17 29
+    699: op_17 34
+    701: op_17 31
+    703: op_17 35
+    705: op_17 13
+    707: op_17 14
+    709: iload 12
+    711: getstatic net/minecraft/core/Direction.EAST:Lnet/minecraft/core/Direction;
+    714: invokespecial net/minecraft/client/model/geom/ModelPart$Polygon.<init>:([Lnet/minecraft/client/model/geom/ModelPart$Vertex;FFFFFFZLnet/minecraft/core/Direction;)V
+    717: aastore
+    718: aload 15
+    720: getstatic net/minecraft/core/Direction.SOUTH:Lnet/minecraft/core/Direction;
+    723: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+    728: ifeq 786
+    731: aload_0
+    732: getfield net/minecraft/client/model/geom/ModelPart$Cube.polygons:[Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+    735: iload 36
+    737: new net/minecraft/client/model/geom/ModelPart$Polygon
+    740: dup
+    741: iconst_4
+    742: anewarray net/minecraft/client/model/geom/ModelPart$Vertex
+    745: dup
+    746: iconst_0
+    747: aload 23
+    749: aastore
+    750: dup
+    751: iconst_1
+    752: aload 24
+    754: aastore
+    755: dup
+    756: iconst_2
+    757: aload 25
+    759: aastore
+    760: dup
+    761: iconst_3
+    762: aload 26
+    764: aastore
+    765: op_17 31
+    767: op_17 34
+    769: op_17 32
+    771: op_17 35
+    773: op_17 13
+    775: op_17 14
+    777: iload 12
+    779: getstatic net/minecraft/core/Direction.SOUTH:Lnet/minecraft/core/Direction;
+    782: invokespecial net/minecraft/client/model/geom/ModelPart$Polygon.<init>:([Lnet/minecraft/client/model/geom/ModelPart$Vertex;FFFFFFZLnet/minecraft/core/Direction;)V
+    785: aastore
+    786: return
+

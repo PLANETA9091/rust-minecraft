@@ -1,0 +1,255 @@
+== net/minecraft/world/entity/decoration/LeashFenceKnotEntity.class
+  METHOD defineSynchedData (Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V  (code=1)
+    0: return
+  METHOD recalculateBoundingBox ()V  (code=108)
+    0: aload_0
+    1: aload_0
+    2: getfield net/minecraft/world/entity/decoration/LeashFenceKnotEntity.pos:Lnet/minecraft/core/BlockPos;
+    5: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    8: i2d
+    9: ldc2_w 0.5
+    12: dadd
+    13: aload_0
+    14: getfield net/minecraft/world/entity/decoration/LeashFenceKnotEntity.pos:Lnet/minecraft/core/BlockPos;
+    17: invokevirtual net/minecraft/core/BlockPos.getY:()I
+    20: i2d
+    21: ldc2_w 0.375
+    24: dadd
+    25: aload_0
+    26: getfield net/minecraft/world/entity/decoration/LeashFenceKnotEntity.pos:Lnet/minecraft/core/BlockPos;
+    29: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    32: i2d
+    33: ldc2_w 0.5
+    36: dadd
+    37: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.setPosRaw:(DDD)V
+    40: aload_0
+    41: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getType:()Lnet/minecraft/world/entity/EntityType;
+    44: invokevirtual net/minecraft/world/entity/EntityType.getWidth:()F
+    47: f2d
+    48: ldc2_w 2.0
+    51: op_6f
+    52: dstore_1
+    53: aload_0
+    54: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getType:()Lnet/minecraft/world/entity/EntityType;
+    57: invokevirtual net/minecraft/world/entity/EntityType.getHeight:()F
+    60: f2d
+    61: dstore_3
+    62: aload_0
+    63: new net/minecraft/world/phys/AABB
+    66: dup
+    67: aload_0
+    68: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getX:()D
+    71: op_27
+    72: dsub
+    73: aload_0
+    74: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getY:()D
+    77: aload_0
+    78: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getZ:()D
+    81: op_27
+    82: dsub
+    83: aload_0
+    84: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getX:()D
+    87: op_27
+    88: dadd
+    89: aload_0
+    90: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getY:()D
+    93: op_29
+    94: dadd
+    95: aload_0
+    96: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getZ:()D
+    99: op_27
+    100: dadd
+    101: invokespecial net/minecraft/world/phys/AABB.<init>:(DDDDDD)V
+    104: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.setBoundingBox:(Lnet/minecraft/world/phys/AABB;)V
+    107: return
+  METHOD readAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueInput;)V  (code=1)
+    0: return
+  METHOD interact (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/InteractionResult;  (code=244)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    7: ifeq 14
+    10: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    13: areturn
+    14: aload_1
+    15: aload_2
+    16: invokevirtual net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+    19: getstatic net/minecraft/world/item/Items.SHEARS:Lnet/minecraft/world/item/Item;
+    22: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    25: ifeq 63
+    28: aload_0
+    29: aload_1
+    30: aload_2
+    31: aload_3
+    32: invokespecial net/minecraft/world/entity/decoration/BlockAttachedEntity.interact:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/InteractionResult;
+    35: astore 4
+    37: aload 4
+    39: instanceof net/minecraft/world/InteractionResult$Success
+    42: ifeq 63
+    45: aload 4
+    47: checkcast net/minecraft/world/InteractionResult$Success
+    50: astore 5
+    52: aload 5
+    54: invokevirtual net/minecraft/world/InteractionResult$Success.wasItemInteraction:()Z
+    57: ifeq 63
+    60: aload 4
+    62: areturn
+    63: iconst_0
+    64: istore 4
+    66: aload_1
+    67: invokestatic net/minecraft/world/entity/Leashable.leashableLeashedTo:(Lnet/minecraft/world/entity/Entity;)Ljava/util/List;
+    70: astore 5
+    72: aload 5
+    74: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    79: astore 6
+    81: aload 6
+    83: invokeinterface java/util/Iterator.hasNext:()Z
+    88: ifeq 129
+    91: aload 6
+    93: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    98: checkcast net/minecraft/world/entity/Leashable
+    101: astore 7
+    103: aload 7
+    105: aload_0
+    106: invokeinterface net/minecraft/world/entity/Leashable.canHaveALeashAttachedTo:(Lnet/minecraft/world/entity/Entity;)Z
+    111: ifeq 126
+    114: aload 7
+    116: aload_0
+    117: iconst_1
+    118: invokeinterface net/minecraft/world/entity/Leashable.setLeashedTo:(Lnet/minecraft/world/entity/Entity;Z)V
+    123: iconst_1
+    124: istore 4
+    126: goto 81
+    129: iconst_0
+    130: istore 6
+    132: iload 4
+    134: ifne 207
+    137: aload_1
+    138: invokevirtual net/minecraft/world/entity/player/Player.isSecondaryUseActive:()Z
+    141: ifne 207
+    144: aload_0
+    145: invokestatic net/minecraft/world/entity/Leashable.leashableLeashedTo:(Lnet/minecraft/world/entity/Entity;)Ljava/util/List;
+    148: astore 7
+    150: aload 7
+    152: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    157: astore 8
+    159: aload 8
+    161: invokeinterface java/util/Iterator.hasNext:()Z
+    166: ifeq 207
+    169: aload 8
+    171: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    176: checkcast net/minecraft/world/entity/Leashable
+    179: astore 9
+    181: aload 9
+    183: aload_1
+    184: invokeinterface net/minecraft/world/entity/Leashable.canHaveALeashAttachedTo:(Lnet/minecraft/world/entity/Entity;)Z
+    189: ifeq 204
+    192: aload 9
+    194: aload_1
+    195: iconst_1
+    196: invokeinterface net/minecraft/world/entity/Leashable.setLeashedTo:(Lnet/minecraft/world/entity/Entity;Z)V
+    201: iconst_1
+    202: istore 6
+    204: goto 159
+    207: iload 4
+    209: ifne 217
+    212: iload 6
+    214: ifeq 236
+    217: aload_0
+    218: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_ATTACH:Lnet/minecraft/core/Holder$Reference;
+    221: aload_1
+    222: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.gameEvent:(Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/Entity;)V
+    225: aload_0
+    226: getstatic net/minecraft/sounds/SoundEvents.LEAD_TIED:Lnet/minecraft/sounds/SoundEvent;
+    229: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.playSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    232: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    235: areturn
+    236: aload_0
+    237: aload_1
+    238: aload_2
+    239: aload_3
+    240: invokespecial net/minecraft/world/entity/decoration/BlockAttachedEntity.interact:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/InteractionResult;
+    243: areturn
+  METHOD getKnot (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Ljava/util/Optional;  (code=113)
+    0: aload_1
+    1: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    4: istore_2
+    5: aload_1
+    6: invokevirtual net/minecraft/core/BlockPos.getY:()I
+    9: istore_3
+    10: aload_1
+    11: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    14: istore 4
+    16: aload_0
+    17: ldc net/minecraft/world/entity/decoration/LeashFenceKnotEntity
+    19: new net/minecraft/world/phys/AABB
+    22: dup
+    23: iload_2
+    24: i2d
+    25: op_0f
+    26: dsub
+    27: iload_3
+    28: i2d
+    29: op_0f
+    30: dsub
+    31: iload 4
+    33: i2d
+    34: op_0f
+    35: dsub
+    36: iload_2
+    37: i2d
+    38: op_0f
+    39: dadd
+    40: iload_3
+    41: i2d
+    42: op_0f
+    43: dadd
+    44: iload 4
+    46: i2d
+    47: op_0f
+    48: dadd
+    49: invokespecial net/minecraft/world/phys/AABB.<init>:(DDDDDD)V
+    52: invokevirtual net/minecraft/world/level/Level.getEntitiesOfClass:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+    55: astore 5
+    57: aload 5
+    59: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    64: astore 6
+    66: aload 6
+    68: invokeinterface java/util/Iterator.hasNext:()Z
+    73: ifeq 109
+    76: aload 6
+    78: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    83: checkcast net/minecraft/world/entity/decoration/LeashFenceKnotEntity
+    86: astore 7
+    88: aload 7
+    90: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getPos:()Lnet/minecraft/core/BlockPos;
+    93: aload_1
+    94: invokevirtual net/minecraft/core/BlockPos.equals:(Ljava/lang/Object;)Z
+    97: ifeq 106
+    100: aload 7
+    102: invokestatic java/util/Optional.of:(Ljava/lang/Object;)Ljava/util/Optional;
+    105: areturn
+    106: goto 66
+    109: invokestatic java/util/Optional.empty:()Ljava/util/Optional;
+    112: areturn
+  METHOD createKnot (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/entity/decoration/LeashFenceKnotEntity;  (code=18)
+    0: new net/minecraft/world/entity/decoration/LeashFenceKnotEntity
+    3: dup
+    4: aload_0
+    5: aload_1
+    6: invokespecial net/minecraft/world/entity/decoration/LeashFenceKnotEntity.<init>:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+    9: astore_2
+    10: aload_0
+    11: aload_2
+    12: invokevirtual net/minecraft/world/level/Level.addFreshEntity:(Lnet/minecraft/world/entity/Entity;)Z
+    15: pop
+    16: aload_2
+    17: areturn
+  METHOD playPlacementSound ()V  (code=10)
+    0: aload_0
+    1: getstatic net/minecraft/sounds/SoundEvents.LEAD_TIED:Lnet/minecraft/sounds/SoundEvent;
+    4: op_0c
+    5: op_0c
+    6: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.playSound:(Lnet/minecraft/sounds/SoundEvent;FF)V
+    9: return
+

@@ -8053,6 +8053,77 @@ impl ItemFrameEnt {
     }
 }
 
+/// THE LEAD FENCE KNOT (javap `LeashFenceKnotEntity` the leash_knot_498
+/// census banks — the decoration body the LeadItem.useOn FENCES walk
+/// spawns, the fence cell the `pos` field keeps, the knot the mobs
+/// the PLAYER's own hand ropes transfer to). The port's offline
+/// fiction the Vec lane keeps [the wire session the knot never
+/// spawns — the server's own addFreshEntity the echo lane owns, the
+/// port's wire bodies the knot lane never reaches]; the NBT save lane
+/// the NEXT rounds may wear (the item frames' bank the same shape
+/// speaks).
+pub struct LeashKnotEnt {
+    pub id: i32,
+    /// The fence cell (the `BlockPos pos` field — the
+    /// BlockAttachedEntity.setPos's `BlockPos.containing` walk banks).
+    pub cell: (i32, i32, i32),
+    /// The survive poll's own clock (the BlockAttachedEntity.tick's
+    /// `checkInterval` field — the == 100 verdict the survives walk
+    /// answers, the reset the same walk banks).
+    pub check_interval: u32,
+}
+
+impl LeashKnotEnt {
+    /// THE KNOT'S OWN BOX (javap `LeashFenceKnotEntity
+    /// .recalculateBoundingBox` the leash_knot_498 census banks — the
+    /// pos the (x+0.5, y+0.375, z+0.5) trio the ldc2_w pair speaks,
+    /// the bb the width/2 = 0.1875 half-extents + the height 0.5
+    /// upward span the AABB ctor walk keeps): the pick + the rope
+    /// hold + the transfer gate the same box read.
+    pub fn box_(&self) -> (f64, f64, f64, f64, f64, f64) {
+        Self::bb_at(self.cell)
+    }
+
+    /// THE CELL'S OWN BB (the same walk the pos field's cell form
+    /// keeps — the pure helper the spawn + the pick + the tick polls
+    /// read).
+    pub fn bb_at(cell: (i32, i32, i32)) -> (f64, f64, f64, f64, f64, f64) {
+        let (px, py, pz) = (
+            cell.0 as f64 + 0.5,
+            cell.1 as f64 + 0.375,
+            cell.2 as f64 + 0.5,
+        );
+        let half = crate::mob::LEASH_KNOT_WIDTH / 2.0;
+        (
+            px - half,
+            py,
+            pz - half,
+            px + half,
+            py + crate::mob::LEASH_KNOT_HEIGHT,
+            pz + half,
+        )
+    }
+
+    /// THE KNOT'S OWN ROPE HOLD (javap `Entity.getRopeHoldPosition(F)`
+    /// the ropehold_501 census banks — the `getPosition(partial).add
+    /// (0, eyeHeight * 0.7d, 0)` walk speaks, the eyeHeight the
+    /// `EntityDimensions.defaultEyeHeight(height)` = height·0.85 the
+    /// knotdims_502 walk answers [0.5·0.85 = 0.425, the hold the pos
+    /// y + 0.2975 the f64 chain keeps]).
+    pub fn rope_hold(&self) -> (f64, f64, f64) {
+        let (px, py, pz) = (
+            self.cell.0 as f64 + 0.5,
+            self.cell.1 as f64 + 0.375,
+            self.cell.2 as f64 + 0.5,
+        );
+        (
+            px,
+            py + crate::mob::LEASH_KNOT_EYE_HEIGHT * 0.7,
+            pz,
+        )
+    }
+}
+
 /// THE THREE DIMENSIONS (the vanilla `Level.OVERWORLD`/`NETHER`/`END`
 /// registry keys the client's own enum wears — the swap's lane the
 /// per-dimension table answers: the `coordinate_scale` the rows carry
@@ -8926,6 +8997,11 @@ pub struct App {
     /// own layout), value `None` = the layer failed its verification
     /// and that piece never renders.
     pub armor_textures: std::collections::HashMap<String, Option<crate::avatar::ArmorTex>>,
+    /// THE KNOT'S OWN TEXTURE (the LeashKnotRenderer's KNOT_LOCATION
+    /// the knotrender_500 clinit banks — the
+    /// textures/entity/lead_knot/lead_knot.png the lazy load decodes,
+    /// (w, h, rgba) the None the honest silence keeps)
+    pub knot_texture: Option<(u32, u32, Vec<u8>)>,
     /// THE FIRST MOB's own skin (the zombie's 64x64 wide texture, the
     /// sha1 the generator pinned) — loaded lazily beside the player's,
     /// `None` = the mobs stay unseen (the honest-missing-data law).
@@ -10718,6 +10794,12 @@ pub struct App {
     /// parse the offline world alone serves, the cell the identity
     /// the in-memory row never clobbers).
     pub item_frames: Vec<ItemFrameEnt>,
+    /// THE OFFLINE LEAD KNOTS (the LeadItem.useOn FENCES walk the
+    /// leash_knot_498 census banks — the knot the bind walk spawns,
+    /// the mobs the PLAYER's own hand ropes the transfer serves; the
+    /// wire session the Vec never fills — the server's own entity
+    /// the echo lane owns).
+    pub knots: Vec<LeashKnotEnt>,
     /// THE OFFLINE SPAWNER'S OWN CARTS (the MinecartItem.useOn walk's
     /// singleplayer arm — the local carts the wire's Add Entity lane
     /// is the future own of): the cart the offline right-click spawns
@@ -13417,6 +13499,7 @@ impl App {
             perspective: crate::camera::CameraType::FirstPerson,
             avatar: None,
             armor_textures: std::collections::HashMap::new(),
+            knot_texture: None,
             zombie_avatar: None,
             skeleton_avatar: None,
             pig_model: None,
@@ -13811,6 +13894,7 @@ impl App {
             next_cart_id: 1,
             next_frame_id: 1,
             item_frames: Vec::new(),
+            knots: Vec::new(),
             offline_carts: Vec::new(),
             pending_cart_booms: Vec::new(),
             pending_anchor_booms: Vec::new(),
@@ -49099,9 +49183,22 @@ impl App {
             let hull_hit = self.pick_hull();
             let cart_hit = self.pick_cart();
             let frame_hit = self.pick_item_frame();
+            let knot_hit = self.pick_knot();
             // THE THREE-WAY RANK (the NEAREST candidate the one pick's
             // own law speaks — the mob the hull the cart the same
-            // distance fold ranks, the ties the earlier arm keeps)
+            // distance fold ranks, the ties the earlier arm keeps;
+            // the KNOT the fifth candidate the same nearest fold
+            // ranks — the decoration body the entity pick's own law
+            // keeps)
+            let knot_wins = match knot_hit {
+                Some((_, kd)) => {
+                    mob_hit.map_or(true, |(_, d)| kd < d)
+                        && hull_hit.map_or(true, |(_, d)| kd < d)
+                        && cart_hit.map_or(true, |(_, d)| kd < d)
+                        && frame_hit.map_or(true, |(_, d)| kd < d)
+                }
+                None => false,
+            };
             let hull_wins = match (mob_hit, hull_hit) {
                 (Some((_, md)), Some((_, hd))) => hd < md,
                 (None, Some(_)) => true,
@@ -49121,7 +49218,20 @@ impl App {
             let frame_wins = !cart_wins
                 && !hull_wins
                 && frame_hit.map_or(false, |(_, fd)| mob_hit.map_or(true, |(_, md)| fd < md));
-            if frame_wins {
+            if knot_wins {
+                if let Some((id, _)) = knot_hit {
+                    // THE KNOT'S INTERACT ARM (javap
+                    // LeashFenceKnotEntity.interact the leash_knot_498
+                    // census banks — the shears cut + the take arms the
+                    // SUCCESS verdict carries; the PASS the entity_pass
+                    // the BLOCK case the walk keeps — the fence cell's
+                    // own lead lane the fall-through serves)
+                    if self.on_right_press_knot_interact(id) {
+                        return true;
+                    }
+                    entity_pass = true;
+                }
+            } else if frame_wins {
                 if let Some((id, _)) = frame_hit {
                     // THE FRAME'S INTERACT ARM (javap ItemFrame.interact
                     // — the store/rotate/slot lanes the SUCCESS verdict
@@ -71297,6 +71407,33 @@ impl App {
                 inside: hit.inside,
             });
         }
+        // THE LEAD'S OWN FENCE LANE (javap `LeadItem.useOn` code=58 the
+        // lead_use_486 + leash_knot_498 censuses bank — the held lead
+        // stack the FENCES cell the bind walk serves: the item's useOn
+        // the block's own use the PASS fall-through the vanilla
+        // useItemOn order keeps, the cell-kind disjointness the door
+        // arms the same order preserves [the fence cell the
+        // crafting-table/furnace/bed/anchor/chest/door kinds the
+        // mutually-exclusive set wears — the arm's placement the
+        // vanilla order the same verdict answers], the
+        // `isClientSide` PASS the wire lane never serves [the
+        // offline world the integrated body the bind answers], the
+        // empty scan / the empty-transfer PASS the item lanes the
+        // fall-through keeps — the block item's placement the lead
+        // never carries)
+        if !self.world_is_network {
+            let held = self.held_id().and_then(mc_registry::item_name);
+            if held.as_deref() == Some("lead") {
+                let fence = self.active_world().is_some_and(|w| {
+                    crate::mob::is_fence_block(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                });
+                if fence {
+                    if let Some(consumed) = self.bind_player_mobs_to_fence(hit.pos) {
+                        return consumed;
+                    }
+                }
+            }
+        }
         // THE INTERACTIVE BLOCK'S OWN ARM (javap 26.2 GameType.useItemOn —
         // the block.use state walk the item.useOn dispatch PRECEDES:
         // CraftingTableBlock.use's openMenu the CONSUME verdict carries,
@@ -74583,6 +74720,379 @@ impl App {
             Some((id, d2))
         } else {
             None
+        }
+    }
+
+    /// THE KNOT'S OWN PICK (the same law the frame pick's walk keeps —
+    /// javap `LeashFenceKnotEntity` the leash_knot_498 census banks —
+    /// the bb clip the ray the eye's own forward casts, the nearest
+    /// knot the single-lane answer, the `isPickable` the
+    /// BlockAttachedEntity's own true the entity hit the block clip
+    /// must beat [the entity_reach the 3.0 the vanilla pick law
+    /// keeps]). THE FENCE CELL'S OWN FACE (the knot's bb the fence
+    /// cell's own center the ±0.1875 band wears — the port's
+    /// full-cell clip the cell's ENTRY face the hit names, the
+    /// vanilla's own OUTLINE shape the POST column the 7/16..9/16
+    /// band speaks: the knot's face the 3/16 the post's 1/16 the
+    /// entry the eye sees FIRST, the entity hit the cell-face hit
+    /// the honest WIN keeps [the bb the post's column the whole
+    /// cross-section covers — any ray the post would hit the knot's
+    /// face the entry crosses first]; the cell-face hit the knot's
+    /// own cell the IGNORE law keeps, the behind-blocks the honest
+    /// miss the pick refuses).
+    fn pick_knot(&self) -> Option<(i32, f64)> {
+        if self.knots.is_empty() {
+            return None;
+        }
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+        let end = (
+            eye.0 + view.0 * search_range,
+            eye.1 + view.1 * search_range,
+            eye.2 + view.2 * search_range,
+        );
+        let mut best: Option<(i32, f64, (i32, i32, i32))> = None;
+        for kn in &self.knots {
+            let (x0, y0, z0, x1, y1, z1) = kn.box_();
+            let inside =
+                eye.0 >= x0 && eye.0 <= x1 && eye.1 >= y0 && eye.1 <= y1 && eye.2 >= z0 && eye.2 <= z1;
+            let d2 = if inside {
+                0.0
+            } else {
+                match crate::mob::aabb_clip(eye, end, (x0, y0, z0), (x1, y1, z1)) {
+                    Some((point, _)) => {
+                        let (px, py, pz) = point;
+                        let (ex, ey, ez) = (px - eye.0, py - eye.1, pz - eye.2);
+                        ex * ex + ey * ey + ez * ez
+                    }
+                    None => continue,
+                }
+            };
+            if d2 < search_range * search_range && best.as_ref().map_or(true, |(_, b, _)| d2 < *b) {
+                best = Some((kn.id, d2, kn.cell));
+            }
+        }
+        let (id, d2, knot_cell) = best?;
+        // THE BLOCK CLIP'S OWN TERM (the frame pick's law the same
+        // tail keeps — the FENCE CELL'S OWN FACE the ignore law the
+        // doc speaks: the hit cell the knot's own the post column the
+        // bb covers, the entity win the honest verdict wears)
+        let block_d2 = self
+            .active_world()
+            .and_then(|w| w.clip(eye, view, search_range))
+            .filter(|hit| hit.pos != knot_cell)
+            .map(|hit| {
+                let (lx, ly, lz) = hit.location;
+                let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
+                dx * dx + dy * dy + dz * dz
+            })
+            .unwrap_or(f64::INFINITY);
+        let entity_reach =
+            crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
+        if d2 < block_d2 && d2 < entity_reach {
+            Some((id, d2))
+        } else {
+            None
+        }
+    }
+
+    /// THE KNOT'S OWN LOOKUP (javap `LeashFenceKnotEntity.getKnot`
+    /// the leash_knot_498 census banks — the ±1 box the
+    /// getEntitiesOfClass walk scans, the `getPos().equals(pos)` the
+    /// cell match the Optional answers): the bind walk's reuse law
+    /// the fence cell the existing knot the same-body verdict keeps.
+    fn knot_at_cell(&self, cell: (i32, i32, i32)) -> Option<i32> {
+        self.knots
+            .iter()
+            .find(|k| k.cell == cell)
+            .map(|k| k.id)
+    }
+
+    /// THE LEAD'S OWN FENCE BIND (javap `LeadItem.useOn` code=58 +
+    /// `bindPlayerMobs` code=156 the lead_use_486 + leash_knot_498
+    /// censuses bank — the `BlockState.is(BlockTags.FENCES)` gate the
+    /// is_fence_block word reads, the `leashableInArea(center,
+    /// lambda$0)` scan the holder==PLAYER predicate the 32³ box the
+    /// AABB.ofSize(center, 32, 32, 32) shape keeps, the EMPTY scan
+    /// the PASS the knot never spawns, the `getKnot(level, pos)
+    /// .orElseGet(createKnot)` the reuse-or-spawn pair the id
+    /// counter banks, the EACH mob the `canHaveALeashAttachedTo
+    /// (knot)` gate the ≤ 12.0 bb-center distance serves + the
+    /// `setLeashedTo(knot, true)` the transfer banks, the flag the
+    /// `playPlacementSound()` + the BLOCK_ATTACH gameevent [the
+    /// port's gameevent lane never banks] + the SUCCESS_SERVER
+    /// verdict carries, the fresh-knot empty-transfer arm the
+    /// `discard()` walk answers, the NO-shrink law the bind walk
+    /// speaks — the rope the mob's own lead the item the hand never
+    /// spends [the tie the transfer the rope's own RE-SEAT keeps —
+    /// the mob's existing rope the knot's own anchor the same lead
+    /// wears]). The verdict: Some(true) = the press the bind
+    /// consumed, None = the PASS the block lane's own walk the
+    /// fall-through keeps.
+    fn bind_player_mobs_to_fence(&mut self, cell: (i32, i32, i32)) -> Option<bool> {
+        // THE SCAN'S OWN BOX (leashableInArea the AABB.ofSize(center,
+        // 32, 32, 32) the same shape the sneak arm's 16.0 half-spans
+        // keep — the lambda$0 the `getLeashHolder() == player`
+        // predicate the leashed_to == PLAYER chain reads)
+        let (cx, cy, cz) = (
+            cell.0 as f64 + 0.5,
+            cell.1 as f64 + 0.5,
+            cell.2 as f64 + 0.5,
+        );
+        let picked: Vec<usize> = (0..self.mobs.len())
+            .filter(|&j| {
+                let m = &self.mobs[j];
+                if m.leashed_to != Some(crate::mob::PLAYER_HOLDER_ID) {
+                    return false;
+                }
+                let mbox = m.box_for();
+                let mc = crate::mob::leash_bb_center(mbox);
+                (mc.0 - cx).abs() <= 16.0 && (mc.1 - cy).abs() <= 16.0 && (mc.2 - cz).abs() <= 16.0
+            })
+            .collect();
+        if picked.is_empty() {
+            return None;
+        }
+        // THE REUSE-OR-SPAWN PAIR (getKnot the cell match the
+        // existing body keeps, createKnot the fresh id the generic
+        // entity counter banks — the next_drop_id the same counter
+        // the drops wear, the mob ids the spawn-order law the
+        // separate counter keeps)
+        let fresh = self.knot_at_cell(cell).is_none();
+        let knot_id = match self.knot_at_cell(cell) {
+            Some(id) => id,
+            None => {
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.knots.push(LeashKnotEnt {
+                    id,
+                    cell,
+                    check_interval: 0,
+                });
+                id
+            }
+        };
+        // THE TRANSFER'S OWN WALK (the each-mob gate the ≤ 12.0
+        // bb-center distance the can_have_a_leash_attached_to pair
+        // serves — the knot's box the holder side the gate reads)
+        let knot_box = LeashKnotEnt::bb_at(cell);
+        let mut flag = false;
+        for j in picked {
+            if crate::mob::can_have_a_leash_attached_to(self.mobs[j].box_for(), knot_box) {
+                self.mobs[j].leashed_to = Some(knot_id);
+                flag = true;
+            }
+        }
+        if flag {
+            // THE PLACEMENT'S OWN VOICE (playPlacementSound the
+            // playSound(LEAD_TIED, 1.0, 1.0) the op_0c pair speaks —
+            // the same row the tie lane's own voice wears) + THE
+            // SUCCESS_SERVER'S SWING
+            self.sounds
+                .play_voice(self.frame, crate::mob::LEAD_TIED_SOUND, 1.0, 1.0);
+            self.swing.start();
+            return Some(true);
+        }
+        // THE FRESH-KNOT'S OWN DISCARD (pc 139-149 — the
+        // Optional.isEmpty + the empty-transfer arm the discard walk
+        // answers, the PASS the item lanes follow)
+        if fresh {
+            self.knots.retain(|k| k.cell != cell);
+        }
+        None
+    }
+
+    /// THE KNOT'S OWN PRESS WALK (javap `LeashFenceKnotEntity.interact`
+    /// code=244 the leash_knot_498 census banks — the knot the
+    /// decoration body the class's own interface list the EMPTY walk
+    /// keeps [NOT a Leashable — the pc 306 instanceof the honest miss
+    /// the super's un-tie/tie arms the walk never serves]): the
+    /// SHEARS' OWN CUT pc 14-62 [the BlockAttachedEntity super the
+    /// Entity.interact walk resolves — the SHEARS LEASH-CUT arm the
+    /// shear_leash_491 walk serves: the `leashableLeashedTo(knot)`
+    /// scan the cut !isEmpty speaks, the EACH mob's rope the lead at
+    /// THAT body's own feet the dropLeash(Entity, true, true) walk
+    /// drops, the SNIP voice the item.shears.snip row the
+    /// wasItemInteraction verdict carries], the RE-AFFIRM LOOP pc
+    /// 63-126 [the delayed-leash queue the port never banks — the
+    /// flag the honest false keeps], THE TAKE'S OWN ARM pc 129-207
+    /// [the !isSecondaryUseActive gate the bare press serves: the
+    /// `leashableLeashedTo(knot)` scan the EACH mob the
+    /// `canHaveALeashAttachedTo(player)` ≤ 12.0 gate answers, the
+    /// `setLeashedTo(player, true)` the rope's own re-seat banks —
+    /// NO drop the rope the player's own hand the same lead keeps,
+    /// the BLOCK_ATTACH gameevent the port's lane never banks, the
+    /// LEAD_TIED voice + the SUCCESS the flag carries], THE PASS pc
+    /// 236-243 [the super the NOT-Leashable walk the PASS answers —
+    /// the fence cell's own lead lane the block lane the
+    /// fall-through serves]. The wire lane the local walk never
+    /// serves (the offline knots the Vec alone carries).
+    fn on_right_press_knot_interact(&mut self, id: i32) -> bool {
+        if self.world_is_network {
+            self.swing.start();
+            return true;
+        }
+        let Some(_ki) = self.knots.iter().position(|k| k.id == id) else {
+            return false;
+        };
+        // THE SHEARS' OWN CUT (pc 14-62 — the leashees' scan the
+        // dropAllLeashConnections walk serves, the lead at the EACH
+        // mob's own feet drops)
+        let held = self.held_id().and_then(mc_registry::item_name);
+        let held = held.as_deref().unwrap_or("");
+        if held == "shears" {
+            let leashees: Vec<usize> = (0..self.mobs.len())
+                .filter(|&j| self.mobs[j].leashed_to == Some(id))
+                .collect();
+            if !leashees.is_empty() {
+                for j in leashees {
+                    let (mx, my, mz) = (self.mobs[j].x, self.mobs[j].y, self.mobs[j].z);
+                    self.mobs[j].leashed_to = None;
+                    self.mobs[j].leash_angular_momentum = 0.0;
+                    if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                        let drop_id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                            drop_id,
+                            lead,
+                            1,
+                            mx,
+                            my,
+                            mz,
+                            &mut self.mob_rng,
+                        ));
+                    }
+                }
+                self.sounds
+                    .play_voice(self.frame, crate::mob::SHEARS_SNIP_SOUND, 1.0, 1.0);
+                self.swing.start();
+                return true;
+            }
+            // THE NO-CUT FALL-THROUGH (pc 220 ifeq 235 — the cut false
+            // the take/tie arms the walk still serves)
+        }
+        // THE TAKE'S OWN ARM (pc 129-207 — the bare press the knot's
+        // ropes the player's own hand re-seats, the ≤ 12.0 gate the
+        // player's own box reads)
+        if !self.shift_down {
+            let pbox = match self.body.as_ref() {
+                Some(b) => {
+                    let h = if b.crouching {
+                        crate::body::CROUCH_HEIGHT
+                    } else {
+                        crate::body::STANDING_HEIGHT
+                    };
+                    let half = crate::body::WIDTH / 2.0;
+                    (b.x - half, b.y, b.z - half, b.x + half, b.y + h, b.z + half)
+                }
+                None => {
+                    let c = self.world_camera();
+                    let feet_y = c.pos.y as f64 - crate::body::STANDING_EYE;
+                    let half = crate::body::WIDTH / 2.0;
+                    let fx = c.pos.x as f64;
+                    let fz = c.pos.z as f64;
+                    (
+                        fx - half,
+                        feet_y,
+                        fz - half,
+                        fx + half,
+                        feet_y + crate::body::STANDING_HEIGHT,
+                        fz + half,
+                    )
+                }
+            };
+            let mut flag = false;
+            for m in self.mobs.iter_mut() {
+                if m.leashed_to != Some(id) {
+                    continue;
+                }
+                if crate::mob::can_have_a_leash_attached_to(m.box_for(), pbox) {
+                    m.leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+                    flag = true;
+                }
+            }
+            if flag {
+                // THE TIED VOICE + THE SUCCESS (pc 225-235 — the
+                // BLOCK_ATTACH gameevent the port's lane never banks,
+                // the LEAD_TIED the playSound word carries)
+                self.sounds
+                    .play_voice(self.frame, crate::mob::LEAD_TIED_SOUND, 1.0, 1.0);
+                self.swing.start();
+                return true;
+            }
+        }
+        // THE PASS THE SUPER KEEPS (pc 236-243 — the Entity.interact
+        // super the NOT-Leashable knot the PASS answers, the block
+        // lane's own walk the fall-through serves)
+        false
+    }
+
+    /// THE KNOT'S OWN SURVIVE POLL (javap `BlockAttachedEntity.tick`
+    /// the blockattached_499 census banks — the ServerLevel gate the
+    /// offline world answers, the checkInterval the == 100 verdict
+    /// the reset walk banks, the `survives()` the fence verdict the
+    /// LeashFenceKnotEntity's own tag read serves [the
+    /// BlockTags.FENCES the is_fence_block word reads], the
+    /// `discard()` + the dropItem the break walk speaks — the LEAD
+    /// item the knot's own drop the 26.2's dropItem walk the
+    /// getPickResult lane serves, the tied mobs the holder-gone
+    /// break the dropLeash walk answers [the lead the EACH mob's own
+    /// feet drops, the LEAD_BREAK voice the table the port never
+    /// banks the silence keeps — the same law the snap lane wears]).
+    fn tick_knots(&mut self) {
+        if self.world_is_network {
+            return;
+        }
+        // THE TWO-PHASE POLL (the cross-borrow the snapshot answers —
+        // the same law the leash pass's own pre-pass keeps)
+        let mut intervals: Vec<(i32, (i32, i32, i32))> = Vec::new();
+        for kn in self.knots.iter_mut() {
+            kn.check_interval = kn.check_interval.wrapping_add(1);
+            if kn.check_interval % 100 != 0 {
+                continue;
+            }
+            kn.check_interval = 0;
+            let cell = kn.cell;
+            intervals.push((kn.id, cell));
+        }
+        let gone: Vec<i32> = intervals
+            .into_iter()
+            .filter(|(id, cell)| {
+                !self
+                    .active_world()
+                    .is_some_and(|w| crate::mob::is_fence_block(w.get(cell.0, cell.1, cell.2)))
+            })
+            .map(|(id, _)| id)
+            .collect();
+        if gone.is_empty() {
+            return;
+        }
+        self.knots.retain(|k| !gone.contains(&k.id));
+        // THE TIED MOBS' OWN BREAK (the holder-gone walk — the rope
+        // the None clears, the lead the count-1 the feet drops)
+        for m in self.mobs.iter_mut() {
+            if !m.leashed_to.is_some_and(|h| gone.contains(&h)) {
+                continue;
+            }
+            m.leashed_to = None;
+            m.leash_angular_momentum = 0.0;
+            let (mx, my, mz) = (m.x, m.y, m.z);
+            if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                let drop_id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    drop_id,
+                    lead,
+                    1,
+                    mx,
+                    my,
+                    mz,
+                    &mut self.mob_rng,
+                ));
+            }
         }
     }
 
@@ -79651,6 +80161,7 @@ impl App {
         // clock the survive verdict rides — the popped frames the
         // support's own loss the drop walk serves)
         self.tick_item_frames();
+        self.tick_knots();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -84542,6 +85053,7 @@ impl App {
         // models hug the support slabs, the contained items ride the
         // FIXED pose the 0.5 scale + the rotation fold wears)
         if !self.item_frames.is_empty() {
+            self.render_knots(fb, &ctx);
             self.render_item_frames(fb, &ctx);
         }
         // THE XP ORB LANE's draw (the entity pass's own arm — the award
@@ -88035,15 +88547,32 @@ impl App {
                 } else {
                     None
                 };
-                let rope_end: Option<(f64, f64, f64)> = match (holder, player_hold) {
-                    (Some(holder), _) => {
+                // THE KNOT'S OWN HOLD (javap `Entity.getRopeHoldPosition`
+                // the ropehold_501 census banks — the holder the fence
+                // knot the bind walk seats: the hold the knot pos +
+                // eyeHeight·0.7 the rope's own end keeps, the eyeHeight
+                // the defaultEyeHeight 0.5·0.85 the knotdims_502 walk
+                // answers)
+                let knot_hold = if holder.is_none()
+                    && holder_id != crate::mob::PLAYER_HOLDER_ID
+                {
+                    self.knots
+                        .iter()
+                        .find(|k| k.id == holder_id)
+                        .map(|k| k.rope_hold())
+                } else {
+                    None
+                };
+                let rope_end: Option<(f64, f64, f64)> = match (holder, player_hold, knot_hold) {
+                    (Some(holder), _, _) => {
                         let (hx, hy, hz) = holder.lerped_pos(self.partial_tick);
                         Some(crate::mob::rope_hold_position(holder.kind, hx, hy, hz))
                     }
-                    (None, Some((hx, hy, hz))) => {
+                    (_, Some((hx, hy, hz)), _) => {
                         Some((hx, hy + crate::body::STANDING_EYE * 0.7, hz))
                     }
-                    (None, None) => None,
+                    (_, _, Some((hx, hy, hz))) => Some((hx, hy, hz)),
+                    (_, _, None) => None,
                 };
                 if let Some(end) = rope_end {
                     let start =
@@ -89136,6 +89665,177 @@ impl App {
                 mc_registry::sprite_uv::Sample::Unknown => None,
             },
         );
+    }
+
+    /// THE KNOT'S OWN RENDER (javap `LeashKnotRenderer.submit` +
+    /// `LeashKnotModel.createBodyLayer` the knotrender_500 census
+    /// banks — the box the `addBox(-3.0f, -8.0f, -3.0f, 6.0f, 8.0f,
+    /// 6.0f)` the texOffs(0,0) 32×32 sheet wears, the scale(-1,-1,1)
+    /// pose flip the world's +y span the 0..0.5 band keeps, the
+    /// KNOT_LOCATION the textures/entity/lead_knot/lead_knot.png the
+    /// clinit's ldc speaks). THE BOX UV LAW the cubeuv_503 census
+    /// speaks [the ModelPart$Cube ctor's polygon walk: the TOP face
+    /// the (u+d, v) rect wears, the BOTTOM the (u+d+w, v) pair, the
+    /// side row the v+d band the w/h/d columns keep — the
+    /// x-flip's per-face mirror the port's direct bake answers as the
+    /// un-mirrored rects, the near-symmetric knot the honest note
+    /// keeps] — the corner order + the uv law the block-face
+    /// machinery's own walk the winding-compatible convention wears,
+    /// the shade the face-direction table the frame render's law
+    /// answers.
+    fn render_knots(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        if self.knots.is_empty() {
+            return;
+        }
+        // THE TEXTURE'S OWN LAZY LOAD (the KNOT_LOCATION the assets
+        // roots the splashes loader's walk keeps — the None the honest
+        // silence keeps)
+        if self.knot_texture.is_none() {
+            for prefix in [
+                "assets-cache/jar",
+                "../assets-cache/jar",
+                "../../assets-cache/jar",
+            ] {
+                if let Ok(bytes) = std::fs::read(
+                    std::path::Path::new(prefix)
+                        .join("assets/minecraft/textures/entity/lead_knot/lead_knot.png"),
+                ) {
+                    if let Ok((w, h, rgba)) = crate::avatar::decode_rgba(&bytes) {
+                        self.knot_texture = Some((w, h, rgba));
+                        break;
+                    }
+                }
+            }
+        }
+        let Some((tw, th, tex)) = self.knot_texture.as_ref() else {
+            return;
+        };
+        let (tw, th) = (*tw, *th);
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for kn in &self.knots {
+            // THE FACES' OWN WALK (the block-face corner order the
+            // winding-compatible convention wears — the corners the
+            // from/to pair the bool table picks, the uv the rect law
+            // the vertex_uvs shape keeps: corner 0 = (minU, minV), 1 =
+            // (minU, maxV), 2 = (maxU, maxV), 3 = (maxU, minV))
+            let (x0, y0, z0, x1, y1, z1) = kn.box_();
+            let from = [x0 as f32, y0 as f32, z0 as f32];
+            let to = [x1 as f32, y1 as f32, z1 as f32];
+            // THE BOX UNWRAP'S OWN RECTS (the w=6 h=8 d=6 px box at
+            // (u0,v0)=(0,0) the cubeuv_503 law keeps — the px/16 the
+            // 32×32 sheet's texel space carries; the TOP face the
+            // (u+d, v) rect, the BOTTOM the (u+d+w, v) pair, the side
+            // row the v+d band: north (u+d, v+d), south (u+d+w+d,
+            // v+d), east (u, v+d) [the model WEST the x-flip the
+            // world's east face keeps], west (u+d+w, v+d) [the model
+            // EAST the same flip wears])
+            let rects: [([[bool; 3]; 4], [f32; 4]); 6] = [
+                // top (the y=max face — the model DOWN the flip the
+                // world's up keeps)
+                (
+                    [
+                        [false, true, false],
+                        [false, true, true],
+                        [true, true, true],
+                        [true, true, false],
+                    ],
+                    [6.0 / 16.0, 0.0, 12.0 / 16.0, 6.0 / 16.0],
+                ),
+                // bottom (the y=min face)
+                (
+                    [
+                        [false, false, true],
+                        [false, false, false],
+                        [true, false, false],
+                        [true, false, true],
+                    ],
+                    [12.0 / 16.0, 0.0, 18.0 / 16.0, 6.0 / 16.0],
+                ),
+                // north (the z=min face)
+                (
+                    [
+                        [true, true, false],
+                        [true, false, false],
+                        [false, false, false],
+                        [false, true, false],
+                    ],
+                    [6.0 / 16.0, 6.0 / 16.0, 12.0 / 16.0, 14.0 / 16.0],
+                ),
+                // south (the z=max face)
+                (
+                    [
+                        [false, true, true],
+                        [false, false, true],
+                        [true, false, true],
+                        [true, true, true],
+                    ],
+                    [18.0 / 16.0, 6.0 / 16.0, 24.0 / 16.0, 14.0 / 16.0],
+                ),
+                // east (the x=max face — the model WEST the flip
+                // carries)
+                (
+                    [
+                        [true, true, true],
+                        [true, false, true],
+                        [true, false, false],
+                        [true, true, false],
+                    ],
+                    [0.0, 6.0 / 16.0, 6.0 / 16.0, 14.0 / 16.0],
+                ),
+                // west (the x=min face)
+                (
+                    [
+                        [false, true, false],
+                        [false, false, false],
+                        [false, false, true],
+                        [false, true, true],
+                    ],
+                    [12.0 / 16.0, 6.0 / 16.0, 18.0 / 16.0, 14.0 / 16.0],
+                ),
+            ];
+            // THE SHADE'S OWN TABLE (the face-direction law the frame
+            // render keeps — Up 1.0 / Down 0.5 / N-S 0.8 / W-E 0.6)
+            let shades: [f32; 6] = [1.0, 0.5, 0.8, 0.8, 0.6, 0.6];
+            for (fi, (corners, rect)) in rects.iter().enumerate() {
+                let mut pts = [[0.0f32; 3]; 4];
+                for (ci, cell) in pts.iter_mut().enumerate() {
+                    let pick = corners[ci];
+                    for axis in 0..3 {
+                        cell[axis] = if pick[axis] { to[axis] } else { from[axis] };
+                    }
+                }
+                let uvs: [[f32; 2]; 4] = [
+                    [rect[0], rect[1]],
+                    [rect[0], rect[3]],
+                    [rect[2], rect[3]],
+                    [rect[2], rect[1]],
+                ];
+                let sh = shades[fi];
+                sampled.push(crate::raster::SampledQuad {
+                    pts,
+                    uv: uvs,
+                    tex: "",
+                    tint: [sh, sh, sh],
+                });
+            }
+        }
+        let tex_owned = (tw, th, tex.clone());
+        fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
+            let (tw, th, tex) = &tex_owned;
+            let (uu, vv) = (
+                u.clamp(0.0, *tw as f32 - 1e-4),
+                v.clamp(0.0, *th as f32 - 1e-4),
+            );
+            let x = uu as usize;
+            let y = vv as usize;
+            let o = (y * *tw as usize + x) * 4;
+            let rgba = tex.get(o..o + 4)?;
+            let [r, g, b, a] = [rgba[0], rgba[1], rgba[2], rgba[3]];
+            if a < 128 {
+                return None;
+            }
+            Some([r, g, b, a])
+        });
     }
 
     /// THE ITEM FRAME's render (javap ItemFrameRenderer.submit the 26.2

@@ -1,0 +1,98 @@
+== net/minecraft/client/model/object/leash/LeashKnotModel.class
+  METHOD <init> (Lnet/minecraft/client/model/geom/ModelPart;)V  (code=16)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/client/model/EntityModel.<init>:(Lnet/minecraft/client/model/geom/ModelPart;)V
+    5: aload_0
+    6: aload_1
+    7: ldc "knot"
+    9: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    12: putfield net/minecraft/client/model/object/leash/LeashKnotModel.knot:Lnet/minecraft/client/model/geom/ModelPart;
+    15: return
+  METHOD createBodyLayer ()Lnet/minecraft/client/model/geom/builders/LayerDefinition;  (code=55)
+    0: new net/minecraft/client/model/geom/builders/MeshDefinition
+    3: dup
+    4: invokespecial net/minecraft/client/model/geom/builders/MeshDefinition.<init>:()V
+    7: astore_0
+    8: aload_0
+    9: invokevirtual net/minecraft/client/model/geom/builders/MeshDefinition.getRoot:()Lnet/minecraft/client/model/geom/builders/PartDefinition;
+    12: astore_1
+    13: aload_1
+    14: ldc "knot"
+    16: invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create:()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;
+    19: iconst_0
+    20: iconst_0
+    21: invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs:(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;
+    24: ldc -3.0f
+    26: ldc -8.0f
+    28: ldc -3.0f
+    30: ldc 6.0f
+    32: ldc 8.0f
+    34: ldc 6.0f
+    36: invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox:(FFFFFF)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;
+    39: getstatic net/minecraft/client/model/geom/PartPose.ZERO:Lnet/minecraft/client/model/geom/PartPose;
+    42: invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild:(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;
+    45: pop
+    46: aload_0
+    47: bipush 32
+    49: bipush 32
+    51: invokestatic net/minecraft/client/model/geom/builders/LayerDefinition.create:(Lnet/minecraft/client/model/geom/builders/MeshDefinition;II)Lnet/minecraft/client/model/geom/builders/LayerDefinition;
+    54: areturn
+
+
+
+== net/minecraft/client/renderer/entity/LeashKnotRenderer.class
+  METHOD <init> (Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;)V  (code=24)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/client/renderer/entity/EntityRenderer.<init>:(Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;)V
+    5: aload_0
+    6: new net/minecraft/client/model/object/leash/LeashKnotModel
+    9: dup
+    10: aload_1
+    11: getstatic net/minecraft/client/model/geom/ModelLayers.LEASH_KNOT:Lnet/minecraft/client/model/geom/ModelLayerLocation;
+    14: invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.bakeLayer:(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;
+    17: invokespecial net/minecraft/client/model/object/leash/LeashKnotModel.<init>:(Lnet/minecraft/client/model/geom/ModelPart;)V
+    20: putfield net/minecraft/client/renderer/entity/LeashKnotRenderer.model:Lnet/minecraft/client/model/object/leash/LeashKnotModel;
+    23: return
+  METHOD submit (Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V  (code=54)
+    0: aload_2
+    1: invokevirtual com/mojang/blaze3d/vertex/PoseStack.pushPose:()V
+    4: aload_2
+    5: ldc -1.0f
+    7: ldc -1.0f
+    9: op_0c
+    10: invokevirtual com/mojang/blaze3d/vertex/PoseStack.scale:(FFF)V
+    13: aload_3
+    14: aload_0
+    15: getfield net/minecraft/client/renderer/entity/LeashKnotRenderer.model:Lnet/minecraft/client/model/object/leash/LeashKnotModel;
+    18: aload_1
+    19: aload_2
+    20: getstatic net/minecraft/client/renderer/entity/LeashKnotRenderer.KNOT_LOCATION:Lnet/minecraft/resources/Identifier;
+    23: aload_1
+    24: getfield net/minecraft/client/renderer/entity/state/EntityRenderState.lightCoords:I
+    27: getstatic net/minecraft/client/renderer/texture/OverlayTexture.NO_OVERLAY:I
+    30: aload_1
+    31: getfield net/minecraft/client/renderer/entity/state/EntityRenderState.outlineColor:I
+    34: aconst_null
+    35: invokeinterface net/minecraft/client/renderer/SubmitNodeCollector.submitModel:(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/resources/Identifier;IIILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V
+    40: aload_2
+    41: invokevirtual com/mojang/blaze3d/vertex/PoseStack.popPose:()V
+    44: aload_0
+    45: aload_1
+    46: aload_2
+    47: aload_3
+    48: aload 4
+    50: invokespecial net/minecraft/client/renderer/entity/EntityRenderer.submit:(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+    53: return
+  METHOD createRenderState ()Lnet/minecraft/client/renderer/entity/state/EntityRenderState;  (code=8)
+    0: new net/minecraft/client/renderer/entity/state/EntityRenderState
+    3: dup
+    4: invokespecial net/minecraft/client/renderer/entity/state/EntityRenderState.<init>:()V
+    7: areturn
+  METHOD <clinit> ()V  (code=9)
+    0: ldc "textures/entity/lead_knot/lead_knot.png"
+    2: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    5: putstatic net/minecraft/client/renderer/entity/LeashKnotRenderer.KNOT_LOCATION:Lnet/minecraft/resources/Identifier;
+    8: return
+

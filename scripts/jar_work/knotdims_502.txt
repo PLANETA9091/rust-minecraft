@@ -1,0 +1,89 @@
+== net/minecraft/world/entity/EntityDimensions.class
+  METHOD <init> (FFZ)V  (code=17)
+    0: aload_0
+    1: op_23
+    2: op_24
+    3: op_24
+    4: invokestatic net/minecraft/world/entity/EntityDimensions.defaultEyeHeight:(F)F
+    7: op_23
+    8: op_24
+    9: invokestatic net/minecraft/world/entity/EntityAttachments.createDefault:(FF)Lnet/minecraft/world/entity/EntityAttachments;
+    12: iload_3
+    13: invokespecial net/minecraft/world/entity/EntityDimensions.<init>:(FFFLnet/minecraft/world/entity/EntityAttachments;Z)V
+    16: return
+  METHOD <init> (FFFLnet/minecraft/world/entity/EntityAttachments;Z)V  (code=32)
+    0: aload_0
+    1: invokespecial java/lang/Record.<init>:()V
+    4: aload_0
+    5: op_23
+    6: putfield net/minecraft/world/entity/EntityDimensions.width:F
+    9: aload_0
+    10: op_24
+    11: putfield net/minecraft/world/entity/EntityDimensions.height:F
+    14: aload_0
+    15: op_25
+    16: putfield net/minecraft/world/entity/EntityDimensions.eyeHeight:F
+    19: aload_0
+    20: aload 4
+    22: putfield net/minecraft/world/entity/EntityDimensions.attachments:Lnet/minecraft/world/entity/EntityAttachments;
+    25: aload_0
+    26: iload 5
+    28: putfield net/minecraft/world/entity/EntityDimensions.fixed:Z
+    31: return
+  METHOD makeBoundingBox (Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;  (code=17)
+    0: aload_0
+    1: aload_1
+    2: getfield net/minecraft/world/phys/Vec3.x:D
+    5: aload_1
+    6: getfield net/minecraft/world/phys/Vec3.y:D
+    9: aload_1
+    10: getfield net/minecraft/world/phys/Vec3.z:D
+    13: invokevirtual net/minecraft/world/entity/EntityDimensions.makeBoundingBox:(DDD)Lnet/minecraft/world/phys/AABB;
+    16: areturn
+  METHOD makeBoundingBox (DDD)Lnet/minecraft/world/phys/AABB;  (code=50)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/EntityDimensions.width:F
+    4: op_0d
+    5: fdiv
+    6: fstore 7
+    8: aload_0
+    9: getfield net/minecraft/world/entity/EntityDimensions.height:F
+    12: fstore 8
+    14: new net/minecraft/world/phys/AABB
+    17: dup
+    18: op_27
+    19: op_17 7
+    21: f2d
+    22: dsub
+    23: op_29
+    24: op_18 5
+    26: op_17 7
+    28: f2d
+    29: dsub
+    30: op_27
+    31: op_17 7
+    33: f2d
+    34: dadd
+    35: op_29
+    36: op_17 8
+    38: f2d
+    39: dadd
+    40: op_18 5
+    42: op_17 7
+    44: f2d
+    45: dadd
+    46: invokespecial net/minecraft/world/phys/AABB.<init>:(DDDDDD)V
+    49: areturn
+  METHOD scalable (FF)Lnet/minecraft/world/entity/EntityDimensions;  (code=11)
+    0: new net/minecraft/world/entity/EntityDimensions
+    3: dup
+    4: op_22
+    5: op_23
+    6: iconst_0
+    7: invokespecial net/minecraft/world/entity/EntityDimensions.<init>:(FFZ)V
+    10: areturn
+  METHOD eyeHeight ()F  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/EntityDimensions.eyeHeight:F
+    4: freturn
+

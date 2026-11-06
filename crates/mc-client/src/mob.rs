@@ -10943,6 +10943,60 @@ pub const LEAD_UNTIED_SOUND: &str = "item.lead.untied";
 /// player-carried press keeps).
 pub const SHEARS_SNIP_SOUND: &str = "item.shears.snip";
 
+/// THE LEAD KNOT'S OWN WIDTH (javap `LeashFenceKnotEntity
+/// .recalculateBoundingBox` pc 40-52 the leash_knot_498 census banks —
+/// the `getType().getWidth()` f2d read the EntityType registration
+/// speaks, the LEASH_KNOT sized pair the bootstrap lambda the 26.2
+/// registers; the MODEL'S OWN CONFIRM the knotrender_500 census banks —
+/// the LeashKnotModel.createBodyLayer's `addBox(-3.0f, -8.0f, -3.0f,
+/// 6.0f, 8.0f, 6.0f)` the 6-px = 0.375-block box the texOffs(0,0)
+/// 32×32 sheet wears, the bb the same pair the entity's own shape
+/// keeps).
+pub const LEASH_KNOT_WIDTH: f64 = 0.375;
+
+/// THE LEAD KNOT'S OWN HEIGHT (the same registration walk the width
+/// const banks — the 8-px = 0.5-block box the model's y −8..0 span
+/// speaks, the scale(-1,-1,1) pose flip the 0..0.5 upward span the
+/// world wears, the bb y pos..pos+0.5 the recalculate walk answers).
+pub const LEASH_KNOT_HEIGHT: f64 = 0.5;
+
+/// THE LEAD KNOT'S OWN EYE HEIGHT (javap `EntityDimensions
+/// .defaultEyeHeight(F)` the knotdims_502 census banks — the
+/// `height * 0.8500000238418579f` the ldc 0.85 fmul speaks, the
+/// scalable ctor the default the eyeHeight field stores, the
+/// getRopeHoldPosition's eyeHeight·0.7 the ropehold_501 census
+/// wears — the hold the knot pos + 0.425·0.7 the rope's own end
+/// keeps).
+pub const LEASH_KNOT_EYE_HEIGHT: f64 = 0.425;
+
+/// THE FENCE TAG'S OWN VERDICT (the 26.2 jar's own
+/// `data/minecraft/tags/block/fences.json` the knot round reads —
+/// the `#minecraft:wooden_fences` 12-name band + the
+/// `minecraft:nether_brick_fence` row the values walk banks, the
+/// `BlockState.is(BlockTags.FENCES)` the LeadItem.useOn pc 17-22
+/// gate the knot lane reads, the block_name_of the state id the
+/// registry word answers).
+pub fn is_fence_block(id: u16) -> bool {
+    matches!(
+        mc_registry::generated::block_ids::block_name_of(u32::from(id)),
+        Some(
+            "minecraft:oak_fence"
+                | "minecraft:acacia_fence"
+                | "minecraft:dark_oak_fence"
+                | "minecraft:pale_oak_fence"
+                | "minecraft:spruce_fence"
+                | "minecraft:birch_fence"
+                | "minecraft:jungle_fence"
+                | "minecraft:crimson_fence"
+                | "minecraft:warped_fence"
+                | "minecraft:mangrove_fence"
+                | "minecraft:bamboo_fence"
+                | "minecraft:cherry_fence"
+                | "minecraft:nether_brick_fence"
+        )
+    )
+}
+
 /// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderData — the
 /// fresh `(24000, 25)` the no-arg ctor speaks [the dump's `sipush
 /// 24000` + `bipush 25` the invokespecial ride banks], the saveddata

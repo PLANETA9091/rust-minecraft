@@ -40058,3 +40058,310 @@ fn the_shear_cut_the_ropes_drop_wears() {
     );
 }
 
+
+/// THE LEAD KNOT'S OWN WORDS (javap `LeashFenceKnotEntity
+/// .recalculateBoundingBox` + `Entity.getRopeHoldPosition` +
+/// `EntityDimensions.defaultEyeHeight` + the FENCES tag the
+/// leash_knot_498/ropehold_501/knotdims_502 censuses bank — the
+/// (0.375, 0.5) sized pair the model's 6×8×6 px box confirms, the
+/// bb the cell + (0.5, 0.375, 0.5) pos the ±0.1875 half-extents
+/// wear, the rope hold the eyeHeight·0.7 = 0.425·0.7 the +0.2975
+/// span keeps, the tag the 12 wooden + the nether brick rows the
+/// jar's own fences.json carries):
+#[test]
+fn the_lead_knot_the_vanilla_words_wear() {
+    use crate::screens::LeashKnotEnt;
+    // THE SIZED PAIR (the model's 6×8×6 px the 0.375×0.5 blocks the
+    // /16 fold keeps — the same pair the recalculate walk's
+    // getType().getWidth()/getHeight() reads)
+    assert_eq!(
+        crate::mob::LEASH_KNOT_WIDTH,
+        0.375,
+        "the knot width the pair wears"
+    );
+    assert_eq!(
+        crate::mob::LEASH_KNOT_HEIGHT,
+        0.5,
+        "the knot height the pair wears"
+    );
+    // THE BB'S OWN WALK (the pos the (x+0.5, y+0.375, z+0.5) trio the
+    // ldc2_w pair speaks, the half-extents the 0.1875 the width/2
+    // keeps, the y span the height 0.5 the upward band wears)
+    let bb = LeashKnotEnt::bb_at((10, 20, 30));
+    assert_eq!(
+        bb,
+        (
+            10.0 + 0.3125,
+            20.0 + 0.375,
+            30.0 + 0.3125,
+            10.0 + 0.6875,
+            20.0 + 0.875,
+            30.0 + 0.6875
+        ),
+        "the knot bb the cell walk wears"
+    );
+    // THE EYE HEIGHT'S OWN LAW (the defaultEyeHeight the height·0.85
+    // the ldc 0.85 fmul speaks — 0.5·0.85 = 0.425)
+    assert_eq!(
+        crate::mob::LEASH_KNOT_EYE_HEIGHT,
+        0.425,
+        "the knot eye the default law wears"
+    );
+    // THE ROPE HOLD'S OWN SPAN (the getRopeHoldPosition the
+    // eyeHeight·0.7 fold speaks — the hold the pos y + 0.2975 keeps)
+    let kn = LeashKnotEnt {
+        id: 7,
+        cell: (10, 20, 30),
+        check_interval: 0,
+    };
+    assert_eq!(
+        kn.rope_hold(),
+        (10.5, 20.375 + 0.425 * 0.7, 30.5),
+        "the rope hold the eye fold wears"
+    );
+    // THE FENCE TAG'S OWN ROWS (the jar's fences.json the values walk
+    // banks — the 12 wooden + the nether brick the tag answers, the
+    // gate/fence-gate the same-name prefix the tag REFUSES, the
+    // stone the miss keeps)
+    let fence_id = (0..7000u32)
+        .find(|&s| {
+            mc_registry::generated::block_ids::block_name_of(s) == Some("minecraft:oak_fence")
+        })
+        .expect("the oak fence the registry carries");
+    assert!(
+        crate::mob::is_fence_block(fence_id as u16),
+        "the oak fence the tag answers"
+    );
+    let gate_id = (0..9400u32)
+        .find(|&s| {
+            mc_registry::generated::block_ids::block_name_of(s) == Some("minecraft:oak_fence_gate")
+        })
+        .expect("the fence gate the registry carries");
+    assert!(
+        !crate::mob::is_fence_block(gate_id as u16),
+        "the fence gate the tag refuses"
+    );
+    let nether_id = (0..9400u32)
+        .find(|&s| {
+            mc_registry::generated::block_ids::block_name_of(s)
+                == Some("minecraft:nether_brick_fence")
+        })
+        .expect("the nether fence the registry carries");
+    assert!(
+        crate::mob::is_fence_block(nether_id as u16),
+        "the nether fence the tag answers"
+    );
+    let stone_id = (0..10u32)
+        .find(|&s| mc_registry::generated::block_ids::block_name_of(s) == Some("minecraft:stone"))
+        .expect("the stone the registry carries");
+    assert!(
+        !crate::mob::is_fence_block(stone_id as u16),
+        "the stone the tag refuses"
+    );
+}
+
+/// THE LEAD KNOT'S OWN CANVAS (the `LeadItem.useOn` FENCES lane +
+/// `bindPlayerMobs` + `LeashFenceKnotEntity.interact` the press walk
+/// serves — the held lead the fence cell the bind walks [the
+/// reuse-or-spawn the getKnot pair keeps, the NO-shrink law the
+/// transfer speaks], the bare press the knot the TAKE arm the
+/// player's own hand re-seats, the sneak press the PASS the super's
+/// NOT-Leashable walk answers, the shears press the CUT the lead at
+/// the mob's own feet drops, the fence-gone poll the discard +
+/// the tied mobs' rope break the tick lane serves):
+#[test]
+fn the_lead_knot_the_fence_tie_wears() {
+    let _lane = render_lane();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE FIRST-PERSON'S OWN POSE (the pick walks the eye's own camera
+    // the walk serves — the fence the eye's own forward the 2-block
+    // band wears, the knot the cell's own center the ray crosses)
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 0.0;
+        body.pitch = 0.0;
+        // THE HALF-BLOCK'S OWN STAND (the spawn the cell boundary the
+        // exact-40.0 x wears — the ray the tiny yaw drift the
+        // neighboring cell the floor(x) crosses, the knot bb the
+        // half-block the eye's own x carries)
+        body.x += 0.5;
+    }
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+    let fence_cell = (bx, by + 1, bz + 2);
+    let fence_id = (0..7000u32)
+        .find(|&s| {
+            mc_registry::generated::block_ids::block_name_of(s) == Some("minecraft:oak_fence")
+        })
+        .expect("the oak fence the registry carries") as u16;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in (bx - 30)..=(bx + 30) {
+            for z in (bz - 7)..=(bz + 3) {
+                for y in by..=(by + 5) {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+                w.set(x, by - 1, z, crate::world::STONE);
+            }
+        }
+        w.set(fence_cell.0, fence_cell.1, fence_cell.2, fence_id);
+        w.relight();
+    }
+    // THE LLAMA'S OWN STAGE (the holder's own side — the body 2 blocks
+    // east the ray never crosses, the fence center the ≤ 16 scan box
+    // + the ≤ 12.0 attach gate both answer)
+    let mut llama =
+        crate::mob::Zombie::new(902, (bx as f64) + 2.0, by as f64, (bz as f64) + 2.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    app.mobs.push(llama);
+    let lead = mc_registry::item_id_by_name("lead").expect("the lead the registry carries");
+    app.inventory.items[app.selected_hotbar] = (lead, 1);
+    // THE PLAYER'S OWN ROPE (the tie walk the 486 round serves — the
+    // llama the player's own seat the pre-bank keeps, the bind the
+    // same rope the knot's own anchor re-seats)
+    app.mobs[0].leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+    // THE BIND'S OWN PRESS (the held lead the fence cell the useOn
+    // lane serves — the knot the fresh id the spawn banks, the llama
+    // the knot's own seat the transfer banks, the tied voice the row
+    // speaks, the NO-shrink the lead the hand keeps)
+    assert!(app.on_right_press(0, 0), "the bind the press consumes");
+    assert_eq!(app.knots.len(), 1, "the bind the fresh knot spawns");
+    let knot_id = app.knots[0].id;
+    assert_eq!(
+        app.knots[0].cell, fence_cell,
+        "the knot the fence cell keeps"
+    );
+    assert_eq!(
+        app.mobs[0].leashed_to,
+        Some(knot_id),
+        "the transfer the knot's own seat banks"
+    );
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (lead, 1),
+        "the NO-shrink the lead the hand keeps"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.lead.tied ")),
+        "the placement voice the lane carries"
+    );
+    // THE TAKE'S OWN PRESS (the bare press the knot the pick wins —
+    // the fence cell's own face the ignore law keeps — the llama the
+    // player's own hand re-seats, the tied voice the row speaks)
+    assert!(app.on_right_press(0, 0), "the take the press consumes");
+    assert_eq!(
+        app.mobs[0].leashed_to,
+        Some(crate::mob::PLAYER_HOLDER_ID),
+        "the take the player's own seat banks"
+    );
+    assert_eq!(app.knots.len(), 1, "the take the knot the world keeps");
+    // THE SNEAK'S OWN PASS (the shift the take arm SKIPS — the super
+    // the NOT-Leashable walk the PASS answers, the press the walk
+    // never consumes, the rope the player's own seat keeps)
+    app.shift_down = true;
+    app.inventory.items[app.selected_hotbar] = (0, 0);
+    assert!(
+        !app.on_right_press(0, 0),
+        "the sneak press the super's PASS keeps"
+    );
+    assert_eq!(
+        app.mobs[0].leashed_to,
+        Some(crate::mob::PLAYER_HOLDER_ID),
+        "the sneak the rope the player's own seat keeps"
+    );
+    app.shift_down = false;
+    // THE RE-BIND'S OWN REUSE (the held lead the same fence cell the
+    // getKnot walk serves — the knot id the SAME body keeps, the
+    // count the one keeps, the llama the knot's own seat re-banks;
+    // the PITCH the knot bb the ray the fence cell's own lower band
+    // wears — the entity hit the vanilla startUseItem the switch the
+    // BLOCK case never routes, the knot's own PASS the item lane the
+    // press never re-binds, the off-knot aim the fence cell the bind
+    // walk serves)
+    app.inventory.items[app.selected_hotbar] = (lead, 1);
+    {
+        let body = app.body.as_mut().unwrap();
+        body.pitch = 12.0;
+    }
+    assert!(app.on_right_press(0, 0), "the re-bind the press consumes");
+    {
+        let body = app.body.as_mut().unwrap();
+        body.pitch = 0.0;
+    }
+    assert_eq!(app.knots.len(), 1, "the reuse the count the one keeps");
+    assert_eq!(app.knots[0].id, knot_id, "the reuse the same body keeps");
+    assert_eq!(
+        app.mobs[0].leashed_to,
+        Some(knot_id),
+        "the re-bind the knot's own seat banks"
+    );
+    // THE CUT'S OWN PRESS (the held shears the knot the pick serves —
+    // the llama's rope the lead at the body's own feet drops, the
+    // snip voice the row speaks)
+    let shears = mc_registry::item_id_by_name("shears").expect("the shears the registry carries");
+    app.inventory.items[app.selected_hotbar] = (shears, 1);
+    let drops_before = app.drops.len();
+    assert!(app.on_right_press(0, 0), "the cut the press consumes");
+    assert_eq!(
+        app.mobs[0].leashed_to, None,
+        "the cut the rope the None clears"
+    );
+    let lead_dropped = app.drops[drops_before..]
+        .iter()
+        .any(|d| d.item == lead && d.count == 1);
+    assert!(lead_dropped, "the cut the lead the count-1 the feet drops");
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.shears.snip ")),
+        "the snip voice the lane carries"
+    );
+    // THE FENCE-GONE'S OWN POLL (the survives verdict the fence
+    // check the tick walk serves — the knot the discard answers, the
+    // tied mobs the rope break the lead drop the same walk keeps;
+    // the PITCH the off-knot aim the fence cell the bind walk serves
+    // — the knot's own PASS the entity hit the BLOCK case the switch
+    // never routes)
+    app.inventory.items[app.selected_hotbar] = (lead, 1);
+    // THE PLAYER'S OWN ROPE (the cut the rope the drop cleared — the
+    // re-tie the mob-tie walk the 486 round's own tests wear, the
+    // pre-bank the same law the first bind's staging keeps)
+    app.mobs[0].leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+    {
+        let body = app.body.as_mut().unwrap();
+        body.pitch = 12.0;
+    }
+    assert!(app.on_right_press(0, 0), "the re-tie the press consumes");
+    assert_eq!(
+        app.mobs[0].leashed_to,
+        Some(knot_id),
+        "the re-tie the knot's own seat banks"
+    );
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(fence_cell.0, fence_cell.1, fence_cell.2, crate::world::AIR);
+    }
+    app.knots[0].check_interval = 99;
+    let drops_before = app.drops.len();
+    app.tick_knots();
+    assert!(app.knots.is_empty(), "the fence-gone the knot discards");
+    assert_eq!(
+        app.mobs[0].leashed_to, None,
+        "the holder-gone the rope breaks"
+    );
+    let lead_dropped = app.drops[drops_before..]
+        .iter()
+        .any(|d| d.item == lead && d.count == 1);
+    assert!(lead_dropped, "the holder-gone the lead the feet drops");
+}
+
+
+
+
