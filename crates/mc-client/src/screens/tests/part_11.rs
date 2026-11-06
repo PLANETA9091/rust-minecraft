@@ -42403,3 +42403,251 @@ fn the_set_damage_the_points_fold_wears() {
         "the missing row the zero keeps"
     );
 }
+
+/// THE DAMAGE BAR'S OWN LAWS (javap 26.2 the durbar_511 census banks
+/// — the strip the hotbar slot's sprite overlay the vanilla wears):
+/// the `Item.getBarWidth` clamp(Math.round(13 − dmg·13/max), 0, 13)
+/// fold, the `Item.getBarColor` hue the max(0, (max−dmg)/max)/3 the
+/// green-to-red wears [the alpha-0 ARGB the hsvToArgb's own 0 keeps,
+/// the ARGB.opaque the strip's fill re-wears], the isBarVisible gate
+/// the isDamaged trio maps, the Mth.hsvToArgb's own six arms the
+/// sector fold keeps.
+#[test]
+fn the_damage_bar_the_laws_the_census_wears() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    // THE WIDTH'S OWN LAW (the 13 the pristine wears, the 7 the
+    // round(6.6) boots' half speaks, the 0 the spent + the clamp the
+    // over-damaged stack keeps, the 13 the rod's 1-point nick wears)
+    assert_eq!(
+        crate::drops::stack_bar_width(0, 65),
+        13,
+        "the pristine strip the full 13 wears"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_width(32, 65),
+        7,
+        "the boots the round(6.6) wears"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_width(65, 65),
+        0,
+        "the spent stack the zero wears"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_width(100, 65),
+        0,
+        "the over-damaged the clamp keeps"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_width(1, 384),
+        13,
+        "the bow's 1-point nick the 13 wears"
+    );
+    // THE COLOR'S OWN LAW (the green 0x0000FF00 the full-health
+    // stack wears, the red 0x00FF0000 the spent one, the boots' half
+    // the 0x00FBFF00 the sector-1 q fold speaks, the alpha byte the
+    // ZERO the hsvToRgb keeps, the opaque wrap the FF re-wears)
+    assert_eq!(
+        crate::drops::stack_bar_color(0, 65),
+        0x0000FF00,
+        "the full-health the green wears"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_color(65, 65),
+        0x00FF0000,
+        "the spent the red wears"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_color(32, 65),
+        0x00FBFF00,
+        "the half the 251/255 q fold wears"
+    );
+    assert_eq!(
+        crate::drops::stack_bar_color(0, 65) & (0xFF000000_u32 as i32),
+        0,
+        "the alpha-0 word the hsvToRgb keeps"
+    );
+    assert_eq!(
+        crate::drops::argb_opaque(crate::drops::stack_bar_color(32, 65)),
+        0xFFFBFF00_u32 as i32,
+        "the strip's fill the opaque wrap wears"
+    );
+    // THE VISIBLE'S OWN GATE (the pristine the silence keeps, the
+    // nick the bar wears, the spent the bar wears — the width the
+    // bw>0 gate the strip never draws, the max-0 row the gate never
+    // passes)
+    assert!(
+        !crate::drops::stack_bar_visible(0, 65),
+        "the pristine the silence keeps"
+    );
+    assert!(
+        crate::drops::stack_bar_visible(1, 65),
+        "the nick the bar wears"
+    );
+    assert!(
+        crate::drops::stack_bar_visible(65, 65),
+        "the spent the visible keeps — the width the draw gates"
+    );
+    assert!(
+        !crate::drops::stack_bar_visible(0, 0),
+        "the max-0 row the gate never passes"
+    );
+    // THE HUE FOLD'S OWN ARMS (the sector boundaries the exact pairs
+    // speak: the 0 red, the 1/3 green, the 1/2 cyan, the 2/3 blue —
+    // the alpha ride the argb variant keeps)
+    assert_eq!(
+        crate::mth::hsv_to_rgb(0.0, 1.0, 1.0),
+        0x00FF0000,
+        "the sector 0 the red wears"
+    );
+    assert_eq!(
+        crate::mth::hsv_to_rgb(1.0 / 3.0, 1.0, 1.0),
+        0x0000FF00,
+        "the sector 2 the green wears"
+    );
+    assert_eq!(
+        crate::mth::hsv_to_rgb(0.5, 1.0, 1.0),
+        0x0000FFFF,
+        "the sector 3 the cyan wears"
+    );
+    assert_eq!(
+        crate::mth::hsv_to_rgb(2.0 / 3.0, 1.0, 1.0),
+        0x000000FF,
+        "the sector 4 the blue wears"
+    );
+    assert_eq!(
+        crate::mth::hsv_to_argb(0.5, 1.0, 1.0, 0x80),
+        0x8000FFFF_u32 as i32,
+        "the alpha ride the argb variant keeps"
+    );
+    // THE COMPOSED CHAIN (the 486 points fold the strip's own input
+    // wears: the 0.5 boots the 32 points, the width the 7, the
+    // color the sector-1 fold — the HUD's own walk the round banks)
+    let points = crate::mob::bobber_set_damage_points(0.5, boots);
+    assert_eq!(points, 32);
+    assert_eq!(crate::drops::stack_bar_width(points, 65), 7);
+    assert_eq!(crate::drops::stack_bar_color(points, 65), 0x00FBFF00);
+}
+
+/// THE DAMAGE BAR'S OWN RIDE (the pickup's own walk the row banks —
+/// the landed stack's wear the grow row wears, the pristine landing
+/// the fresh row the 0.0 wears, the untouched rows the wear they had
+/// keep, the merge the landed word the row answers): the strip's own
+/// inputs the ride's tail reads, the unstackable boots the vanilla's
+/// own max-stack the separate rows the wears keep, the stackable
+/// dirt the merge arm the reset speaks.
+#[test]
+fn the_damage_bar_the_pickup_the_row_the_strip_wears() {
+    let mut app = crate::screens::App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x, body.y, body.z);
+    let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+    // THE WORN DROP'S OWN TAKE (the 0.5 frac the damaged drop wears
+    // — the touch the row banks)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(1, boots, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.damage_frac = 0.5;
+    app.drops.push(drop);
+    app.items_damage_frac[5] = 0.9; // the untouched row's own wear
+    app.update();
+    assert!(app.drops.is_empty(), "the take the whole drop spoke");
+    assert_eq!(
+        app.inventory.items[0],
+        (boots, 1),
+        "the take the slot holds"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.5,
+        "the landed stack's wear the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[5], 0.9,
+        "the untouched row the wear keeps"
+    );
+    // THE STRIP'S OWN INPUTS (the ride's row the HUD's own walk
+    // reads: the points the 0.5·65 fold wears, the width + color the
+    // census laws answer)
+    let points = crate::mob::bobber_set_damage_points(app.items_damage_frac[0], boots);
+    assert_eq!(points, 32, "the half-wear the 32 points wears");
+    assert_eq!(crate::drops::stack_bar_width(points, 65), 7);
+    assert_eq!(crate::drops::stack_bar_color(points, 65), 0x00FBFF00);
+    assert!(crate::drops::stack_bar_visible(points, 65));
+    // THE SECOND BOOTS' OWN ROW (the vanilla's own max-stack the
+    // merge never speaks — the pristine landing the FRESH row the
+    // 0.0 wears, the worn row the untouched law the 0.5 keeps)
+    let pristine =
+        crate::drops::ItemDrop::spawn_entity_loot(2, boots, 1, bx, by + 0.5, bz, &mut rng);
+    let mut pristine = pristine;
+    pristine.pickup_delay = 0;
+    pristine.damage_frac = 0.0;
+    app.drops.push(pristine);
+    app.update();
+    assert_eq!(
+        app.inventory.items[1],
+        (boots, 1),
+        "the landing the next slot holds"
+    );
+    assert_eq!(
+        app.items_damage_frac[1], 0.0,
+        "the pristine landing the fresh row the 0.0 wears"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.5,
+        "the worn row the untouched law keeps"
+    );
+    // THE MERGE'S OWN RESET (the stackable dirt the merge arm speaks:
+    // the worn 0.5 take the row banks, the pristine merge the grow
+    // arm the landed word answers — the 0.0 the pristine wears, the
+    // stale bar the refill never keeps)
+    let mut worn_dirt =
+        crate::drops::ItemDrop::spawn_entity_loot(3, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    worn_dirt.pickup_delay = 0;
+    worn_dirt.damage_frac = 0.5;
+    app.drops.push(worn_dirt);
+    app.update();
+    assert_eq!(
+        app.items_damage_frac[2], 0.5,
+        "the worn dirt's take the row banks"
+    );
+    let mut more_dirt =
+        crate::drops::ItemDrop::spawn_entity_loot(4, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    more_dirt.pickup_delay = 0;
+    more_dirt.damage_frac = 0.0;
+    app.drops.push(more_dirt);
+    app.update();
+    assert_eq!(
+        app.inventory.items[2],
+        (dirt, 2),
+        "the merge the slot grows"
+    );
+    assert_eq!(
+        app.items_damage_frac[2], 0.0,
+        "the pristine merge the row resets"
+    );
+    // THE RE-WORN TAKE'S OWN WIDTH (the 0.25 the 16 points, the width
+    // the round(9.8) the 10 wears — the HUD's own chain the ride's
+    // fresh word re-reads)
+    let mut worn =
+        crate::drops::ItemDrop::spawn_entity_loot(5, boots, 1, bx, by + 0.5, bz, &mut rng);
+    worn.pickup_delay = 0;
+    worn.damage_frac = 0.25;
+    app.drops.push(worn);
+    app.update();
+    assert_eq!(
+        app.items_damage_frac[2 + 1],
+        0.25,
+        "the re-worn landing the fresh word wears"
+    );
+    let points = crate::mob::bobber_set_damage_points(0.25, boots);
+    assert_eq!(points, 16, "the 0.25 the floor(16.25) wears");
+    assert_eq!(
+        crate::drops::stack_bar_width(points, 65),
+        10,
+        "the re-worn strip the round(9.8) wears"
+    );
+}

@@ -10068,6 +10068,21 @@ pub struct App {
     /// the absence keeps; the accessor's normalization the non-potion
     /// rows the NONE verdict reads.
     pub items_potion_kinds: [i32; 37],
+    /// THE DAMAGE BAR'S OWN ROW (the durbar_511 census the strip's
+    /// laws banks — per items row the SAME 36-slot numbering the kind
+    /// row keys, the 37TH SEAT the offhand's own parity keeps): the
+    /// stack's DAMAGE fraction the [`crate::drops::ItemDrop
+    /// ::damage_frac`] word the pickup's own ride banks, the hotbar's
+    /// strip the HUD's draw the [`crate::drops::stack_bar_width`] /
+    /// [`crate::drops::stack_bar_color`] folds render. The vanilla
+    /// stacks the wear the COMPONENTS keep — the port's own (id,
+    /// count) rows the parallel row the ride banks (the grow row the
+    /// landed stack's wear wears, the pristine drop the row's reset
+    /// keeps), the WIRE seats the 0.0 wall the gate never passes (the
+    /// store the components never carried — the honest wall the
+    /// glint lane's own shape re-wears), the menu walks' own rides
+    /// the NEXT's own lane banks.
+    pub items_damage_frac: [f32; 37],
     /// THE ANVIL'S OWN TRANSIENT TRIO (the dev-202 round — the
     /// ItemCombinerMenu's SimpleContainer(2) + the ResultContainer the
     /// offline canvas projects: the input 0 the input 1 the menu
@@ -13801,6 +13816,7 @@ impl App {
             enchant_comps: std::array::from_fn(|_| Vec::new()),
             inventory_enchants: std::array::from_fn(|_| Vec::new()),
             items_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 37],
+            items_damage_frac: [0.0; 37],
             enchant_clues: [-1; 3],
             enchant_level_clues: [-1; 3],
             enchanting_table_pos: None,
@@ -19043,8 +19059,13 @@ impl App {
                             // THE WORD BEFORE THE TAKE (the kinded drop
                             // the ride's own snapshot banks — the rows
                             // the add is about to walk, the kindless
-                            // drop the ride never wears)
+                            // drop the ride never wears; the WEAR the
+                            // damage bar's own ride banks — the frac
+                            // the drop carries, the rows the same
+                            // snapshot pairs)
                             let drop_kind = d.potion_kind;
+                            let drop_wear = d.damage_frac;
+                            let wear_before = self.inventory.items;
                             let inv_before = if drop_kind != crate::brewing_sim::POTION_KIND_NONE {
                                 Some(self.inventory.items)
                             } else {
@@ -19082,6 +19103,28 @@ impl App {
                                         {
                                             self.items_potion_kinds[i] = drop_kind;
                                         }
+                                    }
+                                }
+                                // THE DAMAGE BAR'S OWN RIDE (the
+                                // durbar_511 census the strip's laws
+                                // banks — the grow rows the landed
+                                // stack's own wear wears [the pristine
+                                // drop the row's reset keeps — the
+                                // landed stack's own word the row
+                                // answers, the vanilla's own
+                                // refuse-to-merge the damaged rows the
+                                // (id, count) store's simplification
+                                // re-wears], the emptied rows the reset
+                                // the stale bar never wears, the
+                                // untouched rows the wear they had
+                                // keep). The menu walks' own rides the
+                                // NEXT's own lane banks.
+                                for i in 0..36usize {
+                                    let now = self.inventory.items[i].1;
+                                    if now <= 0 && wear_before[i].1 > 0 {
+                                        self.items_damage_frac[i] = 0.0;
+                                    } else if now > wear_before[i].1 {
+                                        self.items_damage_frac[i] = drop_wear;
                                     }
                                 }
                             }
@@ -93197,6 +93240,45 @@ impl App {
                     draw_item_icon_kind(g, id, kind, ix, iy);
                 } else {
                     draw_item_icon(g, id, ix, iy);
+                }
+                // THE DAMAGE BAR'S OWN STRIP (javap 26.2
+                // GuiGraphicsExtractor.itemBar the durbar_511 census
+                // banks — the isBarVisible gate the isDamaged fold
+                // answers, the background 13x2 at (x+2, y+13) the
+                // OPAQUE BLACK fill (-16777216) keeps, the color strip
+                // the getBarWidth x 1 the ARGB.opaque(getBarColor())
+                // wraps — the hue the `max(0.0F, (max - damage) / max)
+                // / 3.0F` fold the green-to-red wears, the width the
+                // `clamp(Math.round(13.0F - damage * 13.0F / max), 0,
+                // 13)` the strip wears; the itemDecorations order the
+                // bar FIRST the cooldown + count follow — the strip
+                // the icon's own sprite rows 13..15 the overlay
+                // wears). The frac the pickup's own ride banks (the
+                // points the `bobber_set_damage_points` fold resolves,
+                // the max the registry's table the three fishing-lane
+                // rows banks), the WIRE seats the 0.0 wall the gate
+                // never passes (the store the components never
+                // carried — the honest wall the glint lane's own
+                // shape re-wears), the max-0/missing rows the None
+                // the strip never wears).
+                let wear = self.items_damage_frac[i];
+                if wear > 0.0 {
+                    if let Some(max) = mc_registry::item_max_damage(id) {
+                        let points = crate::mob::bobber_set_damage_points(wear, id);
+                        if crate::drops::stack_bar_visible(points, max) {
+                            let bw = crate::drops::stack_bar_width(points, max);
+                            g.fill(ix + 2, iy + 13, 13, 2, [0.0, 0.0, 0.0, 1.0]);
+                            if bw > 0 {
+                                let c = crate::drops::argb_opaque(crate::drops::stack_bar_color(
+                                    points, max,
+                                ));
+                                let r = ((c >> 16) & 0xFF) as f32 / 255.0;
+                                let gg = ((c >> 8) & 0xFF) as f32 / 255.0;
+                                let bb = (c & 0xFF) as f32 / 255.0;
+                                g.fill(ix + 2, iy + 13, bw, 1, [r, gg, bb, 1.0]);
+                            }
+                        }
+                    }
                 }
                 if count > 1 {
                     let s = count.to_string();

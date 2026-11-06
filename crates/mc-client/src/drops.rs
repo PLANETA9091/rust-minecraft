@@ -1039,6 +1039,55 @@ pub fn player_touch(
     }
 }
 
+/// THE DAMAGE BAR'S OWN STACK LAWS (javap 26.2 the durbar_511 census
+/// banks — the bar the hotbar slot's sprite overlay the vanilla
+/// wears): the reads the stack's own words speak.
+/// - `Item.getBarWidth(ItemStack)` (the default the stack's virtual
+///   delegate answers): `Mth.clamp(Math.round(13.0F - damage *
+///   13.0F / max), 0, 13)` — the 13-px strip the 16-px sprite rows
+///   13..15 keeps, the clamp the over-damaged stack's own 0 wears.
+/// - `Item.getBarColor(ItemStack)`: `Mth.hsvToRgb(Math.max(0.0F,
+///   (max - damage) / max) / 3.0F, 1.0F, 1.0F)` — the green-to-red
+///   hue fold the [`crate::mth::hsv_to_rgb`] port answers (the
+///   alpha-0 ARGB the hsvToArgb's own alpha=0 call keeps — the
+///   strip's fill the opaque wrap re-wears).
+/// - `ItemStack.isBarVisible()` → `isDamaged()` →
+///   `isDamageableItem() && getDamageValue() > 0` — the component
+///   trio the port's own store shape maps: the MAX_DAMAGE row the
+///   registry's `item_max_damage` table keeps, the UNBREAKABLE flag
+///   the offline lanes never wear, the DAMAGE component the >0
+///   points the damaged stack carries. The max 0 row the gate
+///   never passes (the table's missing rows the honest None the
+///   HUD's own arm keeps before this law reads).
+/// The max 0 division the callers' own visible gate never reaches —
+/// the vanilla's own isBarVisible arm the reads precede.
+pub fn stack_bar_width(damage: i32, max_damage: i32) -> i32 {
+    (13.0 - damage as f32 * 13.0 / max_damage as f32)
+        .round()
+        .clamp(0.0, 13.0) as i32
+}
+
+/// `Item.getBarColor` — the hue fold the alpha-0 ARGB keeps (the
+/// green 0x0000FF00 the full-health stack wears, the red
+/// 0x00FF0000 the spent one).
+pub fn stack_bar_color(damage: i32, max_damage: i32) -> i32 {
+    let ratio = ((max_damage - damage) as f32 / max_damage as f32).max(0.0);
+    crate::mth::hsv_to_rgb(ratio / 3.0, 1.0, 1.0)
+}
+
+/// `ItemStack.isBarVisible` — the isDamaged fold the component trio
+/// maps (the max row the table keeps, the >0 points the wear speaks).
+pub fn stack_bar_visible(damage: i32, max_damage: i32) -> bool {
+    max_damage > 0 && damage > 0
+}
+
+/// `ARGB.opaque` (javap) — the alpha byte the FF the strip fill
+/// wears (the itemBar's own wrap the hsvToRgb's alpha-0 word
+/// re-answers).
+pub fn argb_opaque(color: i32) -> i32 {
+    color | 0xFF000000u32 as i32
+}
+
 /// The aiStep scan (javap Player.aiStep, the no-vehicle branch): the
 /// player's own bounding box inflated `(1.0, 0.5, 1.0)` against the
 /// item's box. The crouch pose's own height rides (the vanilla's

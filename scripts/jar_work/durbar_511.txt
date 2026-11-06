@@ -1,0 +1,326 @@
+== net/minecraft/world/item/ItemStack ==
+  METHOD getBarColor ()I  (code=9)
+  0: 2a 
+  1: b6 ItemStack.getItem
+  4: 2a 
+  5: b6 Item.getBarColor
+  8: ac 
+  METHOD getBarWidth ()I  (code=9)
+  0: 2a 
+  1: b6 ItemStack.getItem
+  4: 2a 
+  5: b6 Item.getBarWidth
+  8: ac 
+  METHOD getDamageValue ()I  (code=26)
+  0: 2a 
+  1: b2 DataComponents.DAMAGE
+  4: 03 0
+  5: b8 Integer.valueOf
+  8: b6 ItemStack.getOrDefault
+  11: c0 Integer
+  14: b6 Integer.intValue
+  17: 03 0
+  18: 2a 
+  19: b6 ItemStack.getMaxDamage
+  22: b8 Mth.clamp
+  25: ac 
+  METHOD getMaxDamage ()I  (code=18)
+  0: 2a 
+  1: b2 DataComponents.MAX_DAMAGE
+  4: 03 0
+  5: b8 Integer.valueOf
+  8: b6 ItemStack.getOrDefault
+  11: c0 Integer
+  14: b6 Integer.intValue
+  17: ac 
+  METHOD isBarVisible ()Z  (code=9)
+  0: 2a 
+  1: b6 ItemStack.getItem
+  4: 2a 
+  5: b6 Item.isBarVisible
+  8: ac 
+  METHOD isDamageableItem ()Z  (code=36)
+  0: 2a 
+  1: b2 DataComponents.MAX_DAMAGE
+  4: b6 ItemStack.has
+  7: 99 34
+  10: 2a 
+  11: b2 DataComponents.UNBREAKABLE
+  14: b6 ItemStack.has
+  17: 9a 34
+  20: 2a 
+  21: b2 DataComponents.DAMAGE
+  24: b6 ItemStack.has
+  27: 99 34
+  30: 04 1
+  31: a7 35
+  34: 03 0
+  35: ac 
+  METHOD isDamaged ()Z  (code=20)
+  0: 2a 
+  1: b6 ItemStack.isDamageableItem
+  4: 99 18
+  7: 2a 
+  8: b6 ItemStack.getDamageValue
+  11: 9e 18
+  14: 04 1
+  15: a7 19
+  18: 03 0
+  19: ac 
+
+== net/minecraft/world/item/Item ==
+  METHOD getBarColor (Lnet/minecraft/world/item/ItemStack;)I  (code=32)
+  0: 2b 
+  1: b6 ItemStack.getMaxDamage
+  4: 3d 
+  5: 0b 
+  6: 1c 
+  7: 86 
+  8: 2b 
+  9: b6 ItemStack.getDamageValue
+  12: 86 
+  13: 66 
+  14: 1c 
+  15: 86 
+  16: 6e 
+  17: b8 Math.max
+  20: 46 
+  21: 25 
+  22: 13 3.0
+  25: 6e 
+  26: 0c 
+  27: 0c 
+  28: b8 Mth.hsvToRgb
+  31: ac 
+  METHOD getBarWidth (Lnet/minecraft/world/item/ItemStack;)I  (code=27)
+  0: 12 13.0
+  2: 2b 
+  3: b6 ItemStack.getDamageValue
+  6: 86 
+  7: 12 13.0
+  9: 6a 
+  10: 2b 
+  11: b6 ItemStack.getMaxDamage
+  14: 86 
+  15: 6e 
+  16: 66 
+  17: b8 Math.round
+  20: 03 0
+  21: 10 13
+  23: b8 Mth.clamp
+  26: ac 
+  METHOD isBarVisible (Lnet/minecraft/world/item/ItemStack;)Z  (code=5)
+  0: 2b 
+  1: b6 ItemStack.isDamaged
+  4: ac 
+
+== net/minecraft/client/gui/GuiGraphicsExtractor ==
+  METHOD itemBar (Lnet/minecraft/world/item/ItemStack;II)V  (code=71)
+  0: 2b 
+  1: b6 ItemStack.isBarVisible
+  4: 99 70
+  7: 1c 
+  8: 05 2
+  9: 60 
+  10: 36 4
+  12: 1d 
+  13: 10 13
+  15: 60 
+  16: 36 5
+  18: 2a 
+  19: b2 RenderPipelines.GUI
+  22: 15 4
+  24: 15 5
+  26: 15 4
+  28: 10 13
+  30: 60 
+  31: 15 5
+  33: 05 2
+  34: 60 
+  35: 13 -16777216
+  38: b6 GuiGraphicsExtractor.fill
+  41: 2a 
+  42: b2 RenderPipelines.GUI
+  45: 15 4
+  47: 15 5
+  49: 15 4
+  51: 2b 
+  52: b6 ItemStack.getBarWidth
+  55: 60 
+  56: 15 5
+  58: 04 1
+  59: 60 
+  60: 2b 
+  61: b6 ItemStack.getBarColor
+  64: b8 ARGB.opaque
+  67: b6 GuiGraphicsExtractor.fill
+  70: b1 
+  METHOD itemDecorations (Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V  (code=11)
+  0: 2a 
+  1: 2b 
+  2: 2c 
+  3: 1d 
+  4: 15 4
+  6: 01 
+  7: b6 GuiGraphicsExtractor.itemDecorations
+  10: b1 
+  METHOD itemDecorations (Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V  (code=52)
+  0: 2c 
+  1: b6 ItemStack.isEmpty
+  4: 99 8
+  7: b1 
+  8: 2a 
+  9: b4 GuiGraphicsExtractor.pose
+  12: b6 Matrix3x2fStack.pushMatrix
+  15: 57 
+  16: 2a 
+  17: 2c 
+  18: 1d 
+  19: 15 4
+  21: b6 GuiGraphicsExtractor.itemBar
+  24: 2a 
+  25: 2c 
+  26: 1d 
+  27: 15 4
+  29: b6 GuiGraphicsExtractor.itemCooldown
+  32: 2a 
+  33: 2b 
+  34: 2c 
+  35: 1d 
+  36: 15 4
+  38: 19 5
+  40: b6 GuiGraphicsExtractor.itemCount
+  43: 2a 
+  44: b4 GuiGraphicsExtractor.pose
+  47: b6 Matrix3x2fStack.popMatrix
+  50: 57 
+  51: b1 
+
+== net/minecraft/util/Mth ==
+  METHOD hsvToArgb (FFFI)I  (code=239)
+  0: 22 
+  1: 13 6.0
+  4: 6a 
+  5: 8b 
+  6: 10 6
+  8: 70 
+  9: 36 4
+  11: 22 
+  12: 13 6.0
+  15: 6a 
+  16: 15 4
+  18: 86 
+  19: 66 
+  20: 38 5
+  22: 24 
+  23: 0c 
+  24: 23 
+  25: 66 
+  26: 6a 
+  27: 38 6
+  29: 24 
+  30: 0c 
+  31: 17 5
+  33: 23 
+  34: 6a 
+  35: 66 
+  36: 6a 
+  37: 38 7
+  39: 24 
+  40: 0c 
+  41: 0c 
+  42: 17 5
+  44: 66 
+  45: 23 
+  46: 6a 
+  47: 66 
+  48: 6a 
+  49: 38 8
+  51: 15 4
+  53: aa 
+  88: 00 
+  89: 00 
+  90: 00 
+  91: 6d 
+  92: 24 
+  93: 38 9
+  95: 17 8
+  97: 38 10
+  99: 17 6
+  101: 38 11
+  103: a7 192
+  106: 17 7
+  108: 38 9
+  110: 24 
+  111: 38 10
+  113: 17 6
+  115: 38 11
+  117: a7 192
+  120: 17 6
+  122: 38 9
+  124: 24 
+  125: 38 10
+  127: 17 8
+  129: 38 11
+  131: a7 192
+  134: 17 6
+  136: 38 9
+  138: 17 7
+  140: 38 10
+  142: 24 
+  143: 38 11
+  145: a7 192
+  148: 17 8
+  150: 38 9
+  152: 17 6
+  154: 38 10
+  156: 24 
+  157: 38 11
+  159: a7 192
+  162: 24 
+  163: 38 9
+  165: 17 6
+  167: 38 10
+  169: 17 7
+  171: 38 11
+  173: a7 192
+  176: bb RuntimeException
+  179: 59 
+  180: 22 
+  181: 23 
+  182: 24 
+  183: ba 
+  188: b7 RuntimeException.<init>
+  191: bf 
+  192: 1d 
+  193: 17 9
+  195: 13 255.0
+  198: 6a 
+  199: 8b 
+  200: 03 0
+  201: 11 255
+  204: b8 Mth.clamp
+  207: 17 10
+  209: 13 255.0
+  212: 6a 
+  213: 8b 
+  214: 03 0
+  215: 11 255
+  218: b8 Mth.clamp
+  221: 17 11
+  223: 13 255.0
+  226: 6a 
+  227: 8b 
+  228: 03 0
+  229: 11 255
+  232: b8 Mth.clamp
+  235: b8 ARGB.color
+  238: ac 
+  METHOD hsvToRgb (FFF)I  (code=8)
+  0: 22 
+  1: 23 
+  2: 24 
+  3: 03 0
+  4: b8 Mth.hsvToArgb
+  7: ac 
+

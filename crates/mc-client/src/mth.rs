@@ -145,6 +145,45 @@ pub fn rotate_if_necessary(current: f32, target: f32, max_delta: f32) -> f32 {
     current + clamp(degrees_difference(current, target), -max_delta, max_delta)
 }
 
+/// THE HUE'S OWN FOLD (javap `Mth.hsvToArgb` the durbar_511 census
+/// banks — the code=239 walk the four ints the ARGB.color pack
+/// wears): the `i = (int)(hue * 6.0F) % 6` sector [the f2i truncation
+/// the `(int)` cast keeps], the `f = hue * 6.0F - (float)i` remainder,
+/// the trio the sector's own pair picks [`p = v * (1.0F - s)`,
+/// `q = v * (1.0F - f * s)`, `t = v * (1.0F - (1.0F - f) * s)`],
+/// the six arms the switch banks [(0: v/t/p, 1: q/v/p, 2: p/v/t,
+/// 3: p/q/v, 4: t/p/v, 5: v/p/q)], the `ARGB.color(alpha,
+/// clamp((int)(r * 255.0F)), clamp((int)(g * 255.0F)),
+/// clamp((int)(b * 255.0F)))` pack the tail wears. The negative-hue
+/// sectors the Java switch the RuntimeException throws — the bar
+/// lane's hue the `max(0.0F, (max - damage) / max) / 3.0F` gate keeps
+/// non-negative, the throw arm the port's own callers never reach.
+pub fn hsv_to_argb(hue: f32, saturation: f32, value: f32, alpha: i32) -> i32 {
+    let sector = ((hue * 6.0) as i32) % 6;
+    let f = hue * 6.0 - sector as f32;
+    let p = value * (1.0 - saturation);
+    let q = value * (1.0 - f * saturation);
+    let t = value * (1.0 - (1.0 - f) * saturation);
+    let (r, g, b) = match sector {
+        0 => (value, t, p),
+        1 => (q, value, p),
+        2 => (p, value, t),
+        3 => (p, q, value),
+        4 => (t, p, value),
+        _ => (value, p, q), // the sector 5 arm the `% 6` head keeps
+    };
+    let ch = |x: f32| -> i32 { ((x * 255.0) as i32).clamp(0, 255) };
+    (alpha << 24) | (ch(r) << 16) | (ch(g) << 8) | ch(b)
+}
+
+/// `Mth.hsvToRgb` (javap) — the 8-byte body the alpha-0 delegate
+/// speaks: the ARGB the alpha byte ZERO keeps (the caller's own
+/// opaque wrap the strip fill re-wears — the itemBar's
+/// `ARGB.opaque` lane).
+pub fn hsv_to_rgb(hue: f32, saturation: f32, value: f32) -> i32 {
+    hsv_to_argb(hue, saturation, value, 0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
