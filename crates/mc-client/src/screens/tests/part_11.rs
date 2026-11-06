@@ -41015,3 +41015,315 @@ fn the_ender_pearl_the_teleport_wears() {
     );
     assert!(app.eggs.is_empty(), "the refused hit the pearl discards");
 }
+
+/// THE FISHING ROD'S OWN CAST (javap `FishingRodItem.use` code=223 +
+/// `FishingHook.<init>` code=309 the rod_506/506b censuses bank — the
+/// THROW voice the (0.5, pitch-fold) pair the press arms FIRST, the
+/// bobber the ctor's walk the look-vec words fn serves [the spawn
+/// seat the (px − f8·0.3, eyeY, pz − f7·0.3) trio keeps, the
+/// velocity the 0.6/length + the triangle noise the THREE draws
+/// wear], the luck/lure the port's rod never enchants — the 0/0 the
+/// honest law keeps; the ONE bobber the player's own rod keeps —
+/// the second press the REEL arm the walk serves).
+#[test]
+fn the_fishing_rod_the_cast_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    assert!(app.on_right_press(0, 0), "the cast the press consumes");
+    // THE VOICE'S OWN ROW (the throw the sound arms FIRST — the 0.5
+    // the census's own ldc wears)
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("entity.fishing_bobber.throw ") && e.contains(" v0.500000 ")),
+        "the throw voice the 0.5 pair speaks: {:?}",
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.contains("fishing_bobber"))
+            .collect::<Vec<_>>()
+    );
+    // THE BOBBER'S OWN SEAT (the spawn the ctor's walk keeps — the
+    // eye the y seat the body's own read answers)
+    assert_eq!(app.bobbers.len(), 1, "the cast the bobber spawns");
+    let b = app.body.as_ref().unwrap();
+    let expected_y = b.y + b.eye_height();
+    assert!(
+        (app.bobbers[0].y - expected_y).abs() < 0.01,
+        "the spawn seat the eye law keeps"
+    );
+    assert_eq!(
+        app.bobbers[0].state,
+        crate::mob::BobberState::Flying,
+        "the fresh bobber the FLYING state wears"
+    );
+    assert_eq!(app.bobbers[0].luck, 0, "the luck the no-ench rod keeps");
+    assert_eq!(
+        app.bobbers[0].lure_speed, 0,
+        "the lure the no-ench rod keeps"
+    );
+    // THE VELOCITY'S OWN BAND (the 0.6/len + the triangle(0.5,
+    // 0.0103365) noise — the unit look vec the multiplier the
+    // 0.6 + 0.5 the 1.1-ish band keeps)
+    let speed = (app.bobbers[0].vx * app.bobbers[0].vx
+        + app.bobbers[0].vy * app.bobbers[0].vy
+        + app.bobbers[0].vz * app.bobbers[0].vz)
+        .sqrt();
+    assert!(
+        speed > 1.0 && speed < 1.25,
+        "the cast velocity the 1.1 band keeps: {}",
+        speed
+    );
+    // THE ONE BOBBER'S OWN LAW (the second press the REEL arm the
+    // walk serves — the fresh cast the walk never doubles)
+    let voices_before = app.sounds.events.len();
+    assert!(app.on_right_press(0, 0), "the reel the press consumes");
+    assert_eq!(app.bobbers.len(), 0, "the reel the bobber retires");
+    assert!(
+        app.sounds.events[voices_before..]
+            .iter()
+            .any(|e| e.starts_with("entity.fishing_bobber.retrieve ") && e.contains(" v1.000000 ")),
+        "the retrieve voice the 1.0 pair speaks"
+    );
+}
+
+/// THE FISHING ROD'S OWN BITE AND CATCH (javap `FishingHook.tick`
+/// code=705 + `catchingFish` code=900 + `retrieve` code=445 the
+/// rod_506/506b censuses bank — the water the BOBBING state banks,
+/// the bite the splash voice + the biting flag + the 20..40 nibble
+/// window the arm serves, the shouldStopFishing the no-rod walk the
+/// discard answers, the retrieve the fish catch the loot walk
+/// serves [the band the weight walk picks, the fling the drop's
+/// own velocity wears, the XP orb the nextInt(6)+1 value keeps],
+/// the hooked drag the (owner − mob)·0.1 add the pullEntity walk
+/// wears, the verdict word the words fn banks).
+#[test]
+fn the_fishing_rod_the_bite_and_the_catch_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    // THE WATER POOL'S OWN SEAT (the staging's own pit the water
+    // fills — the bobber the direct seat the tick walk serves)
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x as i32, b.y as i32, b.z as i32)
+    };
+    let pool = (b0x + 2, b0y + 1, b0z);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in -1..=1i32 {
+            for dz in -1..=1i32 {
+                w.set(pool.0 + dx, pool.1, pool.2 + dz, crate::world::WATER);
+            }
+        }
+        w.relight();
+    }
+    app.bobbers.push(crate::mob::FishingBobber::from_cast(
+        4242,
+        crate::mob::BobberCast {
+            x: pool.0 as f64 + 0.5,
+            y: pool.1 as f64 + 0.5,
+            z: pool.2 as f64 + 0.5,
+            vx: 0.0,
+            vy: -0.1,
+            vz: 0.0,
+        },
+        0,
+        0,
+    ));
+    // THE WATER'S OWN TRANSITION (the FLYING the BOBBING the damp
+    // arm serves)
+    app.update();
+    assert_eq!(
+        app.bobbers[0].state,
+        crate::mob::BobberState::Bobbing,
+        "the water the BOBBING state banks"
+    );
+    // THE BITE'S OWN ARM (the hooked clock the 1 the staging keeps —
+    // the tick the splash voice + the biting flag + the 20..40
+    // nibble window the arm serves)
+    app.bobbers[0].time_until_hooked = 1;
+    let voices_before = app
+        .sounds
+        .events
+        .iter()
+        .filter(|e| e.starts_with("entity.fishing_bobber.splash "))
+        .count();
+    app.update();
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.fishing_bobber.splash "))
+            .count(),
+        voices_before + 1,
+        "the bite the splash voice speaks"
+    );
+    assert!(app.bobbers[0].biting, "the bite the DATA_BITING flag keeps");
+    assert!(
+        (20..=40).contains(&app.bobbers[0].nibble),
+        "the nibble window the 20..40 roll keeps: {}",
+        app.bobbers[0].nibble
+    );
+    // THE SHOULD-STOP'S OWN GATE (javap `shouldStopFishing` — the
+    // no-rod walk the discard answers)
+    app.inventory.items[app.selected_hotbar] = (0, 0);
+    app.update();
+    assert!(
+        app.bobbers.is_empty(),
+        "the no-rod walk the bobber discards"
+    );
+    // THE CATCH'S OWN WALK (the staged nibble the retrieve serves —
+    // the fish family the drop the band's roll wears, the XP orb
+    // the value keeps, the discard the removal)
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    app.bobbers.push(crate::mob::FishingBobber::from_cast(
+        4243,
+        crate::mob::BobberCast {
+            x: pool.0 as f64 + 0.5,
+            y: pool.1 as f64 + 0.5,
+            z: pool.2 as f64 + 0.5,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+        },
+        0,
+        0,
+    ));
+    app.bobbers[0].nibble = 5;
+    let drops_before = app.drops.len();
+    let orbs_before = app.orbs.len();
+    let voices_before = app
+        .sounds
+        .events
+        .iter()
+        .filter(|e| e.starts_with("entity.fishing_bobber.retrieve "))
+        .count();
+    assert!(app.on_right_press(0, 0), "the reel the press consumes");
+    assert!(app.bobbers.is_empty(), "the retrieve the bobber retires");
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.fishing_bobber.retrieve "))
+            .count(),
+        voices_before + 1,
+        "the retrieve voice the lane speaks"
+    );
+    // THE FISH FAMILY'S OWN CONDITIONAL (the band the weight walk
+    // picks — the fish the drop + the orb the same walk serves, the
+    // junk/treasure the NEXT round's pools the honest silence keeps)
+    if app.drops.len() > drops_before {
+        let fish_names = ["cod", "salmon", "pufferfish", "tropical_fish"];
+        let fish_ids: Vec<i32> = fish_names
+            .iter()
+            .filter_map(|n| mc_registry::item_id_by_name(n))
+            .collect();
+        let drop = &app.drops[drops_before];
+        assert!(
+            fish_ids.contains(&drop.item),
+            "the fish the pool's own roll wears: {}",
+            drop.item
+        );
+        assert_eq!(drop.count, 1, "the count-1 the catch wears");
+        assert!(app.orbs.len() > orbs_before, "the XP orb the catch serves");
+    } else {
+        assert_eq!(
+            app.orbs.len(),
+            orbs_before,
+            "the junk/treasure band the NEXT round's pools keep"
+        );
+    }
+    // THE HOOKED DRAG'S OWN WALK (javap `pullEntity` code=64 — the
+    // mob the (owner − mob)·0.1 add the retrieve wears)
+    let mut llama = crate::mob::Zombie::new(902, 40.0, 40.0, 40.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    app.mobs.push(llama);
+    app.bobbers.push(crate::mob::FishingBobber::from_cast(
+        4244,
+        crate::mob::BobberCast {
+            x: 40.5,
+            y: 41.0,
+            z: 40.5,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+        },
+        0,
+        0,
+    ));
+    app.bobbers[0].hooked = Some(902);
+    let mi = app
+        .mobs
+        .iter()
+        .position(|m| m.id == 902)
+        .expect("the llama the staging carries");
+    let (vx0, vy0, vz0) = (app.mobs[mi].vx, app.mobs[mi].vy, app.mobs[mi].vz);
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x, b.y, b.z)
+    };
+    assert!(app.on_right_press(0, 0), "the reel the press consumes");
+    let (mvx, mvy, mvz) = (app.mobs[mi].vx, app.mobs[mi].vy, app.mobs[mi].vz);
+    assert!(
+        (mvx - (vx0 + (b0x - 40.0) * 0.1)).abs() < 1e-9
+            && (mvy - (vy0 + (b0y - 40.0) * 0.1)).abs() < 1e-9
+            && (mvz - (vz0 + (b0z - 40.0) * 0.1)).abs() < 1e-9,
+        "the pull the (owner − mob)·0.1 add wears"
+    );
+    // THE VERDICT WORD'S OWN TABLE (javap `retrieve` — the hooked 5,
+    // the caught 1, the ground 2, the water-nothing 0 the words fn
+    // banks)
+    assert_eq!(
+        crate::mob::bobber_retrieve_word(false, true, false, false),
+        5,
+        "the hooked body the 5 wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_retrieve_word(true, true, false, false),
+        3,
+        "the hooked ItemEntity the 3 wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_retrieve_word(false, false, true, false),
+        1,
+        "the fish catch the 1 wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_retrieve_word(false, false, false, true),
+        2,
+        "the ground the 2 wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_retrieve_word(false, false, false, false),
+        0,
+        "the water-nothing the 0 keeps"
+    );
+    // THE CLOCKS' OWN BOUNDS (the rolls the words fns keep)
+    let mut rng = crate::drops::Lcg::new(77);
+    for _ in 0..64 {
+        assert!(
+            (100..=600).contains(&crate::mob::bobber_wait_roll(&mut rng, 0)),
+            "the wait roll the 100..600 band keeps"
+        );
+        assert!(
+            (60..=560).contains(&crate::mob::bobber_wait_roll(&mut rng, 40)),
+            "the lure the subtraction serves"
+        );
+        assert!(
+            (20..=80).contains(&crate::mob::bobber_hooked_roll(&mut rng)),
+            "the hooked roll the 20..80 band keeps"
+        );
+        assert!(
+            (20..=40).contains(&crate::mob::bobber_nibble_roll(&mut rng)),
+            "the nibble roll the 20..40 band keeps"
+        );
+    }
+}

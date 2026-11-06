@@ -1,0 +1,756 @@
+== net/minecraft/world/entity/projectile/FishingHook.class
+  METHOD tick ()V  (code=705)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/projectile/FishingHook.syncronizedRandom:Lnet/minecraft/util/RandomSource;
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getUUID:()Ljava/util/UUID;
+    8: invokevirtual java/util/UUID.getLeastSignificantBits:()J
+    11: aload_0
+    12: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    15: invokevirtual net/minecraft/world/level/Level.getGameTime:()J
+    18: op_83
+    19: invokeinterface net/minecraft/util/RandomSource.setSeed:(J)V
+    24: aload_0
+    25: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getInterpolation:()Lnet/minecraft/world/entity/InterpolationHandler;
+    28: invokevirtual net/minecraft/world/entity/InterpolationHandler.interpolate:()V
+    31: aload_0
+    32: invokespecial net/minecraft/world/entity/projectile/Projectile.tick:()V
+    35: aload_0
+    36: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getPlayerOwner:()Lnet/minecraft/world/entity/player/Player;
+    39: astore_1
+    40: aload_1
+    41: ifnonnull 49
+    44: aload_0
+    45: invokevirtual net/minecraft/world/entity/projectile/FishingHook.discard:()V
+    48: return
+    49: aload_0
+    50: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    53: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    56: ifne 68
+    59: aload_0
+    60: aload_1
+    61: invokevirtual net/minecraft/world/entity/projectile/FishingHook.shouldStopFishing:(Lnet/minecraft/world/entity/player/Player;)Z
+    64: ifeq 68
+    67: return
+    68: aload_0
+    69: invokevirtual net/minecraft/world/entity/projectile/FishingHook.onGround:()Z
+    72: ifeq 100
+    75: aload_0
+    76: dup
+    77: getfield net/minecraft/world/entity/projectile/FishingHook.life:I
+    80: iconst_1
+    81: iadd
+    82: putfield net/minecraft/world/entity/projectile/FishingHook.life:I
+    85: aload_0
+    86: getfield net/minecraft/world/entity/projectile/FishingHook.life:I
+    89: sipush 1200
+    92: if_icmplt 105
+    95: aload_0
+    96: invokevirtual net/minecraft/world/entity/projectile/FishingHook.discard:()V
+    99: return
+    100: aload_0
+    101: iconst_0
+    102: putfield net/minecraft/world/entity/projectile/FishingHook.life:I
+    105: op_0b
+    106: fstore_2
+    107: aload_0
+    108: invokevirtual net/minecraft/world/entity/projectile/FishingHook.blockPosition:()Lnet/minecraft/core/BlockPos;
+    111: astore_3
+    112: aload_0
+    113: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    116: aload_3
+    117: invokevirtual net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+    120: astore 4
+    122: aload 4
+    124: getstatic net/minecraft/tags/FluidTags.WATER:Lnet/minecraft/tags/TagKey;
+    127: invokevirtual net/minecraft/world/level/material/FluidState.is:(Lnet/minecraft/tags/TagKey;)Z
+    130: ifeq 144
+    133: aload 4
+    135: aload_0
+    136: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    139: aload_3
+    140: invokevirtual net/minecraft/world/level/material/FluidState.getHeight:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)F
+    143: fstore_2
+    144: op_24
+    145: op_0b
+    146: fcmpl
+    147: ifle 154
+    150: iconst_1
+    151: goto 155
+    154: iconst_0
+    155: istore 5
+    157: aload_0
+    158: getfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    161: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.FLYING:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    164: if_acmpne 229
+    167: aload_0
+    168: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    171: ifnull 189
+    174: aload_0
+    175: getstatic net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+    178: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    181: aload_0
+    182: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.HOOKED_IN_ENTITY:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    185: putfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    188: return
+    189: iload 5
+    191: ifeq 222
+    194: aload_0
+    195: aload_0
+    196: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    199: ldc2_w 0.3
+    202: ldc2_w 0.2
+    205: ldc2_w 0.3
+    208: invokevirtual net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+    211: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    214: aload_0
+    215: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.BOBBING:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    218: putfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    221: return
+    222: aload_0
+    223: invokevirtual net/minecraft/world/entity/projectile/FishingHook.checkCollision:()V
+    226: goto 590
+    229: aload_0
+    230: getfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    233: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.HOOKED_IN_ENTITY:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    236: if_acmpne 330
+    239: aload_0
+    240: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    243: ifnull 329
+    246: aload_0
+    247: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    250: invokevirtual net/minecraft/world/entity/Entity.isRemoved:()Z
+    253: ifne 286
+    256: aload_0
+    257: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    260: invokevirtual net/minecraft/world/entity/Entity.canInteractWithLevel:()Z
+    263: ifeq 286
+    266: aload_0
+    267: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    270: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    273: invokevirtual net/minecraft/world/level/Level.dimension:()Lnet/minecraft/resources/ResourceKey;
+    276: aload_0
+    277: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    280: invokevirtual net/minecraft/world/level/Level.dimension:()Lnet/minecraft/resources/ResourceKey;
+    283: if_acmpeq 301
+    286: aload_0
+    287: aconst_null
+    288: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setHookedEntity:(Lnet/minecraft/world/entity/Entity;)V
+    291: aload_0
+    292: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.FLYING:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    295: putfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    298: goto 329
+    301: aload_0
+    302: aload_0
+    303: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    306: invokevirtual net/minecraft/world/entity/Entity.getX:()D
+    309: aload_0
+    310: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    313: ldc2_w 0.8
+    316: invokevirtual net/minecraft/world/entity/Entity.getY:(D)D
+    319: aload_0
+    320: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    323: invokevirtual net/minecraft/world/entity/Entity.getZ:()D
+    326: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setPos:(DDD)V
+    329: return
+    330: aload_0
+    331: getfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    334: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.BOBBING:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    337: if_acmpne 590
+    340: aload_0
+    341: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    344: astore 6
+    346: aload_0
+    347: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getY:()D
+    350: aload 6
+    352: getfield net/minecraft/world/phys/Vec3.y:D
+    355: dadd
+    356: aload_3
+    357: invokevirtual net/minecraft/core/BlockPos.getY:()I
+    360: i2d
+    361: dsub
+    362: op_24
+    363: f2d
+    364: dsub
+    365: dstore 7
+    367: op_18 7
+    369: invokestatic java/lang/Math.abs:(D)D
+    372: ldc2_w 0.01
+    375: dcmpg
+    376: ifge 393
+    379: op_18 7
+    381: op_18 7
+    383: invokestatic java/lang/Math.signum:(D)D
+    386: ldc2_w 0.1
+    389: dmul
+    390: dadd
+    391: dstore 7
+    393: aload_0
+    394: aload 6
+    396: getfield net/minecraft/world/phys/Vec3.x:D
+    399: ldc2_w 0.9
+    402: dmul
+    403: aload 6
+    405: getfield net/minecraft/world/phys/Vec3.y:D
+    408: op_18 7
+    410: aload_0
+    411: getfield net/minecraft/world/entity/projectile/FishingHook.random:Lnet/minecraft/util/RandomSource;
+    414: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    419: f2d
+    420: dmul
+    421: ldc2_w 0.2
+    424: dmul
+    425: dsub
+    426: aload 6
+    428: getfield net/minecraft/world/phys/Vec3.z:D
+    431: ldc2_w 0.9
+    434: dmul
+    435: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(DDD)V
+    438: aload_0
+    439: getfield net/minecraft/world/entity/projectile/FishingHook.nibble:I
+    442: ifgt 452
+    445: aload_0
+    446: getfield net/minecraft/world/entity/projectile/FishingHook.timeUntilHooked:I
+    449: ifle 488
+    452: aload_0
+    453: aload_0
+    454: getfield net/minecraft/world/entity/projectile/FishingHook.openWater:Z
+    457: ifeq 481
+    460: aload_0
+    461: getfield net/minecraft/world/entity/projectile/FishingHook.outOfWaterTime:I
+    464: bipush 10
+    466: if_icmpge 481
+    469: aload_0
+    470: aload_3
+    471: invokevirtual net/minecraft/world/entity/projectile/FishingHook.calculateOpenWater:(Lnet/minecraft/core/BlockPos;)Z
+    474: ifeq 481
+    477: iconst_1
+    478: goto 482
+    481: iconst_0
+    482: putfield net/minecraft/world/entity/projectile/FishingHook.openWater:Z
+    485: goto 493
+    488: aload_0
+    489: iconst_1
+    490: putfield net/minecraft/world/entity/projectile/FishingHook.openWater:Z
+    493: iload 5
+    495: ifeq 575
+    498: aload_0
+    499: iconst_0
+    500: aload_0
+    501: getfield net/minecraft/world/entity/projectile/FishingHook.outOfWaterTime:I
+    504: iconst_1
+    505: isub
+    506: invokestatic java/lang/Math.max:(II)I
+    509: putfield net/minecraft/world/entity/projectile/FishingHook.outOfWaterTime:I
+    512: aload_0
+    513: getfield net/minecraft/world/entity/projectile/FishingHook.biting:Z
+    516: ifeq 557
+    519: aload_0
+    520: aload_0
+    521: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    524: op_0e
+    525: ldc2_w -0.1
+    528: aload_0
+    529: getfield net/minecraft/world/entity/projectile/FishingHook.syncronizedRandom:Lnet/minecraft/util/RandomSource;
+    532: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    537: f2d
+    538: dmul
+    539: aload_0
+    540: getfield net/minecraft/world/entity/projectile/FishingHook.syncronizedRandom:Lnet/minecraft/util/RandomSource;
+    543: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    548: f2d
+    549: dmul
+    550: op_0e
+    551: invokevirtual net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+    554: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    557: aload_0
+    558: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    561: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    564: ifne 590
+    567: aload_0
+    568: aload_3
+    569: invokevirtual net/minecraft/world/entity/projectile/FishingHook.catchingFish:(Lnet/minecraft/core/BlockPos;)V
+    572: goto 590
+    575: aload_0
+    576: bipush 10
+    578: aload_0
+    579: getfield net/minecraft/world/entity/projectile/FishingHook.outOfWaterTime:I
+    582: iconst_1
+    583: iadd
+    584: invokestatic java/lang/Math.min:(II)I
+    587: putfield net/minecraft/world/entity/projectile/FishingHook.outOfWaterTime:I
+    590: aload 4
+    592: getstatic net/minecraft/tags/FluidTags.WATER:Lnet/minecraft/tags/TagKey;
+    595: invokevirtual net/minecraft/world/level/material/FluidState.is:(Lnet/minecraft/tags/TagKey;)Z
+    598: ifne 631
+    601: aload_0
+    602: invokevirtual net/minecraft/world/entity/projectile/FishingHook.onGround:()Z
+    605: ifne 631
+    608: aload_0
+    609: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    612: ifnonnull 631
+    615: aload_0
+    616: aload_0
+    617: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    620: op_0e
+    621: ldc2_w -0.03
+    624: op_0e
+    625: invokevirtual net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+    628: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    631: aload_0
+    632: getstatic net/minecraft/world/entity/MoverType.SELF:Lnet/minecraft/world/entity/MoverType;
+    635: aload_0
+    636: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    639: invokevirtual net/minecraft/world/entity/projectile/FishingHook.move:(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V
+    642: aload_0
+    643: invokevirtual net/minecraft/world/entity/projectile/FishingHook.applyEffectsFromBlocks:()V
+    646: aload_0
+    647: invokevirtual net/minecraft/world/entity/projectile/FishingHook.updateRotation:()V
+    650: aload_0
+    651: getfield net/minecraft/world/entity/projectile/FishingHook.currentState:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    654: getstatic net/minecraft/world/entity/projectile/FishingHook$FishHookState.FLYING:Lnet/minecraft/world/entity/projectile/FishingHook$FishHookState;
+    657: if_acmpne 681
+    660: aload_0
+    661: invokevirtual net/minecraft/world/entity/projectile/FishingHook.onGround:()Z
+    664: ifne 674
+    667: aload_0
+    668: getfield net/minecraft/world/entity/projectile/FishingHook.horizontalCollision:Z
+    671: ifeq 681
+    674: aload_0
+    675: getstatic net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+    678: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    681: ldc2_w 0.92
+    684: dstore 6
+    686: aload_0
+    687: aload_0
+    688: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    691: ldc2_w 0.92
+    694: invokevirtual net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    697: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    700: aload_0
+    701: invokevirtual net/minecraft/world/entity/projectile/FishingHook.reapplyPosition:()V
+    704: return
+  METHOD shouldStopFishing (Lnet/minecraft/world/entity/player/Player;)Z  (code=65)
+    0: aload_1
+    1: invokevirtual net/minecraft/world/entity/player/Player.canInteractWithLevel:()Z
+    4: ifeq 59
+    7: aload_1
+    8: invokevirtual net/minecraft/world/entity/player/Player.getMainHandItem:()Lnet/minecraft/world/item/ItemStack;
+    11: astore_2
+    12: aload_1
+    13: invokevirtual net/minecraft/world/entity/player/Player.getOffhandItem:()Lnet/minecraft/world/item/ItemStack;
+    16: astore_3
+    17: aload_2
+    18: getstatic net/minecraft/world/item/Items.FISHING_ROD:Lnet/minecraft/world/item/Item;
+    21: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    24: istore 4
+    26: aload_3
+    27: getstatic net/minecraft/world/item/Items.FISHING_ROD:Lnet/minecraft/world/item/Item;
+    30: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    33: istore 5
+    35: iload 4
+    37: ifne 45
+    40: iload 5
+    42: ifeq 59
+    45: aload_0
+    46: aload_1
+    47: invokevirtual net/minecraft/world/entity/projectile/FishingHook.distanceToSqr:(Lnet/minecraft/world/entity/Entity;)D
+    50: ldc2_w 1024.0
+    53: dcmpg
+    54: ifgt 59
+    57: iconst_0
+    58: ireturn
+    59: aload_0
+    60: invokevirtual net/minecraft/world/entity/projectile/FishingHook.discard:()V
+    63: iconst_1
+    64: ireturn
+  METHOD onHitEntity (Lnet/minecraft/world/phys/EntityHitResult;)V  (code=24)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/projectile/Projectile.onHitEntity:(Lnet/minecraft/world/phys/EntityHitResult;)V
+    5: aload_0
+    6: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    9: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    12: ifne 23
+    15: aload_0
+    16: aload_1
+    17: invokevirtual net/minecraft/world/phys/EntityHitResult.getEntity:()Lnet/minecraft/world/entity/Entity;
+    20: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setHookedEntity:(Lnet/minecraft/world/entity/Entity;)V
+    23: return
+  METHOD onHitBlock (Lnet/minecraft/world/phys/BlockHitResult;)V  (code=25)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/projectile/Projectile.onHitBlock:(Lnet/minecraft/world/phys/BlockHitResult;)V
+    5: aload_0
+    6: aload_0
+    7: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    10: invokevirtual net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+    13: aload_1
+    14: aload_0
+    15: invokevirtual net/minecraft/world/phys/BlockHitResult.distanceTo:(Lnet/minecraft/world/entity/Entity;)D
+    18: invokevirtual net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    21: invokevirtual net/minecraft/world/entity/projectile/FishingHook.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    24: return
+  METHOD retrieve (Lnet/minecraft/world/item/ItemStack;)I  (code=445)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getPlayerOwner:()Lnet/minecraft/world/entity/player/Player;
+    4: astore_2
+    5: aload_0
+    6: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    9: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    12: ifne 27
+    15: aload_2
+    16: ifnull 27
+    19: aload_0
+    20: aload_2
+    21: invokevirtual net/minecraft/world/entity/projectile/FishingHook.shouldStopFishing:(Lnet/minecraft/world/entity/player/Player;)Z
+    24: ifeq 29
+    27: iconst_0
+    28: ireturn
+    29: iconst_0
+    30: istore_3
+    31: aload_0
+    32: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    35: ifnull 90
+    38: aload_0
+    39: aload_0
+    40: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    43: invokevirtual net/minecraft/world/entity/projectile/FishingHook.pullEntity:(Lnet/minecraft/world/entity/Entity;)V
+    46: getstatic net/minecraft/advancements/triggers/CriteriaTriggers.FISHING_ROD_HOOKED:Lnet/minecraft/advancements/triggers/FishingRodHookedTrigger;
+    49: aload_2
+    50: checkcast net/minecraft/server/level/ServerPlayer
+    53: aload_1
+    54: aload_0
+    55: invokestatic java/util/Collections.emptyList:()Ljava/util/List;
+    58: invokevirtual net/minecraft/advancements/triggers/FishingRodHookedTrigger.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/projectile/FishingHook;Ljava/util/Collection;)V
+    61: aload_0
+    62: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    65: aload_0
+    66: bipush 31
+    68: invokevirtual net/minecraft/world/level/Level.broadcastEntityEvent:(Lnet/minecraft/world/entity/Entity;B)V
+    71: aload_0
+    72: getfield net/minecraft/world/entity/projectile/FishingHook.hookedIn:Lnet/minecraft/world/entity/Entity;
+    75: instanceof net/minecraft/world/entity/item/ItemEntity
+    78: ifeq 85
+    81: iconst_3
+    82: goto 86
+    85: iconst_5
+    86: istore_3
+    87: goto 430
+    90: aload_0
+    91: getfield net/minecraft/world/entity/projectile/FishingHook.nibble:I
+    94: ifle 430
+    97: new net/minecraft/world/level/storage/loot/LootParams$Builder
+    100: dup
+    101: aload_0
+    102: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    105: checkcast net/minecraft/server/level/ServerLevel
+    108: invokespecial net/minecraft/world/level/storage/loot/LootParams$Builder.<init>:(Lnet/minecraft/server/level/ServerLevel;)V
+    111: getstatic net/minecraft/world/level/storage/loot/parameters/LootContextParams.ORIGIN:Lnet/minecraft/util/context/ContextKey;
+    114: aload_0
+    115: invokevirtual net/minecraft/world/entity/projectile/FishingHook.position:()Lnet/minecraft/world/phys/Vec3;
+    118: invokevirtual net/minecraft/world/level/storage/loot/LootParams$Builder.withParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+    121: getstatic net/minecraft/world/level/storage/loot/parameters/LootContextParams.TOOL:Lnet/minecraft/util/context/ContextKey;
+    124: aload_1
+    125: invokevirtual net/minecraft/world/level/storage/loot/LootParams$Builder.withParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+    128: getstatic net/minecraft/world/level/storage/loot/parameters/LootContextParams.THIS_ENTITY:Lnet/minecraft/util/context/ContextKey;
+    131: aload_0
+    132: invokevirtual net/minecraft/world/level/storage/loot/LootParams$Builder.withParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+    135: aload_0
+    136: getfield net/minecraft/world/entity/projectile/FishingHook.luck:I
+    139: i2f
+    140: aload_2
+    141: invokevirtual net/minecraft/world/entity/player/Player.getLuck:()F
+    144: fadd
+    145: invokevirtual net/minecraft/world/level/storage/loot/LootParams$Builder.withLuck:(F)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+    148: getstatic net/minecraft/world/level/storage/loot/parameters/LootContextParamSets.FISHING:Lnet/minecraft/util/context/ContextKeySet;
+    151: invokevirtual net/minecraft/world/level/storage/loot/LootParams$Builder.create:(Lnet/minecraft/util/context/ContextKeySet;)Lnet/minecraft/world/level/storage/loot/LootParams;
+    154: astore 4
+    156: aload_0
+    157: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    160: invokevirtual net/minecraft/world/level/Level.getServer:()Lnet/minecraft/server/MinecraftServer;
+    163: invokevirtual net/minecraft/server/MinecraftServer.reloadableRegistries:()Lnet/minecraft/server/ReloadableServerRegistries$Holder;
+    166: getstatic net/minecraft/world/level/storage/loot/BuiltInLootTables.FISHING:Lnet/minecraft/resources/ResourceKey;
+    169: invokevirtual net/minecraft/server/ReloadableServerRegistries$Holder.getLootTable:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/level/storage/loot/LootTable;
+    172: astore 5
+    174: aload 5
+    176: aload 4
+    178: invokevirtual net/minecraft/world/level/storage/loot/LootTable.getRandomItems:(Lnet/minecraft/world/level/storage/loot/LootParams;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+    181: astore 6
+    183: getstatic net/minecraft/advancements/triggers/CriteriaTriggers.FISHING_ROD_HOOKED:Lnet/minecraft/advancements/triggers/FishingRodHookedTrigger;
+    186: aload_2
+    187: checkcast net/minecraft/server/level/ServerPlayer
+    190: aload_1
+    191: aload_0
+    192: aload 6
+    194: invokevirtual net/minecraft/advancements/triggers/FishingRodHookedTrigger.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/projectile/FishingHook;Ljava/util/Collection;)V
+    197: aload 6
+    199: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    204: astore 7
+    206: aload 7
+    208: invokeinterface java/util/Iterator.hasNext:()Z
+    213: ifeq 428
+    216: aload 7
+    218: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    223: checkcast net/minecraft/world/item/ItemStack
+    226: astore 8
+    228: new net/minecraft/world/entity/item/ItemEntity
+    231: dup
+    232: aload_0
+    233: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    236: aload_0
+    237: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getX:()D
+    240: aload_0
+    241: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getY:()D
+    244: aload_0
+    245: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getZ:()D
+    248: aload 8
+    250: invokespecial net/minecraft/world/entity/item/ItemEntity.<init>:(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/item/ItemStack;)V
+    253: astore 9
+    255: aload_2
+    256: invokevirtual net/minecraft/world/entity/player/Player.getX:()D
+    259: aload_0
+    260: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getX:()D
+    263: dsub
+    264: dstore 10
+    266: aload_2
+    267: invokevirtual net/minecraft/world/entity/player/Player.getY:()D
+    270: aload_0
+    271: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getY:()D
+    274: dsub
+    275: dstore 12
+    277: aload_2
+    278: invokevirtual net/minecraft/world/entity/player/Player.getZ:()D
+    281: aload_0
+    282: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getZ:()D
+    285: dsub
+    286: dstore 14
+    288: ldc2_w 0.1
+    291: dstore 16
+    293: aload 9
+    295: op_18 10
+    297: ldc2_w 0.1
+    300: dmul
+    301: op_18 12
+    303: ldc2_w 0.1
+    306: dmul
+    307: op_18 10
+    309: op_18 10
+    311: dmul
+    312: op_18 12
+    314: op_18 12
+    316: dmul
+    317: dadd
+    318: op_18 14
+    320: op_18 14
+    322: dmul
+    323: dadd
+    324: invokestatic java/lang/Math.sqrt:(D)D
+    327: invokestatic java/lang/Math.sqrt:(D)D
+    330: ldc2_w 0.08
+    333: dmul
+    334: dadd
+    335: op_18 14
+    337: ldc2_w 0.1
+    340: dmul
+    341: invokevirtual net/minecraft/world/entity/item/ItemEntity.setDeltaMovement:(DDD)V
+    344: aload_0
+    345: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    348: aload 9
+    350: invokevirtual net/minecraft/world/level/Level.addFreshEntity:(Lnet/minecraft/world/entity/Entity;)Z
+    353: pop
+    354: aload_2
+    355: invokevirtual net/minecraft/world/entity/player/Player.level:()Lnet/minecraft/world/level/Level;
+    358: new net/minecraft/world/entity/ExperienceOrb
+    361: dup
+    362: aload_2
+    363: invokevirtual net/minecraft/world/entity/player/Player.level:()Lnet/minecraft/world/level/Level;
+    366: aload_2
+    367: invokevirtual net/minecraft/world/entity/player/Player.getX:()D
+    370: aload_2
+    371: invokevirtual net/minecraft/world/entity/player/Player.getY:()D
+    374: ldc2_w 0.5
+    377: dadd
+    378: aload_2
+    379: invokevirtual net/minecraft/world/entity/player/Player.getZ:()D
+    382: ldc2_w 0.5
+    385: dadd
+    386: aload_0
+    387: getfield net/minecraft/world/entity/projectile/FishingHook.random:Lnet/minecraft/util/RandomSource;
+    390: bipush 6
+    392: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    397: iconst_1
+    398: iadd
+    399: invokespecial net/minecraft/world/entity/ExperienceOrb.<init>:(Lnet/minecraft/world/level/Level;DDDI)V
+    402: invokevirtual net/minecraft/world/level/Level.addFreshEntity:(Lnet/minecraft/world/entity/Entity;)Z
+    405: pop
+    406: aload 8
+    408: getstatic net/minecraft/tags/ItemTags.FISHES:Lnet/minecraft/tags/TagKey;
+    411: invokevirtual net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+    414: ifeq 425
+    417: aload_2
+    418: getstatic net/minecraft/stats/Stats.FISH_CAUGHT:Lnet/minecraft/resources/Identifier;
+    421: iconst_1
+    422: invokevirtual net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/resources/Identifier;I)V
+    425: goto 206
+    428: iconst_1
+    429: istore_3
+    430: aload_0
+    431: invokevirtual net/minecraft/world/entity/projectile/FishingHook.onGround:()Z
+    434: ifeq 439
+    437: iconst_2
+    438: istore_3
+    439: aload_0
+    440: invokevirtual net/minecraft/world/entity/projectile/FishingHook.discard:()V
+    443: iload_3
+    444: ireturn
+  METHOD pullEntity (Lnet/minecraft/world/entity/Entity;)V  (code=64)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getOwner:()Lnet/minecraft/world/entity/Entity;
+    4: astore_2
+    5: aload_2
+    6: ifnonnull 10
+    9: return
+    10: new net/minecraft/world/phys/Vec3
+    13: dup
+    14: aload_2
+    15: invokevirtual net/minecraft/world/entity/Entity.getX:()D
+    18: aload_0
+    19: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getX:()D
+    22: dsub
+    23: aload_2
+    24: invokevirtual net/minecraft/world/entity/Entity.getY:()D
+    27: aload_0
+    28: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getY:()D
+    31: dsub
+    32: aload_2
+    33: invokevirtual net/minecraft/world/entity/Entity.getZ:()D
+    36: aload_0
+    37: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getZ:()D
+    40: dsub
+    41: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    44: ldc2_w 0.1
+    47: invokevirtual net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    50: astore_3
+    51: aload_1
+    52: aload_1
+    53: invokevirtual net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    56: aload_3
+    57: invokevirtual net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    60: invokevirtual net/minecraft/world/entity/Entity.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    63: return
+
+
+
+== net/minecraft/world/item/FishingRodItem.class
+  METHOD use (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;  (code=223)
+    0: aload_2
+    1: aload_3
+    2: invokevirtual net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+    5: astore 4
+    7: aload_2
+    8: getfield net/minecraft/world/entity/player/Player.fishing:Lnet/minecraft/world/entity/projectile/FishingHook;
+    11: ifnull 98
+    14: aload_1
+    15: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    18: ifne 44
+    21: aload_2
+    22: getfield net/minecraft/world/entity/player/Player.fishing:Lnet/minecraft/world/entity/projectile/FishingHook;
+    25: aload 4
+    27: invokevirtual net/minecraft/world/entity/projectile/FishingHook.retrieve:(Lnet/minecraft/world/item/ItemStack;)I
+    30: istore 5
+    32: aload 4
+    34: iload 5
+    36: aload_2
+    37: aload_3
+    38: invokevirtual net/minecraft/world/InteractionHand.asEquipmentSlot:()Lnet/minecraft/world/entity/EquipmentSlot;
+    41: invokevirtual net/minecraft/world/item/ItemStack.hurtAndBreak:(ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;)V
+    44: aload_1
+    45: aconst_null
+    46: aload_2
+    47: invokevirtual net/minecraft/world/entity/player/Player.getX:()D
+    50: aload_2
+    51: invokevirtual net/minecraft/world/entity/player/Player.getY:()D
+    54: aload_2
+    55: invokevirtual net/minecraft/world/entity/player/Player.getZ:()D
+    58: getstatic net/minecraft/sounds/SoundEvents.FISHING_BOBBER_RETRIEVE:Lnet/minecraft/sounds/SoundEvent;
+    61: getstatic net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+    64: op_0c
+    65: ldc 0.4000000059604645f
+    67: aload_1
+    68: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+    71: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    76: ldc 0.4000000059604645f
+    78: fmul
+    79: ldc 0.800000011920929f
+    81: fadd
+    82: fdiv
+    83: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    86: aload 4
+    88: aload_2
+    89: getstatic net/minecraft/world/level/gameevent/GameEvent.ITEM_INTERACT_FINISH:Lnet/minecraft/core/Holder$Reference;
+    92: invokevirtual net/minecraft/world/item/ItemStack.causeUseVibration:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder$Reference;)V
+    95: goto 219
+    98: aload_1
+    99: aconst_null
+    100: aload_2
+    101: invokevirtual net/minecraft/world/entity/player/Player.getX:()D
+    104: aload_2
+    105: invokevirtual net/minecraft/world/entity/player/Player.getY:()D
+    108: aload_2
+    109: invokevirtual net/minecraft/world/entity/player/Player.getZ:()D
+    112: getstatic net/minecraft/sounds/SoundEvents.FISHING_BOBBER_THROW:Lnet/minecraft/sounds/SoundEvent;
+    115: getstatic net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+    118: ldc 0.5f
+    120: ldc 0.4000000059604645f
+    122: aload_1
+    123: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+    126: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    131: ldc 0.4000000059604645f
+    133: fmul
+    134: ldc 0.800000011920929f
+    136: fadd
+    137: fdiv
+    138: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    141: aload_1
+    142: instanceof net/minecraft/server/level/ServerLevel
+    145: ifeq 199
+    148: aload_1
+    149: checkcast net/minecraft/server/level/ServerLevel
+    152: astore 5
+    154: aload 5
+    156: aload 4
+    158: aload_2
+    159: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.getFishingTimeReduction:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;)F
+    162: ldc 20.0f
+    164: fmul
+    165: f2i
+    166: istore 6
+    168: aload 5
+    170: aload 4
+    172: aload_2
+    173: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.getFishingLuckBonus:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;)I
+    176: istore 7
+    178: new net/minecraft/world/entity/projectile/FishingHook
+    181: dup
+    182: aload_2
+    183: aload_1
+    184: iload 7
+    186: iload 6
+    188: invokespecial net/minecraft/world/entity/projectile/FishingHook.<init>:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;II)V
+    191: aload 5
+    193: aload 4
+    195: invokestatic net/minecraft/world/entity/projectile/Projectile.spawnProjectile:(Lnet/minecraft/world/entity/projectile/Projectile;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/entity/projectile/Projectile;
+    198: pop
+    199: aload_2
+    200: getstatic net/minecraft/stats/Stats.ITEM_USED:Lnet/minecraft/stats/StatType;
+    203: aload_0
+    204: invokevirtual net/minecraft/stats/StatType.get:(Ljava/lang/Object;)Lnet/minecraft/stats/Stat;
+    207: invokevirtual net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/stats/Stat;)V
+    210: aload 4
+    212: aload_2
+    213: getstatic net/minecraft/world/level/gameevent/GameEvent.ITEM_INTERACT_START:Lnet/minecraft/core/Holder$Reference;
+    216: invokevirtual net/minecraft/world/item/ItemStack.causeUseVibration:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder$Reference;)V
+    219: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    222: areturn
+

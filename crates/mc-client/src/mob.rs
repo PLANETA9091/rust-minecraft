@@ -13425,6 +13425,677 @@ pub fn pearl_can_teleport(owner_alive: bool, owner_sleeping: bool) -> bool {
     owner_alive && !owner_sleeping
 }
 
+/// THE FISHING BOBBER'S OWN BODY (javap `FishingHook` the 26.2 bytes
+/// the rod_506 + rod_506b censuses bank — the bobber the rod's own
+/// cast spawns, the FLYING/BOBBING/HOOKED_IN_ENTITY states the tick's
+/// own machine wears, the bite clock the catchingFish walk rolls, the
+/// fish catch the retrieve's loot walk serves). The port's offline
+/// fiction the Vec lane keeps [the wire session the bobber the
+/// server's own entity the echo lane owns].
+pub struct FishingBobber {
+    /// The level's own entity counter word (the next_drop_id the
+    /// shared id space keeps — the egg's own lane the same counter
+    /// wears).
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    pub yaw: f32,
+    pub pitch: f32,
+    pub on_ground: bool,
+    pub horizontal_collision: bool,
+    pub dead: bool,
+    /// THE STATE'S OWN WORD (the FishHookState enum the tick machine
+    /// walks — Flying / Bobbing / HookedInEntity).
+    pub state: BobberState,
+    /// The HOOKED entity's own id (the hookedIn field — the mob hit
+    /// the onHitEntity walk banks, the ride the HOOKED_IN_ENTITY arm
+    /// serves).
+    pub hooked: Option<i32>,
+    /// THE BITE WINDOW'S OWN CLOCK (the nibble field — the bite the
+    /// catch walk's own window wears, the 20..40 roll the bite arm
+    /// banks).
+    pub nibble: i32,
+    /// THE LURE'S OWN CLOCK (the timeUntilLured field — the wait the
+    /// 100..600 roll the tail banks, the approach ripples the lured
+    /// arm speaks).
+    pub time_until_lured: i32,
+    /// THE HOOKED CLOCK'S OWN WALK (the timeUntilHooked field — the
+    /// bite's own approach the 20..80 roll banks, the ripples the
+    /// approach arm speaks).
+    pub time_until_hooked: i32,
+    /// THE BITING FLAG (the DATA_BITING synced word — the nibble
+    /// window's own wobble the tick's biting arm wears).
+    pub biting: bool,
+    /// THE FISH'S OWN ANGLE (the fishAngle field — the approach arm's
+    /// 0..360 roll the ripples' seat wears).
+    pub fish_angle: f32,
+    /// THE LUCK'S OWN BANK (the luck field — the rod's ctor arg the
+    /// Luck of the Sea level carries, the loot quality shift the
+    /// retrieve's weight walk reads).
+    pub luck: i32,
+    /// THE LURE'S OWN SPEED (the lureSpeed field — the rod's ctor arg
+    /// the Lure level carries, the wait clock the subtraction serves).
+    pub lure_speed: i32,
+    /// THE GROUND'S OWN LIFE (the life field — the 1200 the onGround
+    /// arm's discard wears, the reset the airborne arm keeps).
+    pub life: i32,
+    /// THE OUT-OF-WATER CLOCK (the outOfWaterTime field — the 10 the
+    /// ±1 walk banks).
+    pub out_of_water_time: i32,
+}
+
+/// THE BOBBER'S OWN STATE (javap `FishingHook$FishHookState` — the
+/// three the tick machine walks).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BobberState {
+    Flying,
+    Bobbing,
+    HookedInEntity,
+}
+
+/// THE BOBBER'S OWN VOICES (javap `FishingRodItem.use` + `FishingHook
+/// .catchingFish` the census banks — the ids the sounds.json rows
+/// carry).
+pub const FISHING_BOBBER_THROW_SOUND: &str = "entity.fishing_bobber.throw";
+pub const FISHING_BOBBER_RETRIEVE_SOUND: &str = "entity.fishing_bobber.retrieve";
+pub const FISHING_BOBBER_SPLASH_SOUND: &str = "entity.fishing_bobber.splash";
+
+/// THE BOBBER'S OWN PHYSICS CONSTS (javap `FishingHook.tick` the
+/// census banks — the air gravity the additive arm wears [the
+/// −0.03 the NOT-water NOT-ground arm adds], the 0.92 the final
+/// scale keeps, the water damp the FLYING arm's (0.3, 0.2, 0.3)
+/// multiply banks, the 1200 the ground life the discard wears, the
+/// 1024 the stop distance the shouldStopFishing gate speaks).
+pub const BOBBER_AIR_GRAVITY: f64 = -0.03;
+pub const BOBBER_DRAG: f64 = 0.92;
+pub const BOBBER_GROUND_LIFE: i32 = 1200;
+pub const BOBBER_STOP_DISTANCE_SQR: f64 = 1024.0;
+
+/// THE FISHING LOOT'S OWN MAIN BAND (javap `FishingHook.retrieve` the
+/// LootParams walk + the gameplay/fishing.json the jar carries — the
+/// THREE pools the weight walk picks: the junk (weight 10, quality
+/// −2), the treasure (weight 5, quality +2, the open-water condition
+/// the json's own predicate wears), the fish (weight 85, quality
+/// −1). The quality shift the effective weight = weight + quality ×
+/// luck fold speaks [the luck the rod's ctor arg the port's rod
+/// never enchants — the 0 the honest law keeps]; the junk/treasure
+/// POOLS the item parse the NEXT round wears — the FISH band the
+/// catch walk serves this round).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BobberLootBand {
+    Fish,
+    Junk,
+    Treasure,
+}
+
+/// THE MAIN BAND'S OWN PICK (the weighted walk the loot table's
+/// entries serve — the effective weight the quality·luck shift
+/// wears, the non-positive the pool's own skip keeps, the treasure
+/// the open-water gate the condition wears).
+pub fn bobber_loot_band_pick(rng: &mut Lcg, luck: i32, open_water: bool) -> BobberLootBand {
+    let entries: [(i64, i64, BobberLootBand); 3] = [
+        (10 - 2 * luck as i64, 0, BobberLootBand::Junk),
+        (
+            if open_water { 5 + 2 * luck as i64 } else { 0 },
+            0,
+            BobberLootBand::Treasure,
+        ),
+        (85 - luck as i64, 0, BobberLootBand::Fish),
+    ];
+    let total: i64 = entries.iter().map(|&(w, _, _)| w.max(0)).sum();
+    if total <= 0 {
+        return BobberLootBand::Fish;
+    }
+    let mut roll = rng.next_int(total as u64) as i64;
+    for (w, _, band) in entries {
+        let w = w.max(0);
+        if roll < w {
+            return band;
+        }
+        roll -= w;
+    }
+    BobberLootBand::Fish
+}
+
+/// THE FISH POOL'S OWN ROLL (the gameplay/fishing/fish.json the jar
+/// carries — the FOUR fish the weights speak: cod 60, salmon 25,
+/// pufferfish 13, tropical_fish 2, NO functions the entries wear).
+pub fn bobber_fish_pick(rng: &mut Lcg) -> &'static str {
+    const FISH_POOL: [(&str, i64); 4] = [
+        ("cod", 60),
+        ("salmon", 25),
+        ("pufferfish", 13),
+        ("tropical_fish", 2),
+    ];
+    let total: i64 = FISH_POOL.iter().map(|(_, w)| w).sum();
+    let mut roll = rng.next_int(total as u64) as i64;
+    for (name, w) in FISH_POOL {
+        if roll < w {
+            return name;
+        }
+        roll -= w;
+    }
+    "cod"
+}
+
+/// THE CLOCKS' OWN ROLLS (javap `catchingFish` the census banks —
+/// the wait the Mth.nextInt(100, 600) roll the tail banks [the
+/// lureSpeed the subtraction serves], the hooked approach the
+/// 20..80 roll, the nibble window the 20..40 roll the bite arm
+/// banks; the Mth.nextInt walk the next_int_inclusive helper
+/// answers).
+pub fn bobber_wait_roll(rng: &mut Lcg, lure_speed: i32) -> i32 {
+    rng.next_int_inclusive(100, 600) - lure_speed
+}
+pub fn bobber_hooked_roll(rng: &mut Lcg) -> i32 {
+    rng.next_int_inclusive(20, 80)
+}
+pub fn bobber_nibble_roll(rng: &mut Lcg) -> i32 {
+    rng.next_int_inclusive(20, 40)
+}
+
+/// THE RETRIEVE'S OWN DAMAGE WORD (javap `FishingHook.retrieve` the
+/// census banks — the hooked arm the 3/5 pair wears [the ItemEntity
+/// the 3, the OTHER bodies the 5], the fish catch the 1, the
+/// onGround override the 2 the unconditional tail wears, the
+/// water-nothing the 0 keeps). The durability the port's own honest
+/// skip keeps [the hurtAndBreak walk the crossbow's own precedent
+/// never banks] — the WORD the walk's verdict banks.
+pub fn bobber_retrieve_word(
+    hooked_item_entity: bool,
+    hooked: bool,
+    caught: bool,
+    on_ground: bool,
+) -> i32 {
+    let mut word = if hooked {
+        if hooked_item_entity {
+            3
+        } else {
+            5
+        }
+    } else if caught {
+        1
+    } else {
+        0
+    };
+    if on_ground {
+        word = 2;
+    }
+    word
+}
+
+/// THE CAST'S OWN VELOCITY (javap `FishingHook.<init>` code=309 the
+/// rod_506b census banks — the look vec the (−f8, clamp(−f10/f9,
+/// −5.0, 5.0), −f7) trio the Mth folds speak, the scale the
+/// 0.6/length + the triangle(0.5, 0.0103365) noise the THREE draws
+/// wear [the per-axis draw the ctor's own stack order keeps], the
+/// spawn seat the (px − f8·0.3, eyeY, pz − f7·0.3) trio the ctor
+/// walk keeps).
+pub struct BobberCast {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+}
+
+pub fn bobber_cast(
+    yaw: f32,
+    pitch: f32,
+    eye_y: f64,
+    px: f64,
+    pz: f64,
+    rng: &mut Lcg,
+) -> BobberCast {
+    const RAD: f32 = 0.01745329238474369;
+    let f7 = ((-yaw * RAD) - core::f32::consts::PI).cos() as f64;
+    let f8 = ((-yaw * RAD) - core::f32::consts::PI).sin() as f64;
+    let f9 = -((-pitch * RAD).cos()) as f64;
+    let f10 = (-pitch * RAD).sin() as f64;
+    let (dx, dy, dz) = (-f8, (-f10 / f9).clamp(-5.0, 5.0), -f7);
+    let len = (dx * dx + dy * dy + dz * dz).sqrt();
+    let scale = 0.6 / len;
+    let mult_x = scale + 0.5 + rng.triangle(0.0103365);
+    let mult_y = scale + 0.5 + rng.triangle(0.0103365);
+    let mult_z = scale + 0.5 + rng.triangle(0.0103365);
+    BobberCast {
+        x: px - f8 * 0.3,
+        y: eye_y,
+        z: pz - f7 * 0.3,
+        vx: dx * mult_x,
+        vy: dy * mult_y,
+        vz: dz * mult_z,
+    }
+}
+
+/// THE BOBBER'S OWN TICK EVENTS (the borrowed-world walk the App's
+/// sim serves — the voices the sound lanes play, the bubble/splash
+/// particles the port's own helpers spawn, the approach ripples the
+/// FISHING particle kind the port's list never carries — the honest
+/// note the census keeps).
+pub struct BobberTickEvents {
+    pub voices: Vec<(&'static str, f32, f32)>,
+    pub bubbles: Vec<(f64, f64, f64, f64, f64, f64)>,
+    pub splashes: Vec<(f64, f64, f64, i32)>,
+}
+
+impl BobberTickEvents {
+    fn new() -> Self {
+        Self {
+            voices: Vec::new(),
+            bubbles: Vec::new(),
+            splashes: Vec::new(),
+        }
+    }
+}
+
+impl FishingBobber {
+    /// THE CAST'S OWN SEAT (the ctor's walk the words fn banks — the
+    /// bobber the cast spawns the same seat the velocity walk keeps;
+    /// the rotation words the atan2 fold the ctor's own tail wears).
+    pub fn from_cast(id: i32, cast: BobberCast, luck: i32, lure_speed: i32) -> Self {
+        let horiz = (cast.vx * cast.vx + cast.vz * cast.vz).sqrt();
+        Self {
+            id,
+            x: cast.x,
+            y: cast.y,
+            z: cast.z,
+            vx: cast.vx,
+            vy: cast.vy,
+            vz: cast.vz,
+            yaw: (cast.vx.atan2(cast.vz) * 57.295_776_367_187_5) as f32,
+            pitch: (cast.vy.atan2(horiz) * 57.295_776_367_187_5) as f32,
+            on_ground: false,
+            horizontal_collision: false,
+            dead: false,
+            state: BobberState::Flying,
+            hooked: None,
+            nibble: 0,
+            time_until_lured: 0,
+            time_until_hooked: 0,
+            biting: false,
+            fish_angle: 0.0,
+            luck: luck.max(0),
+            lure_speed: lure_speed.max(0),
+            life: 0,
+            out_of_water_time: 0,
+        }
+    }
+
+    /// THE BOBBER'S OWN TICK (javap `FishingHook.tick` code=705 + the
+    /// `catchingFish` code=900 the rod_506/506b censuses bank — the
+    /// owner gates the shouldStopFishing walk answers, the state
+    /// machine the FLYING/BOBBING/HOOKED_IN_ENTITY trio serves, the
+    /// bite clock the catchingFish walk rolls, the move the clip
+    /// walk serves, the 0.92 the drag's final scale keeps). The
+    /// syncronizedRandom the port's own level stream the mob_rng
+    /// word keeps [the seeded-per-tick client-server sync the
+    /// offline fiction's single world never needs — the honest note
+    /// the doc wears]; the FLYING checkCollision's walk the clip
+    /// ray + the mob sweep the egg's own precedent wears [the
+    /// ItemEntity hook the sweep the mobs-only walk never banks —
+    /// the honest note the retrieve word's doc carries]; the
+    /// openWater recalc the junk/treasure pools' gate the NEXT
+    /// round wears [the ctor's true default the fish band's own
+    /// parse never reads — the honest note the loot words carry].
+    #[allow(clippy::too_many_arguments)]
+    pub fn tick(
+        &mut self,
+        world: &crate::world::World,
+        owner_feet: Option<(f64, f64, f64)>,
+        owner_holds_rod: bool,
+        raining_at: bool,
+        sees_sky: bool,
+        mobs: &mut [Zombie],
+        rng: &mut Lcg,
+    ) -> BobberTickEvents {
+        let mut ev = BobberTickEvents::new();
+        // THE OWNER'S OWN GATES (javap tick pcs 35-67 — the gone
+        // owner the discard arm answers, the shouldStopFishing
+        // code=65 the no-rod + the 1024 the distance gate serves
+        // [the canInteractWithLevel the offline fiction's own
+        // living body trivially keeps])
+        let Some((ox, oy, oz)) = owner_feet else {
+            self.dead = true;
+            return ev;
+        };
+        let dist_sqr = (self.x - ox) * (self.x - ox)
+            + (self.y - oy) * (self.y - oy)
+            + (self.z - oz) * (self.z - oz);
+        if !owner_holds_rod || dist_sqr > BOBBER_STOP_DISTANCE_SQR {
+            self.dead = true;
+            return ev;
+        }
+        // THE GROUND'S OWN LIFE (javap pcs 68-102 — the grounded
+        // bobber the 1200 the life++ discard wears, the airborne
+        // the reset keeps)
+        if self.on_ground {
+            self.life += 1;
+            if self.life >= BOBBER_GROUND_LIFE {
+                self.dead = true;
+                return ev;
+            }
+        } else {
+            self.life = 0;
+        }
+        // THE FLUID'S OWN READ (javap pcs 105-155 — the bobber's own
+        // cell the FluidState read answers, the water the height
+        // word wears [the port's full-cell water the 1.0 the honest
+        // height keeps — the partial-height flow the fluid system
+        // never banks])
+        let cell = (
+            self.x.floor() as i32,
+            self.y.floor() as i32,
+            self.z.floor() as i32,
+        );
+        let fluid_height = if world.get(cell.0, cell.1, cell.2) == crate::world::WATER {
+            1.0f64
+        } else {
+            0.0f64
+        };
+        let in_water = fluid_height > 0.0;
+        // THE STATE'S OWN MACHINE (javap pcs 157-589)
+        match self.state {
+            BobberState::Flying => {
+                if self.hooked.is_some() {
+                    self.vx = 0.0;
+                    self.vy = 0.0;
+                    self.vz = 0.0;
+                    self.state = BobberState::HookedInEntity;
+                    return ev;
+                }
+                if in_water {
+                    self.vx *= 0.3;
+                    self.vy *= 0.2;
+                    self.vz *= 0.3;
+                    self.state = BobberState::Bobbing;
+                    return ev;
+                }
+                // THE COLLISION'S OWN CHECK (javap pc 222 — the
+                // checkCollision walk the hit scan serves: the block
+                // the onHitBlock code=25 the remaining-distance
+                // velocity banks, the mob the onHitEntity code=24
+                // the hooked id banks)
+                let from = (self.x, self.y, self.z);
+                let to = (self.x + self.vx, self.y + self.vy, self.z + self.vz);
+                if let Some(h) = crate::body::clip_ray(
+                    world,
+                    crate::math::Vec3::new(self.x as f32, self.y as f32, self.z as f32),
+                    crate::math::Vec3::new(to.0 as f32, to.1 as f32, to.2 as f32),
+                ) {
+                    let ddx = to.0 - from.0;
+                    let ddy = to.1 - from.1;
+                    let ddz = to.2 - from.2;
+                    let dlen = (ddx * ddx + ddy * ddy + ddz * ddz).sqrt().max(1e-9);
+                    let nx = ddx / dlen;
+                    let ny = ddy / dlen;
+                    let nz = ddz / dlen;
+                    let remaining = (h.x as f64 - from.0) * nx
+                        + (h.y as f64 - from.1) * ny
+                        + (h.z as f64 - from.2) * nz;
+                    self.vx = nx * remaining;
+                    self.vy = ny * remaining;
+                    self.vz = nz * remaining;
+                } else {
+                    // THE MOB SWEEP (the inflate-0.3 walk the egg's
+                    // own nearest-hit law keeps)
+                    const INF: f64 = 0.3;
+                    let mut best: Option<(f64, i32)> = None;
+                    for m in mobs.iter() {
+                        if m.health <= 0.0 {
+                            continue;
+                        }
+                        let (bx0, by0, bz0, bx1, by1, bz1) = m.box_for();
+                        if let Some(t) = segment_box_param(
+                            from,
+                            to,
+                            (bx0 - INF, by0 - INF, bz0 - INF),
+                            (bx1 + INF, by1 + INF, bz1 + INF),
+                        ) {
+                            if best.map_or(true, |(bt, _)| t < bt) {
+                                best = Some((t, m.id));
+                            }
+                        }
+                    }
+                    if let Some((_, mob_id)) = best {
+                        self.hooked = Some(mob_id);
+                    }
+                }
+            }
+            BobberState::HookedInEntity => {
+                // THE RIDE'S OWN ARM (javap pcs 239-329 — the hooked
+                // body the isRemoved/dimension gates refuse, the pos
+                // the (x, y + height·0.8, z) seat the getY(0.8) walk
+                // keeps)
+                let hooked_live = self
+                    .hooked
+                    .and_then(|hid| mobs.iter().find(|m| m.id == hid))
+                    .filter(|m| m.health > 0.0)
+                    .map(|m| {
+                        let b = m.box_for();
+                        (m.x, m.y, m.z, b.4 - b.1)
+                    });
+                match hooked_live {
+                    Some((hx, hy, hz, h)) => {
+                        self.x = hx;
+                        self.y = hy + h * 0.8;
+                        self.z = hz;
+                    }
+                    None => {
+                        self.hooked = None;
+                        self.state = BobberState::Flying;
+                    }
+                }
+                return ev;
+            }
+            BobberState::Bobbing => {
+                // THE WOBBLE'S OWN PHYSICS (javap pcs 340-435 — the
+                // d7 the (y + vy − floor(y) − fluid) height word
+                // keeps, the 0.01 the |d7| gate the signum lift
+                // serves, the velocity the (x·0.9, y − d7·nextFloat
+                // ·0.2, z·0.9) fold banks)
+                let mut d7 = (self.y + self.vy) - cell.1 as f64 - fluid_height;
+                if d7.abs() < 0.01 {
+                    d7 += d7.signum() * 0.1;
+                }
+                let vy_new = self.vy - d7 * rng.next_f32() as f64 * 0.2;
+                self.vx *= 0.9;
+                self.vy = vy_new;
+                self.vz *= 0.9;
+                // THE CLOCK'S OWN WALK (javap `catchingFish` code=900
+                // — the ServerLevel arm the port's offline world
+                // answers)
+                self.catching_fish(world, cell, raining_at, sees_sky, rng, &mut ev);
+                // THE IN-WATER'S OWN WALK (javap pcs 493-574 — the
+                // outOfWaterTime the max(0, −1) fold keeps, the
+                // biting wobble the (0.0, −0.1·f1·f2, 0.0) add
+                // banks [the TWO sync draws the fold's own stack
+                // order wears])
+                if in_water {
+                    self.out_of_water_time = (self.out_of_water_time - 1).max(0);
+                    if self.biting {
+                        let f1 = rng.next_f32() as f64;
+                        let f2 = rng.next_f32() as f64;
+                        self.vy += -0.1 * f1 * f2;
+                    }
+                } else {
+                    self.out_of_water_time = (self.out_of_water_time + 1).min(10);
+                }
+            }
+        }
+        // THE AIR'S OWN GRAVITY (javap pcs 590-628 — the NOT-water
+        // NOT-ground NO-hooked arm the −0.03 the additive add keeps)
+        if !in_water && !self.on_ground && self.hooked.is_none() {
+            self.vy += BOBBER_AIR_GRAVITY;
+        }
+        // THE MOVE'S OWN WALK (javap pc 631 — the MoverType.SELF walk
+        // the clip the port's own ray serves: the hit the surface
+        // stops, the down-walk the onGround word keeps)
+        let to = (self.x + self.vx, self.y + self.vy, self.z + self.vz);
+        if let Some(h) = crate::body::clip_ray(
+            world,
+            crate::math::Vec3::new(self.x as f32, self.y as f32, self.z as f32),
+            crate::math::Vec3::new(to.0 as f32, to.1 as f32, to.2 as f32),
+        ) {
+            self.x = h.x as f64;
+            self.y = h.y as f64;
+            self.z = h.z as f64;
+            if self.vy < 0.0 {
+                self.on_ground = true;
+            }
+            self.horizontal_collision = self.vx.abs() > 1e-9 || self.vz.abs() > 1e-9;
+        } else {
+            self.x = to.0;
+            self.y = to.1;
+            self.z = to.2;
+            self.on_ground = false;
+            self.horizontal_collision = false;
+        }
+        // THE ROTATION'S OWN WORDS (javap pc 646 — the updateRotation
+        // walk the atan2 fold banks)
+        let horiz = (self.vx * self.vx + self.vz * self.vz).sqrt();
+        self.pitch = (self.vy.atan2(horiz) * 57.295_776_367_187_5) as f32;
+        self.yaw = (self.vx.atan2(self.vz) * 57.295_776_367_187_5) as f32;
+        // THE FLYING'S OWN STOP (javap pcs 650-679 — the onGround +
+        // the horizontalCollision the ZERO velocity the pair arms)
+        if self.state == BobberState::Flying && (self.on_ground || self.horizontal_collision) {
+            self.vx = 0.0;
+            self.vy = 0.0;
+            self.vz = 0.0;
+        }
+        // THE DRAG'S OWN SCALE (javap pcs 681-703 — the 0.92 the
+        // EVERY-state final scale keeps)
+        self.vx *= BOBBER_DRAG;
+        self.vy *= BOBBER_DRAG;
+        self.vz *= BOBBER_DRAG;
+        ev
+    }
+
+    /// THE BITE CLOCK'S OWN WALK (javap `FishingHook.catchingFish`
+    /// code=900 the rod_506b census banks — the rain/sky gates the
+    /// ±1 the tick speed wears, the nibble the countdown the window
+    /// serves, the hooked approach the ripples the 0.15 gate speaks,
+    /// the BITE the splash voice + the bubble burst + the 20..40
+    /// nibble the arm banks, the lured approach the SPLASH puff the
+    /// f5 walk serves, the wait the 100..600 roll the lureSpeed
+    /// subtraction keeps). The rain/sky gates the port's own world
+    /// reads answer [the isRainingAt the rain_level verdict keeps,
+    /// the canSeeSky the sky_column word the 15 the unbroken column
+    /// speaks]; the approach ripples the FISHING particle kind the
+    /// port's list never carries — the BUBBLE the 0.15 gate banks,
+    /// the FISHING pairs the honest silence keeps.
+    fn catching_fish(
+        &mut self,
+        world: &crate::world::World,
+        cell: (i32, i32, i32),
+        raining_at: bool,
+        sees_sky: bool,
+        rng: &mut Lcg,
+        ev: &mut BobberTickEvents,
+    ) {
+        let mut speed = 1i32;
+        if rng.next_f32() < 0.25 && raining_at {
+            speed += 1;
+        }
+        if rng.next_f32() < 0.5 && !sees_sky {
+            speed -= 1;
+        }
+        if self.nibble > 0 {
+            self.nibble -= 1;
+            if self.nibble <= 0 {
+                self.time_until_lured = 0;
+                self.time_until_hooked = 0;
+                self.biting = false;
+            }
+            return;
+        }
+        if self.time_until_hooked > 0 {
+            self.time_until_hooked -= speed;
+            if self.time_until_hooked > 0 {
+                // THE APPROACH'S OWN RIPPLES (javap pcs 153-395 — the
+                // fishAngle the triangle(0.0, 9.188) wobble wears,
+                // the seat the (x + sin·t·0.1, floor(y)+1.0, z +
+                // cos·t·0.1) trio keeps, the WATER cell the BUBBLE
+                // 0.15 gate serves)
+                self.fish_angle += rng.triangle(9.188) as f32;
+                let rad = self.fish_angle * 0.01745329238474369f32;
+                let (sin_a, cos_a) = (rad.sin() as f64, rad.cos() as f64);
+                let px = self.x + sin_a * self.time_until_hooked as f64 * 0.1;
+                let py = cell.1 as f64 + 1.0;
+                let pz = self.z + cos_a * self.time_until_hooked as f64 * 0.1;
+                if world.get(px.floor() as i32, py.floor() as i32, pz.floor() as i32)
+                    == crate::world::WATER
+                    && rng.next_f32() < 0.15
+                {
+                    ev.bubbles
+                        .push((px, py - 0.1, pz, sin_a * 0.1, 0.01, cos_a * 0.1));
+                }
+                return;
+            }
+            // THE BITE (javap pcs 398-557 — the SPLASH voice the
+            // 0.25f volume + the (1.0 + (f1−f2)·0.4) pitch the
+            // arm banks, the bubble burst the count the bbWidth·20
+            // + 1 speaks, the 20..40 the nibble roll the window
+            // banks, the DATA_BITING the true keeps)
+            let f1 = rng.next_f32();
+            let f2 = rng.next_f32();
+            ev.voices
+                .push((FISHING_BOBBER_SPLASH_SOUND, 0.25, 1.0 + (f1 - f2) * 0.4));
+            let burst = 6i64; // the 0.25-wide bb the 0.25·20 + 1 word keeps
+            ev.bubbles
+                .push((self.x, self.y + 0.5, self.z, burst as f64, 0.0, 0.0));
+            self.nibble = bobber_nibble_roll(rng);
+            self.biting = true;
+            return;
+        }
+        if self.time_until_lured > 0 {
+            self.time_until_lured -= speed;
+            // THE f5'S OWN TIERS (javap pcs 578-666 — the 0.15 base
+            // the <20/<40/<60 tiers the ±0.05/0.02/0.01 adds keep)
+            let mut f5 = 0.15f32;
+            if self.time_until_lured < 20 {
+                f5 += (20 - self.time_until_lured) as f32 * 0.05;
+            } else if self.time_until_lured < 40 {
+                f5 += (40 - self.time_until_lured) as f32 * 0.02;
+            } else if self.time_until_lured < 60 {
+                f5 += (60 - self.time_until_lured) as f32 * 0.01;
+            }
+            if rng.next_f32() < f5 {
+                // THE APPROACH'S OWN PUFF (javap pcs 667-829 — the
+                // 0..360 angle + the 25..60 distance the rolls
+                // keep, the seat the (x + sin·dist·0.1, floor(y)+1.0,
+                // z + cos·dist·0.1) trio wears, the WATER cell the
+                // SPLASH 2+rng.nextInt(2) the puff serves)
+                let angle = rng.next_f32() * 360.0f32;
+                let rad = angle * 0.01745329238474369f32;
+                let dist = rng.next_f32() as f64 * 35.0 + 25.0;
+                let px = self.x + rad.sin() as f64 * dist * 0.1;
+                let py = cell.1 as f64 + 1.0;
+                let pz = self.z + rad.cos() as f64 * dist * 0.1;
+                if world.get(px.floor() as i32, py.floor() as i32, pz.floor() as i32)
+                    == crate::world::WATER
+                {
+                    ev.splashes.push((px, py, pz, 2));
+                }
+            }
+            if self.time_until_lured <= 0 {
+                self.fish_angle = rng.next_f32() * 360.0f32;
+                self.time_until_hooked = bobber_hooked_roll(rng);
+            }
+            return;
+        }
+        // THE WAIT'S OWN ROLL (javap pcs 870-896 — the 100..600 the
+        // Mth.nextInt roll the tail banks, the lureSpeed the
+        // subtraction serves)
+        self.time_until_lured = bobber_wait_roll(rng, self.lure_speed);
+    }
+}
+
 /// THE SEGMENT'S OWN SLAB WALK (the ray-AABB intersection the
 /// ClipContext's own box law speaks — the param window the t-min/
 /// t-max the slabs clamp, the hit's own t the distance order

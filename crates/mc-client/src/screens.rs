@@ -9388,6 +9388,19 @@ pub struct App {
     /// discard the removal). The headless scenes never spawn one: the
     /// goldens stay.
     pub eggs: Vec<crate::mob::EggProjectile>,
+    /// THE FISHING BOBBER LANE (the offline world's own bobber — the
+    /// rod's cast the FishingRodItem.use walk speaks, the flight the
+    /// FishingHook tick's own state machine rides: the FLYING arc,
+    /// the water the BOBBING state banks, the bite clock the
+    /// catchingFish walk rolls, the retrieve the fish catch the
+    /// loot walk serves). The ONE bobber the player's own rod keeps
+    /// [the vanilla's player.fishing field the single-body law
+    /// speaks], the wire session the Vec never fills.
+    pub bobbers: Vec<crate::mob::FishingBobber>,
+    /// THE BOBBER'S OWN TEXTURE (the lazy load the knots' own
+    /// pattern keeps — the fishing_bobber.png the entity pass
+    /// reads).
+    pub bobber_texture: Option<(u32, u32, Vec<u8>)>,
     /// THE FALLING BLOCKS' OWN BODIES (the FallingBlockEntity lane —
     /// the conversion the scheduled tick spawns, the landing the
     /// placement/drop walk serves).
@@ -13652,6 +13665,8 @@ impl App {
             mobs: Vec::new(),
             arrows: Vec::new(),
             eggs: Vec::new(),
+            bobbers: Vec::new(),
+            bobber_texture: None,
             arrow_model: None,
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
@@ -21084,6 +21099,97 @@ impl App {
                                 1.0,
                                 1.0,
                             );
+                        }
+                        // THE FISHING BOBBER'S OWN FLIGHT (javap
+                        // `FishingHook.tick` code=705 the rod_506
+                        // census banks — the state machine the
+                        // FLYING/BOBBING/HOOKED_IN_ENTITY trio serves,
+                        // the bite clock the catchingFish walk rolls,
+                        // the move the clip walk serves, the drag the
+                        // 0.92 the final scale keeps; the events the
+                        // voices/particles the port's own helpers
+                        // spawn)
+                        if !self.bobbers.is_empty() {
+                            // THE OWNER'S OWN READ (the body's feet +
+                            // the rod-held verdict the gates read —
+                            // the MAIN hand the port's own held lane
+                            // keeps [the offhand the vanilla's
+                            // shouldStopFishing arm the port's
+                            // single-hand read never serves — the
+                            // honest note the doc wears])
+                            let owner_feet = self.body.as_ref().map(|b| (b.x, b.y, b.z));
+                            let holds_rod = self.held_id().and_then(mc_registry::item_name)
+                                == Some("fishing_rod");
+                            let raining = self
+                                .offline_world
+                                .as_ref()
+                                .map(|w| w.rain_level > 0.0)
+                                .unwrap_or(false);
+                            for bob in self.bobbers.iter_mut() {
+                                if bob.dead {
+                                    continue;
+                                }
+                                // THE SKY'S OWN READ (the bobber's
+                                // own cell the column word answers —
+                                // the 15 the unbroken column speaks)
+                                let sees_sky = crate::mob::sky_column_word(
+                                    world,
+                                    bob.x.floor() as i32,
+                                    bob.y as i32 + 1,
+                                    bob.z.floor() as i32,
+                                ) >= 15;
+                                let ev = bob.tick(
+                                    world,
+                                    owner_feet,
+                                    holds_rod,
+                                    raining,
+                                    sees_sky,
+                                    &mut self.mobs,
+                                    &mut self.mob_rng,
+                                );
+                                // THE EVENTS' OWN APPLIES (the
+                                // voices the sound lanes play, the
+                                // bubbles the port's own helper
+                                // spawns [the seven draws the ctor's
+                                // chain wears], the splash puffs the
+                                // port's own helper serves)
+                                for (name, vol, pit) in ev.voices {
+                                    self.sounds.play_voice(self.frame, name, vol, pit);
+                                }
+                                for (bx, by, bz, bvx, bvy, bvz) in ev.bubbles {
+                                    self.particles.push(crate::particles::bubble(
+                                        bx,
+                                        by,
+                                        bz,
+                                        bvx,
+                                        bvy,
+                                        bvz,
+                                        self.mob_rng.next_f32(),
+                                        self.mob_rng.next_f32(),
+                                        self.mob_rng.next_f32(),
+                                        self.mob_rng.next_f32(),
+                                        self.mob_rng.next_f32(),
+                                        self.mob_rng.next_f32(),
+                                        self.mob_rng.next_f32(),
+                                    ));
+                                }
+                                for (sx, sy, sz, count) in ev.splashes {
+                                    for _ in 0..count {
+                                        self.particles.push(crate::particles::splash(
+                                            sx,
+                                            sy,
+                                            sz,
+                                            0.1,
+                                            0.0,
+                                            0.1,
+                                            self.mob_rng.next_f32(),
+                                            self.mob_rng.next_f32(),
+                                            self.mob_rng.next_f32(),
+                                        ));
+                                    }
+                                }
+                            }
+                            self.bobbers.retain(|b| !b.dead);
                         }
                         for arrow in self.arrows.iter_mut() {
                             let mut aev = arrow.tick(world, player.as_ref(), &self.mobs);
@@ -50350,6 +50456,113 @@ impl App {
     /// random the walk spends). The durability the `hurtAndBreak`
     /// walk spends the client never banks (the items' wear the
     /// honest skip keeps), the stats the server's own ledger names.
+    /// THE BOBBER'S OWN RETRIEVE (javap `FishingHook.retrieve`
+    /// code=445 the rod_506 census banks — the hooked arm the
+    /// pullEntity drag serves [the mob's velocity the (owner − mob)
+    /// ·0.1 add wears], the fish catch the loot walk serves: the
+    /// main band the weight walk picks [the junk 10 / the treasure
+    /// 5 / the fish 85 the quality·luck shift the port's 0-luck law
+    /// keeps — the open-water gate the true the ctor's default
+    /// wears], the FISH band the pool's own weighted roll serves,
+    /// the ItemEntity the hook's pos the fling velocity wears [the
+    /// (dx·0.1, dy·0.1 + dist^0.25·0.08, dz·0.1) fold the census's
+    /// double-sqrt speaks], the XP orb the (px, py+0.5, pz+0.5)
+    /// seat the nextInt(6)+1 value keeps, the FISH_CAUGHT stat the
+    /// client's ledger never banks; the junk/treasure POOLS the
+    /// item parse the NEXT round wears — the band's own pick the
+    /// port's fish lane never serves, the honest note the doc
+    /// carries). The verdict word the damage the port's own honest
+    /// skip keeps [the hurtAndBreak walk the crossbow's precedent
+    /// never banks], the discard the removal.
+    fn bobber_retrieve(&mut self, idx: usize) {
+        let Some(bob) = self.bobbers.get(idx) else {
+            return;
+        };
+        let (hx, hy, hz) = (bob.x, bob.y, bob.z);
+        let hooked = bob.hooked;
+        let nibble_caught = bob.nibble > 0;
+        let on_ground = bob.on_ground;
+        // THE OWNER'S OWN SEAT (the pull + the fling the body's own
+        // pos reads — the flight camera the headless fallback's own
+        // honesty the camera keeps)
+        let (ox, oy, oz) = match self.body.as_ref() {
+            Some(b) => (b.x, b.y, b.z),
+            None => {
+                let c = self.world_camera();
+                (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
+            }
+        };
+        let mut caught = false;
+        if let Some(hid) = hooked {
+            // THE HOOKED'S OWN PULL (javap `pullEntity` code=64 — the
+            // owner−hooked delta the 0.1 scale the mob's velocity
+            // add wears)
+            if let Some(m) = self.mobs.iter_mut().find(|m| m.id == hid) {
+                m.vx += (ox - m.x) * 0.1;
+                m.vy += (oy - m.y) * 0.1;
+                m.vz += (oz - m.z) * 0.1;
+            }
+        } else if nibble_caught {
+            caught = true;
+            // THE MAIN BAND'S OWN PICK (the weight walk the loot
+            // table's entries serve)
+            let band = crate::mob::bobber_loot_band_pick(&mut self.mob_rng, 0, true);
+            if band == crate::mob::BobberLootBand::Fish {
+                // THE FISH POOL'S OWN ROLL (the weighted walk the
+                // fish.json entries serve)
+                let fish = crate::mob::bobber_fish_pick(&mut self.mob_rng);
+                let fish_id =
+                    mc_registry::item_id_by_name(fish).expect("the fish the registry carries");
+                // THE FLING'S OWN SEAT (javap retrieve pcs 228-341 —
+                // the dx/dy/dz the owner−hook delta the 0.1 scales
+                // keep, the y the quarter-root distance boost the
+                // double-sqrt fold speaks)
+                let dx = ox - hx;
+                let dy = oy - hy;
+                let dz = oz - hz;
+                let dist = (dx * dx + dy * dy + dz * dz).sqrt().sqrt();
+                let drop_id = self.next_drop_id;
+                self.next_drop_id += 1;
+                let mut drop = crate::drops::ItemDrop::spawn_entity_loot(
+                    drop_id,
+                    fish_id,
+                    1,
+                    hx,
+                    hy,
+                    hz,
+                    &mut self.mob_rng,
+                );
+                drop.vx = dx * 0.1;
+                drop.vy = dy * 0.1 + dist * 0.08;
+                drop.vz = dz * 0.1;
+                self.drops.push(drop);
+                // THE XP ORB'S OWN SEAT (javap pcs 354-405 — the orb
+                // the (px, py+0.5, pz+0.5) spawns, the value the
+                // nextInt(6)+1 wears)
+                let orb_id = self.next_orb_id;
+                self.next_orb_id += 1;
+                let value = self.mob_rng.next_int(6) + 1;
+                self.orbs.push(crate::xp::ExperienceOrb::spawn(
+                    orb_id,
+                    hx,
+                    hy + 0.5,
+                    hz + 0.5,
+                    value,
+                ));
+            }
+            // THE JUNK/TREASURE POOLS the item parse the NEXT round
+            // wears — the band's own pick the port's fish lane never
+            // serves (the honest note the census's own words keep)
+        }
+        // THE VERDICT'S OWN WORD (javap pcs 428-444 — the damage the
+        // words fn banks, the onGround override the 2 wears; the
+        // durability the port's own honest skip keeps)
+        let _word = crate::mob::bobber_retrieve_word(false, hooked.is_some(), caught, on_ground);
+        // THE DISCARD (javap pc 439 — the bobber the world's own
+        // list retires)
+        self.bobbers.remove(idx);
+    }
+
     fn crossbow_shot_offline(&mut self) {
         // THE OWNER'S OWN EYE (the AbstractArrow ctor's spawn law —
         // the body's own coords the camera's authority keeps, the
@@ -50786,6 +50999,70 @@ impl App {
                         pitch,
                         hand: 0,
                     });
+                }
+                return true;
+            }
+            // THE FISHING ROD'S OWN USE (javap `FishingRodItem.use`
+            // code=223 the rod_506 census banks — the REEL arm the
+            // bobber's own retrieve serves [the damage word the
+            // hurtAndBreak walk the port's own honest skip never
+            // banks — the items' wear the crossbow's own precedent
+            // keeps], the RETRIEVE voice the (1.0, pitch-fold) pair
+            // plays; the CAST arm the bobber the fresh body spawns —
+            // the THROW voice the (0.5, pitch-fold) pair the press
+            // arms FIRST, the ctor's walk the look-vec words fn
+            // serves, the luck/lure the port's rod never enchants —
+            // the 0/0 the honest law keeps). The ONE bobber the
+            // player's own rod keeps [the vanilla's player.fishing
+            // field the single-body law speaks]; the wire session
+            // the Vec never fills.
+            if self.held_word_of(id) == Some("fishing_rod") {
+                // THE REEL ARM (the bobber's own retrieve — the fish
+                // catch the loot walk serves, the discard the removal)
+                if let Some(bi) = self.bobbers.iter().position(|b| !b.dead) {
+                    self.bobber_retrieve(bi);
+                    // THE VOICE (javap use pc 58-83 — the
+                    // FISHING_BOBBER_RETRIEVE the (1.0, pitch) pair the
+                    // fconst_1 keeps, the pitch the 0.4f/(nextFloat·0.4
+                    // + 0.8) fold the level's own stream draws)
+                    let pitch = 0.4 / (self.mob_rng.next_f32() * 0.4 + 0.8);
+                    self.sounds.play_voice(
+                        self.frame,
+                        crate::mob::FISHING_BOBBER_RETRIEVE_SOUND,
+                        1.0,
+                        pitch,
+                    );
+                    return true;
+                }
+                // THE CAST ARM'S OWN VOICE (javap use pc 98-138 — the
+                // FISHING_BOBBER_THROW the (0.5, pitch) pair the ldc
+                // keeps, the pitch the same fold draws BEFORE the
+                // ctor's own triangles)
+                let pitch = 0.4 / (self.mob_rng.next_f32() * 0.4 + 0.8);
+                self.sounds.play_voice(
+                    self.frame,
+                    crate::mob::FISHING_BOBBER_THROW_SOUND,
+                    0.5,
+                    pitch,
+                );
+                // THE OFFLINE PREDICTION (the ctor's own walk the
+                // words fn serves — the spawn seat + the velocity
+                // the cast keeps)
+                if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                    if let Some(b) = self.body.as_ref() {
+                        let cast = crate::mob::bobber_cast(
+                            b.yaw,
+                            b.pitch,
+                            b.y + b.eye_height(),
+                            b.x,
+                            b.z,
+                            &mut self.mob_rng,
+                        );
+                        let ent = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.bobbers
+                            .push(crate::mob::FishingBobber::from_cast(ent, cast, 0, 0));
+                    }
                 }
                 return true;
             }
@@ -85485,6 +85762,7 @@ impl App {
         // fuse machines the block-model flash render wears)
         self.render_tnts(fb, &ctx, &cam);
         self.render_eggs(fb, &ctx, &cam);
+        self.render_bobbers(fb, &ctx, &cam);
         self.render_falling_blocks(fb, &ctx, &cam);
         self.render_arrows(fb, &ctx, &cam);
         // THE FIREWORK ROCKETS' OWN PASS (the entity pass's own lane —
@@ -87108,6 +87386,132 @@ impl App {
     /// bakes, the pose the lerped position anchors, the basis the
     /// camera's own right/up/forward speak (the roll-0 camera the
     /// orb's own lane speaks, the Y-180 the orb's basis negates).
+    /// THE FISHING BOBBER'S OWN PASS (javap `FishingHookRenderer`
+    /// the 26.2 jar — the bobber's own body the camera-facing quad
+    /// wears, the LINE the rod's own hold the rope primitive serves:
+    /// the start the body's eye the port's own hold keeps [the rod
+    /// tip the vanilla's hand-pose walk computes — the honest
+    /// simplification the note wears], the end the bobber's own pos,
+    /// the white the vertex color the fishing line's own law keeps —
+    /// the leash's own 0.5/0.4/0.3 the fishing line never tints).
+    /// The golden scenes never cast a rod: the goldens stay.
+    fn render_bobbers(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.bobbers.is_empty() {
+            return; // the deterministic scenes carry no bobbers — the goldens stay
+        }
+        // THE TEXTURE'S OWN LAZY LOAD (the knots' own pattern — the
+        // fishing_bobber.png the assets roots read)
+        if self.bobber_texture.is_none() {
+            for prefix in [
+                "assets-cache/jar",
+                "../assets-cache/jar",
+                "../../assets-cache/jar",
+            ] {
+                if let Ok(bytes) = std::fs::read(
+                    std::path::Path::new(prefix)
+                        .join("assets/minecraft/textures/entity/fishing_bobber.png"),
+                ) {
+                    if let Ok((w, h, rgba)) = crate::avatar::decode_rgba(&bytes) {
+                        self.bobber_texture = Some((w, h, rgba));
+                        break;
+                    }
+                }
+            }
+        }
+        let Some((tw, th, tex)) = self.bobber_texture.as_ref() else {
+            return;
+        };
+        let (tw, th) = (*tw, *th);
+        // the camera basis (the mulPose(cameraOrientation) fold — the
+        // throwables' own walk shares)
+        let sy = cam.yaw.sin();
+        let cy = cam.yaw.cos();
+        let sp = cam.pitch.sin();
+        let cp = cam.pitch.cos();
+        let right = [-cy, 0.0, -sy];
+        let up = [-sy * sp, cp, cy * sp];
+        let fwd = cam.forward();
+        let fwd = [-fwd.x, -fwd.y, -fwd.z];
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for bob in &self.bobbers {
+            // THE QUAD'S OWN SEAT (the 0.25-wide bb the billboard's
+            // own half-span wears)
+            let (bx, by, bz) = (bob.x as f32, bob.y as f32, bob.z as f32);
+            let half = 0.125f32;
+            let pts = [
+                [
+                    bx + right[0] * -half + up[0] * -half + fwd[0] * 0.0,
+                    by + right[1] * -half + up[1] * -half + fwd[1] * 0.0,
+                    bz + right[2] * -half + up[2] * -half + fwd[2] * 0.0,
+                ],
+                [
+                    bx + right[0] * -half + up[0] * half + fwd[0] * 0.0,
+                    by + right[1] * -half + up[1] * half + fwd[1] * 0.0,
+                    bz + right[2] * -half + up[2] * half + fwd[2] * 0.0,
+                ],
+                [
+                    bx + right[0] * half + up[0] * half + fwd[0] * 0.0,
+                    by + right[1] * half + up[1] * half + fwd[1] * 0.0,
+                    bz + right[2] * half + up[2] * half + fwd[2] * 0.0,
+                ],
+                [
+                    bx + right[0] * half + up[0] * -half + fwd[0] * 0.0,
+                    by + right[1] * half + up[1] * -half + fwd[1] * 0.0,
+                    bz + right[2] * half + up[2] * -half + fwd[2] * 0.0,
+                ],
+            ];
+            sampled.push(crate::raster::SampledQuad {
+                pts,
+                uv: [
+                    [0.0, 0.0],
+                    [0.0, th as f32],
+                    [tw as f32, th as f32],
+                    [tw as f32, 0.0],
+                ],
+                tex: "entity/fishing_bobber",
+                tint: [1.0, 1.0, 1.0],
+            });
+        }
+        fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_name, u, v| {
+            let (w, h, px) = self.bobber_texture.as_ref()?;
+            let uu = (u as u32).clamp(0, w - 1) as usize;
+            let vv = (v as u32).clamp(0, h - 1) as usize;
+            let i = (vv * *w as usize + uu) * 4;
+            let c = px.get(i..i + 4)?;
+            Some([c[0], c[1], c[2], c[3]])
+        });
+        // THE LINE'S OWN PASS (javap `FishingHookRenderer` — the rope
+        // primitive the leash's own walk wears: the start the body's
+        // eye the port's own hold keeps, the end the bobber's own
+        // pos, the WHITE the vertex color the fishing line's own law
+        // keeps)
+        if let Some(b) = self.body.as_ref() {
+            let (eye_x, eye_y, eye_z) = (b.x, b.y + b.eye_height(), b.z);
+            let mut line_sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+            for bob in &self.bobbers {
+                let rope = crate::avatar::rope_quads((eye_x, eye_y, eye_z), (bob.x, bob.y, bob.z));
+                for q in &rope {
+                    line_sampled.push(crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: "",
+                        tint: [q.shade, q.shade, q.shade],
+                    });
+                }
+            }
+            fb.draw_sampled_quads(
+                ctx.proj.mul(&ctx.view),
+                &line_sampled,
+                &mut |_tex, _u, _v| Some([255u8, 255, 255, 255]),
+            );
+        }
+    }
+
     fn render_eggs(
         &mut self,
         fb: &mut crate::raster::Framebuf,
