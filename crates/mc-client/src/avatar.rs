@@ -2883,6 +2883,76 @@ impl LlamaModel {
     }
 }
 
+/// THE LEASH'S OWN ROPE (javap `LeashFeatureRenderer.prepare` +
+/// `addVertexPair` the leash_481 census banks): the 25 vertex pairs
+/// the 24-segment walk wears — the (dx, dy, dz) the end-start
+/// subtraction speaks, the perpendicular scale the `0.05f * invSqrt
+/// (dx²+dz²) / 2` fold the f8 store keeps (the degenerate vertical
+/// pair the xz-zero the honest 0 guard answers — the vanilla +Inf
+/// word the NaN poisons, the port the zero-cross keeps), the pair
+/// offsets the `(∓f9, sag ± 0.05, ±f10)` cross-section words wear,
+/// the slack sag the single-leash path the field never unwears (the
+/// ctor's `iconst_1` true the honest droop keeps). The 24 segment
+/// quads both windings the two passes' strip the canvas answers
+/// (the ascending iconst_0 walk + the descending iconst_1 walk the
+/// prepare loops speak), the per-segment shade the parity
+/// alternation banks (the flat-quad walk the Gouraud pair-shade
+/// span the start pair's word picks).
+pub fn rope_quads(start: (f64, f64, f64), end: (f64, f64, f64)) -> Vec<AvatarQuad> {
+    let (sx, sy, sz) = start;
+    let (ex, ey, ez) = end;
+    let dx = (ex - sx) as f32;
+    let dy = (ey - sy) as f32;
+    let dz = (ez - sz) as f32;
+    // THE PERPENDICULAR'S OWN SCALE (prepare pc 79-112): the xz
+    // length the invSqrt fold answers, the LEASH_WIDTH/2 the pair
+    // offsets wear
+    let xz2 = dx * dx + dz * dz;
+    let f8 = if xz2 > 0.0 {
+        crate::mob::LEASH_WIDTH * 0.5 / xz2.sqrt()
+    } else {
+        0.0
+    };
+    let f9 = dz * f8;
+    let f10 = dx * f8;
+    let mut pairs: Vec<[[f32; 3]; 2]> = Vec::with_capacity(25);
+    for seg in 0..=24 {
+        let t = seg as f32 / 24.0;
+        let f19 = dx * t;
+        let f21 = dz * t;
+        let sag = crate::mob::rope_sag(dy, t, true);
+        pairs.push([
+            [
+                sx as f32 + f19 - f9,
+                sy as f32 + sag + crate::mob::LEASH_WIDTH,
+                sz as f32 + f21 + f10,
+            ],
+            [sx as f32 + f19 + f9, sy as f32 + sag, sz as f32 + f21 - f10],
+        ]);
+    }
+    let uv = [[0.0f32, 0.0f32]; 4];
+    let mut out: Vec<AvatarQuad> = Vec::with_capacity(48);
+    for seg in 0..24 {
+        let [a0, b0] = pairs[seg];
+        let [a1, b1] = pairs[seg + 1];
+        let shade = crate::mob::rope_segment_shade(seg as i32, 0);
+        // THE STRIP'S TWO FACES (the ascending + the descending
+        // passes the prepare loops speak — each the quad's own
+        // winding the raster's cull law answers)
+        out.push(AvatarQuad {
+            pts: [a0, a1, b1, b0],
+            uv,
+            shade,
+        });
+        out.push(AvatarQuad {
+            pts: [b0, b1, a1, a0],
+            uv,
+            shade,
+        });
+    }
+    out
+}
+
 /// The equine's parts, posed by `state` — the javap-proven mesh
 /// (`LlamaModel.createBodyLayer`'s own fluent chains the census
 /// banks). THE WALK: the same `LlamaModel.setupAnim` diagonal fold

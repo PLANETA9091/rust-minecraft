@@ -38760,3 +38760,338 @@ fn the_trader_llama_the_mesh_the_quads_wear() {
         .count();
     assert!(differ > 0, "the walk phase the leg poses the quads move");
 }
+
+/// THE LEASH'S OWN ROPE (javap `LeashFeatureRenderer.prepare` +
+/// `addVertexPair` + the `EntityRenderer.extractRenderState`
+/// single-leash walk the leash_481 census banks — the LEASH_WIDTH
+/// 0.05f constant, the getRopeHoldPosition eye*0.7 word, the
+/// Llama.getLeashOffset (0, eye*0.75, bbW*0.5) pair, the Vec3.yRot
+/// x·cos + z·sin fold, the slack sag the dy sign splits (the rise
+/// the t² ease-in, the drop the dy − dy·(1−t)² ease-out), the parity
+/// shade the 0.7/1.0 alternation keeps, the 25 vertex pairs the
+/// 24-segment strip wears, the cross-section the (∓f9, sag ± 0.05,
+/// ±f10) offsets speak, the degenerate vertical pair the xz-zero
+/// guard keeps):
+#[test]
+fn the_leash_rope_the_vanilla_words_wear() {
+    use crate::mob::{
+        leash_start, llama_leash_offset, rope_hold_position, rope_sag, rope_segment_shade,
+        vec3_y_rot, MobKind, LEASH_WIDTH,
+    };
+    // THE WIDTH'S OWN CONSTANT (the compile-time word the ldc
+    // 0.05000000074505806f the prepare/addVertexPair walks inline)
+    assert_eq!(LEASH_WIDTH, 0.05, "the rope width the ldc bank keeps");
+    // THE HOLDER'S OWN HOLD POINT (the eye*0.7 word the dmul speaks
+    // — the f64 promote the f2d widen wears)
+    let hold = rope_hold_position(MobKind::WanderingTrader, 10.0, 5.0, 20.0);
+    assert_eq!(
+        hold,
+        (10.0, 5.0 + 1.6200000047683716 * 0.7, 20.0),
+        "the trader's hold the eye*0.7 word wears"
+    );
+    let llama_hold = rope_hold_position(MobKind::TraderLlama, 0.0, 9.0, 0.0);
+    assert_eq!(
+        llama_hold,
+        (0.0, 9.0 + 1.7764999866485596 * 0.7, 0.0),
+        "the llama kind the same hold law wears"
+    );
+    // THE LLAMA'S OWN LEASH OFFSET (the (0, eye*0.75, bbW*0.5) pair
+    // the ldc2_w 0.75/0.5 doubles speak)
+    assert_eq!(
+        llama_leash_offset(),
+        (0.0, 0.75 * 1.7764999866485596, 0.5 * 0.8999999761581421),
+        "the llama offset the Llama.getLeashOverride words wear"
+    );
+    // THE WIRE'S OWN ROTATION (the yRot fold the x·cos + z·sin /
+    // z·cos − x·sin pair speaks; the zero rot the identity wears)
+    assert_eq!(
+        vec3_y_rot(0.0, 1.0, 2.0, 0.0),
+        (0.0, 1.0, 2.0),
+        "the zero rot the identity fold wears"
+    );
+    let (_ox, h, w) = llama_leash_offset();
+    // THE START'S OWN WALK (the yaw 0 the offset unchanged — the
+    // -0.01745 fold the zero degree answers; the yaw 90 the offset
+    // the -w x-edge speaks, the z the ±1e-6 cos tail keeps)
+    let start0 = leash_start(10.0, 20.0, 30.0, 0.0);
+    assert_eq!(
+        start0,
+        (10.0, 20.0 + h, 30.0 + w),
+        "the yaw-0 start the unrotated offset wears"
+    );
+    let start90 = leash_start(10.0, 20.0, 30.0, 90.0);
+    assert!(
+        (start90.0 - (10.0 - w)).abs() < 1e-6,
+        "the yaw-90 start the -w edge wears ({})",
+        start90.0
+    );
+    assert!(
+        (start90.2 - 30.0).abs() < 1e-6,
+        "the yaw-90 z the cos tail keeps ({})",
+        start90.2
+    );
+    assert_eq!(start90.1, 20.0 + h, "the y the untouched pass keeps");
+    // THE SAG'S OWN THREE WORDS (the slack gate the dy sign splits:
+    // the taut the straight lerp, the rise the t² fold, the drop
+    // the dy − dy·(1−t)² ease-out — both slack arms the chord below
+    // the droop keeps, the endpoints the exact attach wear)
+    assert_eq!(
+        rope_sag(-2.0, 0.5, false),
+        -1.0,
+        "the taut the straight lerp wears"
+    );
+    assert_eq!(rope_sag(4.0, 0.5, true), 1.0, "the rise the t² fold wears");
+    assert_eq!(
+        rope_sag(-4.0, 0.25, true),
+        -1.75,
+        "the drop the dy − dy·u² word wears (u = 0.75)"
+    );
+    assert_eq!(
+        rope_sag(-2.0, 0.5, true),
+        -1.5,
+        "the drop mid the chord below the droop keeps"
+    );
+    assert_eq!(
+        rope_sag(2.0, 0.5, true),
+        0.5,
+        "the rise mid the chord below the rise keeps"
+    );
+    assert_eq!(
+        rope_sag(3.0, 0.0, true),
+        0.0,
+        "the t=0 the start attach wears"
+    );
+    assert_eq!(
+        rope_sag(3.0, 1.0, true),
+        3.0,
+        "the rise end the exact reach"
+    );
+    assert_eq!(
+        rope_sag(-3.0, 0.0, true),
+        0.0,
+        "the drop start the exact attach"
+    );
+    assert_eq!(
+        rope_sag(-3.0, 1.0, true),
+        -3.0,
+        "the drop end the exact reach"
+    );
+    // THE SHADE'S OWN ALTERNATION (the seg%2 == side pick the
+    // if_icmpne speaks — the pass 0/1 the parity swap serves)
+    assert_eq!(
+        rope_segment_shade(0, 0),
+        0.7,
+        "the even seg the dark arm wears"
+    );
+    assert_eq!(rope_segment_shade(1, 0), 1.0, "the odd seg the light keeps");
+    assert_eq!(
+        rope_segment_shade(2, 0),
+        0.7,
+        "the second pair the dark repeats"
+    );
+    assert_eq!(
+        rope_segment_shade(23, 0),
+        1.0,
+        "the last odd the light keeps"
+    );
+    assert_eq!(
+        rope_segment_shade(0, 1),
+        1.0,
+        "the pass-1 the parity swap wears"
+    );
+    assert_eq!(
+        rope_segment_shade(1, 1),
+        0.7,
+        "the pass-1 odd the dark wears"
+    );
+    // THE ROPE'S OWN QUADS (the horizontal 4-block span the exact
+    // cross-section words wear: f9 = 0, f10 = 0.025 — the 48 quads
+    // both windings, the pair rows the (∓f9, sag ± 0.05, ±f10)
+    // offsets keep, the shades the parity walk banks)
+    let quads = crate::avatar::rope_quads((0.0, 0.0, 0.0), (4.0, 0.0, 0.0));
+    assert_eq!(quads.len(), 48, "the 24 segments the both windings wear");
+    let q0 = &quads[0];
+    assert_eq!(
+        q0.pts[0],
+        [0.0, 0.05, 0.025],
+        "the pair-0 A vertex the (-f9, 0.05, +f10) words wear"
+    );
+    assert_eq!(
+        q0.pts[3],
+        [0.0, 0.0, -0.025],
+        "the pair-0 B vertex the (+f9, 0, -f10) words wear"
+    );
+    assert_eq!(q0.shade, 0.7, "the seg-0 shade the parity wears");
+    assert_eq!(
+        quads[1].pts[0], q0.pts[3],
+        "the reversed face the B row leads"
+    );
+    assert_eq!(
+        quads[1].pts[3], q0.pts[0],
+        "the reversed face the A row trails"
+    );
+    assert_eq!(quads[2].shade, 1.0, "the seg-1 shade the light arm wears");
+    // the rope's END pair the exact attach keeps (the dy=0 the sag
+    // zero the straight span answers) — the reversed quad's row the
+    // pts[1] B / pts[2] A order keeps
+    let q47 = &quads[47];
+    assert_eq!(
+        q47.pts[2],
+        [4.0, 0.05, 0.025],
+        "the pair-24 A the end + cross-section wears"
+    );
+    assert_eq!(
+        q47.pts[1],
+        [4.0, 0.0, -0.025],
+        "the pair-24 B the end attach keeps"
+    );
+    // THE DROOP'S OWN CANVAS WORD (the 2-block drop the mid pair the
+    // dy − dy·u² fold wears: 10 + (−2 − (−2·0.25)) = 8.5 — the
+    // chord's 9.0 the rope 8.5 below)
+    let droop = crate::avatar::rope_quads((0.0, 10.0, 0.0), (4.0, 8.0, 0.0));
+    let mid_b = droop[12 * 2].pts[3];
+    assert_eq!(
+        mid_b[1], 8.5,
+        "the drop mid the dy − dy·u² sag the 8.5 wears"
+    );
+    // THE DEGENERATE'S OWN GUARD (the vertical pair the xz-zero the
+    // honest 0 answers — no NaN the finite quads keep, the sag the
+    // t² fold carries, the cross-section the pure vertical wears)
+    let vertical = crate::avatar::rope_quads((0.0, 0.0, 0.0), (0.0, 5.0, 0.0));
+    assert_eq!(vertical.len(), 48, "the vertical rope the same count wears");
+    for q in &vertical {
+        for p in &q.pts {
+            for c in p {
+                assert!(c.is_finite(), "the degenerate pair no NaN wears");
+            }
+        }
+    }
+    let vmid_a = vertical[12 * 2].pts[0];
+    assert_eq!(
+        vmid_a[1], 1.3,
+        "the vertical mid the t² sag + 0.05 lift wears"
+    );
+    assert_eq!(vmid_a[0], 0.0, "the vertical mid the zero cross keeps");
+}
+
+/// THE LEASH'S OWN ROPE CANVAS (the render walk the
+/// `LeashFeatureRenderer` lane serves): the trader + the leashed
+/// llama the world lands, the rope the frame's brown pixels the
+/// setColor(0.5s, 0.4s, 0.3s) words wear, the leashed_to cleared the
+/// same frame the rope never paints (the echo-gate harness the
+/// static stage keeps — the no-tick frames the pair positions
+/// never move), the rope pixels the between-bodies band the diff
+/// speaks.
+#[test]
+fn the_leash_rope_the_canvas_wears() {
+    // THE RENDER LANE'S OWN SERIAL LOCK (the dev-151 prescription the
+    // heavy frame bodies the parallel harness never interleaves)
+    let _lane = render_lane();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.perspective = crate::camera::CameraType::ThirdPersonBack;
+    // THE ZOMBIE SKIN'S OWN GATE (the stage's own pre-fill the
+    // walked root keeps — the mob lane the lazy loads the frame
+    // draw answers)
+    if app.zombie_avatar.is_none() {
+        if let Some(root) = [
+            "assets-cache/jar",
+            "../assets-cache/jar",
+            "../../assets-cache/jar",
+        ]
+        .iter()
+        .map(std::path::Path::new)
+        .find(|p| p.join("gui/container/inventory.png").exists())
+        {
+            app.zombie_avatar = crate::avatar::AvatarModel::load_zombie(root);
+        }
+    }
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 0.0;
+        body.pitch = 0.0;
+    }
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in (bx - 5)..=(bx + 5) {
+            for z in (bz - 7)..=(bz + 3) {
+                for y in by..=(by + 5) {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+                w.set(x, by - 1, z, crate::world::STONE);
+            }
+        }
+    }
+    if let Some(w) = app.offline_world.as_ref() {
+        app.world_quads = Some(crate::mesher::mesh_world(w, None));
+    }
+    // THE PAIR'S OWN STAGE (the static no-tick frame the positions
+    // never move): the trader 3 ahead + 1 right, the llama 3 ahead
+    // − 1 right — the 2-block rope the pair's mid-air spans
+    let mut trader =
+        crate::mob::Zombie::new(901, (bx as f64) + 1.0, by as f64, (bz as f64) - 3.0, 262);
+    trader.kind = crate::mob::MobKind::WanderingTrader;
+    trader.on_ground = true;
+    app.mobs.push(trader);
+    let mut llama =
+        crate::mob::Zombie::new(902, (bx as f64) - 1.0, by as f64, (bz as f64) - 3.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    llama.leashed_to = Some(901);
+    app.mobs.push(llama);
+    // FRAME A (the leash the rope paints) — the same frame twice the
+    // render determinism keeps
+    let a = third_person_frame(&mut app);
+    let a_again = third_person_frame(&mut app);
+    assert_eq!(a, a_again, "the rope frames bit-identical twice");
+    // THE GATE'S OWN CLEAR (the leashed_to None the rope lane the
+    // silence keeps — the bodies the same pose the frame never moves)
+    for m in app.mobs.iter_mut() {
+        if m.kind == crate::mob::MobKind::TraderLlama {
+            m.leashed_to = None;
+        }
+    }
+    let b = third_person_frame(&mut app);
+    // THE ROPE'S OWN BAND (the diff pixels the rope paints — the
+    // brown words the 0.5/0.4/0.3 × the 0.7/1.0 shades speak:
+    // (128, 102, 77) the light arm, (89, 71, 54) the dark arm)
+    let mut diff_positions: Vec<usize> = Vec::new();
+    for (i, (x, y)) in a.chunks_exact(3).zip(b.chunks_exact(3)).enumerate() {
+        if x != y {
+            diff_positions.push(i);
+        }
+    }
+    assert!(
+        !diff_positions.is_empty(),
+        "the leash the rope the frame paints"
+    );
+    let browns = [(128u8, 102u8, 77u8), (89u8, 71u8, 54u8)];
+    let rope_colored = diff_positions
+        .iter()
+        .filter(|&&i| {
+            let o = i * 3;
+            let px = (a[o], a[o + 1], a[o + 2]);
+            browns.iter().any(|&b| px == b)
+        })
+        .count();
+    assert!(
+        rope_colored > 0,
+        "the rope pixels the brown words wear ({rope_colored}/{})",
+        diff_positions.len()
+    );
+    // THE GATE'S OWN SILENCE (the cleared leash the same stage the
+    // rope never paints — the frame B the no-rope law keeps: the
+    // diff band's pixels the rope browns never wear)
+    let b_browns = diff_positions
+        .iter()
+        .filter(|&&i| {
+            let o = i * 3;
+            let px = (b[o], b[o + 1], b[o + 2]);
+            browns.iter().any(|&c| px == c)
+        })
+        .count();
+    assert_eq!(b_browns, 0, "the cleared leash the brown silence keeps");
+}

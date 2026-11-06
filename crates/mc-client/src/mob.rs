@@ -10484,6 +10484,94 @@ pub fn trader_llama_finalize_words(rng: &mut Lcg) -> LlamaFinalize {
     }
 }
 
+/// THE LEASH'S OWN WIDTH (javap `LeashFeatureRenderer.LEASH_WIDTH:F`
+/// the leash_481 census banks — the compile-time constant the
+/// `ldc 0.05000000074505806f` words the prepare/addVertexPair walks
+/// inline: the rope cross-section the 0.05 lift + the 0.025
+/// perpendicular the pair offsets wear).
+pub const LEASH_WIDTH: f32 = 0.05;
+
+/// THE HOLDER'S OWN HOLD POINT (javap `Entity.getRopeHoldPosition(F)`
+/// the leash_481 census banks — the `getPosition(partial)` the
+/// dconst_0 x/z pair keeps, the y the `eyeHeight * 0.7d` word the
+/// f2d/ldc2_w/dmul walk speaks): the leash the holder's hand the
+/// eye's own 0.7 fraction serves.
+pub fn rope_hold_position(kind: MobKind, x: f64, y: f64, z: f64) -> (f64, f64, f64) {
+    (x, y + kind.eye_height() * 0.7, z)
+}
+
+/// THE LLAMA'S OWN LEASH OFFSET (javap `Llama.getLeashOffset()` the
+/// leash_481 census banks — the `Vec3(0, eyeHeight * 0.75d,
+/// getBbWidth() * 0.5d)` the ldc2_w pair speaks: the unrotated
+/// attach the leashed body's own eye-width frame wears).
+pub fn llama_leash_offset() -> (f64, f64, f64) {
+    (
+        0.0,
+        0.75 * MobKind::TraderLlama.eye_height(),
+        0.5 * TRADER_LLAMA_WIDTH,
+    )
+}
+
+/// THE WIRE'S OWN ROTATION (javap `Vec3.yRot(F)` the leash_481
+/// census banks — the `Mth.cos(D)F`/`Mth.sin(D)F` pair the f32
+/// stores keep, the products the f2d widen wears: x' = x·cos + z·sin,
+/// z' = z·cos − x·sin, the y the untouched pass keeps).
+pub fn vec3_y_rot(x: f64, y: f64, z: f64, rot_rad: f32) -> (f64, f64, f64) {
+    let c = (rot_rad as f64).cos() as f32 as f64;
+    let s = (rot_rad as f64).sin() as f32 as f64;
+    (x * c + z * s, y, z * c - x * s)
+}
+
+/// THE LEASH'S OWN START (javap `EntityRenderer.extractRenderState`
+/// pc 298-703 the single-leash walk the leash_481 census banks —
+/// the `getPreciseBodyRotation(partial) * 0.01745329238474369f`
+/// radian fold the f7 store keeps, the `getLeashOffset(partial)
+/// .yRot(-f7)` the rotated offset speaks, the start the
+/// `getPosition(partial).add(offset)` sum banks): the rope the
+/// leashed llama's own attach point the body yaw serves.
+pub fn leash_start(x: f64, y: f64, z: f64, body_yaw_deg: f32) -> (f64, f64, f64) {
+    let rad = body_yaw_deg * 0.017_453_292_384_743_69;
+    let (ox, oy, oz) = llama_leash_offset();
+    let (rx, ry, rz) = vec3_y_rot(ox, oy, oz, -rad);
+    (x + rx, y + ry, z + rz)
+}
+
+/// THE ROPE'S OWN SAG (javap `LeashFeatureRenderer.addVertexPair`
+/// pc 109-155 the leash_481 census banks — the `slack` gate the
+/// field's word arms first: the rise the `dy * t * t` fold wears,
+/// the droop the `dy - dy * (1-t) * (1-t)` word answers [the fsub
+/// stack the dy − dy·u² order keeps, u = 1−t], the taut the straight
+/// `dy * t` lerp keeps; both slack arms the chord BELOW the droop
+/// speaks — the rise the t² ease-in wears, the drop the t(2−t)
+/// ease-out answers). The port's trader rope the single-leash path
+/// the field NEVER writes — the ctor's `iconst_1` true the honest
+/// droop wears).
+pub fn rope_sag(dy: f32, t: f32, slack: bool) -> f32 {
+    if slack {
+        if dy > 0.0 {
+            dy * t * t
+        } else {
+            let u = 1.0 - t;
+            dy - dy * u * u
+        }
+    } else {
+        dy * t
+    }
+}
+
+/// THE ROPE'S OWN SHADE (javap `addVertexPair` pc 57-80 the
+/// leash_481 census banks — the `seg % 2 == side` pick the
+/// if_icmpne speaks: the equal pair the 0.7f dark arm wears, the
+/// other the 1.0f keeps; the two passes the side 0/1 swap the
+/// parity the strip's own double-face walk serves).
+pub fn rope_segment_shade(seg: i32, side: i32) -> f32 {
+    if seg % 2 == side {
+        0.7
+    } else {
+        1.0
+    }
+}
+
 /// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderData — the
 /// fresh `(24000, 25)` the no-arg ctor speaks [the dump's `sipush
 /// 24000` + `bipush 25` the invokespecial ride banks], the saveddata

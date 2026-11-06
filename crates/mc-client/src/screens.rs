@@ -87521,6 +87521,46 @@ impl App {
                 let [r, g, b, a] = pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE LEASH'S OWN ROPE (javap `LeashFeatureRenderer.prepare`
+            // the leash_481 census banks — the leashStates list the
+            // leashed body's own extract carries, the rope the
+            // 24-segment walk the pair's own endpoints wear: the start
+            // the llama's rotated leash offset the extractRenderState
+            // single-leash walk banks, the end the holder's eye*0.7
+            // hold the getRopeHoldPosition word serves; the slack sag
+            // the ctor's true the honest droop keeps, the parity shade
+            // the two passes' strip the canvas answers, the rope color
+            // the setColor(0.5s, 0.4s, 0.3s) words wear — no hurt
+            // overlay the feature lane's own vertex colors keep)
+            if mob.kind == crate::mob::MobKind::TraderLlama {
+                if let Some(holder_id) = mob.leashed_to {
+                    let holder = self
+                        .mobs
+                        .iter()
+                        .chain(self.net_mobs.iter())
+                        .find(|m| m.id == holder_id);
+                    if let Some(holder) = holder {
+                        let (hx, hy, hz) = holder.lerped_pos(self.partial_tick);
+                        let end = crate::mob::rope_hold_position(holder.kind, hx, hy, hz);
+                        let start = crate::mob::leash_start(mx, my, mz, mob.yaw);
+                        let rope = crate::avatar::rope_quads(start, end);
+                        let rope_sampled: Vec<crate::raster::SampledQuad> = rope
+                            .iter()
+                            .map(|q| crate::raster::SampledQuad {
+                                pts: q.pts,
+                                uv: q.uv,
+                                tex: "",
+                                tint: [q.shade * 0.5, q.shade * 0.4, q.shade * 0.3],
+                            })
+                            .collect();
+                        fb.draw_sampled_quads(
+                            ctx.proj.mul(&ctx.view),
+                            &rope_sampled,
+                            &mut |_tex, _u, _v| Some([255u8, 255, 255, 255]),
+                        );
+                    }
+                }
+            }
             // THE ARMOR LAYERS' own draw (HumanoidArmorLayer's own
             // render order — the vanilla ctor arms the armor layers
             // BEFORE the item-in-hand layer, the pieces the body's
