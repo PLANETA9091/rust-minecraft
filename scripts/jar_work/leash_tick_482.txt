@@ -1,0 +1,377 @@
+  METHOD canBeLeashed ()Z  (code=2)
+    0: iconst_1
+    1: ireturn
+  METHOD dropLeash ()V  (code=10)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Entity
+    4: iconst_1
+    5: iconst_1
+    6: invokestatic net/minecraft/world/entity/Leashable.dropLeash:(Lnet/minecraft/world/entity/Entity;ZZ)V
+    9: return
+  METHOD dropLeash (Lnet/minecraft/world/entity/Entity;ZZ)V  (code=109)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Leashable
+    4: invokeinterface net/minecraft/world/entity/Leashable.getLeashData:()Lnet/minecraft/world/entity/Leashable$LeashData;
+    9: astore_3
+    10: aload_3
+    11: ifnull 108
+    14: aload_3
+    15: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    18: ifnull 108
+    21: aload_0
+    22: checkcast net/minecraft/world/entity/Leashable
+    25: aconst_null
+    26: invokeinterface net/minecraft/world/entity/Leashable.setLeashData:(Lnet/minecraft/world/entity/Leashable$LeashData;)V
+    31: aload_0
+    32: checkcast net/minecraft/world/entity/Leashable
+    35: invokeinterface net/minecraft/world/entity/Leashable.onLeashRemoved:()V
+    40: aload_0
+    41: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    44: astore 5
+    46: aload 5
+    48: instanceof net/minecraft/server/level/ServerLevel
+    51: ifeq 108
+    54: aload 5
+    56: checkcast net/minecraft/server/level/ServerLevel
+    59: astore 4
+    61: iload_2
+    62: ifeq 75
+    65: aload_0
+    66: aload 4
+    68: getstatic net/minecraft/world/item/Items.LEAD:Lnet/minecraft/world/item/Item;
+    71: invokevirtual net/minecraft/world/entity/Entity.spawnAtLocation:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/entity/item/ItemEntity;
+    74: pop
+    75: iload_1
+    76: ifeq 97
+    79: aload 4
+    81: invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource:()Lnet/minecraft/server/level/ServerChunkCache;
+    84: aload_0
+    85: new net/minecraft/network/protocol/game/ClientboundSetEntityLinkPacket
+    88: dup
+    89: aload_0
+    90: aconst_null
+    91: invokespecial net/minecraft/network/protocol/game/ClientboundSetEntityLinkPacket.<init>:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)V
+    94: invokevirtual net/minecraft/server/level/ServerChunkCache.sendToTrackingPlayers:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/protocol/Packet;)V
+    97: aload_3
+    98: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    101: aload_0
+    102: checkcast net/minecraft/world/entity/Leashable
+    105: invokevirtual net/minecraft/world/entity/Entity.notifyLeasheeRemoved:(Lnet/minecraft/world/entity/Leashable;)V
+    108: return
+  METHOD tickLeash (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;)V  (code=287)
+    0: aload_1
+    1: checkcast net/minecraft/world/entity/Leashable
+    4: invokeinterface net/minecraft/world/entity/Leashable.getLeashData:()Lnet/minecraft/world/entity/Leashable$LeashData;
+    9: astore_2
+    10: aload_2
+    11: ifnull 26
+    14: aload_2
+    15: getfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashInfo:Lcom/mojang/datafixers/util/Either;
+    18: ifnull 26
+    21: aload_1
+    22: aload_2
+    23: invokestatic net/minecraft/world/entity/Leashable.restoreLeashFromSave:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Leashable$LeashData;)V
+    26: aload_2
+    27: ifnull 37
+    30: aload_2
+    31: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    34: ifnonnull 38
+    37: return
+    38: aload_1
+    39: invokevirtual net/minecraft/world/entity/Entity.canInteractWithLevel:()Z
+    42: ifeq 55
+    45: aload_2
+    46: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    49: invokevirtual net/minecraft/world/entity/Entity.canInteractWithLevel:()Z
+    52: ifne 95
+    55: aload_0
+    56: invokevirtual net/minecraft/server/level/ServerLevel.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+    59: getstatic net/minecraft/world/level/gamerules/GameRules.ENTITY_DROPS:Lnet/minecraft/world/level/gamerules/GameRule;
+    62: invokevirtual net/minecraft/world/level/gamerules/GameRules.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+    65: checkcast java/lang/Boolean
+    68: invokevirtual java/lang/Boolean.booleanValue:()Z
+    71: ifeq 86
+    74: aload_1
+    75: checkcast net/minecraft/world/entity/Leashable
+    78: invokeinterface net/minecraft/world/entity/Leashable.dropLeash:()V
+    83: goto 95
+    86: aload_1
+    87: checkcast net/minecraft/world/entity/Leashable
+    90: invokeinterface net/minecraft/world/entity/Leashable.removeLeash:()V
+    95: aload_1
+    96: checkcast net/minecraft/world/entity/Leashable
+    99: invokeinterface net/minecraft/world/entity/Leashable.getLeashHolder:()Lnet/minecraft/world/entity/Entity;
+    104: astore_3
+    105: aload_3
+    106: ifnull 286
+    109: aload_3
+    110: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    113: aload_1
+    114: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    117: if_acmpne 286
+    120: aload_1
+    121: checkcast net/minecraft/world/entity/Leashable
+    124: aload_3
+    125: invokeinterface net/minecraft/world/entity/Leashable.leashDistanceTo:(Lnet/minecraft/world/entity/Entity;)D
+    130: dstore 4
+    132: aload_1
+    133: checkcast net/minecraft/world/entity/Leashable
+    136: aload_3
+    137: invokeinterface net/minecraft/world/entity/Leashable.whenLeashedTo:(Lnet/minecraft/world/entity/Entity;)V
+    142: op_18 4
+    144: aload_1
+    145: checkcast net/minecraft/world/entity/Leashable
+    148: invokeinterface net/minecraft/world/entity/Leashable.leashSnapDistance:()D
+    153: dcmpl
+    154: ifle 194
+    157: aload_0
+    158: aconst_null
+    159: aload_3
+    160: invokevirtual net/minecraft/world/entity/Entity.getX:()D
+    163: aload_3
+    164: invokevirtual net/minecraft/world/entity/Entity.getY:()D
+    167: aload_3
+    168: invokevirtual net/minecraft/world/entity/Entity.getZ:()D
+    171: getstatic net/minecraft/sounds/SoundEvents.LEAD_BREAK:Lnet/minecraft/sounds/SoundEvent;
+    174: getstatic net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+    177: op_0c
+    178: op_0c
+    179: invokevirtual net/minecraft/server/level/ServerLevel.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    182: aload_1
+    183: checkcast net/minecraft/world/entity/Leashable
+    186: invokeinterface net/minecraft/world/entity/Leashable.leashTooFarBehaviour:()V
+    191: goto 257
+    194: op_18 4
+    196: aload_1
+    197: checkcast net/minecraft/world/entity/Leashable
+    200: invokeinterface net/minecraft/world/entity/Leashable.leashElasticDistance:()D
+    205: aload_3
+    206: invokevirtual net/minecraft/world/entity/Entity.getBbWidth:()F
+    209: f2d
+    210: dsub
+    211: aload_1
+    212: invokevirtual net/minecraft/world/entity/Entity.getBbWidth:()F
+    215: f2d
+    216: dsub
+    217: dcmpl
+    218: ifle 247
+    221: aload_1
+    222: checkcast net/minecraft/world/entity/Leashable
+    225: aload_3
+    226: aload_2
+    227: invokeinterface net/minecraft/world/entity/Leashable.checkElasticInteractions:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Leashable$LeashData;)Z
+    232: ifeq 247
+    235: aload_1
+    236: checkcast net/minecraft/world/entity/Leashable
+    239: invokeinterface net/minecraft/world/entity/Leashable.onElasticLeashPull:()V
+    244: goto 257
+    247: aload_1
+    248: checkcast net/minecraft/world/entity/Leashable
+    251: aload_3
+    252: invokeinterface net/minecraft/world/entity/Leashable.closeRangeLeashBehaviour:(Lnet/minecraft/world/entity/Entity;)V
+    257: aload_1
+    258: aload_1
+    259: invokevirtual net/minecraft/world/entity/Entity.getYRot:()F
+    262: f2d
+    263: aload_2
+    264: getfield net/minecraft/world/entity/Leashable$LeashData.angularMomentum:D
+    267: dsub
+    268: op_90
+    269: invokevirtual net/minecraft/world/entity/Entity.setYRot:(F)V
+    272: aload_2
+    273: dup
+    274: getfield net/minecraft/world/entity/Leashable$LeashData.angularMomentum:D
+    277: aload_1
+    278: invokestatic net/minecraft/world/entity/Leashable.angularFriction:(Lnet/minecraft/world/entity/Entity;)F
+    281: f2d
+    282: dmul
+    283: putfield net/minecraft/world/entity/Leashable$LeashData.angularMomentum:D
+    286: return
+  METHOD leashTooFarBehaviour ()V  (code=7)
+    0: aload_0
+    1: invokeinterface net/minecraft/world/entity/Leashable.dropLeash:()V
+    6: return
+  METHOD setLeashedTo (Lnet/minecraft/world/entity/Entity;Z)V  (code=16)
+    0: aload_0
+    1: aload_1
+    2: if_acmpne 6
+    5: return
+    6: aload_0
+    7: checkcast net/minecraft/world/entity/Entity
+    10: aload_1
+    11: iload_2
+    12: invokestatic net/minecraft/world/entity/Leashable.setLeashedTo:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Z)V
+    15: return
+  METHOD setLeashedTo (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Z)V  (code=122)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Leashable
+    4: invokeinterface net/minecraft/world/entity/Leashable.getLeashData:()Lnet/minecraft/world/entity/Leashable$LeashData;
+    9: astore_3
+    10: aload_3
+    11: ifnonnull 36
+    14: new net/minecraft/world/entity/Leashable$LeashData
+    17: dup
+    18: aload_1
+    19: invokespecial net/minecraft/world/entity/Leashable$LeashData.<init>:(Lnet/minecraft/world/entity/Entity;)V
+    22: astore_3
+    23: aload_0
+    24: checkcast net/minecraft/world/entity/Leashable
+    27: aload_3
+    28: invokeinterface net/minecraft/world/entity/Leashable.setLeashData:(Lnet/minecraft/world/entity/Leashable$LeashData;)V
+    33: goto 67
+    36: aload_3
+    37: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    40: astore 4
+    42: aload_3
+    43: aload_1
+    44: invokevirtual net/minecraft/world/entity/Leashable$LeashData.setLeashHolder:(Lnet/minecraft/world/entity/Entity;)V
+    47: aload 4
+    49: ifnull 67
+    52: aload 4
+    54: aload_1
+    55: if_acmpeq 67
+    58: aload 4
+    60: aload_0
+    61: checkcast net/minecraft/world/entity/Leashable
+    64: invokevirtual net/minecraft/world/entity/Entity.notifyLeasheeRemoved:(Lnet/minecraft/world/entity/Leashable;)V
+    67: iload_2
+    68: ifeq 110
+    71: aload_0
+    72: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    75: astore 5
+    77: aload 5
+    79: instanceof net/minecraft/server/level/ServerLevel
+    82: ifeq 110
+    85: aload 5
+    87: checkcast net/minecraft/server/level/ServerLevel
+    90: astore 4
+    92: aload 4
+    94: invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource:()Lnet/minecraft/server/level/ServerChunkCache;
+    97: aload_0
+    98: new net/minecraft/network/protocol/game/ClientboundSetEntityLinkPacket
+    101: dup
+    102: aload_0
+    103: aload_1
+    104: invokespecial net/minecraft/network/protocol/game/ClientboundSetEntityLinkPacket.<init>:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)V
+    107: invokevirtual net/minecraft/server/level/ServerChunkCache.sendToTrackingPlayers:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/protocol/Packet;)V
+    110: aload_0
+    111: invokevirtual net/minecraft/world/entity/Entity.isPassenger:()Z
+    114: ifeq 121
+    117: aload_0
+    118: invokevirtual net/minecraft/world/entity/Entity.stopRiding:()V
+    121: return
+  METHOD getLeashHolder ()Lnet/minecraft/world/entity/Entity;  (code=8)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Entity
+    4: invokestatic net/minecraft/world/entity/Leashable.getLeashHolder:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/entity/Entity;
+    7: areturn
+  METHOD getLeashHolder (Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/entity/Entity;  (code=59)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Leashable
+    4: invokeinterface net/minecraft/world/entity/Leashable.getLeashData:()Lnet/minecraft/world/entity/Leashable$LeashData;
+    9: astore_1
+    10: aload_1
+    11: ifnonnull 16
+    14: aconst_null
+    15: areturn
+    16: aload_0
+    17: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    20: aload_1
+    21: getfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashHolderId:I
+    24: invokevirtual net/minecraft/world/level/Level.getEntity:(I)Lnet/minecraft/world/entity/Entity;
+    27: astore_2
+    28: aload_1
+    29: getfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashHolderId:I
+    32: ifeq 54
+    35: aload_0
+    36: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    39: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    42: ifeq 54
+    45: aload_2
+    46: ifnull 54
+    49: aload_1
+    50: aload_2
+    51: invokevirtual net/minecraft/world/entity/Leashable$LeashData.setLeashHolder:(Lnet/minecraft/world/entity/Entity;)V
+    54: aload_1
+    55: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    58: areturn
+
+  FIELD CODEC:Lcom/mojang/serialization/Codec; flags=0x19
+  FIELD delayedLeashHolderId:I flags=0x2
+  FIELD leashHolder:Lnet/minecraft/world/entity/Entity; flags=0x1
+  FIELD delayedLeashInfo:Lcom/mojang/datafixers/util/Either; flags=0x1
+  FIELD angularMomentum:D flags=0x1
+  METHOD <init> (Lcom/mojang/datafixers/util/Either;)V  (code=10)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: aload_0
+    5: aload_1
+    6: putfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashInfo:Lcom/mojang/datafixers/util/Either;
+    9: return
+  METHOD <init> (Lnet/minecraft/world/entity/Entity;)V  (code=10)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: aload_0
+    5: aload_1
+    6: putfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    9: return
+  METHOD <init> (I)V  (code=10)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: aload_0
+    5: iload_1
+    6: putfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashHolderId:I
+    9: return
+  METHOD setLeashHolder (Lnet/minecraft/world/entity/Entity;)V  (code=16)
+    0: aload_0
+    1: aload_1
+    2: putfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    5: aload_0
+    6: aconst_null
+    7: putfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashInfo:Lcom/mojang/datafixers/util/Either;
+    10: aload_0
+    11: iconst_0
+    12: putfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashHolderId:I
+    15: return
+  METHOD lambda$static$0 (Lnet/minecraft/world/entity/Leashable$LeashData;)Lcom/mojang/datafixers/util/Either;  (code=56)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    4: astore_2
+    5: aload_2
+    6: instanceof net/minecraft/world/entity/decoration/LeashFenceKnotEntity
+    9: ifeq 25
+    12: aload_2
+    13: checkcast net/minecraft/world/entity/decoration/LeashFenceKnotEntity
+    16: astore_1
+    17: aload_1
+    18: invokevirtual net/minecraft/world/entity/decoration/LeashFenceKnotEntity.getPos:()Lnet/minecraft/core/BlockPos;
+    21: invokestatic com/mojang/datafixers/util/Either.right:(Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+    24: areturn
+    25: aload_0
+    26: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    29: ifnull 43
+    32: aload_0
+    33: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    36: invokevirtual net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+    39: invokestatic com/mojang/datafixers/util/Either.left:(Ljava/lang/Object;)Lcom/mojang/datafixers/util/Either;
+    42: areturn
+    43: aload_0
+    44: getfield net/minecraft/world/entity/Leashable$LeashData.delayedLeashInfo:Lcom/mojang/datafixers/util/Either;
+    47: ldc "Invalid LeashData had no attachment"
+    49: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    52: checkcast com/mojang/datafixers/util/Either
+    55: areturn
+  METHOD <clinit> ()V  (code=38)
+    0: getstatic net/minecraft/core/UUIDUtil.CODEC:Lcom/mojang/serialization/Codec;
+    3: ldc "UUID"
+    5: invokeinterface com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    10: invokevirtual com/mojang/serialization/MapCodec.codec:()Lcom/mojang/serialization/Codec;
+    13: getstatic net/minecraft/core/BlockPos.CODEC:Lcom/mojang/serialization/Codec;
+    16: invokestatic com/mojang/serialization/Codec.xor:(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;)Lcom/mojang/serialization/Codec;
+    19: invokedynamic dynamic#0:apply
+    24: invokedynamic dynamic#1:apply
+    29: invokeinterface com/mojang/serialization/Codec.xmap:(Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+    34: putstatic net/minecraft/world/entity/Leashable$LeashData.CODEC:Lcom/mojang/serialization/Codec;
+    37: return
+
+done

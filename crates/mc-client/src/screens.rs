@@ -21566,6 +21566,127 @@ impl App {
                 if !discarded_ids.is_empty() {
                     self.mobs.retain(|m| !discarded_ids.contains(&m.id));
                 }
+                // THE LEASH'S OWN PHYSICS PASS (javap `Leashable.tickLeash`
+                // the leash_tick_482/483/484/485 censuses bank — the
+                // bb-center distance the leashDistanceTo word reads, the
+                // >12.0 the LEAD_BREAK + the dropLeash pair arms, the
+                // >6.0 − wH − wE the spring walk serves [the wrench the
+                // computeDampenedSpringInteraction word banks: the force
+                // the (holder−entity).normalize()·(d−6) fold wears, the
+                // dot≥1 fast-pull the 0.3 dampen keeps, the torque the
+                // z·fx − x·fz cross speaks, the dv the force×(0.8,0.2,0.8)
+                // + rel×0.11 words wear], the close-range the no-op law
+                // keeps; the yaw the setYRot((float)(yRot − momentum))
+                // fold swings, the momentum the angularFriction decay
+                // answers. THE TWO-PHASE WALK the cross-mob borrow the
+                // snapshot answers [the attack_prey law the same lane
+                // keeps] — the holder words the id-keyed map the pre-
+                // pass banks, the llamas the verdict the post pass
+                // serves. The net_mobs the holder read the chain keeps
+                // [the wire trader the offline llama the rope can hold],
+                // the bodies the server drives the pass never mutates.
+                // THE FALL-ACCRUAL ASIDE (onElasticLeashPull's
+                // checkFallDistanceAccumulation word the port's mob lane
+                // never banks — no fall-distance store the climb comment
+                // keeps, the pull's own harm the future lane may wear)
+                {
+                    let mut holder_words: std::collections::HashMap<
+                        i32,
+                        (
+                            (f64, f64, f64, f64, f64, f64),
+                            f32,
+                            (f64, f64),
+                            (f64, f64, f64),
+                        ),
+                    > = std::collections::HashMap::new();
+                    for m in self.mobs.iter().chain(self.net_mobs.iter()) {
+                        let hbox = m.box_for();
+                        let hw = hbox.3 - hbox.0;
+                        let hh = hbox.4 - hbox.1;
+                        holder_words.insert(m.id, (hbox, m.yaw, (hw, hh), (m.vx, m.vy, m.vz)));
+                    }
+                    let mut lead_drops: Vec<(f64, f64, f64)> = Vec::new();
+                    for mob in self.mobs.iter_mut() {
+                        let Some(holder_id) = mob.leashed_to else {
+                            continue;
+                        };
+                        let Some((hbox, hyaw, hbb, hmove)) = holder_words.get(&holder_id) else {
+                            continue;
+                        };
+                        let ebox = mob.box_for();
+                        let ew = ebox.3 - ebox.0;
+                        let eh = ebox.4 - ebox.1;
+                        match crate::mob::leash_tick_words(
+                            ebox,
+                            mob.yaw,
+                            (ew, eh),
+                            (mob.vx, mob.vy, mob.vz),
+                            *hbox,
+                            *hyaw,
+                            *hbb,
+                            *hmove,
+                        ) {
+                            crate::mob::LeashTick::Snap => {
+                                // THE DROP'S OWN PAIR (dropLeash(this,
+                                // true, true) — the lead the count-1 the
+                                // feet the spawnAtLocation word keeps, the
+                                // LEAD_BREAK voice the table the port
+                                // never banks the silence keeps)
+                                mob.leashed_to = None;
+                                mob.leash_angular_momentum = 0.0;
+                                lead_drops.push((mob.x, mob.y, mob.z));
+                            }
+                            crate::mob::LeashTick::Elastic {
+                                dvx,
+                                dvy,
+                                dvz,
+                                torque,
+                            } => {
+                                mob.vx += dvx;
+                                mob.vy += dvy;
+                                mob.vz += dvz;
+                                // THE MOMENTUM'S OWN BANK (pc 91-106: the
+                                // + 10.0d · torque the dadd speaks)
+                                mob.leash_angular_momentum +=
+                                    crate::mob::LEASH_TORQUE_GAIN * torque;
+                                // THE YAW'S OWN SWING (pc 257-269: the
+                                // setYRot((float)(yRot − momentum)) the
+                                // f64 subtract the f32 cast wears)
+                                mob.yaw = (mob.yaw as f64 - mob.leash_angular_momentum) as f32;
+                                // THE FRICTION'S OWN DECAY (pc 272-283:
+                                // the momentum the angularFriction fold —
+                                // the port's liquid lane the store never
+                                // banks, the ground/air arms the on_ground
+                                // word keeps)
+                                mob.leash_angular_momentum *= crate::mob::leash_angular_friction(
+                                    mob.on_ground,
+                                    false,
+                                    crate::body::BLOCK_FRICTION,
+                                )
+                                    as f64;
+                            }
+                            crate::mob::LeashTick::CloseRange => {}
+                        }
+                    }
+                    // THE LEAD'S OWN FALL (the spawnAtLocation(LEAD) word
+                    // the item lane's own pattern the death loot wears)
+                    for (dx, dy, dz) in lead_drops {
+                        let Some(lead) = mc_registry::item_id_by_name("lead") else {
+                            continue;
+                        };
+                        let id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                            id,
+                            lead,
+                            1,
+                            dx,
+                            dy,
+                            dz,
+                            &mut self.mob_rng,
+                        ));
+                    }
+                }
                 // THE WOLF'S OWN BITES (the doHurtTarget the caller's
                 // own pass serves — the prey the id names the hurt
                 // pipeline walks, the knockback the attacker-minus-

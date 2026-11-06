@@ -39095,3 +39095,415 @@ fn the_leash_rope_the_canvas_wears() {
         .count();
     assert_eq!(b_browns, 0, "the cleared leash the brown silence keeps");
 }
+
+/// THE LEASH'S OWN PHYSICS (javap `Leashable.tickLeash` +
+/// `checkElasticInteractions` + `computeDampenedSpringInteraction` +
+/// the `Wrench` record the leash_tick_482/483/484/485 censuses bank —
+/// the 12.0 snap + the 6.0 elastic + the (0.8, 0.2, 0.8) axis
+/// elasticity + the (1, 0.5, 0.5)/(1, 0.5, 1) attachment pair, the
+/// dot≥1 fast-pull the 0.3 dampen keeps, the z·fx − x·fz torque the
+/// Y-axis cross speaks, the +10·torque momentum bank the setYRot
+/// fold swings, the angularFriction decay the 0.91/0.8 arms keep,
+/// the relative ×0.11 wind the addDeltaMovement carries):
+#[test]
+fn the_leash_physics_the_vanilla_words_wear() {
+    use crate::mob::{
+        leash_angular_friction, leash_bb_center, leash_point_offset, leash_spring_wrench,
+        leash_tick_words, LeashTick, LEASH_ANGULAR_FRICTION_AIR, LEASH_ANGULAR_FRICTION_LIQUID,
+        LEASH_AXIS_ELASTICITY, LEASH_DAMPEN, LEASH_DAMPEN_GATE, LEASH_ELASTIC_DISTANCE,
+        LEASH_ENTITY_ATTACHMENT_POINT, LEASH_LEASHER_ATTACHMENT_POINT, LEASH_RELATIVE_SCALE,
+        LEASH_SNAP_DISTANCE, LEASH_TORQUE_GAIN,
+    };
+    // THE CONSTANTS' OWN WORDS (the clinit + the default-method ldc2_w
+    // pairs the censuses speak)
+    assert_eq!(LEASH_SNAP_DISTANCE, 12.0, "the snap the ldc2_w 12.0 wears");
+    assert_eq!(
+        LEASH_ELASTIC_DISTANCE, 6.0,
+        "the elastic the ldc2_w 6.0 wears"
+    );
+    assert_eq!(
+        LEASH_AXIS_ELASTICITY,
+        (0.8, 0.2, 0.8),
+        "the axis elasticity the clinit's three ldc2_w pair wears"
+    );
+    assert_eq!(
+        LEASH_ENTITY_ATTACHMENT_POINT,
+        (1.0, 0.5, 0.5),
+        "the entity point the dconst_1 + 0.5 pair wears"
+    );
+    assert_eq!(
+        LEASH_LEASHER_ATTACHMENT_POINT,
+        (1.0, 0.5, 1.0),
+        "the leasher point the dconst_1 pair wears"
+    );
+    assert_eq!(LEASH_DAMPEN_GATE, 1.0, "the dampen gate the dconst_1 wears");
+    assert_eq!(
+        LEASH_DAMPEN, 0.30000001192092896,
+        "the dampen the 0.3f word wears"
+    );
+    assert_eq!(
+        LEASH_RELATIVE_SCALE, 0.11,
+        "the relative wind the 0.11d wears"
+    );
+    assert_eq!(LEASH_TORQUE_GAIN, 10.0, "the torque gain the 10.0d wears");
+    assert_eq!(
+        LEASH_ANGULAR_FRICTION_AIR, 0.9100000262260437,
+        "the air friction the 0.91f word wears"
+    );
+    assert_eq!(
+        LEASH_ANGULAR_FRICTION_LIQUID, 0.800000011920929,
+        "the liquid friction the 0.8f word wears"
+    );
+    // THE FRICTION'S OWN ARMS (the ground the blockFriction × 0.91
+    // pair speaks, the liquid the 0.8 keeps, the air the 0.91)
+    assert_eq!(
+        leash_angular_friction(true, false, 0.6),
+        0.6 * 0.9100000262260437,
+        "the ground arm the blockFriction fold wears"
+    );
+    assert_eq!(
+        leash_angular_friction(false, true, 0.6),
+        0.800000011920929,
+        "the liquid arm the 0.8f keeps"
+    );
+    assert_eq!(
+        leash_angular_friction(false, false, 0.6),
+        0.9100000262260437,
+        "the air arm the fall-through keeps"
+    );
+    // THE BB CENTER'S OWN WORD (the getCenter pair the midpoint speaks)
+    assert_eq!(
+        leash_bb_center((0.0, 0.0, 0.0, 2.0, 4.0, 2.0)),
+        (1.0, 2.0, 1.0),
+        "the bb center the AABB midpoint wears"
+    );
+    // THE ATTACH OFFSET'S OWN WALK (the point × (w,h,w) scale the
+    // yRot(-yaw) fold wears — the yaw 0 the unrotated pair keeps)
+    assert_eq!(
+        leash_point_offset((1.0, 0.5, 0.5), 0.9, 1.87, 0.0),
+        (0.9, 0.935, 0.45),
+        "the entity offset the scale pair wears"
+    );
+    // THE SPRING'S OWN WRENCH (the 8-block pull the exact words wear:
+    // the force the dir × (8−6) = (2, 0, 0), the torque the
+    // z·fx − x·fz = 0.45·2 − 0.9·0 = 0.9 keeps)
+    let wrench = leash_spring_wrench(
+        (8.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        6.0,
+        (0.0, 0.0, 0.0),
+        (0.9, 0.935, 0.45),
+    );
+    assert_eq!(
+        wrench,
+        Some(((2.0, 0.0, 0.0), 0.9)),
+        "the spring the dir × stretch + the torque cross wears"
+    );
+    // THE SUB-ELASTIC SILENCE (the 5.9 the Optional.empty keeps)
+    assert_eq!(
+        leash_spring_wrench(
+            (5.9, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            6.0,
+            (0.0, 0.0, 0.0),
+            (0.9, 0.935, 0.45)
+        ),
+        None,
+        "the sub-elastic the empty silence keeps"
+    );
+    // THE FAST-PULL'S OWN DAMPEN (the dot ≥ 1 the 0.3 fraction arms —
+    // the holder's own +x rush the force line rides)
+    assert_eq!(
+        leash_spring_wrench(
+            (8.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            6.0,
+            (1.0, 0.0, 0.0),
+            (0.9, 0.935, 0.45)
+        ),
+        Some((
+            (2.0 * 0.30000001192092896, 0.0, 0.0),
+            0.45 * 2.0 * 0.30000001192092896
+        )),
+        "the fast-pull the dampen fraction wears"
+    );
+    // THE VERDICT'S OWN GATES (the bb-center distance the three arms
+    // speak: the 13.0 the snap, the 5.0 > 6−0.6−0.9 the elastic, the
+    // 4.0 ≤ 4.5 the close-range keeps)
+    let ebox = (0.0, 0.0, 0.0, 0.9, 1.87, 0.9);
+    let hbox_near = (8.0, 0.0, 0.0, 8.6, 1.95, 0.9);
+    let hbox_far = (20.0, 0.0, 0.0, 20.6, 1.95, 0.9);
+    let hbox_mid = (5.0, 0.0, 0.0, 5.6, 1.95, 0.9);
+    assert!(matches!(
+        leash_tick_words(
+            ebox,
+            0.0,
+            (0.9, 1.87),
+            (0.0, 0.0, 0.0),
+            hbox_far,
+            0.0,
+            (0.6, 1.95),
+            (0.0, 0.0, 0.0)
+        ),
+        LeashTick::Snap,
+    ));
+    assert!(matches!(
+        leash_tick_words(
+            ebox,
+            0.0,
+            (0.9, 1.87),
+            (0.0, 0.0, 0.0),
+            hbox_near,
+            0.0,
+            (0.6, 1.95),
+            (0.0, 0.0, 0.0)
+        ),
+        LeashTick::Elastic { .. },
+    ));
+    assert!(matches!(
+        leash_tick_words(
+            ebox,
+            0.0,
+            (0.9, 1.87),
+            (0.0, 0.0, 0.0),
+            hbox_mid,
+            0.0,
+            (0.6, 1.95),
+            (0.0, 0.0, 0.0)
+        ),
+        LeashTick::CloseRange,
+    ));
+    // THE DELTA'S OWN COMPOSITION (the elastic arm the dv the force ×
+    // (0.8, 0.2, 0.8) + the relative × 0.11 words wear — the expected
+    // the same attach walk the wrench pipeline recomputes, the -x
+    // pull the holder-at-+x answers)
+    let e_off = leash_point_offset(LEASH_ENTITY_ATTACHMENT_POINT, 0.9, 1.87, 0.0);
+    let h_off = leash_point_offset(LEASH_LEASHER_ATTACHMENT_POINT, 0.6, 1.95, 0.0);
+    let e_attach = (0.45 + e_off.0, 0.0 + e_off.1, 0.45 + e_off.2);
+    let h_attach = (8.3 + h_off.0, 0.0 + h_off.1, 0.45 + h_off.2);
+    let (force, torque) = leash_spring_wrench(h_attach, e_attach, 6.0, (0.0, 0.0, 0.0), e_off)
+        .expect("the stretched pair the wrench speaks");
+    match leash_tick_words(
+        ebox,
+        0.0,
+        (0.9, 1.87),
+        (0.0, 0.0, 0.0),
+        hbox_near,
+        0.0,
+        (0.6, 1.95),
+        (0.0, 0.0, 0.0),
+    ) {
+        LeashTick::Elastic {
+            dvx,
+            dvy,
+            dvz,
+            torque: t2,
+        } => {
+            assert_eq!(
+                dvx,
+                force.0 * 0.8 + 0.0 * 0.11,
+                "the dvx the force × 0.8 word wears"
+            );
+            assert_eq!(
+                dvy,
+                force.1 * 0.2 + 0.0 * 0.11,
+                "the dvy the force × 0.2 word wears"
+            );
+            assert_eq!(
+                dvz,
+                force.2 * 0.8 + 0.0 * 0.11,
+                "the dvz the force × 0.8 word wears"
+            );
+            assert_eq!(t2, torque, "the torque the wrench word wears");
+            assert!(
+                dvx > 0.0,
+                "the holder at +x the toward-holder pull the sign speaks ({dvx})"
+            );
+        }
+        _ => panic!("the stretched pair the elastic verdict wears"),
+    }
+    // THE RELATIVE WIND'S OWN TERM (the holder's own +x walk the
+    // relative × 0.11 the dv adds — the same-axis word the 0.11
+    // fraction keeps)
+    match leash_tick_words(
+        ebox,
+        0.0,
+        (0.9, 1.87),
+        (0.0, 0.0, 0.0),
+        hbox_near,
+        0.0,
+        (0.6, 1.95),
+        (2.0, 0.0, 0.0),
+    ) {
+        LeashTick::Elastic { dvx, .. } => {
+            let (f, _) = leash_spring_wrench(h_attach, e_attach, 6.0, (2.0, 0.0, 0.0), e_off)
+                .expect("the moving holder the wrench speaks");
+            assert_eq!(
+                dvx,
+                f.0 * 0.8 + 2.0 * 0.11,
+                "the relative wind the 0.11 term wears"
+            );
+        }
+        _ => panic!("the elastic verdict the moving holder keeps"),
+    }
+}
+
+/// THE LEASH'S OWN DRAG WALK (the live pair the spawner's forced
+/// windows land — the 8-block pull the elastic verdict the llama's
+/// own delta the -x push serves, the momentum the torque bank swings,
+/// the 20-block pull the snap the leashed_to the None clears + the
+/// lead the count-1 the feet the drop lane speaks):
+#[test]
+fn the_leash_physics_the_drag_walk_wears() {
+    let mut app = App::new(17);
+    app.enter_world();
+    // THE FLAT GRASS PLATFORM (the spawner test's own build the
+    // find's every spot keeps)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    w.set(x, y, z, crate::world::STONE);
+                }
+                w.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        w.relight();
+    }
+    app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+    // THE PAIR'S OWN STAGE (the forced windows the spawner walk the
+    // trader + the leashed llama the world lands)
+    let mut landed = false;
+    for _ in 0..300 {
+        app.wanderer_spawner.spawn_delay = crate::mob::WANDERER_CHECKPOINT_TICKS;
+        app.wanderer_spawner.tick_delay = 1;
+        app.update();
+        if app
+            .mobs
+            .iter()
+            .any(|m| m.kind == crate::mob::MobKind::WanderingTrader)
+        {
+            landed = true;
+            break;
+        }
+    }
+    assert!(landed, "the forced windows the trader the world lands");
+    let trader_id = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::WanderingTrader)
+        .expect("the trader the find banks")
+        .id;
+    // THE DIRECT PLACEMENT (the pair the 8-block X span the elastic
+    // band the test's own geometry wears — the yaws the +x faces keep,
+    // the deltas the still pair zeroes)
+    {
+        let cx = size as f64 / 2.0;
+        let cz = cx;
+        let cy = 9.0;
+        let trader = app
+            .mobs
+            .iter_mut()
+            .find(|m| m.id == trader_id)
+            .expect("the trader the find banks");
+        trader.x = cx;
+        trader.y = cy;
+        trader.z = cz;
+        trader.prev_x = cx;
+        trader.prev_y = cy;
+        trader.prev_z = cz;
+        trader.vx = 0.0;
+        trader.vy = 0.0;
+        trader.vz = 0.0;
+        trader.yaw = 90.0;
+        let llama = app
+            .mobs
+            .iter_mut()
+            .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+            .expect("the llama the spawn pair banks");
+        llama.x = cx + 8.0;
+        llama.y = cy;
+        llama.z = cz;
+        llama.prev_x = cx + 8.0;
+        llama.prev_y = cy;
+        llama.prev_z = cz;
+        llama.vx = 0.0;
+        llama.vy = 0.0;
+        llama.vz = 0.0;
+        llama.yaw = 90.0;
+    }
+    app.update();
+    // THE ELASTIC'S OWN PULL (the 8-block span the spring the -x
+    // delta the llama gains — the holder at -x the pull the sign
+    // speaks, the momentum the torque bank the swing stores)
+    let llama = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .expect("the llama the pair keeps");
+    assert_eq!(
+        llama.leashed_to,
+        Some(trader_id),
+        "the elastic band the leash the pair keeps"
+    );
+    assert!(
+        llama.vx < 0.0,
+        "the holder at -x the +x-strained llama the -x delta wears ({})",
+        llama.vx
+    );
+    assert!(
+        llama.leash_angular_momentum != 0.0,
+        "the elastic tick the torque bank wears ({})",
+        llama.leash_angular_momentum
+    );
+    // THE SNAP'S OWN WALK (the 20-block span the >12 the dropLeash
+    // pair arms — the leash the None clears, the lead the count-1 the
+    // feet the drop lane speaks)
+    let llama_x = llama.x;
+    let llama_y = llama.y;
+    let llama_z = llama.z;
+    let drops_before = app.drops.len();
+    {
+        let trader = app
+            .mobs
+            .iter_mut()
+            .find(|m| m.id == trader_id)
+            .expect("the trader the find banks");
+        trader.x = llama_x + 20.0;
+        trader.prev_x = trader.x;
+        trader.y = llama_y;
+        trader.prev_y = trader.y;
+        trader.z = llama_z;
+        trader.prev_z = trader.z;
+        trader.vx = 0.0;
+        trader.vy = 0.0;
+        trader.vz = 0.0;
+    }
+    app.update();
+    let llama = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .expect("the llama the pair keeps");
+    assert_eq!(
+        llama.leashed_to, None,
+        "the beyond-snap the dropLeash the None clears"
+    );
+    assert_eq!(
+        llama.leash_angular_momentum, 0.0,
+        "the snap the momentum store the zero keeps"
+    );
+    let lead = mc_registry::item_id_by_name("lead").expect("the lead the registry carries");
+    let lead_dropped = app.drops[drops_before..]
+        .iter()
+        .any(|d| d.item == lead && d.count == 1);
+    assert!(
+        lead_dropped,
+        "the snap the lead item the count-1 the feet drops"
+    );
+}

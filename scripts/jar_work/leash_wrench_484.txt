@@ -1,0 +1,300 @@
+  FIELD AXIS_SPECIFIC_ELASTICITY:Lnet/minecraft/world/phys/Vec3; flags=0x19
+  FIELD ENTITY_ATTACHMENT_POINT:Ljava/util/List; flags=0x19
+  FIELD LEASHER_ATTACHMENT_POINT:Ljava/util/List; flags=0x19
+  FIELD SHARED_QUAD_ATTACHMENT_POINTS:Ljava/util/List; flags=0x19
+  METHOD getHolderMovement (Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/Vec3;  (code=28)
+    0: aload_0
+    1: instanceof net/minecraft/world/entity/Mob
+    4: ifeq 23
+    7: aload_0
+    8: checkcast net/minecraft/world/entity/Mob
+    11: astore_1
+    12: aload_1
+    13: invokevirtual net/minecraft/world/entity/Mob.isNoAi:()Z
+    16: ifeq 23
+    19: getstatic net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+    22: areturn
+    23: aload_0
+    24: invokevirtual net/minecraft/world/entity/Entity.getKnownMovement:()Lnet/minecraft/world/phys/Vec3;
+    27: areturn
+  METHOD computeElasticInteraction (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Ljava/util/List;Ljava/util/List;)Ljava/util/List;  (code=215)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Leashable
+    4: invokeinterface net/minecraft/world/entity/Leashable.leashElasticDistance:()D
+    9: dstore 4
+    11: aload_0
+    12: invokestatic net/minecraft/world/entity/Leashable.getHolderMovement:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/Vec3;
+    15: astore 6
+    17: aload_0
+    18: invokevirtual net/minecraft/world/entity/Entity.getYRot:()F
+    21: ldc_w 0.01745329238474369f
+    24: fmul
+    25: fstore 7
+    27: new net/minecraft/world/phys/Vec3
+    30: dup
+    31: aload_0
+    32: invokevirtual net/minecraft/world/entity/Entity.getBbWidth:()F
+    35: f2d
+    36: aload_0
+    37: invokevirtual net/minecraft/world/entity/Entity.getBbHeight:()F
+    40: f2d
+    41: aload_0
+    42: invokevirtual net/minecraft/world/entity/Entity.getBbWidth:()F
+    45: f2d
+    46: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    49: astore 8
+    51: aload_1
+    52: invokevirtual net/minecraft/world/entity/Entity.getYRot:()F
+    55: ldc_w 0.01745329238474369f
+    58: fmul
+    59: fstore 9
+    61: new net/minecraft/world/phys/Vec3
+    64: dup
+    65: aload_1
+    66: invokevirtual net/minecraft/world/entity/Entity.getBbWidth:()F
+    69: f2d
+    70: aload_1
+    71: invokevirtual net/minecraft/world/entity/Entity.getBbHeight:()F
+    74: f2d
+    75: aload_1
+    76: invokevirtual net/minecraft/world/entity/Entity.getBbWidth:()F
+    79: f2d
+    80: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    83: astore 10
+    85: new java/util/ArrayList
+    88: dup
+    89: invokespecial java/util/ArrayList.<init>:()V
+    92: astore 11
+    94: iconst_0
+    95: istore 12
+    97: iload 12
+    99: aload_2
+    100: invokeinterface java/util/List.size:()I
+    105: if_icmpge 212
+    108: aload_2
+    109: iload 12
+    111: invokeinterface java/util/List.get:(I)Ljava/lang/Object;
+    116: checkcast net/minecraft/world/phys/Vec3
+    119: aload 8
+    121: invokevirtual net/minecraft/world/phys/Vec3.multiply:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    124: op_17 7
+    126: fneg
+    127: invokevirtual net/minecraft/world/phys/Vec3.yRot:(F)Lnet/minecraft/world/phys/Vec3;
+    130: astore 13
+    132: aload_0
+    133: invokevirtual net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+    136: aload 13
+    138: invokevirtual net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    141: astore 14
+    143: aload_3
+    144: iload 12
+    146: invokeinterface java/util/List.get:(I)Ljava/lang/Object;
+    151: checkcast net/minecraft/world/phys/Vec3
+    154: aload 10
+    156: invokevirtual net/minecraft/world/phys/Vec3.multiply:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    159: op_17 9
+    161: fneg
+    162: invokevirtual net/minecraft/world/phys/Vec3.yRot:(F)Lnet/minecraft/world/phys/Vec3;
+    165: astore 15
+    167: aload_1
+    168: invokevirtual net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+    171: aload 15
+    173: invokevirtual net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    176: astore 16
+    178: aload 16
+    180: aload 14
+    182: op_18 4
+    184: aload 6
+    186: aload 13
+    188: invokestatic net/minecraft/world/entity/Leashable.computeDampenedSpringInteraction:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;DLnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Ljava/util/Optional;
+    191: aload 11
+    193: dup
+    194: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+    197: pop
+    198: invokedynamic dynamic#0:accept
+    203: invokevirtual java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+    206: iinc 12 1
+    209: goto 97
+    212: aload 11
+    214: areturn
+  METHOD <clinit> ()V  (code=128)
+    0: new net/minecraft/world/phys/Vec3
+    3: dup
+    4: ldc2_w 0.8
+    7: ldc2_w 0.2
+    10: ldc2_w 0.8
+    13: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    16: putstatic net/minecraft/world/entity/Leashable.AXIS_SPECIFIC_ELASTICITY:Lnet/minecraft/world/phys/Vec3;
+    19: new net/minecraft/world/phys/Vec3
+    22: dup
+    23: op_0e
+    24: ldc2_w 0.5
+    27: ldc2_w 0.5
+    30: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    33: invokestatic com/google/common/collect/ImmutableList.of:(Ljava/lang/Object;)Lcom/google/common/collect/ImmutableList;
+    36: putstatic net/minecraft/world/entity/Leashable.ENTITY_ATTACHMENT_POINT:Ljava/util/List;
+    39: new net/minecraft/world/phys/Vec3
+    42: dup
+    43: op_0e
+    44: ldc2_w 0.5
+    47: op_0e
+    48: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    51: invokestatic com/google/common/collect/ImmutableList.of:(Ljava/lang/Object;)Lcom/google/common/collect/ImmutableList;
+    54: putstatic net/minecraft/world/entity/Leashable.LEASHER_ATTACHMENT_POINT:Ljava/util/List;
+    57: new net/minecraft/world/phys/Vec3
+    60: dup
+    61: ldc2_w -0.5
+    64: ldc2_w 0.5
+    67: ldc2_w 0.5
+    70: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    73: new net/minecraft/world/phys/Vec3
+    76: dup
+    77: ldc2_w -0.5
+    80: ldc2_w 0.5
+    83: ldc2_w -0.5
+    86: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    89: new net/minecraft/world/phys/Vec3
+    92: dup
+    93: ldc2_w 0.5
+    96: ldc2_w 0.5
+    99: ldc2_w -0.5
+    102: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    105: new net/minecraft/world/phys/Vec3
+    108: dup
+    109: ldc2_w 0.5
+    112: ldc2_w 0.5
+    115: ldc2_w 0.5
+    118: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    121: invokestatic com/google/common/collect/ImmutableList.of:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableList;
+    124: putstatic net/minecraft/world/entity/Leashable.SHARED_QUAD_ATTACHMENT_POINTS:Ljava/util/List;
+    127: return
+
+  FIELD force:Lnet/minecraft/world/phys/Vec3; flags=0x12
+  FIELD torque:D flags=0x12
+  FIELD ZERO:Lnet/minecraft/world/entity/Leashable$Wrench; flags=0x19
+  METHOD <init> (Lnet/minecraft/world/phys/Vec3;D)V  (code=15)
+    0: aload_0
+    1: invokespecial java/lang/Record.<init>:()V
+    4: aload_0
+    5: aload_1
+    6: putfield net/minecraft/world/entity/Leashable$Wrench.force:Lnet/minecraft/world/phys/Vec3;
+    9: aload_0
+    10: op_28
+    11: putfield net/minecraft/world/entity/Leashable$Wrench.torque:D
+    14: return
+  METHOD torqueFromForce (Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)D  (code=20)
+    0: aload_0
+    1: getfield net/minecraft/world/phys/Vec3.z:D
+    4: aload_1
+    5: getfield net/minecraft/world/phys/Vec3.x:D
+    8: dmul
+    9: aload_0
+    10: getfield net/minecraft/world/phys/Vec3.x:D
+    13: aload_1
+    14: getfield net/minecraft/world/phys/Vec3.z:D
+    17: dmul
+    18: dsub
+    19: op_af
+  METHOD accumulate (Ljava/util/List;)Lnet/minecraft/world/entity/Leashable$Wrench;  (code=120)
+    0: aload_0
+    1: invokeinterface java/util/List.isEmpty:()Z
+    6: ifeq 13
+    9: getstatic net/minecraft/world/entity/Leashable$Wrench.ZERO:Lnet/minecraft/world/entity/Leashable$Wrench;
+    12: areturn
+    13: op_0e
+    14: dstore_1
+    15: op_0e
+    16: dstore_3
+    17: op_0e
+    18: dstore 5
+    20: op_0e
+    21: dstore 7
+    23: aload_0
+    24: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    29: astore 9
+    31: aload 9
+    33: invokeinterface java/util/Iterator.hasNext:()Z
+    38: ifeq 99
+    41: aload 9
+    43: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    48: checkcast net/minecraft/world/entity/Leashable$Wrench
+    51: astore 10
+    53: aload 10
+    55: getfield net/minecraft/world/entity/Leashable$Wrench.force:Lnet/minecraft/world/phys/Vec3;
+    58: astore 11
+    60: op_27
+    61: aload 11
+    63: getfield net/minecraft/world/phys/Vec3.x:D
+    66: dadd
+    67: dstore_1
+    68: op_29
+    69: aload 11
+    71: getfield net/minecraft/world/phys/Vec3.y:D
+    74: dadd
+    75: dstore_3
+    76: op_18 5
+    78: aload 11
+    80: getfield net/minecraft/world/phys/Vec3.z:D
+    83: dadd
+    84: dstore 5
+    86: op_18 7
+    88: aload 10
+    90: getfield net/minecraft/world/entity/Leashable$Wrench.torque:D
+    93: dadd
+    94: dstore 7
+    96: goto 31
+    99: new net/minecraft/world/entity/Leashable$Wrench
+    102: dup
+    103: new net/minecraft/world/phys/Vec3
+    106: dup
+    107: op_27
+    108: op_29
+    109: op_18 5
+    111: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    114: op_18 7
+    116: invokespecial net/minecraft/world/entity/Leashable$Wrench.<init>:(Lnet/minecraft/world/phys/Vec3;D)V
+    119: areturn
+  METHOD scale (D)Lnet/minecraft/world/entity/Leashable$Wrench;  (code=22)
+    0: new net/minecraft/world/entity/Leashable$Wrench
+    3: dup
+    4: aload_0
+    5: getfield net/minecraft/world/entity/Leashable$Wrench.force:Lnet/minecraft/world/phys/Vec3;
+    8: op_27
+    9: invokevirtual net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    12: aload_0
+    13: getfield net/minecraft/world/entity/Leashable$Wrench.torque:D
+    16: op_27
+    17: dmul
+    18: invokespecial net/minecraft/world/entity/Leashable$Wrench.<init>:(Lnet/minecraft/world/phys/Vec3;D)V
+    21: areturn
+  METHOD toString ()Ljava/lang/String;  (code=7)
+    0: aload_0
+    1: invokedynamic dynamic#0:toString
+    6: areturn
+  METHOD hashCode ()I  (code=7)
+    0: aload_0
+    1: invokedynamic dynamic#0:hashCode
+    6: ireturn
+  METHOD equals (Ljava/lang/Object;)Z  (code=8)
+    0: aload_0
+    1: aload_1
+    2: invokedynamic dynamic#0:equals
+    7: ireturn
+  METHOD force ()Lnet/minecraft/world/phys/Vec3;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/Leashable$Wrench.force:Lnet/minecraft/world/phys/Vec3;
+    4: areturn
+  METHOD torque ()D  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/Leashable$Wrench.torque:D
+    4: op_af
+  METHOD <clinit> ()V  (code=15)
+    0: new net/minecraft/world/entity/Leashable$Wrench
+    3: dup
+    4: getstatic net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+    7: op_0e
+    8: invokespecial net/minecraft/world/entity/Leashable$Wrench.<init>:(Lnet/minecraft/world/phys/Vec3;D)V
+    11: putstatic net/minecraft/world/entity/Leashable$Wrench.ZERO:Lnet/minecraft/world/entity/Leashable$Wrench;
+    14: return
+
+done

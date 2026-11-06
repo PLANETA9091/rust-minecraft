@@ -1,0 +1,122 @@
+  METHOD leashDistanceTo (Lnet/minecraft/world/entity/Entity;)D  (code=21)
+    0: aload_1
+    1: invokevirtual net/minecraft/world/entity/Entity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    4: invokevirtual net/minecraft/world/phys/AABB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+    7: aload_0
+    8: checkcast net/minecraft/world/entity/Entity
+    11: invokevirtual net/minecraft/world/entity/Entity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    14: invokevirtual net/minecraft/world/phys/AABB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+    17: invokevirtual net/minecraft/world/phys/Vec3.distanceTo:(Lnet/minecraft/world/phys/Vec3;)D
+    20: op_af
+  METHOD onElasticLeashPull ()V  (code=10)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Entity
+    4: astore_1
+    5: aload_1
+    6: invokevirtual net/minecraft/world/entity/Entity.checkFallDistanceAccumulation:()V
+    9: return
+  METHOD leashSnapDistance ()D  (code=4)
+    0: ldc2_w 12.0
+    3: op_af
+  METHOD leashElasticDistance ()D  (code=4)
+    0: ldc2_w 6.0
+    3: op_af
+  METHOD angularFriction (Lnet/minecraft/world/entity/Entity;)F  (code=44)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/Entity.onGround:()Z
+    4: ifeq 29
+    7: aload_0
+    8: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    11: aload_0
+    12: invokevirtual net/minecraft/world/entity/Entity.getBlockPosBelowThatAffectsMyMovement:()Lnet/minecraft/core/BlockPos;
+    15: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    18: invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+    21: invokevirtual net/minecraft/world/level/block/Block.getFriction:()F
+    24: ldc_w 0.9100000262260437f
+    27: fmul
+    28: freturn
+    29: aload_0
+    30: invokevirtual net/minecraft/world/entity/Entity.isInLiquid:()Z
+    33: ifeq 40
+    36: ldc_w 0.800000011920929f
+    39: freturn
+    40: ldc_w 0.9100000262260437f
+    43: freturn
+  METHOD whenLeashedTo (Lnet/minecraft/world/entity/Entity;)V  (code=6)
+    0: aload_1
+    1: aload_0
+    2: invokevirtual net/minecraft/world/entity/Entity.notifyLeashHolder:(Lnet/minecraft/world/entity/Leashable;)V
+    5: return
+  METHOD closeRangeLeashBehaviour (Lnet/minecraft/world/entity/Entity;)V  (code=1)
+    0: return
+  METHOD checkElasticInteractions (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Leashable$LeashData;)Z  (code=156)
+    0: aload_1
+    1: invokevirtual net/minecraft/world/entity/Entity.supportQuadLeashAsHolder:()Z
+    4: ifeq 20
+    7: aload_0
+    8: invokeinterface net/minecraft/world/entity/Leashable.supportQuadLeash:()Z
+    13: ifeq 20
+    16: iconst_1
+    17: goto 21
+    20: iconst_0
+    21: istore_3
+    22: aload_0
+    23: checkcast net/minecraft/world/entity/Entity
+    26: aload_1
+    27: iload_3
+    28: ifeq 37
+    31: getstatic net/minecraft/world/entity/Leashable.SHARED_QUAD_ATTACHMENT_POINTS:Ljava/util/List;
+    34: goto 40
+    37: getstatic net/minecraft/world/entity/Leashable.ENTITY_ATTACHMENT_POINT:Ljava/util/List;
+    40: iload_3
+    41: ifeq 50
+    44: getstatic net/minecraft/world/entity/Leashable.SHARED_QUAD_ATTACHMENT_POINTS:Ljava/util/List;
+    47: goto 53
+    50: getstatic net/minecraft/world/entity/Leashable.LEASHER_ATTACHMENT_POINT:Ljava/util/List;
+    53: invokestatic net/minecraft/world/entity/Leashable.computeElasticInteraction:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;Ljava/util/List;Ljava/util/List;)Ljava/util/List;
+    56: astore 4
+    58: aload 4
+    60: invokeinterface java/util/List.isEmpty:()Z
+    65: ifeq 70
+    68: iconst_0
+    69: ireturn
+    70: aload 4
+    72: invokestatic net/minecraft/world/entity/Leashable$Wrench.accumulate:(Ljava/util/List;)Lnet/minecraft/world/entity/Leashable$Wrench;
+    75: iload_3
+    76: ifeq 85
+    79: ldc2_w 0.25
+    82: goto 86
+    85: op_0f
+    86: invokevirtual net/minecraft/world/entity/Leashable$Wrench.scale:(D)Lnet/minecraft/world/entity/Leashable$Wrench;
+    89: astore 5
+    91: aload_2
+    92: dup
+    93: getfield net/minecraft/world/entity/Leashable$LeashData.angularMomentum:D
+    96: ldc2_w 10.0
+    99: aload 5
+    101: invokevirtual net/minecraft/world/entity/Leashable$Wrench.torque:()D
+    104: dmul
+    105: dadd
+    106: putfield net/minecraft/world/entity/Leashable$LeashData.angularMomentum:D
+    109: aload_1
+    110: invokestatic net/minecraft/world/entity/Leashable.getHolderMovement:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/Vec3;
+    113: aload_0
+    114: checkcast net/minecraft/world/entity/Entity
+    117: invokevirtual net/minecraft/world/entity/Entity.getKnownMovement:()Lnet/minecraft/world/phys/Vec3;
+    120: invokevirtual net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    123: astore 6
+    125: aload_0
+    126: checkcast net/minecraft/world/entity/Entity
+    129: aload 5
+    131: invokevirtual net/minecraft/world/entity/Leashable$Wrench.force:()Lnet/minecraft/world/phys/Vec3;
+    134: getstatic net/minecraft/world/entity/Leashable.AXIS_SPECIFIC_ELASTICITY:Lnet/minecraft/world/phys/Vec3;
+    137: invokevirtual net/minecraft/world/phys/Vec3.multiply:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    140: aload 6
+    142: ldc2_w 0.11
+    145: invokevirtual net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    148: invokevirtual net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    151: invokevirtual net/minecraft/world/entity/Entity.addDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    154: iconst_1
+    155: ireturn
+
+done

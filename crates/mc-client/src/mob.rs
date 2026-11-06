@@ -5388,6 +5388,13 @@ pub struct Zombie {
     /// id the pair's rope reads; the ctor's None the honest un-leashed
     /// body keeps, the rope render the future lane may wear)
     pub leashed_to: Option<i32>,
+    /// THE ROPE'S OWN SWING STORE (javap `Leashable$LeashData
+    /// .angularMomentum:D` the leash_tick_482 census banks — the
+    /// torque the checkElasticInteractions walk banks, the yaw the
+    /// setYRot((float)(yRot − momentum)) fold swings, the friction
+    /// the angularFriction decay answers; the ctor's 0.0 the
+    /// un-leashed still keeps)
+    pub leash_angular_momentum: f64,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
     /// drains, the handleEntityEvent(10) the client copy re-arms: the
@@ -5804,6 +5811,7 @@ impl Zombie {
             strength: 0,
             llama_variant: 0,
             leashed_to: None,
+            leash_angular_momentum: 0.0,
             eat_animation_tick: 0,
             effects: crate::effects::EffectsStore::new(),
             custom_name: None,
@@ -10569,6 +10577,247 @@ pub fn rope_segment_shade(seg: i32, side: i32) -> f32 {
         0.7
     } else {
         1.0
+    }
+}
+
+/// THE LEASH'S OWN SNAP DISTANCE (javap `Leashable.leashSnapDistance()`
+/// the leash_tick_482 census banks — the `ldc2_w 12.0` the default
+/// speak: the bb-center distance the tick walk reads, the beyond the
+/// LEAD_BREAK + the dropLeash the pair arms).
+pub const LEASH_SNAP_DISTANCE: f64 = 12.0;
+
+/// THE LEASH'S OWN ELASTIC DISTANCE (javap
+/// `Leashable.leashElasticDistance()` the same census banks — the
+/// `ldc2_w 6.0` the spring's own rest length wears: the bb-center
+/// gate the `6 − wHolder − wEntity` fold the tick walk speaks).
+pub const LEASH_ELASTIC_DISTANCE: f64 = 6.0;
+
+/// THE LEASH'S OWN AXIS ELASTICITY (javap
+/// `Leashable.AXIS_SPECIFIC_ELASTICITY` clinit pc 0-16 — the
+/// `Vec3(0.8d, 0.2d, 0.8d)` the three ldc2_w pair speaks: the force
+/// the x/z the 0.8 fraction serves, the y the 0.2 the light lift
+/// keeps).
+pub const LEASH_AXIS_ELASTICITY: (f64, f64, f64) = (0.8, 0.2, 0.8);
+
+/// THE LEASH'S OWN ENTITY ATTACHMENT (javap
+/// `Leashable.ENTITY_ATTACHMENT_POINT` clinit pc 19-35 — the
+/// `Vec3(dconst_1, 0.5d, 0.5d)` the leashed body's own corner-right
+/// the scale multiply wears).
+pub const LEASH_ENTITY_ATTACHMENT_POINT: (f64, f64, f64) = (1.0, 0.5, 0.5);
+
+/// THE LEASH'S OWN LEASHER ATTACHMENT (javap
+/// `Leashable.LEASHER_ATTACHMENT_POINT` clinit pc 39-54 — the
+/// `Vec3(dconst_1, 0.5d, dconst_1)` the holder's own corner the
+/// scale multiply wears).
+pub const LEASH_LEASHER_ATTACHMENT_POINT: (f64, f64, f64) = (1.0, 0.5, 1.0);
+
+/// THE SPRING'S OWN DAMPEN GATE (javap
+/// `computeDampenedSpringInteraction` pc 44-61 — the
+/// `holderMove.dot(force) >= 1.0d` compare the dcmpl speaks: the
+/// holder's own pull the force line the fast walk arms).
+pub const LEASH_DAMPEN_GATE: f64 = 1.0;
+
+/// THE SPRING'S OWN DAMPEN (javap the same pc 63-76 — the
+/// `Vec3.scale(0.30000001192092896)` the fast-pull arm wears: the
+/// stretched rope the holder's own rush the 30% force keeps).
+pub const LEASH_DAMPEN: f64 = 0.30000001192092896;
+
+/// THE ROPE'S OWN RELATIVE WIND (javap `checkElasticInteractions`
+/// pc 140-148 — the `(holderMove − entityMove).scale(0.11d)` the
+/// relative motion term the addDeltaMovement carries).
+pub const LEASH_RELATIVE_SCALE: f64 = 0.11;
+
+/// THE ROPE'S OWN TORQUE GAIN (javap `checkElasticInteractions`
+/// pc 91-106 — the `angularMomentum + 10.0d * wrench.torque()` the
+/// dmul the swing word speaks).
+pub const LEASH_TORQUE_GAIN: f64 = 10.0;
+
+/// THE SWING'S OWN AIR FRICTION (javap `Leashable.angularFriction`
+/// pc 40-43 — the `0.9100000262260437f` the fall-through arm keeps;
+/// the ground arm the `blockFriction * 0.91f` pair speaks, the
+/// liquid arm the 0.8f word answers).
+pub const LEASH_ANGULAR_FRICTION_AIR: f32 = 0.9100000262260437;
+
+/// THE SWING'S OWN LIQUID FRICTION (javap the same pc 29-39 — the
+/// `0.800000011920929f` the isInLiquid arm wears).
+pub const LEASH_ANGULAR_FRICTION_LIQUID: f32 = 0.800000011920929;
+
+/// THE ROPE'S OWN BB CENTER (javap `Leashable.leashDistanceTo` the
+/// leash_tick_482 census banks — the `getBoundingBox().getCenter()`
+/// pair the Vec3.distanceTo walk serves: the tick's distance the
+/// boxes' own midpoints speak, the feet the centers never read).
+pub fn leash_bb_center(box6: (f64, f64, f64, f64, f64, f64)) -> (f64, f64, f64) {
+    let (x0, y0, z0, x1, y1, z1) = box6;
+    ((x0 + x1) * 0.5, (y0 + y1) * 0.5, (z0 + z1) * 0.5)
+}
+
+/// THE ROPE'S OWN ATTACH OFFSET (javap `computeElasticInteraction`
+/// pc 31-44 + 108-130 the scale-rotate walk banks — the attachment
+/// point the `(bbW, bbH, bbW)` scale multiply wears, the rotated
+/// `yRot(-yaw * 0.01745329238474369f)` fold the rad pair speaks).
+pub fn leash_point_offset(
+    point: (f64, f64, f64),
+    bb_w: f64,
+    bb_h: f64,
+    yaw_deg: f32,
+) -> (f64, f64, f64) {
+    let scaled = (point.0 * bb_w, point.1 * bb_h, point.2 * bb_w);
+    let rad = yaw_deg * 0.017_453_292_384_743_69;
+    vec3_y_rot(scaled.0, scaled.1, scaled.2, -rad)
+}
+
+/// THE ROPE'S OWN SPRING WRENCH (javap
+/// `Leashable.computeDampenedSpringInteraction` the 93-byte walk the
+/// leash_spring_485 census banks): the distance the two attach
+/// points speak, the sub-elastic the Optional.empty silence keeps,
+/// the force the `(holder − entity).normalize() * (d6 − elastic)`
+/// fold wears [the subtract order the Vec3#1 − Vec3#2 law keeps],
+/// the dampen the `holderMove · force >= 1.0` gate arms (the
+/// fast-pull the 0.30000001192092896 fraction keeps), the torque the
+/// `offset.z * force.x − offset.x * force.z` word the Y-axis swing
+/// banks. The (force, torque) pair the Wrench record speaks.
+pub fn leash_spring_wrench(
+    holder_attach: (f64, f64, f64),
+    entity_attach: (f64, f64, f64),
+    elastic_distance: f64,
+    holder_move: (f64, f64, f64),
+    entity_offset: (f64, f64, f64),
+) -> Option<((f64, f64, f64), f64)> {
+    let (hx, hy, hz) = holder_attach;
+    let (ex, ey, ez) = entity_attach;
+    let d6 = ((hx - ex).powi(2) + (hy - ey).powi(2) + (hz - ez).powi(2)).sqrt();
+    if d6 < elastic_distance {
+        return None;
+    }
+    let len = d6;
+    let dir = ((hx - ex) / len, (hy - ey) / len, (hz - ez) / len);
+    let stretch = d6 - elastic_distance;
+    let mut force = (dir.0 * stretch, dir.1 * stretch, dir.2 * stretch);
+    // THE DAMPEN'S OWN GATE (pc 44-76): the dot the fast-pull arms
+    let dot = holder_move.0 * force.0 + holder_move.1 * force.1 + holder_move.2 * force.2;
+    if dot >= LEASH_DAMPEN_GATE {
+        force = (
+            force.0 * LEASH_DAMPEN,
+            force.1 * LEASH_DAMPEN,
+            force.2 * LEASH_DAMPEN,
+        );
+    }
+    // THE TORQUE'S OWN WORD (torqueFromForce pc 0-19: the z·fx −
+    // x·fz the Y-axis cross keeps)
+    let torque = entity_offset.2 * force.0 - entity_offset.0 * force.2;
+    Some((force, torque))
+}
+
+/// THE TICK'S OWN VERDICT (javap `Leashable.tickLeash` the 287-byte
+/// walk the leash_tick_482 census banks): the bb-center distance the
+/// `leashDistanceTo` word reads — the beyond-snap the `>` 12.0 gate
+/// the dropLeash pair arms, the beyond-elastic the `6.0 − wHolder −
+/// wEntity` gate the spring walk serves, the close-range the
+/// no-op law keeps. The Elastic arm the dv the
+/// `force × (0.8, 0.2, 0.8) + (holderMove − entityMove) × 0.11`
+/// words wear [the checkElasticInteractions pc 109-151 walk], the
+/// torque the caller's own momentum store banks.
+pub enum LeashTick {
+    /// the `d4 > 12.0` arm — the LEAD_BREAK + the dropLeash pair
+    Snap,
+    /// the `d4 > 6 − wH − wE` arm — the dv the delta add serves, the
+    /// torque the angularMomentum += 10·t word banks
+    Elastic {
+        dvx: f64,
+        dvy: f64,
+        dvz: f64,
+        torque: f64,
+    },
+    /// the close-range no-op the default behaviour keeps
+    CloseRange,
+}
+
+/// THE ROPE'S OWN PHYSICS WORD (the tickLeash + the
+/// checkElasticInteractions walk the two censuses bank — the pure
+/// verdict the caller's own per-tick pass serves): the boxes the
+/// (x0,y0,z0,x1,y1,z1) pairs wear, the deltas the (vx,vy,vz) triples
+/// speak, the yaws the attach rotations serve.
+pub fn leash_tick_words(
+    entity_box: (f64, f64, f64, f64, f64, f64),
+    entity_yaw: f32,
+    entity_bb: (f64, f64),
+    entity_move: (f64, f64, f64),
+    holder_box: (f64, f64, f64, f64, f64, f64),
+    holder_yaw: f32,
+    holder_bb: (f64, f64),
+    holder_move: (f64, f64, f64),
+) -> LeashTick {
+    let (ec, hc) = (leash_bb_center(entity_box), leash_bb_center(holder_box));
+    let d4 = ((hc.0 - ec.0).powi(2) + (hc.1 - ec.1).powi(2) + (hc.2 - ec.2).powi(2)).sqrt();
+    // THE SNAP'S OWN GATE (pc 142-154: the d4 > 12.0 the dcmpl speaks)
+    if d4 > LEASH_SNAP_DISTANCE {
+        return LeashTick::Snap;
+    }
+    // THE ELASTIC'S OWN GATE (pc 194-218: the d4 > 6 − wH − wE the
+    // two dsub the compare speaks)
+    if d4 <= LEASH_ELASTIC_DISTANCE - holder_bb.0 - entity_bb.0 {
+        return LeashTick::CloseRange;
+    }
+    // THE ATTACH POINTS' OWN WALK (computeElasticInteraction pc
+    // 94-176: the point × (w,h,w) scale the yRot(-yaw) fold the
+    // position add serves — the position() the feet-center word the
+    // AABB min-x/z the half-width pair answers)
+    let (ew, eh) = entity_bb;
+    let (hw, hh) = holder_bb;
+    let e_off = leash_point_offset(LEASH_ENTITY_ATTACHMENT_POINT, ew, eh, entity_yaw);
+    let h_off = leash_point_offset(LEASH_LEASHER_ATTACHMENT_POINT, hw, hh, holder_yaw);
+    let e_attach = (
+        (entity_box.0 + entity_box.3) * 0.5 + e_off.0,
+        entity_box.1 + e_off.1,
+        (entity_box.2 + entity_box.5) * 0.5 + e_off.2,
+    );
+    let h_attach = (
+        (holder_box.0 + holder_box.3) * 0.5 + h_off.0,
+        holder_box.1 + h_off.1,
+        (holder_box.2 + holder_box.5) * 0.5 + h_off.2,
+    );
+    // THE SPRING'S OWN WRENCH (the single non-quad point pair the
+    // llama's own rope speaks — the accumulate the one wrench the
+    // scale(dconst_1) pass keeps)
+    let Some((force, torque)) = leash_spring_wrench(
+        h_attach,
+        e_attach,
+        LEASH_ELASTIC_DISTANCE,
+        holder_move,
+        e_off,
+    ) else {
+        return LeashTick::CloseRange;
+    };
+    // THE DELTA'S OWN WORDS (checkElasticInteractions pc 109-151):
+    // the force × AXIS_SPECIFIC_ELASTICITY + the relative × 0.11
+    let rel = (
+        (holder_move.0 - entity_move.0) * LEASH_RELATIVE_SCALE,
+        (holder_move.1 - entity_move.1) * LEASH_RELATIVE_SCALE,
+        (holder_move.2 - entity_move.2) * LEASH_RELATIVE_SCALE,
+    );
+    let dvx = force.0 * LEASH_AXIS_ELASTICITY.0 + rel.0;
+    let dvy = force.1 * LEASH_AXIS_ELASTICITY.1 + rel.1;
+    let dvz = force.2 * LEASH_AXIS_ELASTICITY.2 + rel.2;
+    LeashTick::Elastic {
+        dvx,
+        dvy,
+        dvz,
+        torque,
+    }
+}
+
+/// THE SWING'S OWN FRICTION (javap `Leashable.angularFriction` the
+/// 44-byte walk banks: the ground the `blockFriction * 0.91f` pair
+/// speaks, the liquid the 0.8f word answers, the air the 0.91f
+/// fall-through keeps — the port's liquid lane the block state's
+/// own word the caller passes).
+pub fn leash_angular_friction(on_ground: bool, in_liquid: bool, block_friction: f32) -> f32 {
+    if on_ground {
+        block_friction * LEASH_ANGULAR_FRICTION_AIR
+    } else if in_liquid {
+        LEASH_ANGULAR_FRICTION_LIQUID
+    } else {
+        LEASH_ANGULAR_FRICTION_AIR
     }
 }
 
