@@ -22725,6 +22725,33 @@ impl App {
         let cart_pick = self.pick_cart();
         let hull_pick = self.pick_offline_hull();
         let frame_pick = self.pick_item_frame();
+        let knot_pick = self.pick_knot();
+        // THE KNOT'S OWN RANK (the right-press lane's own law the
+        // attack pick re-wears — the KNOT the fifth candidate the
+        // same nearest fold ranks, the strict < the four compares
+        // wear, the ties the earlier arm keeps)
+        let knot_wins = match knot_pick {
+            Some((_, kd)) => {
+                mob_pick.map_or(true, |(_, d)| kd < d)
+                    && hull_pick.map_or(true, |(_, d)| kd < d)
+                    && cart_pick.map_or(true, |(_, d)| kd < d)
+                    && frame_pick.map_or(true, |(_, d)| kd < d)
+            }
+            None => false,
+        };
+        if knot_wins {
+            if let Some((id, _)) = knot_pick {
+                // THE KNOT'S PUNCH ARM (javap
+                // BlockAttachedEntity.skipAttackInteraction + hurtServer
+                // — the walk the 26.2 bytes the attack lane serves)
+                self.attack_knot(id);
+            }
+            self.swing.start();
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+            }
+            return;
+        }
         let hull_wins = match hull_pick {
             None => false,
             Some((_, hd)) => {
@@ -75094,6 +75121,63 @@ impl App {
                 ));
             }
         }
+    }
+
+    /// THE KNOT'S OWN PUNCH BREAK (javap `BlockAttachedEntity
+    /// .skipAttackInteraction` + `hurtServer` the 26.2 bytes the
+    /// 480 census banks — the player source the mayInteract gate
+    /// the hurtOrSimulate(playerAttack, 0.0f) walk answers, the
+    /// invulnerable gate the FALSE verdict keeps [the knot the
+    /// invulnerable flag never wears], the MOB_GRIEFING gate the
+    /// MOB-source arm only speaks [the punch the player's own
+    /// source the gate never holds], the kill + markHurt +
+    /// dropItem(level, player) trio the removal walk serves — the
+    /// markHurt the hurt-mark word the non-living body the port's
+    /// fiction never banks). javap `LeashFenceKnotEntity.dropItem`
+    /// — the LEAD_UNTIED voice the (1.0, 1.0) pair plays, the ITEM
+    /// the knot's own walk NEVER spawns [the getPickResult LEAD
+    /// row the punch lane never reads — the lead the TIED MOBS'
+    /// own break drops]: the kill the mobs' own unlink walk serves
+    /// — the rope the None clears, the momentum the zero parks,
+    /// the lead the count-1 the EACH mob's own feet drops [the
+    /// same law the fence-gone poll wears].
+    fn attack_knot(&mut self, id: i32) {
+        if self.world_is_network {
+            return;
+        }
+        if !self.knots.iter().any(|k| k.id == id) {
+            return;
+        }
+        // THE REMOVAL'S OWN WALK (the kill — the knot the world's
+        // own list retires)
+        self.knots.retain(|k| k.id != id);
+        // THE TIED MOBS' OWN BREAK (the holder-gone walk — the rope
+        // the None clears, the lead the count-1 the feet drops)
+        for m in self.mobs.iter_mut() {
+            if m.leashed_to != Some(id) {
+                continue;
+            }
+            m.leashed_to = None;
+            m.leash_angular_momentum = 0.0;
+            let (mx, my, mz) = (m.x, m.y, m.z);
+            if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                let drop_id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    drop_id,
+                    lead,
+                    1,
+                    mx,
+                    my,
+                    mz,
+                    &mut self.mob_rng,
+                ));
+            }
+        }
+        // THE KNOT'S OWN VOICE (javap `dropItem` the playSound word —
+        // the LEAD_UNTIED the (1.0, 1.0) pair speaks)
+        self.sounds
+            .play_voice(self.frame, crate::mob::LEAD_UNTIED_SOUND, 1.0, 1.0);
     }
 
     /// THE FRAME'S OWN ANALOG BROADCAST (javap Level

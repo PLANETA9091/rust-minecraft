@@ -40362,6 +40362,180 @@ fn the_lead_knot_the_fence_tie_wears() {
     assert!(lead_dropped, "the holder-gone the lead the feet drops");
 }
 
-
-
-
+/// THE LEAD KNOT'S OWN PUNCH BREAK (javap `BlockAttachedEntity
+/// .skipAttackInteraction` + `hurtServer` + `LeashFenceKnotEntity
+/// .dropItem` the 480 census banks — the attack press the knot the
+/// pick serves, the kill the removal walk answers, the LEAD_UNTIED
+/// voice the (1.0, 1.0) pair plays, the ITEM the knot's own walk
+/// never spawns, the tied mobs' rope break the lead the EACH body's
+/// own feet drops, the empty knot the voice alone carries):
+#[test]
+fn the_lead_knot_the_punch_break_wears() {
+    let _lane = render_lane();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE FIRST-PERSON'S OWN POSE (the fence-tie staging the same
+    // walk keeps — the knot the cell's own center the ray crosses)
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 0.0;
+        body.pitch = 0.0;
+        body.x += 0.5;
+    }
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+    let fence_cell = (bx, by + 1, bz + 2);
+    let fence_id = (0..7000u32)
+        .find(|&s| {
+            mc_registry::generated::block_ids::block_name_of(s) == Some("minecraft:oak_fence")
+        })
+        .expect("the oak fence the registry carries") as u16;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in (bx - 30)..=(bx + 30) {
+            for z in (bz - 7)..=(bz + 3) {
+                for y in by..=(by + 5) {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+                w.set(x, by - 1, z, crate::world::STONE);
+            }
+        }
+        w.set(fence_cell.0, fence_cell.1, fence_cell.2, fence_id);
+        w.relight();
+    }
+    let mut llama =
+        crate::mob::Zombie::new(902, (bx as f64) + 2.0, by as f64, (bz as f64) + 2.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    app.mobs.push(llama);
+    let lead = mc_registry::item_id_by_name("lead").expect("the lead the registry carries");
+    app.inventory.items[app.selected_hotbar] = (lead, 1);
+    app.mobs[0].leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+    // THE BIND'S OWN PRESS (the knot the fresh id the spawn banks —
+    // the llama the knot's own seat transfers)
+    assert!(app.on_right_press(0, 0), "the bind the press consumes");
+    assert_eq!(app.knots.len(), 1, "the bind the fresh knot spawns");
+    let knot_id = app.knots[0].id;
+    assert_eq!(
+        app.mobs[0].leashed_to,
+        Some(knot_id),
+        "the transfer the knot's own seat banks"
+    );
+    // THE WORD'S OWN ROW (the LEAD_UNTIED the sounds table banks)
+    assert_eq!(
+        crate::mob::LEAD_UNTIED_SOUND,
+        "item.lead.untied",
+        "the untied voice the row keeps"
+    );
+    // THE PUNCH'S OWN BREAK (the attack press the knot the pick
+    // serves — the knot the world's list retires, the llama the
+    // rope the None clears + the momentum the zero parks, the lead
+    // the count-1 the body's own feet drops, the LEAD_UNTIED voice
+    // the (1.0, 1.0) pair speaks)
+    let drops_before = app.drops.len();
+    let voices_before = app
+        .sounds
+        .events
+        .iter()
+        .filter(|e| e.starts_with("item.lead.untied "))
+        .count();
+    app.on_attack();
+    assert!(app.knots.is_empty(), "the punch the knot retires");
+    assert_eq!(
+        app.mobs[0].leashed_to, None,
+        "the punch the rope the None clears"
+    );
+    assert_eq!(
+        app.mobs[0].leash_angular_momentum, 0.0,
+        "the punch the momentum the zero parks"
+    );
+    let lead_dropped = app.drops[drops_before..]
+        .iter()
+        .any(|d| d.item == lead && d.count == 1);
+    assert!(lead_dropped, "the punch the lead the feet drops");
+    assert_eq!(
+        app.drops[drops_before..]
+            .iter()
+            .filter(|d| d.item == lead)
+            .count(),
+        1,
+        "the punch the ONE lead the knot's own walk never doubles"
+    );
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("item.lead.untied "))
+            .count(),
+        voices_before + 1,
+        "the untied voice the (1.0, 1.0) pair speaks"
+    );
+    // THE FENCE'S OWN STAND (the punch the knot ALONE breaks — the
+    // fence cell the block the same bytes keep)
+    assert_eq!(
+        app.offline_world
+            .as_ref()
+            .unwrap()
+            .get(fence_cell.0, fence_cell.1, fence_cell.2),
+        fence_id,
+        "the fence cell the block the punch never breaks"
+    );
+    // THE EMPTY KNOT'S OWN BREAK (the direct seat the staging keeps —
+    // the bare knot the kill the voice alone carries, the ITEM the
+    // knot's own walk never spawns, the drop count the same len keeps)
+    app.knots.push(crate::screens::LeashKnotEnt {
+        id: 555,
+        cell: fence_cell,
+        check_interval: 0,
+    });
+    let drops_before = app.drops.len();
+    let voices_before = app
+        .sounds
+        .events
+        .iter()
+        .filter(|e| e.starts_with("item.lead.untied "))
+        .count();
+    app.on_attack();
+    assert!(app.knots.is_empty(), "the bare punch the knot retires");
+    assert_eq!(
+        app.drops.len(),
+        drops_before,
+        "the bare punch the ITEM the walk never spawns"
+    );
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("item.lead.untied "))
+            .count(),
+        voices_before + 1,
+        "the bare punch the untied voice the lane carries"
+    );
+    // THE MISS'S OWN PASS (the knot-less world the attack lane the
+    // swing alone wears — the knot walk the empty list never enters,
+    // the second voice the lane never speaks; the SKY the aim the
+    // ray keeps — the fence cell the staging's own state-space id
+    // the dig lane's kind-space NAME_OF never indexes, the miss arm
+    // the pure-air walk the honest note serves)
+    {
+        let body = app.body.as_mut().unwrap();
+        body.pitch = 89.0;
+    }
+    let voices_before = app
+        .sounds
+        .events
+        .iter()
+        .filter(|e| e.starts_with("item.lead.untied "))
+        .count();
+    app.on_attack();
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("item.lead.untied "))
+            .count(),
+        voices_before,
+        "the miss the untied voice the lane never speaks"
+    );
+}
