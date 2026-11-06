@@ -13486,6 +13486,11 @@ pub struct FishingBobber {
     /// THE OUT-OF-WATER CLOCK (the outOfWaterTime field — the 10 the
     /// ±1 walk banks).
     pub out_of_water_time: i32,
+    /// THE OPEN-WATER'S OWN FLAG (the openWater field — the ctor's
+    /// true default the rod_506b census's putfield wears, the tick's
+    /// recalc the nibble-window walk serves, the retrieve's band pick
+    /// the flag reads [the treasure's own gate the condition wears]).
+    pub open_water: bool,
 }
 
 /// THE BOBBER'S OWN STATE (javap `FishingHook$FishHookState` — the
@@ -13559,6 +13564,92 @@ pub fn bobber_loot_band_pick(rng: &mut Lcg, luck: i32, open_water: bool) -> Bobb
         roll -= w;
     }
     BobberLootBand::Fish
+}
+
+/// THE OPEN-WATER TYPE'S OWN TRIO (javap `FishingHook$OpenWaterType`
+/// the openwater_508 census banks — the enum's own <clinit> the
+/// ordinals speak: 0 the ABOVE_WATER, 1 the INSIDE_WATER, 2 the
+/// INVALID; the calculateOpenWater's own switch the same order the
+/// cases answer).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BobberOpenWaterKind {
+    AboveWater,
+    InsideWater,
+    Invalid,
+}
+
+/// THE BLOCK'S OWN VERDICT (javap `getOpenWaterTypeForBlock` code=75
+/// the openwater_508 census banks — the isAir || LILY_PAD arm the
+/// ABOVE verdict answers [the port's block kinds the lily row never
+/// carries — the honest note the verdict wears], the FluidTags.WATER
+/// + isSource + the empty collision trio the INSIDE verdict banks
+/// [the port's static ocean the source law trivially keeps, the
+/// water's own cell the collision-free body wears], the rest the
+/// INVALID keeps).
+pub fn bobber_open_water_block(kind: u16) -> BobberOpenWaterKind {
+    if kind == crate::world::AIR {
+        BobberOpenWaterKind::AboveWater
+    } else if kind == crate::world::WATER {
+        BobberOpenWaterKind::InsideWater
+    } else {
+        BobberOpenWaterKind::Invalid
+    }
+}
+
+/// THE SLAB'S OWN FOLD (javap `getOpenWaterTypeForArea` code=36 +
+/// the lambda$getOpenWaterTypeForArea$0 code=13 the same census
+/// banks — the betweenClosedStream the 5x1x5 slab (±2 x/z) the block
+/// verdicts walk, the fold the same-kind chain answers: the first
+/// row the accumulator keeps, the mismatch the INVALID wears [the
+/// sticky law — the INVALID the fold never recovers], the empty
+/// slab the orElse INVALID keeps).
+pub fn bobber_open_water_slab(
+    world: &crate::world::World,
+    x0: i32,
+    y: i32,
+    z0: i32,
+) -> BobberOpenWaterKind {
+    let mut acc: Option<BobberOpenWaterKind> = None;
+    for dx in 0..5 {
+        for dz in 0..5 {
+            let kind = bobber_open_water_block(world.get(x0 + dx, y, z0 + dz));
+            acc = match acc {
+                None => Some(kind),
+                Some(a) if a == kind => Some(a),
+                Some(_) => Some(BobberOpenWaterKind::Invalid),
+            };
+        }
+    }
+    acc.unwrap_or(BobberOpenWaterKind::Invalid)
+}
+
+/// THE 4-SLAB CHAIN'S OWN WALK (javap `calculateOpenWater` code=95 —
+/// the dy −1..+2 the FOUR 5x1x5 slabs the hook's own blockPosition
+/// centers, the switch the census's ordinals answer: the 2-INVALID
+/// slab the immediate false wears, the 0-ABOVE slab the acc-INVALID
+/// gate serves, the 1-INSIDE slab the acc-ABOVE gate keeps [the
+/// valid chain the INSIDE×k → ABOVE×(4−k) fold wears, k ≥ 1 — the
+/// water the bottom slabs hold, the air the top slabs may carry]).
+pub fn bobber_calculate_open_water(world: &crate::world::World, bx: i32, by: i32, bz: i32) -> bool {
+    let mut acc = BobberOpenWaterKind::Invalid;
+    for dy in -1..=2 {
+        let t = bobber_open_water_slab(world, bx - 2, by + dy, bz - 2);
+        match t {
+            BobberOpenWaterKind::Invalid => return false,
+            BobberOpenWaterKind::AboveWater => {
+                if acc == BobberOpenWaterKind::Invalid {
+                    return false;
+                }
+            }
+            BobberOpenWaterKind::InsideWater => {
+                if acc == BobberOpenWaterKind::AboveWater {
+                    return false;
+                }
+            }
+        }
+        acc = t;
+    }
+    true
 }
 
 /// THE FISH POOL'S OWN ROLL (the gameplay/fishing/fish.json the jar
@@ -13831,6 +13922,7 @@ impl FishingBobber {
             lure_speed: lure_speed.max(0),
             life: 0,
             out_of_water_time: 0,
+            open_water: true,
         }
     }
 
@@ -13847,9 +13939,9 @@ impl FishingBobber {
     /// ray + the mob sweep the egg's own precedent wears [the
     /// ItemEntity hook the sweep the mobs-only walk never banks —
     /// the honest note the retrieve word's doc carries]; the
-    /// openWater recalc the junk/treasure pools' gate the NEXT
-    /// round wears [the ctor's true default the fish band's own
-    /// parse never reads — the honest note the loot words carry].
+    /// openWater recalc the tick's own arm serves [the
+    /// openwater_508 census the 4-slab chain banks — the flag the
+    /// retrieve's band pick the treasure's gate reads].
     #[allow(clippy::too_many_arguments)]
     pub fn tick(
         &mut self,
@@ -14018,6 +14110,21 @@ impl FishingBobber {
                 // — the ServerLevel arm the port's offline world
                 // answers)
                 self.catching_fish(world, cell, raining_at, sees_sky, rng, &mut ev);
+                // THE OPEN-WATER'S OWN RECALC (javap tick pcs 438-490
+                // — the nibble > 0 || timeUntilHooked > 0 gate the
+                // approach windows the recalc serves, the fold the
+                // openWater && outOfWaterTime < 10 &&
+                // calculateOpenWater(blockPosition) chain the PREVIOUS
+                // tick's clock reads, the idle the true the else arm
+                // wears [the openwater_508 census the chain's own
+                // walk banks])
+                if self.nibble > 0 || self.time_until_hooked > 0 {
+                    self.open_water = self.open_water
+                        && self.out_of_water_time < 10
+                        && bobber_calculate_open_water(world, cell.0, cell.1, cell.2);
+                } else {
+                    self.open_water = true;
+                }
                 // THE IN-WATER'S OWN WALK (javap pcs 493-574 — the
                 // outOfWaterTime the max(0, −1) fold keeps, the
                 // biting wobble the (0.0, −0.1·f1·f2, 0.0) add

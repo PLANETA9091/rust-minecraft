@@ -1,0 +1,144 @@
+== net/minecraft/world/entity/projectile/FishingHook.class
+  METHOD calculateOpenWater (Lnet/minecraft/core/BlockPos;)Z  (code=95)
+    0: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INVALID:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    3: astore_2
+    4: iconst_m1
+    5: istore_3
+    6: iload_3
+    7: iconst_2
+    8: if_icmpgt 93
+    11: aload_0
+    12: aload_1
+    13: bipush -2
+    15: iload_3
+    16: bipush -2
+    18: invokevirtual net/minecraft/core/BlockPos.offset:(III)Lnet/minecraft/core/BlockPos;
+    21: aload_1
+    22: iconst_2
+    23: iload_3
+    24: iconst_2
+    25: invokevirtual net/minecraft/core/BlockPos.offset:(III)Lnet/minecraft/core/BlockPos;
+    28: invokevirtual net/minecraft/world/entity/projectile/FishingHook.getOpenWaterTypeForArea:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    31: astore 4
+    33: aload 4
+    35: invokevirtual net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.ordinal:()I
+    38: op_aa lo=0 hi=2 dflt->84 [0->66, 1->75, 2->64]
+    64: iconst_0
+    65: ireturn
+    66: aload_2
+    67: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INVALID:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    70: if_acmpne 84
+    73: iconst_0
+    74: ireturn
+    75: aload_2
+    76: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.ABOVE_WATER:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    79: if_acmpne 84
+    82: iconst_0
+    83: ireturn
+    84: aload 4
+    86: astore_2
+    87: iinc 3 1
+    90: goto 6
+    93: iconst_1
+    94: ireturn
+  METHOD getOpenWaterTypeForArea (Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;  (code=36)
+    0: aload_1
+    1: aload_2
+    2: invokestatic net/minecraft/core/BlockPos.betweenClosedStream:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/util/stream/Stream;
+    5: aload_0
+    6: invokedynamic dynamic#1:apply
+    11: invokeinterface java/util/stream/Stream.map:(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+    16: invokedynamic dynamic#2:apply
+    21: invokeinterface java/util/stream/Stream.reduce:(Ljava/util/function/BinaryOperator;)Ljava/util/Optional;
+    26: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INVALID:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    29: invokevirtual java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+    32: checkcast net/minecraft/world/entity/projectile/FishingHook$OpenWaterType
+    35: areturn
+  METHOD getOpenWaterTypeForBlock (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;  (code=75)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    4: aload_1
+    5: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    8: astore_2
+    9: aload_2
+    10: invokevirtual net/minecraft/world/level/block/state/BlockState.isAir:()Z
+    13: ifne 26
+    16: aload_2
+    17: getstatic net/minecraft/world/level/block/Blocks.LILY_PAD:Lnet/minecraft/world/level/block/Block;
+    20: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Ljava/lang/Object;)Z
+    23: ifeq 30
+    26: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.ABOVE_WATER:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    29: areturn
+    30: aload_2
+    31: invokevirtual net/minecraft/world/level/block/state/BlockState.getFluidState:()Lnet/minecraft/world/level/material/FluidState;
+    34: astore_3
+    35: aload_3
+    36: getstatic net/minecraft/tags/FluidTags.WATER:Lnet/minecraft/tags/TagKey;
+    39: invokevirtual net/minecraft/world/level/material/FluidState.is:(Lnet/minecraft/tags/TagKey;)Z
+    42: ifeq 71
+    45: aload_3
+    46: invokevirtual net/minecraft/world/level/material/FluidState.isSource:()Z
+    49: ifeq 71
+    52: aload_2
+    53: aload_0
+    54: invokevirtual net/minecraft/world/entity/projectile/FishingHook.level:()Lnet/minecraft/world/level/Level;
+    57: aload_1
+    58: invokevirtual net/minecraft/world/level/block/state/BlockState.getCollisionShape:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    61: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.isEmpty:()Z
+    64: ifeq 71
+    67: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INSIDE_WATER:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    70: areturn
+    71: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INVALID:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    74: areturn
+  METHOD lambda$getOpenWaterTypeForArea$0 (Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;)Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;  (code=13)
+    0: aload_0
+    1: aload_1
+    2: if_acmpne 9
+    5: aload_0
+    6: goto 12
+    9: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INVALID:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    12: areturn
+  METHOD <clinit> ()V  (code=29)
+    0: invokestatic com/mojang/logging/LogUtils.getLogger:()Lorg/slf4j/Logger;
+    3: putstatic net/minecraft/world/entity/projectile/FishingHook.LOGGER:Lorg/slf4j/Logger;
+    6: ldc net/minecraft/world/entity/projectile/FishingHook
+    8: getstatic net/minecraft/network/syncher/EntityDataSerializers.INT:Lnet/minecraft/network/syncher/EntityDataSerializer;
+    11: invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    14: putstatic net/minecraft/world/entity/projectile/FishingHook.DATA_HOOKED_ENTITY:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    17: ldc net/minecraft/world/entity/projectile/FishingHook
+    19: getstatic net/minecraft/network/syncher/EntityDataSerializers.BOOLEAN:Lnet/minecraft/network/syncher/EntityDataSerializer;
+    22: invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    25: putstatic net/minecraft/world/entity/projectile/FishingHook.DATA_BITING:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    28: return
+
+
+
+== net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.class
+  METHOD values ()[Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;  (code=10)
+    0: getstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.$VALUES:[Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    3: invokevirtual [Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;.clone:()Ljava/lang/Object;
+    6: checkcast [Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    9: areturn
+  METHOD <clinit> ()V  (code=46)
+    0: new net/minecraft/world/entity/projectile/FishingHook$OpenWaterType
+    3: dup
+    4: ldc "ABOVE_WATER"
+    6: iconst_0
+    7: invokespecial net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.<init>:(Ljava/lang/String;I)V
+    10: putstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.ABOVE_WATER:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    13: new net/minecraft/world/entity/projectile/FishingHook$OpenWaterType
+    16: dup
+    17: ldc "INSIDE_WATER"
+    19: iconst_1
+    20: invokespecial net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.<init>:(Ljava/lang/String;I)V
+    23: putstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INSIDE_WATER:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    26: new net/minecraft/world/entity/projectile/FishingHook$OpenWaterType
+    29: dup
+    30: ldc "INVALID"
+    32: iconst_2
+    33: invokespecial net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.<init>:(Ljava/lang/String;I)V
+    36: putstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.INVALID:Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    39: invokestatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.$values:()[Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    42: putstatic net/minecraft/world/entity/projectile/FishingHook$OpenWaterType.$VALUES:[Lnet/minecraft/world/entity/projectile/FishingHook$OpenWaterType;
+    45: return
+

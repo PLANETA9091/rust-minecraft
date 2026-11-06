@@ -50482,6 +50482,7 @@ impl App {
         let hooked = bob.hooked;
         let nibble_caught = bob.nibble > 0;
         let on_ground = bob.on_ground;
+        let open_water = bob.open_water;
         // THE OWNER'S OWN SEAT (the pull + the fling the body's own
         // pos reads — the flight camera the headless fallback's own
         // honesty the camera keeps)
@@ -50505,8 +50506,11 @@ impl App {
         } else if nibble_caught {
             caught = true;
             // THE MAIN BAND'S OWN PICK (the weight walk the loot
-            // table's entries serve)
-            let band = crate::mob::bobber_loot_band_pick(&mut self.mob_rng, 0, true);
+            // table's entries serve — the open-water condition the
+            // bobber's own flag the treasure's weight wears [the
+            // tick's recalc the 4-slab chain the openwater_508 census
+            // banks — the hardcoded-true the round retires])
+            let band = crate::mob::bobber_loot_band_pick(&mut self.mob_rng, 0, open_water);
             // THE BAND'S OWN POOL ROLL (the loot_507 census the
             // fish/junk/treasure tables' own bytes bank — the
             // (name, count, potion) triple the functions walk answers,

@@ -41609,3 +41609,421 @@ fn the_fishing_loot_pools_the_retrieve_serves() {
         );
     }
 }
+
+/// THE OPEN WATER'S OWN SLAB WALK (javap `FishingHook$OpenWaterType`
+/// + `getOpenWaterTypeForBlock` code=75 + `getOpenWaterTypeForArea`
+/// code=36 + the lambda fold code=13 + `calculateOpenWater` code=95
+/// the openwater_508 census banks — the block the air/water/solid
+/// trio the verdict serves, the slab the 5x1x5 same-kind fold wears,
+/// the chain the dy −1..+2 the INSIDE×k → ABOVE×(4−k) law keeps,
+/// the tick's recalc the nibble-window gate the sticky fold serves
+/// [the idle the true reset wears, the outOfWaterTime the <10 gate
+/// keeps]).
+#[test]
+fn the_open_water_the_slab_walk_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x as i32, b.y as i32, b.z as i32)
+    };
+    // THE BLOCK'S OWN VERDICT (the ForBlock law the trio answers)
+    assert_eq!(
+        crate::mob::bobber_open_water_block(crate::world::AIR),
+        crate::mob::BobberOpenWaterKind::AboveWater,
+        "the air the ABOVE verdict wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_open_water_block(crate::world::WATER),
+        crate::mob::BobberOpenWaterKind::InsideWater,
+        "the water the INSIDE verdict wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_open_water_block(crate::world::LEAVES),
+        crate::mob::BobberOpenWaterKind::Invalid,
+        "the leaves the INVALID verdict wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_open_water_block(crate::world::STONE),
+        crate::mob::BobberOpenWaterKind::Invalid,
+        "the stone the INVALID verdict wears"
+    );
+    // THE OPEN LAKE'S OWN STAGING (the 5x5 water the TWO layers
+    // hold — the dy −1/+0 slabs the INSIDE verdict keeps, the +1/+2
+    // the air the ABOVE wears)
+    let lake = (b0x + 3, b0y + 1, b0z);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in 0..5i32 {
+            for dz in 0..5i32 {
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 - 1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 1,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 2,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+            }
+        }
+        w.relight();
+    }
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        // THE SLAB'S OWN FOLD (the water slab the INSIDE keeps)
+        assert_eq!(
+            crate::mob::bobber_open_water_slab(w, lake.0 - 2, lake.1, lake.2 - 2),
+            crate::mob::BobberOpenWaterKind::InsideWater,
+            "the water slab the INSIDE fold wears"
+        );
+        assert_eq!(
+            crate::mob::bobber_open_water_slab(w, lake.0 - 2, lake.1 + 1, lake.2 - 2),
+            crate::mob::BobberOpenWaterKind::AboveWater,
+            "the air slab the ABOVE fold wears"
+        );
+        // THE CHAIN'S OWN WALK (the open lake the true serves, the
+        // surface cell the INSIDE→ABOVE transition the valid law
+        // keeps)
+        assert!(
+            crate::mob::bobber_calculate_open_water(w, lake.0, lake.1, lake.2),
+            "the open lake the chain the true wears"
+        );
+        assert!(
+            crate::mob::bobber_calculate_open_water(w, lake.0, lake.1 + 1, lake.2),
+            "the surface cell the INSIDE→ABOVE walk keeps"
+        );
+    }
+    // THE ROOF'S OWN LAW (the one leaves block the +1 slab the mix
+    // wears — the sticky INVALID the chain the false serves)
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(lake.0 + 1, lake.1 + 1, lake.2 + 1, crate::world::LEAVES);
+        w.relight();
+    }
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert!(
+            !crate::mob::bobber_calculate_open_water(w, lake.0, lake.1, lake.2),
+            "the roofed lake the mixed slab the false wears"
+        );
+    }
+    // THE SHALLOW'S OWN LAW (the pond the ground slab the dy −1
+    // layer wears — the first slab the INSIDE law never serves, the
+    // INVALID the immediate false keeps)
+    let pond = (b0x - 6, b0y + 1, b0z + 6);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in 0..5i32 {
+            for dz in 0..5i32 {
+                w.set(
+                    pond.0 - 2 + dx,
+                    pond.1 - 1,
+                    pond.2 - 2 + dz,
+                    crate::world::STONE,
+                );
+                w.set(
+                    pond.0 - 2 + dx,
+                    pond.1,
+                    pond.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    pond.0 - 2 + dx,
+                    pond.1 + 1,
+                    pond.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+                w.set(
+                    pond.0 - 2 + dx,
+                    pond.1 + 2,
+                    pond.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+            }
+        }
+        w.relight();
+    }
+    {
+        let w = app.offline_world.as_ref().unwrap();
+        assert!(
+            !crate::mob::bobber_calculate_open_water(w, pond.0, pond.1, pond.2),
+            "the shallow pond the ground slab the false wears"
+        );
+    }
+    // THE TICK'S OWN RECALC (javap tick pcs 438-490 — the bobber the
+    // lake walks, the idle the true reset wears, the nibble window
+    // the sticky fold serves)
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    app.bobbers.push(crate::mob::FishingBobber::from_cast(
+        6100,
+        crate::mob::BobberCast {
+            x: lake.0 as f64 + 0.5,
+            y: lake.1 as f64 + 0.5,
+            z: lake.2 as f64 + 0.5,
+            vx: 0.0,
+            vy: -0.1,
+            vz: 0.0,
+        },
+        0,
+        0,
+    ));
+    app.update();
+    assert_eq!(
+        app.bobbers[0].state,
+        crate::mob::BobberState::Bobbing,
+        "the lake the BOBBING state banks"
+    );
+    // THE ROOF'S OWN TICK WALK (the recalc the nibble window the
+    // roofed chain the false keeps — the sticky the flag wears)
+    app.bobbers[0].time_until_hooked = 1;
+    app.update();
+    assert!(app.bobbers[0].nibble > 0, "the bite the window opens");
+    assert!(
+        !app.bobbers[0].open_water,
+        "the roofed lake the recalc the false wears"
+    );
+    // THE IDLE'S OWN RESET (the else arm the true wears — the
+    // window's silence the flag the ctor's own default restores)
+    app.bobbers[0].nibble = 0;
+    app.bobbers[0].open_water = false;
+    app.update();
+    assert!(
+        app.bobbers[0].open_water,
+        "the idle walk the true reset wears"
+    );
+    // THE STICKY'S OWN FOLD (the false the open chain never lifts —
+    // the && chain the window's recalc keeps)
+    app.bobbers[0].open_water = false;
+    app.bobbers[0].time_until_hooked = 1;
+    app.update();
+    assert!(
+        !app.bobbers[0].open_water,
+        "the sticky false the recalc never lifts"
+    );
+    // THE OUT-OF-WATER'S OWN GATE (the 10-cap the <10 law keeps —
+    // the ashore clock the recalc the false serves; the nibble the
+    // 30 the staged walk keeps — the countdown the window the speed
+    // never closes)
+    app.bobbers[0].nibble = 30;
+    app.bobbers[0].out_of_water_time = 10;
+    app.update();
+    assert!(
+        !app.bobbers[0].open_water,
+        "the 10-cap the out-of-water gate wears"
+    );
+    // THE OPEN CHAIN'S OWN TRUE (the roof the round lifts — the
+    // fresh bobber the recalc the open lake the true keeps)
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(lake.0 + 1, lake.1 + 1, lake.2 + 1, crate::world::AIR);
+        w.relight();
+    }
+    app.bobbers[0].open_water = true;
+    app.bobbers[0].time_until_hooked = 1;
+    app.update();
+    assert!(
+        app.bobbers[0].open_water,
+        "the open lake the recalc the true wears"
+    );
+}
+
+/// THE OPEN WATER'S OWN RETRIEVE BAND (the retrieve's band pick the
+/// bobber's own flag reads — the hardcoded-true the round retires,
+/// the roofed waters the treasure's weight the ZERO wears, the
+/// junk/fish the union the drops serve, the treasure-only rows the
+/// roofed rounds never speak, the open lake the recalc the true
+/// keeps).
+#[test]
+fn the_open_water_the_retrieve_band_wears() {
+    // THE BAND PICK'S OWN GATE (the open-water arg the weight walk
+    // reads — the false the treasure the weight-0 never serves, the
+    // true the 5/90 band the seeded 512 serves)
+    let mut rng = crate::drops::Lcg::new(484);
+    for _ in 0..512 {
+        assert_ne!(
+            crate::mob::bobber_loot_band_pick(&mut rng, 0, false),
+            crate::mob::BobberLootBand::Treasure,
+            "the roofed waters the treasure never serves"
+        );
+    }
+    let mut rng = crate::drops::Lcg::new(484);
+    assert!(
+        (0..512).any(|_| crate::mob::bobber_loot_band_pick(&mut rng, 0, true)
+            == crate::mob::BobberLootBand::Treasure),
+        "the open waters the treasure band serves"
+    );
+    // THE ROOFED LAKE'S OWN WALK (the staged lake the leaves roof
+    // the +1 slab invalidates — the bite window's recalc the false
+    // flag the bobber carries, the retrieve the junk/fish the drops
+    // serve, the treasure-only rows never)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x as i32, b.y as i32, b.z as i32)
+    };
+    let lake = (b0x + 3, b0y + 1, b0z);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in 0..5i32 {
+            for dz in 0..5i32 {
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 - 1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 1,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 2,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+            }
+        }
+        w.set(lake.0 + 1, lake.1 + 1, lake.2 + 1, crate::world::LEAVES);
+        w.relight();
+    }
+    // THE POOL'S OWN UNION (the junk's twelve + the fish's four the
+    // membership law keeps — the treasure's six the roofed rounds
+    // never wear; the fishing_rod the junk row the same name the
+    // both pools share — the union the honest list wears)
+    let loot_names = [
+        "cod",
+        "salmon",
+        "pufferfish",
+        "tropical_fish",
+        "lily_pad",
+        "leather_boots",
+        "leather",
+        "bone",
+        "potion",
+        "string",
+        "fishing_rod",
+        "bowl",
+        "stick",
+        "tripwire_hook",
+        "rotten_flesh",
+        "ink_sac",
+    ];
+    let loot_ids: Vec<i32> = loot_names
+        .iter()
+        .map(|n| mc_registry::item_id_by_name(n).expect("the pool item the registry carries"))
+        .collect();
+    let forbidden_names = ["name_tag", "saddle", "bow", "book", "nautilus_shell"];
+    let forbidden_ids: Vec<i32> = forbidden_names
+        .iter()
+        .map(|n| mc_registry::item_id_by_name(n).expect("the treasure row the registry carries"))
+        .collect();
+    for round in 0..8i32 {
+        app.bobbers.push(crate::mob::FishingBobber::from_cast(
+            6200 + round,
+            crate::mob::BobberCast {
+                x: lake.0 as f64 + 0.5,
+                y: lake.1 as f64 + 0.5,
+                z: lake.2 as f64 + 0.5,
+                vx: 0.0,
+                vy: -0.1,
+                vz: 0.0,
+            },
+            0,
+            0,
+        ));
+        app.update();
+        assert_eq!(
+            app.bobbers[0].state,
+            crate::mob::BobberState::Bobbing,
+            "the lake the BOBBING state banks"
+        );
+        app.bobbers[0].time_until_hooked = 1;
+        app.update();
+        assert!(
+            !app.bobbers[0].open_water,
+            "the roofed lake the recalc the false wears"
+        );
+        let drops_before = app.drops.len();
+        let orbs_before = app.orbs.len();
+        assert!(app.on_right_press(0, 0), "the reel the press consumes");
+        assert!(app.bobbers.is_empty(), "the retrieve the bobber retires");
+        assert_eq!(
+            app.drops.len(),
+            drops_before + 1,
+            "the catch the drop wears"
+        );
+        assert_eq!(app.orbs.len(), orbs_before + 1, "the orb the walk wears");
+        let drop = &app.drops[drops_before];
+        assert!(
+            loot_ids.contains(&drop.item),
+            "the junk/fish union the membership wears: {}",
+            mc_registry::item_name(drop.item).unwrap_or("?")
+        );
+        assert!(
+            !forbidden_ids.contains(&drop.item),
+            "the roofed waters the treasure never wears: {}",
+            mc_registry::item_name(drop.item).unwrap_or("?")
+        );
+    }
+    // THE OPEN LAKE'S OWN CONTRAST (the roof the rounds lift — the
+    // recalc the open chain the flag the true keeps)
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(lake.0 + 1, lake.1 + 1, lake.2 + 1, crate::world::AIR);
+        w.relight();
+    }
+    for round in 0..2i32 {
+        app.bobbers.clear();
+        app.bobbers.push(crate::mob::FishingBobber::from_cast(
+            6300 + round,
+            crate::mob::BobberCast {
+                x: lake.0 as f64 + 0.5,
+                y: lake.1 as f64 + 0.5,
+                z: lake.2 as f64 + 0.5,
+                vx: 0.0,
+                vy: -0.1,
+                vz: 0.0,
+            },
+            0,
+            0,
+        ));
+        app.update();
+        app.bobbers[0].time_until_hooked = 1;
+        app.update();
+        assert!(
+            app.bobbers[0].open_water,
+            "the open lake the recalc the true wears"
+        );
+    }
+}
