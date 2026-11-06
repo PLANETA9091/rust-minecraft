@@ -42027,3 +42027,263 @@ fn the_open_water_the_retrieve_band_wears() {
         );
     }
 }
+
+/// THE SET_DAMAGE'S OWN ROLL (the setdamage_509 census the
+/// `SetItemDamageFunction.run` bytes bank — the isDamageable gate the
+/// no-draw law keeps, the four rows the [min, max] band the
+/// Mth.nextFloat draw wears, the frac the `1 - clamp` fold the
+/// [0.1, 1.0] junk / [0.75, 1.0] treasure damage the roll's
+/// remaining word re-speaks).
+#[test]
+fn the_set_damage_the_rows_roll_wears() {
+    // THE GATE'S OWN NO-DRAW LAW (pc 4 `ifeq 72` the warn arm the
+    // getFloat jump pasts — the not-carrying rows the stream never
+    // touch: the same seed's next draw the roll-before vs the
+    // roll-after the identical word keeps)
+    for (band, item) in [
+        (crate::mob::BobberLootBand::Fish, "cod"),
+        (crate::mob::BobberLootBand::Junk, "leather"),
+        (crate::mob::BobberLootBand::Junk, "bone"),
+        (crate::mob::BobberLootBand::Junk, "potion"),
+        (crate::mob::BobberLootBand::Junk, "ink_sac"),
+        (crate::mob::BobberLootBand::Junk, "lily_pad"),
+        (crate::mob::BobberLootBand::Junk, "bowl"),
+        (crate::mob::BobberLootBand::Junk, "stick"),
+        (crate::mob::BobberLootBand::Junk, "string"),
+        (crate::mob::BobberLootBand::Junk, "tripwire_hook"),
+        (crate::mob::BobberLootBand::Junk, "rotten_flesh"),
+        (crate::mob::BobberLootBand::Treasure, "name_tag"),
+        (crate::mob::BobberLootBand::Treasure, "saddle"),
+        (crate::mob::BobberLootBand::Treasure, "book"),
+        (crate::mob::BobberLootBand::Treasure, "nautilus_shell"),
+    ] {
+        let mut rng = crate::drops::Lcg::new(509);
+        let frac = crate::mob::bobber_set_damage_roll(&mut rng, band, item);
+        assert_eq!(frac, 0.0, "the plain row the pristine keeps: {}", item);
+        let untouched = rng.next_f32();
+        let mut rng = crate::drops::Lcg::new(509);
+        let _ = crate::mob::bobber_set_damage_roll(&mut rng, band, item);
+        assert_eq!(
+            rng.next_f32(),
+            untouched,
+            "the no-draw law the stream keeps: {}",
+            item
+        );
+    }
+    // THE JUNK'S OWN BAND (the boots the uniform(0, 0.9) the damage
+    // [0.1, 1.0] the mostly-worn junk speaks — the exact first roll
+    // the seed pins, the 512 rolls the span + the high tail serve)
+    let mut rng = crate::drops::Lcg::new(510);
+    let first = crate::mob::bobber_set_damage_roll(
+        &mut rng,
+        crate::mob::BobberLootBand::Junk,
+        "leather_boots",
+    );
+    assert!(
+        (0.1..=1.0).contains(&first),
+        "the boots' damage the [0.1, 1.0] band wears: {}",
+        first
+    );
+    let mut lo = 2.0f32;
+    let mut hi = -1.0f32;
+    let mut tail = 0;
+    for _ in 0..512 {
+        let f = crate::mob::bobber_set_damage_roll(
+            &mut rng,
+            crate::mob::BobberLootBand::Junk,
+            "leather_boots",
+        );
+        assert!(
+            (0.1..=1.0).contains(&f),
+            "the boots' roll the band keeps: {}",
+            f
+        );
+        lo = lo.min(f);
+        hi = hi.max(f);
+        if f > 0.95 {
+            tail += 1;
+        }
+    }
+    assert!(
+        lo < 0.3 && hi > 0.85,
+        "the 512 rolls the span wears: {} {}",
+        lo,
+        hi
+    );
+    assert!(tail > 0, "the high-damage tail the 512 serves: {}", tail);
+    // the rod the same row the same band keeps
+    let mut rng = crate::drops::Lcg::new(511);
+    let f = crate::mob::bobber_set_damage_roll(
+        &mut rng,
+        crate::mob::BobberLootBand::Junk,
+        "fishing_rod",
+    );
+    assert!(
+        (0.1..=1.0).contains(&f),
+        "the junk rod's damage the band keeps: {}",
+        f
+    );
+    // THE TREASURE'S OWN BAND (the bow/rod the uniform(0, 0.25) the
+    // damage [0.75, 1.0] the worn tools carry — the 512 rolls the
+    // span serves)
+    let mut rng = crate::drops::Lcg::new(512);
+    let mut lo = 2.0f32;
+    let mut hi = -1.0f32;
+    for _ in 0..512 {
+        let f = crate::mob::bobber_set_damage_roll(
+            &mut rng,
+            crate::mob::BobberLootBand::Treasure,
+            "bow",
+        );
+        assert!(
+            (0.75..=1.0).contains(&f),
+            "the bow's roll the band keeps: {}",
+            f
+        );
+        lo = lo.min(f);
+        hi = hi.max(f);
+    }
+    assert!(
+        lo < 0.78 && hi > 0.995,
+        "the bow's 512 rolls the span wears: {} {}",
+        lo,
+        hi
+    );
+    let f = crate::mob::bobber_set_damage_roll(
+        &mut rng,
+        crate::mob::BobberLootBand::Treasure,
+        "fishing_rod",
+    );
+    assert!(
+        (0.75..=1.0).contains(&f),
+        "the treasure rod's damage the band keeps: {}",
+        f
+    );
+}
+
+/// THE SET_DAMAGE'S OWN RETRIEVE WALK (the four damageable rows the
+/// drop's word the retrieve arm carries — the plain rows the 0.0 the
+/// pristine keeps, the whole port's spawn law the default wears, the
+/// roofed lake the treasure rows never serves).
+#[test]
+fn the_set_damage_the_retrieve_carries_wears() {
+    // THE SPAWN LAW'S OWN DEFAULT (the block/loot/spill ctors the
+    // pristine 0.0 wear — the vanilla ItemStack's damage=0 the plain
+    // spawns speak)
+    let mut rng = crate::drops::Lcg::new(513);
+    let dirt = mc_registry::item_id_by_name("dirt").expect("the dirt the registry carries");
+    let d = crate::drops::ItemDrop::spawn(1, dirt, 1, 0, 0, 0, &mut rng);
+    assert_eq!(d.damage_frac, 0.0, "the block drop the pristine keeps");
+    let d = crate::drops::ItemDrop::spawn_entity_loot(2, dirt, 1, 0.0, 0.0, 0.0, &mut rng);
+    assert_eq!(d.damage_frac, 0.0, "the loot drop the pristine keeps");
+    let spills = crate::drops::ItemDrop::spawn_container_spill(3, dirt, 64, 0, 0, 0, &mut rng);
+    assert!(
+        spills.iter().all(|s| s.damage_frac == 0.0),
+        "the spill chunks the pristine keeps"
+    );
+    // THE ROOFED LAKE'S OWN WALK (the 484's own staging the leaves
+    // roof wears — the treasure rows the flag never serves, the
+    // fishing_rod the junk row the only band carries)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x as i32, b.y as i32, b.z as i32)
+    };
+    let lake = (b0x + 3, b0y + 1, b0z);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in 0..5i32 {
+            for dz in 0..5i32 {
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 - 1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 1,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 2,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+            }
+        }
+        w.set(lake.0 + 1, lake.1 + 1, lake.2 + 1, crate::world::LEAVES);
+        w.relight();
+    }
+    // THE ROUNDS' OWN LAW (the 200 rounds the ONE drop each the
+    // retrieve serves — the row's own word the frac carries: the
+    // four damageable rows the [0.1, 1.0] band wears, the plain rows
+    // the 0.0 the pristine keeps)
+    let mut worn_lands = 0;
+    for round in 0..200i32 {
+        app.bobbers.clear();
+        app.bobbers.push(crate::mob::FishingBobber::from_cast(
+            6400 + round,
+            crate::mob::BobberCast {
+                x: lake.0 as f64 + 0.5,
+                y: lake.1 as f64 + 0.5,
+                z: lake.2 as f64 + 0.5,
+                vx: 0.0,
+                vy: -0.1,
+                vz: 0.0,
+            },
+            0,
+            0,
+        ));
+        app.update();
+        app.bobbers[0].time_until_hooked = 1;
+        app.update();
+        assert!(app.on_right_press(0, 0), "the reel the press consumes");
+        let drop = app.drops.last().expect("the round's drop wears");
+        let name = mc_registry::item_name(drop.item)
+            .expect("the drop item the registry carries")
+            .strip_prefix("minecraft:")
+            .unwrap_or(mc_registry::item_name(drop.item).unwrap());
+        match name {
+            "leather_boots" | "fishing_rod" => {
+                assert!(
+                    (0.1..=1.0).contains(&drop.damage_frac),
+                    "the worn row the [0.1, 1.0] band wears: {} {}",
+                    name,
+                    drop.damage_frac
+                );
+                worn_lands += 1;
+            }
+            "cod" | "salmon" | "pufferfish" | "tropical_fish" | "lily_pad" | "leather" | "bone"
+            | "potion" | "string" | "bowl" | "stick" | "tripwire_hook" | "rotten_flesh"
+            | "ink_sac" => {
+                assert_eq!(
+                    drop.damage_frac, 0.0,
+                    "the plain row the pristine keeps: {}",
+                    name
+                );
+            }
+            other => panic!("the roofed lake the treasure never serves: {}", other),
+        }
+    }
+    // THE WORN ROW'S OWN LAND (the 200 rounds the junk band's
+    // boots/rod rows the seeded stream serves — the deterministic
+    // walk the count pins)
+    assert!(
+        worn_lands > 0,
+        "the 200 rounds the worn row lands: {}",
+        worn_lands
+    );
+}

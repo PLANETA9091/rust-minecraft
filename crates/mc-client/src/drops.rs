@@ -195,6 +195,16 @@ impl Lcg {
         min + self.next_f64() * (max - min)
     }
 
+    /// `Mth.nextFloat(random, min, max)` (javap: `min + nextFloat() *
+    /// (max - min)`; the degenerate range returns min) — the set_damage
+    /// uniform roll's own draw (the f64 pair the sibling mirrors).
+    pub fn next_f32_between(&mut self, min: f32, max: f32) -> f32 {
+        if min >= max {
+            return min;
+        }
+        min + self.next_f32() * (max - min)
+    }
+
     /// `RandomSource.triangle(mode, delta)` (javap the default method
     /// verbatim: `mode + delta * (nextDouble() - nextDouble())` — the
     /// two-draw triangular spread the arrow's inaccuracy scales).
@@ -235,6 +245,18 @@ pub struct ItemDrop {
     /// [`crate::brewing_sim::POTION_KIND_NONE`] wall keeps, the pickup
     /// ride the word the inventory seat banks).
     pub potion_kind: i32,
+    /// The set_damage's own word (the vanilla ItemStack's `Damage` tag
+    /// the loot function's walk speaks — the setdamage_509 census: the
+    /// roll the REMAINING-durability fraction carries, `frac =
+    /// 1 - clamp(base + roll, 0, 1)` the add=false base keeps,
+    /// `setDamageValue(floor(frac * maxDamage))` the POINTS the
+    /// max-damage table the NEXT's own lane banks). 0.0 = the pristine
+    /// stack the vanilla default wears; the fishing rows the four
+    /// damageable ones roll — the junk boots/rod uniform(0, 0.9), the
+    /// treasure bow/rod uniform(0, 0.25) — the rest the
+    /// isDamageable-ifeq arm keeps [the plain stacks the pristine 0.0
+    /// the whole port's spawn law wears].
+    pub damage_frac: f32,
     pub x: f64,
     pub y: f64,
     pub z: f64,
@@ -272,6 +294,7 @@ impl ItemDrop {
             y: by as f64 + 0.5 + rng.next_f64_between(-POP_SPREAD, POP_SPREAD) - ITEM_HEIGHT / 2.0,
             z: bz as f64 + 0.5 + rng.next_f64_between(-POP_SPREAD, POP_SPREAD),
             potion_kind: crate::brewing_sim::POTION_KIND_NONE,
+            damage_frac: 0.0,
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,
@@ -304,6 +327,7 @@ impl ItemDrop {
             item,
             count,
             potion_kind: crate::brewing_sim::POTION_KIND_NONE,
+            damage_frac: 0.0,
             x,
             y,
             z,
@@ -348,6 +372,7 @@ impl ItemDrop {
             item,
             count,
             potion_kind: crate::brewing_sim::POTION_KIND_NONE,
+            damage_frac: 0.0,
             x,
             y,
             z,
@@ -423,6 +448,7 @@ impl ItemDrop {
                 item,
                 count: taken,
                 potion_kind: crate::brewing_sim::POTION_KIND_NONE,
+                damage_frac: 0.0,
                 x,
                 y,
                 z,

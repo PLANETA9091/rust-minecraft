@@ -13780,6 +13780,46 @@ pub fn bobber_band_item_pick(rng: &mut Lcg, band: BobberLootBand) -> (&'static s
     }
 }
 
+/// THE SET_DAMAGE'S OWN ROLL (the setdamage_509 census the
+/// `SetItemDamageFunction.run`'s own bytes bank — the isDamageableItem
+/// gate the not-damageable stack the warn arm keeps [NO draw — pc 4
+/// `ifeq 72` the getFloat jump pasts, the stream the plain rows
+/// never touch], the `UniformGenerator.getFloat` the
+/// `Mth.nextFloat(random, min, max)` draw wears, the frac the
+/// `1 - clamp(base + roll, 0, 1)` fold speaks [the add flag the
+/// codec's `optionalFieldOf("add", false)` default the 0.0 base
+/// keeps], the `setDamageValue(floor(frac * maxDamage))` the POINTS
+/// the max-damage table the NEXT's own lane banks — the port's word
+/// the DAMAGE fraction stores). The roll the REMAINING-durability
+/// fraction speaks: the junk boots/rod uniform(0, 0.9) the
+/// [0.1, 1.0] damage the mostly-worn junk answers, the treasure
+/// bow/rod uniform(0, 0.25) the [0.75, 1.0] the worn tools carry,
+/// the plain rows the 0.0 the pristine keeps. The
+/// enchant_with_levels draw the treasure pair's function list
+/// carries — the NEXT's own lane the stream re-wears.
+pub fn bobber_set_damage_roll(rng: &mut Lcg, band: BobberLootBand, item: &'static str) -> f32 {
+    // THE FOUR DAMAGEABLE ROWS the set_damage arg carries (the
+    // loot_507 census the junk/treasure tables' own bytes bank) — the
+    // (min, max) pair the JSON rows speak, the rest the function
+    // never carries
+    let (min, max) = match (band, item) {
+        (BobberLootBand::Junk, "leather_boots") | (BobberLootBand::Junk, "fishing_rod") => {
+            (0.0f32, 0.9f32)
+        }
+        (BobberLootBand::Treasure, "bow") | (BobberLootBand::Treasure, "fishing_rod") => {
+            (0.0f32, 0.25f32)
+        }
+        // the not-carrying rows the isDamageable-ifeq arm keeps —
+        // the stream the warn arm never touches
+        _ => return 0.0,
+    };
+    // THE DRAW'S OWN FOLD (Mth.nextFloat + the run's pcs 35-55 the
+    // frac chain banks — the clamp the [0,1] band the roll's own
+    // range never leaves)
+    let roll = rng.next_f32_between(min, max);
+    1.0 - roll.clamp(0.0, 1.0)
+}
+
 /// THE CLOCKS' OWN ROLLS (javap `catchingFish` the census banks —
 /// the wait the Mth.nextInt(100, 600) roll the tail banks [the
 /// lureSpeed the subtraction serves], the hooked approach the

@@ -50544,6 +50544,13 @@ impl App {
             drop.vy = dy * 0.1 + dist * 0.08;
             drop.vz = dz * 0.1;
             drop.potion_kind = potion_kind;
+            // THE SET_DAMAGE'S OWN WORD (the four damageable rows the
+            // roll the draw carries — the loot-function chain the
+            // entry pick serves, the stream the orb's nextInt(6) draw
+            // the pre-lap keeps, the plain rows the no-draw arm the
+            // pristine keeps)
+            drop.damage_frac =
+                crate::mob::bobber_set_damage_roll(&mut self.mob_rng, band, item_name);
             self.drops.push(drop);
             // THE XP ORB'S OWN SEAT (javap pcs 354-405 — the orb the
             // PLAYER's (px, py+0.5, pz+0.5) seat the per-item loop

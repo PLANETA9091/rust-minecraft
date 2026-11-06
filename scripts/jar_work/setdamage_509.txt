@@ -1,0 +1,161 @@
+== net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.class
+  METHOD <init> (Ljava/util/List;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;Z)V  (code=16)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/level/storage/loot/functions/LootItemConditionalFunction.<init>:(Ljava/util/List;)V
+    5: aload_0
+    6: aload_2
+    7: putfield net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.damage:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    10: aload_0
+    11: iload_3
+    12: putfield net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.add:Z
+    15: return
+  METHOD run (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/storage/loot/LootContext;)Lnet/minecraft/world/item/ItemStack;  (code=85)
+    0: aload_1
+    1: invokevirtual net/minecraft/world/item/ItemStack.isDamageableItem:()Z
+    4: ifeq 72
+    7: aload_1
+    8: invokevirtual net/minecraft/world/item/ItemStack.getMaxDamage:()I
+    11: istore_3
+    12: aload_0
+    13: getfield net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.add:Z
+    16: ifeq 32
+    19: op_0c
+    20: aload_1
+    21: invokevirtual net/minecraft/world/item/ItemStack.getDamageValue:()I
+    24: i2f
+    25: iload_3
+    26: i2f
+    27: fdiv
+    28: fsub
+    29: goto 33
+    32: op_0b
+    33: fstore 4
+    35: op_0c
+    36: aload_0
+    37: getfield net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.damage:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    40: aload_2
+    41: invokeinterface net/minecraft/world/level/storage/loot/providers/number/NumberProvider.getFloat:(Lnet/minecraft/world/level/storage/loot/LootContext;)F
+    46: op_17 4
+    48: fadd
+    49: op_0b
+    50: op_0c
+    51: invokestatic net/minecraft/util/Mth.clamp:(FFF)F
+    54: fsub
+    55: fstore 5
+    57: aload_1
+    58: op_17 5
+    60: iload_3
+    61: i2f
+    62: fmul
+    63: invokestatic net/minecraft/util/Mth.floor:(F)I
+    66: invokevirtual net/minecraft/world/item/ItemStack.setDamageValue:(I)V
+    69: goto 83
+    72: getstatic net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.LOGGER:Lorg/slf4j/Logger;
+    75: ldc "Couldn't set damage of loot item {}"
+    77: aload_1
+    78: invokeinterface org/slf4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Object;)V
+    83: aload_1
+    84: areturn
+  METHOD lambda$setDamage$1 (Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;ZLjava/util/List;)Lnet/minecraft/world/level/storage/loot/functions/LootItemFunction;  (code=11)
+    0: new net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction
+    3: dup
+    4: aload_2
+    5: aload_0
+    6: iload_1
+    7: invokespecial net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.<init>:(Ljava/util/List;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;Z)V
+    10: areturn
+  METHOD lambda$setDamage$0 (Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;Ljava/util/List;)Lnet/minecraft/world/level/storage/loot/functions/LootItemFunction;  (code=11)
+    0: new net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction
+    3: dup
+    4: aload_1
+    5: aload_0
+    6: iconst_0
+    7: invokespecial net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.<init>:(Ljava/util/List;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;Z)V
+    10: areturn
+  METHOD lambda$static$0 (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;  (code=61)
+    0: aload_0
+    1: invokestatic net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.commonFields:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/Products$P1;
+    4: aload_0
+    5: getstatic net/minecraft/world/level/storage/loot/providers/number/NumberProviders.CODEC:Lcom/mojang/serialization/Codec;
+    8: ldc "damage"
+    10: invokeinterface com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    15: invokedynamic dynamic#2:apply
+    20: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    23: getstatic com/mojang/serialization/Codec.BOOL:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+    26: ldc "add"
+    28: iconst_0
+    29: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    32: invokeinterface com/mojang/serialization/codecs/PrimitiveCodec.optionalFieldOf:(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;
+    37: invokedynamic dynamic#3:apply
+    42: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    45: invokevirtual com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P2;
+    48: invokevirtual com/mojang/datafixers/Products$P1.and:(Lcom/mojang/datafixers/Products$P2;)Lcom/mojang/datafixers/Products$P3;
+    51: aload_0
+    52: invokedynamic dynamic#4:apply
+    57: invokevirtual com/mojang/datafixers/Products$P3.apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function3;)Lcom/mojang/datafixers/kinds/App;
+    60: areturn
+  METHOD lambda$static$2 (Lnet/minecraft/world/level/storage/loot/functions/SetItemDamageFunction;)Ljava/lang/Boolean;  (code=8)
+    0: aload_0
+    1: getfield net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.add:Z
+    4: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    7: areturn
+  METHOD lambda$static$1 (Lnet/minecraft/world/level/storage/loot/functions/SetItemDamageFunction;)Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/level/storage/loot/functions/SetItemDamageFunction.damage:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    4: areturn
+
+
+
+== net/minecraft/world/level/storage/loot/providers/number/UniformGenerator.class
+  METHOD <init> (Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;)V  (code=15)
+    0: aload_0
+    1: invokespecial java/lang/Record.<init>:()V
+    4: aload_0
+    5: aload_1
+    6: putfield net/minecraft/world/level/storage/loot/providers/number/UniformGenerator.min:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    9: aload_0
+    10: aload_2
+    11: putfield net/minecraft/world/level/storage/loot/providers/number/UniformGenerator.max:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    14: return
+  METHOD lambda$static$0 (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;  (code=50)
+    0: aload_0
+    1: getstatic net/minecraft/world/level/storage/loot/providers/number/NumberProviders.CODEC:Lcom/mojang/serialization/Codec;
+    4: ldc "min"
+    6: invokeinterface com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    11: invokedynamic dynamic#1:apply
+    16: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    19: getstatic net/minecraft/world/level/storage/loot/providers/number/NumberProviders.CODEC:Lcom/mojang/serialization/Codec;
+    22: ldc "max"
+    24: invokeinterface com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    29: invokedynamic dynamic#2:apply
+    34: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    37: invokevirtual com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P2;
+    40: aload_0
+    41: invokedynamic dynamic#3:apply
+    46: invokevirtual com/mojang/datafixers/Products$P2.apply:(Lcom/mojang/datafixers/kinds/Applicative;Ljava/util/function/BiFunction;)Lcom/mojang/datafixers/kinds/App;
+    49: areturn
+
+
+
+== net/minecraft/world/level/storage/loot/providers/number/ConstantValue.class
+  METHOD <init> (F)V  (code=10)
+    0: aload_0
+    1: invokespecial java/lang/Record.<init>:()V
+    4: aload_0
+    5: op_23
+    6: putfield net/minecraft/world/level/storage/loot/providers/number/ConstantValue.value:F
+    9: return
+  METHOD lambda$static$0 (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;  (code=32)
+    0: aload_0
+    1: getstatic com/mojang/serialization/Codec.FLOAT:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+    4: ldc "value"
+    6: invokeinterface com/mojang/serialization/codecs/PrimitiveCodec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    11: invokedynamic dynamic#1:apply
+    16: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    19: invokevirtual com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P1;
+    22: aload_0
+    23: invokedynamic dynamic#2:apply
+    28: invokevirtual com/mojang/datafixers/Products$P1.apply:(Lcom/mojang/datafixers/kinds/Applicative;Ljava/util/function/Function;)Lcom/mojang/datafixers/kinds/App;
+    31: areturn
+
