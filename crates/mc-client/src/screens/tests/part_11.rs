@@ -40539,3 +40539,216 @@ fn the_lead_knot_the_punch_break_wears() {
         "the miss the untied voice the lane never speaks"
     );
 }
+
+/// THE KNOT BANK'S OWN ROUNDTRIP (the autopush-481 round — the
+/// knotnbt_504 census the jar's own bytes speak: the
+/// BlockAttachedEntity.addAdditionalSaveData the "block_pos" row
+/// the BlockPos.CODEC store wears, the LeashFenceKnotEntity's own
+/// overrides the EMPTY bodies keep [both code=1 — the knot the
+/// super's walk alone wears, NOTHING the row's own cell beyond
+/// banks], the readAdditionalSaveData the Optional read the null
+/// arm the corrupt row's skip serves): the bank the x/y/z triple
+/// the row alone carries [the id the session's counter owns, the
+/// poll clock the same session state keeps — never a banked tick
+/// count], the BTree cell order the deterministic bytes keep, the
+/// parse the tolerant walk the missing coordinate the entry skip
+/// wears, the missing list the honest empties keep.
+#[test]
+fn the_lead_knot_the_nbt_bank_wears() {
+    let kv = |k: &str, v: mc_protocol::nbt::Nbt| (k.to_string(), v);
+    let knots = vec![
+        crate::screens::LeashKnotEnt {
+            id: 7,
+            cell: (3, 64, -7),
+            check_interval: 55,
+        },
+        crate::screens::LeashKnotEnt {
+            id: 9,
+            cell: (-2, 70, 11),
+            check_interval: 0,
+        },
+    ];
+    let bank = crate::screens::leash_knots_bank_to_nbt(&knots);
+    // THE ROW'S OWN SHAPE (the block_pos ALONE the compound keeps —
+    // the knot's own overrides the empty bodies wear, the three the
+    // row's own fields the count speaks)
+    let mc_protocol::nbt::Nbt::List(entries) = &bank else {
+        panic!("the bank the list wears");
+    };
+    assert_eq!(entries.len(), 2, "the two knots the bank's rows keep");
+    let mc_protocol::nbt::Nbt::Compound(fields) = &entries[0] else {
+        panic!("the row the compound wears");
+    };
+    assert_eq!(
+        fields.len(),
+        3,
+        "the block_pos row the x/y/z trio ALONE carries"
+    );
+    let root = mc_protocol::nbt::Nbt::Compound(vec![kv("leash_knots", bank)]);
+    let parsed = crate::screens::leash_knots_from_nbt(&root);
+    assert_eq!(parsed.len(), 2, "the two knots the parse keeps");
+    // THE BTREE ORDER (the cell sort the deterministic bytes keep —
+    // the -2,70,11 row the smaller x the first slot wears)
+    assert_eq!(parsed[0].cell, (-2, 70, 11));
+    assert_eq!(parsed[1].cell, (3, 64, -7));
+    // THE SESSION'S OWN COUNTERS (the id + the poll clock the boot
+    // walk re-mints — the file the cell identity banks)
+    assert!(
+        parsed.iter().all(|k| k.id == 0),
+        "the id the session's counter owns"
+    );
+    assert!(
+        parsed.iter().all(|k| k.check_interval == 0),
+        "the poll clock the fresh walk parks"
+    );
+    // THE PARSE'S OWN TOLERANCE (the missing coordinate the entry
+    // skip keeps — the CODEC read's own Optional-empty arm the same
+    // verdict serves, the non-compound row the skip wears)
+    let root = mc_protocol::nbt::Nbt::Compound(vec![kv(
+        "leash_knots",
+        mc_protocol::nbt::Nbt::List(vec![
+            mc_protocol::nbt::Nbt::Compound(vec![kv("x", mc_protocol::nbt::Nbt::Int(4))]),
+            mc_protocol::nbt::Nbt::Int(1),
+            mc_protocol::nbt::Nbt::Compound({
+                let mut f = vec![
+                    kv("x", mc_protocol::nbt::Nbt::Int(4)),
+                    kv("y", mc_protocol::nbt::Nbt::Int(65)),
+                    kv("z", mc_protocol::nbt::Nbt::Int(-3)),
+                ];
+                f.push(kv("garbage", mc_protocol::nbt::Nbt::Int(9)));
+                f
+            }),
+        ]),
+    )]);
+    let parsed = crate::screens::leash_knots_from_nbt(&root);
+    assert_eq!(
+        parsed.len(),
+        1,
+        "the coord-less + the non-compound rows the skips keep"
+    );
+    assert_eq!(parsed[0].cell, (4, 65, -3), "the row the cell wears");
+    assert!(
+        parsed[0].check_interval == 0 && parsed[0].id == 0,
+        "the restored row the fresh session state keeps"
+    );
+    // THE MISSING LIST the honest empties keep + the wrong tag too
+    assert!(crate::screens::leash_knots_from_nbt(&mc_protocol::nbt::Nbt::Int(1)).is_empty());
+    assert!(
+        crate::screens::leash_knots_from_nbt(&mc_protocol::nbt::Nbt::Compound(vec![])).is_empty()
+    );
+    // THE EMPTY VEC the honest empty list keeps
+    let bank = crate::screens::leash_knots_bank_to_nbt(&[]);
+    assert!(
+        matches!(bank, mc_protocol::nbt::Nbt::List(ref e) if e.is_empty()),
+        "the knot-less world the empty list banks"
+    );
+}
+
+/// THE KNOT'S OWN RESTART OUTLIVES (the autopush-481 round — the
+/// containers file the same lane the frame bank's boot walk wears:
+/// the bind press the knot the save ride banks, the FRESH APP the
+/// load-once parse the fence knot restores, the id the
+/// next_drop_id counter re-mints [the same generic-entity counter
+/// the spawn banks], the poll clock the fresh walk parks, the
+/// in-memory cell the file's row never clobbers, the wire session
+/// the Vec never fills).
+#[test]
+fn the_lead_knot_the_restart_outlives_wears() {
+    let _lane = render_lane();
+    let dir = std::env::temp_dir().join(format!("mc2rs-knotnbt-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("the temp dir");
+    let file = dir.join("knotnbt-round.nbt");
+    let _ = std::fs::remove_file(&file);
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE FIRST-PERSON'S OWN POSE (the punch staging the same walk
+    // keeps — the knot the cell's own center the ray crosses)
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 0.0;
+        body.pitch = 0.0;
+        body.x += 0.5;
+    }
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+    let fence_cell = (bx, by + 1, bz + 2);
+    let fence_id = (0..7000u32)
+        .find(|&s| {
+            mc_registry::generated::block_ids::block_name_of(s) == Some("minecraft:oak_fence")
+        })
+        .expect("the oak fence the registry carries") as u16;
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in (bx - 30)..=(bx + 30) {
+            for z in (bz - 7)..=(bz + 3) {
+                for y in by..=(by + 5) {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+                w.set(x, by - 1, z, crate::world::STONE);
+            }
+        }
+        w.set(fence_cell.0, fence_cell.1, fence_cell.2, fence_id);
+        w.relight();
+    }
+    let mut llama =
+        crate::mob::Zombie::new(902, (bx as f64) + 2.0, by as f64, (bz as f64) + 2.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    app.mobs.push(llama);
+    let lead = mc_registry::item_id_by_name("lead").expect("the lead the registry carries");
+    app.inventory.items[app.selected_hotbar] = (lead, 1);
+    app.mobs[0].leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+    app.container_stores_file = Some(file.clone());
+    // THE BIND'S OWN PRESS (the knot the fresh id the spawn banks —
+    // the SAVE RIDE the spawn the containers file banks)
+    assert!(app.on_right_press(0, 0), "the bind the press consumes");
+    assert_eq!(app.knots.len(), 1, "the bind the fresh knot spawns");
+    let knot_cell = app.knots[0].cell;
+    assert_eq!(knot_cell, fence_cell, "the knot the fence cell keeps");
+    assert!(file.exists(), "the spawn the save ride banks");
+    // THE RESTART: the fresh app the once-flag's parse the knot
+    // restores — the id the next_drop_id counter re-mints, the poll
+    // clock the fresh walk parks
+    let mut fresh = App::new(3);
+    fresh.enter_world();
+    fresh.container_stores_file = Some(file.clone());
+    {
+        let w = fresh.offline_world.as_mut().unwrap();
+        w.set(fence_cell.0, fence_cell.1, fence_cell.2, fence_id);
+    }
+    fresh.container_stores_load_once();
+    assert_eq!(fresh.knots.len(), 1, "the restart the fence knot restores");
+    assert_eq!(
+        fresh.knots[0].cell, knot_cell,
+        "the restored row the cell keeps"
+    );
+    assert_eq!(
+        fresh.knots[0].id, 1,
+        "the id the next_drop_id counter re-mints"
+    );
+    assert_eq!(
+        fresh.knots[0].check_interval, 0,
+        "the poll clock the fresh walk parks"
+    );
+    assert_eq!(fresh.next_drop_id, 2, "the counter the re-mint walk bumps");
+    // THE IN-MEMORY'S OWN SEAT (the boot walk the same file the
+    // twice ride wears — the in-memory cell the file's row never
+    // clobbers, the counter the second pass never bumps)
+    fresh.knots[0].id = 999;
+    let counter_before = fresh.next_drop_id;
+    fresh.container_stores_load_once();
+    assert_eq!(
+        fresh.knots.len(),
+        1,
+        "the duplicate cell the file's row never doubles"
+    );
+    assert_eq!(
+        fresh.knots[0].id, 999,
+        "the in-memory row the file never clobbers"
+    );
+    assert_eq!(
+        fresh.next_drop_id, counter_before,
+        "the counter the skip walk never bumps"
+    );
+}

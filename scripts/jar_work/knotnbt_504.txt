@@ -1,0 +1,44 @@
+== net/minecraft/world/entity/decoration/BlockAttachedEntity.class
+  METHOD addAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueOutput;)V  (code=16)
+    0: aload_1
+    1: ldc "block_pos"
+    3: getstatic net/minecraft/core/BlockPos.CODEC:Lcom/mojang/serialization/Codec;
+    6: aload_0
+    7: invokevirtual net/minecraft/world/entity/decoration/BlockAttachedEntity.getPos:()Lnet/minecraft/core/BlockPos;
+    10: invokeinterface net/minecraft/world/level/storage/ValueOutput.store:(Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V
+    15: return
+  METHOD readAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueInput;)V  (code=55)
+    0: aload_1
+    1: ldc "block_pos"
+    3: getstatic net/minecraft/core/BlockPos.CODEC:Lcom/mojang/serialization/Codec;
+    6: invokeinterface net/minecraft/world/level/storage/ValueInput.read:(Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+    11: aconst_null
+    12: invokevirtual java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+    15: checkcast net/minecraft/core/BlockPos
+    18: astore_2
+    19: aload_2
+    20: ifnull 37
+    23: aload_2
+    24: aload_0
+    25: invokevirtual net/minecraft/world/entity/decoration/BlockAttachedEntity.blockPosition:()Lnet/minecraft/core/BlockPos;
+    28: ldc2_w 16.0
+    31: invokevirtual net/minecraft/core/BlockPos.closerThan:(Lnet/minecraft/core/Vec3i;D)Z
+    34: ifne 49
+    37: getstatic net/minecraft/world/entity/decoration/BlockAttachedEntity.LOGGER:Lorg/slf4j/Logger;
+    40: ldc "Block-attached entity at invalid position: {}"
+    42: aload_2
+    43: invokeinterface org/slf4j/Logger.error:(Ljava/lang/String;Ljava/lang/Object;)V
+    48: return
+    49: aload_0
+    50: aload_2
+    51: putfield net/minecraft/world/entity/decoration/BlockAttachedEntity.pos:Lnet/minecraft/core/BlockPos;
+    54: return
+
+
+
+== net/minecraft/world/entity/decoration/LeashFenceKnotEntity.class
+  METHOD addAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueOutput;)V  (code=1)
+    0: return
+  METHOD readAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueInput;)V  (code=1)
+    0: return
+

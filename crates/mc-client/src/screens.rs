@@ -13335,6 +13335,73 @@ pub fn item_frames_from_nbt(value: &mc_protocol::nbt::Nbt) -> Vec<ItemFrameEnt> 
     frames
 }
 
+/// THE KNOT BANK'S OWN WALK (the autopush-481 round — the
+/// "leash_knots" list the containers file's next bank wears: the
+/// fence knots the RESTART OUTLIVES the same file the frame list
+/// shares). The knotnbt_504 census the jar's own bytes speak: the
+/// `BlockAttachedEntity.addAdditionalSaveData` the "block_pos" row
+/// the BlockPos.CODEC store wears [code=16], the
+/// `LeashFenceKnotEntity`'s own overrides the EMPTY bodies keep
+/// [both code=1 — the knot the super's walk alone wears, nothing
+/// the row's own cell beyond banks]. The BTree cell order the
+/// deterministic bytes keep; each entry the x/y/z triple the row
+/// alone carries — the id the session's own counter owns [the
+/// next_drop_id the same generic-entity counter the spawn banks],
+/// the poll clock the same session state keeps — never a banked
+/// tick count.
+pub fn leash_knots_bank_to_nbt(knots: &[LeashKnotEnt]) -> mc_protocol::nbt::Nbt {
+    let mut ordered = knots.iter().collect::<Vec<_>>();
+    ordered.sort_by_key(|k| k.cell);
+    let mut entries = Vec::new();
+    for k in ordered {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(k.cell.0)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(k.cell.1)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(k.cell.2)),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE KNOT BANK'S OWN PARSE (the tolerant walk the store parse
+/// wears: the missing coordinate the entry skip keeps — the CODEC
+/// read's own Optional-empty arm the same verdict serves, the
+/// missing list the honest empties keep). The
+/// readAdditionalSaveData's own 16.0-closerThan gate the TWO-pos
+/// pair the entity load's current-position term speaks — the
+/// port's row-form the cell the coords alone answer [the vanilla
+/// walk the loaded "Pos" triple the sanity check wears, the
+/// port's bank the row's own cell the whole identity keeps, the
+/// second pos the offline fiction never banks]. The id the parse
+/// the zero re-mints — the boot walk's own counter the session
+/// owns.
+pub fn leash_knots_from_nbt(value: &mc_protocol::nbt::Nbt) -> Vec<LeashKnotEnt> {
+    let mut knots = Vec::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("leash_knots") else {
+        return knots;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
+            continue;
+        };
+        knots.push(LeashKnotEnt {
+            id: 0,
+            cell: (x, y, z),
+            check_interval: 0,
+        });
+    }
+    knots
+}
+
 impl App {
     /// Deterministic boot: splash selection from the seed (vanilla picks a
     /// random line; here the RNG is seeded for reproducible rendering).
@@ -54826,6 +54893,25 @@ impl App {
                         self.frame_analog_broadcast(cell);
                     }
                 }
+                // THE KNOT BANK'S OWN PARSE (the autopush-481 round —
+                // the leash_knots list the fence knots' boot bank
+                // answers: the offline world alone the restore serves
+                // [the wire session the Vec never fills — the server's
+                // own entity the echo lane owns], the in-memory cell
+                // the file's row never clobbers, the ids the
+                // next_drop_id counter re-mints [the same
+                // generic-entity counter the spawn banks], the poll
+                // clock the fresh walk parks)
+                if self.offline_world.is_some() {
+                    for k in leash_knots_from_nbt(&root) {
+                        if self.knots.iter().any(|e| e.cell == k.cell) {
+                            continue;
+                        }
+                        let id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.knots.push(LeashKnotEnt { id, ..k });
+                    }
+                }
             }
         }
     }
@@ -54927,6 +55013,16 @@ impl App {
             (
                 "item_frames".to_string(),
                 item_frames_bank_to_nbt(&self.item_frames),
+            ),
+            // THE KNOT BANK'S OWN LIST (the autopush-481 round — the
+            // fence knots the same file the next list wears, the
+            // BTree cell order the deterministic bytes keep, the
+            // block_pos row the knotnbt_504 census's own shape the
+            // disk banks: the RESTART the tied fence's own knot
+            // OUTLIVES)
+            (
+                "leash_knots".to_string(),
+                leash_knots_bank_to_nbt(&self.knots),
             ),
             // THE BED SPAWN'S OWN ROW (the autopush-312 round — the
             // banked respawn point the same file the list wears: the
@@ -74921,6 +75017,12 @@ impl App {
             self.sounds
                 .play_voice(self.frame, crate::mob::LEAD_TIED_SOUND, 1.0, 1.0);
             self.swing.start();
+            // THE KNOT'S OWN SAVE RIDE (the autopush-481 round — the
+            // spawn the containers file banks, the RESTART the tied
+            // fence's own knot OUTLIVES; the fresh-discard arm the
+            // Vec the same bytes keep — the no-write the honest
+            // silence wears)
+            self.container_stores_file_save();
             return Some(true);
         }
         // THE FRESH-KNOT'S OWN DISCARD (pc 139-149 — the
@@ -75121,6 +75223,10 @@ impl App {
                 ));
             }
         }
+        // THE KNOT'S OWN SAVE RIDE (the autopush-481 round — the
+        // discard the containers file banks, the RESTART the empty
+        // truth keeps)
+        self.container_stores_file_save();
     }
 
     /// THE KNOT'S OWN PUNCH BREAK (javap `BlockAttachedEntity
@@ -75178,6 +75284,10 @@ impl App {
         // the LEAD_UNTIED the (1.0, 1.0) pair speaks)
         self.sounds
             .play_voice(self.frame, crate::mob::LEAD_UNTIED_SOUND, 1.0, 1.0);
+        // THE KNOT'S OWN SAVE RIDE (the autopush-481 round — the
+        // kill the containers file banks, the RESTART the empty
+        // truth keeps)
+        self.container_stores_file_save();
     }
 
     /// THE FRAME'S OWN ANALOG BROADCAST (javap Level
