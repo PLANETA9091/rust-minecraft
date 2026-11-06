@@ -1,0 +1,349 @@
+== net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.class
+== net/minecraft/world/level/saveddata/WanderingTraderData.class
+  FIELD tickDelay:I flags=0x2
+  METHOD <init> (Lnet/minecraft/world/level/storage/SavedDataStorage;)V  (code=29)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: aload_0
+    5: invokestatic net/minecraft/util/RandomSource.create:()Lnet/minecraft/util/RandomSource;
+    8: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.random:Lnet/minecraft/util/RandomSource;
+    11: aload_0
+    12: aload_1
+    13: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.savedDataStorage:Lnet/minecraft/world/level/storage/SavedDataStorage;
+    16: aload_0
+    17: sipush 1200
+    20: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.tickDelay:I
+    23: aload_0
+    24: aconst_null
+    25: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.traderData:Lnet/minecraft/world/level/saveddata/WanderingTraderData;
+    28: return
+  METHOD tick (Lnet/minecraft/server/level/ServerLevel;Z)V  (code=134)
+    0: aload_1
+    1: invokevirtual net/minecraft/server/level/ServerLevel.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+    4: getstatic net/minecraft/world/level/gamerules/GameRules.SPAWN_WANDERING_TRADERS:Lnet/minecraft/world/level/gamerules/GameRule;
+    7: invokevirtual net/minecraft/world/level/gamerules/GameRules.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+    10: checkcast java/lang/Boolean
+    13: invokevirtual java/lang/Boolean.booleanValue:()Z
+    16: ifne 20
+    19: return
+    20: aload_0
+    21: dup
+    22: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.tickDelay:I
+    25: iconst_1
+    26: isub
+    27: dup_x1
+    28: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.tickDelay:I
+    31: ifle 35
+    34: return
+    35: aload_0
+    36: sipush 1200
+    39: putfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.tickDelay:I
+    42: aload_0
+    43: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.getTraderData:()Lnet/minecraft/world/level/saveddata/WanderingTraderData;
+    46: astore_3
+    47: aload_3
+    48: invokevirtual net/minecraft/world/level/saveddata/WanderingTraderData.spawnDelay:()I
+    51: sipush 1200
+    54: isub
+    55: istore 4
+    57: aload_3
+    58: iload 4
+    60: invokevirtual net/minecraft/world/level/saveddata/WanderingTraderData.setSpawnDelay:(I)V
+    63: iload 4
+    65: ifle 69
+    68: return
+    69: aload_3
+    70: sipush 24000
+    73: invokevirtual net/minecraft/world/level/saveddata/WanderingTraderData.setSpawnDelay:(I)V
+    76: aload_3
+    77: invokevirtual net/minecraft/world/level/saveddata/WanderingTraderData.spawnChance:()I
+    80: istore 5
+    82: iload 5
+    84: bipush 25
+    86: iadd
+    87: bipush 25
+    89: bipush 75
+    91: invokestatic net/minecraft/util/Mth.clamp:(III)I
+    94: istore 6
+    96: aload_3
+    97: iload 6
+    99: invokevirtual net/minecraft/world/level/saveddata/WanderingTraderData.setSpawnChance:(I)V
+    102: aload_0
+    103: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.random:Lnet/minecraft/util/RandomSource;
+    106: bipush 100
+    108: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    113: iload 5
+    115: if_icmple 119
+    118: return
+    119: aload_0
+    120: aload_1
+    121: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.spawn:(Lnet/minecraft/server/level/ServerLevel;)Z
+    124: ifeq 133
+    127: aload_3
+    128: bipush 25
+    130: invokevirtual net/minecraft/world/level/saveddata/WanderingTraderData.setSpawnChance:(I)V
+    133: return
+  METHOD spawn (Lnet/minecraft/server/level/ServerLevel;)Z  (code=193)
+    0: aload_1
+    1: invokevirtual net/minecraft/server/level/ServerLevel.getRandomPlayer:()Lnet/minecraft/server/level/ServerPlayer;
+    4: astore_2
+    5: aload_2
+    6: ifnonnull 11
+    9: iconst_1
+    10: ireturn
+    11: aload_0
+    12: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.random:Lnet/minecraft/util/RandomSource;
+    15: bipush 10
+    17: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    22: ifeq 27
+    25: iconst_0
+    26: ireturn
+    27: aload_2
+    28: invokevirtual net/minecraft/world/entity/player/Player.blockPosition:()Lnet/minecraft/core/BlockPos;
+    31: astore_3
+    32: bipush 48
+    34: istore 4
+    36: aload_1
+    37: invokevirtual net/minecraft/server/level/ServerLevel.getPoiManager:()Lnet/minecraft/world/entity/ai/village/poi/PoiManager;
+    40: astore 5
+    42: aload 5
+    44: invokedynamic dynamic#0:test
+    49: invokedynamic dynamic#1:test
+    54: aload_3
+    55: bipush 48
+    57: getstatic net/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy.ANY:Lnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;
+    60: invokevirtual net/minecraft/world/entity/ai/village/poi/PoiManager.find:(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/Optional;
+    63: astore 6
+    65: aload 6
+    67: aload_3
+    68: invokevirtual java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+    71: checkcast net/minecraft/core/BlockPos
+    74: astore 7
+    76: aload_0
+    77: aload_1
+    78: aload 7
+    80: bipush 48
+    82: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.findSpawnPositionNear:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;I)Lnet/minecraft/core/BlockPos;
+    85: astore 8
+    87: aload 8
+    89: ifnull 191
+    92: aload_0
+    93: aload_1
+    94: aload 8
+    96: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.hasEnoughSpace:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+    99: ifeq 191
+    102: aload_1
+    103: aload 8
+    105: invokevirtual net/minecraft/server/level/ServerLevel.getBiome:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/Holder;
+    108: getstatic net/minecraft/tags/BiomeTags.WITHOUT_WANDERING_TRADER_SPAWNS:Lnet/minecraft/tags/TagKey;
+    111: invokeinterface net/minecraft/core/Holder.is:(Lnet/minecraft/tags/TagKey;)Z
+    116: ifeq 121
+    119: iconst_0
+    120: ireturn
+    121: getstatic net/minecraft/world/entity/EntityTypes.WANDERING_TRADER:Lnet/minecraft/world/entity/EntityType;
+    124: aload_1
+    125: aload 8
+    127: getstatic net/minecraft/world/entity/EntitySpawnReason.EVENT:Lnet/minecraft/world/entity/EntitySpawnReason;
+    130: invokevirtual net/minecraft/world/entity/EntityType.spawn:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntitySpawnReason;)Lnet/minecraft/world/entity/Entity;
+    133: checkcast net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader
+    136: astore 9
+    138: aload 9
+    140: ifnull 191
+    143: iconst_0
+    144: istore 10
+    146: iload 10
+    148: iconst_2
+    149: if_icmpge 166
+    152: aload_0
+    153: aload_1
+    154: aload 9
+    156: iconst_4
+    157: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.tryToSpawnLlamaFor:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;I)V
+    160: iinc 10 1
+    163: goto 146
+    166: aload 9
+    168: ldc 0
+    170: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.setDespawnDelay:(I)V
+    173: aload 9
+    175: aload 7
+    177: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.setWanderTarget:(Lnet/minecraft/core/BlockPos;)V
+    180: aload 9
+    182: aload 7
+    184: bipush 16
+    186: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.setHomeTo:(Lnet/minecraft/core/BlockPos;I)V
+    189: iconst_1
+    190: ireturn
+    191: iconst_0
+    192: ireturn
+  METHOD tryToSpawnLlamaFor (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/npc/wanderingtrader/WanderingTrader;I)V  (code=49)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.blockPosition:()Lnet/minecraft/core/BlockPos;
+    6: iload_3
+    7: invokevirtual net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.findSpawnPositionNear:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;I)Lnet/minecraft/core/BlockPos;
+    10: astore 4
+    12: aload 4
+    14: ifnonnull 18
+    17: return
+    18: getstatic net/minecraft/world/entity/EntityTypes.TRADER_LLAMA:Lnet/minecraft/world/entity/EntityType;
+    21: aload_1
+    22: aload 4
+    24: getstatic net/minecraft/world/entity/EntitySpawnReason.EVENT:Lnet/minecraft/world/entity/EntitySpawnReason;
+    27: invokevirtual net/minecraft/world/entity/EntityType.spawn:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntitySpawnReason;)Lnet/minecraft/world/entity/Entity;
+    30: checkcast net/minecraft/world/entity/animal/equine/TraderLlama
+    33: astore 5
+    35: aload 5
+    37: ifnonnull 41
+    40: return
+    41: aload 5
+    43: aload_2
+    44: iconst_1
+    45: invokevirtual net/minecraft/world/entity/animal/equine/TraderLlama.setLeashedTo:(Lnet/minecraft/world/entity/Entity;Z)V
+    48: return
+  METHOD findSpawnPositionNear (Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;I)Lnet/minecraft/core/BlockPos;  (code=128)
+    0: aconst_null
+    1: astore 4
+    3: getstatic net/minecraft/world/entity/EntityTypes.WANDERING_TRADER:Lnet/minecraft/world/entity/EntityType;
+    6: invokestatic net/minecraft/world/entity/SpawnPlacements.getPlacementType:(Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/entity/SpawnPlacementType;
+    9: astore 5
+    11: iconst_0
+    12: istore 6
+    14: iload 6
+    16: bipush 10
+    18: if_icmpge 125
+    21: aload_2
+    22: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    25: aload_0
+    26: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.random:Lnet/minecraft/util/RandomSource;
+    29: iload_3
+    30: iconst_2
+    31: imul
+    32: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    37: iadd
+    38: iload_3
+    39: isub
+    40: istore 7
+    42: aload_2
+    43: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    46: aload_0
+    47: getfield net/minecraft/world/entity/npc/wanderingtrader/WanderingTraderSpawner.random:Lnet/minecraft/util/RandomSource;
+    50: iload_3
+    51: iconst_2
+    52: imul
+    53: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    58: iadd
+    59: iload_3
+    60: isub
+    61: istore 8
+    63: aload_1
+    64: getstatic net/minecraft/world/entity/EntityTypes.WANDERING_TRADER:Lnet/minecraft/world/entity/EntityType;
+    67: invokestatic net/minecraft/world/entity/SpawnPlacements.getHeightmapType:(Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/level/levelgen/Heightmap$Types;
+    70: iload 7
+    72: iload 8
+    74: invokeinterface net/minecraft/world/level/LevelReader.getHeight:(Lnet/minecraft/world/level/levelgen/Heightmap$Types;II)I
+    79: istore 9
+    81: new net/minecraft/core/BlockPos
+    84: dup
+    85: iload 7
+    87: iload 9
+    89: iload 8
+    91: invokespecial net/minecraft/core/BlockPos.<init>:(III)V
+    94: astore 10
+    96: aload 5
+    98: aload_1
+    99: aload 10
+    101: getstatic net/minecraft/world/entity/EntityTypes.WANDERING_TRADER:Lnet/minecraft/world/entity/EntityType;
+    104: invokeinterface net/minecraft/world/entity/SpawnPlacementType.isSpawnPositionOk:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntityType;)Z
+    109: ifeq 119
+    112: aload 10
+    114: astore 4
+    116: goto 125
+    119: iinc 6 1
+    122: goto 14
+    125: aload 4
+    127: areturn
+  METHOD hasEnoughSpace (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z  (code=64)
+    0: aload_2
+    1: aload_2
+    2: iconst_1
+    3: iconst_2
+    4: iconst_1
+    5: invokevirtual net/minecraft/core/BlockPos.offset:(III)Lnet/minecraft/core/BlockPos;
+    8: invokestatic net/minecraft/core/BlockPos.betweenClosed:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+    11: invokeinterface java/lang/Iterable.iterator:()Ljava/util/Iterator;
+    16: astore_3
+    17: aload_3
+    18: invokeinterface java/util/Iterator.hasNext:()Z
+    23: ifeq 62
+    26: aload_3
+    27: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    32: checkcast net/minecraft/core/BlockPos
+    35: astore 4
+    37: aload_1
+    38: aload 4
+    40: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    45: aload_1
+    46: aload 4
+    48: invokevirtual net/minecraft/world/level/block/state/BlockState.getCollisionShape:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    51: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.isEmpty:()Z
+    54: ifne 59
+    57: iconst_0
+    58: ireturn
+    59: goto 17
+    62: iconst_1
+    63: ireturn
+  METHOD lambda$spawn$1 (Lnet/minecraft/core/BlockPos;)Z  (code=2)
+    0: iconst_1
+    1: ireturn
+  METHOD lambda$spawn$0 (Lnet/minecraft/core/Holder;)Z  (code=10)
+    0: aload_0
+    1: getstatic net/minecraft/world/entity/ai/village/poi/PoiTypes.MEETING:Lnet/minecraft/resources/ResourceKey;
+    4: invokeinterface net/minecraft/core/Holder.is:(Lnet/minecraft/resources/ResourceKey;)Z
+    9: ireturn
+
+  FIELD spawnDelay:I flags=0x2
+  FIELD spawnChance:I flags=0x2
+  METHOD <init> ()V  (code=10)
+    0: aload_0
+    1: sipush 24000
+    4: bipush 25
+    6: invokespecial net/minecraft/world/level/saveddata/WanderingTraderData.<init>:(II)V
+    9: return
+  METHOD <init> (II)V  (code=15)
+    0: aload_0
+    1: invokespecial net/minecraft/world/level/saveddata/SavedData.<init>:()V
+    4: aload_0
+    5: iload_1
+    6: putfield net/minecraft/world/level/saveddata/WanderingTraderData.spawnDelay:I
+    9: aload_0
+    10: iload_2
+    11: putfield net/minecraft/world/level/saveddata/WanderingTraderData.spawnChance:I
+    14: return
+  METHOD spawnDelay ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/level/saveddata/WanderingTraderData.spawnDelay:I
+    4: ireturn
+  METHOD spawnChance ()I  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/level/saveddata/WanderingTraderData.spawnChance:I
+    4: ireturn
+
+VERDICT [ok] the tick the gamerule gate opens with (SPAWN_WANDERING_TRADERS read)
+VERDICT [ok] the tick the 1200-tick checkpoint wears (isub + re-seat)
+VERDICT [ok] the tick the delay decrement + the >0 silence wears
+VERDICT [ok] the tick the 24000 re-arm banks
+VERDICT [ok] the tick the 25-step climb the [25, 75] clamp keeps
+VERDICT [ok] the tick the roll the OLD chance answers (nextInt(100) vs the pre-climb word)
+VERDICT [ok] the tick the success the chance-25 reset wears (setSpawnChance(25))
+VERDICT [ok] the spawn the random-player pick opens with
+VERDICT [ok] the spawn the 1-in-10 gate wears (nextInt(10) != 0 refusal)
+VERDICT [ok] the spawn the 48 ring wears (the POI anchor the orElse fallback keeps)
+VERDICT [ok] the spawn the find + the space arms ride (placement + collision)
+VERDICT [ok] the spawn the 2 llama attempts the range-4 speaks (loop 0..2, tryToSpawnLlamaFor .., 4)
+VERDICT [ok] the spawn the despawn-0 / wander-target / 16-wide home tails wear
+VERDICT [ok] the find the 10 attempts the 2*range draw wears
+VERDICT [ok] the find the heightmap + the placement verdict ride
+VERDICT [ok] the space the 2x3x2 collision fold wears (offset(1, 2, 1), isEmpty)
+VERDICT [ok] the llama the find + the TRADER_LLAMA spawn + the leash wear
+VERDICT [ok] the fresh data the (24000, 25) defaults wear

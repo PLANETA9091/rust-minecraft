@@ -10188,6 +10188,259 @@ pub const DYE_MIX_TABLE: [((u8, u8), u8); 9] = [
     ((11, 14), 10), // BLUE + RED -> PURPLE
 ];
 
+// ---------------------------------------------------------------------------
+// THE WANDERER'S OWN SPAWNER (javap 26.2 WanderingTraderSpawner —
+// scripts/jar_work/spawner_478.txt the census wears, all 18 verdicts
+// ok) — the natural-spawn lane the 475 round's ensure call pre-armed:
+// the 1200-tick checkpoint the tick's own delay keeps, the 24000
+// re-arm the data's own word banks, the 25-step chance climb the
+// [25, 75] clamp answers, the roll the OLD chance reads, the 1-in-10
+// gate the spawn opens with, the 48 ring the 10 attempts wear, the
+// 2x3x2 space fold, the 2 llama attempts the 4 range speaks.
+// ---------------------------------------------------------------------------
+
+/// THE CHECKPOINT'S OWN CADENCE (the tick's `sipush 1200` re-seat
+/// speaks — the 60-second wall the delay's decrement waits on).
+pub const WANDERER_CHECKPOINT_TICKS: i32 = 1200;
+/// THE RE-ARM'S OWN WORD (the tick's `sipush 24000` the data's
+/// setSpawnDelay answers — the next window the fresh 20-minute wall
+/// opens).
+pub const WANDERER_SPAWN_DELAY_REARM: i32 = 24000;
+/// THE CLIMB'S OWN STEP (the tick's `bipush 25` the Mth.clamp's
+/// min/max pair keeps — the fresh 25 the WanderingTraderData ctor
+/// speaks, the climb the chance never passes the 75 ceiling wears).
+pub const WANDERER_CHANCE_STEP: i32 = 25;
+pub const WANDERER_CHANCE_MIN: i32 = 25;
+pub const WANDERER_CHANCE_MAX: i32 = 75;
+/// THE SPAWN'S OWN RING (the spawn's `bipush 48` the POI find + the
+/// placement find both speak — the anchor's ±48 the attempts roam).
+pub const WANDERER_SPAWN_RING: i32 = 48;
+/// THE FIND'S OWN ATTEMPTS (the findSpawnPositionNear's `bipush 10`
+/// loop — the placement verdict the first ok spot the walk banks).
+pub const WANDERER_FIND_ATTEMPTS: usize = 10;
+/// THE LLAMAS' OWN ATTEMPTS (the spawn's `iconst_2` loop — the pair
+/// the leash walk serves, the TRADER_LLAMA kind the port's banks
+/// never speak — the find's own draws the attempts spend, the spawn
+/// the honest refusal wears).
+pub const WANDERER_LLAMA_ATTEMPTS: usize = 2;
+/// THE LLAMA'S OWN RING (the tryToSpawnLlamaFor call's `iconst_4`
+/// arg — the trader's own block pos the ±4 the finds roam).
+pub const WANDERER_LLAMA_RING: i32 = 4;
+
+/// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderData — the
+/// fresh `(24000, 25)` the no-arg ctor speaks [the dump's `sipush
+/// 24000` + `bipush 25` the invokespecial ride banks], the saveddata
+/// pair the port's own fields wear; the tick delay the spawner's own
+/// field the re-seat wears).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WandererSpawner {
+    /// The checkpoint's own countdown (the spawner's `tickDelay` —
+    /// the fresh 0 the first tick the checkpoint fires on).
+    pub tick_delay: i32,
+    /// The spawn window's own countdown (the data's `spawnDelay` —
+    /// the fresh 24000, the checkpoint the -1200 answers, the ≤0 the
+    /// re-arm the same word banks).
+    pub spawn_delay: i32,
+    /// The spawn chance's own word (the data's `spawnChance` — the
+    /// fresh 25, the climb the +25 step serves, the success the
+    /// chance-25 reset answers).
+    pub spawn_chance: i32,
+}
+
+impl Default for WandererSpawner {
+    fn default() -> Self {
+        WandererSpawner {
+            tick_delay: 0,
+            spawn_delay: 24000,
+            spawn_chance: 25,
+        }
+    }
+}
+
+impl WandererSpawner {
+    /// THE SPAWNER'S OWN TICK (javap `WanderingTraderSpawner.tick`
+    /// pcs 0-133 — the gamerule gate the port's own default-true law
+    /// wears [the SPAWN_WANDERING_TRADERS toggle the gamerule lane's
+    /// round banks — the tick the port's default the vanilla ctor
+    /// keeps], the checkpoint the decrement + the 1200 re-seat wears,
+    /// the delay the -1200 + the >0 silence serves, the re-arm the
+    /// 24000 answers, the climb the OLD chance's +25 [25, 75] keeps,
+    /// the roll the OLD chance reads [the `iload 5` the pre-climb
+    /// word the if_icmple compares — the climbed word the roll never
+    /// sees], the spawn the success the chance-25 reset wears).
+    /// `true` the trader the walk lands.
+    pub fn tick(
+        &mut self,
+        mobs: &mut Vec<Zombie>,
+        next_id: &mut i32,
+        px: f64,
+        pz: f64,
+        world: &World,
+        rng: &mut Lcg,
+    ) -> bool {
+        // THE CHECKPOINT (pcs 20-34: `--tickDelay` the >0 silence
+        // keeps, the 1200 the re-seat wears)
+        self.tick_delay -= 1;
+        if self.tick_delay > 0 {
+            return false;
+        }
+        self.tick_delay = WANDERER_CHECKPOINT_TICKS;
+        // THE WINDOW'S OWN DECREMENT (pcs 42-68: `spawnDelay - 1200`
+        // the >0 silence keeps)
+        self.spawn_delay -= WANDERER_CHECKPOINT_TICKS;
+        if self.spawn_delay > 0 {
+            return false;
+        }
+        // THE RE-ARM + THE CLIMB (pcs 69-99: the 24000 the setSpawnDelay
+        // banks, the OLD chance the clamp's +25 step stores)
+        self.spawn_delay = WANDERER_SPAWN_DELAY_REARM;
+        let chance = self.spawn_chance;
+        self.spawn_chance = (chance + WANDERER_CHANCE_STEP)
+            .clamp(WANDERER_CHANCE_MIN, WANDERER_CHANCE_MAX);
+        // THE ROLL (pcs 102-118: `nextInt(100) > chance` the refusal
+        // speaks — the OLD word the compare reads)
+        if rng.next_int(100) > chance {
+            return false;
+        }
+        // THE SPAWN (pc 121: the walk the success the chance-25 reset
+        // wears — pcs 127-130)
+        if try_spawn_wanderer(mobs, next_id, px, pz, world, rng) {
+            self.spawn_chance = WANDERER_CHANCE_MIN;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+/// THE SPAWN'S OWN WALK (javap `WanderingTraderSpawner.spawn` pcs
+/// 0-192): the 1-in-10 gate the nextInt(10) refusal opens with, the
+/// anchor the player's block pos wears [the POI find the port's world
+/// never banks — the `Optional.orElse(playerPos)` fallback the same
+/// arm the anchor answers], the ±48 find the 10 attempts wear, the
+/// 2x3x2 space fold, the spawn the trio the generic lanes wear [the
+/// kind + the max health + the offer ensure the try_spawn trio
+/// mirrors], the 2 llama attempts the find's own draws spend [the
+/// TRADER_LLAMA kind the port's banks never speak — the spawn the
+/// honest refusal wears], the despawn-0 / wander-target / 16-wide
+/// home tails the fields the port never banks [the census note the
+/// honesty wears — the AI lanes the future rounds' lines].
+pub fn try_spawn_wanderer(
+    mobs: &mut Vec<Zombie>,
+    next_id: &mut i32,
+    px: f64,
+    pz: f64,
+    world: &World,
+    rng: &mut Lcg,
+) -> bool {
+    // THE 1-IN-10 GATE (pcs 11-26: `nextInt(10) != 0` the false
+    // returns — the attempt's own cost the draw spends)
+    if rng.next_int(10) != 0 {
+        return false;
+    }
+    // THE ANCHOR (pcs 27-74: the player's block pos — the POI lane's
+    // absence the fallback arm wears)
+    let ax = px.floor() as i32;
+    let az = pz.floor() as i32;
+    // THE FIND + THE SPACE (pcs 76-99: the ±48 ring the 10 attempts
+    // wear, the 2x3x2 the no-collision fold keeps)
+    let Some((sx, sy, sz)) = wanderer_find_spawn_position_near(world, rng, ax, az, WANDERER_SPAWN_RING)
+    else {
+        return false;
+    };
+    if !wanderer_has_enough_space(world, sx, sy, sz) {
+        return false;
+    }
+    // THE BIOME TAG (pcs 102-120: WITHOUT_WANDERING_TRADER_SPAWNS the
+    // refusal speaks — the tag's data file the client jar never
+    // carries [the zip walk the ABSENT speaks], the port's own gate
+    // the empty absence wears — the honest pass the vanilla's
+    // overworld biomes the tag never names answers)
+    // THE SPAWN (pcs 121-140: the entity the EVENT reason spawns —
+    // the trio the generic lanes wear: the kind + the max health +
+    // the offer ensure the try_spawn trio mirrors)
+    let id = *next_id;
+    *next_id += 1;
+    let mut trader = Zombie::new(
+        id,
+        sx as f64 + 0.5,
+        sy as f64,
+        sz as f64 + 0.5,
+        (*next_id as u64) << 16 ^ rng.next(),
+    );
+    trader.kind = MobKind::WanderingTrader;
+    trader.health = trader.kind.max_health();
+    trader.ensure_trader_offers();
+    // THE TAILS (pcs 166-186: the despawn-0 the fresh 0 the ctor
+    // keeps, the wander target + the 16-wide home the AI fields the
+    // port never banks — the census note the honesty wears)
+    mobs.push(trader);
+    // THE LLAMAS' OWN ATTEMPTS (pcs 143-165: the loop the
+    // tryToSpawnLlamaFor(.., 4) serves — the find's own draws the
+    // attempts spend, the TRADER_LLAMA kind the spawn the honest
+    // refusal wears)
+    for _ in 0..WANDERER_LLAMA_ATTEMPTS {
+        let _ = wanderer_find_spawn_position_near(world, rng, sx, sz, WANDERER_LLAMA_RING);
+    }
+    true
+}
+
+/// THE FIND'S OWN WALK (javap `findSpawnPositionNear` pcs 0-128): the
+/// 10 attempts the ±(2*range) draws wear, the heightmap the top-solid
+/// + 1 scan answers [the port's own scan the try_spawn anchor's law
+/// keeps], the placement verdict the ON_GROUND fold speaks [the below
+/// solid + the two cells the no-collision keeps — the first ok spot
+/// the walk banks, the loop the break the success speaks].
+fn wanderer_find_spawn_position_near(
+    world: &World,
+    rng: &mut Lcg,
+    ax: i32,
+    az: i32,
+    range: i32,
+) -> Option<(i32, i32, i32)> {
+    for _ in 0..WANDERER_FIND_ATTEMPTS {
+        let x = ax + rng.next_int((range * 2) as u64) - range;
+        let z = az + rng.next_int((range * 2) as u64) - range;
+        // THE HEIGHTMAP (the port's own top-solid scan — the surface
+        // + 1 the feet wear)
+        let mut sy: Option<i32> = None;
+        for y in (0..world.size_blocks()).rev() {
+            if crate::body::solid(world, x, y, z) {
+                sy = Some(y + 1);
+                break;
+            }
+        }
+        let Some(y) = sy else { continue };
+        // THE PLACEMENT VERDICT (isSpawnPositionOk's ON_GROUND fold —
+        // the below cell solid, the feet + head cells the box's own
+        // no-collision keeps)
+        if crate::body::solid(world, x, y - 1, z)
+            && !crate::body::solid(world, x, y, z)
+            && !crate::body::solid(world, x, y + 1, z)
+        {
+            return Some((x, y, z));
+        }
+    }
+    None
+}
+
+/// THE SPACE'S OWN FOLD (javap `hasEnoughSpace` pcs 0-63): the 2x3x2
+/// volume the `betweenClosed(pos, pos.offset(1, 2, 1))` walk speaks —
+/// every cell the collision shape the empty law keeps, the one solid
+/// the false returns.
+fn wanderer_has_enough_space(world: &World, x: i32, y: i32, z: i32) -> bool {
+    for dy in 0..3 {
+        for dx in 0..2 {
+            for dz in 0..2 {
+                if crate::body::solid(world, x + dx, y + dy, z + dz) {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
 /// THE OFFSPRING'S OWN COLOR WALK (javap `Sheep.getBreedOffspring`:
 /// `setColor(DyeColor.getMixedColor(level, a, b))` — the parents'
 /// dyes the crafting grid pairs, the recipe result the baby speaks;
@@ -23696,6 +23949,174 @@ mod tests {
             animal_spot_ok(&world, 40, 9, 40),
             "the thin shade the raw 9 the spot admits"
         );
+    }
+
+    /// THE WANDERER SPAWNER'S OWN CHECKPOINT CYCLE (javap
+    /// `WanderingTraderSpawner.tick` the census wears): the fresh
+    /// `(0, 24000, 25)` the data ctor speaks, the first tick the
+    /// checkpoint fires on [the 1200 re-seat the delay's decrement
+    /// answers, the window the -1200 serves, the >0 the silence
+    /// keeps], the forced window the re-arm + the climb answers, the
+    /// clamp the 75 ceiling keeps, the success the chance-25 reset
+    /// wears.
+    #[test]
+    fn the_wanderer_spawner_the_checkpoint_cycle_wears() {
+        let world = jockey_flat_world();
+        let mut mobs: Vec<Zombie> = Vec::new();
+        let mut next_id = 1;
+        let mut rng = Lcg::new(7);
+        // THE FRESH STATE (the data ctor's own words)
+        let mut sp = WandererSpawner::default();
+        assert_eq!(
+            (sp.tick_delay, sp.spawn_delay, sp.spawn_chance),
+            (0, 24000, 25),
+            "the fresh (0, 24000, 25) the ctor speaks"
+        );
+        // THE FIRST TICK THE CHECKPOINT FIRES ON (the delay 0 the
+        // -1 answers, the 1200 the re-seat wears, the window the
+        // -1200 keeps, the 22800 the >0 silence returns)
+        assert!(!sp.tick(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng));
+        assert_eq!(
+            (sp.tick_delay, sp.spawn_delay, sp.spawn_chance),
+            (1200, 22800, 25),
+            "the checkpoint the re-seat + the decrement wear"
+        );
+        assert!(mobs.is_empty(), "the window's silence no spawn lands");
+        // THE FORCED WINDOW (the delay the 0 crossing the re-arm +
+        // the climb + the roll serves — the state asserts the roll's
+        // own verdict never touch)
+        sp.spawn_delay = WANDERER_CHECKPOINT_TICKS;
+        sp.tick_delay = 1;
+        sp.tick(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng);
+        assert_eq!(
+            (sp.spawn_delay, sp.spawn_chance),
+            (WANDERER_SPAWN_DELAY_REARM, 50),
+            "the re-arm the 24000 banks, the climb the +25 answers"
+        );
+        // THE CLAMP (the 60's +25 the 75 ceiling keeps)
+        sp.spawn_chance = 60;
+        sp.spawn_delay = WANDERER_CHECKPOINT_TICKS;
+        sp.tick_delay = 1;
+        sp.tick(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng);
+        assert_eq!(
+            (sp.spawn_delay, sp.spawn_chance),
+            (WANDERER_SPAWN_DELAY_REARM, 75),
+            "the clamp the 75 ceiling wears"
+        );
+        // THE 60-SECOND WALL (the checkpoint's own countdown the
+        // every non-checkpoint tick the silence keeps — the window's
+        // own word the wall's ticks never move)
+        sp.spawn_delay = WANDERER_SPAWN_DELAY_REARM;
+        sp.tick_delay = WANDERER_CHECKPOINT_TICKS;
+        for _ in 0..WANDERER_CHECKPOINT_TICKS - 1 {
+            assert!(!sp.tick(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng));
+        }
+        assert_eq!(
+            sp.tick_delay, 1,
+            "the 1199 decrements the wall the next tick opens"
+        );
+        assert_eq!(
+            sp.spawn_delay, WANDERER_SPAWN_DELAY_REARM,
+            "the window's own word the wall's ticks never move"
+        );
+    }
+
+    /// THE WANDERER SPAWN'S OWN ATTEMPT WALK (javap
+    /// `WanderingTraderSpawner.spawn` the census wears): the 1-in-10
+    /// gate the refusal seeds speak, the anchor the player's block
+    /// pos wears, the find the ±48 ring the 10 attempts roam, the
+    /// space the 2x3x2 fold keeps, the spawn the trio the generic
+    /// lanes wear [the kind + the max health + the offers the ensure
+    /// arms], the no-spot world the find refuses, the seed search the
+    /// spawn's own determinism replays.
+    #[test]
+    fn the_wanderer_spawn_the_attempt_walk_wears() {
+        let world = jockey_flat_world();
+        // THE NO-SPOT REFUSAL (the all-air column the heightmap scan
+        // never answers — the find the None the spawn the false
+        // returns; the gate's own draw the refusal still spends)
+        // THE ALL-AIR WORLD (the generated world the every cell the
+        // AIR walk clears — the heightmap scan the no-solid answer
+        // wears)
+        let mut void_world = World::new(4, 7);
+        let vs = void_world.size_blocks();
+        for x in 0..vs {
+            for z in 0..vs {
+                for y in 0..vs {
+                    void_world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let mut refused = 0;
+        for seed in 0u64..64 {
+            let mut mobs: Vec<Zombie> = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(seed);
+            assert!(!try_spawn_wanderer(&mut mobs, &mut next_id, 32.0, 32.0, &void_world, &mut rng));
+            assert!(mobs.is_empty(), "the void the spawn never lands");
+            refused += 1;
+        }
+        assert_eq!(refused, 64, "the void world every seed refuses");
+        // THE GATE'S OWN 1-IN-10 (the seeds the refusal speaks — the
+        // first draw the nextInt(10) != 0 answers)
+        let mut gate_refused = 0;
+        for seed in 0u64..64 {
+            let mut rng = Lcg::new(seed);
+            if rng.next_int(10) != 0 {
+                gate_refused += 1;
+            }
+        }
+        assert!(
+            gate_refused > 40,
+            "the 1-in-10 gate the seeds' own words speak ({gate_refused}/64 refuse)"
+        );
+        // THE SEED SEARCH THE SPAWN REPLAYS (the gate + the find + the
+        // space the pass the trader the walk lands — the trio the
+        // generic lanes wear, the offer ensure the 9 the pools bank)
+        let mut landed = false;
+        let mut next_id = 1;
+        for seed in 0u64..4096 {
+            let mut mobs: Vec<Zombie> = Vec::new();
+            let mut nid = 1;
+            let mut rng = Lcg::new(seed);
+            if !try_spawn_wanderer(&mut mobs, &mut nid, 32.0, 32.0, &world, &mut rng) {
+                continue;
+            }
+            landed = true;
+            next_id = nid;
+            assert_eq!(mobs.len(), 1, "the ONE trader the walk lands");
+            let t = &mobs[0];
+            assert_eq!(
+                t.kind,
+                MobKind::WanderingTrader,
+                "the trader's own kind the spawn wears"
+            );
+            assert_eq!(
+                t.health,
+                20.0,
+                "the max health the kind's own attribute keeps"
+            );
+            assert_eq!(
+                t.trader_offers.len(),
+                9,
+                "the offers the ensure walk arms (6 + 15 pool caps the 9 the updateTrades speaks)"
+            );
+            // THE RING THE ANCHOR KEEPS (the ±48 the find roams — the
+            // landed feet the surface + 1 wears)
+            let dx = t.x - 32.0;
+            let dz = t.z - 32.0;
+            assert!(
+                dx.abs() <= 49.0 && dz.abs() <= 49.0,
+                "the ring the anchor's ±48 keeps ({dx}, {dz})"
+            );
+            assert!(
+                crate::body::solid(&world, t.x.floor() as i32, t.y as i32 - 1, t.z.floor() as i32),
+                "the feet the surface's own solid keeps"
+            );
+            break;
+        }
+        assert!(landed, "the seeds the walk the trader lands");
+        assert_eq!(next_id, 2, "the id counter the spawn advances");
     }
 
 }

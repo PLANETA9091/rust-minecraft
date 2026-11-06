@@ -9314,6 +9314,12 @@ pub struct App {
     /// The spawner's clock (the client's own cadence the mob lane
     /// speaks) and the id counter (the entity ids the drops ride).
     pub spawn_clock: i64,
+    /// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderSpawner
+    /// + WanderingTraderData — the fresh `(24000, 25)` the data ctor
+    /// speaks, the checkpoint cadence the tick's own walk keeps): the
+    /// natural-spawn lane the offline sim's update answers (the
+    /// tick call the spawn beat's own region rides).
+    pub wanderer_spawner: crate::mob::WandererSpawner,
     pub next_mob_id: i32,
     /// The mob lane's own RNG (the goal clocks + the spawn draws).
     pub mob_rng: crate::drops::Lcg,
@@ -13497,6 +13503,7 @@ impl App {
             falling_blocks: Vec::new(),
             falling_checks: Vec::new(),
             spawn_clock: 0,
+            wanderer_spawner: crate::mob::WandererSpawner::default(),
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
             dispenser_rng: crate::drops::Lcg::new(0x5EED_D155),
@@ -19076,6 +19083,30 @@ impl App {
                 // darken's first tick) the creature lane rode, the
                 // vanilla dusk spawns the beat never offered.
                 self.spawn_clock += 1;
+                // THE WANDERER'S OWN SPAWNER TICK (javap
+                // WanderingTraderSpawner.tick — the spawner's own 1200
+                // cadence the beat's own 40-tick lane never paces: the
+                // checkpoint the decrement + the 1200 re-seat wears,
+                // the window the -1200 + the 24000 re-arm serves, the
+                // chance the +25 [25, 75] climb the OLD word's roll
+                // answers, the spawn the ±48 find the success the
+                // chance-25 reset wears. The SPAWN_WANDERING_TRADERS
+                // gamerule the port's default-true law wears [the
+                // toggle the gamerule lane's round banks], the offline
+                // world's own lane the call rides — the networked
+                // session the server's own spawner owns)
+                if let (Some(world), Some(b)) =
+                    (self.offline_world.as_ref(), self.body.as_ref())
+                {
+                    let (px, pz) = (b.x, b.z);
+                    // the disjoint field borrows (the monster arm's own
+                    // split the checker repeats)
+                    let mobs = &mut self.mobs;
+                    let rng = &mut self.mob_rng;
+                    let next_id = &mut self.next_mob_id;
+                    let spawner = &mut self.wanderer_spawner;
+                    spawner.tick(mobs, next_id, px, pz, world, rng);
+                }
                 // THE GAMERULE'S OWN SPAWN GATE (javap GameRules
                 // .RULE_DOMOBSPAWNING the natural cycle's own read —
                 // the false the whole beat's attempts the walk never

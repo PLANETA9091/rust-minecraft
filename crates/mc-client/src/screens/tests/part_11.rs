@@ -38051,3 +38051,127 @@ fn the_wanderer_window_the_take_sync_wears() {
     assert_eq!(app.merchant_trader_id, None, "the close the trader disarms");
     assert!(app.merchant_offers.is_empty(), "the close the bank drops");
 }
+
+/// THE WANDERER SPAWNER'S OWN APP TICK (javap `WanderingTraderSpawner`
+/// .tick the spawner lane the update answers — the checkpoint the
+/// decrement + the 1200 re-seat wears, the window the -1200 + the
+/// 24000 re-arm serves, the chance the +25 [25, 75] climb answers,
+/// the roll the OLD chance reads, the spawn the ±48 find the trader
+/// the world lands — the offer ensure the 9 the pools bank, the
+/// beat's own 40-tick lane the cadence never paces).
+#[test]
+fn the_wanderer_spawner_the_app_tick_wears() {
+    let mut app = App::new(9);
+    app.enter_world();
+    // THE FLAT GRASS PLATFORM (the day beat's own build the find's
+    // every spot keeps)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    w.set(x, y, z, crate::world::STONE);
+                }
+                w.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        w.relight();
+    }
+    app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+    // THE FRESH STATE (the data ctor's own words the App's field
+    // wears)
+    assert_eq!(
+        (
+            app.wanderer_spawner.tick_delay,
+            app.wanderer_spawner.spawn_delay,
+            app.wanderer_spawner.spawn_chance
+        ),
+        (0, 24000, 25),
+        "the fresh (0, 24000, 25) the field keeps"
+    );
+    // THE FIRST UPDATE THE CHECKPOINT FIRES ON (the window the
+    // 22800 keeps, the chance the fresh 25 answers, the re-seat the
+    // 1200 wears — the trader the fresh world the 20-minute wall
+    // never meets)
+    app.update();
+    assert_eq!(
+        (
+            app.wanderer_spawner.tick_delay,
+            app.wanderer_spawner.spawn_delay,
+            app.wanderer_spawner.spawn_chance
+        ),
+        (1200, 22800, 25),
+        "the checkpoint the re-seat + the decrement wear"
+    );
+    assert!(
+        !app
+            .mobs
+            .iter()
+            .any(|m| m.kind == crate::mob::MobKind::WanderingTrader),
+        "the fresh window no trader lands"
+    );
+    // THE FORCED WINDOWS THE SPAWN SERVES (the every update the
+    // checkpoint opens, the climb the 75 ceiling reaches, the roll
+    // the gate the chance answers, the find the platform's every
+    // spot keeps — the trader the windows the deterministic stream
+    // lands)
+    let mut landed = false;
+    for _ in 0..300 {
+        app.wanderer_spawner.spawn_delay =
+            crate::mob::WANDERER_CHECKPOINT_TICKS;
+        app.wanderer_spawner.tick_delay = 1;
+        app.update();
+        if app
+            .mobs
+            .iter()
+            .any(|m| m.kind == crate::mob::MobKind::WanderingTrader)
+        {
+            landed = true;
+            break;
+        }
+    }
+    assert!(
+        landed,
+        "the forced windows the trader the world lands"
+    );
+    let trader = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::WanderingTrader)
+        .unwrap();
+    assert_eq!(
+        trader.trader_offers.len(),
+        9,
+        "the offers the ensure walk arms"
+    );
+    assert_eq!(trader.health, 20.0, "the max health the kind keeps");
+    let dx = trader.x - 40.0;
+    let dz = trader.z - 40.0;
+    assert!(
+        dx.abs() <= 49.0 && dz.abs() <= 49.0,
+        "the ring the anchor's ±48 keeps ({dx}, {dz})"
+    );
+    assert!(
+        crate::body::solid(
+            app.offline_world.as_ref().unwrap(),
+            trader.x.floor() as i32,
+            trader.y as i32 - 1,
+            trader.z.floor() as i32
+        ),
+        "the feet the platform's own solid keeps"
+    );
+    // THE SUCCESS'S OWN RESET (the chance the 25 the next window
+    // wears — the climb the re-armed state answers)
+    assert_eq!(
+        (
+            app.wanderer_spawner.spawn_delay,
+            app.wanderer_spawner.spawn_chance
+        ),
+        (crate::mob::WANDERER_SPAWN_DELAY_REARM, 25),
+        "the re-arm + the reset the success wears"
+    );
+}
