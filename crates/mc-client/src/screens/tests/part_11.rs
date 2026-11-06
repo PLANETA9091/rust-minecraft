@@ -42651,3 +42651,294 @@ fn the_damage_bar_the_pickup_the_row_the_strip_wears() {
         "the re-worn strip the round(9.8) wears"
     );
 }
+
+
+// ==========================================================================
+// THE ENCHANT'S OWN LEVELS (the enchlvl_512 census the round banks —
+// the treasure rows' enchant_with_levels 30 the selectEnchantment walk
+// the power fold + the multi-pick loop the laws wear, the
+// WeightedRandom fold the pick serves)
+// ==========================================================================
+
+#[test]
+fn the_enchant_the_power_the_laws_the_census_wears() {
+    // THE WEIGHTED PICK'S OWN FOLD (javap `WeightedRandom` the census
+    // banks): the empty list the None keeps, the zero-total the None
+    // the same-seed next draw the SILENT stream wears, the single row
+    // the Some(0) the one-draw stream answers.
+    let mut rng = crate::drops::Lcg::new(523);
+    assert_eq!(
+        crate::mob::weighted_random_pick(&mut rng, &[]),
+        None,
+        "the empty list the empty pick wears"
+    );
+    let raw = rng.next();
+    let mut rng = crate::drops::Lcg::new(523);
+    assert_eq!(
+        crate::mob::weighted_random_pick(&mut rng, &[0, 0]),
+        None,
+        "the zero-total the Optional.empty keeps"
+    );
+    assert_eq!(rng.next(), raw, "the zero-total the no-draw law keeps");
+    let mut rng = crate::drops::Lcg::new(518);
+    assert_eq!(
+        crate::mob::weighted_random_pick(&mut rng, &[5]),
+        Some(0),
+        "the single row the first index wears"
+    );
+    assert_eq!(
+        rng.next(),
+        28812652193969u64,
+        "the single pick the ONE-draw stream wears"
+    );
+    // THE SCAN'S OWN WALK (the [1, 3] pair the linear `i -= weight`
+    // speaks — the seed's own ten picks the pins bank, the 200-roll
+    // split the 1:3 law the counts answer).
+    let mut rng = crate::drops::Lcg::new(517);
+    let want = [1usize, 0, 0, 1, 0, 1, 1, 0, 1, 1];
+    for (round, expected) in want.iter().enumerate() {
+        assert_eq!(
+            crate::mob::weighted_random_pick(&mut rng, &[1, 3]),
+            Some(*expected),
+            "the pick {round} the pin wears"
+        );
+    }
+    let mut rng = crate::drops::Lcg::new(517);
+    let (mut first, mut second) = (0u32, 0u32);
+    for _ in 0..200 {
+        match crate::mob::weighted_random_pick(&mut rng, &[1, 3]) {
+            Some(0) => first += 1,
+            Some(1) => second += 1,
+            _ => panic!("the scan the two indices keeps"),
+        }
+    }
+    assert_eq!(
+        (first, second),
+        (50, 150),
+        "the 200-roll split the 1:3 law wears"
+    );
+    // THE POWER'S OWN FOLD (javap `selectEnchantment` the head the
+    // census banks): the v/4+1 bound the two nextInt draws wear, the
+    // `+1` fold the level banks, the vulcan noise the (f1 + f2 - 1)
+    // * 0.15 pair speaks, the round + the clamp(1, MAX) the power
+    // keeps — the seeds the exact pins bank, the 4-draw stream the
+    // raw word answers.
+    assert_eq!(
+        crate::mob::enchant_select_power(&mut crate::drops::Lcg::new(513), 30, 1),
+        32,
+        "the seed 513 the round(32.96) wears"
+    );
+    assert_eq!(
+        crate::mob::enchant_select_power(&mut crate::drops::Lcg::new(514), 30, 1),
+        32,
+        "the seed 514 the round(31.71) wears"
+    );
+    assert_eq!(
+        crate::mob::enchant_select_power(&mut crate::drops::Lcg::new(515), 30, 1),
+        29,
+        "the seed 515 the round(28.70) wears"
+    );
+    let mut rng = crate::drops::Lcg::new(513);
+    let _power = crate::mob::enchant_select_power(&mut rng, 30, 1);
+    assert_eq!(
+        rng.next(),
+        48898210548319u64,
+        "the head the EXACTLY-4-draw stream wears (2 nextInt(1) + 2 nextFloat)"
+    );
+    // THE BOUND'S OWN WINDOWS (the v=1 the nextInt(1) draws the zero
+    // answers — the level the levels+1 keeps, the noise the 0.85..
+    // 1.15 band the power window speaks, the levels=0 the clamp's
+    // own low edge the 1 keeps).
+    for seed in 0..200u64 {
+        assert_eq!(
+            crate::mob::enchant_select_power(&mut crate::drops::Lcg::new(seed), 0, 1),
+            1,
+            "the levels=0 the clamp low the 1 keeps (seed {seed})"
+        );
+        let power = crate::mob::enchant_select_power(&mut crate::drops::Lcg::new(seed), 30, 1);
+        assert!(
+            (26..=36).contains(&power),
+            "the power the round(31 * (1 ± 0.15)) window keeps (seed {seed}: {power})"
+        );
+    }
+}
+
+#[test]
+fn the_enchant_the_pick_the_loop_the_census_wears() {
+    // THE LOOP'S OWN GATES (javap the multi-pick the census banks):
+    // the empty list the ZERO-draw walk keeps, the no-candidates walk
+    // the raw word the silence answers.
+    let mut rng = crate::drops::Lcg::new(523);
+    assert!(
+        crate::mob::enchant_multi_pick(&mut rng, 30, &[], the_all_compatible).is_empty(),
+        "the empty list the empty picks wear"
+    );
+    let raw = rng.next();
+    let mut rng = crate::drops::Lcg::new(523);
+    let _ = crate::mob::enchant_multi_pick(&mut rng, 30, &[], the_all_compatible);
+    assert_eq!(rng.next(), raw, "the empty list the no-draw law keeps");
+    // THE FIRST PICK + THE GATE (the [7] row the Some(0) pick the
+    // power=0 the gate's own first word the break answers — the
+    // two-draw stream the raw word pins).
+    let mut rng = crate::drops::Lcg::new(524);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 0, &[7], the_all_compatible),
+        vec![0],
+        "the single row the first pick wears"
+    );
+    assert_eq!(
+        rng.next(),
+        99826880662880u64,
+        "the power=0 the gate draw the break keeps"
+    );
+    // THE FILTER'S OWN BREAK (the never-compatible fn the available
+    // list empties — the one pick the loop's own gate draw the break
+    // keeps, the seeds the exact pins bank).
+    let mut rng = crate::drops::Lcg::new(521);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 100, &[1, 1, 1], the_none_compatible),
+        vec![2],
+        "the seed 521 the filter the break wears"
+    );
+    assert_eq!(
+        rng.next(),
+        160394766551066u64,
+        "the never-compat the two-draw stream wears"
+    );
+    let mut rng = crate::drops::Lcg::new(522);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 100, &[1, 1, 1], the_none_compatible),
+        vec![1],
+        "the seed 522 the filter the break wears"
+    );
+    // THE MULTI-PICK'S OWN WALK (the all-compatible fn the loop runs —
+    // the power the /= 2 halving rides, the seeds the exact sequences
+    // the pins bank: the 513 the [1, 0] pair, the 514 the [0, 0] pair,
+    // the 515 the gate's own first break, the 519 the three-pick walk).
+    let mut rng = crate::drops::Lcg::new(513);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 30, &[3, 1], the_all_compatible),
+        vec![1, 0],
+        "the seed 513 the pair the halved power wears"
+    );
+    assert_eq!(
+        rng.next(),
+        48898210548319u64,
+        "the seed 513 the four-draw stream wears"
+    );
+    let mut rng = crate::drops::Lcg::new(514);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 30, &[3, 1], the_all_compatible),
+        vec![0, 0],
+        "the seed 514 the pair wears"
+    );
+    let mut rng = crate::drops::Lcg::new(515);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 30, &[3, 1], the_all_compatible),
+        vec![0],
+        "the seed 515 the gate's own break wears"
+    );
+    let mut rng = crate::drops::Lcg::new(519);
+    assert_eq!(
+        crate::mob::enchant_multi_pick(&mut rng, 30, &[3, 1], the_all_compatible),
+        vec![0, 0, 0],
+        "the seed 519 the triple wears"
+    );
+}
+
+fn the_all_compatible(_last: usize, _candidate: usize) -> bool {
+    true
+}
+
+fn the_none_compatible(_last: usize, _candidate: usize) -> bool {
+    false
+}
+
+#[test]
+fn the_enchant_the_walk_the_treasure_the_registry_wears() {
+    use mc_registry::generated::enchantments as ench;
+    // THE ZERO GATE (the missing ENCHANTABLE row the cod/dirt the
+    // honest empty keeps — the head fold the no-draw stream the
+    // same-seed raw word answers).
+    let mut rng = crate::drops::Lcg::new(513);
+    assert!(
+        crate::mob::enchant_random_loot_walk(&mut rng, "cod", 30).is_empty(),
+        "the cod the no-enchantability empty wears"
+    );
+    let raw = rng.next();
+    let mut rng = crate::drops::Lcg::new(513);
+    let _ = crate::mob::enchant_random_loot_walk(&mut rng, "dirt", 30);
+    assert_eq!(rng.next(), raw, "the missing row the ZERO-draw law keeps");
+    // THE PAIR LAW (the walk the (idx, level) pairs answers — the
+    // names the registry id resolves, the seeds the exact treasure
+    // pins bank: the bow the unbreaking + the power/infinity trio,
+    // the mending + vanishing pair the pool's own tail rows wear).
+    let names = |picks: Vec<(usize, i32)>| -> Vec<(&'static str, i32)> {
+        picks
+            .into_iter()
+            .map(|(idx, level)| (ench::enchantment_name(idx).unwrap(), level))
+            .collect()
+    };
+    let mut rng = crate::drops::Lcg::new(513);
+    assert_eq!(
+        names(crate::mob::enchant_random_loot_walk(&mut rng, "bow", 30)),
+        vec![("unbreaking", 3), ("power", 4), ("infinity", 1)],
+        "the bow seed 513 the trio wears"
+    );
+    let mut rng = crate::drops::Lcg::new(514);
+    assert_eq!(
+        names(crate::mob::enchant_random_loot_walk(&mut rng, "bow", 30)),
+        vec![("unbreaking", 3), ("mending", 1), ("vanishing_curse", 1)],
+        "the bow seed 514 the pool-tail pair wears"
+    );
+    let mut rng = crate::drops::Lcg::new(515);
+    assert_eq!(
+        names(crate::mob::enchant_random_loot_walk(&mut rng, "bow", 30)),
+        vec![("unbreaking", 3), ("power", 3)],
+        "the bow seed 515 the pair wears"
+    );
+    let mut rng = crate::drops::Lcg::new(513);
+    assert_eq!(
+        names(crate::mob::enchant_random_loot_walk(
+            &mut rng,
+            "fishing_rod",
+            30
+        )),
+        vec![("unbreaking", 3), ("lure", 2), ("luck_of_the_sea", 2)],
+        "the rod seed 513 the fishing trio wears"
+    );
+    let mut rng = crate::drops::Lcg::new(513);
+    assert_eq!(
+        names(crate::mob::enchant_random_loot_walk(&mut rng, "book", 30)),
+        vec![
+            ("fire_protection", 3),
+            ("quick_charge", 2),
+            ("sweeping_edge", 3)
+        ],
+        "the book seed 513 the is-book bypass trio wears"
+    );
+    let mut rng = crate::drops::Lcg::new(515);
+    assert_eq!(
+        names(crate::mob::enchant_random_loot_walk(&mut rng, "book", 30)),
+        vec![("efficiency", 3), ("multishot", 1)],
+        "the book seed 515 the cross-family pair wears"
+    );
+    // THE POOL'S OWN SHAPE (the 40 rows the tag expansion keeps — the
+    // four tail rows the walk's own mending/vanishing pins bank, the
+    // 200-seed multi-pick rate the census's own walk the count pins).
+    assert_eq!(
+        ench::TABLE_MEMBERS.len() + 4,
+        40,
+        "the 40 rows the pool keeps"
+    );
+    let multi = (0..200u64)
+        .filter(|s| {
+            crate::mob::enchant_random_loot_walk(&mut crate::drops::Lcg::new(*s), "bow", 30).len()
+                > 1
+        })
+        .count();
+    assert_eq!(
+        multi, 129,
+        "the 200-seed multi-pick rate the walk's own law wears"
+    );
+}

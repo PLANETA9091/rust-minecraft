@@ -1,0 +1,1720 @@
+== net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.class
+  METHOD <init> (Ljava/util/List;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;Ljava/util/Optional;Z)V  (code=22)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/level/storage/loot/functions/LootItemConditionalFunction.<init>:(Ljava/util/List;)V
+    5: aload_0
+    6: aload_2
+    7: putfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.levels:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    10: aload_0
+    11: aload_3
+    12: putfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.options:Ljava/util/Optional;
+    15: aload_0
+    16: iload 4
+    18: putfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.includeAdditionalCostComponent:Z
+    21: return
+  METHOD run (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/storage/loot/LootContext;)Lnet/minecraft/world/item/ItemStack;  (code=88)
+    0: aload_2
+    1: invokevirtual net/minecraft/world/level/storage/loot/LootContext.getRandom:()Lnet/minecraft/util/RandomSource;
+    4: astore_3
+    5: aload_2
+    6: invokevirtual net/minecraft/world/level/storage/loot/LootContext.getLevel:()Lnet/minecraft/server/level/ServerLevel;
+    9: invokevirtual net/minecraft/server/level/ServerLevel.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+    12: astore 4
+    14: aload_0
+    15: getfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.levels:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    18: aload_2
+    19: invokeinterface net/minecraft/world/level/storage/loot/providers/number/NumberProvider.getInt:(Lnet/minecraft/world/level/storage/loot/LootContext;)I
+    24: istore 5
+    26: aload_3
+    27: aload_1
+    28: iload 5
+    30: aload 4
+    32: aload_0
+    33: getfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.options:Ljava/util/Optional;
+    36: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.enchantItem:(Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/core/RegistryAccess;Ljava/util/Optional;)Lnet/minecraft/world/item/ItemStack;
+    39: astore 6
+    41: aload_0
+    42: getfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.includeAdditionalCostComponent:Z
+    45: ifeq 85
+    48: aload_2
+    49: getstatic net/minecraft/world/level/storage/loot/parameters/LootContextParams.ADDITIONAL_COST_COMPONENT_ALLOWED:Lnet/minecraft/util/context/ContextKey;
+    52: invokevirtual net/minecraft/world/level/storage/loot/LootContext.hasParameter:(Lnet/minecraft/util/context/ContextKey;)Z
+    55: ifeq 85
+    58: aload 6
+    60: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    63: ifne 85
+    66: iload 5
+    68: ifle 85
+    71: aload 6
+    73: getstatic net/minecraft/core/component/DataComponents.ADDITIONAL_TRADE_COST:Lnet/minecraft/core/component/DataComponentType;
+    76: iload 5
+    78: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    81: invokevirtual net/minecraft/world/item/ItemStack.set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+    84: pop
+    85: aload 6
+    87: areturn
+  METHOD lambda$static$0 (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;  (code=82)
+    0: aload_0
+    1: invokestatic net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.commonFields:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/Products$P1;
+    4: aload_0
+    5: getstatic net/minecraft/world/level/storage/loot/providers/number/NumberProviders.CODEC:Lcom/mojang/serialization/Codec;
+    8: ldc "levels"
+    10: invokeinterface com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    15: invokedynamic dynamic#0:apply
+    20: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    23: getstatic net/minecraft/core/registries/Registries.ENCHANTMENT:Lnet/minecraft/resources/ResourceKey;
+    26: invokestatic net/minecraft/core/RegistryCodecs.homogeneousList:(Lnet/minecraft/resources/ResourceKey;)Lcom/mojang/serialization/Codec;
+    29: ldc "options"
+    31: invokeinterface com/mojang/serialization/Codec.optionalFieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    36: invokedynamic dynamic#1:apply
+    41: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    44: getstatic com/mojang/serialization/Codec.BOOL:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+    47: ldc "include_additional_cost_component"
+    49: iconst_0
+    50: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    53: invokeinterface com/mojang/serialization/codecs/PrimitiveCodec.optionalFieldOf:(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;
+    58: invokedynamic dynamic#2:apply
+    63: invokevirtual com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    66: invokevirtual com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P3;
+    69: invokevirtual com/mojang/datafixers/Products$P1.and:(Lcom/mojang/datafixers/Products$P3;)Lcom/mojang/datafixers/Products$P4;
+    72: aload_0
+    73: invokedynamic dynamic#3:apply
+    78: invokevirtual com/mojang/datafixers/Products$P4.apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function4;)Lcom/mojang/datafixers/kinds/App;
+    81: areturn
+  METHOD lambda$static$3 (Lnet/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction;)Ljava/lang/Boolean;  (code=8)
+    0: aload_0
+    1: getfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.includeAdditionalCostComponent:Z
+    4: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    7: areturn
+  METHOD lambda$static$2 (Lnet/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction;)Ljava/util/Optional;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.options:Ljava/util/Optional;
+    4: areturn
+  METHOD lambda$static$1 (Lnet/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction;)Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;  (code=5)
+    0: aload_0
+    1: getfield net/minecraft/world/level/storage/loot/functions/EnchantWithLevelsFunction.levels:Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;
+    4: areturn
+
+
+
+== net/minecraft/world/item/enchantment/EnchantmentInstance.class
+  METHOD <init> (Lnet/minecraft/core/Holder;I)V  (code=15)
+    0: aload_0
+    1: invokespecial java/lang/Record.<init>:()V
+    4: aload_0
+    5: aload_1
+    6: putfield net/minecraft/world/item/enchantment/EnchantmentInstance.enchantment:Lnet/minecraft/core/Holder;
+    9: aload_0
+    10: iload_2
+    11: putfield net/minecraft/world/item/enchantment/EnchantmentInstance.level:I
+    14: return
+
+
+
+== net/minecraft/util/random/WeightedRandom.class
+  METHOD <init> ()V  (code=5)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: return
+  METHOD getTotalWeight (Ljava/util/List;Ljava/util/function/ToIntFunction;)I  (code=65)
+    0: lconst_0
+    1: lstore_2
+    2: aload_0
+    3: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    8: astore 4
+    10: aload 4
+    12: invokeinterface java/util/Iterator.hasNext:()Z
+    17: ifeq 44
+    20: aload 4
+    22: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    27: astore 5
+    29: op_20
+    30: aload_1
+    31: aload 5
+    33: invokeinterface java/util/function/ToIntFunction.applyAsInt:(Ljava/lang/Object;)I
+    38: i2l
+    39: ladd
+    40: lstore_2
+    41: goto 10
+    44: op_20
+    45: ldc2_w 2147483647
+    48: lcmp
+    49: ifle 62
+    52: new java/lang/IllegalArgumentException
+    55: dup
+    56: ldc "Sum of weights must be <= 2147483647"
+    58: invokespecial java/lang/IllegalArgumentException.<init>:(Ljava/lang/String;)V
+    61: athrow
+    62: op_20
+    63: i2s
+    64: ireturn
+  METHOD getRandomItem (Lnet/minecraft/util/RandomSource;Ljava/util/List;ILjava/util/function/ToIntFunction;)Ljava/util/Optional;  (code=45)
+    0: iload_2
+    1: ifge 20
+    4: new java/lang/IllegalArgumentException
+    7: dup
+    8: ldc "Negative total weight in getRandomItem"
+    10: invokespecial java/lang/IllegalArgumentException.<init>:(Ljava/lang/String;)V
+    13: invokestatic net/minecraft/util/Util.pauseInIde:(Ljava/lang/Throwable;)Ljava/lang/Throwable;
+    16: checkcast java/lang/IllegalArgumentException
+    19: athrow
+    20: iload_2
+    21: ifne 28
+    24: invokestatic java/util/Optional.empty:()Ljava/util/Optional;
+    27: areturn
+    28: aload_0
+    29: iload_2
+    30: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    35: istore 4
+    37: aload_1
+    38: iload 4
+    40: aload_3
+    41: invokestatic net/minecraft/util/random/WeightedRandom.getWeightedItem:(Ljava/util/List;ILjava/util/function/ToIntFunction;)Ljava/util/Optional;
+    44: areturn
+  METHOD getWeightedItem (Ljava/util/List;ILjava/util/function/ToIntFunction;)Ljava/util/Optional;  (code=52)
+    0: aload_0
+    1: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    6: astore_3
+    7: aload_3
+    8: invokeinterface java/util/Iterator.hasNext:()Z
+    13: ifeq 48
+    16: aload_3
+    17: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    22: astore 4
+    24: iload_1
+    25: aload_2
+    26: aload 4
+    28: invokeinterface java/util/function/ToIntFunction.applyAsInt:(Ljava/lang/Object;)I
+    33: isub
+    34: istore_1
+    35: iload_1
+    36: ifge 45
+    39: aload 4
+    41: invokestatic java/util/Optional.of:(Ljava/lang/Object;)Ljava/util/Optional;
+    44: areturn
+    45: goto 7
+    48: invokestatic java/util/Optional.empty:()Ljava/util/Optional;
+    51: areturn
+  METHOD getRandomItem (Lnet/minecraft/util/RandomSource;Ljava/util/List;Ljava/util/function/ToIntFunction;)Ljava/util/Optional;  (code=12)
+    0: aload_0
+    1: aload_1
+    2: aload_1
+    3: aload_2
+    4: invokestatic net/minecraft/util/random/WeightedRandom.getTotalWeight:(Ljava/util/List;Ljava/util/function/ToIntFunction;)I
+    7: aload_2
+    8: invokestatic net/minecraft/util/random/WeightedRandom.getRandomItem:(Lnet/minecraft/util/RandomSource;Ljava/util/List;ILjava/util/function/ToIntFunction;)Ljava/util/Optional;
+    11: areturn
+
+
+
+== net/minecraft/world/item/enchantment/EnchantmentHelper.class
+  METHOD <init> ()V  (code=5)
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>:()V
+    4: return
+  METHOD getEnchantmentCost (Lnet/minecraft/util/RandomSource;IILnet/minecraft/world/item/ItemStack;)I  (code=90)
+    0: aload_3
+    1: getstatic net/minecraft/core/component/DataComponents.ENCHANTABLE:Lnet/minecraft/core/component/DataComponentType;
+    4: invokevirtual net/minecraft/world/item/ItemStack.get:(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantable
+    10: astore 4
+    12: aload 4
+    14: ifnonnull 19
+    17: iconst_0
+    18: ireturn
+    19: iload_2
+    20: bipush 15
+    22: if_icmple 28
+    25: bipush 15
+    27: istore_2
+    28: aload_0
+    29: bipush 8
+    31: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    36: iconst_1
+    37: iadd
+    38: iload_2
+    39: iconst_1
+    40: ishr
+    41: iadd
+    42: aload_0
+    43: iload_2
+    44: iconst_1
+    45: iadd
+    46: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    51: iadd
+    52: istore 5
+    54: iload_1
+    55: ifne 67
+    58: iload 5
+    60: iconst_3
+    61: idiv
+    62: iconst_1
+    63: invokestatic java/lang/Math.max:(II)I
+    66: ireturn
+    67: iload_1
+    68: iconst_1
+    69: if_icmpne 81
+    72: iload 5
+    74: iconst_2
+    75: imul
+    76: iconst_3
+    77: idiv
+    78: iconst_1
+    79: iadd
+    80: ireturn
+    81: iload 5
+    83: iload_2
+    84: iconst_2
+    85: imul
+    86: invokestatic java/lang/Math.max:(II)I
+    89: ireturn
+  METHOD enchantItem (Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILnet/minecraft/core/RegistryAccess;Ljava/util/Optional;)Lnet/minecraft/world/item/ItemStack;  (code=29)
+    0: aload_0
+    1: aload_1
+    2: iload_2
+    3: aload 4
+    5: invokedynamic dynamic#36:apply
+    10: invokevirtual java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+    13: aload_3
+    14: invokedynamic dynamic#37:get
+    19: invokevirtual java/util/Optional.orElseGet:(Ljava/util/function/Supplier;)Ljava/lang/Object;
+    22: checkcast java/util/stream/Stream
+    25: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.enchantItem:(Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILjava/util/stream/Stream;)Lnet/minecraft/world/item/ItemStack;
+    28: areturn
+  METHOD enchantItem (Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILjava/util/stream/Stream;)Lnet/minecraft/world/item/ItemStack;  (code=80)
+    0: aload_0
+    1: aload_1
+    2: iload_2
+    3: aload_3
+    4: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.selectEnchantment:(Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILjava/util/stream/Stream;)Ljava/util/List;
+    7: astore 4
+    9: aload_1
+    10: getstatic net/minecraft/world/item/Items.BOOK:Lnet/minecraft/world/item/Item;
+    13: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    16: ifeq 30
+    19: new net/minecraft/world/item/ItemStack
+    22: dup
+    23: getstatic net/minecraft/world/item/Items.ENCHANTED_BOOK:Lnet/minecraft/world/item/Item;
+    26: invokespecial net/minecraft/world/item/ItemStack.<init>:(Lnet/minecraft/world/level/ItemLike;)V
+    29: astore_1
+    30: aload 4
+    32: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    37: astore 5
+    39: aload 5
+    41: invokeinterface java/util/Iterator.hasNext:()Z
+    46: ifeq 78
+    49: aload 5
+    51: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    56: checkcast net/minecraft/world/item/enchantment/EnchantmentInstance
+    59: astore 6
+    61: aload_1
+    62: aload 6
+    64: invokevirtual net/minecraft/world/item/enchantment/EnchantmentInstance.enchantment:()Lnet/minecraft/core/Holder;
+    67: aload 6
+    69: invokevirtual net/minecraft/world/item/enchantment/EnchantmentInstance.level:()I
+    72: invokevirtual net/minecraft/world/item/ItemStack.enchant:(Lnet/minecraft/core/Holder;I)V
+    75: goto 39
+    78: aload_1
+    79: areturn
+  METHOD selectEnchantment (Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;ILjava/util/stream/Stream;)Ljava/util/List;  (code=231)
+    0: invokestatic com/google/common/collect/Lists.newArrayList:()Ljava/util/ArrayList;
+    3: astore 4
+    5: aload_1
+    6: getstatic net/minecraft/core/component/DataComponents.ENCHANTABLE:Lnet/minecraft/core/component/DataComponentType;
+    9: invokevirtual net/minecraft/world/item/ItemStack.get:(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+    12: checkcast net/minecraft/world/item/enchantment/Enchantable
+    15: astore 5
+    17: aload 5
+    19: ifnonnull 25
+    22: aload 4
+    24: areturn
+    25: iload_2
+    26: iconst_1
+    27: aload_0
+    28: aload 5
+    30: invokevirtual net/minecraft/world/item/enchantment/Enchantable.value:()I
+    33: iconst_4
+    34: idiv
+    35: iconst_1
+    36: iadd
+    37: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    42: iadd
+    43: aload_0
+    44: aload 5
+    46: invokevirtual net/minecraft/world/item/enchantment/Enchantable.value:()I
+    49: iconst_4
+    50: idiv
+    51: iconst_1
+    52: iadd
+    53: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    58: iadd
+    59: iadd
+    60: istore_2
+    61: aload_0
+    62: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    67: aload_0
+    68: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    73: fadd
+    74: op_0c
+    75: fsub
+    76: ldc_w 0.15000000596046448f
+    79: fmul
+    80: fstore 6
+    82: iload_2
+    83: i2f
+    84: iload_2
+    85: i2f
+    86: op_17 6
+    88: fmul
+    89: fadd
+    90: invokestatic java/lang/Math.round:(F)I
+    93: iconst_1
+    94: ldc_w 2147483647
+    97: invokestatic net/minecraft/util/Mth.clamp:(III)I
+    100: istore_2
+    101: iload_2
+    102: aload_1
+    103: aload_3
+    104: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.getAvailableEnchantmentResults:(ILnet/minecraft/world/item/ItemStack;Ljava/util/stream/Stream;)Ljava/util/List;
+    107: astore 7
+    109: aload 7
+    111: invokeinterface java/util/List.isEmpty:()Z
+    116: ifne 228
+    119: aload_0
+    120: aload 7
+    122: invokedynamic dynamic#38:applyAsInt
+    127: invokestatic net/minecraft/util/random/WeightedRandom.getRandomItem:(Lnet/minecraft/util/RandomSource;Ljava/util/List;Ljava/util/function/ToIntFunction;)Ljava/util/Optional;
+    130: aload 4
+    132: dup
+    133: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+    136: pop
+    137: invokedynamic dynamic#39:accept
+    142: invokevirtual java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+    145: aload_0
+    146: bipush 50
+    148: invokeinterface net/minecraft/util/RandomSource.nextInt:(I)I
+    153: iload_2
+    154: if_icmpgt 228
+    157: aload 4
+    159: invokeinterface java/util/List.isEmpty:()Z
+    164: ifne 182
+    167: aload 7
+    169: aload 4
+    171: invokeinterface java/util/List.getLast:()Ljava/lang/Object;
+    176: checkcast net/minecraft/world/item/enchantment/EnchantmentInstance
+    179: invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.filterCompatibleEnchantments:(Ljava/util/List;Lnet/minecraft/world/item/enchantment/EnchantmentInstance;)V
+    182: aload 7
+    184: invokeinterface java/util/List.isEmpty:()Z
+    189: ifeq 195
+    192: goto 228
+    195: aload_0
+    196: aload 7
+    198: invokedynamic dynamic#38:applyAsInt
+    203: invokestatic net/minecraft/util/random/WeightedRandom.getRandomItem:(Lnet/minecraft/util/RandomSource;Ljava/util/List;Ljava/util/function/ToIntFunction;)Ljava/util/Optional;
+    206: aload 4
+    208: dup
+    209: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+    212: pop
+    213: invokedynamic dynamic#39:accept
+    218: invokevirtual java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+    221: iload_2
+    222: iconst_2
+    223: idiv
+    224: istore_2
+    225: goto 145
+    228: aload 4
+    230: areturn
+  METHOD filterCompatibleEnchantments (Ljava/util/List;Lnet/minecraft/world/item/enchantment/EnchantmentInstance;)V  (code=14)
+    0: aload_0
+    1: aload_1
+    2: invokedynamic dynamic#40:test
+    7: invokeinterface java/util/List.removeIf:(Ljava/util/function/Predicate;)Z
+    12: pop
+    13: return
+  METHOD isEnchantmentCompatible (Ljava/util/Collection;Lnet/minecraft/core/Holder;)Z  (code=41)
+    0: aload_0
+    1: invokeinterface java/util/Collection.iterator:()Ljava/util/Iterator;
+    6: astore_2
+    7: aload_2
+    8: invokeinterface java/util/Iterator.hasNext:()Z
+    13: ifeq 39
+    16: aload_2
+    17: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    22: checkcast net/minecraft/core/Holder
+    25: astore_3
+    26: aload_3
+    27: aload_1
+    28: invokestatic net/minecraft/world/item/enchantment/Enchantment.areCompatible:(Lnet/minecraft/core/Holder;Lnet/minecraft/core/Holder;)Z
+    31: ifne 36
+    34: iconst_0
+    35: ireturn
+    36: goto 7
+    39: iconst_1
+    40: ireturn
+  METHOD getAvailableEnchantmentResults (ILnet/minecraft/world/item/ItemStack;Ljava/util/stream/Stream;)Ljava/util/List;  (code=41)
+    0: invokestatic com/google/common/collect/Lists.newArrayList:()Ljava/util/ArrayList;
+    3: astore_3
+    4: aload_1
+    5: getstatic net/minecraft/world/item/Items.BOOK:Lnet/minecraft/world/item/Item;
+    8: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    11: istore 4
+    13: aload_2
+    14: aload_1
+    15: iload 4
+    17: invokedynamic dynamic#41:test
+    22: invokeinterface java/util/stream/Stream.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+    27: iload_0
+    28: aload_3
+    29: invokedynamic dynamic#42:accept
+    34: invokeinterface java/util/stream/Stream.forEach:(Ljava/util/function/Consumer;)V
+    39: aload_3
+    40: areturn
+  METHOD lambda$enchantItemFromProvider$0 (Lnet/minecraft/world/item/enchantment/providers/EnchantmentProvider;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/item/enchantment/ItemEnchantments$Mutable;)V  (code=12)
+    0: aload_0
+    1: aload_1
+    2: aload 4
+    4: aload_2
+    5: aload_3
+    6: invokeinterface net/minecraft/world/item/enchantment/providers/EnchantmentProvider.enchant:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/enchantment/ItemEnchantments$Mutable;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/DifficultyInstance;)V
+    11: return
+  METHOD lambda$getAvailableEnchantmentResults$1 (ILjava/util/List;Lnet/minecraft/core/Holder;)V  (code=72)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: astore_3
+    10: aload_3
+    11: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getMaxLevel:()I
+    14: istore 4
+    16: iload 4
+    18: aload_3
+    19: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getMinLevel:()I
+    22: if_icmplt 71
+    25: iload_0
+    26: aload_3
+    27: iload 4
+    29: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getMinCost:(I)I
+    32: if_icmplt 65
+    35: iload_0
+    36: aload_3
+    37: iload 4
+    39: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getMaxCost:(I)I
+    42: if_icmpgt 65
+    45: aload_1
+    46: new net/minecraft/world/item/enchantment/EnchantmentInstance
+    49: dup
+    50: aload_2
+    51: iload 4
+    53: invokespecial net/minecraft/world/item/enchantment/EnchantmentInstance.<init>:(Lnet/minecraft/core/Holder;I)V
+    56: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+    61: pop
+    62: goto 71
+    65: iinc 4 -1
+    68: goto 16
+    71: return
+  METHOD lambda$getAvailableEnchantmentResults$0 (Lnet/minecraft/world/item/ItemStack;ZLnet/minecraft/core/Holder;)Z  (code=26)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: invokevirtual net/minecraft/world/item/enchantment/Enchantment.isPrimaryItem:(Lnet/minecraft/world/item/ItemStack;)Z
+    13: ifne 20
+    16: iload_1
+    17: ifeq 24
+    20: iconst_1
+    21: goto 25
+    24: iconst_0
+    25: ireturn
+  METHOD lambda$filterCompatibleEnchantments$0 (Lnet/minecraft/world/item/enchantment/EnchantmentInstance;Lnet/minecraft/world/item/enchantment/EnchantmentInstance;)Z  (code=20)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/item/enchantment/EnchantmentInstance.enchantment:()Lnet/minecraft/core/Holder;
+    4: aload_1
+    5: invokevirtual net/minecraft/world/item/enchantment/EnchantmentInstance.enchantment:()Lnet/minecraft/core/Holder;
+    8: invokestatic net/minecraft/world/item/enchantment/Enchantment.areCompatible:(Lnet/minecraft/core/Holder;Lnet/minecraft/core/Holder;)Z
+    11: ifne 18
+    14: iconst_1
+    15: goto 19
+    18: iconst_0
+    19: ireturn
+  METHOD lambda$enchantItem$0 (Lnet/minecraft/core/RegistryAccess;)Ljava/util/stream/Stream;  (code=25)
+    0: aload_0
+    1: getstatic net/minecraft/core/registries/Registries.ENCHANTMENT:Lnet/minecraft/resources/ResourceKey;
+    4: invokeinterface net/minecraft/core/RegistryAccess.lookupOrThrow:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Registry;
+    9: invokeinterface net/minecraft/core/Registry.listElements:()Ljava/util/stream/Stream;
+    14: invokedynamic dynamic#44:apply
+    19: invokeinterface java/util/stream/Stream.map:(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+    24: areturn
+  METHOD lambda$enchantItem$1 (Lnet/minecraft/core/Holder$Reference;)Lnet/minecraft/core/Holder;  (code=2)
+    0: aload_0
+    1: areturn
+  METHOD lambda$getHighestLevel$0 (Lorg/apache/commons/lang3/mutable/MutableObject;Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/core/Holder;I)V  (code=66)
+    0: aload_0
+    1: invokevirtual org/apache/commons/lang3/mutable/MutableObject.get:()Ljava/lang/Object;
+    4: ifnull 27
+    7: aload_0
+    8: invokevirtual org/apache/commons/lang3/mutable/MutableObject.get:()Ljava/lang/Object;
+    11: checkcast com/mojang/datafixers/util/Pair
+    14: invokevirtual com/mojang/datafixers/util/Pair.getSecond:()Ljava/lang/Object;
+    17: checkcast java/lang/Integer
+    20: invokevirtual java/lang/Integer.intValue:()I
+    23: iload_3
+    24: if_icmpge 65
+    27: aload_2
+    28: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    33: checkcast net/minecraft/world/item/enchantment/Enchantment
+    36: invokevirtual net/minecraft/world/item/enchantment/Enchantment.effects:()Lnet/minecraft/core/component/DataComponentMap;
+    39: aload_1
+    40: invokeinterface net/minecraft/core/component/DataComponentMap.get:(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+    45: astore 4
+    47: aload 4
+    49: ifnull 65
+    52: aload_0
+    53: aload 4
+    55: iload_3
+    56: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    59: invokestatic com/mojang/datafixers/util/Pair.of:(Ljava/lang/Object;Ljava/lang/Object;)Lcom/mojang/datafixers/util/Pair;
+    62: invokevirtual org/apache/commons/lang3/mutable/MutableObject.setValue:(Ljava/lang/Object;)V
+    65: return
+  METHOD lambda$has$0 (Lnet/minecraft/core/component/DataComponentType;Lorg/apache/commons/lang3/mutable/MutableBoolean;Lnet/minecraft/core/Holder;I)V  (code=26)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: invokevirtual net/minecraft/world/item/enchantment/Enchantment.effects:()Lnet/minecraft/core/component/DataComponentMap;
+    12: aload_0
+    13: invokeinterface net/minecraft/core/component/DataComponentMap.has:(Lnet/minecraft/core/component/DataComponentType;)Z
+    18: ifeq 25
+    21: aload_1
+    22: invokevirtual org/apache/commons/lang3/mutable/MutableBoolean.setTrue:()V
+    25: return
+  METHOD lambda$getTridentSpinAttackStrength$0 (Lnet/minecraft/world/entity/LivingEntity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=19)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: invokevirtual net/minecraft/world/entity/LivingEntity.getRandom:()Lnet/minecraft/util/RandomSource;
+    13: iload_3
+    14: aload_1
+    15: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyTridentSpinAttackStrength:(Lnet/minecraft/util/RandomSource;ILorg/apache/commons/lang3/mutable/MutableFloat;)V
+    18: return
+  METHOD lambda$modifyCrossbowChargingTime$0 (Lnet/minecraft/world/entity/LivingEntity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=19)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: invokevirtual net/minecraft/world/entity/LivingEntity.getRandom:()Lnet/minecraft/util/RandomSource;
+    13: iload_3
+    14: aload_1
+    15: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyCrossbowChargeTime:(Lnet/minecraft/util/RandomSource;ILorg/apache/commons/lang3/mutable/MutableFloat;)V
+    18: return
+  METHOD lambda$getTridentReturnToOwnerAcceleration$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=20)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyTridentReturnToOwnerAcceleration:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    19: return
+  METHOD lambda$getFishingTimeReduction$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=20)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyFishingTimeReduction:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    19: return
+  METHOD lambda$getFishingLuckBonus$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=20)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyFishingLuckBonus:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    19: return
+  METHOD lambda$forEachModifier$2 (Lnet/minecraft/world/entity/EquipmentSlot;Ljava/util/function/BiConsumer;Lnet/minecraft/core/Holder;I)V  (code=30)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: getstatic net/minecraft/world/item/enchantment/EnchantmentEffectComponents.ATTRIBUTES:Lnet/minecraft/core/component/DataComponentType;
+    12: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getEffects:(Lnet/minecraft/core/component/DataComponentType;)Ljava/util/List;
+    15: aload_2
+    16: aload_0
+    17: aload_1
+    18: iload_3
+    19: invokedynamic dynamic#45:accept
+    24: invokeinterface java/util/List.forEach:(Ljava/util/function/Consumer;)V
+    29: return
+  METHOD lambda$forEachModifier$3 (Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/EquipmentSlot;Ljava/util/function/BiConsumer;ILnet/minecraft/world/item/enchantment/effects/EnchantmentAttributeEffect;)V  (code=35)
+    0: aload_0
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_1
+    10: invokevirtual net/minecraft/world/item/enchantment/Enchantment.matchingSlot:(Lnet/minecraft/world/entity/EquipmentSlot;)Z
+    13: ifeq 34
+    16: aload_2
+    17: aload 4
+    19: invokevirtual net/minecraft/world/item/enchantment/effects/EnchantmentAttributeEffect.attribute:()Lnet/minecraft/core/Holder;
+    22: aload 4
+    24: iload_3
+    25: aload_1
+    26: invokevirtual net/minecraft/world/item/enchantment/effects/EnchantmentAttributeEffect.getModifier:(ILnet/minecraft/util/StringRepresentable;)Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+    29: invokeinterface java/util/function/BiConsumer.accept:(Ljava/lang/Object;Ljava/lang/Object;)V
+    34: return
+  METHOD lambda$forEachModifier$0 (Lnet/minecraft/world/entity/EquipmentSlotGroup;Ljava/util/function/BiConsumer;Lnet/minecraft/core/Holder;I)V  (code=30)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: getstatic net/minecraft/world/item/enchantment/EnchantmentEffectComponents.ATTRIBUTES:Lnet/minecraft/core/component/DataComponentType;
+    12: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getEffects:(Lnet/minecraft/core/component/DataComponentType;)Ljava/util/List;
+    15: aload_2
+    16: aload_0
+    17: aload_1
+    18: iload_3
+    19: invokedynamic dynamic#46:accept
+    24: invokeinterface java/util/List.forEach:(Ljava/util/function/Consumer;)V
+    29: return
+  METHOD lambda$forEachModifier$1 (Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/EquipmentSlotGroup;Ljava/util/function/BiConsumer;ILnet/minecraft/world/item/enchantment/effects/EnchantmentAttributeEffect;)V  (code=43)
+    0: aload_0
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: invokevirtual net/minecraft/world/item/enchantment/Enchantment.definition:()Lnet/minecraft/world/item/enchantment/Enchantment$EnchantmentDefinition;
+    12: invokevirtual net/minecraft/world/item/enchantment/Enchantment$EnchantmentDefinition.slots:()Ljava/util/List;
+    15: aload_1
+    16: invokeinterface java/util/List.contains:(Ljava/lang/Object;)Z
+    21: ifeq 42
+    24: aload_2
+    25: aload 4
+    27: invokevirtual net/minecraft/world/item/enchantment/effects/EnchantmentAttributeEffect.attribute:()Lnet/minecraft/core/Holder;
+    30: aload 4
+    32: iload_3
+    33: aload_1
+    34: invokevirtual net/minecraft/world/item/enchantment/effects/EnchantmentAttributeEffect.getModifier:(ILnet/minecraft/util/StringRepresentable;)Lnet/minecraft/world/entity/ai/attributes/AttributeModifier;
+    37: invokeinterface java/util/function/BiConsumer.accept:(Ljava/lang/Object;Ljava/lang/Object;)V
+    42: return
+  METHOD lambda$processEquipmentDropChance$2 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=44)
+    0: aload_0
+    1: iload 6
+    3: aload_1
+    4: aload_2
+    5: invokestatic net/minecraft/world/item/enchantment/Enchantment.damageContext:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/world/level/storage/loot/LootContext;
+    8: astore 8
+    10: aload 5
+    12: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    17: checkcast net/minecraft/world/item/enchantment/Enchantment
+    20: getstatic net/minecraft/world/item/enchantment/EnchantmentEffectComponents.EQUIPMENT_DROPS:Lnet/minecraft/core/component/DataComponentType;
+    23: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getEffects:(Lnet/minecraft/core/component/DataComponentType;)Ljava/util/List;
+    26: aload 8
+    28: aload_3
+    29: iload 6
+    31: aload 4
+    33: invokedynamic dynamic#47:accept
+    38: invokeinterface java/util/List.forEach:(Ljava/util/function/Consumer;)V
+    43: return
+  METHOD lambda$processEquipmentDropChance$3 (Lnet/minecraft/world/level/storage/loot/LootContext;Lorg/apache/commons/lang3/mutable/MutableFloat;ILnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/enchantment/TargetedConditionalEffect;)V  (code=55)
+    0: aload 4
+    2: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.enchanted:()Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    5: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.ATTACKER:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    8: if_acmpne 54
+    11: aload 4
+    13: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.affected:()Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    16: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.VICTIM:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    19: if_acmpne 54
+    22: aload 4
+    24: aload_0
+    25: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.matches:(Lnet/minecraft/world/level/storage/loot/LootContext;)Z
+    28: ifeq 54
+    31: aload_1
+    32: aload 4
+    34: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.effect:()Ljava/lang/Object;
+    37: checkcast net/minecraft/world/item/enchantment/effects/EnchantmentValueEffect
+    40: iload_2
+    41: aload_3
+    42: aload_1
+    43: invokevirtual org/apache/commons/lang3/mutable/MutableFloat.floatValue:()F
+    46: invokeinterface net/minecraft/world/item/enchantment/effects/EnchantmentValueEffect.process:(ILnet/minecraft/util/RandomSource;F)F
+    51: invokevirtual org/apache/commons/lang3/mutable/MutableFloat.setValue:(F)V
+    54: return
+  METHOD lambda$processEquipmentDropChance$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=44)
+    0: aload_0
+    1: iload 6
+    3: aload_1
+    4: aload_2
+    5: invokestatic net/minecraft/world/item/enchantment/Enchantment.damageContext:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/world/level/storage/loot/LootContext;
+    8: astore 8
+    10: aload 5
+    12: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    17: checkcast net/minecraft/world/item/enchantment/Enchantment
+    20: getstatic net/minecraft/world/item/enchantment/EnchantmentEffectComponents.EQUIPMENT_DROPS:Lnet/minecraft/core/component/DataComponentType;
+    23: invokevirtual net/minecraft/world/item/enchantment/Enchantment.getEffects:(Lnet/minecraft/core/component/DataComponentType;)Ljava/util/List;
+    26: aload 8
+    28: aload_3
+    29: iload 6
+    31: aload 4
+    33: invokedynamic dynamic#48:accept
+    38: invokeinterface java/util/List.forEach:(Ljava/util/function/Consumer;)V
+    43: return
+  METHOD lambda$processEquipmentDropChance$1 (Lnet/minecraft/world/level/storage/loot/LootContext;Lorg/apache/commons/lang3/mutable/MutableFloat;ILnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/enchantment/TargetedConditionalEffect;)V  (code=55)
+    0: aload 4
+    2: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.enchanted:()Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    5: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.VICTIM:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    8: if_acmpne 54
+    11: aload 4
+    13: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.affected:()Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    16: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.VICTIM:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    19: if_acmpne 54
+    22: aload 4
+    24: aload_0
+    25: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.matches:(Lnet/minecraft/world/level/storage/loot/LootContext;)Z
+    28: ifeq 54
+    31: aload_1
+    32: aload 4
+    34: invokevirtual net/minecraft/world/item/enchantment/TargetedConditionalEffect.effect:()Ljava/lang/Object;
+    37: checkcast net/minecraft/world/item/enchantment/effects/EnchantmentValueEffect
+    40: iload_2
+    41: aload_3
+    42: aload_1
+    43: invokevirtual org/apache/commons/lang3/mutable/MutableFloat.floatValue:()F
+    46: invokeinterface net/minecraft/world/item/enchantment/effects/EnchantmentValueEffect.process:(ILnet/minecraft/util/RandomSource;F)F
+    51: invokevirtual org/apache/commons/lang3/mutable/MutableFloat.setValue:(F)V
+    54: return
+  METHOD lambda$modifyDurabilityToRepairFromXp$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=18)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload_1
+    13: aload_2
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyDurabilityToRepairFromXp:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    17: return
+  METHOD lambda$onHitBlock$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Holder;I)V  (code=22)
+    0: aload 5
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 6
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: aload 4
+    18: invokevirtual net/minecraft/world/item/enchantment/Enchantment.onHitBlock:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/block/state/BlockState;)V
+    21: return
+  METHOD lambda$onProjectileSpawned$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/projectile/Projectile;Lnet/minecraft/core/Holder;I)V  (code=18)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload_1
+    13: aload_2
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.onProjectileSpawned:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/Entity;)V
+    17: return
+  METHOD lambda$getPiercingCount$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=18)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload_1
+    13: aload_2
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyPiercingCount:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    17: return
+  METHOD lambda$processProjectileSpread$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=20)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyProjectileSpread:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    19: return
+  METHOD lambda$processProjectileCount$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=20)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyProjectileCount:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    19: return
+  METHOD lambda$tickEffects$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=18)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload_3
+    11: aload 4
+    13: aload_1
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.tick:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/Entity;)V
+    17: return
+  METHOD lambda$stopLocationBasedEffects$1 (Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=16)
+    0: aload_1
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: iload_2
+    10: aload_3
+    11: aload_0
+    12: invokevirtual net/minecraft/world/item/enchantment/Enchantment.stopLocationBasedEffects:(ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/LivingEntity;)V
+    15: return
+  METHOD lambda$stopLocationBasedEffects$0 (Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=16)
+    0: aload_1
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: iload_2
+    10: aload_3
+    11: aload_0
+    12: invokevirtual net/minecraft/world/item/enchantment/Enchantment.stopLocationBasedEffects:(ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/LivingEntity;)V
+    15: return
+  METHOD lambda$runLocationChangedEffects$1 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=18)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload_3
+    11: aload 4
+    13: aload_1
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.runLocationChangedEffects:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/LivingEntity;)V
+    17: return
+  METHOD lambda$runLocationChangedEffects$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=18)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload_3
+    11: aload 4
+    13: aload_1
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.runLocationChangedEffects:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/LivingEntity;)V
+    17: return
+  METHOD lambda$doPostAttackEffectsWithItemSourceOnBreak$2 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/core/Holder;I)V  (code=23)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload_1
+    14: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.ATTACKER:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    17: aload_2
+    18: aload_3
+    19: invokevirtual net/minecraft/world/item/enchantment/Enchantment.doPostAttack:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/item/enchantment/EnchantmentTarget;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V
+    22: return
+  METHOD lambda$doPostAttackEffectsWithItemSourceOnBreak$1 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=23)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload 5
+    14: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.ATTACKER:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    17: aload_1
+    18: aload_2
+    19: invokevirtual net/minecraft/world/item/enchantment/Enchantment.doPostAttack:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/item/enchantment/EnchantmentTarget;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V
+    22: return
+  METHOD lambda$doPostAttackEffectsWithItemSourceOnBreak$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=23)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload 5
+    14: getstatic net/minecraft/world/item/enchantment/EnchantmentTarget.VICTIM:Lnet/minecraft/world/item/enchantment/EnchantmentTarget;
+    17: aload_1
+    18: aload_2
+    19: invokevirtual net/minecraft/world/item/enchantment/Enchantment.doPostAttack:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/item/enchantment/EnchantmentTarget;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V
+    22: return
+  METHOD lambda$doPostPiercingAttackEffects$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=18)
+    0: aload_2
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload_3
+    11: aload 4
+    13: aload_1
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.doPostPiercingAttack:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;Lnet/minecraft/world/entity/Entity;)V
+    17: return
+  METHOD lambda$modifyKnockback$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=22)
+    0: aload 5
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 6
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: aload 4
+    18: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyKnockback:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    21: return
+  METHOD lambda$modifyArmorEffectiveness$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=22)
+    0: aload 5
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 6
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: aload 4
+    18: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyArmorEffectivness:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    21: return
+  METHOD lambda$modifyFallBasedDamage$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=22)
+    0: aload 5
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 6
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: aload 4
+    18: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyFallBasedDamage:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    21: return
+  METHOD lambda$modifyDamage$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=22)
+    0: aload 5
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 6
+    13: aload_1
+    14: aload_2
+    15: aload_3
+    16: aload 4
+    18: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyDamage:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    21: return
+  METHOD lambda$getDamageProtection$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=25)
+    0: aload 4
+    2: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    7: checkcast net/minecraft/world/item/enchantment/Enchantment
+    10: aload_0
+    11: iload 5
+    13: aload 6
+    15: invokevirtual net/minecraft/world/item/enchantment/EnchantedItemInUse.itemStack:()Lnet/minecraft/world/item/ItemStack;
+    18: aload_1
+    19: aload_2
+    20: aload_3
+    21: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyDamageProtection:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    24: return
+  METHOD lambda$isImmuneToDamage$0 (Lorg/apache/commons/lang3/mutable/MutableBoolean;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=38)
+    0: aload_0
+    1: aload_0
+    2: invokevirtual org/apache/commons/lang3/mutable/MutableBoolean.isTrue:()Z
+    5: ifne 29
+    8: aload 4
+    10: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    15: checkcast net/minecraft/world/item/enchantment/Enchantment
+    18: aload_1
+    19: iload 5
+    21: aload_2
+    22: aload_3
+    23: invokevirtual net/minecraft/world/item/enchantment/Enchantment.isImmuneToDamage:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)Z
+    26: ifeq 33
+    29: iconst_1
+    30: goto 34
+    33: iconst_0
+    34: invokevirtual org/apache/commons/lang3/mutable/MutableBoolean.setValue:(Z)V
+    37: return
+  METHOD lambda$processMobExperience$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;ILnet/minecraft/world/item/enchantment/EnchantedItemInUse;)V  (code=23)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload 5
+    14: invokevirtual net/minecraft/world/item/enchantment/EnchantedItemInUse.itemStack:()Lnet/minecraft/world/item/ItemStack;
+    17: aload_1
+    18: aload_2
+    19: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyMobExperience:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    22: return
+  METHOD lambda$processBlockExperience$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=18)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload_1
+    13: aload_2
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyBlockExperience:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    17: return
+  METHOD lambda$processAmmoUse$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=18)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload_1
+    13: aload_2
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyAmmoCount:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    17: return
+  METHOD lambda$processDurabilityChange$0 (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/core/Holder;I)V  (code=18)
+    0: aload_3
+    1: invokeinterface net/minecraft/core/Holder.value:()Ljava/lang/Object;
+    6: checkcast net/minecraft/world/item/enchantment/Enchantment
+    9: aload_0
+    10: iload 4
+    12: aload_1
+    13: aload_2
+    14: invokevirtual net/minecraft/world/item/enchantment/Enchantment.modifyDurabilityChange:(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lorg/apache/commons/lang3/mutable/MutableFloat;)V
+    17: return
+
+
+
+== Items.<clinit> windows ('FISHING_ROD', 'BOW', 'BOOK', 'WRITABLE_BOOK')
+  == <clinit> window pc~9637 (putstatic net/minecraft/world/item/Items.BOW:Lnet/minecraft/world/item) ==
+    9406: putstatic net/minecraft/world/item/Items.JIGSAW:Lnet/minecraft/world/item/Item;
+    9409: getstatic net/minecraft/references/BlockItemIds.TEST_BLOCK:Lnet/minecraft/references/BlockItemId;
+    9412: getstatic net/minecraft/world/level/block/Blocks.TEST_BLOCK:Lnet/minecraft/world/level/block/Block;
+    9415: invokedynamic dynamic#35:apply
+    9420: new net/minecraft/world/item/Item$Properties
+    9423: dup
+    9424: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9427: getstatic net/minecraft/world/item/Rarity.EPIC:Lnet/minecraft/world/item/Rarity;
+    9430: invokevirtual net/minecraft/world/item/Item$Properties.rarity:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+    9433: getstatic net/minecraft/core/component/DataComponents.BLOCK_STATE:Lnet/minecraft/core/component/DataComponentType;
+    9436: getstatic net/minecraft/world/item/component/BlockItemStateProperties.EMPTY:Lnet/minecraft/world/item/component/BlockItemStateProperties;
+    9439: getstatic net/minecraft/world/level/block/TestBlock.MODE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    9442: getstatic net/minecraft/world/level/block/state/properties/TestBlockMode.START:Lnet/minecraft/world/level/block/state/properties/TestBlockMode;
+    9445: invokevirtual net/minecraft/world/item/component/BlockItemStateProperties.with:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Lnet/minecraft/world/item/component/BlockItemStateProperties;
+    9448: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    9451: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;Ljava/util/function/BiFunction;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9454: putstatic net/minecraft/world/item/Items.TEST_BLOCK:Lnet/minecraft/world/item/Item;
+    9457: getstatic net/minecraft/references/BlockItemIds.TEST_INSTANCE_BLOCK:Lnet/minecraft/references/BlockItemId;
+    9460: getstatic net/minecraft/world/level/block/Blocks.TEST_INSTANCE_BLOCK:Lnet/minecraft/world/level/block/Block;
+    9463: invokedynamic dynamic#35:apply
+    9468: new net/minecraft/world/item/Item$Properties
+    9471: dup
+    9472: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9475: getstatic net/minecraft/world/item/Rarity.EPIC:Lnet/minecraft/world/item/Rarity;
+    9478: invokevirtual net/minecraft/world/item/Item$Properties.rarity:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+    9481: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;Ljava/util/function/BiFunction;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9484: putstatic net/minecraft/world/item/Items.TEST_INSTANCE_BLOCK:Lnet/minecraft/world/item/Item;
+    9487: getstatic net/minecraft/references/ItemIds.TURTLE_HELMET:Lnet/minecraft/resources/ResourceKey;
+    9490: new net/minecraft/world/item/Item$Properties
+    9493: dup
+    9494: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9497: getstatic net/minecraft/world/item/equipment/ArmorMaterials.TURTLE_SCUTE:Lnet/minecraft/world/item/equipment/ArmorMaterial;
+    9500: getstatic net/minecraft/world/item/equipment/ArmorType.HELMET:Lnet/minecraft/world/item/equipment/ArmorType;
+    9503: invokevirtual net/minecraft/world/item/Item$Properties.humanoidArmor:(Lnet/minecraft/world/item/equipment/ArmorMaterial;Lnet/minecraft/world/item/equipment/ArmorType;)Lnet/minecraft/world/item/Item$Properties;
+    9506: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9509: putstatic net/minecraft/world/item/Items.TURTLE_HELMET:Lnet/minecraft/world/item/Item;
+    9512: getstatic net/minecraft/references/ItemIds.TURTLE_SCUTE:Lnet/minecraft/resources/ResourceKey;
+    9515: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9518: putstatic net/minecraft/world/item/Items.TURTLE_SCUTE:Lnet/minecraft/world/item/Item;
+    9521: getstatic net/minecraft/references/ItemIds.ARMADILLO_SCUTE:Lnet/minecraft/resources/ResourceKey;
+    9524: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9527: putstatic net/minecraft/world/item/Items.ARMADILLO_SCUTE:Lnet/minecraft/world/item/Item;
+    9530: getstatic net/minecraft/references/ItemIds.WOLF_ARMOR:Lnet/minecraft/resources/ResourceKey;
+    9533: new net/minecraft/world/item/Item$Properties
+    9536: dup
+    9537: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9540: getstatic net/minecraft/world/item/equipment/ArmorMaterials.ARMADILLO_SCUTE:Lnet/minecraft/world/item/equipment/ArmorMaterial;
+    9543: invokevirtual net/minecraft/world/item/Item$Properties.wolfArmor:(Lnet/minecraft/world/item/equipment/ArmorMaterial;)Lnet/minecraft/world/item/Item$Properties;
+    9546: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9549: putstatic net/minecraft/world/item/Items.WOLF_ARMOR:Lnet/minecraft/world/item/Item;
+    9552: getstatic net/minecraft/references/ItemIds.FLINT_AND_STEEL:Lnet/minecraft/resources/ResourceKey;
+    9555: invokedynamic dynamic#91:apply
+    9560: new net/minecraft/world/item/Item$Properties
+    9563: dup
+    9564: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9567: bipush 64
+    9569: invokevirtual net/minecraft/world/item/Item$Properties.durability:(I)Lnet/minecraft/world/item/Item$Properties;
+    9572: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9575: putstatic net/minecraft/world/item/Items.FLINT_AND_STEEL:Lnet/minecraft/world/item/Item;
+    9578: getstatic net/minecraft/references/ItemIds.BOWL:Lnet/minecraft/resources/ResourceKey;
+    9581: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9584: putstatic net/minecraft/world/item/Items.BOWL:Lnet/minecraft/world/item/Item;
+    9587: getstatic net/minecraft/references/ItemIds.APPLE:Lnet/minecraft/resources/ResourceKey;
+    9590: new net/minecraft/world/item/Item$Properties
+    9593: dup
+    9594: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9597: getstatic net/minecraft/world/food/Foods.APPLE:Lnet/minecraft/world/food/FoodProperties;
+    9600: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    9603: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9606: putstatic net/minecraft/world/item/Items.APPLE:Lnet/minecraft/world/item/Item;
+    9609: getstatic net/minecraft/references/ItemIds.BOW:Lnet/minecraft/resources/ResourceKey;
+    9612: invokedynamic dynamic#92:apply
+    9617: new net/minecraft/world/item/Item$Properties
+    9620: dup
+    9621: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9624: sipush 384
+    9627: invokevirtual net/minecraft/world/item/Item$Properties.durability:(I)Lnet/minecraft/world/item/Item$Properties;
+    9630: iconst_1
+    9631: invokevirtual net/minecraft/world/item/Item$Properties.enchantable:(I)Lnet/minecraft/world/item/Item$Properties;
+    9634: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9637: putstatic net/minecraft/world/item/Items.BOW:Lnet/minecraft/world/item/Item;
+    9640: getstatic net/minecraft/references/ItemIds.ARROW:Lnet/minecraft/resources/ResourceKey;
+    9643: invokedynamic dynamic#93:apply
+    9648: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    9651: putstatic net/minecraft/world/item/Items.ARROW:Lnet/minecraft/world/item/Item;
+    9654: getstatic net/minecraft/references/ItemIds.COAL:Lnet/minecraft/resources/ResourceKey;
+    9657: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9660: putstatic net/minecraft/world/item/Items.COAL:Lnet/minecraft/world/item/Item;
+    9663: getstatic net/minecraft/references/ItemIds.CHARCOAL:Lnet/minecraft/resources/ResourceKey;
+    9666: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9669: putstatic net/minecraft/world/item/Items.CHARCOAL:Lnet/minecraft/world/item/Item;
+    9672: getstatic net/minecraft/references/ItemIds.DIAMOND:Lnet/minecraft/resources/ResourceKey;
+    9675: new net/minecraft/world/item/Item$Properties
+    9678: dup
+    9679: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9682: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.DIAMOND:Lnet/minecraft/resources/ResourceKey;
+    9685: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9688: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9691: putstatic net/minecraft/world/item/Items.DIAMOND:Lnet/minecraft/world/item/Item;
+    9694: getstatic net/minecraft/references/ItemIds.EMERALD:Lnet/minecraft/resources/ResourceKey;
+    9697: new net/minecraft/world/item/Item$Properties
+    9700: dup
+    9701: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9704: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.EMERALD:Lnet/minecraft/resources/ResourceKey;
+    9707: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9710: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9713: putstatic net/minecraft/world/item/Items.EMERALD:Lnet/minecraft/world/item/Item;
+    9716: getstatic net/minecraft/references/ItemIds.LAPIS_LAZULI:Lnet/minecraft/resources/ResourceKey;
+    9719: new net/minecraft/world/item/Item$Properties
+    9722: dup
+    9723: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9726: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.LAPIS:Lnet/minecraft/resources/ResourceKey;
+    9729: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9732: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9735: putstatic net/minecraft/world/item/Items.LAPIS_LAZULI:Lnet/minecraft/world/item/Item;
+    9738: getstatic net/minecraft/references/ItemIds.QUARTZ:Lnet/minecraft/resources/ResourceKey;
+    9741: new net/minecraft/world/item/Item$Properties
+    9744: dup
+    9745: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9748: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.QUARTZ:Lnet/minecraft/resources/ResourceKey;
+    9751: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9754: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9757: putstatic net/minecraft/world/item/Items.QUARTZ:Lnet/minecraft/world/item/Item;
+    9760: getstatic net/minecraft/references/ItemIds.AMETHYST_SHARD:Lnet/minecraft/resources/ResourceKey;
+    9763: new net/minecraft/world/item/Item$Properties
+    9766: dup
+    9767: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9770: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.AMETHYST:Lnet/minecraft/resources/ResourceKey;
+    9773: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9776: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9779: putstatic net/minecraft/world/item/Items.AMETHYST_SHARD:Lnet/minecraft/world/item/Item;
+    9782: getstatic net/minecraft/references/ItemIds.RAW_IRON:Lnet/minecraft/resources/ResourceKey;
+    9785: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9788: putstatic net/minecraft/world/item/Items.RAW_IRON:Lnet/minecraft/world/item/Item;
+    9791: getstatic net/minecraft/references/ItemIds.IRON_INGOT:Lnet/minecraft/resources/ResourceKey;
+    9794: new net/minecraft/world/item/Item$Properties
+    9797: dup
+    9798: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9801: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.IRON:Lnet/minecraft/resources/ResourceKey;
+    9804: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9807: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9810: putstatic net/minecraft/world/item/Items.IRON_INGOT:Lnet/minecraft/world/item/Item;
+    9813: getstatic net/minecraft/references/ItemIds.RAW_COPPER:Lnet/minecraft/resources/ResourceKey;
+    9816: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9819: putstatic net/minecraft/world/item/Items.RAW_COPPER:Lnet/minecraft/world/item/Item;
+    9822: getstatic net/minecraft/references/ItemIds.COPPER_INGOT:Lnet/minecraft/resources/ResourceKey;
+    9825: new net/minecraft/world/item/Item$Properties
+    9828: dup
+    9829: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    9832: getstatic net/minecraft/world/item/equipment/trim/TrimMaterials.COPPER:Lnet/minecraft/resources/ResourceKey;
+    9835: invokevirtual net/minecraft/world/item/Item$Properties.trimMaterial:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    9838: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    9841: putstatic net/minecraft/world/item/Items.COPPER_INGOT:Lnet/minecraft/world/item/Item;
+    9844: getstatic net/minecraft/references/ItemIds.RAW_GOLD:Lnet/minecraft/resources/ResourceKey;
+    9847: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    9850: putstatic net/minecraft/world/item/Items.RAW_GOLD:Lnet/minecraft/world/item/Item;
+    9853: getstatic net/minecraft/references/ItemIds.GOLD_INGOT:Lnet/minecraft/resources/ResourceKey;
+    9856: new net/minecraft/world/item/Item$Properties
+    9859: dup
+    9860: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+
+  == <clinit> window pc~12827 (putstatic net/minecraft/world/item/Items.BOOK:Lnet/minecraft/world/ite) ==
+    12599: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12602: getstatic net/minecraft/core/component/DataComponents.BUCKET_ENTITY_DATA:Lnet/minecraft/core/component/DataComponentType;
+    12605: getstatic net/minecraft/world/item/component/CustomData.EMPTY:Lnet/minecraft/world/item/component/CustomData;
+    12608: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12611: getstatic net/minecraft/core/component/DataComponents.FOOD:Lnet/minecraft/core/component/DataComponentType;
+    12614: getstatic net/minecraft/world/food/Foods.COD:Lnet/minecraft/world/food/FoodProperties;
+    12617: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12620: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12623: putstatic net/minecraft/world/item/Items.COD_BUCKET:Lnet/minecraft/world/item/Item;
+    12626: getstatic net/minecraft/references/ItemIds.TROPICAL_FISH_BUCKET:Lnet/minecraft/resources/ResourceKey;
+    12629: invokedynamic dynamic#148:apply
+    12634: new net/minecraft/world/item/Item$Properties
+    12637: dup
+    12638: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12641: iconst_1
+    12642: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12645: getstatic net/minecraft/core/component/DataComponents.BUCKET_ENTITY_DATA:Lnet/minecraft/core/component/DataComponentType;
+    12648: getstatic net/minecraft/world/item/component/CustomData.EMPTY:Lnet/minecraft/world/item/component/CustomData;
+    12651: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12654: getstatic net/minecraft/core/component/DataComponents.FOOD:Lnet/minecraft/core/component/DataComponentType;
+    12657: getstatic net/minecraft/world/food/Foods.TROPICAL_FISH:Lnet/minecraft/world/food/FoodProperties;
+    12660: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12663: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12666: putstatic net/minecraft/world/item/Items.TROPICAL_FISH_BUCKET:Lnet/minecraft/world/item/Item;
+    12669: getstatic net/minecraft/references/ItemIds.AXOLOTL_BUCKET:Lnet/minecraft/resources/ResourceKey;
+    12672: invokedynamic dynamic#149:apply
+    12677: new net/minecraft/world/item/Item$Properties
+    12680: dup
+    12681: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12684: iconst_1
+    12685: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12688: getstatic net/minecraft/core/component/DataComponents.BUCKET_ENTITY_DATA:Lnet/minecraft/core/component/DataComponentType;
+    12691: getstatic net/minecraft/world/item/component/CustomData.EMPTY:Lnet/minecraft/world/item/component/CustomData;
+    12694: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12697: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12700: putstatic net/minecraft/world/item/Items.AXOLOTL_BUCKET:Lnet/minecraft/world/item/Item;
+    12703: getstatic net/minecraft/references/ItemIds.SULFUR_CUBE_BUCKET:Lnet/minecraft/resources/ResourceKey;
+    12706: invokedynamic dynamic#150:apply
+    12711: new net/minecraft/world/item/Item$Properties
+    12714: dup
+    12715: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12718: iconst_1
+    12719: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12722: getstatic net/minecraft/core/component/DataComponents.BUCKET_ENTITY_DATA:Lnet/minecraft/core/component/DataComponentType;
+    12725: getstatic net/minecraft/world/item/component/CustomData.EMPTY:Lnet/minecraft/world/item/component/CustomData;
+    12728: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12731: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12734: putstatic net/minecraft/world/item/Items.SULFUR_CUBE_BUCKET:Lnet/minecraft/world/item/Item;
+    12737: getstatic net/minecraft/references/ItemIds.TADPOLE_BUCKET:Lnet/minecraft/resources/ResourceKey;
+    12740: invokedynamic dynamic#151:apply
+    12745: new net/minecraft/world/item/Item$Properties
+    12748: dup
+    12749: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12752: iconst_1
+    12753: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12756: getstatic net/minecraft/core/component/DataComponents.BUCKET_ENTITY_DATA:Lnet/minecraft/core/component/DataComponentType;
+    12759: getstatic net/minecraft/world/item/component/CustomData.EMPTY:Lnet/minecraft/world/item/component/CustomData;
+    12762: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    12765: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12768: putstatic net/minecraft/world/item/Items.TADPOLE_BUCKET:Lnet/minecraft/world/item/Item;
+    12771: getstatic net/minecraft/references/ItemIds.BRICK:Lnet/minecraft/resources/ResourceKey;
+    12774: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    12777: putstatic net/minecraft/world/item/Items.BRICK:Lnet/minecraft/world/item/Item;
+    12780: getstatic net/minecraft/references/ItemIds.CLAY_BALL:Lnet/minecraft/resources/ResourceKey;
+    12783: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    12786: putstatic net/minecraft/world/item/Items.CLAY_BALL:Lnet/minecraft/world/item/Item;
+    12789: getstatic net/minecraft/references/BlockItemIds.DRIED_KELP_BLOCK:Lnet/minecraft/references/BlockItemId;
+    12792: getstatic net/minecraft/world/level/block/Blocks.DRIED_KELP_BLOCK:Lnet/minecraft/world/level/block/Block;
+    12795: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+    12798: putstatic net/minecraft/world/item/Items.DRIED_KELP_BLOCK:Lnet/minecraft/world/item/Item;
+    12801: getstatic net/minecraft/references/ItemIds.PAPER:Lnet/minecraft/resources/ResourceKey;
+    12804: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    12807: putstatic net/minecraft/world/item/Items.PAPER:Lnet/minecraft/world/item/Item;
+    12810: getstatic net/minecraft/references/ItemIds.BOOK:Lnet/minecraft/resources/ResourceKey;
+    12813: new net/minecraft/world/item/Item$Properties
+    12816: dup
+    12817: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12820: iconst_1
+    12821: invokevirtual net/minecraft/world/item/Item$Properties.enchantable:(I)Lnet/minecraft/world/item/Item$Properties;
+    12824: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12827: putstatic net/minecraft/world/item/Items.BOOK:Lnet/minecraft/world/item/Item;
+    12830: getstatic net/minecraft/references/ItemIds.SLIME_BALL:Lnet/minecraft/resources/ResourceKey;
+    12833: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    12836: putstatic net/minecraft/world/item/Items.SLIME_BALL:Lnet/minecraft/world/item/Item;
+    12839: getstatic net/minecraft/references/ItemIds.EGG:Lnet/minecraft/resources/ResourceKey;
+    12842: invokedynamic dynamic#152:apply
+    12847: new net/minecraft/world/item/Item$Properties
+    12850: dup
+    12851: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12854: bipush 16
+    12856: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12859: getstatic net/minecraft/core/component/DataComponents.CHICKEN_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    12862: getstatic net/minecraft/world/entity/animal/chicken/ChickenVariants.TEMPERATE:Lnet/minecraft/resources/ResourceKey;
+    12865: invokevirtual net/minecraft/world/item/Item$Properties.delayedHolderComponent:(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    12868: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12871: putstatic net/minecraft/world/item/Items.EGG:Lnet/minecraft/world/item/Item;
+    12874: getstatic net/minecraft/references/ItemIds.BLUE_EGG:Lnet/minecraft/resources/ResourceKey;
+    12877: invokedynamic dynamic#152:apply
+    12882: new net/minecraft/world/item/Item$Properties
+    12885: dup
+    12886: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12889: bipush 16
+    12891: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12894: getstatic net/minecraft/core/component/DataComponents.CHICKEN_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    12897: getstatic net/minecraft/world/entity/animal/chicken/ChickenVariants.COLD:Lnet/minecraft/resources/ResourceKey;
+    12900: invokevirtual net/minecraft/world/item/Item$Properties.delayedHolderComponent:(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    12903: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12906: putstatic net/minecraft/world/item/Items.BLUE_EGG:Lnet/minecraft/world/item/Item;
+    12909: getstatic net/minecraft/references/ItemIds.BROWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    12912: invokedynamic dynamic#152:apply
+    12917: new net/minecraft/world/item/Item$Properties
+    12920: dup
+    12921: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12924: bipush 16
+    12926: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12929: getstatic net/minecraft/core/component/DataComponents.CHICKEN_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    12932: getstatic net/minecraft/world/entity/animal/chicken/ChickenVariants.WARM:Lnet/minecraft/resources/ResourceKey;
+    12935: invokevirtual net/minecraft/world/item/Item$Properties.delayedHolderComponent:(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    12938: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12941: putstatic net/minecraft/world/item/Items.BROWN_EGG:Lnet/minecraft/world/item/Item;
+    12944: getstatic net/minecraft/references/ItemIds.COMPASS:Lnet/minecraft/resources/ResourceKey;
+    12947: invokedynamic dynamic#153:apply
+    12952: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    12955: putstatic net/minecraft/world/item/Items.COMPASS:Lnet/minecraft/world/item/Item;
+    12958: getstatic net/minecraft/references/ItemIds.RECOVERY_COMPASS:Lnet/minecraft/resources/ResourceKey;
+    12961: new net/minecraft/world/item/Item$Properties
+    12964: dup
+    12965: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12968: getstatic net/minecraft/world/item/Rarity.UNCOMMON:Lnet/minecraft/world/item/Rarity;
+    12971: invokevirtual net/minecraft/world/item/Item$Properties.rarity:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+    12974: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12977: putstatic net/minecraft/world/item/Items.RECOVERY_COMPASS:Lnet/minecraft/world/item/Item;
+    12980: getstatic net/minecraft/references/ItemIds.BUNDLE:Lnet/minecraft/resources/ResourceKey;
+    12983: invokedynamic dynamic#9:apply
+    12988: new net/minecraft/world/item/Item$Properties
+    12991: dup
+    12992: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12995: iconst_1
+    12996: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12999: getstatic net/minecraft/core/component/DataComponents.BUNDLE_CONTENTS:Lnet/minecraft/core/component/DataComponentType;
+    13002: getstatic net/minecraft/world/item/component/BundleContents.EMPTY:Lnet/minecraft/world/item/component/BundleContents;
+    13005: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    13008: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13011: putstatic net/minecraft/world/item/Items.BUNDLE:Lnet/minecraft/world/item/Item;
+    13014: getstatic net/minecraft/references/ItemIds.DYED_BUNDLE:Lnet/minecraft/world/level/block/ColorCollection;
+    13017: invokedynamic dynamic#154:apply
+    13022: invokestatic net/minecraft/world/level/block/ColorCollection.registerItems:(Lnet/minecraft/world/level/block/ColorCollection;Ljava/util/function/BiFunction;)Lnet/minecraft/world/level/block/ColorCollection;
+    13025: putstatic net/minecraft/world/item/Items.DYED_BUNDLE:Lnet/minecraft/world/level/block/ColorCollection;
+    13028: getstatic net/minecraft/references/ItemIds.FISHING_ROD:Lnet/minecraft/resources/ResourceKey;
+    13031: invokedynamic dynamic#155:apply
+    13036: new net/minecraft/world/item/Item$Properties
+    13039: dup
+    13040: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13043: bipush 64
+    13045: invokevirtual net/minecraft/world/item/Item$Properties.durability:(I)Lnet/minecraft/world/item/Item$Properties;
+    13048: iconst_1
+    13049: invokevirtual net/minecraft/world/item/Item$Properties.enchantable:(I)Lnet/minecraft/world/item/Item$Properties;
+    13052: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13055: putstatic net/minecraft/world/item/Items.FISHING_ROD:Lnet/minecraft/world/item/Item;
+    13058: getstatic net/minecraft/references/ItemIds.CLOCK:Lnet/minecraft/resources/ResourceKey;
+
+  == <clinit> window pc~13055 (putstatic net/minecraft/world/item/Items.FISHING_ROD:Lnet/minecraft/wo) ==
+    12821: invokevirtual net/minecraft/world/item/Item$Properties.enchantable:(I)Lnet/minecraft/world/item/Item$Properties;
+    12824: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12827: putstatic net/minecraft/world/item/Items.BOOK:Lnet/minecraft/world/item/Item;
+    12830: getstatic net/minecraft/references/ItemIds.SLIME_BALL:Lnet/minecraft/resources/ResourceKey;
+    12833: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    12836: putstatic net/minecraft/world/item/Items.SLIME_BALL:Lnet/minecraft/world/item/Item;
+    12839: getstatic net/minecraft/references/ItemIds.EGG:Lnet/minecraft/resources/ResourceKey;
+    12842: invokedynamic dynamic#152:apply
+    12847: new net/minecraft/world/item/Item$Properties
+    12850: dup
+    12851: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12854: bipush 16
+    12856: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12859: getstatic net/minecraft/core/component/DataComponents.CHICKEN_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    12862: getstatic net/minecraft/world/entity/animal/chicken/ChickenVariants.TEMPERATE:Lnet/minecraft/resources/ResourceKey;
+    12865: invokevirtual net/minecraft/world/item/Item$Properties.delayedHolderComponent:(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    12868: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12871: putstatic net/minecraft/world/item/Items.EGG:Lnet/minecraft/world/item/Item;
+    12874: getstatic net/minecraft/references/ItemIds.BLUE_EGG:Lnet/minecraft/resources/ResourceKey;
+    12877: invokedynamic dynamic#152:apply
+    12882: new net/minecraft/world/item/Item$Properties
+    12885: dup
+    12886: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12889: bipush 16
+    12891: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12894: getstatic net/minecraft/core/component/DataComponents.CHICKEN_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    12897: getstatic net/minecraft/world/entity/animal/chicken/ChickenVariants.COLD:Lnet/minecraft/resources/ResourceKey;
+    12900: invokevirtual net/minecraft/world/item/Item$Properties.delayedHolderComponent:(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    12903: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12906: putstatic net/minecraft/world/item/Items.BLUE_EGG:Lnet/minecraft/world/item/Item;
+    12909: getstatic net/minecraft/references/ItemIds.BROWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    12912: invokedynamic dynamic#152:apply
+    12917: new net/minecraft/world/item/Item$Properties
+    12920: dup
+    12921: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12924: bipush 16
+    12926: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12929: getstatic net/minecraft/core/component/DataComponents.CHICKEN_VARIANT:Lnet/minecraft/core/component/DataComponentType;
+    12932: getstatic net/minecraft/world/entity/animal/chicken/ChickenVariants.WARM:Lnet/minecraft/resources/ResourceKey;
+    12935: invokevirtual net/minecraft/world/item/Item$Properties.delayedHolderComponent:(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item$Properties;
+    12938: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12941: putstatic net/minecraft/world/item/Items.BROWN_EGG:Lnet/minecraft/world/item/Item;
+    12944: getstatic net/minecraft/references/ItemIds.COMPASS:Lnet/minecraft/resources/ResourceKey;
+    12947: invokedynamic dynamic#153:apply
+    12952: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    12955: putstatic net/minecraft/world/item/Items.COMPASS:Lnet/minecraft/world/item/Item;
+    12958: getstatic net/minecraft/references/ItemIds.RECOVERY_COMPASS:Lnet/minecraft/resources/ResourceKey;
+    12961: new net/minecraft/world/item/Item$Properties
+    12964: dup
+    12965: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12968: getstatic net/minecraft/world/item/Rarity.UNCOMMON:Lnet/minecraft/world/item/Rarity;
+    12971: invokevirtual net/minecraft/world/item/Item$Properties.rarity:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+    12974: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    12977: putstatic net/minecraft/world/item/Items.RECOVERY_COMPASS:Lnet/minecraft/world/item/Item;
+    12980: getstatic net/minecraft/references/ItemIds.BUNDLE:Lnet/minecraft/resources/ResourceKey;
+    12983: invokedynamic dynamic#9:apply
+    12988: new net/minecraft/world/item/Item$Properties
+    12991: dup
+    12992: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    12995: iconst_1
+    12996: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    12999: getstatic net/minecraft/core/component/DataComponents.BUNDLE_CONTENTS:Lnet/minecraft/core/component/DataComponentType;
+    13002: getstatic net/minecraft/world/item/component/BundleContents.EMPTY:Lnet/minecraft/world/item/component/BundleContents;
+    13005: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    13008: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13011: putstatic net/minecraft/world/item/Items.BUNDLE:Lnet/minecraft/world/item/Item;
+    13014: getstatic net/minecraft/references/ItemIds.DYED_BUNDLE:Lnet/minecraft/world/level/block/ColorCollection;
+    13017: invokedynamic dynamic#154:apply
+    13022: invokestatic net/minecraft/world/level/block/ColorCollection.registerItems:(Lnet/minecraft/world/level/block/ColorCollection;Ljava/util/function/BiFunction;)Lnet/minecraft/world/level/block/ColorCollection;
+    13025: putstatic net/minecraft/world/item/Items.DYED_BUNDLE:Lnet/minecraft/world/level/block/ColorCollection;
+    13028: getstatic net/minecraft/references/ItemIds.FISHING_ROD:Lnet/minecraft/resources/ResourceKey;
+    13031: invokedynamic dynamic#155:apply
+    13036: new net/minecraft/world/item/Item$Properties
+    13039: dup
+    13040: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13043: bipush 64
+    13045: invokevirtual net/minecraft/world/item/Item$Properties.durability:(I)Lnet/minecraft/world/item/Item$Properties;
+    13048: iconst_1
+    13049: invokevirtual net/minecraft/world/item/Item$Properties.enchantable:(I)Lnet/minecraft/world/item/Item$Properties;
+    13052: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13055: putstatic net/minecraft/world/item/Items.FISHING_ROD:Lnet/minecraft/world/item/Item;
+    13058: getstatic net/minecraft/references/ItemIds.CLOCK:Lnet/minecraft/resources/ResourceKey;
+    13061: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    13064: putstatic net/minecraft/world/item/Items.CLOCK:Lnet/minecraft/world/item/Item;
+    13067: getstatic net/minecraft/references/ItemIds.SPYGLASS:Lnet/minecraft/resources/ResourceKey;
+    13070: invokedynamic dynamic#156:apply
+    13075: new net/minecraft/world/item/Item$Properties
+    13078: dup
+    13079: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13082: iconst_1
+    13083: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    13086: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13089: putstatic net/minecraft/world/item/Items.SPYGLASS:Lnet/minecraft/world/item/Item;
+    13092: getstatic net/minecraft/references/ItemIds.GLOWSTONE_DUST:Lnet/minecraft/resources/ResourceKey;
+    13095: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    13098: putstatic net/minecraft/world/item/Items.GLOWSTONE_DUST:Lnet/minecraft/world/item/Item;
+    13101: getstatic net/minecraft/references/ItemIds.COD:Lnet/minecraft/resources/ResourceKey;
+    13104: new net/minecraft/world/item/Item$Properties
+    13107: dup
+    13108: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13111: getstatic net/minecraft/world/food/Foods.COD:Lnet/minecraft/world/food/FoodProperties;
+    13114: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    13117: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13120: putstatic net/minecraft/world/item/Items.COD:Lnet/minecraft/world/item/Item;
+    13123: getstatic net/minecraft/references/ItemIds.SALMON:Lnet/minecraft/resources/ResourceKey;
+    13126: new net/minecraft/world/item/Item$Properties
+    13129: dup
+    13130: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13133: getstatic net/minecraft/world/food/Foods.SALMON:Lnet/minecraft/world/food/FoodProperties;
+    13136: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    13139: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13142: putstatic net/minecraft/world/item/Items.SALMON:Lnet/minecraft/world/item/Item;
+    13145: getstatic net/minecraft/references/ItemIds.TROPICAL_FISH:Lnet/minecraft/resources/ResourceKey;
+    13148: new net/minecraft/world/item/Item$Properties
+    13151: dup
+    13152: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13155: getstatic net/minecraft/world/food/Foods.TROPICAL_FISH:Lnet/minecraft/world/food/FoodProperties;
+    13158: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    13161: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13164: putstatic net/minecraft/world/item/Items.TROPICAL_FISH:Lnet/minecraft/world/item/Item;
+    13167: getstatic net/minecraft/references/ItemIds.PUFFERFISH:Lnet/minecraft/resources/ResourceKey;
+    13170: new net/minecraft/world/item/Item$Properties
+    13173: dup
+    13174: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13177: getstatic net/minecraft/world/food/Foods.PUFFERFISH:Lnet/minecraft/world/food/FoodProperties;
+    13180: getstatic net/minecraft/world/item/component/Consumables.PUFFERFISH:Lnet/minecraft/world/item/component/Consumable;
+    13183: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;Lnet/minecraft/world/item/component/Consumable;)Lnet/minecraft/world/item/Item$Properties;
+    13186: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13189: putstatic net/minecraft/world/item/Items.PUFFERFISH:Lnet/minecraft/world/item/Item;
+    13192: getstatic net/minecraft/references/ItemIds.COOKED_COD:Lnet/minecraft/resources/ResourceKey;
+    13195: new net/minecraft/world/item/Item$Properties
+    13198: dup
+    13199: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13202: getstatic net/minecraft/world/food/Foods.COOKED_COD:Lnet/minecraft/world/food/FoodProperties;
+    13205: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    13208: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13211: putstatic net/minecraft/world/item/Items.COOKED_COD:Lnet/minecraft/world/item/Item;
+    13214: getstatic net/minecraft/references/ItemIds.COOKED_SALMON:Lnet/minecraft/resources/ResourceKey;
+    13217: new net/minecraft/world/item/Item$Properties
+    13220: dup
+    13221: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    13224: getstatic net/minecraft/world/food/Foods.COOKED_SALMON:Lnet/minecraft/world/food/FoodProperties;
+    13227: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    13230: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    13233: putstatic net/minecraft/world/item/Items.COOKED_SALMON:Lnet/minecraft/world/item/Item;
+    13236: getstatic net/minecraft/references/ItemIds.INK_SAC:Lnet/minecraft/resources/ResourceKey;
+    13239: invokedynamic dynamic#157:apply
+    13244: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    13247: putstatic net/minecraft/world/item/Items.INK_SAC:Lnet/minecraft/world/item/Item;
+    13250: getstatic net/minecraft/references/ItemIds.GLOW_INK_SAC:Lnet/minecraft/resources/ResourceKey;
+    13253: invokedynamic dynamic#158:apply
+    13258: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    13261: putstatic net/minecraft/world/item/Items.GLOW_INK_SAC:Lnet/minecraft/world/item/Item;
+    13264: getstatic net/minecraft/references/BlockItemIds.COCOA_CROP:Lnet/minecraft/references/BlockItemId;
+    13267: getstatic net/minecraft/world/level/block/Blocks.COCOA:Lnet/minecraft/world/level/block/Block;
+    13270: invokestatic net/minecraft/world/item/Items.createBlockItemWithCustomItemName:(Lnet/minecraft/world/level/block/Block;)Ljava/util/function/Function;
+    13273: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    13276: putstatic net/minecraft/world/item/Items.COCOA_BEANS:Lnet/minecraft/world/item/Item;
+    13279: getstatic net/minecraft/references/ItemIds.DYE:Lnet/minecraft/world/level/block/ColorCollection;
+    13282: invokedynamic dynamic#159:apply
+
+  == <clinit> window pc~15104 (putstatic net/minecraft/world/item/Items.WRITABLE_BOOK:Lnet/minecraft/) ==
+    14866: getstatic net/minecraft/world/entity/EntityTypes.HOGLIN:Lnet/minecraft/world/entity/EntityType;
+    14869: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14872: putstatic net/minecraft/world/item/Items.HOGLIN_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14875: getstatic net/minecraft/references/ItemIds.MAGMA_CUBE_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14878: getstatic net/minecraft/world/entity/EntityTypes.MAGMA_CUBE:Lnet/minecraft/world/entity/EntityType;
+    14881: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14884: putstatic net/minecraft/world/item/Items.MAGMA_CUBE_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14887: getstatic net/minecraft/references/ItemIds.PIGLIN_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14890: getstatic net/minecraft/world/entity/EntityTypes.PIGLIN:Lnet/minecraft/world/entity/EntityType;
+    14893: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14896: putstatic net/minecraft/world/item/Items.PIGLIN_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14899: getstatic net/minecraft/references/ItemIds.PIGLIN_BRUTE_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14902: getstatic net/minecraft/world/entity/EntityTypes.PIGLIN_BRUTE:Lnet/minecraft/world/entity/EntityType;
+    14905: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14908: putstatic net/minecraft/world/item/Items.PIGLIN_BRUTE_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14911: getstatic net/minecraft/references/ItemIds.STRIDER_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14914: getstatic net/minecraft/world/entity/EntityTypes.STRIDER:Lnet/minecraft/world/entity/EntityType;
+    14917: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14920: putstatic net/minecraft/world/item/Items.STRIDER_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14923: getstatic net/minecraft/references/ItemIds.ZOGLIN_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14926: getstatic net/minecraft/world/entity/EntityTypes.ZOGLIN:Lnet/minecraft/world/entity/EntityType;
+    14929: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14932: putstatic net/minecraft/world/item/Items.ZOGLIN_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14935: getstatic net/minecraft/references/ItemIds.ZOMBIFIED_PIGLIN_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14938: getstatic net/minecraft/world/entity/EntityTypes.ZOMBIFIED_PIGLIN:Lnet/minecraft/world/entity/EntityType;
+    14941: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14944: putstatic net/minecraft/world/item/Items.ZOMBIFIED_PIGLIN_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14947: getstatic net/minecraft/references/ItemIds.ENDER_DRAGON_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14950: getstatic net/minecraft/world/entity/EntityTypes.ENDER_DRAGON:Lnet/minecraft/world/entity/EntityType;
+    14953: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14956: putstatic net/minecraft/world/item/Items.ENDER_DRAGON_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14959: getstatic net/minecraft/references/ItemIds.ENDERMAN_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14962: getstatic net/minecraft/world/entity/EntityTypes.ENDERMAN:Lnet/minecraft/world/entity/EntityType;
+    14965: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14968: putstatic net/minecraft/world/item/Items.ENDERMAN_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14971: getstatic net/minecraft/references/ItemIds.ENDERMITE_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14974: getstatic net/minecraft/world/entity/EntityTypes.ENDERMITE:Lnet/minecraft/world/entity/EntityType;
+    14977: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14980: putstatic net/minecraft/world/item/Items.ENDERMITE_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14983: getstatic net/minecraft/references/ItemIds.SHULKER_SPAWN_EGG:Lnet/minecraft/resources/ResourceKey;
+    14986: getstatic net/minecraft/world/entity/EntityTypes.SHULKER:Lnet/minecraft/world/entity/EntityType;
+    14989: invokestatic net/minecraft/world/item/Items.registerSpawnEgg:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/item/Item;
+    14992: putstatic net/minecraft/world/item/Items.SHULKER_SPAWN_EGG:Lnet/minecraft/world/item/Item;
+    14995: getstatic net/minecraft/references/ItemIds.EXPERIENCE_BOTTLE:Lnet/minecraft/resources/ResourceKey;
+    14998: invokedynamic dynamic#170:apply
+    15003: new net/minecraft/world/item/Item$Properties
+    15006: dup
+    15007: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15010: getstatic net/minecraft/world/item/Rarity.UNCOMMON:Lnet/minecraft/world/item/Rarity;
+    15013: invokevirtual net/minecraft/world/item/Item$Properties.rarity:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+    15016: getstatic net/minecraft/core/component/DataComponents.ENCHANTMENT_GLINT_OVERRIDE:Lnet/minecraft/core/component/DataComponentType;
+    15019: iconst_1
+    15020: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    15023: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    15026: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15029: putstatic net/minecraft/world/item/Items.EXPERIENCE_BOTTLE:Lnet/minecraft/world/item/Item;
+    15032: getstatic net/minecraft/references/ItemIds.FIRE_CHARGE:Lnet/minecraft/resources/ResourceKey;
+    15035: invokedynamic dynamic#171:apply
+    15040: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    15043: putstatic net/minecraft/world/item/Items.FIRE_CHARGE:Lnet/minecraft/world/item/Item;
+    15046: getstatic net/minecraft/references/ItemIds.WIND_CHARGE:Lnet/minecraft/resources/ResourceKey;
+    15049: invokedynamic dynamic#172:apply
+    15054: new net/minecraft/world/item/Item$Properties
+    15057: dup
+    15058: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15061: ldc_w 0.5f
+    15064: invokevirtual net/minecraft/world/item/Item$Properties.useCooldown:(F)Lnet/minecraft/world/item/Item$Properties;
+    15067: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15070: putstatic net/minecraft/world/item/Items.WIND_CHARGE:Lnet/minecraft/world/item/Item;
+    15073: getstatic net/minecraft/references/ItemIds.WRITABLE_BOOK:Lnet/minecraft/resources/ResourceKey;
+    15076: invokedynamic dynamic#173:apply
+    15081: new net/minecraft/world/item/Item$Properties
+    15084: dup
+    15085: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15088: iconst_1
+    15089: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    15092: getstatic net/minecraft/core/component/DataComponents.WRITABLE_BOOK_CONTENT:Lnet/minecraft/core/component/DataComponentType;
+    15095: getstatic net/minecraft/world/item/component/WritableBookContent.EMPTY:Lnet/minecraft/world/item/component/WritableBookContent;
+    15098: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    15101: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15104: putstatic net/minecraft/world/item/Items.WRITABLE_BOOK:Lnet/minecraft/world/item/Item;
+    15107: getstatic net/minecraft/references/ItemIds.WRITTEN_BOOK:Lnet/minecraft/resources/ResourceKey;
+    15110: invokedynamic dynamic#174:apply
+    15115: new net/minecraft/world/item/Item$Properties
+    15118: dup
+    15119: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15122: bipush 16
+    15124: invokevirtual net/minecraft/world/item/Item$Properties.stacksTo:(I)Lnet/minecraft/world/item/Item$Properties;
+    15127: getstatic net/minecraft/core/component/DataComponents.ENCHANTMENT_GLINT_OVERRIDE:Lnet/minecraft/core/component/DataComponentType;
+    15130: iconst_1
+    15131: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    15134: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    15137: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15140: putstatic net/minecraft/world/item/Items.WRITTEN_BOOK:Lnet/minecraft/world/item/Item;
+    15143: getstatic net/minecraft/references/ItemIds.BREEZE_ROD:Lnet/minecraft/resources/ResourceKey;
+    15146: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/item/Item;
+    15149: putstatic net/minecraft/world/item/Items.BREEZE_ROD:Lnet/minecraft/world/item/Item;
+    15152: getstatic net/minecraft/references/ItemIds.MACE:Lnet/minecraft/resources/ResourceKey;
+    15155: invokedynamic dynamic#175:apply
+    15160: new net/minecraft/world/item/Item$Properties
+    15163: dup
+    15164: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15167: getstatic net/minecraft/world/item/Rarity.EPIC:Lnet/minecraft/world/item/Rarity;
+    15170: invokevirtual net/minecraft/world/item/Item$Properties.rarity:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+    15173: sipush 500
+    15176: invokevirtual net/minecraft/world/item/Item$Properties.durability:(I)Lnet/minecraft/world/item/Item$Properties;
+    15179: getstatic net/minecraft/core/component/DataComponents.TOOL:Lnet/minecraft/core/component/DataComponentType;
+    15182: invokestatic net/minecraft/world/item/MaceItem.createToolProperties:()Lnet/minecraft/world/item/component/Tool;
+    15185: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    15188: getstatic net/minecraft/world/item/Items.BREEZE_ROD:Lnet/minecraft/world/item/Item;
+    15191: invokevirtual net/minecraft/world/item/Item$Properties.repairable:(Lnet/minecraft/world/item/Item;)Lnet/minecraft/world/item/Item$Properties;
+    15194: invokestatic net/minecraft/world/item/MaceItem.createAttributes:()Lnet/minecraft/world/item/component/ItemAttributeModifiers;
+    15197: invokevirtual net/minecraft/world/item/Item$Properties.attributes:(Lnet/minecraft/world/item/component/ItemAttributeModifiers;)Lnet/minecraft/world/item/Item$Properties;
+    15200: bipush 15
+    15202: invokevirtual net/minecraft/world/item/Item$Properties.enchantable:(I)Lnet/minecraft/world/item/Item$Properties;
+    15205: getstatic net/minecraft/core/component/DataComponents.WEAPON:Lnet/minecraft/core/component/DataComponentType;
+    15208: new net/minecraft/world/item/component/Weapon
+    15211: dup
+    15212: iconst_1
+    15213: invokespecial net/minecraft/world/item/component/Weapon.<init>:(I)V
+    15216: invokevirtual net/minecraft/world/item/Item$Properties.component:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/world/item/Item$Properties;
+    15219: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15222: putstatic net/minecraft/world/item/Items.MACE:Lnet/minecraft/world/item/Item;
+    15225: getstatic net/minecraft/references/ItemIds.ITEM_FRAME:Lnet/minecraft/resources/ResourceKey;
+    15228: invokedynamic dynamic#176:apply
+    15233: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    15236: putstatic net/minecraft/world/item/Items.ITEM_FRAME:Lnet/minecraft/world/item/Item;
+    15239: getstatic net/minecraft/references/ItemIds.GLOW_ITEM_FRAME:Lnet/minecraft/resources/ResourceKey;
+    15242: invokedynamic dynamic#177:apply
+    15247: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;)Lnet/minecraft/world/item/Item;
+    15250: putstatic net/minecraft/world/item/Items.GLOW_ITEM_FRAME:Lnet/minecraft/world/item/Item;
+    15253: getstatic net/minecraft/references/BlockItemIds.FLOWER_POT:Lnet/minecraft/references/BlockItemId;
+    15256: getstatic net/minecraft/world/level/block/Blocks.FLOWER_POT:Lnet/minecraft/world/level/block/Block;
+    15259: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+    15262: putstatic net/minecraft/world/item/Items.FLOWER_POT:Lnet/minecraft/world/item/Item;
+    15265: getstatic net/minecraft/references/BlockItemIds.CARROT_CROP:Lnet/minecraft/references/BlockItemId;
+    15268: getstatic net/minecraft/world/level/block/Blocks.CARROTS:Lnet/minecraft/world/level/block/Block;
+    15271: invokestatic net/minecraft/world/item/Items.createBlockItemWithCustomItemName:(Lnet/minecraft/world/level/block/Block;)Ljava/util/function/Function;
+    15274: new net/minecraft/world/item/Item$Properties
+    15277: dup
+    15278: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15281: getstatic net/minecraft/world/food/Foods.CARROT:Lnet/minecraft/world/food/FoodProperties;
+    15284: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    15287: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15290: putstatic net/minecraft/world/item/Items.CARROT:Lnet/minecraft/world/item/Item;
+    15293: getstatic net/minecraft/references/BlockItemIds.POTATO_CROP:Lnet/minecraft/references/BlockItemId;
+    15296: getstatic net/minecraft/world/level/block/Blocks.POTATOES:Lnet/minecraft/world/level/block/Block;
+    15299: invokestatic net/minecraft/world/item/Items.createBlockItemWithCustomItemName:(Lnet/minecraft/world/level/block/Block;)Ljava/util/function/Function;
+    15302: new net/minecraft/world/item/Item$Properties
+    15305: dup
+    15306: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15309: getstatic net/minecraft/world/food/Foods.POTATO:Lnet/minecraft/world/food/FoodProperties;
+    15312: invokevirtual net/minecraft/world/item/Item$Properties.food:(Lnet/minecraft/world/food/FoodProperties;)Lnet/minecraft/world/item/Item$Properties;
+    15315: invokestatic net/minecraft/world/item/Items.registerItem:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+    15318: putstatic net/minecraft/world/item/Items.POTATO:Lnet/minecraft/world/item/Item;
+    15321: getstatic net/minecraft/references/ItemIds.BAKED_POTATO:Lnet/minecraft/resources/ResourceKey;
+    15324: new net/minecraft/world/item/Item$Properties
+    15327: dup
+    15328: invokespecial net/minecraft/world/item/Item$Properties.<init>:()V
+    15331: getstatic net/minecraft/world/food/Foods.BAKED_POTATO:Lnet/minecraft/world/food/FoodProperties;
+
+

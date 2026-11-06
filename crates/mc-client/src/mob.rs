@@ -14410,6 +14410,181 @@ pub fn segment_box_param(
 }
 
 
+// ==========================================================================
+// THE ENCHANT'S OWN LEVELS (the enchlvl_512 census the jar's own bytes
+// speak — the treasure rows' `enchant_with_levels` 30 the run wears,
+// the selectEnchantment walk the power fold + the multi-pick loop
+// bank, the WeightedRandom fold the pick serves; the ENCHANTABLE
+// component the three rows' iconst_1 the clinit windows keep)
+// ==========================================================================
+
+/// `WeightedRandom.getRandomItem` (javap verbatim, enchlvl_512): the
+/// total-weight long-sum the overflow throw wears ["Sum of weights
+/// must be <= 2147483647"], the negative-sum throw the getRandomItem
+/// lane answers ["Negative total weight in getRandomItem"], the
+/// zero-total the `Optional.empty` keeps, the `nextInt(total)` draw
+/// the linear `i -= weight` scan serves — the negative index the pick
+/// answers, the exhausted walk the `None` wears.
+pub fn weighted_random_pick(rng: &mut Lcg, weights: &[i32]) -> Option<usize> {
+    let mut total: i64 = 0;
+    for w in weights {
+        total += i64::from(*w);
+    }
+    if total > i64::from(i32::MAX) {
+        panic!("Sum of weights must be <= 2147483647");
+    }
+    if total < 0 {
+        panic!("Negative total weight in getRandomItem");
+    }
+    if total == 0 {
+        return None;
+    }
+    let mut i = rng.next_int(total as u64);
+    for (k, w) in weights.iter().enumerate() {
+        i -= *w;
+        if i < 0 {
+            return Some(k);
+        }
+    }
+    None
+}
+
+/// `EnchantmentHelper.selectEnchantment`'s own head (javap verbatim,
+/// enchlvl_512): the `ENCHANTABLE.value / 4 + 1` bound the two
+/// `nextInt` draws wear [the component-missing gate the caller's own
+/// absent row the honest walk keeps — the value>0 body the census's
+/// nonnull fold serves], the level the `+1` fold banks, the vulcan
+/// noise the `(f1 + f2 - 1.0f) * 0.15f` pair speaks, the power the
+/// `Math.round(level + level * f)` fold the `Mth.clamp(.., 1, MAX)`
+/// keeps. The treasure rows' own enchantable the `iconst_1` chain the
+/// clinit windows bank (bow 9631, fishing_rod 13049, book 12821 —
+/// the durability chain the 510 walk's own sites the neighbors speak).
+pub fn enchant_select_power(rng: &mut Lcg, levels: i32, enchantable: i32) -> i32 {
+    let bound = (enchantable / 4 + 1) as u64;
+    let level = levels + 1 + rng.next_int(bound) + rng.next_int(bound);
+    let noise = (rng.next_f32() + rng.next_f32() - 1.0) * 0.15;
+    let scaled = level as f32 + level as f32 * noise;
+    crate::mth::clamp_int(scaled.round() as i32, 1, i32::MAX)
+}
+
+/// `EnchantmentHelper.selectEnchantment`'s own multi-pick loop (javap
+/// verbatim, enchlvl_512): the first pick the full list wears, the
+/// `nextInt(50) <= power` gate the loop head speaks, the
+/// `filterCompatibleEnchantments` the last pick's own compat the
+/// available list re-folds, the empty walk the break keeps, the extra
+/// pick the halved power (`power /= 2`) rides. The compat fn the
+/// caller's own registry law wears (the `areCompatible` the exclusive
+/// sets + the self-pair the registry's NEXT lane banks — here the
+/// generic (last, candidate) word).
+pub fn enchant_multi_pick(
+    rng: &mut Lcg,
+    power: i32,
+    weights: &[i32],
+    compatible: impl Fn(usize, usize) -> bool,
+) -> Vec<usize> {
+    let mut picked: Vec<usize> = Vec::new();
+    if weights.is_empty() {
+        return picked;
+    }
+    let mut available: Vec<usize> = (0..weights.len()).collect();
+    if let Some(first) = weighted_random_pick(rng, weights) {
+        picked.push(first);
+    }
+    let mut power = power;
+    loop {
+        if rng.next_int(50) > power {
+            break;
+        }
+        if let Some(&last) = picked.last() {
+            available.retain(|&c| compatible(last, c));
+        }
+        if available.is_empty() {
+            break;
+        }
+        let sub: Vec<i32> = available.iter().map(|&i| weights[i]).collect();
+        if let Some(k) = weighted_random_pick(rng, &sub) {
+            picked.push(available[k]);
+        }
+        power /= 2;
+    }
+    picked
+}
+
+/// THE TREASURE'S OWN WALK — the `selectEnchantment` composition the
+/// registry rows wear (the enchlvl_512 census the walk's own chain
+/// banks): the ENCHANTABLE read the `item_enchantability` law answers
+/// [the missing row the 0 the no-draw empty keeps], the power the head
+/// fold serves, the pool the `#minecraft:on_random_loot` tag keeps
+/// [`#non_treasure` + the four curse/repair rows the jar's own json
+/// banks — the 40 rows the expansion order speaks], the availability
+/// the `isPrimaryItem || is_book` filter serves, the level scan the
+/// cost curves wear [the top-down max_level walk the break keeps],
+/// the multi-pick the `areCompatible` law rides. The (idx, level)
+/// pairs the wired walk answers — the ItemDrop's own enchantment seat
+/// the NEXT lane banks.
+pub fn enchant_random_loot_walk(
+    rng: &mut Lcg,
+    item: &'static str,
+    levels: i32,
+) -> Vec<(usize, i32)> {
+    use mc_registry::generated::enchantments as ench;
+    let mut picked: Vec<(usize, i32)> = Vec::new();
+    let enchantability = ench::item_enchantability(item);
+    if enchantability <= 0 {
+        return picked;
+    }
+    let power = enchant_select_power(rng, levels, enchantability);
+    // THE POOL — the on_random_loot tag's own resolution order (the
+    // non_treasure expansion the head wears, the four rows the tail
+    // keeps: binding_curse, vanishing_curse, frost_walker, mending).
+    let mut pool: Vec<usize> = Vec::new();
+    for name in ench::TABLE_MEMBERS.iter() {
+        if let Some(idx) = ench::enchantment_index(name) {
+            pool.push(idx);
+        }
+    }
+    for name in [
+        "binding_curse",
+        "vanishing_curse",
+        "frost_walker",
+        "mending",
+    ] {
+        if let Some(idx) = ench::enchantment_index(name) {
+            pool.push(idx);
+        }
+    }
+    // THE AVAILABLE — the filter + the level scan the census's
+    // getAvailableEnchantmentResults walk banks.
+    let is_book = item == "book";
+    let mut available: Vec<(usize, i32, i32)> = Vec::new();
+    for &idx in &pool {
+        let def = &ench::ENCHANTMENTS[idx];
+        if is_book || ench::enchantment_accepts_item(def.name, item) {
+            let mut level = def.max_level;
+            while level >= 1 {
+                if power >= ench::EnchDef::cost_at(def.min_cost, level)
+                    && power <= ench::EnchDef::cost_at(def.max_cost, level)
+                {
+                    available.push((idx, level, def.weight));
+                    break;
+                }
+                level -= 1;
+            }
+        }
+    }
+    if available.is_empty() {
+        return picked;
+    }
+    let weights: Vec<i32> = available.iter().map(|&(_, _, w)| w).collect();
+    let compat = |a: usize, b: usize| ench::are_compatible(available[a].0, available[b].0);
+    let picks = enchant_multi_pick(rng, power, &weights, compat);
+    for k in picks {
+        let (idx, level, _) = available[k];
+        picked.push((idx, level));
+    }
+    picked
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

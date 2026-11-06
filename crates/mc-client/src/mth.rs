@@ -105,6 +105,19 @@ pub fn clamp(value: f32, low: f32, high: f32) -> f32 {
     }
 }
 
+/// `Mth.clamp(int, int, int)` — the integer sibling the enchant
+/// select's own power fold wears (the 1..MAX bounds the enchlvl_512
+/// census's `Mth.clamp(III)` the round answers).
+pub fn clamp_int(value: i32, low: i32, high: i32) -> i32 {
+    if value < low {
+        low
+    } else if value > high {
+        high
+    } else {
+        value
+    }
+}
+
 /// `Mth.wrapDegrees(float)` (javap, verbatim): the `frem 360.0f` fold,
 /// the `>= 180.0f` branch the -360 answers, the `< -180.0f` branch the
 /// +360 answers — the EXACT compares the bytecode keeps (the ±180.0
