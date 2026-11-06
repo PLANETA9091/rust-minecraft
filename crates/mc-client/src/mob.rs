@@ -10538,10 +10538,58 @@ pub fn vec3_y_rot(x: f64, y: f64, z: f64, rot_rad: f32) -> (f64, f64, f64) {
 /// `getPosition(partial).add(offset)` sum banks): the rope the
 /// leashed llama's own attach point the body yaw serves.
 pub fn leash_start(x: f64, y: f64, z: f64, body_yaw_deg: f32) -> (f64, f64, f64) {
+    leash_start_for_kind(MobKind::TraderLlama, x, y, z, body_yaw_deg)
+}
+
+/// THE ROPE'S OWN START, THE KIND'S OWN OFFSET (javap the
+/// `getLeashOffset(partial).yRot(−f7)` extract walk the leash_481
+/// census banks — the START the leashed body's own kind answers: the
+/// Llama override the `llama_leash_offset` fn keeps, the every-kind
+/// default the `Leashable.getLeashOffset()` walk serves [the
+/// `Vec3(0, eyeHeight, bbW·0.4)` the ldc2_w 0.4 pair speaks]).
+pub fn leash_start_for_kind(
+    kind: MobKind,
+    x: f64,
+    y: f64,
+    z: f64,
+    body_yaw_deg: f32,
+) -> (f64, f64, f64) {
     let rad = body_yaw_deg * 0.017_453_292_384_743_69;
-    let (ox, oy, oz) = llama_leash_offset();
+    let (ox, oy, oz) = if kind == MobKind::TraderLlama {
+        llama_leash_offset()
+    } else {
+        default_leash_offset(kind)
+    };
     let (rx, ry, rz) = vec3_y_rot(ox, oy, oz, -rad);
     (x + rx, y + ry, z + rz)
+}
+
+/// THE BODY'S OWN WIDTH (the box_for match's own consts the helper
+/// reads — the `getBbWidth` word the default leash offset and the
+/// attach walks serve).
+pub fn kind_bb_width(kind: MobKind) -> f64 {
+    match kind {
+        MobKind::Sheep => SHEEP_WIDTH,
+        MobKind::Cow => COW_WIDTH,
+        MobKind::Pig => PIG_WIDTH,
+        MobKind::Chicken => CHICKEN_WIDTH,
+        MobKind::Zombie => ZOMBIE_WIDTH,
+        MobKind::Skeleton => SKELETON_WIDTH,
+        MobKind::Spider => SPIDER_WIDTH,
+        MobKind::Creeper => CREEPER_WIDTH,
+        MobKind::Wolf => WOLF_WIDTH,
+        MobKind::Warden => crate::sculk::WARDEN_MOB_WIDTH as f64,
+        MobKind::WanderingTrader => WANDERING_TRADER_WIDTH,
+        MobKind::TraderLlama => TRADER_LLAMA_WIDTH,
+    }
+}
+
+/// THE DEFAULT'S OWN OFFSET (javap `Leashable.getLeashOffset()` the
+/// leash_481 census banks — the `Vec3(0, eyeHeight, bbW·0.4)` the
+/// every-kind default wears, the Llama override the
+/// [`llama_leash_offset`] fn answers).
+pub fn default_leash_offset(kind: MobKind) -> (f64, f64, f64) {
+    (0.0, kind.eye_height(), kind_bb_width(kind) * 0.4)
 }
 
 /// THE ROPE'S OWN SAG (javap `LeashFeatureRenderer.addVertexPair`
@@ -10820,6 +10868,70 @@ pub fn leash_angular_friction(on_ground: bool, in_liquid: bool, block_friction: 
         LEASH_ANGULAR_FRICTION_AIR
     }
 }
+
+/// THE PLAYER'S OWN HOLDER SEAT (javap `Entity.interact` the
+/// lead_use_486 census banks — the `setLeashedTo(player, true)` walk
+/// the LEAD tie the player's own hand serves: the holder the PLAYER
+/// ENTITY's own id the rope's lanes wear. The port's offline world the
+/// mob ids the `next_mob_id: 1` counter draws [the first spawn the id
+/// 1 keeps], the 0 the counter never draws — the player's own seat the
+/// integrated server's first-entity law answers [the vanilla
+/// singleplayer the player the id 0 the spawn order banks], the wire
+/// lane's own ids the server assigns the offline counter never
+/// chains).
+pub const PLAYER_HOLDER_ID: i32 = 0;
+
+/// THE LEASH'S OWN ATTACH GATE (javap `Leashable
+/// .canHaveALeashAttachedTo` the lead_use_486 census banks — code=33:
+/// the same-body acmp the iconst_0 speaks, the
+/// `leashDistanceTo(holder) <= leashSnapDistance` the dcmpl `ifle` 26
+/// arms [the STRICTLY-GREATER the iconst_0 return refuses, the <=
+/// the attach admits], the `canBeLeashed()` default the iconst_1 tail
+/// speaks — the port's kinds the override never carries, the
+/// every-mob-leashable law the 26.2 default wears). The distance the
+/// bb-CENTER pair the `leashDistanceTo` walk banks [the
+/// getBoundingBox().getCenter() law the tick census already
+/// serves] — the caller the two boxes answers, the same-body arm the
+/// port's disjoint player/mob bodies never reach, the canBeLeashed
+/// the true constant folds.
+pub fn can_have_a_leash_attached_to(
+    entity_box: (f64, f64, f64, f64, f64, f64),
+    holder_box: (f64, f64, f64, f64, f64, f64),
+) -> bool {
+    let ec = leash_bb_center(entity_box);
+    let hc = leash_bb_center(holder_box);
+    let dx = ec.0 - hc.0;
+    let dy = ec.1 - hc.1;
+    let dz = ec.2 - hc.2;
+    (dx * dx + dy * dy + dz * dz).sqrt() <= LEASH_SNAP_DISTANCE
+}
+
+/// THE LEAD'S OWN TIE WALK (javap `Entity.interact` pcs 388-486 the
+/// lead_use_486 census banks — the held `Items.LEAD` stack the gate
+/// reads, the `getLeashHolder() instanceof Player` the ifne the
+/// ALREADY-MINE body the arm refuses, the `canHaveALeashAttachedTo
+/// (player)` gate the distance ≤ 12.0 word serves, the
+/// `isLeashed` the dropLeash() the OLD holder's rope the re-tie
+/// drops, the `setLeashedTo(player, true)` the holder swap banks
+/// [the ClientboundSetEntityLinkPacket the broadcast word wears, the
+/// `isPassenger` the stopRiding the dismount speaks], the
+/// playSound(LEAD_TIED) the `item.lead.tied` row answers, the
+/// `stack.shrink(1)` the one the hand spends, the
+/// InteractionResult.SUCCESS_SERVER the verdict carries). The port
+/// the verdict the caller's own lanes serve [the dropLeash the lead
+/// drop the feet spawns, the shrink the inventory split the caller
+/// speaks].
+pub const LEAD_TIED_SOUND: &str = "item.lead.tied";
+
+/// THE LEAD'S OWN UN-TIE WALK (javap `Entity.interact` pcs 296-387
+/// the same census banks — the `getLeashHolder() == player` acmp the
+/// MY-ROPE gate arms, the `hasInfiniteMaterials` the removeLeash the
+/// creative arm keeps, the dropLeash() the survival answers [the
+/// lead the count-1 the feet the spawnAtLocation word drops], the
+/// playSound(LEAD_UNTIED) the `item.lead.untied` row serves, the
+/// SUCCESS.withoutItem the verdict carries — NO shrink the rope the
+/// item's own drop the hand never spends).
+pub const LEAD_UNTIED_SOUND: &str = "item.lead.untied";
 
 /// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderData — the
 /// fresh `(24000, 25)` the no-arg ctor speaks [the dump's `sipush

@@ -39507,3 +39507,378 @@ fn the_leash_physics_the_drag_walk_wears() {
         "the snap the lead item the count-1 the feet drops"
     );
 }
+
+/// THE LEAD'S OWN TIE WORDS (javap `Entity.interact` +
+/// `Leashable.canHaveALeashAttachedTo` + `Leashable.getLeashOffset` +
+/// the SoundEvents clinit the lead_use_486 census banks — the
+/// player's own holder seat the 0 sentinel the spawn order wears,
+/// the ≤ 12.0 bb-center attach gate the dcmpl `ifle` arms, the
+/// item.lead.tied/untied pair the clinit's ldc_w rows speak, the
+/// every-kind default offset the Vec3(0, eye, bbW·0.4) pair serves,
+/// the kind-general rope start the llama law the delegate keeps):
+#[test]
+fn the_lead_tie_the_vanilla_words_wear() {
+    use crate::mob::{
+        can_have_a_leash_attached_to, default_leash_offset, kind_bb_width, leash_start,
+        leash_start_for_kind, PLAYER_HOLDER_ID, LEAD_TIED_SOUND, LEAD_UNTIED_SOUND,
+    };
+    // THE PLAYER'S OWN SEAT (the setLeashedTo(player, true) walk the
+    // census banks — the 0 the offline counter never draws, the
+    // integrated server's first entity the id the law keeps)
+    assert_eq!(
+        PLAYER_HOLDER_ID, 0,
+        "the player holder the 0 sentinel wears"
+    );
+    // THE VOICES' OWN ROWS (the SoundEvents clinit the ldc_w pairs
+    // keep — the LEAD_TIED the tie arm's playSound speaks, the
+    // LEAD_UNTIED the un-tie's own word answers)
+    assert_eq!(LEAD_TIED_SOUND, "item.lead.tied", "the tie voice the row wears");
+    assert_eq!(
+        LEAD_UNTIED_SOUND, "item.lead.untied",
+        "the un-tie voice the row wears"
+    );
+    // THE ATTACH GATE'S OWN WORD (the leashDistanceTo the bb-CENTER
+    // distance the getCenter pair speaks, the `<= leashSnapDistance`
+    // dcmpl the ifle 26 arms — the exact 12.0 the gate ADMITS, the
+    // beyond the iconst_0 refuses)
+    let ebox = (0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
+    let ecenter = crate::mob::leash_bb_center(ebox);
+    assert_eq!(ecenter, (0.5, 0.5, 0.5), "the bb center the midpoint wears");
+    let hbox12 = (12.0, 0.0, 0.0, 13.0, 1.0, 1.0);
+    assert!(
+        can_have_a_leash_attached_to(ebox, hbox12),
+        "the exact 12.0 the attach gate admits"
+    );
+    let hbox_far = (12.5, 0.0, 0.0, 13.5, 1.0, 1.0);
+    assert!(
+        !can_have_a_leash_attached_to(ebox, hbox_far),
+        "the 12.5 span the gate refuses"
+    );
+    // THE DEFAULT'S OWN OFFSET (the Vec3(0, eyeHeight, bbW·0.4) pair
+    // the every-kind walk serves — the Llama override the llama fn
+    // never answers)
+    let cow_default = default_leash_offset(crate::mob::MobKind::Cow);
+    assert_eq!(
+        cow_default,
+        (
+            0.0,
+            crate::mob::MobKind::Cow.eye_height(),
+            crate::mob::COW_WIDTH * 0.4
+        ),
+        "the cow default the (0, eye, bbW·0.4) pair wears"
+    );
+    let llama_default = default_leash_offset(crate::mob::MobKind::TraderLlama);
+    assert_ne!(
+        llama_default,
+        crate::mob::llama_leash_offset(),
+        "the llama default the override never folds"
+    );
+    assert_eq!(
+        llama_default,
+        (
+            0.0,
+            crate::mob::MobKind::TraderLlama.eye_height(),
+            crate::mob::TRADER_LLAMA_WIDTH * 0.4
+        ),
+        "the llama default the same law wears"
+    );
+    // THE BODY'S OWN WIDTH (the box_for consts the helper reads)
+    assert_eq!(
+        kind_bb_width(crate::mob::MobKind::Cow),
+        crate::mob::COW_WIDTH,
+        "the cow width the const keeps"
+    );
+    assert_eq!(
+        kind_bb_width(crate::mob::MobKind::TraderLlama),
+        crate::mob::TRADER_LLAMA_WIDTH,
+        "the llama width the const keeps"
+    );
+    // THE KIND-GENERAL START (the getLeashOffset(partial).yRot(−f7)
+    // extract walk — the yaw 0 the offset unrotated keeps, the 90°
+    // the −rad fold the cross speaks, the llama the old signature the
+    // delegate law keeps)
+    let cow_start0 = leash_start_for_kind(crate::mob::MobKind::Cow, 10.0, 20.0, 30.0, 0.0);
+    assert_eq!(
+        cow_start0,
+        (
+            10.0,
+            20.0 + crate::mob::MobKind::Cow.eye_height(),
+            30.0 + crate::mob::COW_WIDTH * 0.4
+        ),
+        "the yaw-0 start the offset sum wears"
+    );
+    let cow_start90 = leash_start_for_kind(crate::mob::MobKind::Cow, 10.0, 20.0, 30.0, 90.0);
+    let (ox, oy, oz) = (
+        0.0,
+        crate::mob::MobKind::Cow.eye_height(),
+        crate::mob::COW_WIDTH * 0.4,
+    );
+    let (rx, ry, rz) = crate::mob::vec3_y_rot(ox, oy, oz, -90.0 * 0.017_453_292_384_743_69);
+    assert_eq!(
+        cow_start90,
+        (10.0 + rx, 20.0 + ry, 30.0 + rz),
+        "the 90° start the yRot fold wears"
+    );
+    assert_eq!(
+        leash_start(10.0, 20.0, 30.0, 45.0),
+        leash_start_for_kind(crate::mob::MobKind::TraderLlama, 10.0, 20.0, 30.0, 45.0),
+        "the old signature the llama law delegates"
+    );
+}
+
+/// THE LEAD'S OWN TIE CANVAS (the `Entity.interact` arms the press
+/// walk serves — the lead stack the tie the player's own hand the
+/// sentinel banks, the rope the frame's brown pixels the widened
+/// every-kind lane paints [the PLAYER holder the eye·0.7 end the
+/// hold speaks], the un-tie the lead the count-1 the feet drops +
+/// the same frame the rope never paints, the PLAYER-holder tick the
+/// elastic pull the llama the stroll drags + the 20-block span the
+/// snap the dropLeash pair arms — the render-lane harness the
+/// canvas test's own stage keeps):
+#[test]
+fn the_lead_tie_the_player_hold_wears() {
+    let _lane = render_lane();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.perspective = crate::camera::CameraType::ThirdPersonBack;
+    if app.zombie_avatar.is_none() {
+        if let Some(root) = [
+            "assets-cache/jar",
+            "../assets-cache/jar",
+            "../../assets-cache/jar",
+        ]
+        .iter()
+        .map(std::path::Path::new)
+        .find(|p| p.join("gui/container/inventory.png").exists())
+        {
+            app.zombie_avatar = crate::avatar::AvatarModel::load_zombie(root);
+        }
+    }
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 0.0;
+        body.pitch = 0.0;
+    }
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in (bx - 30)..=(bx + 30) {
+            for z in (bz - 7)..=(bz + 3) {
+                for y in by..=(by + 5) {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+                w.set(x, by - 1, z, crate::world::STONE);
+            }
+        }
+        w.relight();
+    }
+    if let Some(w) = app.offline_world.as_ref() {
+        app.world_quads = Some(crate::mesher::mesh_world(w, None));
+    }
+    // THE LLAMA'S OWN STAGE (the crosshair's own dead-ahead lane —
+    // the llama 3 ahead the pick ray the body yaw answers)
+    let mut llama =
+        crate::mob::Zombie::new(902, bx as f64, by as f64, (bz as f64) - 3.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    app.mobs.push(llama);
+    // THE TIE'S OWN PRESS (the lead stack the hand carries — the
+    // setLeashedTo(player, true) walk the sentinel banks, the
+    // shrink(1) the hand empties, the LEAD_TIED voice the row speaks,
+    // the SUCCESS_SERVER the swing starts)
+    let lead = mc_registry::item_id_by_name("lead").expect("the lead the registry carries");
+    app.inventory.items[app.selected_hotbar] = (lead, 1);
+    assert!(
+        app.on_right_press(0, 0),
+        "the tie arm the press consumes"
+    );
+    let llama = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .expect("the llama the stage keeps");
+    assert_eq!(
+        llama.leashed_to,
+        Some(crate::mob::PLAYER_HOLDER_ID),
+        "the tie the player's own seat banks"
+    );
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (0, 0),
+        "the shrink(1) the hand empties"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.lead.tied ")),
+        "the tied voice the lane carries"
+    );
+    assert!(app.swing.swinging, "the SUCCESS_SERVER the swing starts");
+    // THE UN-TIE'S OWN PRESS (the empty hand the MY-ROPE gate the
+    // acmp arms — the dropLeash the lead the count-1 the feet drops,
+    // the LEAD_UNTIED voice the row speaks, NO shrink the empty hand
+    // the silence keeps; the crosshair the dead-ahead stage keeps)
+    let drops_before = app.drops.len();
+    assert!(
+        app.on_right_press(0, 0),
+        "the un-tie arm the press consumes"
+    );
+    let llama = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .expect("the llama the stage keeps");
+    assert_eq!(
+        llama.leashed_to, None,
+        "the un-tie the rope the None clears"
+    );
+    let lead_dropped = app.drops[drops_before..]
+        .iter()
+        .any(|d| d.item == lead && d.count == 1);
+    assert!(
+        lead_dropped,
+        "the un-tie the lead item the count-1 the feet drops"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.lead.untied ")),
+        "the untied voice the lane carries"
+    );
+    // THE ROPE'S OWN STAGE (the SIDE-ON view the band the camera's
+    // own yaw speaks — the dead-ahead stage the rope the view ray
+    // the same line wears [the projected area the zero the diff
+    // never paints], the yaw 90 the lateral band the frame paints)
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 90.0;
+    }
+    {
+        let llama = app
+            .mobs
+            .iter_mut()
+            .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+            .expect("the llama the stage keeps");
+        llama.leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+    }
+    let a = third_person_frame(&mut app);
+    let a_again = third_person_frame(&mut app);
+    assert_eq!(a, a_again, "the rope frames bit-identical twice");
+    // THE GATE'S OWN CLEAR (the leashed_to None the rope lane the
+    // silence keeps — the same side-on stage the frame never moves)
+    {
+        let llama = app
+            .mobs
+            .iter_mut()
+            .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+            .expect("the llama the stage keeps");
+        llama.leashed_to = None;
+    }
+    let b = third_person_frame(&mut app);
+    // THE ROPE'S OWN BAND (the diff pixels the rope painted — the
+    // cleared leash the same stage the frame never paints)
+    let browns = [(128u8, 102u8, 77u8), (89u8, 71u8, 54u8)];
+    let mut diff_positions: Vec<usize> = Vec::new();
+    for (i, (x, y)) in a.chunks_exact(3).zip(b.chunks_exact(3)).enumerate() {
+        if x != y {
+            diff_positions.push(i);
+        }
+    }
+    assert!(
+        !diff_positions.is_empty(),
+        "the tie the rope the frame paints"
+    );
+    let a_browns = diff_positions
+        .iter()
+        .filter(|&&i| {
+            let o = i * 3;
+            let px = (a[o], a[o + 1], a[o + 2]);
+            browns.iter().any(|&c| px == c)
+        })
+        .count();
+    assert!(
+        a_browns > 0,
+        "the rope pixels the brown words wear ({a_browns}/{})",
+        diff_positions.len()
+    );
+    let b_browns = diff_positions
+        .iter()
+        .filter(|&&i| {
+            let o = i * 3;
+            let px = (b[o], b[o + 1], b[o + 2]);
+            browns.iter().any(|&c| px == c)
+        })
+        .count();
+    assert_eq!(b_browns, 0, "the cleared leash the brown silence keeps");
+    // THE PLAYER-HOLDER TICK'S OWN PULL (the tick lane the same
+    // bb-CENTER law the mob holders wear — the 8-block span the
+    // spring the +x delta the llama gains, the holder at +x the pull
+    // the sign speaks)
+    {
+        let llama = app
+            .mobs
+            .iter_mut()
+            .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+            .expect("the llama the stage keeps");
+        llama.leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+        llama.leash_angular_momentum = 0.0;
+    }
+    {
+        let body = app.body.as_mut().unwrap();
+        body.x += 8.0;
+        body.prev_x = body.x;
+        body.vx = 0.0;
+        body.vy = 0.0;
+        body.vz = 0.0;
+    }
+    app.update();
+    let llama = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .expect("the llama the stage keeps");
+    assert_eq!(
+        llama.leashed_to,
+        Some(crate::mob::PLAYER_HOLDER_ID),
+        "the 8-block span the elastic keeps"
+    );
+    assert!(
+        llama.vx > 0.0,
+        "the player at +x the strained llama the +x delta wears ({})",
+        llama.vx
+    );
+    // THE SNAP'S OWN WALK (the 20-block span the >12 the dropLeash
+    // pair arms — the PLAYER holder the same snap law the mob
+    // holders wear: the body +12 more the bb-center span the
+    // 19.7 the snap speaks)
+    {
+        let body = app.body.as_mut().unwrap();
+        body.x += 12.0;
+        body.prev_x = body.x;
+        body.vx = 0.0;
+        body.vy = 0.0;
+        body.vz = 0.0;
+    }
+    let drops_before = app.drops.len();
+    app.update();
+    let llama = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .expect("the llama the stage keeps");
+    assert_eq!(
+        llama.leashed_to, None,
+        "the beyond-snap the dropLeash the None clears"
+    );
+    let lead_dropped = app.drops[drops_before..]
+        .iter()
+        .any(|d| d.item == lead && d.count == 1);
+    assert!(
+        lead_dropped,
+        "the snap the lead item the count-1 the feet drops"
+    );
+}

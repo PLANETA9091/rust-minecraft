@@ -21605,6 +21605,33 @@ impl App {
                         let hh = hbox.4 - hbox.1;
                         holder_words.insert(m.id, (hbox, m.yaw, (hw, hh), (m.vx, m.vy, m.vz)));
                     }
+                    // THE PLAYER'S OWN HOLDER WORD (the setLeashedTo
+                    // (player, true) walk the lead_use_486 census
+                    // banks — the tie arm the PLAYER the rope's own
+                    // holder seats, the tick the same bb-CENTER law
+                    // the mob holders wear: the box the body's own
+                    // pose the height wears, the yaw the body speaks,
+                    // the move the deltaMovement carries)
+                    if let Some(b) = self.body.as_ref() {
+                        let ph = if b.crouching {
+                            crate::body::CROUCH_HEIGHT
+                        } else {
+                            crate::body::STANDING_HEIGHT
+                        };
+                        let half = crate::body::WIDTH / 2.0;
+                        let pbox6 = (
+                            b.x - half,
+                            b.y,
+                            b.z - half,
+                            b.x + half,
+                            b.y + ph,
+                            b.z + half,
+                        );
+                        holder_words.insert(
+                            crate::mob::PLAYER_HOLDER_ID,
+                            (pbox6, b.yaw, (crate::body::WIDTH, ph), (b.vx, b.vy, b.vz)),
+                        );
+                    }
                     let mut lead_drops: Vec<(f64, f64, f64)> = Vec::new();
                     for mob in self.mobs.iter_mut() {
                         let Some(holder_id) = mob.leashed_to else {
@@ -49228,6 +49255,18 @@ impl App {
                     // sentinel the held lane's miss rides, the chain's
                     // own gates the word answers
                     let held = held.as_deref().unwrap_or("");
+                    // THE LEASH'S OWN ENTITY-INTERACT LANE (javap
+                    // `Entity.interact` the lead_use_486 census banks —
+                    // the 26.2 dispatch the `Mob.interact`'s own super
+                    // call keeps: the leash arms the mobInteract chain
+                    // the walk serves BEFORE — the sneak re-leash pc
+                    // 0-196, the un-tie pc 296-387, the LEAD tie pc
+                    // 388-486; the consumed arm the press the SUCCESS
+                    // verdict ends, the pass the mobInteract walk the
+                    // fall-through serves)
+                    if self.on_right_press_leash_lane(i) {
+                        return true;
+                    }
                     let mut verdict = self.mobs[i].mob_interact(held, &mut self.mob_rng);
                     // THE SECONDARY-USE STAND-DOWN (bytecode 28-32:
                     // `player.isSecondaryUseActive()` ifne -> 55 — the
@@ -74574,6 +74613,227 @@ impl App {
         }
     }
 
+    /// THE LEASH'S OWN ENTITY-INTERACT LANE (javap `Entity.interact`
+    /// the lead_use_486 census banks — the 26.2 dispatch the
+    /// `Mob.interact`'s own super call keeps, the leash arms the
+    /// mobInteract chain the walk serves BEFORE). THREE ARMS in the
+    /// bytecode's own order:
+    /// - pc 0-196 THE SNEAK RE-LEASH: the `player.isSecondaryUseActive`
+    ///   ifeq 197 the sneak branch arms, the `lambda$interact$0` the
+    ///   `getLeashHolder() == player` predicate speaks, the
+    ///   `leashableInArea` scan the 32³ `AABB.ofSize(center, 32, 32,
+    ///   32)` box the getEntitiesOfClass walk banks, the
+    ///   `canHaveALeashAttachedTo(clicked)` gate the ≤ 12.0 bb-center
+    ///   distance serves, the `setLeashedTo(clicked, true)` the
+    ///   re-attach banks, the playSound(LEAD_TIED) + the
+    ///   SUCCESS_SERVER the consumed press speaks — the YOUR-ROPE
+    ///   bodies the clicked body's own hand the stroll transfers;
+    /// - pc 296-387 THE UN-TIE: the `getLeashHolder() == player` acmp
+    ///   the MY-ROPE gate arms, the dropLeash() the lead the count-1
+    ///   the feet the spawnAtLocation word drops [the same walk the
+    ///   snap lane wears], the playSound(LEAD_UNTIED) the voice
+    ///   serves, the SUCCESS.withoutItem the verdict carries — NO
+    ///   shrink the rope the item's own drop the hand never spends;
+    /// - pc 388-486 THE LEAD TIE: the held `Items.LEAD` stack the
+    ///   gate reads, the `getLeashHolder() instanceof Player` the
+    ///   ifne the ALREADY-MINE body the arm refuses, the client arm
+    ///   the `isClientSide` CONSUME the prediction keeps [pc 426-432
+    ///   — the voice+swing the client's own words, the
+    ///   ClientboundSetEntityLink the server's answer carries — the
+    ///   link packet the port's wire lane never parses, the rope the
+    ///   silence keeps], the `canHaveALeashAttachedTo(player)` gate
+    ///   the distance word serves, the isLeashed the dropLeash() the
+    ///   OLD holder's rope the re-tie drops, the
+    ///   `setLeashedTo(player, true)` the holder swap banks [the
+    ///   isPassenger the stopRiding the MOB's own vehicle the port
+    ///   never banks — the ridden pig the VEHICLE seat holds, the
+    ///   passenger relation the isPassenger word never reads], the
+    ///   LEAD_TIED voice + the shrink(1) the hand spends, the
+    ///   SUCCESS_SERVER the verdict carries.
+    /// The shears leash-cut arm pc 197-295 the round's NEXT lane
+    /// keeps; the wire session's own mobs the lane never reaches (the
+    /// caller's pick the offline bodies alone serves — the server's
+    /// own interact the echo lane owns). The miss the mobInteract
+    /// chain the fall-through keeps.
+    fn on_right_press_leash_lane(&mut self, i: usize) -> bool {
+        // THE ISALIVE'S OWN GATE (pc 1-10 — the isAlive the dead-mob
+        // removal the corpse never right-clicks)
+        if self.mobs[i].health <= 0.0 || self.mobs[i].death_time > 0 {
+            return false;
+        }
+        // THE PLAYER'S OWN BOX (the getBoundingBox().getCenter() law
+        // the leashDistanceTo walk banks — the body's own pose the
+        // height wears, the WIDTH the 0.6 pair keeps, the FEET the
+        // body's own origin the box anchors)
+        let pbox = match self.body.as_ref() {
+            Some(b) => {
+                let h = if b.crouching {
+                    crate::body::CROUCH_HEIGHT
+                } else {
+                    crate::body::STANDING_HEIGHT
+                };
+                let half = crate::body::WIDTH / 2.0;
+                (b.x - half, b.y, b.z - half, b.x + half, b.y + h, b.z + half)
+            }
+            None => {
+                let c = self.world_camera();
+                let feet_y = c.pos.y as f64 - crate::body::STANDING_EYE;
+                let half = crate::body::WIDTH / 2.0;
+                let fx = c.pos.x as f64;
+                let fz = c.pos.z as f64;
+                (
+                    fx - half,
+                    feet_y,
+                    fz - half,
+                    fx + half,
+                    feet_y + crate::body::STANDING_HEIGHT,
+                    fz + half,
+                )
+            }
+        };
+        // THE SNEAK'S OWN RE-LEASH (pc 0-196)
+        if self.shift_down {
+            let clicked_id = self.mobs[i].id;
+            let clicked_box = self.mobs[i].box_for();
+            // THE FOLLOWERS' OWN SCAN (leashableInArea the
+            // `lambda$interact$0` `getLeashHolder() == player`
+            // predicate serves — the port's leashed_to chain the same
+            // bodies answer, the 32³ box the scan's own shape keeps,
+            // the attach gate the ≤ 12.0 bb-center distance closes)
+            let mut transferred: Vec<usize> = Vec::new();
+            for (j, m) in self.mobs.iter().enumerate() {
+                if j == i || m.leashed_to != Some(crate::mob::PLAYER_HOLDER_ID) {
+                    continue;
+                }
+                let mbox = m.box_for();
+                let mc = crate::mob::leash_bb_center(mbox);
+                let cc = crate::mob::leash_bb_center(clicked_box);
+                if (mc.0 - cc.0).abs() > 16.0
+                    || (mc.1 - cc.1).abs() > 16.0
+                    || (mc.2 - cc.2).abs() > 16.0
+                {
+                    continue;
+                }
+                if crate::mob::can_have_a_leash_attached_to(mbox, clicked_box) {
+                    transferred.push(j);
+                }
+            }
+            if !transferred.is_empty() {
+                for j in transferred {
+                    self.mobs[j].leashed_to = Some(clicked_id);
+                }
+                self.sounds
+                    .play_voice(self.frame, crate::mob::LEAD_TIED_SOUND, 1.0, 1.0);
+                self.swing.start();
+                return true;
+            }
+            // THE MISS THE FALL-THROUGH KEEPS (pc 100-162 the flag the
+            // empty scan never arms — the walk the shears/un-tie/tie
+            // arms the 197 fall-through still serves)
+        }
+        // THE UN-TIE'S OWN ARM (pc 296-387)
+        if self.mobs[i].leashed_to == Some(crate::mob::PLAYER_HOLDER_ID) {
+            if self.live_held.is_some() {
+                // THE WIRE'S OWN PREDICTION (pc 336-381 the client arm
+                // the SUCCESS alone answers — the voice+swing the
+                // client's own words, the dropLeash the server's own
+                // walk carries, the SetEntityLink the link packet the
+                // port's wire lane never parses)
+            } else {
+                // THE DROP'S OWN PAIR (dropLeash(this, true, true) —
+                // the lead the count-1 the feet the spawnAtLocation
+                // word keeps, the same walk the snap lane wears)
+                let (mx, my, mz) = (self.mobs[i].x, self.mobs[i].y, self.mobs[i].z);
+                self.mobs[i].leashed_to = None;
+                self.mobs[i].leash_angular_momentum = 0.0;
+                if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                    let id = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        id,
+                        lead,
+                        1,
+                        mx,
+                        my,
+                        mz,
+                        &mut self.mob_rng,
+                    ));
+                }
+            }
+            self.sounds
+                .play_voice(self.frame, crate::mob::LEAD_UNTIED_SOUND, 1.0, 1.0);
+            self.swing.start();
+            return true;
+        }
+        // THE LEAD'S OWN TIE ARM (pc 388-486)
+        let held = self.held_id().and_then(mc_registry::item_name);
+        let held = held.as_deref().unwrap_or("");
+        if held == "lead" && self.mobs[i].leashed_to != Some(crate::mob::PLAYER_HOLDER_ID) {
+            if self.live_held.is_some() {
+                // THE CLIENT'S OWN CONSUME (pc 426-432 — the
+                // isClientSide the CONSUME the prediction keeps, the
+                // voice+swing the client's own words, the state the
+                // server's SetEntityLink answer carries)
+                self.sounds
+                    .play_voice(self.frame, crate::mob::LEAD_TIED_SOUND, 1.0, 1.0);
+                self.swing.start();
+                return true;
+            }
+            // THE ATTACH'S OWN GATE (pc 433-441 — the
+            // canHaveALeashAttachedTo(player) the ≤ 12.0 bb-center
+            // distance the gate closes, the PASS the mobInteract chain
+            // the fall-through serves)
+            let clicked_box = self.mobs[i].box_for();
+            if !crate::mob::can_have_a_leash_attached_to(clicked_box, pbox) {
+                return false;
+            }
+            // THE OLD ROPE'S OWN DROP (pc 444-461 — the isLeashed the
+            // dropLeash() the re-tie serves, the OLD holder's lead the
+            // feet the spawnAtLocation word drops)
+            if self.mobs[i].leashed_to.is_some() {
+                let (mx, my, mz) = (self.mobs[i].x, self.mobs[i].y, self.mobs[i].z);
+                self.mobs[i].leashed_to = None;
+                self.mobs[i].leash_angular_momentum = 0.0;
+                if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                    let id = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        id,
+                        lead,
+                        1,
+                        mx,
+                        my,
+                        mz,
+                        &mut self.mob_rng,
+                    ));
+                }
+            }
+            // THE HOLDER SWAP (pc 461-465 — the setLeashedTo(player,
+            // true) the player's own id the sentinel banks; the
+            // isPassenger the stopRiding the MOB's own vehicle the
+            // port's ride lane never banks — the ridden pig the
+            // VEHICLE seat holds, the passenger relation the
+            // isPassenger word never reads)
+            self.mobs[i].leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+            self.sounds
+                .play_voice(self.frame, crate::mob::LEAD_TIED_SOUND, 1.0, 1.0);
+            // THE SHRINK'S OWN WALK (pc 477-480 — the stack.shrink(1)
+            // the same split walk the saddle lane speaks)
+            let sel = self.selected_hotbar;
+            let held_count = self.inventory.items[sel].1;
+            if held_count > 1 {
+                self.inventory.items[sel].1 = held_count - 1;
+            } else if held_count > 0 {
+                self.inventory.items[sel] = (0, 0);
+            } else if self.offline_held.is_some() {
+                self.offline_held = None;
+            }
+            self.swing.start();
+            return true;
+        }
+        false
+    }
+
     /// THE FRAME'S OWN INTERACT WALK — javap ItemFrame.interact the
     /// 26.2 jar (the SUCCESS arms the press consumes): the STORE lane
     /// [pcs 131-152 — the held stack the count-1 copy the setItem
@@ -87646,40 +87906,71 @@ impl App {
             // the leash_481 census banks — the leashStates list the
             // leashed body's own extract carries, the rope the
             // 24-segment walk the pair's own endpoints wear: the start
-            // the llama's rotated leash offset the extractRenderState
+            // the leashed body's rotated leash offset the extractRenderState
             // single-leash walk banks, the end the holder's eye*0.7
             // hold the getRopeHoldPosition word serves; the slack sag
             // the ctor's true the honest droop keeps, the parity shade
             // the two passes' strip the canvas answers, the rope color
             // the setColor(0.5s, 0.4s, 0.3s) words wear — no hurt
-            // overlay the feature lane's own vertex colors keep)
-            if mob.kind == crate::mob::MobKind::TraderLlama {
-                if let Some(holder_id) = mob.leashed_to {
-                    let holder = self
-                        .mobs
-                        .iter()
-                        .chain(self.net_mobs.iter())
-                        .find(|m| m.id == holder_id);
-                    if let Some(holder) = holder {
+            // overlay the feature lane's own vertex colors keep. THE
+            // KIND GATE THE TIE ROUND WIDENS (the lead_use_486 walk the
+            // tie the EVERY-KIND body serves — the 481 round the
+            // TraderLlama lane the first rope wore, the
+            // leashableLeashedTo the every-kind bodies the extract
+            // carries): the start the kind's own offset the
+            // leash_start_for_kind walk answers [the Llama override the
+            // llama law keeps, the every-kind default the Vec3(0, eye,
+            // bbW·0.4) pair serves])
+            if mob.leashed_to.is_some() {
+                let holder_id = mob.leashed_to.expect("leashed checked above");
+                let holder = self
+                    .mobs
+                    .iter()
+                    .chain(self.net_mobs.iter())
+                    .find(|m| m.id == holder_id);
+                // THE PLAYER'S OWN HOLD (the setLeashedTo(player, true)
+                // walk the lead_use_486 census banks — the holder the
+                // PLAYER the sentinel seats: the FEET the camera's own
+                // eye unwinds [the getRopeHoldPosition the feet the
+                // pos word keeps], the eye·0.7 the rope's own end the
+                // hold speaks)
+                let player_hold = if holder.is_none()
+                    && holder_id == crate::mob::PLAYER_HOLDER_ID
+                {
+                    let c = self.world_camera();
+                    let feet_y = c.pos.y as f64 - crate::body::STANDING_EYE;
+                    Some((c.pos.x as f64, feet_y, c.pos.z as f64))
+                } else {
+                    None
+                };
+                let rope_end: Option<(f64, f64, f64)> = match (holder, player_hold) {
+                    (Some(holder), _) => {
                         let (hx, hy, hz) = holder.lerped_pos(self.partial_tick);
-                        let end = crate::mob::rope_hold_position(holder.kind, hx, hy, hz);
-                        let start = crate::mob::leash_start(mx, my, mz, mob.yaw);
-                        let rope = crate::avatar::rope_quads(start, end);
-                        let rope_sampled: Vec<crate::raster::SampledQuad> = rope
-                            .iter()
-                            .map(|q| crate::raster::SampledQuad {
-                                pts: q.pts,
-                                uv: q.uv,
-                                tex: "",
-                                tint: [q.shade * 0.5, q.shade * 0.4, q.shade * 0.3],
-                            })
-                            .collect();
-                        fb.draw_sampled_quads(
-                            ctx.proj.mul(&ctx.view),
-                            &rope_sampled,
-                            &mut |_tex, _u, _v| Some([255u8, 255, 255, 255]),
-                        );
+                        Some(crate::mob::rope_hold_position(holder.kind, hx, hy, hz))
                     }
+                    (None, Some((hx, hy, hz))) => {
+                        Some((hx, hy + crate::body::STANDING_EYE * 0.7, hz))
+                    }
+                    (None, None) => None,
+                };
+                if let Some(end) = rope_end {
+                    let start =
+                        crate::mob::leash_start_for_kind(mob.kind, mx, my, mz, mob.yaw);
+                    let rope = crate::avatar::rope_quads(start, end);
+                    let rope_sampled: Vec<crate::raster::SampledQuad> = rope
+                        .iter()
+                        .map(|q| crate::raster::SampledQuad {
+                            pts: q.pts,
+                            uv: q.uv,
+                            tex: "",
+                            tint: [q.shade * 0.5, q.shade * 0.4, q.shade * 0.3],
+                        })
+                        .collect();
+                    fb.draw_sampled_quads(
+                        ctx.proj.mul(&ctx.view),
+                        &rope_sampled,
+                        &mut |_tex, _u, _v| Some([255u8, 255, 255, 255]),
+                    );
                 }
             }
             // THE ARMOR LAYERS' own draw (HumanoidArmorLayer's own
