@@ -1,0 +1,481 @@
+== net/minecraft/client/gui/screens/inventory/MerchantScreen.class
+  METHOD extractProgressBar (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/item/trading/MerchantOffer;)V  (code=208)
+    0: aload_0
+    1: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    4: checkcast net/minecraft/world/inventory/MerchantMenu
+    7: invokevirtual net/minecraft/world/inventory/MerchantMenu.getTraderLevel:()I
+    10: istore 5
+    12: aload_0
+    13: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    16: checkcast net/minecraft/world/inventory/MerchantMenu
+    19: invokevirtual net/minecraft/world/inventory/MerchantMenu.getTraderXp:()I
+    22: istore 6
+    24: iload 5
+    26: iconst_5
+    27: if_icmplt 31
+    30: return
+    31: aload_1
+    32: getstatic net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    35: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.EXPERIENCE_BAR_BACKGROUND_SPRITE:Lnet/minecraft/resources/Identifier;
+    38: iload_2
+    39: sipush 136
+    42: iadd
+    43: iload_3
+    44: bipush 16
+    46: iadd
+    47: bipush 102
+    49: iconst_5
+    50: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    53: iload 5
+    55: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.getMinXpPerLevel:(I)I
+    58: istore 7
+    60: iload 6
+    62: iload 7
+    64: if_icmplt 75
+    67: iload 5
+    69: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.canLevelUp:(I)Z
+    72: ifne 76
+    75: return
+    76: bipush 102
+    78: istore 8
+    80: ldc 2.396220373995437e-41f
+    82: iload 5
+    84: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.getMaxXpPerLevel:(I)I
+    87: iload 7
+    89: isub
+    90: i2f
+    91: fdiv
+    92: fstore 9
+    94: op_17 9
+    96: iload 6
+    98: iload 7
+    100: isub
+    101: i2f
+    102: fmul
+    103: invokestatic net/minecraft/util/Mth.floor:(F)I
+    106: bipush 102
+    108: invokestatic java/lang/Math.min:(II)I
+    111: istore 10
+    113: aload_1
+    114: getstatic net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    117: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.EXPERIENCE_BAR_CURRENT_SPRITE:Lnet/minecraft/resources/Identifier;
+    120: bipush 102
+    122: iconst_5
+    123: iconst_0
+    124: iconst_0
+    125: iload_2
+    126: sipush 136
+    129: iadd
+    130: iload_3
+    131: bipush 16
+    133: iadd
+    134: iload 10
+    136: iconst_5
+    137: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIII)V
+    140: aload_0
+    141: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    144: checkcast net/minecraft/world/inventory/MerchantMenu
+    147: invokevirtual net/minecraft/world/inventory/MerchantMenu.getFutureTraderXp:()I
+    150: istore 11
+    152: iload 11
+    154: ifle 207
+    157: iload 11
+    159: i2f
+    160: op_17 9
+    162: fmul
+    163: invokestatic net/minecraft/util/Mth.floor:(F)I
+    166: bipush 102
+    168: iload 10
+    170: isub
+    171: invokestatic java/lang/Math.min:(II)I
+    174: istore 12
+    176: aload_1
+    177: getstatic net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    180: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.EXPERIENCE_BAR_RESULT_SPRITE:Lnet/minecraft/resources/Identifier;
+    183: bipush 102
+    185: iconst_5
+    186: iload 10
+    188: iconst_0
+    189: iload_2
+    190: sipush 136
+    193: iadd
+    194: iload 10
+    196: iadd
+    197: iload_3
+    198: bipush 16
+    200: iadd
+    201: iload 12
+    203: iconst_5
+    204: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIII)V
+    207: return
+  METHOD extractContents (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V  (code=477)
+    0: aload_0
+    1: aload_1
+    2: iload_2
+    3: iload_3
+    4: op_17 4
+    6: invokespecial net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.extractContents:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+    9: aload_0
+    10: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    13: checkcast net/minecraft/world/inventory/MerchantMenu
+    16: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    19: astore 5
+    21: aload 5
+    23: invokevirtual net/minecraft/world/item/trading/MerchantOffers.isEmpty:()Z
+    26: ifne 476
+    29: aload_0
+    30: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.width:I
+    33: aload_0
+    34: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageWidth:I
+    37: isub
+    38: iconst_2
+    39: idiv
+    40: istore 6
+    42: aload_0
+    43: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.height:I
+    46: aload_0
+    47: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.imageHeight:I
+    50: isub
+    51: iconst_2
+    52: idiv
+    53: istore 7
+    55: iload 7
+    57: bipush 16
+    59: iadd
+    60: iconst_1
+    61: iadd
+    62: istore 8
+    64: iload 6
+    66: iconst_5
+    67: iadd
+    68: iconst_5
+    69: iadd
+    70: istore 9
+    72: aload_0
+    73: aload_1
+    74: iload 6
+    76: iload 7
+    78: iload_2
+    79: iload_3
+    80: aload 5
+    82: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractScroller:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIILnet/minecraft/world/item/trading/MerchantOffers;)V
+    85: iconst_0
+    86: istore 10
+    88: aload 5
+    90: invokevirtual net/minecraft/world/item/trading/MerchantOffers.iterator:()Ljava/util/Iterator;
+    93: astore 11
+    95: aload 11
+    97: invokeinterface java/util/Iterator.hasNext:()Z
+    102: ifeq 299
+    105: aload 11
+    107: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    112: checkcast net/minecraft/world/item/trading/MerchantOffer
+    115: astore 12
+    117: aload_0
+    118: aload 5
+    120: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    123: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.canScroll:(I)Z
+    126: ifeq 156
+    129: iload 10
+    131: aload_0
+    132: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    135: if_icmplt 150
+    138: iload 10
+    140: bipush 7
+    142: aload_0
+    143: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.scrollOff:I
+    146: iadd
+    147: if_icmplt 156
+    150: iinc 10 1
+    153: goto 95
+    156: aload 12
+    158: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getBaseCostA:()Lnet/minecraft/world/item/ItemStack;
+    161: astore 13
+    163: aload 12
+    165: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostA:()Lnet/minecraft/world/item/ItemStack;
+    168: astore 14
+    170: aload 12
+    172: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getCostB:()Lnet/minecraft/world/item/ItemStack;
+    175: astore 15
+    177: aload 12
+    179: invokevirtual net/minecraft/world/item/trading/MerchantOffer.getResult:()Lnet/minecraft/world/item/ItemStack;
+    182: astore 16
+    184: iload 8
+    186: iconst_2
+    187: iadd
+    188: istore 17
+    190: aload_0
+    191: aload_1
+    192: aload 14
+    194: aload 13
+    196: iload 9
+    198: iload 17
+    200: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractAndDecorateCostA:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;II)V
+    203: aload 15
+    205: invokevirtual net/minecraft/world/item/ItemStack.isEmpty:()Z
+    208: ifne 245
+    211: aload_1
+    212: aload 15
+    214: iload 6
+    216: iconst_5
+    217: iadd
+    218: bipush 35
+    220: iadd
+    221: iload 17
+    223: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fakeItem:(Lnet/minecraft/world/item/ItemStack;II)V
+    226: aload_1
+    227: aload_0
+    228: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.font:Lnet/minecraft/client/gui/Font;
+    231: aload 15
+    233: iload 6
+    235: iconst_5
+    236: iadd
+    237: bipush 35
+    239: iadd
+    240: iload 17
+    242: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.itemDecorations:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V
+    245: aload_0
+    246: aload_1
+    247: aload 12
+    249: iload 6
+    251: iload 17
+    253: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractButtonArrows:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/item/trading/MerchantOffer;II)V
+    256: aload_1
+    257: aload 16
+    259: iload 6
+    261: iconst_5
+    262: iadd
+    263: bipush 68
+    265: iadd
+    266: iload 17
+    268: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fakeItem:(Lnet/minecraft/world/item/ItemStack;II)V
+    271: aload_1
+    272: aload_0
+    273: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.font:Lnet/minecraft/client/gui/Font;
+    276: aload 16
+    278: iload 6
+    280: iconst_5
+    281: iadd
+    282: bipush 68
+    284: iadd
+    285: iload 17
+    287: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.itemDecorations:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V
+    290: iinc 8 20
+    293: iinc 10 1
+    296: goto 95
+    299: aload_0
+    300: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.shopItem:I
+    303: istore 11
+    305: aload 5
+    307: iload 11
+    309: invokevirtual net/minecraft/world/item/trading/MerchantOffers.get:(I)Ljava/lang/Object;
+    312: checkcast net/minecraft/world/item/trading/MerchantOffer
+    315: astore 12
+    317: aload_0
+    318: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    321: checkcast net/minecraft/world/inventory/MerchantMenu
+    324: invokevirtual net/minecraft/world/inventory/MerchantMenu.showProgressBar:()Z
+    327: ifeq 341
+    330: aload_0
+    331: aload_1
+    332: iload 6
+    334: iload 7
+    336: aload 12
+    338: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.extractProgressBar:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/item/trading/MerchantOffer;)V
+    341: aload 12
+    343: invokevirtual net/minecraft/world/item/trading/MerchantOffer.isOutOfStock:()Z
+    346: ifeq 395
+    349: aload_0
+    350: sipush 186
+    353: bipush 35
+    355: bipush 22
+    357: bipush 21
+    359: iload_2
+    360: i2d
+    361: iload_3
+    362: i2d
+    363: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen.isHovering:(IIIIDD)Z
+    366: ifeq 395
+    369: aload_0
+    370: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    373: checkcast net/minecraft/world/inventory/MerchantMenu
+    376: invokevirtual net/minecraft/world/inventory/MerchantMenu.canRestock:()Z
+    379: ifeq 395
+    382: aload_1
+    383: aload_0
+    384: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.font:Lnet/minecraft/client/gui/Font;
+    387: getstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.DEPRECATED_TOOLTIP:Lnet/minecraft/network/chat/Component;
+    390: iload_2
+    391: iload_3
+    392: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.setTooltipForNextFrame:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;II)V
+    395: aload_0
+    396: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.tradeOfferButtons:[Lnet/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton;
+    399: astore 13
+    401: aload 13
+    403: arraylength
+    404: istore 14
+    406: iconst_0
+    407: istore 15
+    409: iload 15
+    411: iload 14
+    413: if_icmpge 476
+    416: aload 13
+    418: iload 15
+    420: aaload
+    421: astore 16
+    423: aload 16
+    425: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.isHoveredOrFocused:()Z
+    428: ifeq 439
+    431: aload 16
+    433: aload_1
+    434: iload_2
+    435: iload_3
+    436: invokevirtual net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.extractToolTip:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V
+    439: aload 16
+    441: aload 16
+    443: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.index:I
+    446: aload_0
+    447: getfield net/minecraft/client/gui/screens/inventory/MerchantScreen.menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    450: checkcast net/minecraft/world/inventory/MerchantMenu
+    453: invokevirtual net/minecraft/world/inventory/MerchantMenu.getOffers:()Lnet/minecraft/world/item/trading/MerchantOffers;
+    456: invokevirtual net/minecraft/world/item/trading/MerchantOffers.size:()I
+    459: if_icmpge 466
+    462: iconst_1
+    463: goto 467
+    466: iconst_0
+    467: putfield net/minecraft/client/gui/screens/inventory/MerchantScreen$TradeOfferButton.visible:Z
+    470: iinc 15 1
+    473: goto 409
+    476: return
+  METHOD <clinit> ()V  (code=109)
+    0: ldc_w "container/villager/out_of_stock"
+    3: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    6: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.OUT_OF_STOCK_SPRITE:Lnet/minecraft/resources/Identifier;
+    9: ldc_w "container/villager/experience_bar_background"
+    12: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    15: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.EXPERIENCE_BAR_BACKGROUND_SPRITE:Lnet/minecraft/resources/Identifier;
+    18: ldc_w "container/villager/experience_bar_current"
+    21: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    24: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.EXPERIENCE_BAR_CURRENT_SPRITE:Lnet/minecraft/resources/Identifier;
+    27: ldc_w "container/villager/experience_bar_result"
+    30: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    33: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.EXPERIENCE_BAR_RESULT_SPRITE:Lnet/minecraft/resources/Identifier;
+    36: ldc_w "container/villager/scroller"
+    39: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    42: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.SCROLLER_SPRITE:Lnet/minecraft/resources/Identifier;
+    45: ldc_w "container/villager/scroller_disabled"
+    48: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    51: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.SCROLLER_DISABLED_SPRITE:Lnet/minecraft/resources/Identifier;
+    54: ldc_w "container/villager/trade_arrow_out_of_stock"
+    57: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    60: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.TRADE_ARROW_OUT_OF_STOCK_SPRITE:Lnet/minecraft/resources/Identifier;
+    63: ldc_w "container/villager/trade_arrow"
+    66: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    69: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.TRADE_ARROW_SPRITE:Lnet/minecraft/resources/Identifier;
+    72: ldc_w "container/villager/discount_strikethrough"
+    75: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    78: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.DISCOUNT_STRIKETHRUOGH_SPRITE:Lnet/minecraft/resources/Identifier;
+    81: ldc_w "textures/gui/container/villager.png"
+    84: invokestatic net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+    87: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.VILLAGER_LOCATION:Lnet/minecraft/resources/Identifier;
+    90: ldc_w "merchant.trades"
+    93: invokestatic net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+    96: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.TRADES_LABEL:Lnet/minecraft/network/chat/Component;
+    99: ldc_w "merchant.deprecated"
+    102: invokestatic net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+    105: putstatic net/minecraft/client/gui/screens/inventory/MerchantScreen.DEPRECATED_TOOLTIP:Lnet/minecraft/network/chat/Component;
+    108: return
+
+== net/minecraft/world/entity/npc/villager/VillagerData.class
+  METHOD getMinXpPerLevel (I)I  (code=19)
+    0: iload_0
+    1: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.canLevelUp:(I)Z
+    4: ifeq 17
+    7: getstatic net/minecraft/world/entity/npc/villager/VillagerData.NEXT_LEVEL_XP_THRESHOLDS:[I
+    10: iload_0
+    11: iconst_1
+    12: isub
+    13: iaload
+    14: goto 18
+    17: iconst_0
+    18: ireturn
+  METHOD getMaxXpPerLevel (I)I  (code=17)
+    0: iload_0
+    1: invokestatic net/minecraft/world/entity/npc/villager/VillagerData.canLevelUp:(I)Z
+    4: ifeq 15
+    7: getstatic net/minecraft/world/entity/npc/villager/VillagerData.NEXT_LEVEL_XP_THRESHOLDS:[I
+    10: iload_0
+    11: iaload
+    12: goto 16
+    15: iconst_0
+    16: ireturn
+  METHOD canLevelUp (I)Z  (code=16)
+    0: iload_0
+    1: iconst_1
+    2: if_icmplt 14
+    5: iload_0
+    6: iconst_5
+    7: if_icmpge 14
+    10: iconst_1
+    11: goto 15
+    14: iconst_0
+    15: ireturn
+  METHOD <clinit> ()V  (code=91)
+    0: getstatic net/minecraft/world/entity/npc/villager/VillagerType.PLAINS:Lnet/minecraft/resources/ResourceKey;
+    3: putstatic net/minecraft/world/entity/npc/villager/VillagerData.DEFAULT_TYPE:Lnet/minecraft/resources/ResourceKey;
+    6: iconst_5
+    7: newarray
+    9: dup
+    10: iconst_0
+    11: iconst_0
+    12: iastore
+    13: dup
+    14: iconst_1
+    15: bipush 10
+    17: iastore
+    18: dup
+    19: iconst_2
+    20: bipush 70
+    22: iastore
+    23: dup
+    24: iconst_3
+    25: sipush 150
+    28: iastore
+    29: dup
+    30: iconst_4
+    31: sipush 250
+    34: iastore
+    35: putstatic net/minecraft/world/entity/npc/villager/VillagerData.NEXT_LEVEL_XP_THRESHOLDS:[I
+    38: invokedynamic dynamic#7:apply
+    43: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.create:(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+    46: putstatic net/minecraft/world/entity/npc/villager/VillagerData.CODEC:Lcom/mojang/serialization/Codec;
+    49: getstatic net/minecraft/core/registries/Registries.VILLAGER_TYPE:Lnet/minecraft/resources/ResourceKey;
+    52: invokestatic net/minecraft/network/codec/ByteBufCodecs.holderRegistry:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/network/codec/StreamCodec;
+    55: invokedynamic dynamic#8:apply
+    60: getstatic net/minecraft/core/registries/Registries.VILLAGER_PROFESSION:Lnet/minecraft/resources/ResourceKey;
+    63: invokestatic net/minecraft/network/codec/ByteBufCodecs.holderRegistry:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/network/codec/StreamCodec;
+    66: invokedynamic dynamic#9:apply
+    71: getstatic net/minecraft/network/codec/ByteBufCodecs.VAR_INT:Lnet/minecraft/network/codec/StreamCodec;
+    74: invokedynamic dynamic#10:apply
+    79: invokedynamic dynamic#6:apply
+    84: invokestatic net/minecraft/network/codec/StreamCodec.composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function3;)Lnet/minecraft/network/codec/StreamCodec;
+    87: putstatic net/minecraft/world/entity/npc/villager/VillagerData.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+    90: return
+
+== net/minecraft/world/entity/npc/wanderingtrader/WanderingTrader.class
+  METHOD showProgressBar ()Z  (code=2)
+    0: iconst_0
+    1: ireturn
+
+VERDICT [ok] the bar the level >= 5 silence opens with (iconst_5 if_icmplt gate)
+VERDICT [ok] the background blit the (136, 16) seat + the 102x5 size wears
+VERDICT [ok] the xp gates the min table + the canLevelUp pair speak
+VERDICT [ok] the fill the 102.0 scale the floor + the min cap wear
+VERDICT [ok] the current blit the windowed (0, 0) UV + the fill width wears
+VERDICT [ok] the future xp the getFutureTraderXp word reads
+VERDICT [ok] the result blit the fill-forward UV + the +fill seat wears
+VERDICT [ok] the caller the showProgressBar gate + the shopItem offer pass
+VERDICT [ok] the xp table the [0, 10, 70, 150, 250] thresholds wear
+VERDICT [ok] the min/max reads the level-1 and level-index pairs speak
+VERDICT [ok] the canLevelUp the [1, 5) band wears
+VERDICT [ok] the trader the showProgressBar FALSE override wears (the bar the trader never shows)

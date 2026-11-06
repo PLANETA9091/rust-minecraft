@@ -715,6 +715,59 @@ impl<'a> Gui<'a> {
         }
     }
 
+    /// THE WINDOWED SPRITE'S OWN TINTED BLIT (the vanilla
+    /// `blitSprite(pipeline, sprite, tw, th, u, v, x, y, w, h)` walk's
+    /// own shape — the source rect `(u, v, sw, sh)` of the named
+    /// sprite sampled 1:1 into the `(x, y, dw, dh)` destination, the
+    /// every-channel tint the sprite_at_tinted walk keeps): the
+    /// merchant progress bar's fill lanes wear it (the current fill's
+    /// left-crop window + the result's fill-forward band the
+    /// extractProgressBar walk serves).
+    pub fn sprite_at_tinted_region(
+        &mut self,
+        a: &mut GuiAssets,
+        name: &str,
+        u: i32,
+        v: i32,
+        sw: i32,
+        sh: i32,
+        x: i32,
+        y: i32,
+        dw: i32,
+        dh: i32,
+        tint: [f32; 4],
+    ) {
+        let Some(s) = a.sprite_any(name).cloned() else {
+            return;
+        };
+        if dw <= 0 || dh <= 0 || sw <= 0 || sh <= 0 || s.w == 0 || s.h == 0 {
+            return;
+        }
+        let (u, v) = (u.clamp(0, s.w as i32), v.clamp(0, s.h as i32));
+        let sw = sw.min(s.w as i32 - u);
+        let sh = sh.min(s.h as i32 - v);
+        for dy in 0..dh {
+            let sy = (v + dy * sh / dh).clamp(0, s.h as i32 - 1);
+            for dx in 0..dw {
+                let sx = (u + (dx * sw / dw)).clamp(0, s.w as i32 - 1);
+                let c = s.sample(sx as u32, sy as u32);
+                if c[3] <= 0.0 {
+                    continue;
+                }
+                self.px(
+                    x + dx,
+                    y + dy,
+                    [
+                        c[0] * tint[0],
+                        c[1] * tint[1],
+                        c[2] * tint[2],
+                        c[3] * tint[3],
+                    ],
+                );
+            }
+        }
+    }
+
     /// The BLOCK TEXTURE's own tinted stretch blit (the
     /// sprite_at_tinted walk over the sprite_file loader — the
     /// `assets-cache/jar/block/*.png` source the atlas's own block

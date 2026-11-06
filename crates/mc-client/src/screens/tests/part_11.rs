@@ -38175,3 +38175,209 @@ fn the_wanderer_spawner_the_app_tick_wears() {
         "the re-arm + the reset the success wears"
     );
 }
+
+/// THE MERCHANT PROGRESS BAR'S OWN WORDS (javap 26.2
+/// MerchantScreen.extractProgressBar — the census
+/// scripts/jar_work/progressbar_479.txt wears, all 12 verdicts ok):
+/// the level-5 silence, the [0, 10, 70, 150, 250] table the min/max
+/// reads answer, the fill the floor(xp * 102.0f / span) fold + the
+/// 102 cap keep, the future the selected offer's own xp word the
+/// min(102 - fill) band answers, the trader's own FALSE override the
+/// gate keeps.
+#[test]
+fn the_merchant_progress_bar_the_vanilla_gates_wear() {
+    use crate::screens::{
+        merchant_xp_bar_words, MERCHANT_LEVEL_XP_THRESHOLDS,
+    };
+    // THE TABLE THE CLINIT BANKS (the [0, 10, 70, 150, 250] the
+    // iconst_5 array speaks)
+    assert_eq!(
+        MERCHANT_LEVEL_XP_THRESHOLDS,
+        [0, 10, 70, 150, 250],
+        "the thresholds the clinit literals wear"
+    );
+    // THE LEVEL-5 SILENCE (the iconst_5/if_icmplt gate — no bg, no
+    // fill, no future the max level speaks)
+    assert_eq!(
+        merchant_xp_bar_words(5, 100, 3),
+        (false, 0, 0),
+        "the level-5 the silence keeps"
+    );
+    assert_eq!(
+        merchant_xp_bar_words(6, 500, 1),
+        (false, 0, 0),
+        "the past-max the same silence wears"
+    );
+    // THE LEVEL-1 FRESH WORD (the min 0 the xp 0 answers — the bg
+    // draws, the fill zero, the future the offer's own xp the scale
+    // speaks: 3 * 102.0 / 10 = 30.6 -> floor 30)
+    assert_eq!(
+        merchant_xp_bar_words(1, 0, 3),
+        (true, 0, 30),
+        "the fresh window the empty fill + the future band wear"
+    );
+    // THE LEVEL-1 PARTIAL FILL (the xp 5 the floor(5 * 10.2) = 51
+    // wears, the future the min(102 - 51, ...) band answers)
+    assert_eq!(
+        merchant_xp_bar_words(1, 5, 2),
+        (true, 51, 20),
+        "the half fill the scale's own word wears"
+    );
+    // THE LEVEL-2 READS (the min 10 the max 70 the table answers —
+    // the xp 40 the floor(30 * 102.0 / 60) = 51 speaks)
+    assert_eq!(
+        merchant_xp_bar_words(2, 40, 0),
+        (true, 51, 0),
+        "the level-2 fill the table's own span wears"
+    );
+    // THE LEVEL-4 CAP (the xp 250 the floor(100 * 1.02) = 102 the
+    // cap keeps, the future the 0-span the silence wears)
+    assert_eq!(
+        merchant_xp_bar_words(4, 250, 5),
+        (true, 102, 0),
+        "the full fill the cap keeps, the future the no-band wears"
+    );
+    // THE UNDER-LEVELED SILENCE (the level 3's min 70 the xp 5 the
+    // fill refuses — the bg the gates PRECEDE the draw keeps)
+    assert_eq!(
+        merchant_xp_bar_words(3, 5, 9),
+        (true, 0, 0),
+        "the under-leveled the fill silence keeps"
+    );
+    // THE LEVEL-0 WORD (the canLevelUp the [1, 5) band the fresh 0
+    // refuses — the bg draws, the fill silent)
+    assert_eq!(
+        merchant_xp_bar_words(0, 50, 4),
+        (true, 0, 0),
+        "the level-0 the canLevelUp band refuses"
+    );
+    // THE FUTURE'S OWN CAP (the level 1's xp 8 the fill 81, the
+    // future 5 the floor(5 * 10.2) = 51 the min(102 - 81, 51) = 21
+    // wears)
+    assert_eq!(
+        merchant_xp_bar_words(1, 8, 5),
+        (true, 81, 21),
+        "the future the remaining band's own cap wears"
+    );
+}
+
+/// THE MERCHANT PROGRESS BAR'S OWN CANVAS (the render walk the
+/// extractProgressBar lane serves): the (136, 16) 102x5 seat the
+/// background blits, the fill the left-crop window the current
+/// sprite answers, the future the selected offer's own xp the RESULT
+/// band the fill-forward seat serves, the show_progress gate the
+/// trader's own FALSE the silence keeps, the scroller the ≤7-offer
+/// window the silence keeps (the DISABLED sprite the dead bank the
+/// bytes never blit).
+#[test]
+fn the_merchant_progress_bar_the_canvas_wears() {
+    use crate::world_view::LiveContainer;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let mut app = App::new(399);
+    app.enter_world();
+    app.live_clicks = Some(std::sync::mpsc::channel().0);
+    // THE WIRE WINDOW'S OWN FEED (the echo-gate harness wears — the
+    // offers the count the scroller's bank keys, the level-1 words
+    // the bar's arms vary, the show_progress the gate's own word)
+    let feed = |offer_count: usize, xp: i32, offer_xp: i32, show: bool| {
+        let mut slots = vec![(emerald, 1), (0, 0), (0, 0)];
+        slots.resize(39, (0, 0));
+        LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+            slots,
+            bundle_rows: Vec::new(),
+            carried: (0, 0),
+            state_id: 5,
+            data_slots: Vec::new(),
+            title_nbt: Vec::new(),
+            merchant: Some(crate::world_view::MerchantView {
+                offers: vec![
+                    crate::world_view::MerchantOfferView {
+                        cost_a: (emerald, 1),
+                        cost_b: None,
+                        result: (bread, 2),
+                        out_of_stock: false,
+                        uses: 0,
+                        max_uses: 4,
+                        xp: offer_xp,
+                    };
+                    offer_count
+                ],
+                level: 1,
+                xp,
+                show_progress: show,
+                can_restock: false,
+            }),
+        }
+    };
+    // RENDER A (the xp 0 + the offer xp 0 — the background alone)
+    app.live_container_updated(Some(feed(9, 0, 0, true)));
+    let a = third_person_frame(&mut app);
+    // RENDER B (the xp 5 — the 51-wide fill the level-1 scale wears)
+    app.live_container_updated(Some(feed(9, 5, 0, true)));
+    let b = third_person_frame(&mut app);
+    // THE BAR'S OWN SEAT (the 320x200 frame's panel (22, 17) — the
+    // (158, 33) seat the 102x5 band wears)
+    let (bx, by) = (22 + 136, 17 + 16);
+    let row = |frame: &[u8], x: i32, y: i32| -> [u8; 3] {
+        let o = ((y * 320 + x) * 3) as usize;
+        [frame[o], frame[o + 1], frame[o + 2]]
+    };
+    // THE FILL BAND'S OWN DIFF (the [0, 51) band the fill changes,
+    // the [51, 102) band the same pixels keep — the current sprite's
+    // own left-crop law the canvas serves)
+    let band_diff = |f1: &[u8], f2: &[u8], x0: i32, x1: i32| -> usize {
+        (x0..x1)
+            .filter(|&x| row(f1, x, by + 2) != row(f2, x, by + 2))
+            .count()
+    };
+    let fill_changed = band_diff(&a, &b, bx, bx + 51);
+    let tail_same = band_diff(&a, &b, bx + 51, bx + 102);
+    assert!(
+        fill_changed > 0,
+        "the fill band the current sprite changes ({fill_changed})"
+    );
+    assert_eq!(
+        tail_same, 0,
+        "the tail band the same pixels keep"
+    );
+    // RENDER C (the xp 0 + the offer xp 3 — the 30-wide future band
+    // the RESULT sprite's forward seat wears)
+    app.live_container_updated(Some(feed(9, 0, 3, true)));
+    let c = third_person_frame(&mut app);
+    let future_changed = band_diff(&a, &c, bx, bx + 30);
+    let future_tail_same = band_diff(&a, &c, bx + 30, bx + 102);
+    assert!(
+        future_changed > 0,
+        "the future band the result sprite changes ({future_changed})"
+    );
+    assert_eq!(future_tail_same, 0, "the future's tail the same keeps");
+    // RENDER D (the show_progress false — the trader's own gate the
+    // WanderingTrader override keeps — the bar the seat never wears)
+    app.live_container_updated(Some(feed(9, 5, 0, false)));
+    let d = third_person_frame(&mut app);
+    let gate_diff = band_diff(&a, &d, bx, bx + 102);
+    assert!(
+        gate_diff > 0,
+        "the gate the background blit the silence keeps ({gate_diff})"
+    );
+    // THE SCROLLER'S OWN SILENCE (the 7-offer window the walk never
+    // enters — the handle band the bare background keeps; the
+    // 9-offer window the enabled handle wears)
+    app.live_container_updated(Some(feed(7, 0, 0, false)));
+    let seven = third_person_frame(&mut app);
+    app.live_container_updated(Some(feed(9, 0, 0, false)));
+    let nine = third_person_frame(&mut app);
+    let (sx, sy) = (22 + 94, 17 + 18);
+    let col_diff = |f1: &[u8], f2: &[u8]| -> usize {
+        (0..27)
+            .filter(|&dy| row(f1, sx + 3, sy + dy) != row(f2, sx + 3, sy + dy))
+            .count()
+    };
+    assert!(
+        col_diff(&seven, &nine) > 0,
+        "the handle the 9-offer bank the band wears"
+    );
+}

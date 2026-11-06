@@ -42072,10 +42072,73 @@ impl App {
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 107, panel.1 + 166 - 94, t, label, false);
         }
-        // THE SCROLLER'S OWN LANE (javap extractScroller — the >7 bank
-        // the enabled handle keeps, the offset the scroll window
-        // folds, the ≤7 bank the disabled sprite at the track's head
-        // answers; the 6x27 seat the (94, 18 + offset) pair wears)
+        // THE PROGRESS BAR'S OWN LANE (javap extractProgressBar — the
+        // caller's showProgressBar gate the walk opens with [the
+        // port's merchant_show_progress word the wire's
+        // setShowProgressBar echo re-banks — the TRADER the false the
+        // WanderingTrader's iconst_0 override keeps, the bar the
+        // trader's own window never shows], the level-5 silence the
+        // words fn wears, the background the (136, 16) 102x5 seat
+        // blits, the fill the left-crop window the current sprite
+        // answers, the future the selected offer's own xp the RESULT
+        // band the fill-forward seat serves)
+        if self.merchant_show_progress {
+            let future_xp = self
+                .merchant_offers
+                .get(self.merchant_selected)
+                .map(|o| o.xp)
+                .unwrap_or(0);
+            let (bg, fill, future) =
+                merchant_xp_bar_words(self.merchant_level, self.merchant_xp, future_xp);
+            if bg {
+                g.sprite_at_tinted(
+                    a,
+                    MERCHANT_XP_BAR_BACKGROUND,
+                    panel.0 + 136,
+                    panel.1 + 16,
+                    102,
+                    5,
+                    [1.0, 1.0, 1.0, 1.0],
+                );
+                if fill > 0 {
+                    g.sprite_at_tinted_region(
+                        a,
+                        MERCHANT_XP_BAR_CURRENT,
+                        0,
+                        0,
+                        fill,
+                        5,
+                        panel.0 + 136,
+                        panel.1 + 16,
+                        fill,
+                        5,
+                        [1.0, 1.0, 1.0, 1.0],
+                    );
+                }
+                if future > 0 {
+                    g.sprite_at_tinted_region(
+                        a,
+                        MERCHANT_XP_BAR_RESULT,
+                        fill,
+                        0,
+                        future,
+                        5,
+                        panel.0 + 136 + fill,
+                        panel.1 + 16,
+                        future,
+                        5,
+                        [1.0, 1.0, 1.0, 1.0],
+                    );
+                }
+            }
+        }
+        // THE SCROLLER'S OWN LANE (javap extractScroller — the
+        // maxScroll = size + 1 - 7 the ≤1 silence keeps [the ≤7-offer
+        // window the walk NEVER enters — the DISABLED sprite the
+        // clinit's own dead bank the bytes never blit, the port's
+        // invention the silence retires], the >7 bank the enabled
+        // handle the offset the scroll window folds, the 6x27 seat
+        // the (94, 18 + offset) pair wears)
         if self.merchant_offers.len() > 7 {
             let off = merchant_scroller_offset(self.merchant_offers.len(), self.merchant_scroll);
             g.sprite_at_tinted(
@@ -42083,16 +42146,6 @@ impl App {
                 MERCHANT_SCROLLER,
                 panel.0 + 94,
                 panel.1 + 18 + off,
-                6,
-                27,
-                [1.0, 1.0, 1.0, 1.0],
-            );
-        } else {
-            g.sprite_at_tinted(
-                a,
-                MERCHANT_SCROLLER_DISABLED,
-                panel.0 + 94,
-                panel.1 + 18,
                 6,
                 27,
                 [1.0, 1.0, 1.0, 1.0],
@@ -98674,12 +98727,78 @@ pub const CREATIVE_SCROLLER_DISABLED: &str =
 /// — the `container/villager/*` sprites the atlas lane carries, the
 /// generated defs the exact dimensions keep: the trade_arrow pair the
 /// 10x9 seat wears, the out_of_stock overlay the 28x21 band speaks,
-/// the scroller pair the 6x27 handle answers)
+/// the scroller pair the 6x27 handle answers, the experience bar trio
+/// the 102x5 seats the extractProgressBar walk serves)
 pub const MERCHANT_TRADE_ARROW: &str = "container/villager/trade_arrow";
 pub const MERCHANT_TRADE_ARROW_OUT_OF_STOCK: &str = "container/villager/trade_arrow_out_of_stock";
 pub const MERCHANT_OUT_OF_STOCK: &str = "container/villager/out_of_stock";
 pub const MERCHANT_SCROLLER: &str = "container/villager/scroller";
 pub const MERCHANT_SCROLLER_DISABLED: &str = "container/villager/scroller_disabled";
+pub const MERCHANT_XP_BAR_BACKGROUND: &str = "container/villager/experience_bar_background";
+pub const MERCHANT_XP_BAR_CURRENT: &str = "container/villager/experience_bar_current";
+pub const MERCHANT_XP_BAR_RESULT: &str = "container/villager/experience_bar_result";
+
+/// THE VILLAGER DATA'S OWN XP THRESHOLDS (javap 26.2 VillagerData
+/// <clinit> — the `NEXT_LEVEL_XP_THRESHOLDS` int[5] the iconst_5
+/// array the [0, 10, 70, 150, 250] literals bank, the
+/// getMinXpPerLevel's `THRESHOLDS[level - 1]` read and the
+/// getMaxXpPerLevel's `THRESHOLDS[level]` read the canLevelUp pair
+/// answers).
+pub const MERCHANT_LEVEL_XP_THRESHOLDS: [i32; 5] = [0, 10, 70, 150, 250];
+
+/// THE PROGRESS BAR'S OWN WORDS (javap 26.2
+/// MerchantScreen.extractProgressBar — the three draws the walk
+/// serves): `(background, fill, future)` — the background the
+/// level-5 silence gates alone [the `level >= 5 return` the
+/// iconst_5/if_icmplt pair speaks, the bg the gates PRECEDE], the
+/// fill the `xp >= minXp && canLevelUp(level)` pair answers [the
+/// floor((xp - minXp) * 102.0f / (maxXp - minXp)) the Mth.floor fold
+/// keeps, the 102 the Math.min cap wears], the future the selected
+/// offer's own xp word answers [the getFutureTraderXp read the
+/// `min(102 - fill, floor(futureXp * scale))` fold serves — the
+/// RESULT band the fill-forward seat wears]. The bar the TRADER
+/// never shows (the WanderingTrader.showProgressBar's iconst_0
+/// override the caller gate refuses — the wire villager windows the
+/// show_progress word arms).
+pub fn merchant_xp_bar_words(level: i32, xp: i32, future_xp: i32) -> (bool, i32, i32) {
+    // THE LEVEL-5 SILENCE (pcs 24-30)
+    if level >= 5 {
+        return (false, 0, 0);
+    }
+    // THE TABLE'S OWN READS (pcs 53-58 + the VillagerData walks —
+    // the canLevelUp the [1, 5) band keeps, the absent word the 0
+    // answers)
+    let can_level_up = (1..5).contains(&level);
+    let min_xp = if can_level_up {
+        MERCHANT_LEVEL_XP_THRESHOLDS[(level - 1) as usize]
+    } else {
+        0
+    };
+    let max_xp = if can_level_up {
+        MERCHANT_LEVEL_XP_THRESHOLDS[level as usize]
+    } else {
+        0
+    };
+    // THE FILL'S OWN GATES (pcs 60-75 — the xp >= minXp and the
+    // canLevelUp pair the proceed speaks)
+    if !can_level_up || xp < min_xp {
+        return (true, 0, 0);
+    }
+    // THE SCALE + THE FILL (pcs 76-111 — the 102.0f / (max - min)
+    // the fdiv quotient keeps, the floor the f2i wear, the 102 the
+    // Math.min cap answers)
+    let scale = 102.0f32 / (max_xp - min_xp) as f32;
+    let fill = (((xp - min_xp) as f32 * scale).floor() as i32).min(102);
+    // THE FUTURE'S OWN WORD (pcs 140-174 — the >0 gate the silence
+    // keeps, the min(102 - fill, floor(future * scale)) the fold
+    // serves)
+    let future = if future_xp > 0 {
+        (((future_xp as f32) * scale).floor() as i32).min(102 - fill)
+    } else {
+        0
+    };
+    (true, fill.max(0), future.max(0))
+}
 
 /// THE MERCHANT'S OWN OFFER ROW (javap 26.2 MerchantScreen.init — the
 /// SEVEN 88x20 TradeOfferButton rows the `y = topPos + 16 + 2` walker
