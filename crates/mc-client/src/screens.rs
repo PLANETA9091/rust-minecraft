@@ -19065,6 +19065,7 @@ impl App {
                             // snapshot pairs)
                             let drop_kind = d.potion_kind;
                             let drop_wear = d.damage_frac;
+                            let drop_ench = d.enchantments.clone();
                             let wear_before = self.inventory.items;
                             let inv_before = if drop_kind != crate::brewing_sim::POTION_KIND_NONE {
                                 Some(self.inventory.items)
@@ -19125,6 +19126,36 @@ impl App {
                                         self.items_damage_frac[i] = 0.0;
                                     } else if now > wear_before[i].1 {
                                         self.items_damage_frac[i] = drop_wear;
+                                    }
+                                }
+                                // THE ENCHANT'S OWN RIDE (the
+                                // enchlvl_512 walk's own pairs the
+                                // seat banks — the grow rows the
+                                // landed stack's own (idx, level)
+                                // pairs wear, the pristine merge the
+                                // row's reset keeps, the emptied rows
+                                // the clear the stale glint never
+                                // wears, the untouched rows the pairs
+                                // they had keep). The
+                                // inventory_enchants lane the SAME
+                                // 36-slot numbering the
+                                // tooltip/glint rounds read — the
+                                // (id, count) store's own
+                                // simplification the enchanted
+                                // stackables' merge the 487 record
+                                // re-wears [the vanilla's own
+                                // refuse-to-merge the enchanted
+                                // stacks the NEXT's own store lane
+                                // banks].
+                                for i in 0..36usize {
+                                    let now = self.inventory.items[i].1;
+                                    if now <= 0 && wear_before[i].1 > 0 {
+                                        self.inventory_enchants[i].clear();
+                                    } else if now > wear_before[i].1 {
+                                        self.inventory_enchants[i] = drop_ench
+                                            .iter()
+                                            .map(|&(idx, level)| (idx as i32, level))
+                                            .collect();
                                     }
                                 }
                             }
@@ -50594,6 +50625,19 @@ impl App {
             // pristine keeps)
             drop.damage_frac =
                 crate::mob::bobber_set_damage_roll(&mut self.mob_rng, band, item_name);
+            // THE ENCHANT'S OWN WIRE (the enchlvl_512 walk the 488
+            // round banks — the treasure rows' own enchant_with_levels
+            // 30 the (idx, level) pairs the walk answers, the band
+            // the junk/fish rows the walk never serves [the junk
+            // leather the enchant-less junk table keeps], the
+            // missing-enchantability rows the zero-gate the no-draw
+            // law the walk itself keeps, the set_damage's own
+            // after-seat the json's own function order wears — the
+            // stream the orb's nextInt(6) draw the pre-lap keeps)
+            if band == crate::mob::BobberLootBand::Treasure {
+                drop.enchantments =
+                    crate::mob::enchant_random_loot_walk(&mut self.mob_rng, item_name, 30);
+            }
             self.drops.push(drop);
             // THE XP ORB'S OWN SEAT (javap pcs 354-405 — the orb the
             // PLAYER's (px, py+0.5, pz+0.5) seat the per-item loop

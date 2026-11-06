@@ -42942,3 +42942,290 @@ fn the_enchant_the_walk_the_treasure_the_registry_wears() {
         "the 200-seed multi-pick rate the walk's own law wears"
     );
 }
+
+
+// ==========================================================================
+// THE ENCHANT'S OWN WIRE + SEAT (the 488 walk the retrieve serves —
+// the treasure rows the pairs the drop carries, the pickup ride the
+// inventory_enchants rows bank)
+// ==========================================================================
+
+#[test]
+fn the_enchant_wire_the_retrieve_the_rows_wear() {
+    use mc_registry::generated::enchantments as ench;
+    // THE CTORS' OWN DEFAULT (the spawn laws the pristine empty wear
+    // — the vanilla's plain stacks the ENCHANTMENTS-less store keeps)
+    let mut rng = crate::drops::Lcg::new(513);
+    let dirt = mc_registry::item_id_by_name("dirt").expect("the dirt the registry carries");
+    let d = crate::drops::ItemDrop::spawn(1, dirt, 1, 0, 0, 0, &mut rng);
+    assert!(
+        d.enchantments.is_empty(),
+        "the block drop the empty seat wears"
+    );
+    let d = crate::drops::ItemDrop::spawn_entity_loot(2, dirt, 1, 0.0, 0.0, 0.0, &mut rng);
+    assert!(
+        d.enchantments.is_empty(),
+        "the loot drop the empty seat wears"
+    );
+    let spills = crate::drops::ItemDrop::spawn_container_spill(3, dirt, 64, 0, 0, 0, &mut rng);
+    assert!(
+        spills.iter().all(|s| s.enchantments.is_empty()),
+        "the spill chunks the empty seat keeps"
+    );
+    // THE OPEN LAKE'S OWN WALK (the 485's own staging the ROOF sheds
+    // — the open-water flag the treasure band the 5/100 weight
+    // serves, the 200 rounds the treasure rows the walk's pairs land)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x as i32, b.y as i32, b.z as i32)
+    };
+    let lake = (b0x + 3, b0y + 1, b0z);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in 0..5i32 {
+            for dz in 0..5i32 {
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 - 1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1,
+                    lake.2 - 2 + dz,
+                    crate::world::WATER,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 1,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+                w.set(
+                    lake.0 - 2 + dx,
+                    lake.1 + 2,
+                    lake.2 - 2 + dz,
+                    crate::world::AIR,
+                );
+            }
+        }
+        w.relight();
+    }
+    let mut treasure_lands = 0u32;
+    let mut worn_lands = 0u32;
+    for round in 0..200i32 {
+        app.bobbers.clear();
+        app.bobbers.push(crate::mob::FishingBobber::from_cast(
+            6600 + round,
+            crate::mob::BobberCast {
+                x: lake.0 as f64 + 0.5,
+                y: lake.1 as f64 + 0.5,
+                z: lake.2 as f64 + 0.5,
+                vx: 0.0,
+                vy: -0.1,
+                vz: 0.0,
+            },
+            0,
+            0,
+        ));
+        app.update();
+        app.bobbers[0].time_until_hooked = 1;
+        app.update();
+        assert!(app.on_right_press(0, 0), "the reel the press consumes");
+        let drop = app.drops.last().expect("the round's drop wears");
+        let name = mc_registry::item_name(drop.item)
+            .expect("the drop item the registry carries")
+            .strip_prefix("minecraft:")
+            .unwrap_or(mc_registry::item_name(drop.item).unwrap());
+        match name {
+            // THE BOW THE TREASURE ROW ALONE SERVES (the junk table
+            // the bow never carries — the 485 census's own rows)
+            "bow" => {
+                treasure_lands += 1;
+                assert!(
+                    (0.75..=1.0).contains(&drop.damage_frac),
+                    "the treasure worn row the [0.75, 1.0] band wears: {name} {}",
+                    drop.damage_frac
+                );
+                assert!(
+                    !drop.enchantments.is_empty(),
+                    "the {name} the walk's pairs wear"
+                );
+                the_pairs_the_laws_wear(drop);
+            }
+            "book" => {
+                treasure_lands += 1;
+                assert_eq!(drop.damage_frac, 0.0, "the book the damage row never wears");
+                assert!(
+                    !drop.enchantments.is_empty(),
+                    "the book the walk's pairs wear"
+                );
+            }
+            "name_tag" | "saddle" | "nautilus_shell" => {
+                treasure_lands += 1;
+                assert_eq!(
+                    drop.damage_frac, 0.0,
+                    "the function-less row the pristine keeps"
+                );
+                assert!(
+                    drop.enchantments.is_empty(),
+                    "the {name} the zero-gate the empty keeps"
+                );
+            }
+            // THE ROD THE TWO BANDS SHARE (the junk row the empty
+            // seat + the [0.1, 1.0] band wears, the treasure row the
+            // pairs + the [0.75, 1.0] band — the SEAT the bands
+            // discriminate)
+            "fishing_rod" => {
+                if drop.enchantments.is_empty() {
+                    worn_lands += 1;
+                    assert!(
+                        (0.1..=1.0).contains(&drop.damage_frac),
+                        "the junk rod the [0.1, 1.0] band wears: {}",
+                        drop.damage_frac
+                    );
+                } else {
+                    treasure_lands += 1;
+                    assert!(
+                        (0.75..=1.0).contains(&drop.damage_frac),
+                        "the treasure rod the [0.75, 1.0] band wears: {}",
+                        drop.damage_frac
+                    );
+                    the_pairs_the_laws_wear(drop);
+                }
+            }
+            "leather_boots" => {
+                worn_lands += 1;
+                assert!(
+                    (0.1..=1.0).contains(&drop.damage_frac),
+                    "the junk boots the [0.1, 1.0] band wears: {}",
+                    drop.damage_frac
+                );
+                assert!(
+                    drop.enchantments.is_empty(),
+                    "the junk row the band gate the empty keeps"
+                );
+            }
+            _ => {
+                assert!(
+                    drop.enchantments.is_empty(),
+                    "the junk/fish row the band gate the empty keeps: {name}"
+                );
+            }
+        }
+    }
+    assert!(
+        treasure_lands > 0,
+        "the 200 rounds the treasure rows land: {treasure_lands}"
+    );
+    assert!(
+        worn_lands > 0,
+        "the 200 rounds the junk worn rows land: {worn_lands}"
+    );
+}
+
+/// THE PAIRS' OWN LAWS (the walk's (idx, level) pairs the registry
+/// rows answer — the level the max wears, the consecutive pairs the
+/// compat law keeps).
+fn the_pairs_the_laws_wear(drop: &crate::drops::ItemDrop) {
+    for (idx, level) in &drop.enchantments {
+        let def = mc_registry::generated::enchantments::ENCHANTMENTS
+            .get(*idx)
+            .expect("the idx the registry keeps");
+        assert!(
+            *level >= 1 && *level <= def.max_level,
+            "the level the max wears: {} <= {}",
+            level,
+            def.max_level
+        );
+    }
+    for pair in drop.enchantments.windows(2) {
+        assert!(
+            mc_registry::generated::enchantments::are_compatible(pair[0].0, pair[1].0),
+            "the pairs the compat law keeps"
+        );
+    }
+}
+
+#[test]
+fn the_enchant_seat_the_pickup_the_rows_wear() {
+    let mut app = crate::screens::App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x, body.y, body.z);
+    let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap();
+    let mending = mc_registry::generated::enchantments::enchantment_index("mending").unwrap();
+    // THE ENCHANTED DROP'S OWN TAKE (the (idx, level) pairs the seat
+    // banks — the row the ride answers)
+    let mut drop = crate::drops::ItemDrop::spawn_entity_loot(1, bow, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.enchantments = vec![(power, 4)];
+    app.drops.push(drop);
+    app.inventory_enchants[5] = vec![(mending as i32, 1)];
+    app.update();
+    assert!(app.drops.is_empty(), "the take the whole drop spoke");
+    assert_eq!(app.inventory.items[0], (bow, 1), "the take the slot holds");
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(power as i32, 4)],
+        "the landed stack's pairs the row banks"
+    );
+    assert_eq!(
+        app.inventory_enchants[5],
+        vec![(mending as i32, 1)],
+        "the untouched row the pairs keeps"
+    );
+    // THE SECOND BOW'S OWN ROW (the vanilla's own max-stack the merge
+    // never speaks — the fresh row its OWN pairs wears, the first row
+    // the pairs keeps)
+    let mut second =
+        crate::drops::ItemDrop::spawn_entity_loot(2, bow, 1, bx, by + 0.5, bz, &mut rng);
+    second.pickup_delay = 0;
+    second.enchantments = vec![(mending, 1)];
+    app.drops.push(second);
+    app.update();
+    assert_eq!(
+        app.inventory.items[1],
+        (bow, 1),
+        "the landing the next slot holds"
+    );
+    assert_eq!(
+        app.inventory_enchants[1],
+        vec![(mending as i32, 1)],
+        "the fresh row its own pairs wears"
+    );
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(power as i32, 4)],
+        "the first row the pairs keeps"
+    );
+    // THE PRISTINE MERGE'S OWN RESET (the stackable dirt the merge arm
+    // speaks — the stale pairs the row pre-wears, the pristine merge
+    // the EMPTY the row resets)
+    app.inventory.items[2] = (dirt, 1);
+    app.inventory_enchants[2] = vec![(power as i32, 1)];
+    let mut more =
+        crate::drops::ItemDrop::spawn_entity_loot(3, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    more.pickup_delay = 0;
+    app.drops.push(more);
+    app.update();
+    assert_eq!(
+        app.inventory.items[2],
+        (dirt, 2),
+        "the merge the slot grows"
+    );
+    assert!(
+        app.inventory_enchants[2].is_empty(),
+        "the pristine merge the row resets"
+    );
+}

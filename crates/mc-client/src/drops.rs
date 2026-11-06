@@ -257,6 +257,17 @@ pub struct ItemDrop {
     /// isDamageable-ifeq arm keeps [the plain stacks the pristine 0.0
     /// the whole port's spawn law wears].
     pub damage_frac: f32,
+    /// THE ENCHANT'S OWN SEAT (the enchlvl_512 walk's own pairs the
+    /// 488 round banks — the (registry idx, level) pairs the
+    /// `selectEnchantment` composition answers, the vanilla
+    /// ItemStack's ENCHANTMENTS component the offline entity's
+    /// honest store wears). Empty = the plain stack the port's
+    /// spawn law keeps; the treasure rows the walk serves [the bow
+    /// /rod/book the enchantability-1 gate answers, the
+    /// name_tag/saddle/nautilus the zero-gate the empty keeps] —
+    /// the junk/fish bands the band gate never serves, the pickup
+    /// ride the pairs the inventory rows bank.
+    pub enchantments: Vec<(usize, i32)>,
     pub x: f64,
     pub y: f64,
     pub z: f64,
@@ -295,6 +306,7 @@ impl ItemDrop {
             z: bz as f64 + 0.5 + rng.next_f64_between(-POP_SPREAD, POP_SPREAD),
             potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             damage_frac: 0.0,
+            enchantments: Vec::new(),
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,
@@ -328,6 +340,7 @@ impl ItemDrop {
             count,
             potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             damage_frac: 0.0,
+            enchantments: Vec::new(),
             x,
             y,
             z,
@@ -373,6 +386,7 @@ impl ItemDrop {
             count,
             potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             damage_frac: 0.0,
+            enchantments: Vec::new(),
             x,
             y,
             z,
@@ -449,6 +463,7 @@ impl ItemDrop {
                 count: taken,
                 potion_kind: crate::brewing_sim::POTION_KIND_NONE,
                 damage_frac: 0.0,
+                enchantments: Vec::new(),
                 x,
                 y,
                 z,
