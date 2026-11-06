@@ -10933,6 +10933,16 @@ pub const LEAD_TIED_SOUND: &str = "item.lead.tied";
 /// item's own drop the hand never spends).
 pub const LEAD_UNTIED_SOUND: &str = "item.lead.untied";
 
+/// THE SHEARS' OWN SNIP VOICE (javap `Entity.shearOffAllLeashConnections`
+/// pc 30-54 the shear_leash_491 census banks — the `dropAllLeashConnections`
+/// cut verdict the gate serves [the ServerLevel `instanceof` pc 16-21 the
+/// integrated body the snip alone hears], the playSound(SHEARS_SNIP,
+/// source) the SoundEvents clinit's ldc_w 12549 `item.shears.snip` row
+/// answers — the sounds.json the `mob/sheep/shear` file the sheep-shear
+/// voice shares, the `player.getSoundSource()` the PLAYERS arm the
+/// player-carried press keeps).
+pub const SHEARS_SNIP_SOUND: &str = "item.shears.snip";
+
 /// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderData — the
 /// fresh `(24000, 25)` the no-arg ctor speaks [the dump's `sipush
 /// 24000` + `bipush 25` the invokespecial ride banks], the saveddata

@@ -1,0 +1,359 @@
+== net/minecraft/world/entity/Entity.class
+  METHOD interact (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/InteractionResult;  (code=491)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    4: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    7: ifne 197
+    10: aload_1
+    11: invokevirtual net/minecraft/world/entity/player/Player.isSecondaryUseActive:()Z
+    14: ifeq 197
+    17: aload_0
+    18: astore 5
+    20: aload 5
+    22: instanceof net/minecraft/world/entity/Leashable
+    25: ifeq 197
+    28: aload 5
+    30: checkcast net/minecraft/world/entity/Leashable
+    33: astore 4
+    35: aload 4
+    37: invokeinterface net/minecraft/world/entity/Leashable.canBeLeashed:()Z
+    42: ifeq 197
+    45: aload_0
+    46: invokevirtual net/minecraft/world/entity/Entity.isAlive:()Z
+    49: ifeq 197
+    52: aload_0
+    53: astore 6
+    55: aload 6
+    57: instanceof net/minecraft/world/entity/LivingEntity
+    60: ifeq 78
+    63: aload 6
+    65: checkcast net/minecraft/world/entity/LivingEntity
+    68: astore 5
+    70: aload 5
+    72: invokevirtual net/minecraft/world/entity/LivingEntity.isBaby:()Z
+    75: ifne 197
+    78: aload_0
+    79: aload_1
+    80: invokedynamic dynamic#6:test
+    85: invokestatic net/minecraft/world/entity/Leashable.leashableInArea:(Lnet/minecraft/world/entity/Entity;Ljava/util/function/Predicate;)Ljava/util/List;
+    88: astore 6
+    90: aload 6
+    92: invokeinterface java/util/List.isEmpty:()Z
+    97: ifne 197
+    100: iconst_0
+    101: istore 7
+    103: aload 6
+    105: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    110: astore 8
+    112: aload 8
+    114: invokeinterface java/util/Iterator.hasNext:()Z
+    119: ifeq 160
+    122: aload 8
+    124: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    129: checkcast net/minecraft/world/entity/Leashable
+    132: astore 9
+    134: aload 9
+    136: aload_0
+    137: invokeinterface net/minecraft/world/entity/Leashable.canHaveALeashAttachedTo:(Lnet/minecraft/world/entity/Entity;)Z
+    142: ifeq 157
+    145: aload 9
+    147: aload_0
+    148: iconst_1
+    149: invokeinterface net/minecraft/world/entity/Leashable.setLeashedTo:(Lnet/minecraft/world/entity/Entity;Z)V
+    154: iconst_1
+    155: istore 7
+    157: goto 112
+    160: iload 7
+    162: ifeq 197
+    165: aload_0
+    166: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    169: getstatic net/minecraft/world/level/gameevent/GameEvent.ENTITY_ACTION:Lnet/minecraft/core/Holder$Reference;
+    172: aload_0
+    173: invokevirtual net/minecraft/world/entity/Entity.blockPosition:()Lnet/minecraft/core/BlockPos;
+    176: aload_1
+    177: invokestatic net/minecraft/world/level/gameevent/GameEvent$Context.of:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/level/gameevent/GameEvent$Context;
+    180: invokevirtual net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/gameevent/GameEvent$Context;)V
+    183: aload_0
+    184: getstatic net/minecraft/sounds/SoundEvents.LEAD_TIED:Lnet/minecraft/sounds/SoundEvent;
+    187: invokevirtual net/minecraft/world/entity/Entity.playSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    190: getstatic net/minecraft/world/InteractionResult.SUCCESS_SERVER:Lnet/minecraft/world/InteractionResult$Success;
+    193: invokevirtual net/minecraft/world/InteractionResult$Success.withoutItem:()Lnet/minecraft/world/InteractionResult$Success;
+    196: areturn
+    197: aload_1
+    198: aload_2
+    199: invokevirtual net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+    202: astore 4
+    204: aload 4
+    206: getstatic net/minecraft/world/item/Items.SHEARS:Lnet/minecraft/world/item/Item;
+    209: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    212: ifeq 235
+    215: aload_0
+    216: aload_1
+    217: invokevirtual net/minecraft/world/entity/Entity.shearOffAllLeashConnections:(Lnet/minecraft/world/entity/player/Player;)Z
+    220: ifeq 235
+    223: aload 4
+    225: iconst_1
+    226: aload_1
+    227: aload_2
+    228: invokevirtual net/minecraft/world/item/ItemStack.hurtAndBreak:(ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/InteractionHand;)V
+    231: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    234: areturn
+    235: aload_0
+    236: astore 6
+    238: aload 6
+    240: instanceof net/minecraft/world/entity/Mob
+    243: ifeq 296
+    246: aload 6
+    248: checkcast net/minecraft/world/entity/Mob
+    251: astore 5
+    253: aload 4
+    255: getstatic net/minecraft/world/item/Items.SHEARS:Lnet/minecraft/world/item/Item;
+    258: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    261: ifeq 296
+    264: aload 5
+    266: aload_1
+    267: invokevirtual net/minecraft/world/entity/Mob.canShearEquipment:(Lnet/minecraft/world/entity/player/Player;)Z
+    270: ifeq 296
+    273: aload_1
+    274: invokevirtual net/minecraft/world/entity/player/Player.isSecondaryUseActive:()Z
+    277: ifne 296
+    280: aload 5
+    282: aload_1
+    283: aload_2
+    284: aload 4
+    286: invokevirtual net/minecraft/world/entity/Mob.attemptToShearEquipment:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Z
+    289: ifeq 296
+    292: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    295: areturn
+    296: aload_0
+    297: invokevirtual net/minecraft/world/entity/Entity.isAlive:()Z
+    300: ifeq 487
+    303: aload_0
+    304: astore 6
+    306: aload 6
+    308: instanceof net/minecraft/world/entity/Leashable
+    311: ifeq 487
+    314: aload 6
+    316: checkcast net/minecraft/world/entity/Leashable
+    319: astore 5
+    321: aload 5
+    323: invokeinterface net/minecraft/world/entity/Leashable.getLeashHolder:()Lnet/minecraft/world/entity/Entity;
+    328: aload_1
+    329: if_acmpne 388
+    332: aload_0
+    333: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    336: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    339: ifne 381
+    342: aload_1
+    343: invokevirtual net/minecraft/world/entity/player/Player.hasInfiniteMaterials:()Z
+    346: ifeq 359
+    349: aload 5
+    351: invokeinterface net/minecraft/world/entity/Leashable.removeLeash:()V
+    356: goto 366
+    359: aload 5
+    361: invokeinterface net/minecraft/world/entity/Leashable.dropLeash:()V
+    366: aload_0
+    367: getstatic net/minecraft/world/level/gameevent/GameEvent.ENTITY_INTERACT:Lnet/minecraft/core/Holder$Reference;
+    370: aload_1
+    371: invokevirtual net/minecraft/world/entity/Entity.gameEvent:(Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/Entity;)V
+    374: aload_0
+    375: getstatic net/minecraft/sounds/SoundEvents.LEAD_UNTIED:Lnet/minecraft/sounds/SoundEvent;
+    378: invokevirtual net/minecraft/world/entity/Entity.playSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    381: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+    384: invokevirtual net/minecraft/world/InteractionResult$Success.withoutItem:()Lnet/minecraft/world/InteractionResult$Success;
+    387: areturn
+    388: aload_1
+    389: aload_2
+    390: invokevirtual net/minecraft/world/entity/player/Player.getItemInHand:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+    393: astore 6
+    395: aload 6
+    397: getstatic net/minecraft/world/item/Items.LEAD:Lnet/minecraft/world/item/Item;
+    400: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+    403: ifeq 487
+    406: aload 5
+    408: invokeinterface net/minecraft/world/entity/Leashable.getLeashHolder:()Lnet/minecraft/world/entity/Entity;
+    413: instanceof net/minecraft/world/entity/player/Player
+    416: ifne 487
+    419: aload_0
+    420: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    423: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+    426: ifeq 433
+    429: getstatic net/minecraft/world/InteractionResult.CONSUME:Lnet/minecraft/world/InteractionResult$Success;
+    432: areturn
+    433: aload 5
+    435: aload_1
+    436: invokeinterface net/minecraft/world/entity/Leashable.canHaveALeashAttachedTo:(Lnet/minecraft/world/entity/Entity;)Z
+    441: ifeq 487
+    444: aload 5
+    446: invokeinterface net/minecraft/world/entity/Leashable.isLeashed:()Z
+    451: ifeq 461
+    454: aload 5
+    456: invokeinterface net/minecraft/world/entity/Leashable.dropLeash:()V
+    461: aload 5
+    463: aload_1
+    464: iconst_1
+    465: invokeinterface net/minecraft/world/entity/Leashable.setLeashedTo:(Lnet/minecraft/world/entity/Entity;Z)V
+    470: aload_0
+    471: getstatic net/minecraft/sounds/SoundEvents.LEAD_TIED:Lnet/minecraft/sounds/SoundEvent;
+    474: invokevirtual net/minecraft/world/entity/Entity.playSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    477: aload 6
+    479: iconst_1
+    480: invokevirtual net/minecraft/world/item/ItemStack.shrink:(I)V
+    483: getstatic net/minecraft/world/InteractionResult.SUCCESS_SERVER:Lnet/minecraft/world/InteractionResult$Success;
+    486: areturn
+    487: getstatic net/minecraft/world/InteractionResult.PASS:Lnet/minecraft/world/InteractionResult$Pass;
+    490: areturn
+  METHOD shearOffAllLeashConnections (Lnet/minecraft/world/entity/player/Player;)Z  (code=59)
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/world/entity/Entity.dropAllLeashConnections:(Lnet/minecraft/world/entity/player/Player;)Z
+    5: istore_2
+    6: iload_2
+    7: ifeq 57
+    10: aload_0
+    11: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    14: astore 4
+    16: aload 4
+    18: instanceof net/minecraft/server/level/ServerLevel
+    21: ifeq 57
+    24: aload 4
+    26: checkcast net/minecraft/server/level/ServerLevel
+    29: astore_3
+    30: aload_3
+    31: aconst_null
+    32: aload_0
+    33: invokevirtual net/minecraft/world/entity/Entity.blockPosition:()Lnet/minecraft/core/BlockPos;
+    36: getstatic net/minecraft/sounds/SoundEvents.SHEARS_SNIP:Lnet/minecraft/sounds/SoundEvent;
+    39: aload_1
+    40: ifnull 50
+    43: aload_1
+    44: invokevirtual net/minecraft/world/entity/player/Player.getSoundSource:()Lnet/minecraft/sounds/SoundSource;
+    47: goto 54
+    50: aload_0
+    51: invokevirtual net/minecraft/world/entity/Entity.getSoundSource:()Lnet/minecraft/sounds/SoundSource;
+    54: invokevirtual net/minecraft/server/level/ServerLevel.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;)V
+    57: iload_2
+    58: ireturn
+  METHOD dropAllLeashConnections (Lnet/minecraft/world/entity/player/Player;)Z  (code=113)
+    0: aload_0
+    1: invokestatic net/minecraft/world/entity/Leashable.leashableLeashedTo:(Lnet/minecraft/world/entity/Entity;)Ljava/util/List;
+    4: astore_2
+    5: aload_2
+    6: invokeinterface java/util/List.isEmpty:()Z
+    11: ifne 18
+    14: iconst_1
+    15: goto 19
+    18: iconst_0
+    19: istore_3
+    20: aload_0
+    21: astore 5
+    23: aload 5
+    25: instanceof net/minecraft/world/entity/Leashable
+    28: ifeq 57
+    31: aload 5
+    33: checkcast net/minecraft/world/entity/Leashable
+    36: astore 4
+    38: aload 4
+    40: invokeinterface net/minecraft/world/entity/Leashable.isLeashed:()Z
+    45: ifeq 57
+    48: aload 4
+    50: invokeinterface net/minecraft/world/entity/Leashable.dropLeash:()V
+    55: iconst_1
+    56: istore_3
+    57: aload_2
+    58: invokeinterface java/util/List.iterator:()Ljava/util/Iterator;
+    63: astore 4
+    65: aload 4
+    67: invokeinterface java/util/Iterator.hasNext:()Z
+    72: ifeq 97
+    75: aload 4
+    77: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+    82: checkcast net/minecraft/world/entity/Leashable
+    85: astore 5
+    87: aload 5
+    89: invokeinterface net/minecraft/world/entity/Leashable.dropLeash:()V
+    94: goto 65
+    97: iload_3
+    98: ifeq 111
+    101: aload_0
+    102: getstatic net/minecraft/world/level/gameevent/GameEvent.SHEAR:Lnet/minecraft/core/Holder$Reference;
+    105: aload_1
+    106: invokevirtual net/minecraft/world/entity/Entity.gameEvent:(Lnet/minecraft/core/Holder;Lnet/minecraft/world/entity/Entity;)V
+    109: iconst_1
+    110: ireturn
+    111: iconst_0
+    112: ireturn
+
+
+
+== net/minecraft/world/entity/Leashable.class
+  METHOD canBeLeashed ()Z  (code=2)
+    0: iconst_1
+    1: ireturn
+  METHOD dropLeash ()V  (code=10)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Entity
+    4: iconst_1
+    5: iconst_1
+    6: invokestatic net/minecraft/world/entity/Leashable.dropLeash:(Lnet/minecraft/world/entity/Entity;ZZ)V
+    9: return
+  METHOD removeLeash ()V  (code=10)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Entity
+    4: iconst_1
+    5: iconst_0
+    6: invokestatic net/minecraft/world/entity/Leashable.dropLeash:(Lnet/minecraft/world/entity/Entity;ZZ)V
+    9: return
+  METHOD onLeashRemoved ()V  (code=1)
+    0: return
+  METHOD dropLeash (Lnet/minecraft/world/entity/Entity;ZZ)V  (code=109)
+    0: aload_0
+    1: checkcast net/minecraft/world/entity/Leashable
+    4: invokeinterface net/minecraft/world/entity/Leashable.getLeashData:()Lnet/minecraft/world/entity/Leashable$LeashData;
+    9: astore_3
+    10: aload_3
+    11: ifnull 108
+    14: aload_3
+    15: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    18: ifnull 108
+    21: aload_0
+    22: checkcast net/minecraft/world/entity/Leashable
+    25: aconst_null
+    26: invokeinterface net/minecraft/world/entity/Leashable.setLeashData:(Lnet/minecraft/world/entity/Leashable$LeashData;)V
+    31: aload_0
+    32: checkcast net/minecraft/world/entity/Leashable
+    35: invokeinterface net/minecraft/world/entity/Leashable.onLeashRemoved:()V
+    40: aload_0
+    41: invokevirtual net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+    44: astore 5
+    46: aload 5
+    48: instanceof net/minecraft/server/level/ServerLevel
+    51: ifeq 108
+    54: aload 5
+    56: checkcast net/minecraft/server/level/ServerLevel
+    59: astore 4
+    61: iload_2
+    62: ifeq 75
+    65: aload_0
+    66: aload 4
+    68: getstatic net/minecraft/world/item/Items.LEAD:Lnet/minecraft/world/item/Item;
+    71: invokevirtual net/minecraft/world/entity/Entity.spawnAtLocation:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/entity/item/ItemEntity;
+    74: pop
+    75: iload_1
+    76: ifeq 97
+    79: aload 4
+    81: invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource:()Lnet/minecraft/server/level/ServerChunkCache;
+    84: aload_0
+    85: new net/minecraft/network/protocol/game/ClientboundSetEntityLinkPacket
+    88: dup
+    89: aload_0
+    90: aconst_null
+    91: invokespecial net/minecraft/network/protocol/game/ClientboundSetEntityLinkPacket.<init>:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)V
+    94: invokevirtual net/minecraft/server/level/ServerChunkCache.sendToTrackingPlayers:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/protocol/Packet;)V
+    97: aload_3
+    98: getfield net/minecraft/world/entity/Leashable$LeashData.leashHolder:Lnet/minecraft/world/entity/Entity;
+    101: aload_0
+    102: checkcast net/minecraft/world/entity/Leashable
+    105: invokevirtual net/minecraft/world/entity/Entity.notifyLeasheeRemoved:(Lnet/minecraft/world/entity/Leashable;)V
+    108: return
+

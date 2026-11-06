@@ -39882,3 +39882,179 @@ fn the_lead_tie_the_player_hold_wears() {
         "the snap the lead item the count-1 the feet drops"
     );
 }
+
+/// THE SHEARS' OWN LEASH-CUT WORDS (javap `Entity.interact` pcs 197-235
+/// + `Entity.shearOffAllLeashConnections` code=59 + `Entity.dropAllLeash
+/// Connections` code=113 the shear_leash_491 census banks — the
+/// `Items.SHEARS` gate the ItemStack.is word reads, the
+/// `playSound(SHEARS_SNIP)` the SoundEvents clinit's ldc_w 12549 row
+/// speaks, the sounds.json the `mob/sheep/shear` file the sheep-shear
+/// voice shares, the `player.getSoundSource()` the PLAYERS arm the
+/// player-carried press keeps, the cut the ANY-rope word the
+/// leashableLeashedTo scan + the isLeashed arm pair serves):
+#[test]
+fn the_shear_cut_the_vanilla_words_wear() {
+    use crate::mob::SHEARS_SNIP_SOUND;
+    // THE VOICE'S OWN ROW (the SoundEvents clinit the ldc_w 12549 row
+    // keeps — the `item.shears.snip` the snip lane's playSound speaks)
+    assert_eq!(
+        SHEARS_SNIP_SOUND, "item.shears.snip",
+        "the snip voice the row wears"
+    );
+    // THE ROW'S OWN FILE (the sounds.json the runtime cache keeps —
+    // the `mob/sheep/shear` ogg the sheep-shear voice shares, the
+    // weighted pick the same file answers)
+    let ev = crate::sound_table::event("item.shears.snip")
+        .expect("the snip row the sounds.json carries");
+    let files = crate::sound_table::files(ev);
+    assert!(
+        files.iter().any(|f| f.name.contains("mob/sheep/shear")),
+        "the snip row the sheep-shear file shares"
+    );
+    // THE HELD GATE'S OWN WORD (the ItemStack.is(Items.SHEARS) the pc
+    // 204-209 walk reads — the registry the shears id resolves, the
+    // item_name the gate's word answers)
+    let shears = mc_registry::item_id_by_name("shears").expect("the shears the registry carries");
+    assert_eq!(
+        mc_registry::item_name(shears).as_deref(),
+        Some("shears"),
+        "the shears gate the registry word reads"
+    );
+    // THE CUT'S OWN VERDICT WORDS (the dropAllLeashConnections code=113
+    // walk the cut the ANY-rope word speaks — the clicked's own rope
+    // the isLeashed pc 38-50 arm banks, the leashees' scan the
+    // `leashableLeashedTo(this)` pc 0-4 word serves, the cut the gameEvent
+    // pc 101-106 arm the port's gameevent lane never banks)
+    let cut = |own: bool, leashees: usize| own || leashees > 0;
+    assert!(
+        cut(true, 0),
+        "the own-rope body the cut the isLeashed arm banks"
+    );
+    assert!(
+        cut(false, 2),
+        "the leashees' scan the cut the iterator arms"
+    );
+    assert!(!cut(false, 0), "the no-rope body the arm never consumes");
+}
+
+/// THE SHEARS' OWN LEASH-CUT CANVAS (the `Entity.interact` pc order
+/// the press walk serves — the SHEARS arm pc 197-235 the UN-TIE pc
+/// 296-387 BEFORE runs, the my-rope body the snip voice the un-tie
+/// word never answers, the clicked's own rope the lead the feet
+/// drops, the EACH leashee's rope the lead at THAT body's own feet
+/// drops, the no-rope body the arm never consumes — the miss the
+/// mobInteract chain the fall-through keeps, the hurtAndBreak(1) the
+/// durability the port's (id, count) stack the count never spends):
+#[test]
+fn the_shear_cut_the_ropes_drop_wears() {
+    let _lane = render_lane();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.perspective = crate::camera::CameraType::ThirdPersonBack;
+    if app.zombie_avatar.is_none() {
+        if let Some(root) = [
+            "assets-cache/jar",
+            "../assets-cache/jar",
+            "../../assets-cache/jar",
+        ]
+        .iter()
+        .map(std::path::Path::new)
+        .find(|p| p.join("gui/container/inventory.png").exists())
+        {
+            app.zombie_avatar = crate::avatar::AvatarModel::load_zombie(root);
+        }
+    }
+    {
+        let body = app.body.as_mut().unwrap();
+        body.yaw = 0.0;
+        body.pitch = 0.0;
+    }
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in (bx - 30)..=(bx + 30) {
+            for z in (bz - 7)..=(bz + 3) {
+                for y in by..=(by + 5) {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+                w.set(x, by - 1, z, crate::world::STONE);
+            }
+        }
+        w.relight();
+    }
+    let shears = mc_registry::item_id_by_name("shears").expect("the shears the registry carries");
+    app.inventory.items[app.selected_hotbar] = (shears, 1);
+    // THE NO-ROPE BODY'S OWN MISS (the shearOffAllLeashConnections the
+    // cut false answers — the arm never consumes, the walk the
+    // mobInteract chain the fall-through serves, the snip voice the
+    // silence keeps)
+    let mut cow =
+        crate::mob::Zombie::new(903, (bx as f64) + 8.0, by as f64, (bz as f64) - 3.0, 262);
+    cow.kind = crate::mob::MobKind::Cow;
+    cow.on_ground = true;
+    app.mobs.push(cow);
+    let mut llama = crate::mob::Zombie::new(902, bx as f64, by as f64, (bz as f64) - 3.0, 262);
+    llama.kind = crate::mob::MobKind::TraderLlama;
+    llama.on_ground = true;
+    app.mobs.push(llama);
+    let events_before = app.sounds.events.len();
+    assert!(
+        !app.on_right_press(0, 0),
+        "the no-rope body the shears arm never consumes"
+    );
+    assert_eq!(
+        app.sounds.events.len(),
+        events_before,
+        "the miss the snip voice the silence keeps"
+    );
+    // THE CUT'S OWN PRESS (the llama tied to the PLAYER's own seat the
+    // rope the body wears, the cow leashed TO the llama the second
+    // rope the scan serves — the held shears the pc 197-235 arm
+    // consumes: the BOTH ropes the None clear, the TWO leads the
+    // feet drops, the snip voice the row speaks, the swing starts)
+    let llama_id = app.mobs[1].id;
+    app.mobs[1].leashed_to = Some(crate::mob::PLAYER_HOLDER_ID);
+    app.mobs[0].leashed_to = Some(llama_id);
+    let drops_before = app.drops.len();
+    assert!(app.on_right_press(0, 0), "the cut arm the press consumes");
+    assert_eq!(
+        app.mobs[1].leashed_to, None,
+        "the clicked's own rope the None clears"
+    );
+    assert_eq!(
+        app.mobs[0].leashed_to, None,
+        "the leashee's rope the None clears"
+    );
+    let lead = mc_registry::item_id_by_name("lead").expect("the lead the registry carries");
+    let leads_dropped = app.drops[drops_before..]
+        .iter()
+        .filter(|d| d.item == lead && d.count == 1)
+        .count();
+    assert_eq!(
+        leads_dropped, 2,
+        "the cut the TWO leads the each body's own feet drops"
+    );
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.shears.snip ")),
+        "the snip voice the lane carries"
+    );
+    assert!(
+        !app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("item.lead.untied ")),
+        "the SHEARS arm the pc order the UN-TIE word never answers"
+    );
+    assert!(app.swing.swinging, "the SUCCESS the swing starts");
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (shears, 1),
+        "the hurtAndBreak(1) the durability the (id, count) stack the count never spends"
+    );
+}
+

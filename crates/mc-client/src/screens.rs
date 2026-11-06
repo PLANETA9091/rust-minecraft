@@ -74616,7 +74616,7 @@ impl App {
     /// THE LEASH'S OWN ENTITY-INTERACT LANE (javap `Entity.interact`
     /// the lead_use_486 census banks — the 26.2 dispatch the
     /// `Mob.interact`'s own super call keeps, the leash arms the
-    /// mobInteract chain the walk serves BEFORE). THREE ARMS in the
+    /// mobInteract chain the walk serves BEFORE). FOUR ARMS in the
     /// bytecode's own order:
     /// - pc 0-196 THE SNEAK RE-LEASH: the `player.isSecondaryUseActive`
     ///   ifeq 197 the sneak branch arms, the `lambda$interact$0` the
@@ -74628,6 +74628,21 @@ impl App {
     ///   re-attach banks, the playSound(LEAD_TIED) + the
     ///   SUCCESS_SERVER the consumed press speaks — the YOUR-ROPE
     ///   bodies the clicked body's own hand the stroll transfers;
+    /// - pc 197-235 THE SHEARS LEASH-CUT: the held `Items.SHEARS`
+    ///   stack the gate reads, the `shearOffAllLeashConnections(player)`
+    ///   walk the cut verdict answers [the shear_leash_491 census —
+    ///   the `dropAllLeashConnections` code=113 the
+    ///   `leashableLeashedTo(this)` scan + the isLeashed dropLeash
+    ///   pair banks: the clicked's own rope the lead the feet drops,
+    ///   the EACH leashee's rope the lead at THAT body's own feet
+    ///   drops, the playSound(SHEARS_SNIP) the ServerLevel gate the
+    ///   integrated body serves, the gameEvent(SHEAR) the port's
+    ///   gameevent lane never banks, the hurtAndBreak(1) the
+    ///   durability the port's (id, count) stack the same honesty the
+    ///   sheep shears walk keeps — the damage lane never banks], the
+    ///   SUCCESS the verdict carries; the no-rope body the arm never
+    ///   consumes — the wool shears the mobInteract chain the walk
+    ///   serves next;
     /// - pc 296-387 THE UN-TIE: the `getLeashHolder() == player` acmp
     ///   the MY-ROPE gate arms, the dropLeash() the lead the count-1
     ///   the feet the spawnAtLocation word drops [the same walk the
@@ -74650,8 +74665,7 @@ impl App {
     ///   passenger relation the isPassenger word never reads], the
     ///   LEAD_TIED voice + the shrink(1) the hand spends, the
     ///   SUCCESS_SERVER the verdict carries.
-    /// The shears leash-cut arm pc 197-295 the round's NEXT lane
-    /// keeps; the wire session's own mobs the lane never reaches (the
+    /// The wire session's own mobs the lane never reaches (the
     /// caller's pick the offline bodies alone serves — the server's
     /// own interact the echo lane owns). The miss the mobInteract
     /// chain the fall-through keeps.
@@ -74730,6 +74744,84 @@ impl App {
             // THE MISS THE FALL-THROUGH KEEPS (pc 100-162 the flag the
             // empty scan never arms — the walk the shears/un-tie/tie
             // arms the 197 fall-through still serves)
+        }
+        // THE SHEARS' OWN LEASH-CUT (pc 197-235 — the held
+        // `Items.SHEARS` stack the ItemStack.is gate reads, the
+        // `shearOffAllLeashConnections(player)` walk the cut verdict
+        // answers, the SUCCESS the consumed press carries; the
+        // no-rope body the arm never consumes — the wool shears the
+        // mobInteract chain the walk serves next)
+        let held = self.held_id().and_then(mc_registry::item_name);
+        let held = held.as_deref().unwrap_or("");
+        if held == "shears" {
+            // THE CUT'S OWN WALK (dropAllLeashConnections code=113 —
+            // the cut the ANY-rope word speaks: the clicked's own
+            // rope the isLeashed pc 38-50 arm banks, the leashees'
+            // scan the `leashableLeashedTo(this)` pc 0-4 word serves)
+            let clicked_id = self.mobs[i].id;
+            let leashees: Vec<usize> = (0..self.mobs.len())
+                .filter(|&j| j != i && self.mobs[j].leashed_to == Some(clicked_id))
+                .collect();
+            if self.mobs[i].leashed_to.is_some() || !leashees.is_empty() {
+                if self.live_held.is_none() {
+                    // THE CLICKED'S OWN ROPE (pc 38-50 — the isLeashed
+                    // the dropLeash() arm answers, the lead the count-1
+                    // the feet the spawnAtLocation word drops, the same
+                    // walk the un-tie lane wears)
+                    if self.mobs[i].leashed_to.is_some() {
+                        let (mx, my, mz) = (self.mobs[i].x, self.mobs[i].y, self.mobs[i].z);
+                        self.mobs[i].leashed_to = None;
+                        self.mobs[i].leash_angular_momentum = 0.0;
+                        if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                            let id = self.next_drop_id;
+                            self.next_drop_id += 1;
+                            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                id,
+                                lead,
+                                1,
+                                mx,
+                                my,
+                                mz,
+                                &mut self.mob_rng,
+                            ));
+                        }
+                    }
+                    // THE LEASHEES' OWN ROPES (pc 57-94 — the iterator
+                    // walk the each dropLeash serves, the lead at THAT
+                    // body's own feet the spawn word drops)
+                    for j in leashees {
+                        let (mx, my, mz) = (self.mobs[j].x, self.mobs[j].y, self.mobs[j].z);
+                        self.mobs[j].leashed_to = None;
+                        self.mobs[j].leash_angular_momentum = 0.0;
+                        if let Some(lead) = mc_registry::item_id_by_name("lead") {
+                            let id = self.next_drop_id;
+                            self.next_drop_id += 1;
+                            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                id,
+                                lead,
+                                1,
+                                mx,
+                                my,
+                                mz,
+                                &mut self.mob_rng,
+                            ));
+                        }
+                    }
+                }
+                // THE SNIP'S OWN VOICE (shearOffAllLeashConnections pc
+                // 30-54 — the ServerLevel gate the integrated body
+                // serves, the playSound(SHEARS_SNIP, source) the
+                // `item.shears.snip` row the sheep-shear file answers;
+                // the wire lane the prediction the same voice wears —
+                // the same law the un-tie lane's own word keeps)
+                self.sounds
+                    .play_voice(self.frame, crate::mob::SHEARS_SNIP_SOUND, 1.0, 1.0);
+                self.swing.start();
+                return true;
+            }
+            // THE MISS THE FALL-THROUGH KEEPS (pc 220 ifeq 235 — the
+            // no-rope body the arm never consumes, the wool shears the
+            // mobInteract chain the walk serves next)
         }
         // THE UN-TIE'S OWN ARM (pc 296-387)
         if self.mobs[i].leashed_to == Some(crate::mob::PLAYER_HOLDER_ID) {
