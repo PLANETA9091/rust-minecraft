@@ -41216,30 +41216,77 @@ fn the_fishing_rod_the_bite_and_the_catch_wears() {
         voices_before + 1,
         "the retrieve voice the lane speaks"
     );
-    // THE FISH FAMILY'S OWN CONDITIONAL (the band the weight walk
-    // picks — the fish the drop + the orb the same walk serves, the
-    // junk/treasure the NEXT round's pools the honest silence keeps)
-    if app.drops.len() > drops_before {
-        let fish_names = ["cod", "salmon", "pufferfish", "tropical_fish"];
-        let fish_ids: Vec<i32> = fish_names
-            .iter()
-            .filter_map(|n| mc_registry::item_id_by_name(n))
-            .collect();
-        let drop = &app.drops[drops_before];
-        assert!(
-            fish_ids.contains(&drop.item),
-            "the fish the pool's own roll wears: {}",
-            drop.item
-        );
-        assert_eq!(drop.count, 1, "the count-1 the catch wears");
-        assert!(app.orbs.len() > orbs_before, "the XP orb the catch serves");
+    // THE LOOT'S OWN WALK (the loot_507 census the every band serves —
+    // the fish/junk/treasure pool the drop wears, the per-item loop
+    // the XP orb the same walk banks)
+    let loot_names = [
+        "cod",
+        "salmon",
+        "pufferfish",
+        "tropical_fish",
+        "lily_pad",
+        "leather_boots",
+        "leather",
+        "bone",
+        "potion",
+        "string",
+        "fishing_rod",
+        "bowl",
+        "stick",
+        "ink_sac",
+        "tripwire_hook",
+        "rotten_flesh",
+        "name_tag",
+        "saddle",
+        "bow",
+        "book",
+        "nautilus_shell",
+    ];
+    let loot_ids: Vec<i32> = loot_names
+        .iter()
+        .map(|n| mc_registry::item_id_by_name(n).expect("the loot item the registry carries"))
+        .collect();
+    assert_eq!(
+        app.drops.len(),
+        drops_before + 1,
+        "the every-band the drop wears"
+    );
+    let drop = &app.drops[drops_before];
+    assert!(
+        loot_ids.contains(&drop.item),
+        "the pool's own roll wears: {}",
+        drop.item
+    );
+    if drop.item == mc_registry::item_id_by_name("ink_sac").expect("the ink the registry carries") {
+        assert_eq!(drop.count, 10, "the ink_sac's set_count the constant wears");
     } else {
+        assert_eq!(drop.count, 1, "the plain count the rest wears");
+    }
+    if drop.item == mc_registry::item_id_by_name("potion").expect("the potion the registry carries")
+    {
         assert_eq!(
-            app.orbs.len(),
-            orbs_before,
-            "the junk/treasure band the NEXT round's pools keep"
+            drop.potion_kind,
+            crate::brewing_sim::POTION_WATER,
+            "the potion's water kind the seat keeps"
         );
     }
+    assert!(
+        app.orbs.len() > orbs_before,
+        "the XP orb the per-item walk serves"
+    );
+    // THE ORB'S OWN PLAYER SEAT (javap pcs 354-405 — the (px, py+0.5,
+    // pz+0.5) the census's aload_2 banks)
+    let (bpy, bpz) = {
+        let b = app.body.as_ref().unwrap();
+        (b.y, b.z)
+    };
+    let orb = &app.orbs[orbs_before];
+    assert!(
+        (orb.y - (bpy + 0.5)).abs() < 1e-9 && (orb.z - (bpz + 0.5)).abs() < 1e-9,
+        "the orb the player seat keeps: {} {}",
+        orb.y,
+        orb.z
+    );
     // THE HOOKED DRAG'S OWN WALK (javap `pullEntity` code=64 — the
     // mob the (owner − mob)·0.1 add the retrieve wears)
     let mut llama = crate::mob::Zombie::new(902, 40.0, 40.0, 40.0, 262);
@@ -41324,6 +41371,241 @@ fn the_fishing_rod_the_bite_and_the_catch_wears() {
         assert!(
             (20..=40).contains(&crate::mob::bobber_nibble_roll(&mut rng)),
             "the nibble roll the 20..40 band keeps"
+        );
+    }
+}
+
+/// THE FISHING LOOT'S OWN POOLS (the loot_507 census the jar's own
+/// JSON banks — the junk.json's twelve rows + the treasure.json's six
+/// the weighted walks serve, the bamboo the jungle location_check the
+/// biome-less world the honest skip wears, the weightless ink_sac the
+/// default-1 law keeps, the set_count/set_potion words the functions
+/// walk answers, the treasure the weight-1 rows wear).
+#[test]
+fn the_fishing_loot_pools_the_weights_wear() {
+    // THE JUNK TABLE'S OWN BYTES (the rows the const banks — the
+    // loot_507 walk the same order wears)
+    let junk = &crate::mob::BOBBER_JUNK_POOL;
+    assert_eq!(junk.len(), 12, "the twelve rows the parse banks");
+    assert_eq!(junk[0], ("lily_pad", 17), "the head the 17 wears");
+    assert_eq!(junk[1], ("leather_boots", 10), "the boots the 10 wears");
+    assert_eq!(junk[4], ("potion", 10), "the potion the 10 wears");
+    assert_eq!(junk[6], ("fishing_rod", 2), "the rod the 2 wears");
+    assert_eq!(
+        junk[9],
+        ("ink_sac", 1),
+        "the weightless the default-1 keeps"
+    );
+    assert_eq!(junk[11], ("rotten_flesh", 10), "the tail the 10 wears");
+    assert_eq!(
+        junk.iter().map(|(_, w)| w).sum::<i64>(),
+        100,
+        "the bamboo skip the 100-total keeps"
+    );
+    assert!(
+        !junk.iter().any(|(n, _)| *n == "bamboo"),
+        "the jungle location_check the honest skip keeps"
+    );
+    // THE TREASURE TABLE'S OWN BYTES (the six the weight-1 rows wear)
+    let treasure = &crate::mob::BOBBER_TREASURE_POOL;
+    assert_eq!(treasure.len(), 6, "the six rows the parse banks");
+    assert_eq!(treasure[0], ("name_tag", 1), "the head the name tag wears");
+    assert_eq!(treasure[2], ("bow", 1), "the bow the plain row wears");
+    assert_eq!(
+        treasure[5],
+        ("nautilus_shell", 1),
+        "the shell the tail wears"
+    );
+    for (name, w) in treasure.iter() {
+        assert_eq!(*w, 1, "the weight-1 row the treasure keeps: {}", name);
+    }
+    // THE PICKS' OWN MEMBERSHIP (the seeded walks the pool rows keep)
+    let mut rng = crate::drops::Lcg::new(483);
+    for _ in 0..256 {
+        let j = crate::mob::bobber_junk_pick(&mut rng);
+        assert!(
+            junk.iter().any(|(n, _)| *n == j),
+            "the junk the pool's own member wears: {}",
+            j
+        );
+        let t = crate::mob::bobber_treasure_pick(&mut rng);
+        assert!(
+            treasure.iter().any(|(n, _)| *n == t),
+            "the treasure the pool's own member wears: {}",
+            t
+        );
+        let f = crate::mob::bobber_fish_pick(&mut rng);
+        assert!(
+            ["cod", "salmon", "pufferfish", "tropical_fish"].contains(&f),
+            "the fish the pool's own member wears: {}",
+            f
+        );
+    }
+    // THE JUNK'S OWN FUNCTION WORDS (the ink_sac's set_count 10 the
+    // constant wears, the potion's set_potion water the kind-0 keeps)
+    assert_eq!(
+        crate::mob::bobber_junk_words("ink_sac"),
+        (10, crate::brewing_sim::POTION_KIND_NONE),
+        "the ink_sac's set_count the constant wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_junk_words("potion"),
+        (1, crate::brewing_sim::POTION_WATER),
+        "the potion's water kind the seat banks"
+    );
+    assert_eq!(
+        crate::mob::bobber_junk_words("stick"),
+        (1, crate::brewing_sim::POTION_KIND_NONE),
+        "the plain row the single keeps"
+    );
+    // THE BAND'S OWN ITEM WALK (the triple the band serves — the
+    // junk's words fn the walk banks, the fish/treasure the plain
+    // single keeps)
+    for _ in 0..256 {
+        let band = crate::mob::bobber_loot_band_pick(&mut rng, 0, true);
+        let (name, count, pk) = crate::mob::bobber_band_item_pick(&mut rng, band);
+        match band {
+            crate::mob::BobberLootBand::Fish => {
+                assert!(count == 1 && pk == crate::brewing_sim::POTION_KIND_NONE);
+            }
+            crate::mob::BobberLootBand::Junk => {
+                let (c2, p2) = crate::mob::bobber_junk_words(name);
+                assert_eq!((count, pk), (c2, p2), "the junk's words the walk banks");
+            }
+            crate::mob::BobberLootBand::Treasure => {
+                assert!(count == 1 && pk == crate::brewing_sim::POTION_KIND_NONE);
+            }
+        }
+    }
+}
+
+/// THE FISHING LOOT'S OWN RETRIEVE WALK (the loot_507 census the
+/// every-band law banks — the staged nibble the retrieve the ONE
+/// drop + the ONE orb the per-item loop wears, the fling the
+/// (owner−hook)·0.1 + the double-sqrt boost keeps, the orb the
+/// player's (px, py+0.5, pz+0.5) seat banks, the pool the union the
+/// membership law keeps).
+#[test]
+fn the_fishing_loot_pools_the_retrieve_serves() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let rod_id = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    app.inventory.items[app.selected_hotbar] = (rod_id, 1);
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x, b.y, b.z)
+    };
+    let loot_names = [
+        "cod",
+        "salmon",
+        "pufferfish",
+        "tropical_fish",
+        "lily_pad",
+        "leather_boots",
+        "leather",
+        "bone",
+        "potion",
+        "string",
+        "fishing_rod",
+        "bowl",
+        "stick",
+        "ink_sac",
+        "tripwire_hook",
+        "rotten_flesh",
+        "name_tag",
+        "saddle",
+        "bow",
+        "book",
+        "nautilus_shell",
+    ];
+    let loot_ids: Vec<i32> = loot_names
+        .iter()
+        .map(|n| mc_registry::item_id_by_name(n).expect("the loot item the registry carries"))
+        .collect();
+    let ink_id = mc_registry::item_id_by_name("ink_sac").expect("the ink the registry carries");
+    let potion_id =
+        mc_registry::item_id_by_name("potion").expect("the potion the registry carries");
+    // THE FLING'S OWN EXPECTED FOLD (the owner−hook delta the 0.1
+    // scales keep, the double-sqrt boost the y wears)
+    let (evx, evy, evz) = {
+        let dx = b0x - (b0x + 1.5);
+        let dy = b0y - (b0y + 1.0);
+        let dz = b0z - (b0z + 0.5);
+        let d = (dx * dx + dy * dy + dz * dz).sqrt().sqrt();
+        (dx * 0.1, dy * 0.1 + d * 0.08, dz * 0.1)
+    };
+    // THE EIGHT ROUNDS' OWN WALK (the staged nibble the retrieve
+    // serves — the every round the ONE drop + the ONE orb wears)
+    for round in 0..8i32 {
+        app.bobbers.push(crate::mob::FishingBobber::from_cast(
+            5000 + round,
+            crate::mob::BobberCast {
+                x: b0x + 1.5,
+                y: b0y + 1.0,
+                z: b0z + 0.5,
+                vx: 0.0,
+                vy: 0.0,
+                vz: 0.0,
+            },
+            0,
+            0,
+        ));
+        app.bobbers[0].nibble = 5;
+        let drops_before = app.drops.len();
+        let orbs_before = app.orbs.len();
+        assert!(app.on_right_press(0, 0), "the reel the press consumes");
+        assert!(app.bobbers.is_empty(), "the retrieve the bobber retires");
+        assert_eq!(
+            app.drops.len(),
+            drops_before + 1,
+            "the every-band the drop wears"
+        );
+        assert_eq!(
+            app.orbs.len(),
+            orbs_before + 1,
+            "the orb the per-item walk wears"
+        );
+        let drop = &app.drops[drops_before];
+        assert!(
+            loot_ids.contains(&drop.item),
+            "the pool's member wears: {}",
+            drop.item
+        );
+        if drop.item == ink_id {
+            assert_eq!(drop.count, 10, "the ink_sac's set_count the constant wears");
+        } else {
+            assert_eq!(drop.count, 1, "the plain count the rest wears");
+        }
+        if drop.item == potion_id {
+            assert_eq!(
+                drop.potion_kind,
+                crate::brewing_sim::POTION_WATER,
+                "the water kind the seat keeps"
+            );
+        }
+        assert!(
+            (drop.vx - evx).abs() < 1e-9
+                && (drop.vy - evy).abs() < 1e-9
+                && (drop.vz - evz).abs() < 1e-9,
+            "the fling the (owner−hook) fold keeps: {} {} {}",
+            drop.vx,
+            drop.vy,
+            drop.vz
+        );
+        // THE ORB'S OWN PLAYER SEAT (javap pcs 354-405 — the (px,
+        // py+0.5, pz+0.5) the census banks, the value the 1..6 keeps)
+        let orb = &app.orbs[orbs_before];
+        assert!(
+            (orb.y - (b0y + 0.5)).abs() < 1e-9 && (orb.z - (b0z + 0.5)).abs() < 1e-9,
+            "the orb the player seat keeps: {} {}",
+            orb.y,
+            orb.z
+        );
+        assert!(
+            (1..=6).contains(&orb.value),
+            "the orb's value the nextInt(6)+1 keeps: {}",
+            orb.value
         );
     }
 }

@@ -13523,8 +13523,8 @@ pub const BOBBER_STOP_DISTANCE_SQR: f64 = 1024.0;
 /// −1). The quality shift the effective weight = weight + quality ×
 /// luck fold speaks [the luck the rod's ctor arg the port's rod
 /// never enchants — the 0 the honest law keeps]; the junk/treasure
-/// POOLS the item parse the NEXT round wears — the FISH band the
-/// catch walk serves this round).
+/// POOLS the loot_507 census the round's own parse banks — the
+/// THREE bands the catch walk serves).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BobberLootBand {
     Fish,
@@ -13580,6 +13580,113 @@ pub fn bobber_fish_pick(rng: &mut Lcg) -> &'static str {
         roll -= w;
     }
     "cod"
+}
+
+/// THE JUNK POOL'S OWN ROWS (the gameplay/fishing/junk.json the
+/// loot_507 census banks — the TWELVE rows the weighted walk serves
+/// [lily_pad 17 the head wears, the weightless ink_sac the default-1
+/// law keeps], the bamboo the jungle location_check the port's
+/// biome-less world never serves — the honest skip the entry wears;
+/// the set_damage the leather_boots/rod rows carry the drop lane's
+/// plain item the honest law keeps — the Damage tag the port's
+/// ItemDrop never banks).
+pub const BOBBER_JUNK_POOL: [(&str, i64); 12] = [
+    ("lily_pad", 17),
+    ("leather_boots", 10),
+    ("leather", 10),
+    ("bone", 10),
+    ("potion", 10),
+    ("string", 5),
+    ("fishing_rod", 2),
+    ("bowl", 10),
+    ("stick", 5),
+    ("ink_sac", 1),
+    ("tripwire_hook", 10),
+    ("rotten_flesh", 10),
+];
+
+/// THE TREASURE POOL'S OWN ROWS (the gameplay/fishing/treasure.json
+/// the loot_507 census banks — the SIX rows the weight-1 walk wears
+/// [name_tag, saddle, bow, fishing_rod, book, nautilus_shell], the
+/// set_damage 0..0.25 + the enchant_with_levels 30 the bow/rod/book
+/// rows carry — the plain drop + the rod-luck-0 precedent the honest
+/// law keeps).
+pub const BOBBER_TREASURE_POOL: [(&str, i64); 6] = [
+    ("name_tag", 1),
+    ("saddle", 1),
+    ("bow", 1),
+    ("fishing_rod", 1),
+    ("book", 1),
+    ("nautilus_shell", 1),
+];
+
+/// THE JUNK POOL'S OWN ROLL (the weighted walk the junk.json rows
+/// serve — the 100-total the bamboo skip keeps).
+pub fn bobber_junk_pick(rng: &mut Lcg) -> &'static str {
+    let total: i64 = BOBBER_JUNK_POOL.iter().map(|(_, w)| w).sum();
+    let mut roll = rng.next_int(total as u64) as i64;
+    for (name, w) in BOBBER_JUNK_POOL {
+        if roll < w {
+            return name;
+        }
+        roll -= w;
+    }
+    "lily_pad"
+}
+
+/// THE TREASURE POOL'S OWN ROLL (the weight-1 rows the uniform walk
+/// serves — the six the 1/6 lane picks).
+pub fn bobber_treasure_pick(rng: &mut Lcg) -> &'static str {
+    let total: i64 = BOBBER_TREASURE_POOL.iter().map(|(_, w)| w).sum();
+    let mut roll = rng.next_int(total as u64) as i64;
+    for (name, w) in BOBBER_TREASURE_POOL {
+        if roll < w {
+            return name;
+        }
+        roll -= w;
+    }
+    "name_tag"
+}
+
+/// THE JUNK'S OWN FUNCTION WORDS (the junk.json the functions walk
+/// answers — the ink_sac's set_count 10.0 the CONSTANT wears [the
+/// no-uniform roll the plain count keeps], the potion's set_potion
+/// water the kind-0 seat banks, the rest the plain single wears; the
+/// set_damage the drop lane never banks — the honest skip the plain
+/// item keeps).
+pub fn bobber_junk_words(item: &'static str) -> (i32, i32) {
+    if item == "ink_sac" {
+        (10, crate::brewing_sim::POTION_KIND_NONE)
+    } else if item == "potion" {
+        (1, crate::brewing_sim::POTION_WATER)
+    } else {
+        (1, crate::brewing_sim::POTION_KIND_NONE)
+    }
+}
+
+/// THE BAND'S OWN ITEM WALK (the pool roll the band serves — the
+/// (name, count, potion-kind) triple the functions walk answers: the
+/// fish the fish.json's plain rows keep, the junk the junk.json's
+/// words fn banks, the treasure the weight-1 rows the plain single
+/// wears).
+pub fn bobber_band_item_pick(rng: &mut Lcg, band: BobberLootBand) -> (&'static str, i32, i32) {
+    match band {
+        BobberLootBand::Fish => (
+            bobber_fish_pick(rng),
+            1,
+            crate::brewing_sim::POTION_KIND_NONE,
+        ),
+        BobberLootBand::Junk => {
+            let item = bobber_junk_pick(rng);
+            let (count, potion) = bobber_junk_words(item);
+            (item, count, potion)
+        }
+        BobberLootBand::Treasure => (
+            bobber_treasure_pick(rng),
+            1,
+            crate::brewing_sim::POTION_KIND_NONE,
+        ),
+    }
 }
 
 /// THE CLOCKS' OWN ROLLS (javap `catchingFish` the census banks —

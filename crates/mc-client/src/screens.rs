@@ -50507,52 +50507,55 @@ impl App {
             // THE MAIN BAND'S OWN PICK (the weight walk the loot
             // table's entries serve)
             let band = crate::mob::bobber_loot_band_pick(&mut self.mob_rng, 0, true);
-            if band == crate::mob::BobberLootBand::Fish {
-                // THE FISH POOL'S OWN ROLL (the weighted walk the
-                // fish.json entries serve)
-                let fish = crate::mob::bobber_fish_pick(&mut self.mob_rng);
-                let fish_id =
-                    mc_registry::item_id_by_name(fish).expect("the fish the registry carries");
-                // THE FLING'S OWN SEAT (javap retrieve pcs 228-341 —
-                // the dx/dy/dz the owner−hook delta the 0.1 scales
-                // keep, the y the quarter-root distance boost the
-                // double-sqrt fold speaks)
-                let dx = ox - hx;
-                let dy = oy - hy;
-                let dz = oz - hz;
-                let dist = (dx * dx + dy * dy + dz * dz).sqrt().sqrt();
-                let drop_id = self.next_drop_id;
-                self.next_drop_id += 1;
-                let mut drop = crate::drops::ItemDrop::spawn_entity_loot(
-                    drop_id,
-                    fish_id,
-                    1,
-                    hx,
-                    hy,
-                    hz,
-                    &mut self.mob_rng,
-                );
-                drop.vx = dx * 0.1;
-                drop.vy = dy * 0.1 + dist * 0.08;
-                drop.vz = dz * 0.1;
-                self.drops.push(drop);
-                // THE XP ORB'S OWN SEAT (javap pcs 354-405 — the orb
-                // the (px, py+0.5, pz+0.5) spawns, the value the
-                // nextInt(6)+1 wears)
-                let orb_id = self.next_orb_id;
-                self.next_orb_id += 1;
-                let value = self.mob_rng.next_int(6) + 1;
-                self.orbs.push(crate::xp::ExperienceOrb::spawn(
-                    orb_id,
-                    hx,
-                    hy + 0.5,
-                    hz + 0.5,
-                    value,
-                ));
-            }
-            // THE JUNK/TREASURE POOLS the item parse the NEXT round
-            // wears — the band's own pick the port's fish lane never
-            // serves (the honest note the census's own words keep)
+            // THE BAND'S OWN POOL ROLL (the loot_507 census the
+            // fish/junk/treasure tables' own bytes bank — the
+            // (name, count, potion) triple the functions walk answers,
+            // the ink_sac's set_count the constant keeps, the potion's
+            // water kind the seat banks)
+            let (item_name, count, potion_kind) =
+                crate::mob::bobber_band_item_pick(&mut self.mob_rng, band);
+            let item_id = mc_registry::item_id_by_name(item_name)
+                .expect("the loot item the registry carries");
+            // THE FLING'S OWN SEAT (javap retrieve pcs 228-341 —
+            // the dx/dy/dz the owner−hook delta the 0.1 scales
+            // keep, the y the quarter-root distance boost the
+            // double-sqrt fold speaks — the loop the EVERY band's
+            // item wears)
+            let dx = ox - hx;
+            let dy = oy - hy;
+            let dz = oz - hz;
+            let dist = (dx * dx + dy * dy + dz * dz).sqrt().sqrt();
+            let drop_id = self.next_drop_id;
+            self.next_drop_id += 1;
+            let mut drop = crate::drops::ItemDrop::spawn_entity_loot(
+                drop_id,
+                item_id,
+                count,
+                hx,
+                hy,
+                hz,
+                &mut self.mob_rng,
+            );
+            drop.vx = dx * 0.1;
+            drop.vy = dy * 0.1 + dist * 0.08;
+            drop.vz = dz * 0.1;
+            drop.potion_kind = potion_kind;
+            self.drops.push(drop);
+            // THE XP ORB'S OWN SEAT (javap pcs 354-405 — the orb the
+            // PLAYER's (px, py+0.5, pz+0.5) seat the per-item loop
+            // serves [the hook seat the 482 walk's slip the round
+            // re-wears — the census's aload_2 the player's own body
+            // speaks], the value the nextInt(6)+1 wears)
+            let orb_id = self.next_orb_id;
+            self.next_orb_id += 1;
+            let value = self.mob_rng.next_int(6) + 1;
+            self.orbs.push(crate::xp::ExperienceOrb::spawn(
+                orb_id,
+                ox,
+                oy + 0.5,
+                oz + 0.5,
+                value,
+            ));
         }
         // THE VERDICT'S OWN WORD (javap pcs 428-444 — the damage the
         // words fn banks, the onGround override the 2 wears; the
