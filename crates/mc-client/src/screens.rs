@@ -20341,6 +20341,10 @@ impl App {
                 // clock the sky samples)
                 let day_time = self.day_time_now();
                 {
+                    // THE PEARL'S OWN DOSE QUEUE (the teleport walk's
+                    // own hurt — the &mut self walk the world borrow
+                    // forbids, the post-borrow tail the doses serve)
+                    let mut pearl_doses: Vec<f32> = Vec::new();
                     let world = self.offline_world.as_ref();
                     if let Some(world) = world {
                         // THE PEACEFUL'S OWN DESPAWN (javap the 26.2 jar the
@@ -20760,10 +20764,22 @@ impl App {
                         // the discard the removal)
                         let mut egg_breaks: Vec<(f64, f64, f64, crate::mob::ThrownProjectileKind)> =
                             Vec::new();
+                        // THE PEARL'S OWN TELEPORT QUEUE (the pre-move
+                        // pos the oldPosition word wears — the hit
+                        // walk the teleport target the pair carries;
+                        // the borrow the loop's iter forbids the
+                        // body's own walk the post-retain lane serves)
+                        let mut pearl_teleports: Vec<(f64, f64, f64)> = Vec::new();
                         for egg in self.eggs.iter_mut() {
                             if egg.dead {
                                 continue;
                             }
+                            // THE OLD POSITION'S OWN CAPTURE (javap
+                            // `Entity.oldPosition()` — the pre-move pose
+                            // the pearl's own teleport target the
+                            // vanilla walk keeps, the hit walk's own
+                            // assignment the capture rides BEFORE)
+                            let pre = (egg.x, egg.y, egg.z);
                             // THE BLOCK'S OWN RAY (the clip the position
                             // to the position+velocity the segment
                             // walks — the arrow's own law shares)
@@ -20779,6 +20795,13 @@ impl App {
                                 egg.x = h.x as f64;
                                 egg.y = h.y as f64;
                                 egg.z = h.z as f64;
+                                // THE PEARL'S OWN TELEPORT QUEUE (the
+                                // block hit the same onHit walk the
+                                // mob's own arm serves — the target
+                                // the pre-move pos the capture wears)
+                                if egg.kind == crate::mob::ThrownProjectileKind::EnderPearl {
+                                    pearl_teleports.push(pre);
+                                }
                                 // THE CHICK'S OWN ROLLS (javap
                                 // `ThrownEgg.onHit` — the `nextInt(8)`
                                 // roll the chick banks, the nested
@@ -20790,7 +20813,9 @@ impl App {
                                 // GATE (the SNOWBALL the plain break
                                 // the onHit override never wears — NO
                                 // rolls the base's own discard alone
-                                // speaks)
+                                // speaks; the PEARL the chick arm the
+                                // onHit override never wears — the
+                                // teleport the queue's own push banks)
                                 if egg.kind == crate::mob::ThrownProjectileKind::Egg {
                                     if let Some(count) =
                                         crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
@@ -20858,7 +20883,12 @@ impl App {
                                 // mob hit the roll rides too) — THE
                                 // KIND'S OWN GATE (the SNOWBALL the
                                 // plain break the mob-hit arm never
-                                // rolls)
+                                // rolls; the PEARL the chick arm the
+                                // onHit override never wears — the
+                                // teleport the queue's own push banks)
+                                if egg.kind == crate::mob::ThrownProjectileKind::EnderPearl {
+                                    pearl_teleports.push(pre);
+                                }
                                 if egg.kind == crate::mob::ThrownProjectileKind::Egg {
                                     if let Some(count) =
                                         crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
@@ -20915,6 +20945,32 @@ impl App {
                         // 0.25-wide bb keeps), the wire velocity the
                         // gaussian trio's x0.02 carries)
                         for (bx, by, bz, bkind) in egg_breaks {
+                            if bkind == crate::mob::ThrownProjectileKind::EnderPearl {
+                                // THE PEARL'S OWN PORTAL BURST (javap
+                                // `ThrownEnderpearl.onHit` pcs 7-71 — the
+                                // `bipush 32` loop the 32 PORTAL
+                                // particles speak, the y the
+                                // `nextDouble() * 2.0` band wears, the
+                                // wire velocity the (nextGaussian, 0.0,
+                                // nextGaussian) trio the dconst_0 pair
+                                // keeps — the NO broadcast-3 the
+                                // item-crack shards the pearl's own
+                                // chain never wears)
+                                for _ in 0..32 {
+                                    let py = by + self.mob_rng.next_f64() * 2.0;
+                                    let puff = crate::particles::portal_ring_puff(
+                                        bx,
+                                        py,
+                                        bz,
+                                        self.mob_rng.next_gaussian(),
+                                        0.0,
+                                        self.mob_rng.next_gaussian(),
+                                        &mut self.mob_rng,
+                                    );
+                                    self.particles.push(puff);
+                                }
+                                continue;
+                            }
                             if bkind == crate::mob::ThrownProjectileKind::Snowball {
                                 // THE SNOWBALL'S OWN CASE-3 (javap
                                 // `Snowball.handleEntityEvent` the 26.2
@@ -20959,6 +21015,75 @@ impl App {
                                 );
                                 self.particles.push(shard);
                             }
+                        }
+                        // THE PEARL'S OWN TELEPORT WALK (javap onHit pcs
+                        // 99-413 — the owner gate `isAllowedToTeleportOwner`
+                        // the isAlive + !isSleeping pair answers [the
+                        // same-dimension gate the offline fiction
+                        // trivially keeps — the pearl the body's own
+                        // level the ONE dimension the world wears], the
+                        // teleport the OLD POSITION the pre-move pos
+                        // speaks [the TeleportTransition's DELTA +
+                        // ROTATION relative sets the momentum the
+                        // unchanged law keeps — the ZERO delta the
+                        // relative read never serves], the
+                        // resetFallDistance the dose's own lead wears,
+                        // the enderPearl 5.0f dose the hurtServer word
+                        // serves [the ender_pearl type the IS_FALL tag
+                        // the json carries — the death message the
+                        // fall-variant rows speak, the exhaustion field
+                        // the json's own 0.0 keeps, the invulnerable
+                        // gate the dose the hurt walk's own verdict
+                        // refuses], the PLAYER_TELEPORT voice the
+                        // (1.0, 1.0) pair the 8-arg overload's own
+                        // defaults wears)
+                        for (tx, ty, tz) in pearl_teleports {
+                            // THE OWNER'S OWN READ (the gate the body's
+                            // own state answers — the sleeping flag +
+                            // the alive verdict the health floor keeps;
+                            // the ownerless body the discard arm the
+                            // vanilla walk wears — the teleport the
+                            // gate never serves)
+                            let (alive, sleeping) = match self.body.as_ref() {
+                                Some(b) => (self.health > 0.0, b.sleeping),
+                                None => continue,
+                            };
+                            if !crate::mob::pearl_can_teleport(alive, sleeping) {
+                                continue;
+                            }
+                            // THE BODY'S OWN RELOCATION (the vanilla
+                            // teleport's own snap — the prev trio the
+                            // render lerp's anchors, the DELTA the
+                            // relative set the momentum keeps, the fall
+                            // distance the reset walk zeroes)
+                            if let Some(b) = self.body.as_mut() {
+                                b.prev_x = tx;
+                                b.prev_y = ty;
+                                b.prev_z = tz;
+                                b.x = tx;
+                                b.y = ty;
+                                b.z = tz;
+                                b.fall_distance = 0.0;
+                            }
+                            // THE ENDER PEARL'S OWN DOSE (javap hurtServer
+                            // — the enderPearl source the IS_FALL read the
+                            // tracker's fall row banks, the death message
+                            // the accident row the fall_variants walk
+                            // wears; the dose the invulnerable walk's own
+                            // verdict refuses — the teleport the dose's
+                            // own lead never loses; the &mut self walk
+                            // the world borrow the queue defers)
+                            pearl_doses.push(crate::mob::PEARL_TELEPORT_HURT);
+                            // THE VOICE (javap `playSound(Level, Vec3)`
+                            // code=24 — the PLAYER_TELEPORT word the
+                            // PLAYERS source carries, the 8-arg overload
+                            // the (1.0, 1.0) pair the defaults keep)
+                            self.sounds.play_voice(
+                                self.frame,
+                                crate::mob::PEARL_TELEPORT_SOUND,
+                                1.0,
+                                1.0,
+                            );
                         }
                         for arrow in self.arrows.iter_mut() {
                             let mut aev = arrow.tick(world, player.as_ref(), &self.mobs);
@@ -21503,6 +21628,13 @@ impl App {
                                 }
                             }
                         }
+                    }
+                    // THE PEARL'S OWN DOSE TAIL (the queue the world borrow
+                    // deferred — the hurt pipeline the post-borrow walk
+                    // serves, the enderPearl source the accident row the
+                    // fall_variants walk wears)
+                    for dose in pearl_doses {
+                        let _ = self.hurt_keyed(dose, "death.fell.accident.generic");
                     }
                 }
                 // THE SHOT'S OWN SPAWNS (the events the mob ticks
@@ -50558,6 +50690,81 @@ impl App {
                         &mut self.mob_rng,
                     );
                     self.eggs.push(egg);
+                }
+                // THE CONSUME (javap ItemStack.consume(1, player) — the
+                // hasInfiniteMaterials gate the creative arm keeps, the
+                // shrink(1) the survival stack wears; the `--held-item`
+                // stand-in the conjured stack the shrink never owns)
+                if self.game_mode != GameMode::Creative {
+                    let slot = self.selected_hotbar;
+                    if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
+                        self.inventory.items[slot].1 -= 1;
+                        self.use_consume_kills_pop(slot);
+                    }
+                }
+                // THE WIRE ECHO (the use-item click the networked lane
+                // rides — the camera's angles in the vanilla degrees)
+                let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                        yaw,
+                        pitch,
+                        hand: 0,
+                    });
+                }
+                return true;
+            }
+            // THE PEARL'S OWN THROW (javap `EnderpearlItem.use` the 26.2
+            // walk — the sound the press arms FIRST:
+            // `playSound(ENDER_PEARL_THROW, 0.5F, 0.4F / (nextFloat() *
+            // 0.4F + 0.8F))` the level's own stream draws, the
+            // `spawnProjectileFromRotation(factory, level, stack,
+            // player, 0.0F, 1.0F, 1.5F)` walk the fconst pair speaks
+            // [the zRot 0.0 + the inaccuracy 1.0 + the velocity 1.5
+            // trio the egg's own law shares], the `consume(1, player)`
+            // the survival stack wears, the awardStat the client's
+            // ledger never banks). The LIVE session the server's own
+            // pearl the wire's Add Entity word serves — the client
+            // predicts none.
+            if self.held_word_of(id) == Some("ender_pearl") {
+                // THE VOICE (the press's own spot the ear answers — the
+                // pitch draw the level's stream rides BEFORE the ctor's
+                // own gaussians, the vanilla's own draw order the walk
+                // keeps)
+                let pitch = 0.4 / (self.mob_rng.next_f32() * 0.4 + 0.8);
+                self.sounds
+                    .play_voice(self.frame, crate::mob::ENDER_PEARL_THROW_SOUND, 0.5, pitch);
+                // THE OFFLINE PREDICTION (the live lane the wire serves —
+                // the owner's own eye minus 0.1 the ctor's spawn law keeps,
+                // the flight camera the headless fallback answers)
+                if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                    let (ox, oy, oz, dir) = match self.body.as_ref() {
+                        Some(b) => {
+                            let cam = b.camera();
+                            (
+                                b.x,
+                                b.y + b.eye_height() - 0.1,
+                                b.z,
+                                (
+                                    cam.forward().x as f64,
+                                    cam.forward().y as f64,
+                                    cam.forward().z as f64,
+                                ),
+                            )
+                        }
+                        None => (0.0, 0.0, 0.0, (0.0, 0.0, 0.0)),
+                    };
+                    let ent = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    let pearl = crate::mob::EggProjectile::pearl_throw_from(
+                        ent,
+                        ox,
+                        oy,
+                        oz,
+                        dir,
+                        &mut self.mob_rng,
+                    );
+                    self.eggs.push(pearl);
                 }
                 // THE CONSUME (javap ItemStack.consume(1, player) — the
                 // hasInfiniteMaterials gate the creative arm keeps, the
@@ -86944,7 +87151,10 @@ impl App {
         let snow_parts: Vec<mc_registry::element_quads::Quad> = crate::mob::wire_id("snowball")
             .map(build_parts)
             .unwrap_or_default();
-        if parts.is_empty() && snow_parts.is_empty() {
+        let pearl_parts: Vec<mc_registry::element_quads::Quad> = crate::mob::wire_id("ender_pearl")
+            .map(build_parts)
+            .unwrap_or_default();
+        if parts.is_empty() && snow_parts.is_empty() && pearl_parts.is_empty() {
             return; // the honest unknown renders nothing
         }
         // the camera basis (the mulPose(cameraOrientation) fold — the
@@ -86962,11 +87172,13 @@ impl App {
         let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
         for e in self.eggs.iter().chain(self.net_thrown.iter()) {
             // THE KIND'S OWN SPRITE (the egg the throw lane mints, the
-            // snowball the dispenser's shot lane picks — the model the
-            // kind byte picks, the build's own failure the silence
-            // keeps)
+            // snowball the dispenser's shot lane picks, the pearl the
+            // throw's own arm picks — the model the kind byte picks, the
+            // build's own failure the silence keeps)
             let parts = if e.kind == crate::mob::ThrownProjectileKind::Snowball {
                 &snow_parts
+            } else if e.kind == crate::mob::ThrownProjectileKind::EnderPearl {
+                &pearl_parts
             } else {
                 &parts
             };

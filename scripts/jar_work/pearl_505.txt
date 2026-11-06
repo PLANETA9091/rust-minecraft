@@ -1,0 +1,375 @@
+== net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.class
+  METHOD getOwner ()Lnet/minecraft/world/entity/Entity;  (code=46)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.owner:Lnet/minecraft/world/entity/EntityReference;
+    4: ifnull 27
+    7: aload_0
+    8: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.level:()Lnet/minecraft/world/level/Level;
+    11: astore_2
+    12: aload_2
+    13: instanceof net/minecraft/server/level/ServerLevel
+    16: ifeq 27
+    19: aload_2
+    20: checkcast net/minecraft/server/level/ServerLevel
+    23: astore_1
+    24: goto 32
+    27: aload_0
+    28: invokespecial net/minecraft/world/entity/projectile/throwableitemprojectile/ThrowableItemProjectile.getOwner:()Lnet/minecraft/world/entity/Entity;
+    31: areturn
+    32: aload_0
+    33: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.owner:Lnet/minecraft/world/entity/EntityReference;
+    36: aload_1
+    37: ldc net/minecraft/world/entity/Entity
+    39: invokevirtual net/minecraft/world/entity/EntityReference.getEntity:(Lnet/minecraft/world/level/Level;Ljava/lang/Class;)Lnet/minecraft/world/level/entity/UniquelyIdentifyable;
+    42: checkcast net/minecraft/world/entity/Entity
+    45: areturn
+  METHOD onHit (Lnet/minecraft/world/phys/HitResult;)V  (code=414)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/world/entity/projectile/throwableitemprojectile/ThrowableItemProjectile.onHit:(Lnet/minecraft/world/phys/HitResult;)V
+    5: iconst_0
+    6: istore_2
+    7: iload_2
+    8: bipush 32
+    10: if_icmpge 74
+    13: aload_0
+    14: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.level:()Lnet/minecraft/world/level/Level;
+    17: getstatic net/minecraft/core/particles/ParticleTypes.PORTAL:Lnet/minecraft/core/particles/SimpleParticleType;
+    20: aload_0
+    21: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.getX:()D
+    24: aload_0
+    25: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.getY:()D
+    28: aload_0
+    29: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.random:Lnet/minecraft/util/RandomSource;
+    32: invokeinterface net/minecraft/util/RandomSource.nextDouble:()D
+    37: ldc2_w 2.0
+    40: dmul
+    41: dadd
+    42: aload_0
+    43: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.getZ:()D
+    46: aload_0
+    47: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.random:Lnet/minecraft/util/RandomSource;
+    50: invokeinterface net/minecraft/util/RandomSource.nextGaussian:()D
+    55: op_0e
+    56: aload_0
+    57: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.random:Lnet/minecraft/util/RandomSource;
+    60: invokeinterface net/minecraft/util/RandomSource.nextGaussian:()D
+    65: invokevirtual net/minecraft/world/level/Level.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+    68: iinc 2 1
+    71: goto 7
+    74: aload_0
+    75: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.level:()Lnet/minecraft/world/level/Level;
+    78: astore_3
+    79: aload_3
+    80: instanceof net/minecraft/server/level/ServerLevel
+    83: ifeq 98
+    86: aload_3
+    87: checkcast net/minecraft/server/level/ServerLevel
+    90: astore_2
+    91: aload_0
+    92: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.isRemoved:()Z
+    95: ifeq 99
+    98: return
+    99: aload_0
+    100: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.getOwner:()Lnet/minecraft/world/entity/Entity;
+    103: astore_3
+    104: aload_3
+    105: ifnull 116
+    108: aload_3
+    109: aload_2
+    110: invokestatic net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.isAllowedToTeleportOwner:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/level/Level;)Z
+    113: ifne 121
+    116: aload_0
+    117: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.discard:()V
+    120: return
+    121: aload_0
+    122: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.oldPosition:()Lnet/minecraft/world/phys/Vec3;
+    125: astore 4
+    127: aload_3
+    128: instanceof net/minecraft/server/level/ServerPlayer
+    131: ifeq 341
+    134: aload_3
+    135: checkcast net/minecraft/server/level/ServerPlayer
+    138: astore 5
+    140: aload 5
+    142: getfield net/minecraft/server/level/ServerPlayer.connection:Lnet/minecraft/server/network/ServerGamePacketListenerImpl;
+    145: invokevirtual net/minecraft/server/network/ServerGamePacketListenerImpl.isAcceptingMessages:()Z
+    148: ifeq 409
+    151: aload_0
+    152: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.random:Lnet/minecraft/util/RandomSource;
+    155: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+    160: ldc 0.05000000074505806f
+    162: fcmpg
+    163: ifge 240
+    166: aload_2
+    167: invokevirtual net/minecraft/server/level/ServerLevel.isSpawningMonsters:()Z
+    170: ifeq 240
+    173: aload_2
+    174: invokevirtual net/minecraft/server/level/ServerLevel.getLevelData:()Lnet/minecraft/world/level/storage/LevelData;
+    177: invokeinterface net/minecraft/world/level/storage/LevelData.getDifficulty:()Lnet/minecraft/world/Difficulty;
+    182: getstatic net/minecraft/world/Difficulty.PEACEFUL:Lnet/minecraft/world/Difficulty;
+    185: if_acmpeq 240
+    188: getstatic net/minecraft/world/entity/EntityTypes.ENDERMITE:Lnet/minecraft/world/entity/EntityType;
+    191: aload_2
+    192: getstatic net/minecraft/world/entity/EntitySpawnReason.TRIGGERED:Lnet/minecraft/world/entity/EntitySpawnReason;
+    195: invokevirtual net/minecraft/world/entity/EntityType.create:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/EntitySpawnReason;)Lnet/minecraft/world/entity/Entity;
+    198: checkcast net/minecraft/world/entity/monster/Endermite
+    201: astore 6
+    203: aload 6
+    205: ifnull 240
+    208: aload 6
+    210: aload_3
+    211: invokevirtual net/minecraft/world/entity/Entity.getX:()D
+    214: aload_3
+    215: invokevirtual net/minecraft/world/entity/Entity.getY:()D
+    218: aload_3
+    219: invokevirtual net/minecraft/world/entity/Entity.getZ:()D
+    222: aload_3
+    223: invokevirtual net/minecraft/world/entity/Entity.getYRot:()F
+    226: aload_3
+    227: invokevirtual net/minecraft/world/entity/Entity.getXRot:()F
+    230: invokevirtual net/minecraft/world/entity/monster/Endermite.snapTo:(DDDFF)V
+    233: aload_2
+    234: aload 6
+    236: invokevirtual net/minecraft/server/level/ServerLevel.addFreshEntity:(Lnet/minecraft/world/entity/Entity;)Z
+    239: pop
+    240: aload_0
+    241: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.isOnPortalCooldown:()Z
+    244: ifeq 251
+    247: aload_3
+    248: invokevirtual net/minecraft/world/entity/Entity.setPortalCooldown:()V
+    251: aload 5
+    253: new net/minecraft/world/level/portal/TeleportTransition
+    256: dup
+    257: aload_2
+    258: aload 4
+    260: getstatic net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+    263: op_0b
+    264: op_0b
+    265: iconst_2
+    266: anewarray java/util/Set
+    269: dup
+    270: iconst_0
+    271: getstatic net/minecraft/world/entity/Relative.ROTATION:Ljava/util/Set;
+    274: aastore
+    275: dup
+    276: iconst_1
+    277: getstatic net/minecraft/world/entity/Relative.DELTA:Ljava/util/Set;
+    280: aastore
+    281: invokestatic net/minecraft/world/entity/Relative.union:([Ljava/util/Set;)Ljava/util/Set;
+    284: getstatic net/minecraft/world/level/portal/TeleportTransition.DO_NOTHING:Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;
+    287: invokespecial net/minecraft/world/level/portal/TeleportTransition.<init>:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FFLjava/util/Set;Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)V
+    290: invokevirtual net/minecraft/server/level/ServerPlayer.teleport:(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/server/level/ServerPlayer;
+    293: astore 6
+    295: aload 6
+    297: ifnull 331
+    300: aload 6
+    302: invokevirtual net/minecraft/server/level/ServerPlayer.resetFallDistance:()V
+    305: aload 6
+    307: invokevirtual net/minecraft/server/level/ServerPlayer.resetCurrentImpulseContext:()V
+    310: aload 6
+    312: aload 5
+    314: invokevirtual net/minecraft/server/level/ServerPlayer.level:()Lnet/minecraft/server/level/ServerLevel;
+    317: aload_0
+    318: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.damageSources:()Lnet/minecraft/world/damagesource/DamageSources;
+    321: invokevirtual net/minecraft/world/damagesource/DamageSources.enderPearl:()Lnet/minecraft/world/damagesource/DamageSource;
+    324: ldc_w 5.0f
+    327: invokevirtual net/minecraft/server/level/ServerPlayer.hurtServer:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z
+    330: pop
+    331: aload_0
+    332: aload_2
+    333: aload 4
+    335: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.playSound:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/Vec3;)V
+    338: goto 409
+    341: aload_3
+    342: new net/minecraft/world/level/portal/TeleportTransition
+    345: dup
+    346: aload_2
+    347: aload 4
+    349: aload_3
+    350: invokevirtual net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    353: aload_3
+    354: invokevirtual net/minecraft/world/entity/Entity.getYRot:()F
+    357: aload_3
+    358: invokevirtual net/minecraft/world/entity/Entity.getXRot:()F
+    361: getstatic net/minecraft/world/level/portal/TeleportTransition.DO_NOTHING:Lnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;
+    364: invokespecial net/minecraft/world/level/portal/TeleportTransition.<init>:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FFLnet/minecraft/world/level/portal/TeleportTransition$PostTeleportTransition;)V
+    367: invokevirtual net/minecraft/world/entity/Entity.teleport:(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/world/entity/Entity;
+    370: astore 6
+    372: aload 6
+    374: ifnull 382
+    377: aload 6
+    379: invokevirtual net/minecraft/world/entity/Entity.resetFallDistance:()V
+    382: aload 6
+    384: instanceof net/minecraft/world/entity/LivingEntity
+    387: ifeq 402
+    390: aload 6
+    392: checkcast net/minecraft/world/entity/LivingEntity
+    395: astore 7
+    397: aload 7
+    399: invokevirtual net/minecraft/world/entity/LivingEntity.resetCurrentImpulseContext:()V
+    402: aload_0
+    403: aload_2
+    404: aload 4
+    406: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.playSound:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/Vec3;)V
+    409: aload_0
+    410: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.discard:()V
+    413: return
+  METHOD tick ()V  (code=219)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.level:()Lnet/minecraft/world/level/Level;
+    4: astore_2
+    5: aload_2
+    6: instanceof net/minecraft/server/level/ServerLevel
+    9: ifeq 20
+    12: aload_2
+    13: checkcast net/minecraft/server/level/ServerLevel
+    16: astore_1
+    17: goto 25
+    20: aload_0
+    21: invokespecial net/minecraft/world/entity/projectile/throwableitemprojectile/ThrowableItemProjectile.tick:()V
+    24: return
+    25: aload_0
+    26: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.position:()Lnet/minecraft/world/phys/Vec3;
+    29: invokevirtual net/minecraft/world/phys/Vec3.x:()D
+    32: invokestatic net/minecraft/core/SectionPos.blockToSectionCoord:(D)I
+    35: istore_2
+    36: aload_0
+    37: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.position:()Lnet/minecraft/world/phys/Vec3;
+    40: invokevirtual net/minecraft/world/phys/Vec3.z:()D
+    43: invokestatic net/minecraft/core/SectionPos.blockToSectionCoord:(D)I
+    46: istore_3
+    47: aload_0
+    48: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.owner:Lnet/minecraft/world/entity/EntityReference;
+    51: ifnull 68
+    54: aload_1
+    55: aload_0
+    56: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.owner:Lnet/minecraft/world/entity/EntityReference;
+    59: invokevirtual net/minecraft/world/entity/EntityReference.getUUID:()Ljava/util/UUID;
+    62: invokestatic net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.findOwnerIncludingDeadPlayer:(Lnet/minecraft/server/level/ServerLevel;Ljava/util/UUID;)Lnet/minecraft/world/entity/Entity;
+    65: goto 69
+    68: aconst_null
+    69: astore 4
+    71: aload 4
+    73: instanceof net/minecraft/server/level/ServerPlayer
+    76: ifeq 132
+    79: aload 4
+    81: checkcast net/minecraft/server/level/ServerPlayer
+    84: astore 5
+    86: aload 4
+    88: invokevirtual net/minecraft/world/entity/Entity.isAlive:()Z
+    91: ifne 132
+    94: aload 5
+    96: getfield net/minecraft/server/level/ServerPlayer.wonGame:Z
+    99: ifne 132
+    102: aload 5
+    104: invokevirtual net/minecraft/server/level/ServerPlayer.level:()Lnet/minecraft/server/level/ServerLevel;
+    107: invokevirtual net/minecraft/server/level/ServerLevel.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+    110: getstatic net/minecraft/world/level/gamerules/GameRules.ENDER_PEARLS_VANISH_ON_DEATH:Lnet/minecraft/world/level/gamerules/GameRule;
+    113: invokevirtual net/minecraft/world/level/gamerules/GameRules.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+    116: checkcast java/lang/Boolean
+    119: invokevirtual java/lang/Boolean.booleanValue:()Z
+    122: ifeq 132
+    125: aload_0
+    126: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.discard:()V
+    129: goto 136
+    132: aload_0
+    133: invokespecial net/minecraft/world/entity/projectile/throwableitemprojectile/ThrowableItemProjectile.tick:()V
+    136: aload_0
+    137: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.isAlive:()Z
+    140: ifne 144
+    143: return
+    144: aload_0
+    145: invokevirtual net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.position:()Lnet/minecraft/world/phys/Vec3;
+    148: invokestatic net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+    151: astore 5
+    153: aload_0
+    154: dup
+    155: getfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.ticketTimer:J
+    158: lconst_1
+    159: op_65
+    160: dup2_x1
+    161: putfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.ticketTimer:J
+    164: lconst_0
+    165: lcmp
+    166: ifle 193
+    169: iload_2
+    170: aload 5
+    172: invokevirtual net/minecraft/core/BlockPos.getX:()I
+    175: invokestatic net/minecraft/core/SectionPos.blockToSectionCoord:(I)I
+    178: if_icmpne 193
+    181: iload_3
+    182: aload 5
+    184: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+    187: invokestatic net/minecraft/core/SectionPos.blockToSectionCoord:(I)I
+    190: if_icmpeq 218
+    193: aload 4
+    195: instanceof net/minecraft/server/level/ServerPlayer
+    198: ifeq 218
+    201: aload 4
+    203: checkcast net/minecraft/server/level/ServerPlayer
+    206: astore 6
+    208: aload_0
+    209: aload 6
+    211: aload_0
+    212: invokevirtual net/minecraft/server/level/ServerPlayer.registerAndUpdateEnderPearlTicket:(Lnet/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl;)J
+    215: putfield net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.ticketTimer:J
+    218: return
+
+
+
+== net/minecraft/world/entity/projectile/ThrowableProjectile.class
+  METHOD tick ()V  (code=94)
+    0: aload_0
+    1: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.handleFirstTickBubbleColumn:()V
+    4: aload_0
+    5: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.applyGravity:()V
+    8: aload_0
+    9: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.applyInertia:()V
+    12: aload_0
+    13: aload_0
+    14: invokedynamic dynamic#0:test
+    19: invokestatic net/minecraft/world/entity/projectile/ProjectileUtil.getHitResultOnMoveVector:(Lnet/minecraft/world/entity/Entity;Ljava/util/function/Predicate;)Lnet/minecraft/world/phys/HitResult;
+    22: astore_1
+    23: aload_1
+    24: invokevirtual net/minecraft/world/phys/HitResult.getType:()Lnet/minecraft/world/phys/HitResult$Type;
+    27: getstatic net/minecraft/world/phys/HitResult$Type.MISS:Lnet/minecraft/world/phys/HitResult$Type;
+    30: if_acmpeq 41
+    33: aload_1
+    34: invokevirtual net/minecraft/world/phys/HitResult.getLocation:()Lnet/minecraft/world/phys/Vec3;
+    37: astore_2
+    38: goto 53
+    41: aload_0
+    42: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.position:()Lnet/minecraft/world/phys/Vec3;
+    45: aload_0
+    46: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    49: invokevirtual net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    52: astore_2
+    53: aload_0
+    54: aload_2
+    55: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.setPos:(Lnet/minecraft/world/phys/Vec3;)V
+    58: aload_0
+    59: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.updateRotation:()V
+    62: aload_0
+    63: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.applyEffectsFromBlocks:()V
+    66: aload_0
+    67: invokespecial net/minecraft/world/entity/projectile/Projectile.tick:()V
+    70: aload_1
+    71: invokevirtual net/minecraft/world/phys/HitResult.getType:()Lnet/minecraft/world/phys/HitResult$Type;
+    74: getstatic net/minecraft/world/phys/HitResult$Type.MISS:Lnet/minecraft/world/phys/HitResult$Type;
+    77: if_acmpeq 93
+    80: aload_0
+    81: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.isAlive:()Z
+    84: ifeq 93
+    87: aload_0
+    88: aload_1
+    89: invokevirtual net/minecraft/world/entity/projectile/ThrowableProjectile.hitTargetOrDeflectSelf:(Lnet/minecraft/world/phys/HitResult;)Lnet/minecraft/world/entity/projectile/ProjectileDeflection;
+    92: pop
+    93: return
+
+
+
+== net/minecraft/world/entity/decoration/LeashFenceKnotEntity.class
+  METHOD defineSynchedData (Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V  (code=1)
+    0: return
+

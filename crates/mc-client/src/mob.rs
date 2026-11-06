@@ -13151,6 +13151,24 @@ pub enum ThrownProjectileKind {
     /// rolls the onHit override never wears), the 8-particle case-3
     /// the zero-velocity walk banks.
     Snowball,
+    /// `ThrownEnderpearl` — the TELEPORT the onHit walk serves (javap
+    /// `ThrownEnderpearl.onHit` code=414 the pearl_505 census banks:
+    /// the 32 PORTAL particles the y + nextDouble·2.0 band wears, the
+    /// owner gate `isAllowedToTeleportOwner` the alive + !sleeping
+    /// pair answers, the teleport the OLD POSITION the pre-move pos
+    /// speaks [the TeleportTransition's DELTA + ROTATION relative
+    /// sets the momentum the unchanged law keeps], the resetFallDist
+    /// + the enderPearl 5.0f dose the hurtServer word serves, the
+    /// PLAYER_TELEPORT voice the playSound walk wears, the discard
+    /// the removal). The break the NO broadcast-3 speaks — the
+    /// pearl's own chain the item-crack event never wears [the
+    /// ThrowableItemProjectile/ThrowableProjectile/Projectile chain
+    /// the 505 census's absent walk answers], the burst the
+    /// server-side addParticle lane alone carries. The endermite
+    /// roll pc 151-240 the 0.05 fold the port's MobKind list never
+    /// serves — the mite the honest silence keeps [the no-Endermite
+    /// kind the port's census carries].
+    EnderPearl,
 }
 
 /// THE THROWN EGG'S OWN BODY (javap `ThrownEgg` the 26.2 law speaks —
@@ -13199,6 +13217,26 @@ pub const EGG_THROW_POWER: f64 = 1.5;
 pub const EGG_DRAG: f64 = 0.99;
 pub const EGG_GRAVITY: f64 = 0.03;
 
+/// THE PEARL'S OWN THROW VOICE (javap `EnderpearlItem.use` pc 21-47 —
+/// the `SoundEvents.ENDER_PEARL_THROW` the playSound word speaks, the
+/// volume 0.5f the ldc pair wears, the pitch the
+/// `0.4F / (nextFloat() * 0.4F + 0.8F)` fold the level's own stream
+/// draws; the sounds.json row the id carries — the random/bow file
+/// the egg's own throw shares).
+pub const ENDER_PEARL_THROW_SOUND: &str = "entity.ender_pearl.throw";
+/// THE PEARL'S OWN TELEPORT VOICE (javap `ThrownEnderpearl.playSound`
+/// code=24 — the `SoundEvents.PLAYER_TELEPORT` the playSound word
+/// speaks, the PLAYERS source the 8-arg overload's default volume +
+/// pitch the call keeps; the sounds.json row the id carries — the
+/// enderman portal files the player teleport shares).
+pub const PEARL_TELEPORT_SOUND: &str = "entity.player.teleport";
+/// THE PEARL'S OWN TELEPORT DOSE (javap `onHit` pc 324-327 — the
+/// `hurtServer(level, damageSources().enderPearl(), 5.0f)` walk the
+/// resetFallDistance tail serves; the ender_pearl damage type the
+/// IS_FALL tag the json carries — the death message the fall-variant
+/// rows speak, the exhaustion field the json's own 0.0 keeps).
+pub const PEARL_TELEPORT_HURT: f32 = 5.0;
+
 impl EggProjectile {
     /// THE SHOOT'S OWN TRIANGLE (javap `Projectile.shoot` — the look
     /// vector normalized, the gaussian spread
@@ -13242,6 +13280,25 @@ impl EggProjectile {
         }
     }
 
+    /// THE PEARL'S OWN THROW (javap `EnderpearlItem.use` pc 63-80 —
+    /// the `spawnProjectileFromRotation(factory, level, stack, player,
+    /// 0.0F, 1.0F, 1.5F)` walk the fconst pair speaks: the zRot 0.0f
+    /// + the inaccuracy 1.0f + the velocity 1.5f trio the egg's own
+    /// shootFromRotation law shares — the SAME triangle the shoot
+    /// walk serves, the kind byte the pearl's own factory picks).
+    pub fn pearl_throw_from(
+        id: i32,
+        ox: f64,
+        oy: f64,
+        oz: f64,
+        dir: (f64, f64, f64),
+        rng: &mut Lcg,
+    ) -> Self {
+        let mut p = Self::throw_from(id, ox, oy, oz, dir, rng);
+        p.kind = ThrownProjectileKind::EnderPearl;
+        p
+    }
+
     /// THE DISPENSER'S OWN SHOT (javap the 26.2 jar — the
     /// `ProjectileDispenseBehavior.execute` walk the snowball/egg
     /// items' own `DispenseConfig.DEFAULT` serves: the position the
@@ -13265,8 +13322,7 @@ impl EggProjectile {
         rng: &mut Lcg,
     ) -> Self {
         let (px, py, pz) = crate::world::dispense_projectile_position(center, step);
-        let ((vx, vy, vz), y_rot, x_rot) =
-            crate::world::projectile_shoot_law(rng, step, 1.1, 6.0);
+        let ((vx, vy, vz), y_rot, x_rot) = crate::world::projectile_shoot_law(rng, step, 1.1, 6.0);
         Self {
             id,
             x: px,
@@ -13345,12 +13401,28 @@ impl EggProjectile {
     /// banks.
     pub fn chick_count(rng: &mut Lcg) -> Option<i32> {
         if rng.next_int_inclusive(0, 7) == 0 {
-            let count = if rng.next_int_inclusive(0, 31) == 0 { 4 } else { 1 };
+            let count = if rng.next_int_inclusive(0, 31) == 0 {
+                4
+            } else {
+                1
+            };
             Some(count)
         } else {
             None
         }
     }
+}
+
+/// THE PEARL'S OWN OWNER GATE (javap `ThrownEnderpearl
+/// .isAllowedToTeleportOwner` code=57 the census banks — the
+/// same-dimension gate the offline fiction trivially keeps [the pearl
+/// the body's own level the ONE dimension the world wears], the
+/// LivingEntity arm the `isAlive() && !isSleeping()` pair the body's
+/// own state answers, the plain-Entity arm the isAlive verdict alone
+/// serves): the TRUE verdict the teleport walk serves, the FALSE the
+/// discard arm the vanilla walk wears.
+pub fn pearl_can_teleport(owner_alive: bool, owner_sleeping: bool) -> bool {
+    owner_alive && !owner_sleeping
 }
 
 /// THE SEGMENT'S OWN SLAB WALK (the ray-AABB intersection the

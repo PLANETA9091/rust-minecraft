@@ -40752,3 +40752,266 @@ fn the_lead_knot_the_restart_outlives_wears() {
         "the counter the skip walk never bumps"
     );
 }
+
+/// THE ENDER PEARL'S OWN THROW (javap `EnderpearlItem.use` the 26.2
+/// walk the pearl_505 census banks — the sound the press arms FIRST:
+/// `playSound(ENDER_PEARL_THROW, 0.5F, 0.4F / (nextFloat() * 0.4F +
+/// 0.8F))` the level's own stream draws, the
+/// `spawnProjectileFromRotation(factory, level, stack, player, 0.0F,
+/// 1.0F, 1.5F)` walk the fconst pair speaks [the zRot 0.0 + the
+/// inaccuracy 1.0 + the velocity 1.5 trio the egg's own law shares],
+/// the `consume(1, player)` the survival stack wears, the awardStat
+/// the client's ledger never banks): the pearl the eye-minus-0.1
+/// spawn law keeps, the kind byte the pearl's own factory picks.
+#[test]
+fn the_ender_pearl_the_throw_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let pearl_id =
+        mc_registry::item_id_by_name("ender_pearl").expect("the pearl the registry carries");
+    app.inventory.items[app.selected_hotbar] = (pearl_id, 3);
+    assert!(app.on_right_press(0, 0), "the pearl the press consumes");
+    // THE OFFLINE PREDICTION (the flight the eggs vec carries — the
+    // kind byte the pearl's own factory picks)
+    assert_eq!(app.eggs.len(), 1, "the throw the pearl spawns");
+    assert_eq!(
+        app.eggs[0].kind,
+        crate::mob::ThrownProjectileKind::EnderPearl,
+        "the kind byte the pearl's own factory picks"
+    );
+    // THE SPAWN'S OWN SEAT (the eye minus 0.1 the ctor's spawn law
+    // keeps — the body's own camera the throw's walk reads)
+    let b = app.body.as_ref().unwrap();
+    let expected_y = b.y + b.eye_height() - 0.1;
+    assert!(
+        (app.eggs[0].y - expected_y).abs() < 1.0,
+        "the spawn seat the eye-minus-0.1 law keeps"
+    );
+    // THE VOICE'S OWN ROW (the throw the sound arms FIRST — the
+    // volume 0.5 the census's own ldc wears)
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("entity.ender_pearl.throw ") && e.contains(" v0.500000 ")),
+        "the throw voice the 0.5 pair speaks: {:?}",
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.contains("ender_pearl"))
+            .collect::<Vec<_>>()
+    );
+    // THE CONSUME (javap ItemStack.consume(1, player) — the survival
+    // stack the shrink wears, the 3-count the press the 2 leaves)
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (pearl_id, 2),
+        "the consume the stack the 2 leaves"
+    );
+}
+
+/// THE ENDER PEARL'S OWN TELEPORT (javap `ThrownEnderpearl.onHit`
+/// code=414 the pearl_505 census banks — the 32 PORTAL particles the
+/// y + nextDouble·2.0 band wears, the owner gate
+/// `isAllowedToTeleportOwner` the isAlive + !isSleeping pair answers,
+/// the teleport the OLD POSITION the pre-move pos speaks [the
+/// TeleportTransition's DELTA + ROTATION relative sets the momentum
+/// the unchanged law keeps], the resetFallDistance the dose's own
+/// lead wears, the enderPearl 5.0f dose the hurtServer word serves,
+/// the PLAYER_TELEPORT voice the (1.0, 1.0) pair the 8-arg overload's
+/// own defaults wears, the discard the removal; the break the NO
+/// broadcast-3 the item-crack shards the pearl's own chain never
+/// wears): the sleeping owner the gate refuses, the dead owner the
+/// same verdict keeps.
+#[test]
+fn the_ender_pearl_the_teleport_wears() {
+    let _lane = render_lane();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE WALL THE FLIGHT'S OWN TARGET (the south column the pearl
+    // crosses — the staging's own state-space id the dig lane's
+    // kind-space NAME_OF never indexes)
+    let (b0x, b0y, b0z) = {
+        let b = app.body.as_ref().unwrap();
+        (b.x as i32, b.y as i32, b.z as i32)
+    };
+    let pearl_spawn = (b0x as f64 + 0.5, b0y as f64 + 2.5, b0z as f64 + 0.5);
+    // THE WALL THE FLIGHT'S OWN TARGET (the +z cell the ONE-tick drift
+    // crosses — the clip the z=1.0 boundary the hit serves)
+    let wall_cell = (b0x, b0y + 2, b0z + 1);
+    let stone = app.offline_world.as_ref().unwrap().get(b0x, b0y - 1, b0z);
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(wall_cell.0, wall_cell.1, wall_cell.2, stone);
+        w.relight();
+    }
+    // THE FLIGHT'S OWN SEAT (the direct staging the tick walk serves —
+    // the +z drift the wall's own ray crosses)
+    app.eggs.push(crate::mob::EggProjectile {
+        id: 4242,
+        x: pearl_spawn.0,
+        y: pearl_spawn.1,
+        z: pearl_spawn.2,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.9,
+        yaw: 0.0,
+        pitch: 0.0,
+        dead: false,
+        kind: crate::mob::ThrownProjectileKind::EnderPearl,
+    });
+    // THE FALL + THE MOMENTUM'S OWN SEAT (the teleport the reset +
+    // the DELTA-relative pair the walk wears)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.fall_distance = 12.0;
+        b.vx = 1.23;
+    }
+    let body_before = {
+        let b = app.body.as_ref().unwrap();
+        (b.x, b.y, b.z, b.sleeping)
+    };
+    app.update();
+    // THE TELEPORT'S OWN WALK (the body the OLD POSITION the pre-move
+    // pos keeps — the wall the pre pos the 2-block south seat wears)
+    {
+        let b = app.body.as_ref().unwrap();
+        let (px, py, pz, _) = body_before;
+        assert!(
+            (b.x - px).abs() < 2.0 && (b.z - pz).abs() < 2.0,
+            "the teleport the pre-move pos keeps: ({}, {}) vs ({}, {})",
+            b.x,
+            b.z,
+            px,
+            pz
+        );
+        assert_eq!(
+            b.fall_distance, 0.0,
+            "the resetFallDistance the teleport's lead wears"
+        );
+        assert!(
+            b.vx != 0.0,
+            "the DELTA-relative set the momentum keeps — the ZERO the
+             portal walk's own write never serves"
+        );
+    }
+    // THE ENDER PEARL'S OWN DOSE (the 5.0f the hurtServer word serves
+    // — the 20.0 the MAX the 15.0 the dose leaves)
+    assert_eq!(
+        app.health, 15.0,
+        "the 5.0f dose the enderPearl source serves"
+    );
+    // THE VOICE'S OWN PAIR (the PLAYER_TELEPORT the PLAYERS source
+    // carries — the (1.0, 1.0) pair the 8-arg overload's own defaults)
+    assert!(
+        app.sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("entity.player.teleport ") && e.contains(" v1.000000 p1.000000")),
+        "the teleport voice the (1.0, 1.0) pair speaks: {:?}",
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.contains("teleport"))
+            .collect::<Vec<_>>()
+    );
+    // THE PORTAL BURST'S OWN COUNT (the 32 the bipush loop speaks —
+    // the NO item shards the pearl's own chain never wears)
+    assert_eq!(
+        app.particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Portal { .. }))
+            .count(),
+        32,
+        "the 32 PORTAL particles the burst wears"
+    );
+    assert!(
+        !app.particles
+            .iter()
+            .any(|p| matches!(p.kind, crate::particles::ParticleKind::EggItem { .. })),
+        "the item shards the pearl's own chain never spawns"
+    );
+    // THE DISCARD (the pearl the world's own list retires)
+    assert!(app.eggs.is_empty(), "the hit the pearl discards");
+    // THE SLEEPING OWNER'S OWN GATE (javap isAllowedToTeleportOwner —
+    // the isSleeping pair the FALSE verdict keeps: the pearl the
+    // burst + the discard the same walk serves, the teleport the
+    // gate never speaks)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.sleeping = true;
+    }
+    app.eggs.push(crate::mob::EggProjectile {
+        id: 4243,
+        x: pearl_spawn.0,
+        y: pearl_spawn.1,
+        z: pearl_spawn.2,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.9,
+        yaw: 0.0,
+        pitch: 0.0,
+        dead: false,
+        kind: crate::mob::ThrownProjectileKind::EnderPearl,
+    });
+    let health_before = app.health;
+    let voices_before = app
+        .sounds
+        .events
+        .iter()
+        .filter(|e| e.starts_with("entity.player.teleport "))
+        .count();
+    app.update();
+    // THE GATE'S OWN VERDICT (the sleeping flag the FALSE verdict
+    // keeps — the physics the body's own carried momentum continues
+    // [the sleeping POSE the freeze arm the bed's own walk owns — the
+    // flag-alone staging the walk never freezes], the TELEPORT the
+    // pre-move pos the gate never serves, the dose the voice the
+    // same verdict silences)
+    assert_eq!(
+        app.health, health_before,
+        "the sleeping gate the dose never serves"
+    );
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.player.teleport "))
+            .count(),
+        voices_before,
+        "the sleeping gate the voice never speaks"
+    );
+    // THE DEAD OWNER'S OWN GATE (the isAlive pair the same FALSE
+    // verdict keeps — the health floor the zero speaks)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.sleeping = false;
+    }
+    app.health = 0.0;
+    app.eggs.push(crate::mob::EggProjectile {
+        id: 4244,
+        x: pearl_spawn.0,
+        y: pearl_spawn.1,
+        z: pearl_spawn.2,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.9,
+        yaw: 0.0,
+        pitch: 0.0,
+        dead: false,
+        kind: crate::mob::ThrownProjectileKind::EnderPearl,
+    });
+    app.update();
+    assert_eq!(
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.player.teleport "))
+            .count(),
+        voices_before,
+        "the dead gate the voice never speaks"
+    );
+    assert!(app.eggs.is_empty(), "the refused hit the pearl discards");
+}
