@@ -2981,6 +2981,10 @@ fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
         // type filter's predicate the same ten-plus-one table the
         // selector reads)
         crate::mob::MobKind::WanderingTrader => "minecraft:wandering_trader",
+        // THE TRADER LLAMA'S OWN ID (the 476 spawner's llama lane the
+        // kind rides — the type filter's predicate the same table
+        // the selector reads)
+        crate::mob::MobKind::TraderLlama => "minecraft:trader_llama",
     }
 }
 
@@ -8957,6 +8961,11 @@ pub struct App {
     /// = the TRADER stays unseen while the other bodies keep drawing
     /// (the same honesty every lane speaks).
     pub wandering_trader_model: Option<crate::avatar::WanderingTraderModel>,
+    /// THE TRADER LLAMA'S OWN BAKE (the 476 spawner's llama lane the
+    /// body draws — the four-variant skin set the LlamaModel.load
+    /// sha1-verifies; `None` = the llama never renders, the honest
+    /// missing-asset law the other bodies keep)
+    pub llama_model: Option<crate::avatar::LlamaModel>,
     /// THE FOURTH MOB's own WOOL (the SheepFurModel inflate-mesh over
     /// the sheep_wool.png texture — the SheepWoolLayer's own overlay,
     /// the dye tint the DyeColor table multiplies) — loaded lazily
@@ -13414,6 +13423,7 @@ impl App {
             cow_model: None,
             sheep_model: None,
             wandering_trader_model: None,
+            llama_model: None,
             sheep_wool_model: None,
             sheep_wool_undercoat_model: None,
             baby_sheep_model: None,
@@ -86267,6 +86277,9 @@ impl App {
         if self.wandering_trader_model.is_none() {
             self.wandering_trader_model = crate::avatar::WanderingTraderModel::load(&jar_root);
         }
+        if self.llama_model.is_none() {
+            self.llama_model = crate::avatar::LlamaModel::load(&jar_root);
+        }
         // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
         // same cache keeps — each load's sha1 verdict its own lane,
         // the failed variant the honest unseen keeps while the others
@@ -86391,6 +86404,7 @@ impl App {
         let chicken_model = self.chicken_model.as_ref();
         let baby_chicken_model = self.baby_chicken_model.as_ref();
         let wandering_trader_model = self.wandering_trader_model.as_ref();
+        let llama_model = self.llama_model.as_ref();
         // the variants' honesty is ITS OWN lane: a failed variant skin
         // keeps only that variant's birds unseen, the temperate keeps
         // drawing
@@ -86569,6 +86583,36 @@ impl App {
                     };
                     let quads = trader.quads(&state, feet, cam.yaw, cam.pitch);
                     (quads, Box::new(move |u, v| trader.pixel(u, v)))
+                }
+                crate::mob::MobKind::TraderLlama => {
+                    // THE TRADER LLAMA'S OWN EQUINE WALK (javap
+                    // `LlamaModel.createBodyLayer` + `setupAnim` the
+                    // 26.2 bytecode's mesh the llama_480 census banks
+                    // — the head 4x4x9 + the neck 8x18x6 + the two
+                    // ears at pivot (0, 7, -6), the rotX PI/2 barrel
+                    // body 12x18x10 at (0, 5, 2), the 4x14x4 legs the
+                    // four pivots wear — the 0.6662/1.4 diagonal fold
+                    // the cow walk keeps, the chest pair the hasChest
+                    // gate alone arms [the port's spawned llamas the
+                    // chest never carry]). The VARIANT'S OWN TEXTURE
+                    // (LlamaRenderer.getTextureLocation's own map —
+                    // the TEXTURES row the variant id picks, the
+                    // ByIdMap's CLAMP law the unknown id wears).
+                    let Some(llama) = llama_model else {
+                        continue; // the llama skins failed their sha1 — this body stays unseen
+                    };
+                    let state = crate::avatar::QuadrupedState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let variant = mob.llama_variant;
+                    let quads = llama.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| llama.pixel(variant, u, v)))
                 }
                 crate::mob::MobKind::Sheep => {
                     // THE COLOR WORD (SheepRenderState.getWoolColor's
@@ -87443,6 +87487,15 @@ impl App {
                 crate::mob::MobKind::WanderingTrader => (
                     crate::mob::WANDERING_TRADER_WIDTH as f32,
                     crate::mob::WANDERING_TRADER_HEIGHT as f32,
+                ),
+                // THE TRADER LLAMA'S OWN SIZED PAIR (javap the
+                // EntityTypes clinit's TRADER_LLAMA registration pc
+                // 6216-6222 — the sized(0.9f, 1.87f) the ldc_w pair
+                // the builder chain speaks, the same consts the
+                // box_for arm banks)
+                crate::mob::MobKind::TraderLlama => (
+                    crate::mob::TRADER_LLAMA_WIDTH as f32,
+                    crate::mob::TRADER_LLAMA_HEIGHT as f32,
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {

@@ -83,8 +83,15 @@ def read_const_pool(data):
             pool[i] = (tag, struct.unpack_from(">H", data, off + 1)[0])
             off += 3
         elif tag in (CONSTANT_Field, CONSTANT_Method, CONSTANT_Iface,
-                     CONSTANT_NameAndType, CONSTANT_Integer, CONSTANT_Float):
+                     CONSTANT_NameAndType, CONSTANT_Dynamic, CONSTANT_InvokeDynamic):
             pool[i] = (tag,) + struct.unpack_from(">HH", data, off + 1)
+            off += 5
+        elif tag in (CONSTANT_Integer, CONSTANT_Float):
+            # THE HALF-WORD READ THE 480 ROUND FIXES (the 4-byte payload
+            # the >HH pair never wore — the high half the resolve read,
+            # the low half the word loses): the full u32 the >I unpack
+            # banks, the resolve the same single-word law reads.
+            pool[i] = (tag, struct.unpack_from(">I", data, off + 1)[0])
             off += 5
         elif tag in (CONSTANT_Long, CONSTANT_Double):
             pool[i] = (tag, struct.unpack_from(">Q", data, off + 1)[0])

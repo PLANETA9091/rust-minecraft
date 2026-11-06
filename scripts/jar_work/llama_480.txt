@@ -1,0 +1,469 @@
+== net/minecraft/client/model/animal/llama/LlamaModel.class
+  METHOD <init> (Lnet/minecraft/client/model/geom/ModelPart;)V  (code=76)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/client/model/EntityModel.<init>:(Lnet/minecraft/client/model/geom/ModelPart;)V
+    5: aload_0
+    6: aload_1
+    7: ldc "head"
+    9: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    12: putfield net/minecraft/client/model/animal/llama/LlamaModel.head:Lnet/minecraft/client/model/geom/ModelPart;
+    15: aload_0
+    16: aload_1
+    17: ldc "right_chest"
+    19: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    22: putfield net/minecraft/client/model/animal/llama/LlamaModel.rightChest:Lnet/minecraft/client/model/geom/ModelPart;
+    25: aload_0
+    26: aload_1
+    27: ldc "left_chest"
+    29: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    32: putfield net/minecraft/client/model/animal/llama/LlamaModel.leftChest:Lnet/minecraft/client/model/geom/ModelPart;
+    35: aload_0
+    36: aload_1
+    37: ldc "right_hind_leg"
+    39: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    42: putfield net/minecraft/client/model/animal/llama/LlamaModel.rightHindLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    45: aload_0
+    46: aload_1
+    47: ldc "left_hind_leg"
+    49: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    52: putfield net/minecraft/client/model/animal/llama/LlamaModel.leftHindLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    55: aload_0
+    56: aload_1
+    57: ldc "right_front_leg"
+    59: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    62: putfield net/minecraft/client/model/animal/llama/LlamaModel.rightFrontLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    65: aload_0
+    66: aload_1
+    67: ldc "left_front_leg"
+    69: invokevirtual net/minecraft/client/model/geom/ModelPart.getChild:(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;
+    72: putfield net/minecraft/client/model/animal/llama/LlamaModel.leftFrontLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    75: return
+  METHOD setupAnim (Lnet/minecraft/client/renderer/entity/state/LlamaRenderState;)V  (code=152)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/client/model/EntityModel.setupAnim:(Ljava/lang/Object;)V
+    5: aload_0
+    6: getfield net/minecraft/client/model/animal/llama/LlamaModel.head:Lnet/minecraft/client/model/geom/ModelPart;
+    9: aload_1
+    10: getfield net/minecraft/client/renderer/entity/state/LlamaRenderState.xRot:F
+    13: ldc 0.01745329238474369f
+    15: fmul
+    16: putfield net/minecraft/client/model/geom/ModelPart.xRot:F
+    19: aload_0
+    20: getfield net/minecraft/client/model/animal/llama/LlamaModel.head:Lnet/minecraft/client/model/geom/ModelPart;
+    23: aload_1
+    24: getfield net/minecraft/client/renderer/entity/state/LlamaRenderState.yRot:F
+    27: ldc 0.01745329238474369f
+    29: fmul
+    30: putfield net/minecraft/client/model/geom/ModelPart.yRot:F
+    33: aload_1
+    34: getfield net/minecraft/client/renderer/entity/state/LlamaRenderState.walkAnimationSpeed:F
+    37: fstore_2
+    38: aload_1
+    39: getfield net/minecraft/client/renderer/entity/state/LlamaRenderState.walkAnimationPos:F
+    42: fstore_3
+    43: aload_0
+    44: getfield net/minecraft/client/model/animal/llama/LlamaModel.rightHindLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    47: op_25
+    48: ldc 0.6661999821662903f
+    50: fmul
+    51: f2d
+    52: invokestatic net/minecraft/util/Mth.cos:(D)F
+    55: ldc 1.399999976158142f
+    57: fmul
+    58: op_24
+    59: fmul
+    60: putfield net/minecraft/client/model/geom/ModelPart.xRot:F
+    63: aload_0
+    64: getfield net/minecraft/client/model/animal/llama/LlamaModel.leftHindLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    67: op_25
+    68: ldc 0.6661999821662903f
+    70: fmul
+    71: ldc 3.1415927410125732f
+    73: fadd
+    74: f2d
+    75: invokestatic net/minecraft/util/Mth.cos:(D)F
+    78: ldc 1.399999976158142f
+    80: fmul
+    81: op_24
+    82: fmul
+    83: putfield net/minecraft/client/model/geom/ModelPart.xRot:F
+    86: aload_0
+    87: getfield net/minecraft/client/model/animal/llama/LlamaModel.rightFrontLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    90: op_25
+    91: ldc 0.6661999821662903f
+    93: fmul
+    94: ldc 3.1415927410125732f
+    96: fadd
+    97: f2d
+    98: invokestatic net/minecraft/util/Mth.cos:(D)F
+    101: ldc 1.399999976158142f
+    103: fmul
+    104: op_24
+    105: fmul
+    106: putfield net/minecraft/client/model/geom/ModelPart.xRot:F
+    109: aload_0
+    110: getfield net/minecraft/client/model/animal/llama/LlamaModel.leftFrontLeg:Lnet/minecraft/client/model/geom/ModelPart;
+    113: op_25
+    114: ldc 0.6661999821662903f
+    116: fmul
+    117: f2d
+    118: invokestatic net/minecraft/util/Mth.cos:(D)F
+    121: ldc 1.399999976158142f
+    123: fmul
+    124: op_24
+    125: fmul
+    126: putfield net/minecraft/client/model/geom/ModelPart.xRot:F
+    129: aload_0
+    130: getfield net/minecraft/client/model/animal/llama/LlamaModel.rightChest:Lnet/minecraft/client/model/geom/ModelPart;
+    133: aload_1
+    134: getfield net/minecraft/client/renderer/entity/state/LlamaRenderState.hasChest:Z
+    137: putfield net/minecraft/client/model/geom/ModelPart.visible:Z
+    140: aload_0
+    141: getfield net/minecraft/client/model/animal/llama/LlamaModel.leftChest:Lnet/minecraft/client/model/geom/ModelPart;
+    144: aload_1
+    145: getfield net/minecraft/client/renderer/entity/state/LlamaRenderState.hasChest:Z
+    148: putfield net/minecraft/client/model/geom/ModelPart.visible:Z
+    151: return
+  METHOD setupAnim (Ljava/lang/Object;)V  (code=9)
+    0: aload_0
+    1: aload_1
+    2: checkcast net/minecraft/client/renderer/entity/state/LlamaRenderState
+    5: invokevirtual net/minecraft/client/model/animal/llama/LlamaModel.setupAnim:(Lnet/minecraft/client/renderer/entity/state/LlamaRenderState;)V
+    8: return
+
+
+
+== net/minecraft/client/model/animal/llama/BabyLlamaModel.class
+  METHOD <init> (Lnet/minecraft/client/model/geom/ModelPart;)V  (code=6)
+    0: aload_0
+    1: aload_1
+    2: invokespecial net/minecraft/client/model/animal/llama/LlamaModel.<init>:(Lnet/minecraft/client/model/geom/ModelPart;)V
+    5: return
+
+
+
+== net/minecraft/world/entity/animal/equine/Llama.class
+  METHOD <init> (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V  (code=16)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokespecial net/minecraft/world/entity/animal/equine/AbstractChestedHorse.<init>:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
+    6: aload_0
+    7: invokevirtual net/minecraft/world/entity/animal/equine/Llama.getNavigation:()Lnet/minecraft/world/entity/ai/navigation/PathNavigation;
+    10: ldc 40.0f
+    12: invokevirtual net/minecraft/world/entity/ai/navigation/PathNavigation.setRequiredPathLength:(F)V
+    15: return
+  METHOD registerGoals ()V  (code=247)
+    0: aload_0
+    1: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    4: iconst_0
+    5: new net/minecraft/world/entity/ai/goal/FloatGoal
+    8: dup
+    9: aload_0
+    10: invokespecial net/minecraft/world/entity/ai/goal/FloatGoal.<init>:(Lnet/minecraft/world/entity/Mob;)V
+    13: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    16: aload_0
+    17: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    20: iconst_1
+    21: new net/minecraft/world/entity/ai/goal/RunAroundLikeCrazyGoal
+    24: dup
+    25: aload_0
+    26: ldc2_w 1.2
+    29: invokespecial net/minecraft/world/entity/ai/goal/RunAroundLikeCrazyGoal.<init>:(Lnet/minecraft/world/entity/animal/equine/AbstractHorse;D)V
+    32: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    35: aload_0
+    36: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    39: iconst_2
+    40: new net/minecraft/world/entity/ai/goal/LlamaFollowCaravanGoal
+    43: dup
+    44: aload_0
+    45: ldc2_w 2.0999999046325684
+    48: invokespecial net/minecraft/world/entity/ai/goal/LlamaFollowCaravanGoal.<init>:(Lnet/minecraft/world/entity/animal/equine/Llama;D)V
+    51: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    54: aload_0
+    55: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    58: iconst_3
+    59: new net/minecraft/world/entity/ai/goal/RangedAttackGoal
+    62: dup
+    63: aload_0
+    64: ldc2_w 1.25
+    67: bipush 40
+    69: ldc 20.0f
+    71: invokespecial net/minecraft/world/entity/ai/goal/RangedAttackGoal.<init>:(Lnet/minecraft/world/entity/monster/RangedAttackMob;DIF)V
+    74: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    77: aload_0
+    78: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    81: iconst_3
+    82: new net/minecraft/world/entity/ai/goal/PanicGoal
+    85: dup
+    86: aload_0
+    87: ldc2_w 1.2
+    90: invokespecial net/minecraft/world/entity/ai/goal/PanicGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;D)V
+    93: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    96: aload_0
+    97: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    100: iconst_4
+    101: new net/minecraft/world/entity/ai/goal/BreedGoal
+    104: dup
+    105: aload_0
+    106: op_0f
+    107: invokespecial net/minecraft/world/entity/ai/goal/BreedGoal.<init>:(Lnet/minecraft/world/entity/animal/Animal;D)V
+    110: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    113: aload_0
+    114: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    117: iconst_5
+    118: new net/minecraft/world/entity/ai/goal/TemptGoal
+    121: dup
+    122: aload_0
+    123: ldc2_w 1.25
+    126: invokedynamic dynamic#0:test
+    131: iconst_0
+    132: invokespecial net/minecraft/world/entity/ai/goal/TemptGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;DLjava/util/function/Predicate;Z)V
+    135: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    138: aload_0
+    139: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    142: bipush 6
+    144: new net/minecraft/world/entity/ai/goal/FollowParentGoal
+    147: dup
+    148: aload_0
+    149: op_0f
+    150: invokespecial net/minecraft/world/entity/ai/goal/FollowParentGoal.<init>:(Lnet/minecraft/world/entity/animal/Animal;D)V
+    153: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    156: aload_0
+    157: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    160: bipush 7
+    162: new net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal
+    165: dup
+    166: aload_0
+    167: ldc2_w 0.7
+    170: invokespecial net/minecraft/world/entity/ai/goal/WaterAvoidingRandomStrollGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;D)V
+    173: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    176: aload_0
+    177: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    180: bipush 8
+    182: new net/minecraft/world/entity/ai/goal/LookAtPlayerGoal
+    185: dup
+    186: aload_0
+    187: ldc net/minecraft/world/entity/player/Player
+    189: ldc 6.0f
+    191: invokespecial net/minecraft/world/entity/ai/goal/LookAtPlayerGoal.<init>:(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;F)V
+    194: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    197: aload_0
+    198: getfield net/minecraft/world/entity/animal/equine/Llama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    201: bipush 9
+    203: new net/minecraft/world/entity/ai/goal/RandomLookAroundGoal
+    206: dup
+    207: aload_0
+    208: invokespecial net/minecraft/world/entity/ai/goal/RandomLookAroundGoal.<init>:(Lnet/minecraft/world/entity/Mob;)V
+    211: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    214: aload_0
+    215: getfield net/minecraft/world/entity/animal/equine/Llama.targetSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    218: iconst_1
+    219: new net/minecraft/world/entity/animal/equine/Llama$LlamaHurtByTargetGoal
+    222: dup
+    223: aload_0
+    224: invokespecial net/minecraft/world/entity/animal/equine/Llama$LlamaHurtByTargetGoal.<init>:(Lnet/minecraft/world/entity/animal/equine/Llama;)V
+    227: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    230: aload_0
+    231: getfield net/minecraft/world/entity/animal/equine/Llama.targetSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    234: iconst_2
+    235: new net/minecraft/world/entity/animal/equine/Llama$LlamaAttackWolfGoal
+    238: dup
+    239: aload_0
+    240: invokespecial net/minecraft/world/entity/animal/equine/Llama$LlamaAttackWolfGoal.<init>:(Lnet/minecraft/world/entity/animal/equine/Llama;)V
+    243: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    246: return
+  METHOD createAttributes ()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;  (code=4)
+    0: invokestatic net/minecraft/world/entity/animal/equine/Llama.createBaseChestedHorseAttributes:()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;
+    3: areturn
+  METHOD isFood (Lnet/minecraft/world/item/ItemStack;)Z  (code=8)
+    0: aload_1
+    1: getstatic net/minecraft/tags/ItemTags.LLAMA_FOOD:Lnet/minecraft/tags/TagKey;
+    4: invokevirtual net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+    7: ireturn
+  METHOD lambda$registerGoals$0 (Lnet/minecraft/world/item/ItemStack;)Z  (code=8)
+    0: aload_0
+    1: getstatic net/minecraft/tags/ItemTags.LLAMA_TEMPT_ITEMS:Lnet/minecraft/tags/TagKey;
+    4: invokevirtual net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+    7: ireturn
+  METHOD <clinit> ()V  (code=64)
+    0: ldc net/minecraft/world/entity/animal/equine/Llama
+    2: getstatic net/minecraft/network/syncher/EntityDataSerializers.INT:Lnet/minecraft/network/syncher/EntityDataSerializer;
+    5: invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    8: putstatic net/minecraft/world/entity/animal/equine/Llama.DATA_STRENGTH_ID:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    11: ldc net/minecraft/world/entity/animal/equine/Llama
+    13: getstatic net/minecraft/network/syncher/EntityDataSerializers.INT:Lnet/minecraft/network/syncher/EntityDataSerializer;
+    16: invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;
+    19: putstatic net/minecraft/world/entity/animal/equine/Llama.DATA_VARIANT_ID:Lnet/minecraft/network/syncher/EntityDataAccessor;
+    22: getstatic net/minecraft/world/entity/EntityTypes.LLAMA:Lnet/minecraft/world/entity/EntityType;
+    25: invokevirtual net/minecraft/world/entity/EntityType.getDimensions:()Lnet/minecraft/world/entity/EntityDimensions;
+    28: invokestatic net/minecraft/world/entity/EntityAttachments.builder:()Lnet/minecraft/world/entity/EntityAttachments$Builder;
+    31: getstatic net/minecraft/world/entity/EntityAttachment.PASSENGER:Lnet/minecraft/world/entity/EntityAttachment;
+    34: op_0b
+    35: getstatic net/minecraft/world/entity/EntityTypes.LLAMA:Lnet/minecraft/world/entity/EntityType;
+    38: invokevirtual net/minecraft/world/entity/EntityType.getHeight:()F
+    41: ldc_w 0.25f
+    44: fsub
+    45: ldc_w -0.30000001192092896f
+    48: invokevirtual net/minecraft/world/entity/EntityAttachments$Builder.attach:(Lnet/minecraft/world/entity/EntityAttachment;FFF)Lnet/minecraft/world/entity/EntityAttachments$Builder;
+    51: invokevirtual net/minecraft/world/entity/EntityDimensions.withAttachments:(Lnet/minecraft/world/entity/EntityAttachments$Builder;)Lnet/minecraft/world/entity/EntityDimensions;
+    54: ldc_w 0.5f
+    57: invokevirtual net/minecraft/world/entity/EntityDimensions.scale:(F)Lnet/minecraft/world/entity/EntityDimensions;
+    60: putstatic net/minecraft/world/entity/animal/equine/Llama.BABY_DIMENSIONS:Lnet/minecraft/world/entity/EntityDimensions;
+    63: return
+
+
+
+== net/minecraft/world/entity/animal/equine/TraderLlama.class
+  METHOD <init> (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V  (code=13)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokespecial net/minecraft/world/entity/animal/equine/Llama.<init>:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
+    6: aload_0
+    7: ldc 47999
+    9: putfield net/minecraft/world/entity/animal/equine/TraderLlama.despawnDelay:I
+    12: return
+  METHOD registerGoals ()V  (code=83)
+    0: aload_0
+    1: invokespecial net/minecraft/world/entity/animal/equine/Llama.registerGoals:()V
+    4: aload_0
+    5: getfield net/minecraft/world/entity/animal/equine/TraderLlama.goalSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    8: iconst_1
+    9: new net/minecraft/world/entity/ai/goal/PanicGoal
+    12: dup
+    13: aload_0
+    14: ldc2_w 2.0
+    17: invokespecial net/minecraft/world/entity/ai/goal/PanicGoal.<init>:(Lnet/minecraft/world/entity/PathfinderMob;D)V
+    20: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    23: aload_0
+    24: getfield net/minecraft/world/entity/animal/equine/TraderLlama.targetSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    27: iconst_1
+    28: new net/minecraft/world/entity/animal/equine/TraderLlama$TraderLlamaDefendWanderingTraderGoal
+    31: dup
+    32: aload_0
+    33: invokespecial net/minecraft/world/entity/animal/equine/TraderLlama$TraderLlamaDefendWanderingTraderGoal.<init>:(Lnet/minecraft/world/entity/animal/equine/Llama;)V
+    36: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    39: aload_0
+    40: getfield net/minecraft/world/entity/animal/equine/TraderLlama.targetSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    43: iconst_2
+    44: new net/minecraft/world/entity/ai/goal/target/NearestAttackableTargetGoal
+    47: dup
+    48: aload_0
+    49: ldc net/minecraft/world/entity/monster/zombie/Zombie
+    51: iconst_1
+    52: invokedynamic dynamic#0:test
+    57: invokespecial net/minecraft/world/entity/ai/goal/target/NearestAttackableTargetGoal.<init>:(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;ZLnet/minecraft/world/entity/ai/targeting/TargetingConditions$Selector;)V
+    60: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    63: aload_0
+    64: getfield net/minecraft/world/entity/animal/equine/TraderLlama.targetSelector:Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+    67: iconst_2
+    68: new net/minecraft/world/entity/ai/goal/target/NearestAttackableTargetGoal
+    71: dup
+    72: aload_0
+    73: ldc net/minecraft/world/entity/monster/illager/AbstractIllager
+    75: iconst_1
+    76: invokespecial net/minecraft/world/entity/ai/goal/target/NearestAttackableTargetGoal.<init>:(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;Z)V
+    79: invokevirtual net/minecraft/world/entity/ai/goal/GoalSelector.addGoal:(ILnet/minecraft/world/entity/ai/goal/Goal;)V
+    82: return
+  METHOD lambda$registerGoals$0 (Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/server/level/ServerLevel;)Z  (code=16)
+    0: aload_0
+    1: getstatic net/minecraft/world/entity/EntityTypes.ZOMBIFIED_PIGLIN:Lnet/minecraft/world/entity/EntityType;
+    4: invokevirtual net/minecraft/world/entity/LivingEntity.is:(Ljava/lang/Object;)Z
+    7: ifne 14
+    10: iconst_1
+    11: goto 15
+    14: iconst_0
+    15: ireturn
+
+
+
+== net/minecraft/world/entity/EntityTypes.class <clinit> region [TRADER_LLAMA:Lnet/minecraft/world/entity/EntityType;] lines 2233..2286
+    6140: invokevirtual net/minecraft/world/entity/EntityType$Builder.clientTrackingRange:(I)Lnet/minecraft/world/entity/EntityType$Builder;
+    6143: bipush 10
+    6145: invokevirtual net/minecraft/world/entity/EntityType$Builder.updateInterval:(I)Lnet/minecraft/world/entity/EntityType$Builder;
+    6148: invokestatic net/minecraft/world/entity/EntityTypes.register:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType$Builder;)Lnet/minecraft/world/entity/EntityType;
+    6151: putstatic net/minecraft/world/entity/EntityTypes.TNT:Lnet/minecraft/world/entity/EntityType;
+    6154: getstatic net/minecraft/world/entity/EntityTypeIds.TNT_MINECART:Lnet/minecraft/resources/ResourceKey;
+    6157: invokedynamic dynamic#138:create
+    6162: getstatic net/minecraft/world/entity/MobCategory.MISC:Lnet/minecraft/world/entity/MobCategory;
+    6165: invokestatic net/minecraft/world/entity/EntityType$Builder.of:(Lnet/minecraft/world/entity/EntityType$EntityFactory;Lnet/minecraft/world/entity/MobCategory;)Lnet/minecraft/world/entity/EntityType$Builder;
+    6168: invokevirtual net/minecraft/world/entity/EntityType$Builder.noLootTable:()Lnet/minecraft/world/entity/EntityType$Builder;
+    6171: ldc_w 0.9800000190734863f
+    6174: ldc 0.699999988079071f
+    6176: invokevirtual net/minecraft/world/entity/EntityType$Builder.sized:(FF)Lnet/minecraft/world/entity/EntityType$Builder;
+    6179: iconst_1
+    6180: newarray
+    6182: dup
+    6183: iconst_0
+    6184: ldc_w 0.1875f
+    6187: op_51
+    6188: invokevirtual net/minecraft/world/entity/EntityType$Builder.passengerAttachments:([F)Lnet/minecraft/world/entity/EntityType$Builder;
+    6191: bipush 8
+    6193: invokevirtual net/minecraft/world/entity/EntityType$Builder.clientTrackingRange:(I)Lnet/minecraft/world/entity/EntityType$Builder;
+    6196: invokestatic net/minecraft/world/entity/EntityTypes.register:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType$Builder;)Lnet/minecraft/world/entity/EntityType;
+    6199: putstatic net/minecraft/world/entity/EntityTypes.TNT_MINECART:Lnet/minecraft/world/entity/EntityType;
+    6202: getstatic net/minecraft/world/entity/EntityTypeIds.TRADER_LLAMA:Lnet/minecraft/resources/ResourceKey;
+    6205: invokedynamic dynamic#139:create
+    6210: getstatic net/minecraft/world/entity/MobCategory.CREATURE:Lnet/minecraft/world/entity/MobCategory;
+    6213: invokestatic net/minecraft/world/entity/EntityType$Builder.of:(Lnet/minecraft/world/entity/EntityType$EntityFactory;Lnet/minecraft/world/entity/MobCategory;)Lnet/minecraft/world/entity/EntityType$Builder;
+    6216: ldc_w 0.8999999761581421f
+    6219: ldc_w 1.8700000047683716f
+    6222: invokevirtual net/minecraft/world/entity/EntityType$Builder.sized:(FF)Lnet/minecraft/world/entity/EntityType$Builder;
+    6225: ldc_w 1.7764999866485596f
+    6228: invokevirtual net/minecraft/world/entity/EntityType$Builder.eyeHeight:(F)Lnet/minecraft/world/entity/EntityType$Builder;
+    6231: iconst_1
+    6232: anewarray net/minecraft/world/phys/Vec3
+    6235: dup
+    6236: iconst_0
+    6237: new net/minecraft/world/phys/Vec3
+    6240: dup
+    6241: op_0e
+    6242: ldc2_w 1.37
+    6245: ldc2_w -0.3
+    6248: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    6251: aastore
+    6252: invokevirtual net/minecraft/world/entity/EntityType$Builder.passengerAttachments:([Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/entity/EntityType$Builder;
+    6255: bipush 10
+    6257: invokevirtual net/minecraft/world/entity/EntityType$Builder.clientTrackingRange:(I)Lnet/minecraft/world/entity/EntityType$Builder;
+    6260: invokestatic net/minecraft/world/entity/EntityTypes.register:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType$Builder;)Lnet/minecraft/world/entity/EntityType;
+    6263: putstatic net/minecraft/world/entity/EntityTypes.TRADER_LLAMA:Lnet/minecraft/world/entity/EntityType;
+    6266: getstatic net/minecraft/world/entity/EntityTypeIds.TRIDENT:Lnet/minecraft/resources/ResourceKey;
+    6269: invokedynamic dynamic#140:create
+    6274: getstatic net/minecraft/world/entity/MobCategory.MISC:Lnet/minecraft/world/entity/MobCategory;
+    6277: invokestatic net/minecraft/world/entity/EntityType$Builder.of:(Lnet/minecraft/world/entity/EntityType$EntityFactory;Lnet/minecraft/world/entity/MobCategory;)Lnet/minecraft/world/entity/EntityType$Builder;
+
+== net/minecraft/world/entity/EntityTypes.class <clinit> region [LLAMA:Lnet/minecraft/world/entity/EntityType;] lines 1308..1337
+    3574: getstatic net/minecraft/world/entity/EntityTypeIds.LLAMA:Lnet/minecraft/resources/ResourceKey;
+    3577: invokedynamic dynamic#82:create
+    3582: getstatic net/minecraft/world/entity/MobCategory.CREATURE:Lnet/minecraft/world/entity/MobCategory;
+    3585: invokestatic net/minecraft/world/entity/EntityType$Builder.of:(Lnet/minecraft/world/entity/EntityType$EntityFactory;Lnet/minecraft/world/entity/MobCategory;)Lnet/minecraft/world/entity/EntityType$Builder;
+    3588: ldc_w 0.8999999761581421f
+    3591: ldc_w 1.8700000047683716f
+    3594: invokevirtual net/minecraft/world/entity/EntityType$Builder.sized:(FF)Lnet/minecraft/world/entity/EntityType$Builder;
+    3597: ldc_w 1.7764999866485596f
+    3600: invokevirtual net/minecraft/world/entity/EntityType$Builder.eyeHeight:(F)Lnet/minecraft/world/entity/EntityType$Builder;
+    3603: iconst_1
+    3604: anewarray net/minecraft/world/phys/Vec3
+    3607: dup
+    3608: iconst_0
+    3609: new net/minecraft/world/phys/Vec3
+    3612: dup
+    3613: op_0e
+    3614: ldc2_w 1.37
+    3617: ldc2_w -0.3
+    3620: invokespecial net/minecraft/world/phys/Vec3.<init>:(DDD)V
+    3623: aastore
+    3624: invokevirtual net/minecraft/world/entity/EntityType$Builder.passengerAttachments:([Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/entity/EntityType$Builder;
+    3627: bipush 10
+    3629: invokevirtual net/minecraft/world/entity/EntityType$Builder.clientTrackingRange:(I)Lnet/minecraft/world/entity/EntityType$Builder;
+    3632: invokestatic net/minecraft/world/entity/EntityTypes.register:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/EntityType$Builder;)Lnet/minecraft/world/entity/EntityType;
+    3635: putstatic net/minecraft/world/entity/EntityTypes.LLAMA:Lnet/minecraft/world/entity/EntityType;
+    3638: getstatic net/minecraft/world/entity/EntityTypeIds.LLAMA_SPIT:Lnet/minecraft/resources/ResourceKey;
+    3641: invokedynamic dynamic#83:create
+    3646: getstatic net/minecraft/world/entity/MobCategory.MISC:Lnet/minecraft/world/entity/MobCategory;
+    3649: invokestatic net/minecraft/world/entity/EntityType$Builder.of:(Lnet/minecraft/world/entity/EntityType$EntityFactory;Lnet/minecraft/world/entity/MobCategory;)Lnet/minecraft/world/entity/EntityType$Builder;
+
+== name strings in clinit

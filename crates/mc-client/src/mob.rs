@@ -1237,6 +1237,20 @@ pub enum MobKind {
     /// `minecraft:wandering_trader` word the
     /// from_wire_name lane draws.
     WanderingTrader,
+    /// THE TRADER LLAMA'S OWN KIND (javap 26.2 `TraderLlama extends
+    /// Llama` the llama_480 census banks — the equine chain
+    /// AbstractChestedHorse → AbstractHorse → Animal the supplier
+    /// rows the chested overrides speak, the registerGoals the super
+    /// walk + the own prio-1 PanicGoal(2.0) + the target pair the
+    /// zombie/illager goals fill, the `despawnDelay = 47999` the ctor
+    /// banks). The spawn the spawner's own
+    /// `tryToSpawnLlamaFor` walk arms — the `EntityTypes.TRADER_LLAMA
+    /// .spawn(.., EntitySpawnReason.EVENT)` the llama_480.txt
+    /// spawner region speaks, the `setLeashedTo(trader, true)` the
+    /// pair the leash field banks, the finalize chain the
+    /// setAge(0)-adult + the strength/variant/health randomize words
+    /// the draw order banks.
+    TraderLlama,
 }
 
 /// THE MOB CATEGORY'S OWN CENSUS SLICE (javap the 26.2 jar the
@@ -1302,15 +1316,25 @@ impl MobKind {
             // THE WARDEN'S OWN WORD (javap `Warden extends Monster` the
             // 26.2 jar speaks — the Monster base the brain monster
             // joins, the MONSTER category the registration arms)
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper
+            MobKind::Zombie
+            | MobKind::Skeleton
+            | MobKind::Spider
+            | MobKind::Creeper
             | MobKind::Warden => MobCategory::Monster,
-            MobKind::Pig | MobKind::Cow | MobKind::Sheep | MobKind::Chicken
-            | MobKind::Wolf => MobCategory::Creature,
+            MobKind::Pig | MobKind::Cow | MobKind::Sheep | MobKind::Chicken | MobKind::Wolf => {
+                MobCategory::Creature
+            }
             // THE WANDERER'S OWN CREATURE WORD (the villager family
             // the registration arms — the AbstractVillager chain the
             // CREATURE category keeps, the wanderer the same word
             // the spawn cap the creature lane answers)
             MobKind::WanderingTrader => MobCategory::Creature,
+            // THE TRADER LLAMA'S OWN CREATURE WORD (javap the
+            // EntityTypes clinit's TRADER_LLAMA registration pc 6210
+            // the llama_480 census banks — the `MobCategory.CREATURE`
+            // getstatic the builder's of() call reads, the equine
+            // family the same word the spawn cap answers)
+            MobKind::TraderLlama => MobCategory::Creature,
         }
     }
 }
@@ -1329,6 +1353,14 @@ impl MobKind {
             // `minecraft:wandering_trader` word the both-sides
             // merchant the merge draws)
             MobKind::WanderingTrader
+        } else if name == "minecraft:trader_llama" {
+            // THE TRADER LLAMA'S OWN ADMISSION (the 476 spawner's own
+            // llama lane the kind body draws — the Add Entity name
+            // the wire's `minecraft:trader_llama` word the leashed
+            // body the merge renders; the plain llama's own name the
+            // later llama round may wear, the fallback the same
+            // honesty the undrawn kinds keep)
+            MobKind::TraderLlama
         } else if name == "minecraft:cow" {
             MobKind::Cow
         } else if name == "minecraft:sheep" {
@@ -1375,6 +1407,7 @@ impl MobKind {
             MobKind::Creeper => "minecraft:creeper",
             MobKind::Warden => "minecraft:warden",
             MobKind::WanderingTrader => "minecraft:wandering_trader",
+            MobKind::TraderLlama => "minecraft:trader_llama",
         }
     }
 
@@ -1462,6 +1495,13 @@ impl MobKind {
             // folds: the villager family's own sight line the
             // eye-to-eye rays and the light gate read)
             MobKind::WanderingTrader => 1.6200000047683716,
+            // THE TRADER LLAMA'S OWN EXPLICIT WORD (javap the
+            // EntityTypes clinit's TRADER_LLAMA registration pc 6225
+            // — the eyeHeight(1.7764999866485596f) call the ldc_w
+            // the builder chain speaks, the LLAMA registration pc
+            // 3597 the same word wears: the equine sight line the
+            // same explicit fold answers)
+            MobKind::TraderLlama => 1.7764999866485596,
         }
     }
 
@@ -1505,6 +1545,21 @@ impl MobKind {
             // trader's registration inherits), the RangedAttribute's
             // registered default 20.0 the zombie's arm doc pins
             MobKind::WanderingTrader => 20.0,
+            // THE TRADER LLAMA'S REGISTERED BASE (javap the 26.2
+            // supplier chain the llama_480 census banks —
+            // `AbstractChestedHorse.createBaseChestedHorseAttributes`
+            // the `createBaseHorseAttributes().add(MOVEMENT_SPEED,
+            // 0.175).add(JUMP_STRENGTH, 0.5)` chain rides, the
+            // MAX_HEALTH the horse base's `add(Attributes.MAX_HEALTH,
+            // 53.0)` the ldc2_w keeps — the chested chain the same
+            // 53.0 base the builder never re-adds). The INSTANCE the
+            // finalize's randomize walk overrides —
+            // `AbstractChestedHorse.randomizeAttributes` the
+            // `setBaseValue(generateMaxHealth(rng::nextInt))` walk
+            // speaks [15.0 + nextInt(8) + nextInt(9) — the [15, 30]
+            // band the two draws wear], the spawned llama's health
+            // the finalize walk the spawn lane banks
+            MobKind::TraderLlama => 53.0,
         }
     }
 
@@ -1545,6 +1600,16 @@ impl MobKind {
             // 0.5))` the ldc2_w the walk keeps, the trader's own flee
             // the 0.5 modifier rides)
             MobKind::WanderingTrader => Some(0.5),
+            // THE TRADER LLAMA'S OWN PANIC WORD (javap `TraderLlama
+            // .registerGoals` pc 4-20 the llama_480 census banks —
+            // the super's `Llama.registerGoals` the prio-3
+            // PanicGoal(1.2) arms FIRST, the own walk the prio-1
+            // PanicGoal(2.0) the ldc2_w adds AFTER — the goal
+            // selector the topmost runnable picks, the own prio-1
+            // goal the faster 2.0 word the flee wears [the super's
+            // prio-3 goal the selector never runs while the prio-1
+            // panic arms])
+            MobKind::TraderLlama => Some(2.0),
         }
     }
 
@@ -1584,6 +1649,16 @@ impl MobKind {
             // AbstractVillager family the same word the trader's
             // registration inherits)
             MobKind::WanderingTrader => 0.5,
+            // THE TRADER LLAMA'S OWN ADD (javap
+            // `AbstractChestedHorse.createBaseChestedHorseAttributes`
+            // pc 3-9 the llama_480 census banks — the horse base's
+            // `add(MOVEMENT_SPEED, 0.22499999403953552)` the chain
+            // rides FIRST, the chested override the
+            // `add(Attributes.MOVEMENT_SPEED, 0.17499999701976776)`
+            // the ldc2_w the SAME builder re-adds — the later add
+            // the value REPLACES, the llama's own 0.175 word the
+            // supplier registers)
+            MobKind::TraderLlama => 0.17499999701976776,
         }
     }
 
@@ -1631,6 +1706,12 @@ impl MobKind {
             // walk keeps, the MoveTowardsRestrictionGoal's own 0.35
             // the prio-4 lane the same modifier wears)
             MobKind::WanderingTrader => 0.35,
+            // THE TRADER LLAMA'S OWN 0.7 (javap `Llama.registerGoals`
+            // pc 156-173 the llama_480 census banks — the prio-7
+            // `WaterAvoidingRandomStrollGoal(this, 0.7)` the ldc2_w
+            // the addGoal walk keeps, the TraderLlama super the same
+            // goal table rides)
+            MobKind::TraderLlama => 0.7,
         }
     }
 
@@ -1731,6 +1812,17 @@ impl MobKind {
             (MobKind::WanderingTrader, VoiceSlot::Ambient) => "entity.wandering_trader.ambient",
             (MobKind::WanderingTrader, VoiceSlot::Hurt) => "entity.wandering_trader.hurt",
             (MobKind::WanderingTrader, VoiceSlot::Death) => "entity.wandering_trader.death",
+            // THE TRADER LLAMA'S OWN ROWS (javap `Llama.getAmbientSound`
+            // / `getHurtSound` / `getDeathSound` the 26.2 jar the
+            // LLAMA_AMBIENT / LLAMA_HURT / LLAMA_DEATH getstatics the
+            // getters return — the TraderLlama the method table the
+            // overrides NEVER carries (the llama_480 census's own
+            // method walk names <init>/registerGoals/finalizeSpawn
+            // alone), the Llama super's words the kind's own voice
+            // wears)
+            (MobKind::TraderLlama, VoiceSlot::Ambient) => "entity.llama.ambient",
+            (MobKind::TraderLlama, VoiceSlot::Hurt) => "entity.llama.hurt",
+            (MobKind::TraderLlama, VoiceSlot::Death) => "entity.llama.death",
         }
     }
 
@@ -1815,6 +1907,19 @@ impl MobKind {
             // name it not), the Entity.playStepSound(pos, state) base
             // impl the Sheep/Creeper arm's block walk keeps
             MobKind::WanderingTrader => {
+                use mc_registry::generated::block_sounds as bs;
+                let idx = bs::sound_index(under?)?;
+                let (volume, pitch) =
+                    crate::sound::Lane::Step.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+                Some((crate::sound::Lane::Step.event_of(idx), volume, pitch))
+            }
+            // THE TRADER LLAMA'S BASE LAW — the playStepSound override
+            // NEITHER the TraderLlama nor the Llama carries (javap the
+            // 26.2 classfiles the method tables name it not — the
+            // llama_480 census's own method walk the same absence
+            // speaks), the Entity.playStepSound(pos, state) base impl
+            // the wanderer arm's block walk keeps
+            MobKind::TraderLlama => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
                 let (volume, pitch) =
@@ -2079,6 +2184,27 @@ pub const CREEPER_HEIGHT: f64 = 1.7;
 /// same box the robe body wears).
 pub const WANDERING_TRADER_WIDTH: f64 = 0.6;
 pub const WANDERING_TRADER_HEIGHT: f64 = 1.95;
+/// THE TRADER LLAMA'S OWN SIZED PAIR (javap the EntityTypes clinit's
+/// TRADER_LLAMA registration pc 6216-6222 the llama_480 census banks
+/// — the sized(0.8999999761581421f, 1.8700000047683716f) the two
+/// ldc_w pairs the builder chain speaks, the LLAMA registration pc
+/// 3588-3594 the same pair wears — the equine box the llama body
+/// occupies).
+pub const TRADER_LLAMA_WIDTH: f64 = 0.8999999761581421;
+pub const TRADER_LLAMA_HEIGHT: f64 = 1.8700000047683716;
+/// THE TRADER LLAMA'S OWN DESPAWN SEED (javap `TraderLlama.<init>`
+/// pc 6-9 the llama_480 census banks — the `despawnDelay = 47999`
+/// the ldc the ctor stores, the ~40-minute clock the vanilla check
+/// arms). The port's own no-despawn law the 477 precedent keeps —
+/// the despawn walk the despawn-0 trader note the spawner census
+/// wears, the clock the honest const banks (the countdown the
+/// future lane may wear).
+pub const TRADER_LLAMA_DESPAWN_DELAY_TICKS: i32 = 47999;
+/// THE LLAMA VARIANT'S OWN NAMES (javap `Llama$Variant.<clinit>`
+/// the llama_480 census banks — the CREAMY(0)/WHITE(1)/BROWN(2)/
+/// GRAY(3) enum the <init> walk keeps, the ByIdMap the clamp
+/// strategy arms; the DEFAULT the CREAMY row answers).
+pub const LLAMA_VARIANT_NAMES: [&str; 4] = ["creamy", "white", "brown", "gray"];
 /// THE WANDERER'S OWN BUYING POOL (the trade_set/wandering_trader/buying the jar's data speaks — amount 2.0, the allow_duplicates the codec's iconst_0 default keeps, the tag's own order the census banks): the (wants, wants_count, gives, gives_count, max_uses, xp) rows the villager_trade jsons wear, the codec defaults the absent words wear (max_uses 4, xp 1, count 1).
 pub static WANDER_BUYING_POOL: [(&str, i32, &str, i32, i32, i32); 6] = [
     ("potion", 1, "emerald", 1, 2, 1),
@@ -5245,6 +5371,23 @@ pub struct Zombie {
     /// non-traders the empty vec the honest zero wears; the offer's
     /// own uses the notify walk re-banks)
     pub trader_offers: Vec<WanderingTraderOffer>,
+    /// THE TRADER LLAMA'S OWN STRENGTH (javap `Llama.DATA_STRENGTH_ID`
+    /// the llama_480 census banks — the `setRandomStrength` walk the
+    /// 1 + nextInt(3|5) word arms, the carry capacity the slot rows
+    /// the vanilla inventory reads; the ctor's honest default 0 the
+    /// finalize walk the spawned llama overrides)
+    pub strength: u8,
+    /// THE TRADER LLAMA'S OWN VARIANT (javap `Llama.DATA_VARIANT_ID`
+    /// the census banks — the CREAMY(0)/WHITE(1)/BROWN(2)/GRAY(3) id
+    /// the `Variant.byId` clamp reads, the LlamaRenderer's TEXTURES
+    /// map the texture pick serves; the ctor's 0 the DEFAULT row the
+    /// vanilla client's own local default wears)
+    pub llama_variant: u8,
+    /// THE LEASH'S OWN LINK (javap `TraderLlama.setLeashedTo(trader,
+    /// true)` the tryToSpawnLlamaFor walk banks — the holder entity's
+    /// id the pair's rope reads; the ctor's None the honest un-leashed
+    /// body keeps, the rope render the future lane may wear)
+    pub leashed_to: Option<i32>,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
     /// drains, the handleEntityEvent(10) the client copy re-arms: the
@@ -5654,6 +5797,13 @@ impl Zombie {
             // the ensure helper arms — the non-traders the empty vec
             // the honest zero wears)
             trader_offers: Vec::new(),
+            // THE TRADER LLAMA'S OWN DEFAULTS (the strength the 0 the
+            // finalize overrides, the variant the 0 = CREAMY the map's
+            // DEFAULT row wears, the leash the None the un-leashed
+            // body keeps)
+            strength: 0,
+            llama_variant: 0,
+            leashed_to: None,
             eat_animation_tick: 0,
             effects: crate::effects::EffectsStore::new(),
             custom_name: None,
@@ -5795,6 +5945,12 @@ impl Zombie {
             // wears, the CREATURE category the same registration
             // arms)
             MobKind::WanderingTrader => (WANDERING_TRADER_WIDTH, WANDERING_TRADER_HEIGHT),
+            // THE TRADER LLAMA'S OWN SIZED LAW (javap the EntityTypes
+            // clinit's TRADER_LLAMA registration pc 6216-6222 — the
+            // sized(0.8999999761581421f, 1.8700000047683716f) the
+            // ldc_w pair the builder chain speaks, the equine box the
+            // TRADER_LLAMA consts bank)
+            MobKind::TraderLlama => (TRADER_LLAMA_WIDTH, TRADER_LLAMA_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -8892,6 +9048,13 @@ impl Zombie {
             // honest false keeps: the talk the mobInteract's own arm
             // answers, the stack the walk never reads)
             MobKind::WanderingTrader => false,
+            // THE TRADER LLAMA'S OWN FOOD GATE (javap `Llama.isFood`
+            // the 26.2 bytecode the llama_480 census banks — the
+            // `is(ItemTags.LLAMA_FOOD)` walk the tag table reads:
+            // data/minecraft/tags/item/llama_food.json the wheat +
+            // the hay_block rows the jar's own bytes keep, the
+            // TraderLlama the super's gate inherits)
+            MobKind::TraderLlama => held_item == "wheat" || held_item == "hay_block",
         }
     }
 
@@ -9097,6 +9260,16 @@ impl Zombie {
             // the talk census banks], the gate the vanilla's own tag
             // walk the lock the trader's body never takes)
             MobKind::WanderingTrader => {
+                held_item == "golden_dandelion" && self.age < 0 && self.age_lock_particle_timer == 0
+            }
+            // THE TRADER LLAMA'S OWN ALWAYS-PASS (javap the jar's own
+            // cannot_be_age_locked.json the values speak —
+            // zombie_horse/skeleton_horse/villager the trio the tag
+            // names, the TRADER_LLAMA the json never carries: the
+            // equine the zoo's kinds the same always-pass rides, the
+            // gate the vanilla's own tag walk the lock the llama's
+            // body never takes)
+            MobKind::TraderLlama => {
                 held_item == "golden_dandelion" && self.age < 0 && self.age_lock_particle_timer == 0
             }
         }
@@ -9459,6 +9632,20 @@ impl Zombie {
                 // the honest table word wears.
                 if let Some(item) = wire_id("sculk_catalyst") {
                     out.push((item, 1));
+                }
+            }
+            MobKind::TraderLlama => {
+                // THE TRADER LLAMA'S OWN POOL (the jar's
+                // data/minecraft/loot_table/entities/trader_llama.json
+                // the verbatim read — POOL 1 the LEATHER uniform 0..2
+                // the set_count's own band the roll keeps, the looting
+                // ench_count_increase the client's enchant lane never
+                // arms)
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("leather") {
+                        out.push((item, count));
+                    }
                 }
             }
         }
@@ -10219,13 +10406,83 @@ pub const WANDERER_SPAWN_RING: i32 = 48;
 /// loop — the placement verdict the first ok spot the walk banks).
 pub const WANDERER_FIND_ATTEMPTS: usize = 10;
 /// THE LLAMAS' OWN ATTEMPTS (the spawn's `iconst_2` loop — the pair
-/// the leash walk serves, the TRADER_LLAMA kind the port's banks
-/// never speak — the find's own draws the attempts spend, the spawn
-/// the honest refusal wears).
+/// the leash walk serves: each found spot the TRADER_LLAMA EVENT
+/// spawn the finalize chain + the leash pair banks, the find's own
+/// draws the missed attempts spend).
 pub const WANDERER_LLAMA_ATTEMPTS: usize = 2;
 /// THE LLAMA'S OWN RING (the tryToSpawnLlamaFor call's `iconst_4`
 /// arg — the trader's own block pos the ±4 the finds roam).
 pub const WANDERER_LLAMA_RING: i32 = 4;
+
+/// THE FINALIZE'S OWN WORDS (javap the 26.2 finalize chain the
+/// llama_480 census banks — `TraderLlama.finalizeSpawn` the EVENT
+/// setAge(0)-adult arms, `Llama.finalizeSpawn` the
+/// setRandomStrength + the variant pick fill, `AbstractHorse
+/// .finalizeSpawn` the randomizeAttributes the chested health ride
+/// — the draw ORDER the chain's own call order keeps: the strength
+/// pair, the variant, the health pair).
+pub struct LlamaFinalize {
+    /// `DATA_STRENGTH_ID`'s word (the `setRandomStrength` walk: the
+    /// 1 + nextInt(3|5) the nextFloat gate arms)
+    pub strength: u8,
+    /// `DATA_VARIANT_ID`'s word (the Variant.values() pick the
+    /// nextInt(4) draw serves — 0 creamy, 1 white, 2 brown, 3 gray)
+    pub variant: u8,
+    /// the MAX_HEALTH base the `randomizeAttributes` walk overrides
+    /// (the `generateMaxHealth(rng::nextInt)` word: 15.0 +
+    /// nextInt(8) + nextInt(9) — the [15, 30] band the two draws
+    /// wear)
+    pub health: f32,
+}
+
+/// THE STRENGTH'S OWN WALK (javap `Llama.setRandomStrength` pc 0-31
+/// the llama_480 census banks): the `nextFloat() < 0.04f` gate the
+/// fcmpg/ifge pair speaks — the 4% branch the `1 + nextInt(5)`
+/// strength arms (the iconst_5 word), the fall-through the
+/// `1 + nextInt(3)` keeps (the iconst_3 word).
+pub fn llama_set_random_strength(rng: &mut Lcg) -> u8 {
+    let base = if rng.next_f32() < 0.03999999910593033 {
+        5
+    } else {
+        3
+    };
+    (1 + rng.next_int(base)) as u8
+}
+
+/// THE VARIANT'S OWN PICK (javap `Llama.finalizeSpawn` pc 35-46 —
+/// the `Variant.values()` array the `Util.getRandom(.., rng)` walk
+/// indexes, the nextInt(4) draw the pick serves; the TraderLlama's
+/// own AgeableMobGroupData the instanceof arm never wears — the
+/// random pick the trader llama's variant answers, no CREAMY force
+/// the older versions' law kept).
+pub fn llama_random_variant(rng: &mut Lcg) -> u8 {
+    rng.next_int(LLAMA_VARIANT_NAMES.len() as u64) as u8
+}
+
+/// THE HEALTH'S OWN WALK (javap `AbstractHorse.generateMaxHealth`
+/// pc 0-23 the llama_480 census banks — the `15.0f + op(8) + op(9)`
+/// the two IntUnaryOperator draws speak, the
+/// `randomizeAttributes` setBaseValue the f2d widen wears; the
+/// chested horse's instance the [15, 30] band the pair wears).
+pub fn trader_llama_randomized_health(rng: &mut Lcg) -> f32 {
+    15.0 + rng.next_int(8) as f32 + rng.next_int(9) as f32
+}
+
+/// THE FINALIZE CHAIN'S OWN DRAW ORDER (the chain the super calls
+/// keep — `Llama.finalizeSpawn`'s setRandomStrength [nextFloat,
+/// nextInt(3|5)], the variant [nextInt(4)], the super tail's
+/// randomizeAttributes [nextInt(8), nextInt(9)] — the five draws
+/// the vanilla stream spends, in order).
+pub fn trader_llama_finalize_words(rng: &mut Lcg) -> LlamaFinalize {
+    let strength = llama_set_random_strength(rng);
+    let variant = llama_random_variant(rng);
+    let health = trader_llama_randomized_health(rng);
+    LlamaFinalize {
+        strength,
+        variant,
+        health,
+    }
+}
 
 /// THE WANDERER'S OWN SPAWNER STATE (javap WanderingTraderData — the
 /// fresh `(24000, 25)` the no-arg ctor speaks [the dump's `sipush
@@ -10320,11 +10577,15 @@ impl WandererSpawner {
 /// arm the anchor answers], the ±48 find the 10 attempts wear, the
 /// 2x3x2 space fold, the spawn the trio the generic lanes wear [the
 /// kind + the max health + the offer ensure the try_spawn trio
-/// mirrors], the 2 llama attempts the find's own draws spend [the
-/// TRADER_LLAMA kind the port's banks never speak — the spawn the
-/// honest refusal wears], the despawn-0 / wander-target / 16-wide
-/// home tails the fields the port never banks [the census note the
-/// honesty wears — the AI lanes the future rounds' lines].
+/// mirrors], the 2 llama attempts the `tryToSpawnLlamaFor(.., 4)`
+/// walk serves — each found spot the `EntityTypes.TRADER_LLAMA.spawn
+/// (.., EntitySpawnReason.EVENT)` + the `setLeashedTo(trader, true)`
+/// pair the llama_480 census's own spawner region banks (the finalize
+/// chain the strength/variant/health randomize words the draw order
+/// keeps, the EVENT setAge(0)-adult the chain's own head arms), the
+/// despawn-0 / wander-target / 16-wide home tails the fields the port
+/// never banks [the census note the honesty wears — the AI lanes the
+/// future rounds' lines].
 pub fn try_spawn_wanderer(
     mobs: &mut Vec<Zombie>,
     next_id: &mut i32,
@@ -10371,16 +10632,46 @@ pub fn try_spawn_wanderer(
     trader.kind = MobKind::WanderingTrader;
     trader.health = trader.kind.max_health();
     trader.ensure_trader_offers();
+    let trader_id = trader.id;
     // THE TAILS (pcs 166-186: the despawn-0 the fresh 0 the ctor
     // keeps, the wander target + the 16-wide home the AI fields the
     // port never banks — the census note the honesty wears)
     mobs.push(trader);
     // THE LLAMAS' OWN ATTEMPTS (pcs 143-165: the loop the
-    // tryToSpawnLlamaFor(.., 4) serves — the find's own draws the
-    // attempts spend, the TRADER_LLAMA kind the spawn the honest
-    // refusal wears)
+    // `tryToSpawnLlamaFor(level, trader, 4)` serves — each found
+    // spot the TRADER_LLAMA EVENT spawn the leash pair banks, the
+    // find's own draws the missed attempts spend)
     for _ in 0..WANDERER_LLAMA_ATTEMPTS {
-        let _ = wanderer_find_spawn_position_near(world, rng, sx, sz, WANDERER_LLAMA_RING);
+        let Some((lx, ly, lz)) =
+            wanderer_find_spawn_position_near(world, rng, sx, sz, WANDERER_LLAMA_RING)
+        else {
+            continue;
+        };
+        // THE LLAMA SPAWN (javap `tryToSpawnLlamaFor` pcs 18-45: the
+        // EntityTypes.TRADER_LLAMA.spawn(level, pos, EVENT) the
+        // entity walk banks, the null the return keeps, the
+        // setLeashedTo(trader, true) the pair the leash field arms)
+        let id = *next_id;
+        *next_id += 1;
+        let mut llama = Zombie::new(
+            id,
+            lx as f64 + 0.5,
+            ly as f64,
+            lz as f64 + 0.5,
+            (*next_id as u64) << 16 ^ rng.next(),
+        );
+        llama.kind = MobKind::TraderLlama;
+        // THE FINALIZE CHAIN (javap the 26.2 finalize walk the
+        // llama_480 census banks — the EVENT setAge(0) the adult
+        // arms, the strength/variant/health randomize the draw
+        // order the chain keeps; the despawnDelay = 47999 the ctor
+        // banks, the port's no-despawn law the honest note wears)
+        let fin = trader_llama_finalize_words(rng);
+        llama.strength = fin.strength;
+        llama.llama_variant = fin.variant;
+        llama.health = fin.health;
+        llama.leashed_to = Some(trader_id);
+        mobs.push(llama);
     }
     true
 }
@@ -18738,6 +19029,7 @@ mod tests {
                 crate::sculk::WARDEN_MOB_HEIGHT as f64,
             ),
             MobKind::WanderingTrader => (WANDERING_TRADER_WIDTH, WANDERING_TRADER_HEIGHT),
+            MobKind::TraderLlama => (TRADER_LLAMA_WIDTH, TRADER_LLAMA_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);
@@ -24027,8 +24319,11 @@ mod tests {
     /// pos wears, the find the ±48 ring the 10 attempts roam, the
     /// space the 2x3x2 fold keeps, the spawn the trio the generic
     /// lanes wear [the kind + the max health + the offers the ensure
-    /// arms], the no-spot world the find refuses, the seed search the
-    /// spawn's own determinism replays.
+    /// arms], the llama pair the tryToSpawnLlamaFor walk serves [the
+    /// 480 round: the found spots the TRADER_LLAMA spawn the leash
+    /// pair banks — the flat world the both finds answer], the
+    /// no-spot world the find refuses, the seed search the spawn's
+    /// own determinism replays.
     #[test]
     fn the_wanderer_spawn_the_attempt_walk_wears() {
         let world = jockey_flat_world();
@@ -24084,25 +24379,69 @@ mod tests {
             }
             landed = true;
             next_id = nid;
-            assert_eq!(mobs.len(), 1, "the ONE trader the walk lands");
-            let t = &mobs[0];
             assert_eq!(
-                t.kind,
+                mobs[0].kind,
                 MobKind::WanderingTrader,
-                "the trader's own kind the spawn wears"
+                "the FIRST body the trader wears"
             );
             assert_eq!(
-                t.health,
-                20.0,
+                mobs[0].health, 20.0,
                 "the max health the kind's own attribute keeps"
             );
             assert_eq!(
-                t.trader_offers.len(),
+                mobs[0].trader_offers.len(),
                 9,
                 "the offers the ensure walk arms (6 + 15 pool caps the 9 the updateTrades speaks)"
             );
+            // THE LLAMA PAIR'S OWN LANE (the 480 round the spawn walk
+            // banks — the flat world the both finds answer: the trader
+            // + the leashed llamas the found spots land, the ids the
+            // spawn order keeps)
+            assert!(
+                (2..=3).contains(&mobs.len()),
+                "the trader + the llama pair the walk lands ({} bodies)",
+                mobs.len()
+            );
+            let trader_id = mobs[0].id;
+            for llama in &mobs[1..] {
+                assert_eq!(
+                    llama.kind,
+                    MobKind::TraderLlama,
+                    "the llama's own kind the spawn wears"
+                );
+                assert_eq!(
+                    llama.leashed_to,
+                    Some(trader_id),
+                    "the leash the setLeashedTo pair the field banks"
+                );
+                assert!(
+                    (15.0..=30.0).contains(&llama.health),
+                    "the finalize health the [15, 30] band the walk wears"
+                );
+                assert!(
+                    (1..=5).contains(&llama.strength),
+                    "the strength the [1, 5] band wears"
+                );
+                assert!(
+                    llama.llama_variant < 4,
+                    "the variant id the clamp's band wears"
+                );
+                assert!(!llama.is_baby(), "the EVENT setAge(0) the adult law wears");
+                let dx = (llama.x - mobs[0].x) as i32;
+                let dz = (llama.z - mobs[0].z) as i32;
+                assert!(
+                    dx.abs().max(dz.abs()) <= WANDERER_LLAMA_RING,
+                    "the ring the ±4 the find's own word wears"
+                );
+            }
+            assert_eq!(
+                next_id,
+                1 + mobs.len() as i32,
+                "the id counter the spawn advances"
+            );
             // THE RING THE ANCHOR KEEPS (the ±48 the find roams — the
             // landed feet the surface + 1 wears)
+            let t = &mobs[0];
             let dx = t.x - 32.0;
             let dz = t.z - 32.0;
             assert!(
@@ -24116,7 +24455,6 @@ mod tests {
             break;
         }
         assert!(landed, "the seeds the walk the trader lands");
-        assert_eq!(next_id, 2, "the id counter the spawn advances");
     }
 
 }

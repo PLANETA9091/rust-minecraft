@@ -38381,3 +38381,382 @@ fn the_merchant_progress_bar_the_canvas_wears() {
         "the handle the 9-offer bank the band wears"
     );
 }
+
+/// THE TRADER LLAMA'S OWN VANILLA ROWS (javap the 26.2 jar the
+/// llama_480 census banks — the registration words, the supplier
+/// chain, the goal words, the finalize walks, the variant table: the
+/// census the kind rows the port banks):
+/// the CREATURE category, the sized(0.9f, 1.87f) + eyeHeight(1.776f)
+/// registration pair, the 53.0 supplier base + the [15, 30]
+/// randomized band the generateMaxHealth walk wears, the
+/// 0.17499999701976776 movement word the chested override keeps, the
+/// prio-1 PanicGoal(2.0) the own goal arms, the prio-7 stroll 0.7
+/// the super's goal table banks, the wire name pair, the LLAMA_FOOD
+/// tag rows (wheat + hay_block), the [1, 5]/[1, 3] strength split
+/// the 4% gate arms, the four-variant pick the nextInt(4) serves,
+/// the draw ORDER the finalize chain keeps, the despawn seed the
+/// 47999 ctor banks, the leather pool the uniform 0..2 roll wears.
+#[test]
+fn the_trader_llama_the_vanilla_rows_wear() {
+    use crate::drops::Lcg;
+    use crate::mob::{
+        llama_random_variant, llama_set_random_strength, trader_llama_finalize_words,
+        trader_llama_randomized_health, MobCategory, MobKind,
+    };
+    // THE REGISTRATION'S OWN WORDS
+    assert_eq!(
+        MobKind::TraderLlama.mob_category(),
+        MobCategory::Creature,
+        "the CREATURE category the clinit's of() arms"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.wire_name(),
+        "minecraft:trader_llama",
+        "the registry id the registration names"
+    );
+    assert_eq!(
+        MobKind::from_wire_name("minecraft:trader_llama"),
+        MobKind::TraderLlama,
+        "the wire name the kind body draws"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.eye_height(),
+        1.7764999866485596,
+        "the explicit eyeHeight the ldc_w bank keeps"
+    );
+    assert_eq!(
+        (
+            crate::mob::TRADER_LLAMA_WIDTH,
+            crate::mob::TRADER_LLAMA_HEIGHT
+        ),
+        (0.8999999761581421, 1.8700000047683716),
+        "the sized pair the registration's own words wear"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.max_health(),
+        53.0,
+        "the supplier base the horse chain's add keeps"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.movement_speed(),
+        0.17499999701976776,
+        "the chested override the later add replaces"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.panic_speed(),
+        Some(2.0),
+        "the own prio-1 panic the faster word wears"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.stroll_speed(),
+        0.7,
+        "the prio-7 stroll the super's goal table banks"
+    );
+    assert!(
+        !MobKind::TraderLlama.is_monster(),
+        "the animal chain no monster wears"
+    );
+    assert!(
+        !MobKind::TraderLlama.should_burn_in_day(),
+        "the equine no sun brand wears"
+    );
+    assert_eq!(
+        crate::mob::TRADER_LLAMA_DESPAWN_DELAY_TICKS,
+        47999,
+        "the despawn seed the ctor's ldc bank keeps"
+    );
+    // THE VOICE ROWS (the Llama super's own words — the TraderLlama
+    // the overrides never carries)
+    assert_eq!(
+        MobKind::TraderLlama.voice_event(crate::mob::VoiceSlot::Ambient),
+        "entity.llama.ambient",
+        "the ambient the Llama super answers"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.voice_event(crate::mob::VoiceSlot::Hurt),
+        "entity.llama.hurt",
+        "the hurt row the getter's getstatic wears"
+    );
+    assert_eq!(
+        MobKind::TraderLlama.voice_event(crate::mob::VoiceSlot::Death),
+        "entity.llama.death",
+        "the death row the getter's getstatic wears"
+    );
+    // THE STEP'S BASE LAW + THE FOOD GATE (the LLAMA_FOOD tag rows)
+    assert!(
+        MobKind::TraderLlama.step_voice(Some("stone")).is_some(),
+        "the base block law the step voice keeps"
+    );
+    // the is_food rows the tag json speaks
+    let mut llama = crate::mob::Zombie::new(1, 0.0, 0.0, 0.0, 1);
+    llama.kind = MobKind::TraderLlama;
+    assert!(llama.is_food("wheat"), "the wheat row the tag banks");
+    assert!(
+        llama.is_food("hay_block"),
+        "the hay_block row the tag banks"
+    );
+    assert!(
+        !llama.is_food("carrot"),
+        "the untagged stack the gate refuses"
+    );
+    // THE STRENGTH'S OWN WALK (the 4% gate the [1,3]/[1,5] split
+    // wears — the sweep the bands the stream wears)
+    let mut rng = Lcg::new(0xC0FFEE);
+    let mut saw_wide = false;
+    for _ in 0..500 {
+        let s = llama_set_random_strength(&mut rng);
+        assert!((1..=5).contains(&s), "the strength the band the walk wears");
+        if s > 3 {
+            saw_wide = true;
+        }
+    }
+    assert!(saw_wide, "the 4% branch the wide band the sweep hits");
+    // THE VARIANT'S OWN PICK (the nextInt(4) the values() order wears)
+    let mut rng = Lcg::new(0xF00D);
+    let mut seen = [false; 4];
+    for _ in 0..400 {
+        let v = llama_random_variant(&mut rng);
+        assert!(v < 4, "the variant id the clamp's band wears");
+        seen[v as usize] = true;
+    }
+    assert!(
+        seen.iter().all(|&s| s),
+        "the four variants the random pick wears"
+    );
+    // THE HEALTH'S OWN WALK (the [15, 30] band the two draws wear)
+    let mut rng = Lcg::new(0xBEEF);
+    for _ in 0..300 {
+        let h = trader_llama_randomized_health(&mut rng);
+        assert!(
+            (15.0..=30.0).contains(&h),
+            "the health the band the walk wears"
+        );
+    }
+    // THE DRAW ORDER (the chain the super calls keep — the
+    // finalize words the exact stream the vanilla spends: the
+    // strength pair, the variant, the health pair)
+    let mut rng = Lcg::new(0x5EED);
+    let expected = {
+        let strength = llama_set_random_strength(&mut rng);
+        let variant = llama_random_variant(&mut rng);
+        let health = trader_llama_randomized_health(&mut rng);
+        (strength, variant, health)
+    };
+    let mut rng2 = Lcg::new(0x5EED);
+    let fin = trader_llama_finalize_words(&mut rng2);
+    assert_eq!(
+        (fin.strength, fin.variant, fin.health),
+        expected,
+        "the draw order the chain's own call order keeps"
+    );
+    // THE LEATHER POOL (the death loot the uniform 0..2 roll wears)
+    let mut llama = crate::mob::Zombie::new(2, 0.0, 0.0, 0.0, 2);
+    llama.kind = MobKind::TraderLlama;
+    llama.health = 0.0;
+    for _ in 0..50 {
+        let loot = llama.death_loot(true);
+        for (id, count) in &loot {
+            let name = mc_registry::item_name(*id).unwrap_or("");
+            assert_eq!(name, "leather", "the pool the leather row wears");
+            assert!((1..=2).contains(count), "the count the uniform band wears");
+        }
+    }
+}
+
+/// THE TRADER LLAMA'S OWN SPAWN PAIR (javap
+/// `WanderingTraderSpawner.tryToSpawnLlamaFor` the llama_480 census
+/// banks — the find the range-4 spot the trader's own block pos
+/// wears, the TRADER_LLAMA EVENT spawn the entity walk banks, the
+/// `setLeashedTo(trader, true)` the pair the leash field arms, the
+/// finalize chain the strength/variant/health words the draw order
+/// keeps, the setAge(0)-adult the EVENT reason arms): the spawn walk
+/// the 2 llama attempts the pair the world lands.
+#[test]
+fn the_trader_llama_the_spawn_pair_the_leash_wears() {
+    let mut app = App::new(17);
+    app.enter_world();
+    // THE FLAT GRASS PLATFORM (the spawner test's own build the
+    // find's every spot keeps)
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    w.set(x, y, z, crate::world::STONE);
+                }
+                w.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        w.relight();
+    }
+    app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+    // THE FORCED WINDOWS THE SPAWN SERVES (the same lane the
+    // spawner test speaks — the trader the pair the world lands)
+    let mut landed = false;
+    for _ in 0..300 {
+        app.wanderer_spawner.spawn_delay = crate::mob::WANDERER_CHECKPOINT_TICKS;
+        app.wanderer_spawner.tick_delay = 1;
+        app.update();
+        if app
+            .mobs
+            .iter()
+            .any(|m| m.kind == crate::mob::MobKind::WanderingTrader)
+        {
+            landed = true;
+            break;
+        }
+    }
+    assert!(landed, "the forced windows the trader the world lands");
+    // THE PAIR'S OWN WALK (the llamas the spawn loop the world lands
+    // — the kind the TRADER_LLAMA word wears, the leash the trader's
+    // own id the pair banks, the finalize words the bands the walks
+    // keep, the age the EVENT adult law wears, the box the equine
+    // sized pair speaks)
+    let trader = app
+        .mobs
+        .iter()
+        .find(|m| m.kind == crate::mob::MobKind::WanderingTrader)
+        .expect("the trader the find banks");
+    let trader_id = trader.id;
+    let llamas: Vec<_> = app
+        .mobs
+        .iter()
+        .filter(|m| m.kind == crate::mob::MobKind::TraderLlama)
+        .collect();
+    assert!(
+        !llamas.is_empty(),
+        "the spawn loop the found spots the llamas land"
+    );
+    assert!(
+        llamas.len() <= crate::mob::WANDERER_LLAMA_ATTEMPTS,
+        "the attempts the pair the cap keeps"
+    );
+    for llama in &llamas {
+        assert_eq!(
+            llama.leashed_to,
+            Some(trader_id),
+            "the leash the setLeashedTo pair the field banks"
+        );
+        assert!(!llama.is_baby(), "the EVENT setAge(0) the adult law wears");
+        assert!(
+            (15.0..=30.0).contains(&llama.health),
+            "the finalize health the [15, 30] band the walk wears"
+        );
+        assert!(
+            (1..=5).contains(&llama.strength),
+            "the strength the [1, 5] band the walk wears"
+        );
+        assert!(
+            llama.llama_variant < 4,
+            "the variant id the clamp's band wears"
+        );
+        // THE RING'S OWN WORD (the ±4 the trader's own block pos the
+        // finds roam — the llama the ring's Chebyshev the find keeps)
+        let dx = (llama.x as i32 - trader.x as i32).abs();
+        let dz = (llama.z as i32 - trader.z as i32).abs();
+        assert!(
+            dx.max(dz) <= crate::mob::WANDERER_LLAMA_RING,
+            "the ring the ±4 the find's own word wears"
+        );
+        // THE BOX'S OWN DIMS (the equine sized pair the box wears)
+        let (x0, y0, _, x1, y1, _) = llama.box_for();
+        let w = x1 - x0;
+        let h = y1 - y0;
+        assert!(
+            (w - crate::mob::TRADER_LLAMA_WIDTH).abs() < 1e-6,
+            "the box width the sized pair wears"
+        );
+        assert!(
+            (h - crate::mob::TRADER_LLAMA_HEIGHT).abs() < 1e-6,
+            "the box height the sized pair wears"
+        );
+    }
+}
+
+/// THE TRADER LLAMA'S OWN MESH (javap `LlamaModel.createBodyLayer` +
+/// `setupAnim` the 26.2 bytecode the llama_480 census banks — the
+/// head 4x4x9 (uv 0,0) + the neck 8x18x6 (uv 0,14) + the two ear
+/// 3x3x2 cubes (uv 17,0) at pivot (0, 7, -6), the rotX PI/2 barrel
+/// body 12x18x10 (uv 29,0) at offsetAndRotation(0, 5, 2, PI/2, 0,
+/// 0), the shared 4x14x4 leg builder (uv 29,29) the four pivots
+/// (∓3.5, 10, ±6/-5) wear, the 128x64 layer the create call keeps):
+/// the quads the posed walk wears, the pixel lane the variant id
+/// picks, the dead-lambda walk the diagonal pairs the cow fold
+/// answers.
+#[test]
+fn the_trader_llama_the_mesh_the_quads_wear() {
+    // THE LAYOUT'S OWN VERDICT (the real texture bytes the load
+    // sha1-verifies — the cached extract the port's own law keeps)
+    let root = assets_root();
+    let Some(model) = crate::avatar::LlamaModel::load(&root) else {
+        panic!("the cached extract the four skins load");
+    };
+    // THE QUAD COUNT (the head part's FOUR cubes [the head box +
+    // the neck + the two ears] + the 1 body + the 4 legs = the 9
+    // cubes' 6-face walk — the chest pair the hasChest gate the
+    // visible bit the port's spawned llamas never arms)
+    let state = crate::avatar::PigState {
+        yaw_deg: 0.0,
+        pitch_deg: 0.0,
+        head_yaw_off_deg: 0.0,
+        walk_pos: 0.0,
+        walk_speed: 0.0,
+        age_ticks: 0.0,
+        death_time: 0.0,
+    };
+    let feet = crate::math::Vec3::new(0.0, 0.0, 0.0);
+    let quads = model.quads(&state, feet, 0.0, 0.0);
+    assert_eq!(
+        quads.len(),
+        9 * 6,
+        "the 9 cubes' 6-face walk the posed draw wears"
+    );
+    // THE VARIANT'S OWN PIXEL LANE (the four skins the variant id
+    // picks — the opaque texels the full 128x64 decode wears, the
+    // unused UV margins the vanilla layout's transparency keeps)
+    for variant in 0..4u8 {
+        let mut opaque = 0;
+        for v in 0..64u32 {
+            for u in 0..128u32 {
+                if model.pixel(variant, u as f32, v as f32)[3] == 255 {
+                    opaque += 1;
+                }
+            }
+        }
+        assert!(
+            opaque > 1024,
+            "the opaque texels the variant {variant} skin wears"
+        );
+    }
+    // the distinct skins the four rows wear (the variant id the
+    // texture pick serves — the creamy default the clamp law keeps)
+    let sample = |v: u8| model.pixel(v, 2.0, 2.0);
+    let creamy = sample(0);
+    let clamped = sample(9);
+    assert_eq!(creamy, clamped, "the unknown id the DEFAULT row wears");
+    // THE WALK'S OWN FOLD (the diagonal pairs the setupAnim keeps:
+    // right-hind + left-front in phase, the other pair +PI — the
+    // dead-speed gate the zero fold wears, the walk phase the
+    // nonzero speed the xRot arms)
+    let walking = crate::avatar::PigState {
+        walk_pos: 1.0,
+        walk_speed: 1.0,
+        ..state
+    };
+    let walked = model.quads(&walking, feet, 0.0, 0.0);
+    assert_eq!(
+        walked.len(),
+        quads.len(),
+        "the walk the same face count wears"
+    );
+    let differ = walked
+        .iter()
+        .zip(quads.iter())
+        .filter(|(a, b)| a.pts != b.pts)
+        .count();
+    assert!(differ > 0, "the walk phase the leg poses the quads move");
+}

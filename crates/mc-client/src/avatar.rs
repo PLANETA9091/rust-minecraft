@@ -2758,6 +2758,250 @@ fn build_wandering_trader_parts(state: &WanderingTraderState) -> Vec<Part> {
 }
 
 // ===========================================================================
+// THE TRADER LLAMA (the 476 spawner's own llama lane the kind body
+// draws — the equine's own census the llama_480 round banks)
+// ===========================================================================
+
+/// THE LLAMA VARIANT TEXTURES' OWN SHA1S (the 26.2 jar's verbatim
+/// bytes, hashed by scripts over the extracted `entity/llama/*.png`
+/// rows) — the LlamaRenderer's TEXTURES map the getTextureLocation
+/// walk reads per variant (the isBaby arm the BABY_TEXTURES map
+/// answers; the port's spawned llamas the finalize setAge(0) the
+/// adult keeps — the baby map the future lane may wear). The load
+/// gate every other model speaks: a drifted extract keeps the llama
+/// unseen, the honest missing-asset law.
+const LLAMA_VARIANT_PNG_SHA1S: [&str; 4] = [
+    "27235b99166928551ccbcbf5f32f103706f1f145", // creamy (the DEFAULT row)
+    "6c9621529c9b58d34daa595b0e1fd799655bf826", // white
+    "a3071779f555727626f7faa184bc05635800bede", // brown
+    "0f397c85aaec5ec13f719d2945c06d0caec1f038", // gray
+];
+
+/// THE LLAMA VARIANT TEXTURES' OWN RUNTIME PATHS (the
+/// LlamaRenderer.<clinit>'s own `textures/entity/llama/llama_*.png`
+/// rows the map's put walk keeps — the bare jar layout the load
+/// root reads).
+const LLAMA_VARIANT_RUNTIME_PATHS: [&str; 4] = [
+    "entity/llama/llama_creamy.png",
+    "entity/llama/llama_white.png",
+    "entity/llama/llama_brown.png",
+    "entity/llama/llama_gray.png",
+];
+
+/// The llama's quadruped model — the 26.2
+/// `LlamaModel.createBodyLayer`'s own numbers, bytecode-proven off
+/// the official jar (scripts/jar_work/llama_480.txt the census
+/// banks): the head 4x4x9 (uv 0,0) at PartPose.offset(0, 7, -6)
+/// with the NECK 8x18x6 (uv 0,14) + the two EAR 3x3x2 cubes (uv
+/// 17,0) the head's own cube list folds, the rotX PI/2 barrel body
+/// 12x18x10 (uv 29,0) at offsetAndRotation(0, 5, 2, PI/2, 0, 0),
+/// the shared 4x14x4 leg builder (uv 29,29) the four pivots wear
+/// (∓3.5, 10, ±6/-5), the chest pair (uv 45,28 / 45,41) the
+/// hasChest gate alone arms — the port's spawned llamas the chest
+/// never carry, the boxes the honest skip keeps (the visible bit
+/// the render state's hasChest false wears). `LayerDefinition
+/// .create(mesh, 128, 64)` — the llama's own 128-wide layout the
+/// load verifies (the UV rects the texel coords keep, the pixel
+/// walk the 128 stride reads).
+pub struct LlamaModel {
+    /// the four variant skins, the variant id indexes (creamy,
+    /// white, brown, gray — the enum's own order the census banks)
+    variants: [Vec<u8>; 4],
+}
+
+impl LlamaModel {
+    /// Load + sha1-verify all four variant skins (the map the
+    /// renderer wears — one missing row the None keeps, the llama
+    /// never renders). `None` = the llama never renders (the same
+    /// honesty the other paths speak: the renderer must not lie
+    /// about its data).
+    pub fn load(root: &Path) -> Option<LlamaModel> {
+        let mut variants: [Vec<u8>; 4] = Default::default();
+        for (i, (path, sha1)) in LLAMA_VARIANT_RUNTIME_PATHS
+            .iter()
+            .zip(LLAMA_VARIANT_PNG_SHA1S.iter())
+            .enumerate()
+        {
+            let bytes = std::fs::read(root.join(path)).ok()?;
+            let digest = sha1::Sha1::digest(&bytes);
+            if hex::encode(digest) != *sha1 {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != 128 || h != 64 || rgba.len() != 128 * 64 * 4 {
+                return None;
+            }
+            variants[i] = rgba;
+        }
+        Some(LlamaModel { variants })
+    }
+
+    /// The variant skin's pixel at (u, v) — the RGBA row-major
+    /// words, v down (the 128x64 layout's own stride the load
+    /// verified; u clamps to the 128 the wide layout keeps). The
+    /// unknown variant id the creamy default the map's DEFAULT row
+    /// wears (the ByIdMap's own CLAMP law).
+    pub fn pixel(&self, variant: u8, u: f32, v: f32) -> [u8; 4] {
+        let idx = (variant as usize).min(3);
+        let tex = &self.variants[idx];
+        let (uu, vv) = (u.clamp(0.0, 127.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 128 + x) * 4;
+        [tex[o], tex[o + 1], tex[o + 2], tex[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the llama
+    /// at `state` — the SAME entity chain fold the avatar speaks
+    /// (one law, every living model), the equine's own parts beneath
+    /// (the setupAnim the head's deg->rad pair + the 0.6662/1.4 leg
+    /// walk the census banks, the diagonal pairs the cow fold
+    /// wears: right-hind + left-front in phase, the other pair +PI).
+    pub fn quads(
+        &self,
+        state: &QuadrupedState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_llama_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(
+                part,
+                &ident,
+                &fold_point,
+                &fold_normal,
+                cam_yaw,
+                cam_pitch,
+                &mut out,
+            );
+        }
+        out
+    }
+}
+
+/// The equine's parts, posed by `state` — the javap-proven mesh
+/// (`LlamaModel.createBodyLayer`'s own fluent chains the census
+/// banks). THE WALK: the same `LlamaModel.setupAnim` diagonal fold
+/// the cow speaks — right-hind + left-front in phase, the other
+/// pair +PI (the 0.6661999821662903f * walk-pos × the
+/// 1.399999976158142f * walk-speed words the setupAnim's cos walk
+/// keeps); the head's xRot/yRot the 0.01745329238474369f
+/// deg->rad pair the look state multiplies.
+fn build_llama_parts(state: &QuadrupedState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.666_199_98) * 1.399_999_9 * speed;
+    let leg_lh = mth_cos(pos * 0.666_199_98 + std::f32::consts::PI) * 1.399_999_9 * speed;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = Cube {
+        tex: (29.0, 29.0),
+        origin: [-2.0, 0.0, -2.0],
+        size: [4.0, 14.0, 4.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // head (+ the neck + the two ears — the same part's fluent
+        // chain the bytecode's addBox walk speaks: the named boxes
+        // the head's own cube list folds)
+        Part {
+            pivot: [0.0, 7.0, -6.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-2.0, -14.0, -10.0],
+                    size: [4.0, 4.0, 9.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (0.0, 14.0),
+                    origin: [-4.0, -16.0, -6.0],
+                    size: [8.0, 18.0, 6.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (17.0, 0.0),
+                    origin: [-4.0, -19.0, -4.0],
+                    size: [3.0, 3.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (17.0, 0.0),
+                    origin: [1.0, -19.0, -4.0],
+                    size: [3.0, 3.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // body (the horizontal barrel — the rotX PI/2 the PartPose
+        // offsetAndRotation speaks)
+        Part {
+            pivot: [0.0, 5.0, 2.0],
+            x_rot: std::f32::consts::FRAC_PI_2,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (29.0, 0.0),
+                origin: [-6.0, -10.0, -7.0],
+                size: [12.0, 18.0, 10.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (the plain builder's own unwrap — no mirror)
+        Part {
+            pivot: [-3.5, 10.0, 6.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube],
+            children: vec![],
+        },
+        // left hind leg
+        Part {
+            pivot: [3.5, 10.0, 6.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube],
+            children: vec![],
+        },
+        // right front leg
+        Part {
+            pivot: [-3.5, 10.0, -5.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube],
+            children: vec![],
+        },
+        // left front leg
+        Part {
+            pivot: [3.5, 10.0, -5.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube],
+            children: vec![],
+        },
+    ]
+}
+
+// ===========================================================================
 // THE CHICKEN (the fifth drawn body — the avian's own chain)
 // ===========================================================================
 
