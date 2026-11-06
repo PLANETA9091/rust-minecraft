@@ -42287,3 +42287,119 @@ fn the_set_damage_the_retrieve_carries_wears() {
         worn_lands
     );
 }
+
+/// THE MAX-DAMAGE'S OWN TABLE (the maxdamage_510 census the jar's own
+/// bytes bank — the three fishing-lane rows the walk resolved wears,
+/// the rest the None the honest missing law keeps, the no-row the
+/// port guesses).
+#[test]
+fn the_max_damage_the_rows_bank_wears() {
+    // THE THREE RESOLVED ROWS (the boots the humanoidArmor fold the
+    // 13 × 5 product keeps, the rod/bow the direct args speak)
+    let boots =
+        mc_registry::item_id_by_name("leather_boots").expect("the boots the registry carries");
+    assert_eq!(
+        mc_registry::item_max_damage(boots),
+        Some(65),
+        "the boots the 13 × 5 fold banks"
+    );
+    let rod = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    assert_eq!(
+        mc_registry::item_max_damage(rod),
+        Some(64),
+        "the rod the direct bipush 64 banks"
+    );
+    let bow = mc_registry::item_id_by_name("bow").expect("the bow the registry carries");
+    assert_eq!(
+        mc_registry::item_max_damage(bow),
+        Some(384),
+        "the bow the direct sipush 384 banks"
+    );
+    // THE MISSING LAW (the rows the walk never resolved — the plain
+    // items the durability call never carries, the non-damageable
+    // rows the loot tables wear, the unknown id the honest None
+    // keeps)
+    for name in [
+        "cod",
+        "dirt",
+        "book",
+        "saddle",
+        "name_tag",
+        "nautilus_shell",
+        "leather",
+        "bone",
+        "stone",
+        "oak_planks",
+    ] {
+        let id = mc_registry::item_id_by_name(name).expect("the row the registry carries");
+        assert_eq!(
+            mc_registry::item_max_damage(id),
+            None,
+            "the unresolved row the None keeps: {}",
+            name
+        );
+    }
+    assert_eq!(
+        mc_registry::item_max_damage(0x7FFF_FFFF),
+        None,
+        "the unknown id the None keeps"
+    );
+}
+
+/// THE SET_DAMAGE'S OWN POINTS FOLD (the census's run tail the
+/// setDamageValue(floor(frac * maxDamage)) walk banks — the frac the
+/// drop's word carries, the max the registry's table answers, the
+/// Mth.floor the points wear, the missing rows the 0 keep).
+#[test]
+fn the_set_damage_the_points_fold_wears() {
+    let boots =
+        mc_registry::item_id_by_name("leather_boots").expect("the boots the registry carries");
+    let rod = mc_registry::item_id_by_name("fishing_rod").expect("the rod the registry carries");
+    let bow = mc_registry::item_id_by_name("bow").expect("the bow the registry carries");
+    let bone = mc_registry::item_id_by_name("bone").expect("the bone the registry carries");
+    // THE FOLD'S OWN LAW (the floor the half-way fracs speak: the
+    // 0.5 boots the floor(32.5) = 32 wears, the bow the 192 keeps,
+    // the rod the 32 answers; the 0.1 boots the floor(6.5) = 6 the
+    // down-fold wears)
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(0.5, boots),
+        32,
+        "the boots the floor(32.5) wears"
+    );
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(0.5, bow),
+        192,
+        "the bow the floor(192.0) keeps"
+    );
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(0.5, rod),
+        32,
+        "the rod the floor(32.0) answers"
+    );
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(0.1, boots),
+        6,
+        "the boots the floor(6.5) down-folds"
+    );
+    // THE BOUND'S OWN LAW (the pristine 0.0 the zero keeps, the full
+    // 1.0 the max itself wears)
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(0.0, boots),
+        0,
+        "the pristine the zero keeps"
+    );
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(1.0, boots),
+        65,
+        "the full frac the max wears"
+    );
+    assert_eq!(crate::mob::bobber_set_damage_points(1.0, rod), 64);
+    assert_eq!(crate::mob::bobber_set_damage_points(1.0, bow), 384);
+    // THE MISSING ROW'S OWN ZERO (the bone the table never banks —
+    // the 0 the warn arm's stack keeps)
+    assert_eq!(
+        crate::mob::bobber_set_damage_points(0.5, bone),
+        0,
+        "the missing row the zero keeps"
+    );
+}

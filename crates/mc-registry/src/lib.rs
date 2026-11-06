@@ -181,6 +181,35 @@ pub fn item_max_stack(id: i32) -> i32 {
         .unwrap_or(64)
 }
 
+/// The ITEM registry id's MAX DAMAGE — the vanilla `ItemStack
+/// .getMaxDamage()` walk the set_damage's own floor(frac · max) fold
+/// reads (scripts/jar_work/maxdamage_510.txt the 26.2 jar's own bytes
+/// bank — the `Item$Properties.durability(I)` calls the
+/// `Items.<clinit>` sites carry, the humanoidArmor route the
+/// `type.getDurability(material.durability())` fold speaks:
+/// `ArmorType.getDurability` = the unitDurability × material product
+/// — BOOTS 13 × LEATHER 5 = the boots row the fold banks). The
+/// FOCUSED rows the fishing set_damage lane touches the walk
+/// resolved — leather_boots 65 (the humanoidArmor site
+/// `humanoidArmor(ArmorMaterials.LEATHER, ArmorType.BOOTS)` the
+/// LEATHER ctor's iconst_5 durability base + the BOOTS bipush 13
+/// multiplier keeps), fishing_rod 64 (the direct `bipush 64`
+/// durability(I) arg the site speaks), bow 384 (the direct
+/// `sipush 384` arg); the REST the walk never resolved — the `None`
+/// the honest missing law keeps [the material routes the tool/armor
+/// families ride the full-table extraction the NEXT's own lane
+/// banks — no row the port guesses]. Unresolvable ids are `None`.
+pub fn item_max_damage(id: i32) -> Option<i32> {
+    let name = item_name(id)?;
+    let name = name.strip_prefix("minecraft:").unwrap_or(name);
+    match name {
+        "leather_boots" => Some(65),
+        "fishing_rod" => Some(64),
+        "bow" => Some(384),
+        _ => None,
+    }
+}
+
 /// The ITEM registry id's default rarity's CHAT COLOR — the
 /// `getRarity().color()` walk the HUD's held-item name rides, the
 /// `ChatFormatting` enum's own mapping (Rarity.class's static init:

@@ -1,0 +1,886 @@
+== Items.<clinit> site FISHING_ROD (op 4377, pc 13028) ==
+  12765: b8 Items.registerItem
+  12768: b3 Items.TADPOLE_BUCKET
+  12771: b2 ItemIds.BRICK
+  12774: b8 Items.registerItem
+  12777: b3 Items.BRICK
+  12780: b2 ItemIds.CLAY_BALL
+  12783: b8 Items.registerItem
+  12786: b3 Items.CLAY_BALL
+  12789: b2 BlockItemIds.DRIED_KELP_BLOCK
+  12792: b2 Blocks.DRIED_KELP_BLOCK
+  12795: b8 Items.registerBlock
+  12798: b3 Items.DRIED_KELP_BLOCK
+  12801: b2 ItemIds.PAPER
+  12804: b8 Items.registerItem
+  12807: b3 Items.PAPER
+  12810: b2 ItemIds.BOOK
+  12813: bb Item$Properties
+  12816: 59 
+  12817: b7 Item$Properties.<init>
+  12820: 04 1
+  12821: b6 Item$Properties.enchantable
+  12824: b8 Items.registerItem
+  12827: b3 Items.BOOK
+  12830: b2 ItemIds.SLIME_BALL
+  12833: b8 Items.registerItem
+  12836: b3 Items.SLIME_BALL
+  12839: b2 ItemIds.EGG
+  12842: ba 
+  12847: bb Item$Properties
+  12850: 59 
+  12851: b7 Item$Properties.<init>
+  12854: 10 16
+  12856: b6 Item$Properties.stacksTo
+  12859: b2 DataComponents.CHICKEN_VARIANT
+  12862: b2 ChickenVariants.TEMPERATE
+  12865: b6 Item$Properties.delayedHolderComponent
+  12868: b8 Items.registerItem
+  12871: b3 Items.EGG
+  12874: b2 ItemIds.BLUE_EGG
+  12877: ba 
+  12882: bb Item$Properties
+  12885: 59 
+  12886: b7 Item$Properties.<init>
+  12889: 10 16
+  12891: b6 Item$Properties.stacksTo
+  12894: b2 DataComponents.CHICKEN_VARIANT
+  12897: b2 ChickenVariants.COLD
+  12900: b6 Item$Properties.delayedHolderComponent
+  12903: b8 Items.registerItem
+  12906: b3 Items.BLUE_EGG
+  12909: b2 ItemIds.BROWN_EGG
+  12912: ba 
+  12917: bb Item$Properties
+  12920: 59 
+  12921: b7 Item$Properties.<init>
+  12924: 10 16
+  12926: b6 Item$Properties.stacksTo
+  12929: b2 DataComponents.CHICKEN_VARIANT
+  12932: b2 ChickenVariants.WARM
+  12935: b6 Item$Properties.delayedHolderComponent
+  12938: b8 Items.registerItem
+  12941: b3 Items.BROWN_EGG
+  12944: b2 ItemIds.COMPASS
+  12947: ba 
+  12952: b8 Items.registerItem
+  12955: b3 Items.COMPASS
+  12958: b2 ItemIds.RECOVERY_COMPASS
+  12961: bb Item$Properties
+  12964: 59 
+  12965: b7 Item$Properties.<init>
+  12968: b2 Rarity.UNCOMMON
+  12971: b6 Item$Properties.rarity
+  12974: b8 Items.registerItem
+  12977: b3 Items.RECOVERY_COMPASS
+  12980: b2 ItemIds.BUNDLE
+  12983: ba 
+  12988: bb Item$Properties
+  12991: 59 
+  12992: b7 Item$Properties.<init>
+  12995: 04 1
+  12996: b6 Item$Properties.stacksTo
+  12999: b2 DataComponents.BUNDLE_CONTENTS
+  13002: b2 BundleContents.EMPTY
+  13005: b6 Item$Properties.component
+  13008: b8 Items.registerItem
+  13011: b3 Items.BUNDLE
+  13014: b2 ItemIds.DYED_BUNDLE
+  13017: ba 
+  13022: b8 ColorCollection.registerItems
+  13025: b3 Items.DYED_BUNDLE
+  13028: b2 ItemIds.FISHING_ROD
+  13031: ba 
+  13036: bb Item$Properties
+  13039: 59 
+  13040: b7 Item$Properties.<init>
+  13043: 10 64
+  13045: b6 Item$Properties.durability
+  13048: 04 1
+  13049: b6 Item$Properties.enchantable
+  13052: b8 Items.registerItem
+  13055: b3 Items.FISHING_ROD
+  13058: b2 ItemIds.CLOCK
+  13061: b8 Items.registerItem
+  13064: b3 Items.CLOCK
+  13067: b2 ItemIds.SPYGLASS
+  13070: ba 
+  13075: bb Item$Properties
+  13078: 59 
+  13079: b7 Item$Properties.<init>
+  13082: 04 1
+  13083: b6 Item$Properties.stacksTo
+  13086: b8 Items.registerItem
+  13089: b3 Items.SPYGLASS
+  13092: b2 ItemIds.GLOWSTONE_DUST
+  13095: b8 Items.registerItem
+  13098: b3 Items.GLOWSTONE_DUST
+  13101: b2 ItemIds.COD
+  13104: bb Item$Properties
+  13107: 59 
+  13108: b7 Item$Properties.<init>
+  13111: b2 Foods.COD
+  13114: b6 Item$Properties.food
+  13117: b8 Items.registerItem
+  13120: b3 Items.COD
+  13123: b2 ItemIds.SALMON
+  13126: bb Item$Properties
+  13129: 59 
+  13130: b7 Item$Properties.<init>
+  13133: b2 Foods.SALMON
+  13136: b6 Item$Properties.food
+  13139: b8 Items.registerItem
+  13142: b3 Items.SALMON
+  13145: b2 ItemIds.TROPICAL_FISH
+  13148: bb Item$Properties
+  13151: 59 
+  13152: b7 Item$Properties.<init>
+  13155: b2 Foods.TROPICAL_FISH
+  13158: b6 Item$Properties.food
+  13161: b8 Items.registerItem
+  13164: b3 Items.TROPICAL_FISH
+  13167: b2 ItemIds.PUFFERFISH
+  13170: bb Item$Properties
+  13173: 59 
+  13174: b7 Item$Properties.<init>
+  13177: b2 Foods.PUFFERFISH
+  13180: b2 Consumables.PUFFERFISH
+  13183: b6 Item$Properties.food
+  13186: b8 Items.registerItem
+  13189: b3 Items.PUFFERFISH
+  13192: b2 ItemIds.COOKED_COD
+  13195: bb Item$Properties
+  13198: 59 
+  13199: b7 Item$Properties.<init>
+  13202: b2 Foods.COOKED_COD
+  13205: b6 Item$Properties.food
+  13208: b8 Items.registerItem
+  13211: b3 Items.COOKED_COD
+  13214: b2 ItemIds.COOKED_SALMON
+  13217: bb Item$Properties
+  13220: 59 
+  13221: b7 Item$Properties.<init>
+  13224: b2 Foods.COOKED_SALMON
+  13227: b6 Item$Properties.food
+  13230: b8 Items.registerItem
+  13233: b3 Items.COOKED_SALMON
+  13236: b2 ItemIds.INK_SAC
+  13239: ba 
+  13244: b8 Items.registerItem
+  13247: b3 Items.INK_SAC
+  13250: b2 ItemIds.GLOW_INK_SAC
+  13253: ba 
+  13258: b8 Items.registerItem
+  13261: b3 Items.GLOW_INK_SAC
+  13264: b2 BlockItemIds.COCOA_CROP
+  13267: b2 Blocks.COCOA
+  13270: b8 Items.createBlockItemWithCustomItemName
+  13273: b8 Items.registerItem
+  13276: b3 Items.COCOA_BEANS
+  13279: b2 ItemIds.DYE
+  13282: ba 
+
+== Items.<clinit> site BOW (op 3184, pc 9609) ==
+  9346: b3 Items.BAMBOO_CHEST_RAFT
+  9349: b2 BlockItemIds.STRUCTURE_BLOCK
+  9352: b2 Blocks.STRUCTURE_BLOCK
+  9355: ba 
+  9360: bb Item$Properties
+  9363: 59 
+  9364: b7 Item$Properties.<init>
+  9367: b2 Rarity.EPIC
+  9370: b6 Item$Properties.rarity
+  9373: b8 Items.registerBlock
+  9376: b3 Items.STRUCTURE_BLOCK
+  9379: b2 BlockItemIds.JIGSAW
+  9382: b2 Blocks.JIGSAW
+  9385: ba 
+  9390: bb Item$Properties
+  9393: 59 
+  9394: b7 Item$Properties.<init>
+  9397: b2 Rarity.EPIC
+  9400: b6 Item$Properties.rarity
+  9403: b8 Items.registerBlock
+  9406: b3 Items.JIGSAW
+  9409: b2 BlockItemIds.TEST_BLOCK
+  9412: b2 Blocks.TEST_BLOCK
+  9415: ba 
+  9420: bb Item$Properties
+  9423: 59 
+  9424: b7 Item$Properties.<init>
+  9427: b2 Rarity.EPIC
+  9430: b6 Item$Properties.rarity
+  9433: b2 DataComponents.BLOCK_STATE
+  9436: b2 BlockItemStateProperties.EMPTY
+  9439: b2 TestBlock.MODE
+  9442: b2 TestBlockMode.START
+  9445: b6 BlockItemStateProperties.with
+  9448: b6 Item$Properties.component
+  9451: b8 Items.registerBlock
+  9454: b3 Items.TEST_BLOCK
+  9457: b2 BlockItemIds.TEST_INSTANCE_BLOCK
+  9460: b2 Blocks.TEST_INSTANCE_BLOCK
+  9463: ba 
+  9468: bb Item$Properties
+  9471: 59 
+  9472: b7 Item$Properties.<init>
+  9475: b2 Rarity.EPIC
+  9478: b6 Item$Properties.rarity
+  9481: b8 Items.registerBlock
+  9484: b3 Items.TEST_INSTANCE_BLOCK
+  9487: b2 ItemIds.TURTLE_HELMET
+  9490: bb Item$Properties
+  9493: 59 
+  9494: b7 Item$Properties.<init>
+  9497: b2 ArmorMaterials.TURTLE_SCUTE
+  9500: b2 ArmorType.HELMET
+  9503: b6 Item$Properties.humanoidArmor
+  9506: b8 Items.registerItem
+  9509: b3 Items.TURTLE_HELMET
+  9512: b2 ItemIds.TURTLE_SCUTE
+  9515: b8 Items.registerItem
+  9518: b3 Items.TURTLE_SCUTE
+  9521: b2 ItemIds.ARMADILLO_SCUTE
+  9524: b8 Items.registerItem
+  9527: b3 Items.ARMADILLO_SCUTE
+  9530: b2 ItemIds.WOLF_ARMOR
+  9533: bb Item$Properties
+  9536: 59 
+  9537: b7 Item$Properties.<init>
+  9540: b2 ArmorMaterials.ARMADILLO_SCUTE
+  9543: b6 Item$Properties.wolfArmor
+  9546: b8 Items.registerItem
+  9549: b3 Items.WOLF_ARMOR
+  9552: b2 ItemIds.FLINT_AND_STEEL
+  9555: ba 
+  9560: bb Item$Properties
+  9563: 59 
+  9564: b7 Item$Properties.<init>
+  9567: 10 64
+  9569: b6 Item$Properties.durability
+  9572: b8 Items.registerItem
+  9575: b3 Items.FLINT_AND_STEEL
+  9578: b2 ItemIds.BOWL
+  9581: b8 Items.registerItem
+  9584: b3 Items.BOWL
+  9587: b2 ItemIds.APPLE
+  9590: bb Item$Properties
+  9593: 59 
+  9594: b7 Item$Properties.<init>
+  9597: b2 Foods.APPLE
+  9600: b6 Item$Properties.food
+  9603: b8 Items.registerItem
+  9606: b3 Items.APPLE
+  9609: b2 ItemIds.BOW
+  9612: ba 
+  9617: bb Item$Properties
+  9620: 59 
+  9621: b7 Item$Properties.<init>
+  9624: 11 384
+  9627: b6 Item$Properties.durability
+  9630: 04 1
+  9631: b6 Item$Properties.enchantable
+  9634: b8 Items.registerItem
+  9637: b3 Items.BOW
+  9640: b2 ItemIds.ARROW
+  9643: ba 
+  9648: b8 Items.registerItem
+  9651: b3 Items.ARROW
+  9654: b2 ItemIds.COAL
+  9657: b8 Items.registerItem
+  9660: b3 Items.COAL
+  9663: b2 ItemIds.CHARCOAL
+  9666: b8 Items.registerItem
+  9669: b3 Items.CHARCOAL
+  9672: b2 ItemIds.DIAMOND
+  9675: bb Item$Properties
+  9678: 59 
+  9679: b7 Item$Properties.<init>
+  9682: b2 TrimMaterials.DIAMOND
+  9685: b6 Item$Properties.trimMaterial
+  9688: b8 Items.registerItem
+  9691: b3 Items.DIAMOND
+  9694: b2 ItemIds.EMERALD
+  9697: bb Item$Properties
+  9700: 59 
+  9701: b7 Item$Properties.<init>
+  9704: b2 TrimMaterials.EMERALD
+  9707: b6 Item$Properties.trimMaterial
+  9710: b8 Items.registerItem
+  9713: b3 Items.EMERALD
+  9716: b2 ItemIds.LAPIS_LAZULI
+  9719: bb Item$Properties
+  9722: 59 
+  9723: b7 Item$Properties.<init>
+  9726: b2 TrimMaterials.LAPIS
+  9729: b6 Item$Properties.trimMaterial
+  9732: b8 Items.registerItem
+  9735: b3 Items.LAPIS_LAZULI
+  9738: b2 ItemIds.QUARTZ
+  9741: bb Item$Properties
+  9744: 59 
+  9745: b7 Item$Properties.<init>
+  9748: b2 TrimMaterials.QUARTZ
+  9751: b6 Item$Properties.trimMaterial
+  9754: b8 Items.registerItem
+  9757: b3 Items.QUARTZ
+  9760: b2 ItemIds.AMETHYST_SHARD
+  9763: bb Item$Properties
+  9766: 59 
+  9767: b7 Item$Properties.<init>
+  9770: b2 TrimMaterials.AMETHYST
+  9773: b6 Item$Properties.trimMaterial
+  9776: b8 Items.registerItem
+  9779: b3 Items.AMETHYST_SHARD
+  9782: b2 ItemIds.RAW_IRON
+  9785: b8 Items.registerItem
+  9788: b3 Items.RAW_IRON
+  9791: b2 ItemIds.IRON_INGOT
+  9794: bb Item$Properties
+  9797: 59 
+  9798: b7 Item$Properties.<init>
+  9801: b2 TrimMaterials.IRON
+  9804: b6 Item$Properties.trimMaterial
+  9807: b8 Items.registerItem
+  9810: b3 Items.IRON_INGOT
+  9813: b2 ItemIds.RAW_COPPER
+  9816: b8 Items.registerItem
+  9819: b3 Items.RAW_COPPER
+  9822: b2 ItemIds.COPPER_INGOT
+  9825: bb Item$Properties
+  9828: 59 
+  9829: b7 Item$Properties.<init>
+  9832: b2 TrimMaterials.COPPER
+  9835: b6 Item$Properties.trimMaterial
+  9838: b8 Items.registerItem
+  9841: b3 Items.COPPER_INGOT
+  9844: b2 ItemIds.RAW_GOLD
+  9847: b8 Items.registerItem
+  9850: b3 Items.RAW_GOLD
+  9853: b2 ItemIds.GOLD_INGOT
+  9856: bb Item$Properties
+  9859: 59 
+  9860: b7 Item$Properties.<init>
+
+== Items.<clinit> site LEATHER_BOOTS (op 3601, pc 10815) ==
+  10557: 13 -2.799999952316284
+  10560: b6 Item$Properties.pickaxe
+  10563: b6 Item$Properties.fireResistant
+  10566: b8 Items.registerItem
+  10569: b3 Items.NETHERITE_PICKAXE
+  10572: b2 ItemIds.NETHERITE_AXE
+  10575: ba 
+  10580: bb Item$Properties
+  10583: 59 
+  10584: b7 Item$Properties.<init>
+  10587: b6 Item$Properties.fireResistant
+  10590: b8 Items.registerItem
+  10593: b3 Items.NETHERITE_AXE
+  10596: b2 ItemIds.NETHERITE_HOE
+  10599: ba 
+  10604: bb Item$Properties
+  10607: 59 
+  10608: b7 Item$Properties.<init>
+  10611: b6 Item$Properties.fireResistant
+  10614: b8 Items.registerItem
+  10617: b3 Items.NETHERITE_HOE
+  10620: b2 ItemIds.STICK
+  10623: b8 Items.registerItem
+  10626: b3 Items.STICK
+  10629: b2 ItemIds.MUSHROOM_STEW
+  10632: bb Item$Properties
+  10635: 59 
+  10636: b7 Item$Properties.<init>
+  10639: 04 1
+  10640: b6 Item$Properties.stacksTo
+  10643: b2 Foods.MUSHROOM_STEW
+  10646: b6 Item$Properties.food
+  10649: b2 Items.BOWL
+  10652: b6 Item$Properties.usingConvertsTo
+  10655: b8 Items.registerItem
+  10658: b3 Items.MUSHROOM_STEW
+  10661: b2 BlockItemIds.TRIPWIRE
+  10664: b2 Blocks.TRIPWIRE
+  10667: b8 Items.createBlockItemWithCustomItemName
+  10670: b8 Items.registerItem
+  10673: b3 Items.STRING
+  10676: b2 ItemIds.FEATHER
+  10679: b8 Items.registerItem
+  10682: b3 Items.FEATHER
+  10685: b2 ItemIds.GUNPOWDER
+  10688: b8 Items.registerItem
+  10691: b3 Items.GUNPOWDER
+  10694: b2 BlockItemIds.WHEAT_CROP
+  10697: b2 Blocks.WHEAT
+  10700: b8 Items.createBlockItemWithCustomItemName
+  10703: b8 Items.registerItem
+  10706: b3 Items.WHEAT_SEEDS
+  10709: b2 ItemIds.WHEAT
+  10712: b8 Items.registerItem
+  10715: b3 Items.WHEAT
+  10718: b2 ItemIds.BREAD
+  10721: bb Item$Properties
+  10724: 59 
+  10725: b7 Item$Properties.<init>
+  10728: b2 Foods.BREAD
+  10731: b6 Item$Properties.food
+  10734: b8 Items.registerItem
+  10737: b3 Items.BREAD
+  10740: b2 ItemIds.LEATHER_HELMET
+  10743: bb Item$Properties
+  10746: 59 
+  10747: b7 Item$Properties.<init>
+  10750: b2 ArmorMaterials.LEATHER
+  10753: b2 ArmorType.HELMET
+  10756: b6 Item$Properties.humanoidArmor
+  10759: b8 Items.registerItem
+  10762: b3 Items.LEATHER_HELMET
+  10765: b2 ItemIds.LEATHER_CHESTPLATE
+  10768: bb Item$Properties
+  10771: 59 
+  10772: b7 Item$Properties.<init>
+  10775: b2 ArmorMaterials.LEATHER
+  10778: b2 ArmorType.CHESTPLATE
+  10781: b6 Item$Properties.humanoidArmor
+  10784: b8 Items.registerItem
+  10787: b3 Items.LEATHER_CHESTPLATE
+  10790: b2 ItemIds.LEATHER_LEGGINGS
+  10793: bb Item$Properties
+  10796: 59 
+  10797: b7 Item$Properties.<init>
+  10800: b2 ArmorMaterials.LEATHER
+  10803: b2 ArmorType.LEGGINGS
+  10806: b6 Item$Properties.humanoidArmor
+  10809: b8 Items.registerItem
+  10812: b3 Items.LEATHER_LEGGINGS
+  10815: b2 ItemIds.LEATHER_BOOTS
+  10818: bb Item$Properties
+  10821: 59 
+  10822: b7 Item$Properties.<init>
+  10825: b2 ArmorMaterials.LEATHER
+  10828: b2 ArmorType.BOOTS
+  10831: b6 Item$Properties.humanoidArmor
+  10834: b8 Items.registerItem
+  10837: b3 Items.LEATHER_BOOTS
+  10840: b2 ItemIds.COPPER_HELMET
+  10843: bb Item$Properties
+  10846: 59 
+  10847: b7 Item$Properties.<init>
+  10850: b2 ArmorMaterials.COPPER
+  10853: b2 ArmorType.HELMET
+  10856: b6 Item$Properties.humanoidArmor
+  10859: b8 Items.registerItem
+  10862: b3 Items.COPPER_HELMET
+  10865: b2 ItemIds.COPPER_CHESTPLATE
+  10868: bb Item$Properties
+  10871: 59 
+  10872: b7 Item$Properties.<init>
+  10875: b2 ArmorMaterials.COPPER
+  10878: b2 ArmorType.CHESTPLATE
+  10881: b6 Item$Properties.humanoidArmor
+  10884: b8 Items.registerItem
+  10887: b3 Items.COPPER_CHESTPLATE
+  10890: b2 ItemIds.COPPER_LEGGINGS
+  10893: bb Item$Properties
+  10896: 59 
+  10897: b7 Item$Properties.<init>
+  10900: b2 ArmorMaterials.COPPER
+  10903: b2 ArmorType.LEGGINGS
+  10906: b6 Item$Properties.humanoidArmor
+  10909: b8 Items.registerItem
+  10912: b3 Items.COPPER_LEGGINGS
+  10915: b2 ItemIds.COPPER_BOOTS
+  10918: bb Item$Properties
+  10921: 59 
+  10922: b7 Item$Properties.<init>
+  10925: b2 ArmorMaterials.COPPER
+  10928: b2 ArmorType.BOOTS
+  10931: b6 Item$Properties.humanoidArmor
+  10934: b8 Items.registerItem
+  10937: b3 Items.COPPER_BOOTS
+  10940: b2 ItemIds.CHAINMAIL_HELMET
+  10943: bb Item$Properties
+  10946: 59 
+  10947: b7 Item$Properties.<init>
+  10950: b2 ArmorMaterials.CHAINMAIL
+  10953: b2 ArmorType.HELMET
+  10956: b6 Item$Properties.humanoidArmor
+  10959: b2 Rarity.UNCOMMON
+  10962: b6 Item$Properties.rarity
+  10965: b8 Items.registerItem
+  10968: b3 Items.CHAINMAIL_HELMET
+  10971: b2 ItemIds.CHAINMAIL_CHESTPLATE
+  10974: bb Item$Properties
+  10977: 59 
+  10978: b7 Item$Properties.<init>
+  10981: b2 ArmorMaterials.CHAINMAIL
+  10984: b2 ArmorType.CHESTPLATE
+  10987: b6 Item$Properties.humanoidArmor
+  10990: b2 Rarity.UNCOMMON
+  10993: b6 Item$Properties.rarity
+  10996: b8 Items.registerItem
+  10999: b3 Items.CHAINMAIL_CHESTPLATE
+  11002: b2 ItemIds.CHAINMAIL_LEGGINGS
+  11005: bb Item$Properties
+  11008: 59 
+  11009: b7 Item$Properties.<init>
+  11012: b2 ArmorMaterials.CHAINMAIL
+  11015: b2 ArmorType.LEGGINGS
+  11018: b6 Item$Properties.humanoidArmor
+  11021: b2 Rarity.UNCOMMON
+  11024: b6 Item$Properties.rarity
+  11027: b8 Items.registerItem
+  11030: b3 Items.CHAINMAIL_LEGGINGS
+  11033: b2 ItemIds.CHAINMAIL_BOOTS
+  11036: bb Item$Properties
+  11039: 59 
+  11040: b7 Item$Properties.<init>
+  11043: b2 ArmorMaterials.CHAINMAIL
+  11046: b2 ArmorType.BOOTS
+  11049: b6 Item$Properties.humanoidArmor
+  11052: b2 Rarity.UNCOMMON
+  11055: b6 Item$Properties.rarity
+  11058: b8 Items.registerItem
+  11061: b3 Items.CHAINMAIL_BOOTS
+  11064: b2 ItemIds.IRON_HELMET
+
+== net/minecraft/world/item/equipment/ArmorType ==
+  METHOD $values ()[Lnet/minecraft/world/item/equipment/ArmorType;  (code=35)
+  0: 08 5
+  1: bd ArmorType
+  4: 59 
+  5: 03 0
+  6: b2 ArmorType.HELMET
+  9: 53 
+  10: 59 
+  11: 04 1
+  12: b2 ArmorType.CHESTPLATE
+  15: 53 
+  16: 59 
+  17: 05 2
+  18: b2 ArmorType.LEGGINGS
+  21: 53 
+  22: 59 
+  23: 06 3
+  24: b2 ArmorType.BOOTS
+  27: 53 
+  28: 59 
+  29: 07 4
+  30: b2 ArmorType.BODY
+  33: 53 
+  34: b0 
+  METHOD <clinit> ()V  (code=118)
+  0: bb ArmorType
+  3: 59 
+  4: 12 
+  6: 03 0
+  7: b2 EquipmentSlot.HEAD
+  10: 10 11
+  12: 12 
+  14: b7 ArmorType.<init>
+  17: b3 ArmorType.HELMET
+  20: bb ArmorType
+  23: 59 
+  24: 12 
+  26: 04 1
+  27: b2 EquipmentSlot.CHEST
+  30: 10 16
+  32: 12 
+  34: b7 ArmorType.<init>
+  37: b3 ArmorType.CHESTPLATE
+  40: bb ArmorType
+  43: 59 
+  44: 12 
+  46: 05 2
+  47: b2 EquipmentSlot.LEGS
+  50: 10 15
+  52: 12 
+  54: b7 ArmorType.<init>
+  57: b3 ArmorType.LEGGINGS
+  60: bb ArmorType
+  63: 59 
+  64: 12 
+  66: 06 3
+  67: b2 EquipmentSlot.FEET
+  70: 10 13
+  72: 12 
+  74: b7 ArmorType.<init>
+  77: b3 ArmorType.BOOTS
+  80: bb ArmorType
+  83: 59 
+  84: 12 
+  86: 07 4
+  87: b2 EquipmentSlot.BODY
+  90: 10 16
+  92: 12 
+  94: b7 ArmorType.<init>
+  97: b3 ArmorType.BODY
+  100: b8 ArmorType.$values
+  103: b3 ArmorType.$VALUES
+  106: ba 
+  111: b8 StringRepresentable.fromValues
+  114: b3 ArmorType.CODEC
+  117: b1 
+  METHOD <init> (Ljava/lang/String;ILnet/minecraft/world/entity/EquipmentSlot;ILjava/lang/String;)V  (code=24)
+  0: 2a 
+  1: 2b 
+  2: 1c 
+  3: b7 Enum.<init>
+  6: 2a 
+  7: 2d 
+  8: b5 ArmorType.slot
+  11: 2a 
+  12: 19 5
+  14: b5 ArmorType.name
+  17: 2a 
+  18: 15 4
+  20: b5 ArmorType.unitDurability
+  23: b1 
+  METHOD getDurability (I)I  (code=7)
+  0: 2a 
+  1: b4 ArmorType.unitDurability
+  4: 1b 
+  5: 68 
+  6: ac 
+  METHOD getName ()Ljava/lang/String;  (code=5)
+  0: 2a 
+  1: b4 ArmorType.name
+  4: b0 
+  METHOD getSerializedName ()Ljava/lang/String;  (code=5)
+  0: 2a 
+  1: b4 ArmorType.name
+  4: b0 
+  METHOD getSlot ()Lnet/minecraft/world/entity/EquipmentSlot;  (code=5)
+  0: 2a 
+  1: b4 ArmorType.slot
+  4: b0 
+  METHOD valueOf (Ljava/lang/String;)Lnet/minecraft/world/item/equipment/ArmorType;  (code=10)
+  0: 12 
+  2: 2a 
+  3: b8 Enum.valueOf
+  6: c0 ArmorType
+  9: b0 
+  METHOD values ()[Lnet/minecraft/world/item/equipment/ArmorType;  (code=10)
+  0: b2 ArmorType.$VALUES
+  3: b6 ArmorType;.clone
+  6: c0 ArmorType;
+  9: b0 
+
+== net/minecraft/world/item/equipment/ArmorMaterials ==
+  METHOD <clinit> ()V  (code=310)
+  0: bb ArmorMaterial
+  3: 59 
+  4: 08 5
+  5: 04 1
+  6: 05 2
+  7: 06 3
+  8: 04 1
+  9: 06 3
+  10: b8 ArmorMaterials.makeDefense
+  13: 10 15
+  15: b2 SoundEvents.ARMOR_EQUIP_LEATHER
+  18: 0b 
+  19: 0b 
+  20: b2 ItemTags.REPAIRS_LEATHER_ARMOR
+  23: b2 EquipmentAssets.LEATHER
+  26: b7 ArmorMaterial.<init>
+  29: b3 ArmorMaterials.LEATHER
+  32: bb ArmorMaterial
+  35: 59 
+  36: 10 11
+  38: 04 1
+  39: 06 3
+  40: 07 4
+  41: 05 2
+  42: 07 4
+  43: b8 ArmorMaterials.makeDefense
+  46: 10 8
+  48: b2 SoundEvents.ARMOR_EQUIP_COPPER
+  51: 0b 
+  52: 0b 
+  53: b2 ItemTags.REPAIRS_COPPER_ARMOR
+  56: b2 EquipmentAssets.COPPER
+  59: b7 ArmorMaterial.<init>
+  62: b3 ArmorMaterials.COPPER
+  65: bb ArmorMaterial
+  68: 59 
+  69: 10 15
+  71: 04 1
+  72: 07 4
+  73: 08 5
+  74: 05 2
+  75: 07 4
+  76: b8 ArmorMaterials.makeDefense
+  79: 10 12
+  81: b2 SoundEvents.ARMOR_EQUIP_CHAIN
+  84: 0b 
+  85: 0b 
+  86: b2 ItemTags.REPAIRS_CHAIN_ARMOR
+  89: b2 EquipmentAssets.CHAINMAIL
+  92: b7 ArmorMaterial.<init>
+  95: b3 ArmorMaterials.CHAINMAIL
+  98: bb ArmorMaterial
+  101: 59 
+  102: 10 15
+  104: 05 2
+  105: 08 5
+  106: 10 6
+  108: 05 2
+  109: 08 5
+  110: b8 ArmorMaterials.makeDefense
+  METHOD makeDefense (IIIII)Ljava/util/Map;  (code=43)
+  0: b2 ArmorType.BOOTS
+  3: 1a 
+  4: b8 Integer.valueOf
+  7: b2 ArmorType.LEGGINGS
+  10: 1b 
+  11: b8 Integer.valueOf
+  14: b2 ArmorType.CHESTPLATE
+  17: 1c 
+  18: b8 Integer.valueOf
+  21: b2 ArmorType.HELMET
+  24: 1d 
+  25: b8 Integer.valueOf
+  28: b2 ArmorType.BODY
+  31: 15 4
+  33: b8 Integer.valueOf
+  36: b8 Map.of
+  39: b8 Maps.newEnumMap
+  42: b0 
+
+== net/minecraft/world/item/equipment/ArmorMaterial ==
+  METHOD <init> (ILjava/util/Map;ILnet/minecraft/core/Holder;FFLnet/minecraft/tags/TagKey;Lnet/minecraft/resources/ResourceKey;)V  (code=50)
+  0: 2a 
+  1: b7 Record.<init>
+  4: 2a 
+  5: 1b 
+  6: b5 ArmorMaterial.durability
+  9: 2a 
+  10: 2c 
+  11: b5 ArmorMaterial.defense
+  14: 2a 
+  15: 1d 
+  16: b5 ArmorMaterial.enchantmentValue
+  19: 2a 
+  20: 19 4
+  22: b5 ArmorMaterial.equipSound
+  25: 2a 
+  26: 17 5
+  28: b5 ArmorMaterial.toughness
+  31: 2a 
+  32: 17 6
+  34: b5 ArmorMaterial.knockbackResistance
+  37: 2a 
+  38: 19 7
+  40: b5 ArmorMaterial.repairIngredient
+  43: 2a 
+  44: 19 8
+  46: b5 ArmorMaterial.assetId
+  49: b1 
+  METHOD assetId ()Lnet/minecraft/resources/ResourceKey;  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.assetId
+  4: b0 
+  METHOD createAttributes (Lnet/minecraft/world/item/equipment/ArmorType;)Lnet/minecraft/world/item/component/ItemAttributeModifiers;  (code=140)
+  0: 2a 
+  1: b4 ArmorMaterial.defense
+  4: 2b 
+  5: 03 0
+  6: b8 Integer.valueOf
+  9: b9 Map.getOrDefault
+  14: c0 Integer
+  17: b6 Integer.intValue
+  20: 3d 
+  21: b8 ItemAttributeModifiers.builder
+  24: 4e 
+  25: 2b 
+  26: b6 ArmorType.getSlot
+  29: b8 EquipmentSlotGroup.bySlot
+  32: 3a 4
+  34: 2b 
+  35: b6 ArmorType.getName
+  38: ba 
+  43: b8 Identifier.withDefaultNamespace
+  46: 3a 5
+  48: 2d 
+  49: b2 Attributes.ARMOR
+  52: bb AttributeModifier
+  55: 59 
+  56: 19 5
+  58: 1c 
+  59: 87 
+  60: b2 AttributeModifier$Operation.ADD_VALUE
+  63: b7 AttributeModifier.<init>
+  66: 19 4
+  68: b6 ItemAttributeModifiers$Builder.add
+  71: 57 
+  72: 2d 
+  73: b2 Attributes.ARMOR_TOUGHNESS
+  76: bb AttributeModifier
+  79: 59 
+  80: 19 5
+  82: 2a 
+  83: b4 ArmorMaterial.toughness
+  86: 8d 
+  87: b2 AttributeModifier$Operation.ADD_VALUE
+  90: b7 AttributeModifier.<init>
+  93: 19 4
+  95: b6 ItemAttributeModifiers$Builder.add
+  98: 57 
+  99: 2a 
+  100: b4 ArmorMaterial.knockbackResistance
+  103: 0b 
+  104: 95 
+  105: 9e 135
+  108: 2d 
+  109: b2 Attributes.KNOCKBACK_RESISTANCE
+  112: bb AttributeModifier
+  115: 59 
+  116: 19 5
+  118: 2a 
+  119: b4 ArmorMaterial.knockbackResistance
+  122: 8d 
+  123: b2 AttributeModifier$Operation.ADD_VALUE
+  126: b7 AttributeModifier.<init>
+  METHOD defense ()Ljava/util/Map;  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.defense
+  4: b0 
+  METHOD durability ()I  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.durability
+  4: ac 
+  METHOD enchantmentValue ()I  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.enchantmentValue
+  4: ac 
+  METHOD equals (Ljava/lang/Object;)Z  (code=8)
+  0: 2a 
+  1: 2b 
+  2: ba 
+  7: ac 
+  METHOD equipSound ()Lnet/minecraft/core/Holder;  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.equipSound
+  4: b0 
+  METHOD hashCode ()I  (code=7)
+  0: 2a 
+  1: ba 
+  6: ac 
+  METHOD knockbackResistance ()F  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.knockbackResistance
+  4: ae 
+  METHOD repairIngredient ()Lnet/minecraft/tags/TagKey;  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.repairIngredient
+  4: b0 
+  METHOD toString ()Ljava/lang/String;  (code=7)
+  0: 2a 
+  1: ba 
+  6: b0 
+  METHOD toughness ()F  (code=5)
+  0: 2a 
+  1: b4 ArmorMaterial.toughness
+  4: ae 
+

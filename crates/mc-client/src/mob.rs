@@ -13820,6 +13820,25 @@ pub fn bobber_set_damage_roll(rng: &mut Lcg, band: BobberLootBand, item: &'stati
     1.0 - roll.clamp(0.0, 1.0)
 }
 
+/// THE SET_DAMAGE'S OWN POINTS FOLD (the census's run tail the
+/// `setDamageValue(floor(frac * maxDamage))` walk banks — the max
+/// the `ItemStack.getMaxDamage()` read the registry's
+/// `item_max_damage` table answers [the maxdamage_510 census the
+/// three fishing-lane rows banks: leather_boots 65 the
+/// humanoidArmor fold, fishing_rod 64 the direct arg, bow 384 the
+/// direct arg], the frac the [`ItemDrop.damage_frac`] word the
+/// retrieve arm carries, the `Mth.floor(F)I` the points wear; the
+/// table's missing rows the 0 the honest keeps [the vanilla the
+/// warn arm speaks, the port the pristine 0 points the stack
+/// never banks]). The HUD's durability bar the points ÷ max fold
+/// the NEXT's own lane reads.
+pub fn bobber_set_damage_points(frac: f32, item_id: i32) -> i32 {
+    let Some(max) = mc_registry::item_max_damage(item_id) else {
+        return 0;
+    };
+    (frac * max as f32).floor() as i32
+}
+
 /// THE CLOCKS' OWN ROLLS (javap `catchingFish` the census banks —
 /// the wait the Mth.nextInt(100, 600) roll the tail banks [the
 /// lureSpeed the subtraction serves], the hooked approach the
