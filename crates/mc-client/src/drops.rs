@@ -777,13 +777,48 @@ impl Inventory {
     /// bytecode 21-37 speaks), then the full items scan — the armor
     /// list the walk never consults (the pickup's own lanes answer).
     fn get_slot_with_remaining_space(&self, selected: usize, id: i32) -> Option<usize> {
-        if Self::has_remaining_space(self.items[selected], id) {
+        self.get_slot_with_remaining_space_gate(selected, id, &|_| true)
+    }
+
+    /// THE MERGE LAW'S OWN GATED SCAN (the mergelaw_513 census banks —
+    /// `getSlotWithRemainingSpace` code=80 the same order the plain
+    /// scan keeps, each candidate the COMPONENT gate first speaks):
+    /// the `hasRemainingSpaceForItem` pair the
+    /// `isSameItemSameComponents` leg answers [the components
+    /// `Objects.equals` the enchanted stacks the plain rows never
+    /// share — the (id, count) model the leg can't read, the row's
+    /// own store the caller's gate wears], the false word the
+    /// candidate the scan walks past, the free-slot fallback the
+    /// landing's own home keeps.
+    fn get_slot_with_remaining_space_gate(
+        &self,
+        selected: usize,
+        id: i32,
+        gate: &dyn Fn(usize) -> bool,
+    ) -> Option<usize> {
+        if Self::has_remaining_space_gate(self.items[selected], id, gate(selected)) {
             return Some(selected);
         }
-        if Self::has_remaining_space(self.offhand[0], id) {
+        if Self::has_remaining_space_gate(self.offhand[0], id, gate(OFFHAND_CONTAINER)) {
             return Some(OFFHAND_CONTAINER);
         }
-        (0..36).find(|&i| Self::has_remaining_space(self.items[i], id))
+        (0..36).find(|&i| Self::has_remaining_space_gate(self.items[i], id, gate(i)))
+    }
+
+    /// THE MERGE CANDIDATE'S OWN GATE (the mergelaw_513 census —
+    /// `hasRemainingSpaceForItem` code=40 the four legs bank: the
+    /// empty refusal, the `isSameItemSameComponents` pair, the
+    /// `isStackable` cap, the `count < getMaxStackSize` headroom —
+    /// the COMPONENT leg the (id, count) model can't read the
+    /// caller's gate answers [the row's own store the empty verdict
+    /// speaks, the incoming stack's own components the same word
+    /// pairs]): the false gate the candidate never wears — the
+    /// vanilla's own refuse-to-merge the enchanted stacks the port's
+    /// rows answer. The DAMAGE leg the max-1 items the cap law
+    /// excludes [the isStackable `!isDamageableItem || !isDamaged`
+    /// arm the unstackable tools the merge never offers].
+    fn has_remaining_space_gate(item: (i32, i32), id: i32, components_match: bool) -> bool {
+        components_match && Self::has_remaining_space(item, id)
     }
 
     /// `getFreeSlot` (javap): the first empty in the items order.
@@ -847,6 +882,24 @@ impl Inventory {
     /// (leftover, tryPickup) pair — the leftover the caller's honest
     /// shrink, the bool the vanilla add's own return.
     pub fn add(&mut self, selected: usize, id: i32, count: i32, creative: bool) -> (i32, bool) {
+        self.add_gate(selected, id, count, creative, &|_| true)
+    }
+
+    /// THE MERGE LAW'S OWN GATED WALK (`Inventory.add` the gate the
+    /// remaining-space scan rides — the mergelaw_513 census the
+    /// candidate's component leg banks): the plain `add` the
+    /// always-true gate the same loop keeps, the enchanted stacks'
+    /// own gate the caller's store speaks. The loop the same body
+    /// wears — the pass's own re-locate the gate the scan re-asks,
+    /// the exit verdicts the stalled pass's own compare keeps.
+    pub fn add_gate(
+        &mut self,
+        selected: usize,
+        id: i32,
+        count: i32,
+        creative: bool,
+        gate: &dyn Fn(usize) -> bool,
+    ) -> (i32, bool) {
         if count <= 0 {
             return (0, false); // the isEmpty gate (pc 0-8) — nothing walks
         }
@@ -854,7 +907,7 @@ impl Inventory {
         loop {
             let before = remaining; // count_in — the loop head's own refresh
             let slot = self
-                .get_slot_with_remaining_space(selected, id)
+                .get_slot_with_remaining_space_gate(selected, id, gate)
                 .or_else(|| self.get_free_slot());
             let Some(slot) = slot else {
                 // addResource's no-home arm (the (ItemStack) overload's
@@ -1032,11 +1085,28 @@ pub fn player_touch(
     selected: usize,
     creative: bool,
 ) -> Touch {
+    player_touch_gate(drop, inventory, selected, creative, &|_| true)
+}
+
+/// THE MERGE LAW'S OWN GATED TOUCH (`ItemEntity.playerTouch` the
+/// inventory add the gate rides — the mergelaw_513 census the
+/// candidate's component leg banks): the plain touch the always-true
+/// gate the same verdict keeps, the enchanted stacks' own gate the
+/// caller's store speaks — the enchanted drop the plain rows the
+/// merge never wears, the plain drop the enchanted rows the same
+/// refusal keeps, the FREE slot the landing's own home answers.
+pub fn player_touch_gate(
+    drop: &mut ItemDrop,
+    inventory: &mut Inventory,
+    selected: usize,
+    creative: bool,
+    gate: &dyn Fn(usize) -> bool,
+) -> Touch {
     if drop.pickup_delay != 0 || drop.count <= 0 {
         return Touch::Idle;
     }
     let original = drop.count;
-    let (leftover, spoke) = inventory.add(selected, drop.item, drop.count, creative);
+    let (leftover, spoke) = inventory.add_gate(selected, drop.item, drop.count, creative, gate);
     if leftover < original {
         drop.count = leftover; // the honest shrink (the void's own zero rides)
     }
@@ -1049,9 +1119,7 @@ pub fn player_touch(
         return Touch::Idle; // no room — the vanilla's own verdict (no voice)
     }
     drop.count = 0; // the TRUE verdict discards the whole entity
-    Touch::Picked {
-        added: original,
-    }
+    Touch::Picked { added: original }
 }
 
 /// THE DAMAGE BAR'S OWN STACK LAWS (javap 26.2 the durbar_511 census

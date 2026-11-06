@@ -19073,11 +19073,41 @@ impl App {
                                 None
                             };
                             let mut moved = false;
-                            match crate::drops::player_touch(
+                            // THE MERGE LAW'S OWN GATE (the mergelaw_513
+                            // census the `isSameItemSameComponents` leg
+                            // the (id, count) model can't read — the
+                            // row's own store the empty verdict speaks,
+                            // the incoming stack's own pairs the same
+                            // word pairs): the enchanted drop the plain
+                            // rows the merge never wears, the plain
+                            // drop the enchanted rows the same refusal
+                            // keeps — the FREE slot the landing's own
+                            // home answers, the offhand's seat the
+                            // store the ride never lands [the empty
+                            // wall the 489 record banks] the true word
+                            // keeps. The TWO enchanted stacks the
+                            // IDENTICAL-components merge the vanilla
+                            // wears the store's own (id, count)
+                            // simplification the per-unit pairs the
+                            // count can't wear — the refusal the rows
+                            // the data never eats.
+                            let drop_ench_empty = drop_ench.is_empty();
+                            let ench_gate = |i: usize| {
+                                if i == crate::drops::OFFHAND_CONTAINER {
+                                    return true;
+                                }
+                                drop_ench_empty
+                                    && self
+                                        .inventory_enchants
+                                        .get(i)
+                                        .map_or(true, |v| v.is_empty())
+                            };
+                            match crate::drops::player_touch_gate(
                                 d,
                                 &mut self.inventory,
                                 selected,
                                 creative,
+                                &ench_gate,
                             ) {
                                 crate::drops::Touch::Picked { .. } => {
                                     voiced = true;

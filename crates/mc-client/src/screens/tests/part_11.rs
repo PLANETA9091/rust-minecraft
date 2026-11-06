@@ -43209,9 +43209,13 @@ fn the_enchant_seat_the_pickup_the_rows_wear() {
         vec![(power as i32, 4)],
         "the first row the pairs keeps"
     );
-    // THE PRISTINE MERGE'S OWN RESET (the stackable dirt the merge arm
-    // speaks — the stale pairs the row pre-wears, the pristine merge
-    // the EMPTY the row resets)
+    // THE REFUSE-TO-MERGE'S OWN LAW (the mergelaw_513 census the
+    // `isSameItemSameComponents` leg banks — the plain drop the
+    // enchanted row the merge never wears: the stale pairs the row
+    // the component mismatch speaks, the FREE slot the landing's own
+    // home answers, the row's own store the pairs the refusal keeps
+    // — the 490 round the old merge-arm reset the vanilla law
+    // corrects)
     app.inventory.items[2] = (dirt, 1);
     app.inventory_enchants[2] = vec![(power as i32, 1)];
     let mut more =
@@ -43221,11 +43225,257 @@ fn the_enchant_seat_the_pickup_the_rows_wear() {
     app.update();
     assert_eq!(
         app.inventory.items[2],
-        (dirt, 2),
-        "the merge the slot grows"
+        (dirt, 1),
+        "the enchanted row the merge refuses"
+    );
+    assert_eq!(
+        app.inventory.items[3],
+        (dirt, 1),
+        "the landing the fresh slot wears"
+    );
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(power as i32, 1)],
+        "the row's own pairs the refusal keeps"
+    );
+    assert!(
+        app.inventory_enchants[3].is_empty(),
+        "the fresh row the plain stack wears"
+    );
+}
+
+#[test]
+fn the_merge_law_the_gate_the_census_wears() {
+    // THE GATED WALK'S OWN VERDICTS (the mergelaw_513 census the
+    // `hasRemainingSpaceForItem` legs the gate answers — the
+    // `isSameItemSameComponents` component leg the (id, count) model
+    // the caller's gate speaks)
+    let book = mc_registry::item_id_by_name("book").unwrap();
+    // (a) THE ENCHANTED INCOMING'S OWN REFUSAL (the plain rows the
+    // merge never wear — the FREE slot the landing's own home
+    // answers, the rows the counts the refusal keeps)
+    let mut inv = crate::drops::Inventory::default();
+    inv.items[0] = (book, 10);
+    inv.items[1] = (book, 64);
+    let (leftover, spoke) = inv.add_gate(0, book, 5, false, &|_| false);
+    assert_eq!(leftover, 0, "the walk the whole drop the free slot lands");
+    assert!(spoke, "the TRUE verdict the landing speaks");
+    assert_eq!(inv.items[0], (book, 10), "the plain row the merge refuses");
+    assert_eq!(inv.items[1], (book, 64), "the full row the cap keeps");
+    assert_eq!(inv.items[2], (book, 5), "the fresh slot the landing wears");
+    // (b) THE PLAIN INCOMING'S OWN REFUSAL (the enchanted row the
+    // merge never wears — the SELECTED seat the gate refuses, the
+    // plain row the merge wears)
+    let mut inv2 = crate::drops::Inventory::default();
+    inv2.items[0] = (book, 1);
+    inv2.items[1] = (book, 1);
+    let (l2, s2) = inv2.add_gate(0, book, 1, false, &|i| i != 0);
+    assert_eq!(l2, 0, "the walk the plain drop the plain row lands");
+    assert!(s2, "the TRUE verdict the landing speaks");
+    assert_eq!(
+        inv2.items[0],
+        (book, 1),
+        "the enchanted seat the merge refuses"
+    );
+    assert_eq!(inv2.items[1], (book, 2), "the plain row the merge wears");
+    // (c) THE OFFHAND'S OWN CONTAINER (the gate 40 the offhand arm
+    // answers — the true word the offhand merge wears, the false the
+    // fresh slot the landing keeps)
+    let mut inv3 = crate::drops::Inventory::default();
+    inv3.items[0] = (book, 64);
+    inv3.offhand[0] = (book, 10);
+    let (l3, _s3) = inv3.add_gate(0, book, 2, false, &|i| i == crate::drops::OFFHAND_CONTAINER);
+    assert_eq!(l3, 0, "the offhand the merge speaks");
+    assert_eq!(
+        inv3.offhand[0],
+        (book, 12),
+        "the offhand row the merge grows"
+    );
+    let mut inv4 = crate::drops::Inventory::default();
+    inv4.items[0] = (book, 64);
+    inv4.offhand[0] = (book, 10);
+    let (l4, _s4) = inv4.add_gate(0, book, 2, false, &|i| i != crate::drops::OFFHAND_CONTAINER);
+    assert_eq!(l4, 0, "the refusal the fresh slot lands");
+    assert_eq!(inv4.offhand[0], (book, 10), "the offhand the merge refuses");
+    assert_eq!(inv4.items[1], (book, 2), "the fresh slot the landing wears");
+    // (d) THE FULL WALK'S OWN STALL (the gate every seat refuses, no
+    // free slot — the survival arm the FALSE verdict the leftover
+    // keeps)
+    let mut inv5 = crate::drops::Inventory::default();
+    for row in inv5.items.iter_mut() {
+        *row = (book, 64);
+    }
+    let (l5, s5) = inv5.add_gate(0, book, 1, false, &|_| false);
+    assert_eq!(l5, 1, "the stall the leftover keeps");
+    assert!(!s5, "the FALSE verdict the walk speaks");
+    assert_eq!(inv5.items[0], (book, 64), "the rows the merge never wore");
+    // (e) THE CREATIVE VOID'S OWN SWEEP (the add's own
+    // infinite-materials arm the refusal the void answers — the
+    // leftover zeroed, the TRUE verdict)
+    let mut inv6 = crate::drops::Inventory::default();
+    for row in inv6.items.iter_mut() {
+        *row = (book, 64);
+    }
+    let (l6, s6) = inv6.add_gate(0, book, 1, true, &|_| false);
+    assert_eq!(l6, 0, "the void the leftover zeroes");
+    assert!(s6, "the TRUE verdict the void speaks");
+    // (f) THE PLAIN TOUCH'S OWN WRAPPER (the always-true gate the old
+    // walks re-wear — the same verdict the plain merge keeps)
+    let mut inv7 = crate::drops::Inventory::default();
+    inv7.items[0] = (book, 10);
+    let mut rng = crate::drops::Lcg::new(7);
+    let mut drop = crate::drops::ItemDrop::spawn_entity_loot(1, book, 5, 0.0, 0.0, 0.0, &mut rng);
+    drop.pickup_delay = 0;
+    let touch = crate::drops::player_touch(&mut drop, &mut inv7, 0, false);
+    assert_eq!(
+        touch,
+        crate::drops::Touch::Picked { added: 5 },
+        "the wrapper the Picked verdict wears"
+    );
+    assert_eq!(inv7.items[0], (book, 15), "the merge the row grows");
+    // (g) THE GATED TOUCH'S OWN REFUSAL (the enchanted drop the plain
+    // row the merge never wears — the fresh slot the landing's own
+    // home answers, the same (id, count) row the count keeps)
+    let mut inv8 = crate::drops::Inventory::default();
+    inv8.items[0] = (book, 10);
+    let mut enchanted =
+        crate::drops::ItemDrop::spawn_entity_loot(2, book, 5, 0.0, 0.0, 0.0, &mut rng);
+    enchanted.pickup_delay = 0;
+    let touch2 = crate::drops::player_touch_gate(&mut enchanted, &mut inv8, 0, false, &|_| false);
+    assert_eq!(
+        touch2,
+        crate::drops::Touch::Picked { added: 5 },
+        "the gated touch the landing speaks"
+    );
+    assert_eq!(inv8.items[0], (book, 10), "the plain row the merge refuses");
+    assert_eq!(inv8.items[1], (book, 5), "the fresh slot the landing wears");
+}
+
+#[test]
+fn the_merge_law_the_pickup_the_rows_wear() {
+    let mut app = crate::screens::App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.selected_hotbar = 0;
+    let book = mc_registry::item_id_by_name("book").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x, body.y, body.z);
+    let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap();
+    let lure = mc_registry::generated::enchantments::enchantment_index("lure").unwrap();
+    // THE ENCHANTED BOOK'S OWN LANDING (the fished stack the plain
+    // SELECTED row the merge never wears — the fresh slot the
+    // landing's own home answers, the pairs the store banks, the
+    // plain row the count the refusal keeps)
+    app.inventory.items[0] = (book, 7);
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(1, book, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.enchantments = vec![(power, 3)];
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.items[0],
+        (book, 7),
+        "the plain selected row the merge refuses"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (book, 1),
+        "the fresh slot the landing wears"
+    );
+    assert!(
+        app.inventory_enchants[0].is_empty(),
+        "the plain row the store keeps"
+    );
+    assert_eq!(
+        app.inventory_enchants[1],
+        vec![(power as i32, 3)],
+        "the landed pairs the row banks"
+    );
+    // THE PLAIN BOOK'S OWN LANDING (the enchanted row the merge
+    // refuses — the SELECTED row the cap the scan refuses first, the
+    // enchanted row the gate the refusal speaks, the fresh slot the
+    // plain stack wears, the pairs the refusal keeps)
+    app.inventory.items[0] = (book, 64);
+    let mut plain =
+        crate::drops::ItemDrop::spawn_entity_loot(2, book, 1, bx, by + 0.5, bz, &mut rng);
+    plain.pickup_delay = 0;
+    app.drops.push(plain);
+    app.update();
+    assert_eq!(
+        app.inventory.items[0],
+        (book, 64),
+        "the full row the cap keeps"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (book, 1),
+        "the enchanted row the merge refuses"
+    );
+    assert_eq!(
+        app.inventory_enchants[1],
+        vec![(power as i32, 3)],
+        "the pairs the refusal keeps"
+    );
+    assert_eq!(
+        app.inventory.items[2],
+        (book, 1),
+        "the fresh slot the plain stack wears"
     );
     assert!(
         app.inventory_enchants[2].is_empty(),
-        "the pristine merge the row resets"
+        "the fresh row the store keeps"
+    );
+    // THE BOTH-EMPTY MERGE'S OWN LAW (the plain rows the merge wears —
+    // the production walk the gate the true word speaks, the row the
+    // count grows, the store the empty keeps)
+    app.inventory.items[3] = (dirt, 4);
+    let mut more =
+        crate::drops::ItemDrop::spawn_entity_loot(3, dirt, 6, bx, by + 0.5, bz, &mut rng);
+    more.pickup_delay = 0;
+    app.drops.push(more);
+    app.update();
+    assert_eq!(
+        app.inventory.items[3],
+        (dirt, 10),
+        "the merge the row grows"
+    );
+    assert!(
+        app.inventory_enchants[3].is_empty(),
+        "the plain merge the store keeps"
+    );
+    // THE ENCHANTED-PAIRS ENCHANTED-PAIRS REFUSAL (the TWO enchanted
+    // stacks the IDENTICAL-components merge the vanilla wears — the
+    // store's own (id, count) simplification the per-unit pairs the
+    // count can't wear, the refusal the rows the pairs never eat)
+    app.inventory.items[4] = (book, 1);
+    app.inventory_enchants[4] = vec![(lure as i32, 2)];
+    let mut second_ench =
+        crate::drops::ItemDrop::spawn_entity_loot(4, book, 1, bx, by + 0.5, bz, &mut rng);
+    second_ench.pickup_delay = 0;
+    second_ench.enchantments = vec![(lure, 2)];
+    app.drops.push(second_ench);
+    app.update();
+    assert_eq!(
+        app.inventory.items[4],
+        (book, 1),
+        "the enchanted row the enchanted drop the merge refuses"
+    );
+    assert_eq!(
+        app.inventory.items[5],
+        (book, 1),
+        "the fresh slot the second stack wears"
+    );
+    assert_eq!(
+        app.inventory_enchants[4],
+        vec![(lure as i32, 2)],
+        "the first stack's pairs the refusal keeps"
+    );
+    assert_eq!(
+        app.inventory_enchants[5],
+        vec![(lure as i32, 2)],
+        "the second stack's pairs the fresh row banks"
     );
 }
