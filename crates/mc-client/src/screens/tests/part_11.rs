@@ -47283,3 +47283,60 @@ fn the_swap_table_the_grid_the_word_banks() {
         "the drained cell the retire keeps"
     );
 }
+
+/// THE WORLD LANE'S OWN SCREEN GATE (the autopush-505 round — the
+/// number-key + the profiler digit the screen==null verdict the
+/// vanilla handleKeybinds lane re-wears): the open container screen
+/// the digit never selects through [the screen's own swap chain the
+/// court keeps], the close the world lane re-arms, the death the
+/// modal keeps, the chart navigation the same gate answers.
+#[test]
+fn the_world_lane_the_screen_gate_the_digits_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE WORLD LANE'S OWN SELECT (the screen==null the plain select
+    // answers)
+    app.on_number_key(4);
+    assert_eq!(app.selected_hotbar, 4, "the world lane the select moves");
+    // THE OPEN CONTAINER'S OWN SILENCE (the inventory screen the
+    // digit's court keeps — the selection the gate never moves)
+    app.open_inventory();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Inventory,
+        "the screen the open wears"
+    );
+    app.on_number_key(6);
+    assert_eq!(
+        app.selected_hotbar, 4,
+        "the open screen the select never moves"
+    );
+    // THE CHART'S OWN COURT (the container screen the navigation
+    // never drills — the same gate the digit's lane answers)
+    app.profiler_chart = true;
+    assert!(
+        !app.on_profiler_chart_digit(1),
+        "the open screen the chart never drills"
+    );
+    app.profiler_chart = false;
+    // THE CLOSE'S OWN RE-ARM (the world lane the select answers)
+    app.close_inventory(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
+    app.on_number_key(6);
+    assert_eq!(app.selected_hotbar, 6, "the close the lane re-arms");
+    // THE DEATH'S OWN MODAL (the dead flag the same verdict keeps)
+    app.dead = true;
+    app.on_number_key(2);
+    assert_eq!(app.selected_hotbar, 6, "the death the select never moves");
+    assert!(
+        !app.on_profiler_chart_digit(1),
+        "the death the chart never drills"
+    );
+    app.dead = false;
+    // THE CHART'S OWN WORLD LANE (the screen==null the drill answers)
+    app.profiler_chart = true;
+    assert!(
+        app.on_profiler_chart_digit(1),
+        "the world lane the chart consumes"
+    );
+}

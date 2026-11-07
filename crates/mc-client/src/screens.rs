@@ -52861,7 +52861,24 @@ impl App {
     /// silent). The SELECTION-relative 0..8 gate drops the
     /// out-of-domain and the no-op repeat (the vanilla
     /// `Inventory.selected`'s own range).
+    /// THE WORLD SCREEN'S OWN GATE (the autopush-505 round — the
+    /// handleKeybinds lane the screen==null verdict guards, the F-key's
+    /// own law the number-key lane re-wears): the container screens
+    /// the digit never selects through — the screen's own keyPressed
+    /// chain the digit's court keeps [the checkHotbarKeyPressed swap
+    /// the screens' own tables answer, the miss the silence speaks —
+    /// the world's hotbar-select the open screen never reads], the
+    /// death the modal keeps. The wheel lane the dispatch's own
+    /// screen-aware split already guards (the screen-null arm alone
+    /// the hotbar cycle rides — [`Self::on_hotbar_scroll`] the
+    /// in-world poll alone feeds).
     pub fn on_number_key(&mut self, selection: usize) {
+        // THE WORLD SCREEN'S OWN GATE (the container screens the key
+        // never reads, the death the modal keeps — the same verdict
+        // the F-key's own lane keeps)
+        if self.screen != ScreenKind::World || self.dead {
+            return;
+        }
         if self.game_mode == GameMode::Spectator {
             // THE SPECTATOR ROUTE (javap Minecraft.handleKeybinds pcs
             // 183-223 — the keyHotbarSlots loop the `player
@@ -67614,6 +67631,14 @@ impl App {
     /// the separator concat the boot3+boot2 recipes chain (the
     /// empty path the bare name answers).
     pub fn on_profiler_chart_digit(&mut self, digit: i32) -> bool {
+        // THE WORLD SCREEN'S OWN GATE (the autopush-505 round — the
+        // handleDebugKeys lane the screen==null verdict guards: the
+        // chart navigation the container screens never drill, the
+        // death the modal keeps — the same law the number-key lane's
+        // own gate re-wears)
+        if self.screen != ScreenKind::World || self.dead {
+            return false;
+        }
         if !self.profiler_chart {
             return false;
         }
