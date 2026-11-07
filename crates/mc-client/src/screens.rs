@@ -60701,7 +60701,10 @@ impl App {
     /// the inventory's own cell reads, the pickup walk's own
     /// convention) —, the WIRE lane the 39-slot belief speaks. The
     /// safeClone law the cursor ALONE mutates either lane (the row
-    /// never moves, the smelting tick the row's own business keeps).
+    /// never moves, the smelting tick the row's own business keeps),
+    /// the OFFLINE cursor's kind word the hovered seat's own store
+    /// banks (the normalized read the stale word the honest NONE
+    /// cleans), the WIRE lane the kindless cursor the wall keeps.
     fn clone_furnace_seat(&mut self, mx: i32, my: i32) {
         if self.furnace_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
@@ -60736,6 +60739,18 @@ impl App {
                 return; // pc 1427-1432 — the hasItem gate
             }
             self.furnace_carried = (id, crate::world_view::item_max_stack(id));
+            // THE CLONE'S OWN FURNACE RIDE (the 497 NEXT's own first
+            // lane — the safeClone's copyWithCount law the FULL copy
+            // the cursor takes, the KIND WORD the copy never kept): the
+            // hovered seat's own word the carried banks — the standard
+            // rows the write-through's mapped read answers [the
+            // inventory bank's own kind the projection keys], the sim
+            // rows the trio's SEAT STORE the word speaks, the
+            // non-potion seat the id-gate the honest NONE keeps; the
+            // stale word the fresh read cleans, the live lane the
+            // kindless cursor the wire wall keeps [the dev-230
+            // record's own wall re-wears].
+            self.furnace_carried_potion_kind = self.furnace_seat_potion_kind(slot as usize);
             return;
         }
         let Some((window_id, state_id)) = self.furnace_live_window else {

@@ -45899,3 +45899,138 @@ fn the_clone_the_components_the_cursor_banks() {
         "the stale pairs the plain reset clears"
     );
 }
+
+/// THE CLONE'S OWN FURNACE RIDE (the 497 NEXT's own first lane —
+/// the safeClone law the furnace's own cursor wears: the hovered
+/// seat's own kind word the carried banks [the standard rows the
+/// write-through's mapped read answers, the sim rows the trio's
+/// SEAT STORE speaks, the non-potion seat the id-gate the honest
+/// NONE keeps], the stale word the fresh read cleans, the seat's
+/// own rows the copy never touches, the live lane the kindless
+/// cursor the wire wall keeps [the dev-230 record's own wall
+/// re-wears]).
+#[test]
+fn the_clone_the_furnace_the_kind_banks() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.game_mode = crate::screens::GameMode::Creative;
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+    app.open_furnace(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Furnace,
+        "the furnace door the walk wears"
+    );
+    // THE STANDARD ROW'S OWN COPY (the write-through's mapped read
+    // the kind banks — the potion's 1-cap the FULL max takes)
+    app.inventory.items[18] = (potion, 1);
+    app.items_potion_kinds[18] = kind_a;
+    app.furnace_slots[12] = (potion, 1);
+    let (ox, oy) = furnace_seat(&mut app, 12);
+    app.on_container_clone_click(ox, oy);
+    assert_eq!(
+        app.furnace_carried,
+        (potion, 1),
+        "the potion's 1-cap the FULL max takes"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, kind_a,
+        "the standard row's word the cursor banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[18], kind_a,
+        "the seat the copy never touches"
+    );
+    assert_eq!(
+        app.furnace_slots[12],
+        (potion, 1),
+        "the projection the copy never touches"
+    );
+    // THE SIM ROW'S OWN COPY (the trio's SEAT STORE the word speaks)
+    app.furnace_carried = (0, 0);
+    app.furnace_carried_potion_kind = none;
+    app.furnace_slots[0] = (potion, 2);
+    app.furnace_seat_potion_kinds[0] = kind_b;
+    let (ox2, oy2) = furnace_seat(&mut app, 0);
+    app.on_container_clone_click(ox2, oy2);
+    assert_eq!(
+        app.furnace_carried,
+        (potion, 1),
+        "the sim copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, kind_b,
+        "the trio's word the cursor banks"
+    );
+    assert_eq!(
+        app.furnace_seat_potion_kinds[0], kind_b,
+        "the seat the copy never touches"
+    );
+    // THE RESULT SEAT'S OWN COPY (the smelted word the take's own
+    // hand answers)
+    app.furnace_carried = (0, 0);
+    app.furnace_slots[2] = (potion, 1);
+    app.furnace_seat_potion_kinds[2] = kind_c;
+    let (ox3, oy3) = furnace_seat(&mut app, 2);
+    app.on_container_clone_click(ox3, oy3);
+    assert_eq!(
+        app.furnace_carried,
+        (potion, 1),
+        "the result copy the max takes"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, kind_c,
+        "the smelted word the cursor banks"
+    );
+    // THE NON-POTION'S OWN HONEST NONE (the stale word the id-gate
+    // cleans)
+    app.furnace_carried = (0, 0);
+    app.furnace_carried_potion_kind = kind_a;
+    app.inventory.items[10] = (dirt, 3);
+    app.items_potion_kinds[10] = kind_a;
+    app.furnace_slots[4] = (dirt, 3);
+    let (ox4, oy4) = furnace_seat(&mut app, 4);
+    app.on_container_clone_click(ox4, oy4);
+    assert_eq!(
+        app.furnace_carried,
+        (dirt, 64),
+        "the dirt copy the max takes"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the stale word the honest NONE keeps"
+    );
+    // THE SIM ROW'S OWN HONEST NONE (the id-gate the trio's stale
+    // word cleans)
+    app.furnace_carried = (0, 0);
+    app.furnace_seat_potion_kinds[1] = kind_b;
+    app.furnace_slots[1] = (dirt, 1);
+    let (ox5, oy5) = furnace_seat(&mut app, 1);
+    app.on_container_clone_click(ox5, oy5);
+    assert_eq!(
+        app.furnace_carried,
+        (dirt, 64),
+        "the fuel copy the max takes"
+    );
+    assert_eq!(
+        app.furnace_carried_potion_kind, none,
+        "the trio's stale word the id-gate cleans"
+    );
+}
