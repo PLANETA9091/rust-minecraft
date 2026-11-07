@@ -47046,3 +47046,70 @@ fn the_table_the_take_the_kind_retires() {
         "the craft's drained cell the kind never keeps"
     );
 }
+
+/// THE RESULT SEAT'S OWN HONEST CURSOR (the autopush-504 ride — the
+/// pickup + merge arms the carried word the result's own kindless
+/// answer re-wears): the stale potion pickup's kind the result stack
+/// the cursor never wears — the table's own take the answer banks,
+/// the merge arm the same answer re-wears, the craft twin the same
+/// law speaks.
+#[test]
+fn the_result_the_cursor_the_kind_answers() {
+    let log = mc_registry::item_id_by_name("oak_log").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE TABLE'S OWN PICKUP (the stale kind_a the carried wears —
+    // the planks result the cursor takes the kindless answer banks)
+    app.table_grid[0] = (log, 1);
+    app.refresh_table_result();
+    assert_eq!(app.table_result, (planks, 4), "the recipe speaks");
+    app.inv_carried_potion_kind = kind_a;
+    app.click_table_result(0);
+    assert_eq!(app.inv_carried, (planks, 4), "the result the cursor takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the stale kind the result's answer retires"
+    );
+    assert_eq!(app.table_grid[0], (0, 0), "the log the take consumes");
+    // THE TABLE'S OWN MERGE (the carried planks the stale kind_a
+    // wears — the grow the same answer re-wears)
+    app.table_grid[0] = (log, 1);
+    app.refresh_table_result();
+    app.inv_carried = (planks, 2);
+    app.inv_carried_potion_kind = kind_a;
+    app.click_table_result(0);
+    assert_eq!(app.inv_carried, (planks, 6), "the merge the carried grows");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the merge arm the kindless answer re-wears"
+    );
+    // THE CRAFT'S OWN PICKUP TWIN (the 2x2 result the same law
+    // answers)
+    app.craft_grid[0] = (log, 1);
+    app.refresh_craft_result();
+    assert_eq!(app.craft_result, (planks, 4), "the recipe speaks");
+    app.inv_carried = (0, 0);
+    app.inv_carried_potion_kind = kind_b;
+    app.click_craft_result(0);
+    assert_eq!(app.inv_carried, (planks, 4), "the result the cursor takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the craft's pickup the kindless answer banks"
+    );
+    // THE CRAFT'S OWN MERGE TWIN (the grow the same answer re-wears)
+    app.craft_grid[0] = (log, 1);
+    app.refresh_craft_result();
+    app.inv_carried = (planks, 3);
+    app.inv_carried_potion_kind = kind_b;
+    app.click_craft_result(0);
+    assert_eq!(app.inv_carried, (planks, 7), "the merge the carried grows");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the craft's merge the kindless answer re-wears"
+    );
+}

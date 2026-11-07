@@ -36787,7 +36787,11 @@ impl App {
     /// different-item silence, the SHIFT press the quick-move batch
     /// (the quickMoveStack loop over the [10, 46) store range — the
     /// same reverse-order walk the inventory's batch speaks, folded to
-    /// the store's own indexing).
+    /// the store's own indexing). THE RESULT'S OWN HONEST CURSOR the
+    /// take answers (the autopush-504 ride — the pickup + merge arms
+    /// the carried word the result's own kindless answer re-wears:
+    /// the stale potion pickup's kind the result stack the cursor
+    /// never wears).
     fn click_table_result(&mut self, button: i8) {
         if self.shift_down {
             self.table_result_quick_move();
@@ -36800,12 +36804,22 @@ impl App {
         if self.inv_carried.1 <= 0 {
             let taken = if button == 0 { count } else { (count + 1) / 2 };
             self.inv_carried = (id, taken);
+            // THE RESULT'S OWN HONEST CURSOR (the autopush-504 ride —
+            // the carried word the result's own kindless answer
+            // banks: the stale potion pickup's kind the result stack
+            // the cursor never wears, the place/drop rides' own banks
+            // the honest NONE the stale never feeds)
+            self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             self.table_on_take();
         } else if self.inv_carried.0 == id {
             let space = crate::world_view::item_max_stack(id) - self.inv_carried.1;
             if space > 0 {
                 let taken = space.min(count);
                 self.inv_carried.1 += taken;
+                // THE RESULT'S OWN HONEST CURSOR (the merge arm the
+                // same answer banks — the carried the result stack
+                // grows the word the kindless answer re-wears)
+                self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 self.table_on_take();
             }
         }
@@ -37745,7 +37759,11 @@ impl App {
     ///   ifeq the 1027 arm keeps — the mayPlace-false slot no swap
     ///   speaks).
     /// The result slot's own emptiness the carried-empty arm gates
-    /// (the 806/814 walk — nothing to take).
+    /// (the 806/814 walk — nothing to take). THE RESULT'S OWN HONEST
+    /// CURSOR the take answers (the autopush-504 ride — the pickup +
+    /// merge arms the carried word the result's own kindless answer
+    /// re-wears: the stale potion pickup's kind the result stack the
+    /// cursor never wears).
     fn click_craft_result(&mut self, button: i8) {
         if self.shift_down {
             // THE QUICK_MOVE LANE (the doClick walk's own routing — the
@@ -37764,6 +37782,12 @@ impl App {
             // the half-rounded-up the secondary speaks)
             let taken = if button == 0 { count } else { (count + 1) / 2 };
             self.inv_carried = (id, taken);
+            // THE RESULT'S OWN HONEST CURSOR (the autopush-504 ride —
+            // the carried word the result's own kindless answer
+            // banks: the stale potion pickup's kind the result stack
+            // the cursor never wears, the place/drop rides' own banks
+            // the honest NONE the stale never feeds)
+            self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             // THE STATS' OWN CRAFTED BANK (the vanilla ResultSlot
             // .onTake's awardStat(Stats.ITEM_CRAFTED) walk the taken
             // stack's count wears)
@@ -37776,6 +37800,10 @@ impl App {
             if space > 0 {
                 let taken = space.min(count);
                 self.inv_carried.1 += taken;
+                // THE RESULT'S OWN HONEST CURSOR (the merge arm the
+                // same answer banks — the carried the result stack
+                // grows the word the kindless answer re-wears)
+                self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 // the taken stack the same crafted law wears
                 *self.stats.crafted.entry(id).or_insert(0) += taken as i64;
                 self.craft_on_take();
