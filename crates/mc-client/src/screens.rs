@@ -19277,6 +19277,32 @@ impl App {
                                             .collect();
                                     }
                                 }
+                                // THE OFFHAND'S OWN ENCH RIDE (the
+                                // 37th row the ench loop never
+                                // rides — the merge landing the
+                                // drop's own pairs the seat banks,
+                                // the [`OFFHAND_KIND_SEAT`] parity
+                                // the swap ride's rows keep): the
+                                // grow arm the drop's pairs bank
+                                // [the remaining-space scan the
+                                // seat's own arm the merge landing
+                                // wears — the free-slot fallback
+                                // the seat never offers], the
+                                // emptied seat the clear keeps, the
+                                // untouched seat the pairs it had
+                                // keep). The kind row's own 37th
+                                // seat the NEXT's own lane banks.
+                                {
+                                    let now_oh = self.inventory.offhand[0].1;
+                                    if now_oh <= 0 && wear_before_offhand.1 > 0 {
+                                        self.inventory_enchants[OFFHAND_KIND_SEAT].clear();
+                                    } else if now_oh > wear_before_offhand.1 {
+                                        self.inventory_enchants[OFFHAND_KIND_SEAT] = drop_ench
+                                            .iter()
+                                            .map(|&(idx, level)| (idx as i32, level))
+                                            .collect();
+                                    }
+                                }
                             }
                         }
                     }

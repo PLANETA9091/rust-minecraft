@@ -45553,3 +45553,99 @@ fn the_pickup_the_offhand_the_wear_banks() {
         "the untouched seat the 0.0 keeps"
     );
 }
+
+/// THE PICKUP'S OWN OFFHAND ENCH (the autopush-496 round — the ench
+/// ride's own 37th row the 0..36 loop never rode: the merge landing
+/// the enchanted drop's own pairs the seat banks, the
+/// [`OFFHAND_KIND_SEAT`] row the store never wore — the remaining-space
+/// scan the seat's own arm the merge landing wears, the free-slot
+/// fallback the seat never offers).
+#[test]
+fn the_pickup_the_offhand_the_ench_banks() {
+    use mc_registry::generated::enchantments as ench;
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+    let sharp = ench::enchantment_index("sharpness").unwrap();
+    let mending = ench::enchantment_index("mending").unwrap();
+    let power = ench::enchantment_index("power").unwrap();
+    let mut app = crate::screens::App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x, body.y, body.z);
+    let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+    // THE OFFHAND'S OWN STACK + THE STALE SEAT (the merge landing the
+    // seat's own arm wears — the old pairs the landed word re-answers)
+    app.inventory.offhand[0] = (dirt, 1);
+    app.inventory_enchants[OFFHAND_KIND_SEAT] = vec![(mending as i32, 1)];
+    // the untouched hotbar row's own pairs
+    app.inventory_enchants[0] = vec![(power as i32, 4)];
+    // THE ENCHANTED DROP'S OWN MERGE (the (sharp, 3) pairs the
+    // offhand's grow arm banks — the 0..36 rows the enchanted word
+    // the gate refuses, the seat's own arm the true word keeps)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(1, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.enchantments = vec![(sharp, 3)];
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 2),
+        "the merge the offhand seat grows"
+    );
+    assert_eq!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT],
+        vec![(sharp as i32, 3)],
+        "the landing's pairs the offhand row banks"
+    );
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(power as i32, 4)],
+        "the untouched hotbar row the pairs keep"
+    );
+    // THE PRISTINE MERGE'S OWN RESET (the plain drop the grow arm the
+    // landed word banks — the stale glint the merge never keeps)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(2, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the pristine merge the seat grows"
+    );
+    assert!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT].is_empty(),
+        "the pristine merge the seat's row resets"
+    );
+    // THE OTHER-ID DROP'S OWN LANE (the free-slot fallback the 0..36
+    // rows the fresh landing wears — the offhand's row the untouched
+    // seat the pairs keep)
+    app.inventory_enchants[OFFHAND_KIND_SEAT] = vec![(sharp as i32, 1)];
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(3, cobble, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the other id the offhand walks past"
+    );
+    assert_eq!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT],
+        vec![(sharp as i32, 1)],
+        "the untouched seat the pairs keep"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (cobble, 1),
+        "the free slot the fresh landing holds"
+    );
+    assert!(
+        app.inventory_enchants[0].is_empty(),
+        "the fresh landing the plain rows wear"
+    );
+}

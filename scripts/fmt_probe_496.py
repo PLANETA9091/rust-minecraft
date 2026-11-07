@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""autopush-495 — THE FMT REGION WALK (the 485..495 record's own law
+"""autopush-496 — THE FMT REGION WALK (the 485..495 record's own law
 the round wears): the whole-file rustfmt the ORIGINAL text the
 formatted stdout the diff answers — the MY-REGIONS verdict the marker
 ranges keep (no hunk may touch the round's own edits).
 
 Regions:
-  screens.rs — the pickup landing's own offhand snapshot line + the
-  whole offhand wear arm (the 37th row the round banks).
+  screens.rs — the pickup landing's own 37th-row ench ride (the
+  offhand seat the merge arm banks).
   part_11.rs — the round's own test (the tail wears, EOF the end the
   round keeps).
 """
@@ -18,22 +18,17 @@ import sys
 RUSTFMT = os.path.expanduser("~/.cargo/bin/rustfmt")
 
 SCREENS = [
-    # the offhand snapshot line (the wear_before pair the ride keeps)
+    # the 37th-row ench ride (the offhand seat's own arm + the closes)
     (
-        "                            let wear_before = self.inventory.items;",
-        "                            let inv_before = if drop_kind != crate::brewing_sim::POTION_KIND_NONE {",
-    ),
-    # the offhand wear arm (the 37th row the round banks)
-    (
-        "                                // THE OFFHAND'S OWN WEAR RIDE (the",
-        "                                // THE ENCHANT'S OWN RIDE (the",
+        "                                // THE OFFHAND'S OWN ENCH RIDE (the",
+        "                        // THE PICKUP'S OWN POP (javap 26.2",
     ),
 ]
 
 PART11 = [
     # the round's own test (the tail wears)
     (
-        "/// THE PICKUP'S OWN OFFHAND WEAR (the",
+        "/// THE PICKUP'S OWN OFFHAND ENCH (the autopush-496 round",
         None,
     ),
 ]
