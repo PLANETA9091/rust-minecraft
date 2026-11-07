@@ -46160,3 +46160,128 @@ fn the_clone_the_table_the_rows_banks() {
         "the stale pairs the fresh read cleans"
     );
 }
+
+/// THE CLONE'S OWN DISPENSER RIDE (the 232 NEXT's own second lane —
+/// the safeClone law the dispenser's own cursor wears: the hovered
+/// seat's own kind word the carried banks [the grid nine the ROW
+/// STORE's word speaks, the mirror rows the id-gated mapped read
+/// answers, the kindless stack the honest NONE keeps], the stale
+/// word the fresh read cleans, the seat's own rows the copy never
+/// touches, the wire lane the kindless cursor the wall keeps [the
+/// dev-230 record's own wall re-wears]).
+#[test]
+fn the_clone_the_dispenser_the_kind_banks() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.game_mode = crate::screens::GameMode::Creative;
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+    app.open_dispenser_for(cell);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Dispenser,
+        "the dispenser door the walk wears"
+    );
+    // THE MIRROR ROW'S OWN COPY (the write-through's mapped read the
+    // kind banks — the potion's 1-cap the FULL max takes)
+    app.inventory.items[18] = (potion, 1);
+    app.items_potion_kinds[18] = kind_a;
+    let (ox, oy) = dispenser_seat(&mut app, 18);
+    app.on_container_clone_click(ox, oy);
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the potion's 1-cap the FULL max takes"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, kind_a,
+        "the mirror row's word the cursor banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[18], kind_a,
+        "the seat the copy never touches"
+    );
+    // THE GRID CELL'S OWN COPY (the ROW STORE's own word the cursor
+    // banks)
+    app.dispenser_carried = (0, 0);
+    app.dispenser_slots[3] = (potion, 2);
+    app.dispenser_row_potion_kinds[3] = kind_b;
+    let (ox2, oy2) = dispenser_seat(&mut app, 3);
+    app.on_container_clone_click(ox2, oy2);
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the grid copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, kind_b,
+        "the row store's word the cursor banks"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[3], kind_b,
+        "the cell the copy never touches"
+    );
+    // THE NON-POTION'S OWN HONEST NONE (the stale word the id-gate
+    // cleans)
+    app.dispenser_carried = (0, 0);
+    app.dispenser_carried_potion_kind = kind_a;
+    app.inventory.items[10] = (dirt, 3);
+    app.items_potion_kinds[10] = kind_a;
+    let (ox3, oy3) = dispenser_seat(&mut app, 10);
+    app.on_container_clone_click(ox3, oy3);
+    assert_eq!(
+        app.dispenser_carried,
+        (dirt, 64),
+        "the dirt copy the max takes"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the stale word the honest NONE keeps"
+    );
+    // THE GRID CELL'S OWN KINDLESS ROW (the stale word the store's
+    // silence cleans)
+    app.dispenser_carried = (0, 0);
+    app.dispenser_carried_potion_kind = kind_b;
+    app.dispenser_slots[1] = (dirt, 1);
+    let (ox4, oy4) = dispenser_seat(&mut app, 1);
+    app.on_container_clone_click(ox4, oy4);
+    assert_eq!(
+        app.dispenser_carried,
+        (dirt, 64),
+        "the grid copy the max takes"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, none,
+        "the kindless store the honest NONE keeps"
+    );
+    // THE HOTBAR ROW'S OWN COPY (the -36 shift the mapped read keys)
+    app.dispenser_carried = (0, 0);
+    app.inventory.items[2] = (potion, 1);
+    app.items_potion_kinds[2] = kind_b;
+    let (ox5, oy5) = dispenser_seat(&mut app, 38);
+    app.on_container_clone_click(ox5, oy5);
+    assert_eq!(
+        app.dispenser_carried,
+        (potion, 1),
+        "the hotbar copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.dispenser_carried_potion_kind, kind_b,
+        "the hotbar row's word the cursor banks"
+    );
+}
