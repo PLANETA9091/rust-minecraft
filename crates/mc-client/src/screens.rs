@@ -46023,6 +46023,16 @@ impl App {
     /// SWAP arm ran — the refusals the checkHotbarKeyPressed's own
     /// true-return keep); the false verdicts (the screen's own
     /// gates) the world chain answers.
+    /// THE RIDE'S OWN TAIL (the dev-235 round — the kind + data rows
+    /// the swap table re-wears: the hovered seat's word + pairs the
+    /// normalized reads pre-key [the non-potion seat the id gate the
+    /// honest NONE keeps], the four arms the click walks' own laws
+    /// speak — the CASE B the hover's word the button row banks, the
+    /// CASE C the row's word the seat lays [the split the copy-bank
+    /// law], the CASE D the pairs the words exchange, the rowless
+    /// seats [the result the kindless answer owes, the armor the 487
+    /// law] the pristine bank answers, the craft cell's mutation the
+    /// slotsChanged recompute follows).
     pub fn on_inventory_swap_key(&mut self, button: usize) -> bool {
         if self.screen != ScreenKind::Inventory || self.dead {
             return false;
@@ -46152,6 +46162,70 @@ impl App {
         if row_count <= 0 && hover_count <= 0 {
             return true; // pc 1130-1146: the both-empty silence
         }
+        // THE SAME SEAT'S OWN SILENCE (the wire walk's own guard the
+        // offline twin re-wears — the hovered seat the button row's
+        // own index names: the identical pair the walk sets back, no
+        // mutation the rows speak)
+        if matches!(hover, InventoryHover::Store(i) if i == button)
+            || (button == 40 && matches!(hover, InventoryHover::Offhand))
+        {
+            return true;
+        }
+        // THE ROWS' OWN PRE-READS (the 491/377 law's own hoist the
+        // swap table re-wears — the ride the writes pre-key: the
+        // hover seat's word + pairs the normalized reads speak [the
+        // non-potion seat the id gate the honest NONE keeps], the
+        // button row's the own bank's word; the rowless seats — the
+        // result the kindless answer owes, the armor the rows the
+        // 487 law never carries — the pristine reads wear)
+        let (hover_kind, hover_frac, hover_ench) = match hover {
+            InventoryHover::Result | InventoryHover::Armor(_) => {
+                (crate::brewing_sim::POTION_KIND_NONE, 0.0, Vec::new())
+            }
+            InventoryHover::Craft(c) => (
+                if crate::world::brewing_is_potion_kind(self.craft_grid[c].0) {
+                    self.craft_grid_potion_kinds[c]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                },
+                self.craft_grid_damage_frac[c],
+                self.craft_grid_enchants[c].clone(),
+            ),
+            InventoryHover::Store(i) => (
+                self.row_potion_kind(i),
+                self.items_damage_frac[i],
+                self.inventory_enchants[i].clone(),
+            ),
+            InventoryHover::Offhand => (
+                if crate::world::brewing_is_potion_kind(self.inventory.offhand[0].0) {
+                    self.items_potion_kinds[OFFHAND_KIND_SEAT]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                },
+                self.items_damage_frac[OFFHAND_KIND_SEAT],
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+            ),
+        };
+        let row_kind = if crate::world::brewing_is_potion_kind(row_id) {
+            if button == 40 {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT]
+            } else {
+                self.items_potion_kinds[button]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let (row_frac, row_ench) = if button == 40 {
+            (
+                self.items_damage_frac[OFFHAND_KIND_SEAT],
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+            )
+        } else {
+            (
+                self.items_damage_frac[button],
+                self.inventory_enchants[button].clone(),
+            )
+        };
         // THE SEAT'S mayPlace (the Slot.mayPlace walk — the base
         // slots' iconst_1, the armor's matching-piece verdict, the
         // result's iconst_0 the place arms refuse)
@@ -46165,6 +46239,17 @@ impl App {
             // verdict speaks
             self.inventory_set_hover(hover, (0, 0));
             self.inventory_set_row(button, (hover_id, hover_count));
+            // THE RIDE'S OWN BANKS (the 491 law the swap table
+            // re-wears — the hovered stack's word + pairs the button
+            // row banks [the result the kindless answer the 504 law
+            // speaks], the emptied seat the pristine rows wear: the
+            // drained cell the 229 law the retire speaks, the rowless
+            // seats the write skips)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+            self.swap_table_seat_rows_write(hover, crate::brewing_sim::POTION_KIND_NONE, 0.0, &[]);
+            if let InventoryHover::Craft(_) = hover {
+                self.refresh_craft_result();
+            }
             // THE STATS' OWN CRAFTED BANK (the result seat's own take —
             // the vanilla ResultSlot.onTake's awardStat law the ride
             // wears, the Result arm the plain rows never bank)
@@ -46186,9 +46271,28 @@ impl App {
             if row_count > max {
                 self.inventory_set_hover(hover, (row_id, max));
                 self.inventory_set_row(button, (row_id, row_count - max));
+                // THE SPLIT'S OWN COPY-BANK (the qc drag's own law the
+                // split re-wears — the destination the source's word
+                // + pairs banks, the remainder the own rows keep: the
+                // kinded split the max-stack-1 law never speaks)
+                self.swap_table_seat_rows_write(hover, row_kind, row_frac, &row_ench);
             } else {
                 self.inventory_set_row(button, (0, 0));
                 self.inventory_set_hover(hover, (row_id, row_count));
+                // THE PLACE'S OWN RIDE (the kind the whole-stack move
+                // keeps — the seat the row's word + pairs banks [the
+                // rowless hover the 487 honesty the write skips], the
+                // drained row the pristine rows wear)
+                self.swap_table_seat_rows_write(hover, row_kind, row_frac, &row_ench);
+                self.swap_table_button_rows_write(
+                    button,
+                    crate::brewing_sim::POTION_KIND_NONE,
+                    0.0,
+                    &[],
+                );
+            }
+            if let InventoryHover::Craft(_) = hover {
+                self.refresh_craft_result();
             }
             self.hotbar_slots = self.inventory.hotbar();
             return true;
@@ -46207,6 +46311,14 @@ impl App {
             // empty law), the add's FALSE the player.drop speaks
             self.inventory_set_hover(hover, (row_id, max));
             self.inventory_set_row(button, (row_id, row_count - max));
+            // THE SPLIT'S OWN COPY-BANK (the CASE C's own law the
+            // both-filled split re-wears — the hover the incoming
+            // row's word + pairs banks, the remainder the own rows
+            // keep; the ADDED original's word the add's plain pairs
+            // the wall keeps — the row over-max the valid store
+            // never holds, the honest note the unreachable lane
+            // wears)
+            self.swap_table_seat_rows_write(hover, row_kind, row_frac, &row_ench);
             let (leftover, _spoke) =
                 self.inventory
                     .add(self.selected_hotbar, hover_id, hover_count, false);
@@ -46218,9 +46330,72 @@ impl App {
             // stack takes, the cell the row's stack wears
             self.inventory_set_row(button, (hover_id, hover_count));
             self.inventory_set_hover(hover, (row_id, row_count));
+            // THE TRADE'S OWN PAIR RIDE (the words + the pairs the
+            // seats exchange — the identical pair the swap the no-op
+            // keeps, the rowless hover the pristine bank answers [the
+            // 487 law the moved piece the rows never mint])
+            self.swap_table_seat_rows_write(hover, row_kind, row_frac, &row_ench);
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+        }
+        if let InventoryHover::Craft(_) = hover {
+            self.refresh_craft_result();
         }
         self.hotbar_slots = self.inventory.hotbar();
         true
+    }
+
+    /// THE SWAP TABLE'S OWN SEAT WRITE (the ride's landing — the
+    /// hover seat's word + pairs the seat's own rows bank: the store
+    /// row + the offhand the 37-seat parity answers, the craft cell
+    /// the 4-row bank keeps, the rowless seats — the result's
+    /// kindless answer, the armor's own rows the 487 law never
+    /// carries — the write skips)
+    fn swap_table_seat_rows_write(
+        &mut self,
+        hover: InventoryHover,
+        kind: i32,
+        frac: f32,
+        ench: &[(i32, i32)],
+    ) {
+        match hover {
+            InventoryHover::Result | InventoryHover::Armor(_) => {}
+            InventoryHover::Craft(c) => {
+                self.craft_grid_potion_kinds[c] = kind;
+                self.craft_grid_damage_frac[c] = frac;
+                self.craft_grid_enchants[c] = ench.to_vec();
+            }
+            InventoryHover::Store(i) => {
+                self.items_potion_kinds[i] = kind;
+                self.items_damage_frac[i] = frac;
+                self.inventory_enchants[i] = ench.to_vec();
+            }
+            InventoryHover::Offhand => {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT] = kind;
+                self.items_damage_frac[OFFHAND_KIND_SEAT] = frac;
+                self.inventory_enchants[OFFHAND_KIND_SEAT] = ench.to_vec();
+            }
+        }
+    }
+
+    /// THE SWAP TABLE'S OWN BUTTON WRITE (the ride's other landing —
+    /// the button row's word + pairs the kind/data parity the 37th
+    /// seat keeps: the digits the own rows wear, the 40 the offhand's
+    /// 36TH seat answers)
+    fn swap_table_button_rows_write(
+        &mut self,
+        button: usize,
+        kind: i32,
+        frac: f32,
+        ench: &[(i32, i32)],
+    ) {
+        let seat = if button == 40 {
+            OFFHAND_KIND_SEAT
+        } else {
+            button
+        };
+        self.items_potion_kinds[seat] = kind;
+        self.items_damage_frac[seat] = frac;
+        self.inventory_enchants[seat] = ench.to_vec();
     }
 
     /// The hovered seat's own stack (the menu's slot list the walk

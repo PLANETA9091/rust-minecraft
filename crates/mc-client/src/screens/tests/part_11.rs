@@ -47113,3 +47113,173 @@ fn the_result_the_cursor_the_kind_answers() {
         "the craft's merge the kindless answer re-wears"
     );
 }
+
+/// THE SWAP TABLE'S OWN WORD RIDE (the dev-235 round — the number-key
+/// swap the kind/data rows the four arms the click walks' laws
+/// answer): the CASE D trade the pairs the words exchange, the
+/// non-potion swap-in the kindless answer banks, the CASE B the
+/// hovered stack's word + pairs the button row banks [the drained
+/// seat the pristine rows wear], the same seat the identical pair
+/// the silence keeps.
+#[test]
+fn the_swap_table_the_words_the_pairs_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE SAME-ID TRADE'S OWN EXCHANGE (the CASE D straight trade —
+    // the kind_a / kind_b pair the words the seats exchange)
+    app.inventory.items[0] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[0] = kind_a;
+    app.items_potion_kinds[9] = kind_b;
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+    app.mouse_pos = Some((ox + 8, oy + 8));
+    assert!(app.on_inventory_swap_key(0), "the trade consumes");
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the pair's wears"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the seat the pair's wears"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_b, "the word the row rode");
+    assert_eq!(app.items_potion_kinds[9], kind_a, "the word the seat rode");
+    // THE NON-POTION SWAP-IN'S OWN KINDLESS ANSWER (the planks the
+    // potion's old seat wears — the stale word the honest NONE
+    // retires)
+    app.inventory.items[0] = (planks, 4);
+    app.items_potion_kinds[0] = none;
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind_a;
+    app.mouse_pos = Some((ox + 8, oy + 8));
+    assert!(app.on_inventory_swap_key(0), "the trade consumes");
+    assert_eq!(
+        app.inventory.items[9],
+        (planks, 4),
+        "the seat the planks wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the potion wears"
+    );
+    assert_eq!(app.items_potion_kinds[9], none, "the kindless answer banks");
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE CASE B'S OWN BANK (the sword the wear + pairs the empty
+    // row banks — the drained seat the pristine rows wear)
+    app.inventory.items[9] = (sword, 1);
+    app.items_damage_frac[9] = 0.4;
+    app.inventory_enchants[9] = vec![(sharp, 5)];
+    app.items_potion_kinds[9] = none;
+    app.inventory.items[0] = (0, 0);
+    app.items_potion_kinds[0] = none;
+    app.mouse_pos = Some((ox + 8, oy + 8));
+    assert!(app.on_inventory_swap_key(0), "the take consumes");
+    assert_eq!(app.inventory.items[9], (0, 0), "the seat empties");
+    assert_eq!(
+        app.inventory.items[0],
+        (sword, 1),
+        "the row the sword rides"
+    );
+    assert_eq!(app.items_damage_frac[0], 0.4, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(sharp, 5)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[9], 0.0,
+        "the drained seat the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[9].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained word the pristine wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the identical pair the walk sets
+    // back — no mutation the rows speak)
+    app.inventory.items[5] = (planks, 2);
+    app.items_potion_kinds[5] = none;
+    let (fx, fy) = inventory_slot_origin(app.inv_panel, 5);
+    app.mouse_pos = Some((fx + 8, fy + 8));
+    assert!(app.on_inventory_swap_key(5), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[5],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE SWAP TABLE'S OWN GRID BANK (the dev-235 round — the craft
+/// cells' kind/data rows the swap table answers: the row's potion
+/// the empty cell lays [the word the place banks], the CASE B result
+/// take the kindless answer the button row banks, the craft_on_take
+/// the consumed cells the retire speaks)
+#[test]
+fn the_swap_table_the_grid_the_word_banks() {
+    let log = mc_registry::item_id_by_name("oak_log").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE CASE C'S OWN PLACE (the row's potion the empty craft cell
+    // lays — the word the place banks, the recompute the mutation
+    // follows)
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_a;
+    let (cx, cy) = craft_slot_origin(app.inv_panel, 0);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_inventory_swap_key(0), "the place consumes");
+    assert_eq!(app.craft_grid[0], (potion, 1), "the cell the row's wears");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], kind_a,
+        "the word the place banks"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the row empties");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained row the pristine wears"
+    );
+    // THE CASE B'S OWN TAKE (the result the button row rides — the
+    // kindless answer the row banks, the craft_on_take the consumed
+    // cell the retire speaks)
+    app.craft_grid[0] = (log, 1);
+    app.refresh_craft_result();
+    assert_eq!(app.craft_result, (planks, 4), "the recipe speaks");
+    let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+    app.mouse_pos = Some((rx + 8, ry + 8));
+    assert!(app.on_inventory_swap_key(0), "the take consumes");
+    assert_eq!(
+        app.inventory.items[0],
+        (planks, 4),
+        "the result the row rides"
+    );
+    assert_eq!(app.items_potion_kinds[0], none, "the kindless answer banks");
+    assert_eq!(app.craft_result, (0, 0), "the result empties");
+    assert_eq!(app.craft_grid[0], (0, 0), "the take consumes");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], none,
+        "the drained cell the retire keeps"
+    );
+}
