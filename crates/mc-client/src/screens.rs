@@ -36436,12 +36436,71 @@ impl App {
     /// own shape — the TransientCraftingContainer cells the mayPlace
     /// default TRUE keeps): the left press picks up / places / merges /
     /// swaps (the predict_pickup walk verbatim), the right press
-    /// splits and places one. The shift-click's quick-move INTO the
-    /// grid rides later (silence here — the inventory's own craft
-    /// cells keep the same shape).
+    /// splits and places one. The shift-click rides the 510 census's
+    /// grid arm — the [10, 46) FORWARD store walk the cell's stack
+    /// answers, the wear + pairs + word the empty rows bank (the
+    /// quick-move-into-craft lane the later round named rides HERE —
+    /// the grid cells' own out-lane the store rows speak).
     fn click_table_cell(&mut self, cell: usize, button: i8) {
         if self.shift_down {
-            return; // the quick-move-into-craft lane rides later
+            // THE GRID'S OWN SHIFT RIDE (the 510 census —
+            // CraftingMenu.quickMoveStack pc 154-162 the grid cells'
+            // arm: `moveItemStackTo(itemstack1, 10, 46, false)` — the
+            // [10, 46) FORWARD walk the store rows answer, the main
+            // rows first, the hotbar after; the offline store the
+            // main-first order the to-store walk's own rows speak).
+            // The moved stack's own seats the lanes ride — the wear +
+            // pairs the empty store rows bank, the merges the own
+            // identity keep, the drained cell the pristine rows wear,
+            // the remainder the own rows keep.
+            let (id, count) = self.table_grid[cell];
+            if count > 0 {
+                let (changed, rest) = crate::world_view::predict_quick_move_to_store(
+                    &self.inventory.items,
+                    id,
+                    count,
+                );
+                // THE SEATS' OWN PRE-READS (the ride the writes
+                // pre-key — the source's normalized word + the
+                // destinations' old cells the empty-fill gate reads)
+                let src_frac = self.table_grid_damage_frac[cell];
+                let src_ench = self.table_grid_enchants[cell].clone();
+                let src_kind = if crate::world::brewing_is_potion_kind(id) {
+                    self.table_grid_potion_kinds[cell]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                let old_dests: Vec<(usize, (i32, i32))> = changed
+                    .iter()
+                    .map(|(i, _)| (*i, self.inventory.items[*i]))
+                    .collect();
+                for (i, pair) in &changed {
+                    self.inventory.items[*i] = *pair;
+                }
+                self.table_grid[cell] = if rest > 0 { (id, rest) } else { (0, 0) };
+                // THE SOURCE'S OWN TAIL (the drained cell the pristine
+                // rows wear — the remainder the own rows keep)
+                if rest <= 0 {
+                    self.table_grid_damage_frac[cell] = 0.0;
+                    self.table_grid_enchants[cell].clear();
+                    self.table_grid_potion_kinds[cell] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+                // THE DESTINATIONS' OWN BANKS (the empty fill the moved
+                // stack's own wear + pairs + word banks — the merge the
+                // original keeps)
+                for (idx, old) in &old_dests {
+                    if old.1 <= 0 {
+                        self.items_damage_frac[*idx] = src_frac;
+                        self.inventory_enchants[*idx] = src_ench.clone();
+                        if src_kind != crate::brewing_sim::POTION_KIND_NONE {
+                            self.items_potion_kinds[*idx] = src_kind;
+                        }
+                    }
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+                self.refresh_table_result();
+            }
+            return;
         }
         let believed = self.table_grid[cell];
         // THE KIND'S OWN READS (the hoist the component law pre-keys —
@@ -36653,6 +36712,64 @@ impl App {
             return;
         };
         if self.shift_down {
+            // THE GRID'S OWN FILL ARM (the 510 census — CraftingMenu.
+            // quickMoveStack pc 87-109 the store rows' arm the 3x3
+            // grid answers FIRST: `moveItemStackTo(itemstack1, 1, 10,
+            // false)` — the [1, 10) FORWARD walk the nine cells speak;
+            // the FALSE verdict the nothing-moved walk the section
+            // fallback below answers, the census's own order the arm
+            // keeps). The moved stack's own wear + pairs the empty
+            // cells bank — the store→grid move the data never eats.
+            let (id, count) = self.inventory.items[store];
+            if count > 0 {
+                let (fill, rest) =
+                    crate::world_view::predict_quick_move_into_grid(&self.table_grid, id, count);
+                if !fill.is_empty() {
+                    // THE SEATS' OWN PRE-READS (the ride the writes
+                    // pre-key — the source's normalized word + the
+                    // destinations' old cells the empty-fill gate
+                    // reads)
+                    let src_frac = self.items_damage_frac[store];
+                    let src_ench = self.inventory_enchants[store].clone();
+                    let src_kind = self.row_potion_kind(store);
+                    let old_dests: Vec<(usize, (i32, i32))> = fill
+                        .iter()
+                        .map(|(c, _)| (*c, self.table_grid[*c]))
+                        .collect();
+                    for (c, pair) in &fill {
+                        self.table_grid[*c] = *pair;
+                    }
+                    self.inventory.items[store] = if rest > 0 { (id, rest) } else { (0, 0) };
+                    // THE SOURCE'S OWN TAIL (the drained row the
+                    // pristine rows wear — the remainder the own rows
+                    // keep)
+                    if rest <= 0 {
+                        self.items_damage_frac[store] = 0.0;
+                        self.inventory_enchants[store].clear();
+                    }
+                    self.items_potion_kinds[store] =
+                        if rest > 0 && crate::world::brewing_is_potion_kind(id) {
+                            src_kind
+                        } else {
+                            crate::brewing_sim::POTION_KIND_NONE
+                        };
+                    // THE DESTINATIONS' OWN BANKS (the empty fill the
+                    // moved stack's own wear + pairs + word banks — the
+                    // merge the original keeps)
+                    for (c, old) in &old_dests {
+                        if old.1 <= 0 {
+                            self.table_grid_damage_frac[*c] = src_frac;
+                            self.table_grid_enchants[*c] = src_ench.clone();
+                            if src_kind != crate::brewing_sim::POTION_KIND_NONE {
+                                self.table_grid_potion_kinds[*c] = src_kind;
+                            }
+                        }
+                    }
+                    self.hotbar_slots = self.inventory.hotbar();
+                    self.refresh_table_result();
+                    return;
+                }
+            }
             let changed = crate::world_view::predict_quick_move_inventory(
                 &self.inventory.items,
                 &self.inventory.armor,
@@ -37081,13 +37198,71 @@ impl App {
     /// own shape — the TransientCraftingContainer cells the mayPlace
     /// default TRUE keeps): the left press picks up / places / merges /
     /// swaps (the predict_pickup walk the store slots speak verbatim),
-    /// the right press splits and places one. The shift-click's
-    /// quick-move INTO the craft region rides later (the
-    /// quickMoveStack's 1..9 walk the menu keeps — silence here). The
+    /// the right press splits and places one. The shift-click rides
+    /// the 510 census's craft arm — the [9, 45) FORWARD store walk the
+    /// cell's stack answers, the wear + pairs + word the empty rows
+    /// bank (the quickMoveStack's 1..9 arm the menu speaks). The
     /// mutation's slotsChanged recompute the result follows.
     fn click_craft_cell(&mut self, cell: usize, button: i8) {
         if self.shift_down {
-            return; // the quick-move-into-craft lane rides later
+            // THE GRID'S OWN SHIFT RIDE (the 510 census —
+            // InventoryMenu.quickMoveStack pc 78-96 the craft cells'
+            // arm: `moveItemStackTo(itemstack1, 9, 45, false)` — the
+            // [9, 45) FORWARD walk the store rows answer, the main
+            // rows first, the hotbar after; the armor/offhand sources'
+            // fallthrough the same walk the to-store predictor
+            // speaks). The moved stack's own seats the lanes ride —
+            // the wear + pairs the empty store rows bank, the merges
+            // the own identity keep, the drained cell the pristine
+            // rows wear, the remainder the own rows keep.
+            let (id, count) = self.craft_grid[cell];
+            if count > 0 {
+                let (changed, rest) = crate::world_view::predict_quick_move_to_store(
+                    &self.inventory.items,
+                    id,
+                    count,
+                );
+                // THE SEATS' OWN PRE-READS (the ride the writes
+                // pre-key — the source's normalized word + the
+                // destinations' old cells the empty-fill gate reads)
+                let src_frac = self.craft_grid_damage_frac[cell];
+                let src_ench = self.craft_grid_enchants[cell].clone();
+                let src_kind = if crate::world::brewing_is_potion_kind(id) {
+                    self.craft_grid_potion_kinds[cell]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                };
+                let old_dests: Vec<(usize, (i32, i32))> = changed
+                    .iter()
+                    .map(|(i, _)| (*i, self.inventory.items[*i]))
+                    .collect();
+                for (i, pair) in &changed {
+                    self.inventory.items[*i] = *pair;
+                }
+                self.craft_grid[cell] = if rest > 0 { (id, rest) } else { (0, 0) };
+                // THE SOURCE'S OWN TAIL (the drained cell the pristine
+                // rows wear — the remainder the own rows keep)
+                if rest <= 0 {
+                    self.craft_grid_damage_frac[cell] = 0.0;
+                    self.craft_grid_enchants[cell].clear();
+                    self.craft_grid_potion_kinds[cell] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+                // THE DESTINATIONS' OWN BANKS (the empty fill the moved
+                // stack's own wear + pairs + word banks — the merge the
+                // original keeps)
+                for (idx, old) in &old_dests {
+                    if old.1 <= 0 {
+                        self.items_damage_frac[*idx] = src_frac;
+                        self.inventory_enchants[*idx] = src_ench.clone();
+                        if src_kind != crate::brewing_sim::POTION_KIND_NONE {
+                            self.items_potion_kinds[*idx] = src_kind;
+                        }
+                    }
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+                self.refresh_craft_result();
+            }
+            return;
         }
         let believed = self.craft_grid[cell];
         // THE KIND'S OWN READS (the hoist the component law pre-keys —

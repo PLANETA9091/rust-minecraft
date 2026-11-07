@@ -18025,9 +18025,11 @@ fn the_quick_move_the_kind_word_rides_wears() {
         app.items_potion_kinds[30], night,
         "the silence the source's word wears"
     );
-    // ARM D — THE TABLE STORE ROW'S OWN RIDE (the table screen's
-    // store rows the same shift lane wears, the hotbar head the fill
-    // takes, the word the same banks ride)
+    // ARM D — THE TABLE STORE ROW'S OWN RIDE (the 510 census the
+    // store rows' arm the 3x3 grid answers FIRST — the empty cells
+    // the fill takes, the word the grid seat banks; the full grid the
+    // nothing-moved verdict the fallback speaks, the hotbar head the
+    // fill takes, the word the same banks ride)
     app.table_panel = (60, 30);
     for it in app.inventory.items.iter_mut() {
         *it = (0, 0);
@@ -18039,6 +18041,32 @@ fn the_quick_move_the_kind_word_rides_wears() {
     app.items_potion_kinds[9] = night;
     let (tx, ty) = inventory_slot_origin((60, 30), 9);
     app.click_table_slot(tx + 8, ty + 8, 0);
+    // THE GRID'S OWN FILL (the empty cell the stack takes — the word
+    // the grid seat banks)
+    assert_eq!(
+        app.table_grid[0],
+        (potion, 1),
+        "the grid head the fill takes"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[0], night,
+        "the word the grid seat banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the drained source the word retires"
+    );
+    assert_eq!(app.inventory.items[9], (0, 0), "the source the move drains");
+    // THE FULL GRID'S OWN FALLBACK (the stone cells the walk refuses,
+    // the hotbar head the fill takes, the word the same banks ride)
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    for cell in 0..9 {
+        app.table_grid[cell] = (stone, 64);
+    }
+    app.inventory.items[10] = (potion, 1);
+    app.items_potion_kinds[10] = night;
+    let (tx2, ty2) = inventory_slot_origin((60, 30), 10);
+    app.click_table_slot(tx2 + 8, ty2 + 8, 0);
     assert_eq!(
         app.inventory.items[0],
         (potion, 1),
@@ -18049,10 +18077,14 @@ fn the_quick_move_the_kind_word_rides_wears() {
         "the word the hotbar row banks"
     );
     assert_eq!(
-        app.items_potion_kinds[9], none,
+        app.items_potion_kinds[10], none,
         "the drained source the word retires"
     );
-    assert_eq!(app.inventory.items[9], (0, 0), "the source the move drains");
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the fallback the source drains"
+    );
     // ARM E — THE CREATIVE WRAP'S OWN RIDE (the wrap's hotbar seat
     // the same shift arm wears, the main head the fill takes)
     app.creative_panel = (200, 20);
@@ -44761,5 +44793,394 @@ fn the_table_cells_the_glint_the_seats_wear() {
     assert_eq!(
         cell_diff, row_diff,
         "the same icon the same tint count keeps"
+    );
+}
+
+/// THE GRID'S OWN SHIFT RIDE (the autopush-493 round — the 510 census
+/// the InventoryMenu.quickMoveStack the craft cells' arm the [9, 45)
+/// forward walk the store rows answer): the worn + the enchanted
+/// stacks the cells the store rows the landing banks, the empty fills
+/// the source's own wear + pairs the data banks, the merges the own
+/// identity keep, the drained cell the pristine rows wear, the
+/// remainder the own rows keep, the kinded stack the word rides.
+#[test]
+fn the_grid_shift_the_cells_the_store_banks() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let power = the_menus_glint_power();
+    let pairs = vec![(power, 4)];
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE SEATS' OWN PRISTINE (the fresh cells the zeros the ctor banks)
+    for cell in 0..4 {
+        assert_eq!(
+            app.craft_grid_damage_frac[cell], 0.0,
+            "the fresh cell the 0.0 wears"
+        );
+        assert!(
+            app.craft_grid_enchants[cell].is_empty(),
+            "the fresh cell the clear wears"
+        );
+    }
+    // THE WORN ENCHANTED SHIFT (the cell's own stack the store rows
+    // the landing banks — the main rows first, the empty fill the
+    // source's own wear + pairs banks, the drained cell the pristine
+    // rows wear)
+    app.craft_grid[0] = (boots, 1);
+    app.craft_grid_damage_frac[0] = 0.5;
+    app.craft_grid_enchants[0] = pairs.clone();
+    app.inventory.items[9] = (dirt, 10);
+    app.shift_down = true;
+    app.click_craft_cell(0, 0);
+    app.shift_down = false;
+    assert_eq!(app.craft_grid[0], (0, 0), "the cell the shift empties");
+    assert_eq!(
+        app.inventory.items[10],
+        (boots, 1),
+        "the stack the landing banks"
+    );
+    assert_eq!(app.items_damage_frac[10], 0.5, "the wear the landing banks");
+    assert_eq!(
+        app.inventory_enchants[10], pairs,
+        "the pairs the landing banks"
+    );
+    assert_eq!(
+        app.craft_grid_damage_frac[0], 0.0,
+        "the drained cell the pristine wears"
+    );
+    assert!(
+        app.craft_grid_enchants[0].is_empty(),
+        "the drained cell the clear wears"
+    );
+    // THE KINDED SHIFT (the potion the word the landing banks — the
+    // cell's own kind the retire wears)
+    app.craft_grid[0] = (potion, 1);
+    app.craft_grid_potion_kinds[0] = 4;
+    app.shift_down = true;
+    app.click_craft_cell(0, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items[11],
+        (potion, 1),
+        "the potion the landing banks"
+    );
+    assert_eq!(app.items_potion_kinds[11], 4, "the word the landing banks");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], none,
+        "the cell's own kind the retire wears"
+    );
+    // THE REMAINDER'S OWN ROWS (the partial move the cell the own
+    // rows keep — the merge pass the store's room takes, the full
+    // rows the pass-2 refuses; the stone rows the merge order the
+    // earlier stacks' seats retire)
+    app.craft_grid[1] = (dirt, 64);
+    app.craft_grid_damage_frac[1] = 0.3;
+    for it in app.inventory.items.iter_mut() {
+        *it = (stone, 64);
+    }
+    app.inventory.items[12] = (dirt, 30);
+    app.shift_down = true;
+    app.click_craft_cell(1, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items[12],
+        (dirt, 64),
+        "the merge pass the room takes"
+    );
+    assert_eq!(
+        app.craft_grid[1],
+        (dirt, 30),
+        "the remainder the cell keeps"
+    );
+    assert_eq!(
+        app.craft_grid_damage_frac[1], 0.3,
+        "the remainder the own rows keep"
+    );
+    // THE MERGE'S OWN IDENTITY (the destination the own rows keep —
+    // the source's own data the merge never wears)
+    app.craft_grid[2] = (dirt, 5);
+    app.craft_grid_damage_frac[2] = 0.8;
+    app.inventory.items[12] = (dirt, 40);
+    app.items_damage_frac[12] = 0.1;
+    app.shift_down = true;
+    app.click_craft_cell(2, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items[12],
+        (dirt, 45),
+        "the merge the seat grows"
+    );
+    assert_eq!(
+        app.items_damage_frac[12], 0.1,
+        "the merge the own rows keep"
+    );
+    assert_eq!(
+        app.craft_grid_damage_frac[2], 0.0,
+        "the drained cell the pristine wears"
+    );
+    // THE EMPTY CELL'S OWN SILENCE (the shift the empty cell the
+    // store never speaks)
+    let before = app.inventory.items;
+    app.shift_down = true;
+    app.click_craft_cell(3, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items, before,
+        "the empty cell the silence keeps"
+    );
+}
+
+/// THE TABLE SHIFT'S OWN OUT LANE (the autopush-493 round — the 510
+/// census the CraftingMenu.quickMoveStack the grid cells' arm the
+/// [10, 46) forward walk the store rows answer): the worn stack the
+/// cell the store rows the landing banks, the recipe the out lane
+/// the result retires, the remainder the own rows keep, the merge
+/// the own identity keep.
+#[test]
+fn the_table_shift_the_cells_the_store_banks() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let log = mc_registry::item_id_by_name("oak_log").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let power = the_menus_glint_power();
+    let pairs = vec![(power, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_crafting_table();
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE WORN ENCHANTED SHIFT (the cell's own stack the store rows
+    // the landing banks — the empty fill the source's own wear +
+    // pairs banks, the drained cell the pristine rows wear)
+    app.table_grid[0] = (boots, 1);
+    app.table_grid_damage_frac[0] = 0.5;
+    app.table_grid_enchants[0] = pairs.clone();
+    app.inventory.items[9] = (dirt, 10);
+    app.shift_down = true;
+    app.click_table_cell(0, 0);
+    app.shift_down = false;
+    assert_eq!(app.table_grid[0], (0, 0), "the cell the shift empties");
+    assert_eq!(
+        app.inventory.items[10],
+        (boots, 1),
+        "the stack the landing banks"
+    );
+    assert_eq!(app.items_damage_frac[10], 0.5, "the wear the landing banks");
+    assert_eq!(
+        app.inventory_enchants[10], pairs,
+        "the pairs the landing banks"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.0,
+        "the drained cell the pristine wears"
+    );
+    assert!(
+        app.table_grid_enchants[0].is_empty(),
+        "the drained cell the clear wears"
+    );
+    // THE RECIPE'S OWN RECOMPUTE (the single log the out lane the
+    // result retires — the refresh the shift walk speaks)
+    app.table_grid[1] = (log, 1);
+    app.refresh_table_result();
+    assert_eq!(
+        app.table_result,
+        (planks, 4),
+        "the recipe the result speaks"
+    );
+    app.shift_down = true;
+    app.click_table_cell(1, 0);
+    app.shift_down = false;
+    assert_eq!(app.table_result, (0, 0), "the out lane the result retires");
+    assert_eq!(
+        app.inventory.items[11],
+        (log, 1),
+        "the log the landing banks"
+    );
+    // THE REMAINDER'S OWN ROWS (the partial move the cell the own
+    // rows keep — the merge pass the room takes, the full rows the
+    // pass-2 refuses; the stone rows the merge order the earlier
+    // stacks' seats retire)
+    app.table_grid[2] = (dirt, 64);
+    app.table_grid_damage_frac[2] = 0.3;
+    for it in app.inventory.items.iter_mut() {
+        *it = (stone, 64);
+    }
+    app.inventory.items[12] = (dirt, 30);
+    app.shift_down = true;
+    app.click_table_cell(2, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items[12],
+        (dirt, 64),
+        "the merge pass the room takes"
+    );
+    assert_eq!(
+        app.table_grid[2],
+        (dirt, 30),
+        "the remainder the cell keeps"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[2], 0.3,
+        "the remainder the own rows keep"
+    );
+    // THE MERGE'S OWN IDENTITY (the destination the own rows keep —
+    // the source's own data the merge never wears)
+    app.table_grid[3] = (dirt, 5);
+    app.table_grid_damage_frac[3] = 0.8;
+    app.inventory.items[12] = (dirt, 40);
+    app.items_damage_frac[12] = 0.1;
+    app.shift_down = true;
+    app.click_table_cell(3, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items[12],
+        (dirt, 45),
+        "the merge the seat grows"
+    );
+    assert_eq!(
+        app.items_damage_frac[12], 0.1,
+        "the merge the own rows keep"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[3], 0.0,
+        "the drained cell the pristine wears"
+    );
+}
+
+/// THE TABLE SHIFT'S OWN FILL ARM (the autopush-493 round — the 510
+/// census the CraftingMenu.quickMoveStack the store rows' arm the
+/// [1, 10) forward walk the grid answers FIRST): the store→grid move
+/// the wear + pairs the empty cells bank — the data never eats — the
+/// merges the own identity keep, the pass-2 fills the source's own
+/// seats bank, the drained row the pristine wears, the nothing-moved
+/// verdict the section fallback the census's own order answers.
+#[test]
+fn the_table_shift_the_store_the_grid_banks() {
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    let power = the_menus_glint_power();
+    let pairs = vec![(power, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_crafting_table();
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.table_panel;
+    let store_seat = |i: usize| -> (i32, i32) {
+        let (x, y) = inventory_slot_origin(panel, i);
+        (x + 8, y + 8)
+    };
+    // THE FILL'S OWN DATA BANK (the store→grid move the wear + pairs
+    // the empty cell banks — the drained row the pristine wears)
+    app.inventory.items[9] = (bow, 1);
+    app.items_damage_frac[9] = 0.5;
+    app.inventory_enchants[9] = pairs.clone();
+    let (ox, oy) = store_seat(9);
+    app.shift_down = true;
+    app.click_table_slot(ox, oy, 0);
+    app.shift_down = false;
+    assert_eq!(app.table_grid[0], (bow, 1), "the cell the fill lays");
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.5,
+        "the wear the cell banks"
+    );
+    assert_eq!(
+        app.table_grid_enchants[0], pairs,
+        "the pairs the cell banks"
+    );
+    assert_eq!(app.inventory.items[9], (0, 0), "the row the fill drains");
+    assert_eq!(
+        app.items_damage_frac[9], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[9].is_empty(),
+        "the drained row the clear wears"
+    );
+    // THE MERGE'S OWN IDENTITY (the same-id cell the own rows keep —
+    // the pass-2 the first empty cell the source's own data banks)
+    app.table_grid[5] = (dirt, 10);
+    app.table_grid_damage_frac[5] = 0.25;
+    app.inventory.items[10] = (dirt, 60);
+    app.items_damage_frac[10] = 0.9;
+    let (px, py) = store_seat(10);
+    app.shift_down = true;
+    app.click_table_slot(px, py, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.table_grid[5],
+        (dirt, 64),
+        "the merge pass the room takes"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[5], 0.25,
+        "the merge the own rows keep"
+    );
+    assert_eq!(
+        app.table_grid[1],
+        (dirt, 6),
+        "the pass-2 the first empty lays"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[1], 0.9,
+        "the fill the source's own rows banks"
+    );
+    assert_eq!(app.inventory.items[10], (0, 0), "the row the fill drains");
+    // THE NOTHING-MOVED FALLBACK (the full grid the false verdict the
+    // section walk answers — the hotbar row the landing banks, the
+    // 491 walk's own data ride the empty row banks)
+    for cell in 0..9 {
+        app.table_grid[cell] = (stone, 64);
+    }
+    app.inventory.items[11] = (dirt, 7);
+    app.items_damage_frac[11] = 0.4;
+    let (fx, fy) = store_seat(11);
+    app.shift_down = true;
+    app.click_table_slot(fx, fy, 0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 7),
+        "the fallback the hotbar row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.4,
+        "the fallback the data ride banks"
+    );
+    assert_eq!(
+        app.inventory.items[11],
+        (0, 0),
+        "the row the fallback drains"
     );
 }

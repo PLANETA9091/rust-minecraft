@@ -4070,6 +4070,62 @@ pub fn predict_quick_move_to_store(
     (changed, remaining)
 }
 
+/// THE GRID'S OWN FILL WALK (the 510 census — CraftingMenu.
+/// quickMoveStack pc 99-106 the store rows' arm the 3x3 grid answers
+/// FIRST: `moveItemStackTo(itemstack1, 1, 10, false)` — the [1, 10)
+/// FORWARD range over the nine craft cells, the menu's own slot
+/// order; the walk the false answer the section fallback speaks).
+/// `grid` the menu's own cell pairs (the table's 3x3 rows), `id` +
+/// `count` the moved stack. Returns the believed CHANGES as
+/// `(cell, pair)` entries (the merge pass the same-item stacks with
+/// room the vanilla's own two-pass law speaks — the pass-1 merge
+/// before the pass-2 fills, the cell order the menu's 1..9 indexes
+/// the caller's 0..8 rows wear) and the REMAINDER that stayed in the
+/// source row (the `moveItemStackTo` false the nothing-moved arm the
+/// caller's fallback answers — the `count` the remainder equals the
+/// census's own false verdict). 64 the slot max the model's own
+/// default carries; the cursor is NOT the walk's lane.
+pub fn predict_quick_move_into_grid(
+    grid: &[(i32, i32)],
+    id: i32,
+    count: i32,
+) -> (Vec<(usize, (i32, i32))>, i32) {
+    let mut slots = grid.to_vec();
+    let mut remaining = count;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    // pass 1: the same-item merge into the stacks with room (the
+    // moveItemStackTo walk's own first pass — the merge before the
+    // fills the furnace's own 39-row walk re-wears)
+    for i in 0..slots.len() {
+        if remaining == 0 {
+            break;
+        }
+        let d = slots[i];
+        if d.1 > 0 && d.0 == id && d.1 < item_max_stack(id) {
+            let take = (item_max_stack(id) - d.1).min(remaining);
+            slots[i] = (d.0, d.1 + take);
+            remaining -= take;
+            changed.push((i, slots[i]));
+        }
+    }
+    // pass 2: the empty cells take the remainder (the FORWARD order
+    // the menu's own slot 0 speaks)
+    if remaining > 0 {
+        for i in 0..slots.len() {
+            if remaining == 0 {
+                break;
+            }
+            if slots[i].1 <= 0 {
+                let take = remaining.min(item_max_stack(id));
+                slots[i] = (id, take);
+                remaining -= take;
+                changed.push((i, slots[i]));
+            }
+        }
+    }
+    (changed, remaining)
+}
+
 /// THE FURNACE'S OWN QUICK-MOVE (javap 26.2
 /// AbstractFurnaceMenu.quickMoveStack — the routing arms the
 /// bytecode speaks in order; javap
