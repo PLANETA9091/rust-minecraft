@@ -38034,7 +38034,24 @@ impl App {
             } else {
                 crate::brewing_sim::POTION_KIND_NONE
             };
-            if kind != crate::brewing_sim::POTION_KIND_NONE {
+            // THE MIRROR'S OWN GLINT RIDE (the dev-228 round — the
+            // dev-198 foil law the chest's player rows re-wear: the
+            // store rows the REAL inventory the pairs bank, the mirror
+            // map the seat re-keys, the live lane the honest wall the
+            // store-less plain keeps — the golden scenes' empty stores
+            // the bytes never move)
+            let enchanted = !self.chest_is_live
+                && Self::chest_mirror_to_inventory(i)
+                    .map(|inv| {
+                        self.inventory_enchants
+                            .get(inv)
+                            .map(|s| !s.is_empty())
+                            .unwrap_or(false)
+                    })
+                    .unwrap_or(false);
+            if enchanted {
+                draw_item_icon_enchanted(g, a, *id, sx + 1, sy + 1, self.frame_millis);
+            } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                 draw_item_icon_kind(g, *id, kind, sx + 1, sy + 1);
             } else {
                 draw_item_icon(g, *id, sx + 1, sy + 1);
@@ -38269,7 +38286,25 @@ impl App {
             } else {
                 crate::brewing_sim::POTION_KIND_NONE
             };
-            if kind != crate::brewing_sim::POTION_KIND_NONE {
+            // THE HOPPER'S OWN GLINT LANE (the dev-228 round — the
+            // 365 mirror law the foil pass the player rows re-wears:
+            // the store rows the pairs bank, the seat-5+ mirror the
+            // map re-keys, the live lane the honest wall the plain
+            // keeps — the golden scenes' empty stores the bytes never
+            // move)
+            let enchanted = !self.chest_is_live
+                && slot >= 5
+                && Self::chest_mirror_to_inventory(slot - 5)
+                    .map(|inv| {
+                        self.inventory_enchants
+                            .get(inv)
+                            .map(|s| !s.is_empty())
+                            .unwrap_or(false)
+                    })
+                    .unwrap_or(false);
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx, sy, self.frame_millis);
+            } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                 draw_item_icon_kind(g, id, kind, sx, sy);
             } else {
                 draw_item_icon(g, id, sx, sy);
@@ -40380,7 +40415,20 @@ impl App {
             } else {
                 crate::brewing_sim::POTION_KIND_NONE
             };
-            if kind != crate::brewing_sim::POTION_KIND_NONE {
+            // THE TABLE'S OWN GLINT LANE (the dev-228 round — the
+            // dev-198 foil law the table's store rows re-wear: the
+            // REAL inventory the pairs bank, the live lane the honest
+            // wall the store-less plain keeps — the golden scenes'
+            // empty stores the bytes never move)
+            let enchanted = !live
+                && self
+                    .inventory_enchants
+                    .get(i)
+                    .map(|s| !s.is_empty())
+                    .unwrap_or(false);
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx + 1, sy + 1, self.frame_millis);
+            } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                 draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
             } else {
                 draw_item_icon(g, id, sx + 1, sy + 1);
@@ -40578,7 +40626,19 @@ impl App {
                 } else {
                     crate::brewing_sim::POTION_KIND_NONE
                 };
-                if kind != crate::brewing_sim::POTION_KIND_NONE {
+                // THE WRAPPED ROWS' OWN GLINT (the dev-228 round — the
+                // dev-198 foil law the creative tab re-wears: the
+                // store rows the pairs bank, the wrapped seat the
+                // survival arm the same read answers — the golden
+                // scenes' empty stores the bytes never move)
+                let enchanted = self
+                    .inventory_enchants
+                    .get(i)
+                    .map(|s| !s.is_empty())
+                    .unwrap_or(false);
+                if enchanted {
+                    draw_item_icon_enchanted(g, a, id, sx, sy, self.frame_millis);
+                } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                     draw_item_icon_kind(g, id, kind, sx, sy);
                 } else {
                     draw_item_icon(g, id, sx, sy);
@@ -40602,7 +40662,19 @@ impl App {
                 } else {
                     crate::brewing_sim::POTION_KIND_NONE
                 };
-                if kind != crate::brewing_sim::POTION_KIND_NONE {
+                // THE WRAPPED HOTBAR'S OWN GLINT (the dev-228 round —
+                // the same foil law the hotbar row re-wears: the store
+                // rows the pairs bank, the seat the survival arm the
+                // same read answers — the golden scenes' empty stores
+                // the bytes never move)
+                let enchanted = self
+                    .inventory_enchants
+                    .get(i)
+                    .map(|s| !s.is_empty())
+                    .unwrap_or(false);
+                if enchanted {
+                    draw_item_icon_enchanted(g, a, id, sx, sy, self.frame_millis);
+                } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                     draw_item_icon_kind(g, id, kind, sx, sy);
                 } else {
                     draw_item_icon(g, id, sx, sy);

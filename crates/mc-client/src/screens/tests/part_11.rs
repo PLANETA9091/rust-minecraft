@@ -43479,3 +43479,184 @@ fn the_merge_law_the_pickup_the_rows_wear() {
         "the second stack's pairs the fresh row banks"
     );
 }
+
+fn the_menus_glint_count(app: &mut App) -> usize {
+    // THE FRAME PAIR (the enchanted store the one render wears, the
+    // cleared store the other — the same millis the only difference
+    // the foil pass speaks)
+    app.frame_millis = 0;
+    let warm = the_menus_glint_render(app);
+    let _ = warm;
+    app.inventory_enchants[12].clear();
+    app.frame_millis = 0;
+    let plain = the_menus_glint_render(app);
+    app.inventory_enchants[12] = vec![(the_menus_glint_power(), 4)];
+    app.frame_millis = 0;
+    let ench = the_menus_glint_render(app);
+    let mut diff = 0usize;
+    for p in 0..(ench.color.len() / 3) {
+        for k in 0..3 {
+            assert!(
+                ench.color[p * 3 + k] >= plain.color[p * 3 + k],
+                "the additive law the channel never darkens at {p}[{k}]"
+            );
+        }
+        if ench.color[p * 3] != plain.color[p * 3]
+            || ench.color[p * 3 + 1] != plain.color[p * 3 + 1]
+            || ench.color[p * 3 + 2] != plain.color[p * 3 + 2]
+        {
+            diff += 1;
+        }
+    }
+    diff
+}
+
+fn the_menus_glint_power() -> i32 {
+    mc_registry::generated::enchantments::enchantment_index("power").unwrap() as i32
+}
+
+fn the_menus_glint_render(app: &mut App) -> crate::raster::Framebuf {
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut a = GuiAssets::open(&assets_root());
+    app.render(&mut fb, &mut a);
+    fb
+}
+
+/// THE MENUS' OWN GLINT SEATS (the dev-228 round — the dev-198 foil
+/// law the container screens' player rows re-wear): the enchanted
+/// stack the chest mirror + the hopper mirror + the crafting table's
+/// store rows + the creative tab's wrapped rows the SAME foil pass
+/// wears — the additive law the channels never darken, the tint
+/// count the same 16x16 icon the every seat keeps [the same glint
+/// texture, the same phases, the same written-pixel mask the
+/// footprint law answers], the plain seats the cleared store the
+/// same pixels keep.
+#[test]
+fn the_menus_the_glint_the_seats_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    app.inventory.items[12] = (bow, 1);
+    app.inventory_enchants[12] = vec![(the_menus_glint_power(), 4)];
+    // THE INVENTORY'S OWN BASELINE (the dev-198 seat the count the
+    // cross-screen law banks)
+    app.open(ScreenKind::Inventory);
+    let count_inv = the_menus_glint_count(&mut app);
+    assert!(count_inv > 0, "the inventory seat the glint wears");
+    // THE CHEST'S OWN MIRROR (the offline door the player rows render
+    // — the mirror row 3 the inventory row 12 the map answers)
+    app.open_chest();
+    app.chest_mirror_sync_from_inventory();
+    let count_chest = the_menus_glint_count(&mut app);
+    // THE HOPPER'S OWN MIRROR (the canvas flag the hopper shape
+    // renders — the seat-5+ mirror the same map re-keys)
+    app.open_chest();
+    app.chest_window_hopper = true;
+    app.chest_mirror_sync_from_inventory();
+    let count_hopper = the_menus_glint_count(&mut app);
+    // THE TABLE'S OWN STORE ROWS (the offline screen the real
+    // inventory the rows render)
+    app.open_crafting_table();
+    let count_craft = the_menus_glint_count(&mut app);
+    // THE CREATIVE'S OWN WRAPPED ROWS (the inventory tab the real
+    // store the rows render — the default seat the palette keeps, the
+    // select walk the tab switches)
+    app.open(ScreenKind::Creative);
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    let count_creative = the_menus_glint_count(&mut app);
+    // THE COUNT'S OWN LAW (the same icon the every seat the same tint
+    // count keeps — the five lanes the one foil pass speaks)
+    assert_eq!(
+        count_chest, count_inv,
+        "the chest mirror the same tint count keeps"
+    );
+    assert_eq!(
+        count_hopper, count_inv,
+        "the hopper mirror the same tint count keeps"
+    );
+    assert_eq!(
+        count_craft, count_inv,
+        "the table rows the same tint count keeps"
+    );
+    assert_eq!(
+        count_creative, count_inv,
+        "the creative rows the same tint count keeps"
+    );
+}
+
+/// THE MENUS' OWN GLINT LAWS (the dev-228 round — the determinism +
+/// the scroll + the honest walls the seat lanes keep): the same
+/// millis render the byte-identical answer keeps, the different
+/// millis the scroll phase the distinct pixels wear, the CRAFT GRID's
+/// own cell the store the wall never keys — the grid seat the plain
+/// pixels the store's cleared/set frames the identical answer keeps
+/// [the enchanted item the grid seat the honest wall the player row
+/// the same frame tints].
+#[test]
+fn the_menus_the_glint_the_laws_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    app.inventory.items[12] = (bow, 1);
+    app.inventory_enchants[12] = vec![(the_menus_glint_power(), 4)];
+    app.open_crafting_table();
+    // THE DETERMINISM (the same millis the twice render the
+    // byte-identical frames keeps)
+    app.frame_millis = 0;
+    let a0 = the_menus_glint_render(&mut app);
+    app.frame_millis = 0;
+    let b0 = the_menus_glint_render(&mut app);
+    assert_eq!(
+        a0.color, b0.color,
+        "the same millis the byte-identical render keeps"
+    );
+    // THE SCROLL (the different millis the phase the distinct pixels
+    // wear — the foil pass the texture scroll the frames answer)
+    app.frame_millis = 20_000;
+    let g20 = the_menus_glint_render(&mut app);
+    let mut scrolled = 0usize;
+    for p in 0..(g20.color.len() / 3) {
+        if g20.color[p * 3] != a0.color[p * 3]
+            || g20.color[p * 3 + 1] != a0.color[p * 3 + 1]
+            || g20.color[p * 3 + 2] != a0.color[p * 3 + 2]
+        {
+            scrolled += 1;
+        }
+    }
+    assert!(scrolled > 0, "the scroll the distinct pixels wear");
+    // THE CRAFT GRID'S OWN WALL (the grid seat the store the map
+    // never keys — the enchanted bow the grid cell the plain pixels
+    // keep while the player row the SAME frame the tint wears)
+    app.table_grid[0] = (bow, 1);
+    app.frame_millis = 0;
+    let with_grid = the_menus_glint_render(&mut app);
+    app.inventory_enchants[12].clear();
+    app.frame_millis = 0;
+    let cleared = the_menus_glint_render(&mut app);
+    app.inventory_enchants[12] = vec![(the_menus_glint_power(), 4)];
+    // THE GRID SEAT'S OWN BOX (the table_craft_origin the cell 0 the
+    // +1 inset the draw wears)
+    let panel = app.table_panel;
+    let (gx, gy) = table_craft_origin(panel, 0);
+    let mut grid_diff = 0usize;
+    for py in 0..18i32 {
+        for px in 0..18i32 {
+            let x = gx + px;
+            let y = gy + py;
+            let o = ((y as usize) * with_grid.w + x as usize) * 3;
+            if with_grid.color[o] != cleared.color[o]
+                || with_grid.color[o + 1] != cleared.color[o + 1]
+                || with_grid.color[o + 2] != cleared.color[o + 2]
+            {
+                grid_diff += 1;
+            }
+        }
+    }
+    assert_eq!(
+        grid_diff, 0,
+        "the grid seat the store the wall never keys — the plain pixels keep"
+    );
+}
