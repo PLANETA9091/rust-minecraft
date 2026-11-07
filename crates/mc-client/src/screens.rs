@@ -60566,7 +60566,11 @@ impl App {
     /// two lanes the arm wears): the offline store the
     /// [`Self::inventory_hover_stack`] read answers, the wire lane
     /// the live belief's own slot speaks — the safeClone law the
-    /// cursor ALONE mutates, the hovered seat the copy never touches.
+    /// cursor ALONE mutates, the hovered seat the copy never touches,
+    /// the component rows the OFFLINE cursor the copyWithCount law
+    /// banks (the store/offhand/craft rows the cursor's own fields
+    /// wear, the result/armor the store never mints the honest plain
+    /// keeps, the wire lane the belief's own plain the wall keeps).
     fn clone_inventory_seat(&mut self, mx: i32, my: i32) {
         if self.inv_panel == (0, 0) {
             return; // no render spoke yet — no geometry to hit
@@ -60612,6 +60616,38 @@ impl App {
             return; // pc 1427-1432 — the hasItem gate
         }
         self.inv_carried = (id, crate::world_view::item_max_stack(id));
+        // THE CLONE'S OWN COMPONENT RIDE (the 493 NEXT's own second
+        // lane — the safeClone's copyWithCount law the FULL copy the
+        // cursor takes, the component rows the seat's own stores
+        // keep): the cursor's own three fields the plain reset wears
+        // first, the row-backed seats the ride banks (the store rows
+        // the 0..36 keys read, the offhand the [`OFFHAND_KIND_SEAT`]
+        // parity answers, the craft cells the grid's own arrays
+        // wear); the result/armor seats the store never mints the
+        // honest plain keeps, the wire lane the live belief's own
+        // plain the wall keeps [the wire rows the lane never
+        // carries — the dev-230 record's own wall re-wears].
+        self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        self.inv_carried_damage_frac = 0.0;
+        self.inv_carried_enchants.clear();
+        match hover {
+            InventoryHover::Store(i) => {
+                self.inv_carried_potion_kind = self.items_potion_kinds[i];
+                self.inv_carried_damage_frac = self.items_damage_frac[i];
+                self.inv_carried_enchants = self.inventory_enchants[i].clone();
+            }
+            InventoryHover::Offhand => {
+                self.inv_carried_potion_kind = self.items_potion_kinds[OFFHAND_KIND_SEAT];
+                self.inv_carried_damage_frac = self.items_damage_frac[OFFHAND_KIND_SEAT];
+                self.inv_carried_enchants = self.inventory_enchants[OFFHAND_KIND_SEAT].clone();
+            }
+            InventoryHover::Craft(cell) => {
+                self.inv_carried_potion_kind = self.craft_grid_potion_kinds[cell];
+                self.inv_carried_damage_frac = self.craft_grid_damage_frac[cell];
+                self.inv_carried_enchants = self.craft_grid_enchants[cell].clone();
+            }
+            InventoryHover::Result | InventoryHover::Armor(_) => {}
+        }
     }
 
     /// THE CHEST SEAT'S OWN CLONE (the chest click walk's own live-only

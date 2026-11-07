@@ -45771,3 +45771,131 @@ fn the_pickup_the_offhand_the_kind_banks() {
         "the refused merge the seat's kind keeps"
     );
 }
+
+/// THE CLONE'S OWN COMPONENT RIDE (the autopush-497 round — the
+/// safeClone's copyWithCount law the FULL copy the cursor takes: the
+/// store/offhand/craft rows the cursor's own three fields bank, the
+/// result/armor the store never mints the honest plain keeps, the
+/// stale cursor the plain reset clears, the hovered seat the copy
+/// never touches).
+#[test]
+fn the_clone_the_components_the_cursor_banks() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let helmet = mc_registry::item_id_by_name("leather_helmet").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let sharp = mc_registry::generated::enchantments::enchantment_index("sharpness").unwrap();
+    let mending = mc_registry::generated::enchantments::enchantment_index("mending").unwrap();
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    app.game_mode = crate::screens::GameMode::Creative;
+    // THE STORE ROW'S OWN COPY (the worn + kinded + enchanted seat
+    // the cursor's three fields bank — the copyWithCount the FULL
+    // copy wears)
+    app.inventory.items[12] = (dirt, 3);
+    app.items_potion_kinds[12] = kind_a;
+    app.items_damage_frac[12] = 0.5;
+    app.inventory_enchants[12] = vec![(sharp as i32, 3)];
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+    app.on_container_clone_click(ox + 8, oy + 8);
+    assert_eq!(app.inv_carried, (dirt, 64), "the FULL max the cursor takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind_a,
+        "the kind the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the wear the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_enchants,
+        vec![(sharp as i32, 3)],
+        "the pairs the cursor banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], kind_a,
+        "the seat the copy never touches"
+    );
+    // THE OFFHAND SEAT'S OWN COPY (the 37th rows the cursor banks —
+    // the parity the seat's own stores answer)
+    app.inv_carried = (0, 0);
+    app.inventory.offhand[0] = (dirt, 2);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_b;
+    app.items_damage_frac[OFFHAND_KIND_SEAT] = 0.25;
+    app.inventory_enchants[OFFHAND_KIND_SEAT] = vec![(mending as i32, 1)];
+    let (ox2, oy2) = offhand_slot_origin(app.inv_panel);
+    app.on_container_clone_click(ox2 + 8, oy2 + 8);
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 64),
+        "the offhand copy the max takes"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind, kind_b,
+        "the 37th kind the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.25,
+        "the 37th wear the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_enchants,
+        vec![(mending as i32, 1)],
+        "the 37th pairs the cursor banks"
+    );
+    // THE CRAFT CELL'S OWN COPY (the grid's own arrays the cursor
+    // banks)
+    app.inv_carried = (0, 0);
+    app.craft_grid[1] = (dirt, 1);
+    app.craft_grid_potion_kinds[1] = kind_c;
+    app.craft_grid_damage_frac[1] = 0.75;
+    app.craft_grid_enchants[1] = vec![(power as i32, 4)];
+    let (cx, cy) = craft_slot_origin(app.inv_panel, 1);
+    app.on_container_clone_click(cx + 8, cy + 8);
+    assert_eq!(app.inv_carried, (dirt, 64), "the craft copy the max takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind_c,
+        "the grid kind the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.75,
+        "the grid wear the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_enchants,
+        vec![(power as i32, 4)],
+        "the grid pairs the cursor banks"
+    );
+    // THE ARMOR SEAT'S OWN PLAIN (the rows the store never mints —
+    // the stale cursor the plain reset clears)
+    app.inv_carried = (0, 0);
+    app.inv_carried_potion_kind = kind_a;
+    app.inv_carried_damage_frac = 0.9;
+    app.inv_carried_enchants = vec![(sharp as i32, 1)];
+    app.inventory.armor[0] = (helmet, 1);
+    let (ax, ay) = armor_slot_origin(app.inv_panel, 0);
+    app.on_container_clone_click(ax + 8, ay + 8);
+    assert_eq!(
+        app.inv_carried,
+        (helmet, 1),
+        "the armor copy the plain takes"
+    );
+    assert_eq!(
+        app.inv_carried_potion_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the stale kind the plain reset clears"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the stale wear the plain reset clears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the stale pairs the plain reset clears"
+    );
+}
