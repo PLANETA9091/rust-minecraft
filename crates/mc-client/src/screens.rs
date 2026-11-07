@@ -36557,7 +36557,11 @@ impl App {
     /// arm wears (the bucket rides the slot whole), the taller stack
     /// the Inventory.add arm answers (the store takes, the FALSE the
     /// body drop speaks), the grown pair the same-item arm rides
-    /// back. The HUD row the store's every mutation syncs.
+    /// back. The HUD row the store's every mutation syncs. THE
+    /// EMPTIED CELL'S OWN RESET the third seat word answers (the
+    /// dev-234 ride — the kind row the 492 law the wear + pairs the
+    /// same arm retires: the consumed ingredient's own word the
+    /// drained cell never keeps).
     fn table_on_take(&mut self) {
         let remainders = craft_remainders(&self.table_grid);
         let mut store_touched = false;
@@ -36578,6 +36582,12 @@ impl App {
                         // own rows wear)
                         self.table_grid_damage_frac[i] = 0.0;
                         self.table_grid_enchants[i].clear();
+                        // THE KIND ROW'S OWN RETIRE (the dev-234 ride —
+                        // the third seat word the emptied-cell law
+                        // answers: the consumed ingredient's own word
+                        // the drained cell never keeps, the shift
+                        // ride's own drained reset the take re-wears)
+                        self.table_grid_potion_kinds[i] = crate::brewing_sim::POTION_KIND_NONE;
                     }
                     apply_remainder_cell(cell, *rem)
                 };
@@ -37319,7 +37329,11 @@ impl App {
     /// the Inventory.add arm answers (the player's own store takes,
     /// the FALSE the player.drop the body drop speaks), the grown pair
     /// the same-item arm rides back. The HUD row the store's every
-    /// mutation syncs (the add's own landings the hotbar slice reads).
+    /// mutation syncs (the add's own landings the hotbar slice
+    /// reads). THE EMPTIED CELL'S OWN RESET the third seat word
+    /// answers (the dev-234 ride — the kind row the 229 law the wear
+    /// + pairs the same arm retires: the consumed ingredient's own
+    /// word the drained cell never keeps).
     fn craft_on_take(&mut self) {
         let remainders = craft_remainders(&self.craft_grid);
         let mut store_touched = false;
@@ -37340,6 +37354,12 @@ impl App {
                         // wear)
                         self.craft_grid_damage_frac[i] = 0.0;
                         self.craft_grid_enchants[i].clear();
+                        // THE KIND ROW'S OWN RETIRE (the dev-234 ride —
+                        // the third seat word the emptied-cell law
+                        // answers: the consumed ingredient's own word
+                        // the drained cell never keeps, the shift
+                        // ride's own drained reset the take re-wears)
+                        self.craft_grid_potion_kinds[i] = crate::brewing_sim::POTION_KIND_NONE;
                     }
                     apply_remainder_cell(cell, *rem)
                 };

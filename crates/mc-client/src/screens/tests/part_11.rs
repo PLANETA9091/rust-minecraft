@@ -46974,3 +46974,75 @@ fn the_clone_the_ender_the_kind_banks() {
         "the seeded slot the shared jar re-loads"
     );
 }
+
+/// THE TAKE WALK'S OWN KIND RETIRE (the dev-234 ride — the onTake's
+/// own recompute lane the third seat word the 492/229 law answers):
+/// the consumed ingredient's own kind word the drained cell never
+/// keeps — the table's own take the ride answers, the remainder
+/// refill the honest NONE wears, the taller cell the own word keeps,
+/// the craft twin the same law banks.
+#[test]
+fn the_table_the_take_the_kind_retires() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE TABLE'S OWN DRAIN (the count-1 potion the take consumes —
+    // the stale kind_a the 492 arm's wear + pairs the ride retires)
+    app.table_grid[0] = (potion, 1);
+    app.table_grid_potion_kinds[0] = kind_a;
+    app.table_grid_damage_frac[0] = 0.25;
+    app.table_on_take();
+    assert_eq!(app.table_grid[0], (0, 0), "the potion consumed");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the drained cell the kind never keeps"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.0,
+        "the wear the arm retires"
+    );
+    // THE REMAINDER'S OWN REFILL (the milk cell the cake lane
+    // consumes — the reset the bucket's own setItem arm the honest
+    // NONE the refill never re-kinds)
+    let milk = mc_registry::item_id_by_name("milk_bucket").unwrap();
+    let bucket = mc_registry::item_id_by_name("bucket").unwrap();
+    app.table_grid[0] = (milk, 1);
+    app.table_grid_potion_kinds[0] = kind_b;
+    app.table_on_take();
+    assert_eq!(
+        app.table_grid[0],
+        (bucket, 1),
+        "the bucket the refill wears"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the refill cell the honest NONE wears"
+    );
+    // THE TALLER CELL'S OWN WORD (the count-2 potion the take thins —
+    // the surviving stack the own kind keeps)
+    app.table_grid[0] = (potion, 2);
+    app.table_grid_potion_kinds[0] = kind_a;
+    app.table_on_take();
+    assert_eq!(
+        app.table_grid[0],
+        (potion, 1),
+        "the taller cell the take thins"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[0], kind_a,
+        "the own word the stack keeps"
+    );
+    // THE CRAFT'S OWN TWIN (the 2x2 the same emptied-cell law wears)
+    app.craft_grid[0] = (potion, 1);
+    app.craft_grid_potion_kinds[0] = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    app.craft_on_take();
+    assert_eq!(app.craft_grid[0], (0, 0), "the craft's potion consumed");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], none,
+        "the craft's drained cell the kind never keeps"
+    );
+}
