@@ -46034,3 +46034,129 @@ fn the_clone_the_furnace_the_kind_banks() {
         "the trio's stale word the id-gate cleans"
     );
 }
+
+/// THE CLONE'S OWN TABLE RIDE (the 497 NEXT's own second lane —
+/// the safeClone law the table's own cursor wears: the hovered
+/// seat's own rows the carried banks [the craft cells the grid's
+/// own arrays answer, the store rows the inventory bank's own rows
+/// speak, the result seat the store never mints the honest plain
+/// keeps], the stale rows the fresh read cleans, the seat's own
+/// stores the copy never touches, the wire lane the collect's own
+/// NONE wall keeps).
+#[test]
+fn the_clone_the_table_the_rows_banks() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let sharp = mc_registry::generated::enchantments::enchantment_index("sharpness").unwrap();
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_crafting_table();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Crafting,
+        "the table door the walk wears"
+    );
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    app.table_panel = panel;
+    app.game_mode = crate::screens::GameMode::Creative;
+    // THE MAIN ROW'S OWN COPY (the write-through's mapped read the
+    // rows bank — the store 20 the menu 21 the fold keys)
+    app.inventory.items[20] = (dirt, 3);
+    app.items_potion_kinds[20] = kind_a;
+    app.items_damage_frac[20] = 0.5;
+    app.inventory_enchants[20] = vec![(sharp as i32, 3)];
+    let (ox, oy) = inventory_slot_origin(panel, 20);
+    app.on_container_clone_click(ox + 8, oy + 8);
+    assert_eq!(app.inv_carried, (dirt, 64), "the FULL max the cursor takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind_a,
+        "the main row's kind the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the main row's wear the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_enchants,
+        vec![(sharp as i32, 3)],
+        "the main row's pairs the cursor banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[20], kind_a,
+        "the seat the copy never touches"
+    );
+    // THE CRAFT CELL'S OWN COPY (the grid's own arrays the cursor
+    // banks)
+    app.inv_carried = (0, 0);
+    app.table_grid[4] = (dirt, 1);
+    app.table_grid_potion_kinds[4] = kind_b;
+    app.table_grid_damage_frac[4] = 0.75;
+    app.table_grid_enchants[4] = vec![(power as i32, 4)];
+    let (cx, cy) = table_craft_origin(panel, 4);
+    app.on_container_clone_click(cx + 8, cy + 8);
+    assert_eq!(app.inv_carried, (dirt, 64), "the grid copy the max takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind_b,
+        "the grid kind the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.75,
+        "the grid wear the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_enchants,
+        vec![(power as i32, 4)],
+        "the grid pairs the cursor banks"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[4], kind_b,
+        "the cell the copy never touches"
+    );
+    // THE RESULT SEAT'S OWN PLAIN (the seat the store never mints —
+    // the stale rows the plain reset clears)
+    app.inv_carried = (0, 0);
+    app.inv_carried_potion_kind = kind_a;
+    app.inv_carried_damage_frac = 0.9;
+    app.inv_carried_enchants = vec![(sharp as i32, 1)];
+    app.table_result = (dirt, 1);
+    let (rx, ry) = table_craft_origin(panel, 9);
+    app.on_container_clone_click(rx + 8, ry + 8);
+    assert_eq!(app.inv_carried, (dirt, 64), "the result copy the max takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the stale kind the plain reset clears"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the stale wear the plain reset clears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the stale pairs the plain reset clears"
+    );
+    // THE HOTBAR ROW'S OWN PLAIN READ (the stale rows the fresh read
+    // cleans — the store 3 the menu 40 the fold keys)
+    app.inv_carried = (0, 0);
+    app.inv_carried_potion_kind = kind_a;
+    app.inv_carried_damage_frac = 0.9;
+    app.inv_carried_enchants = vec![(sharp as i32, 1)];
+    app.inventory.items[3] = (dirt, 2);
+    let (hx, hy) = inventory_slot_origin(panel, 3);
+    app.on_container_clone_click(hx + 8, hy + 8);
+    assert_eq!(app.inv_carried, (dirt, 64), "the hotbar copy the max takes");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the stale kind the fresh read cleans"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the stale wear the fresh read cleans"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the stale pairs the fresh read cleans"
+    );
+}

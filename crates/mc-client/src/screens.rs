@@ -60794,6 +60794,10 @@ impl App {
     /// speaks. The safeClone law the cursor ALONE mutates — the
     /// recipe recompute the clone walk NEVER fires (the recompute the
     /// onTake's own lane serves, the copy the table's tick keeps).
+    /// The OFFLINE cursor's component rows the hovered seat's own
+    /// stores bank (the table ride the 498 round wears — the grid's
+    /// own arrays the craft cells answer, the inventory bank's rows
+    /// the store rows speak, the result the honest plain keeps).
     fn clone_table_seat(&mut self, mx: i32, my: i32) {
         if self.table_panel == (0, 0) {
             return; // no render spoke yet — no geometry to hit
@@ -60875,6 +60879,37 @@ impl App {
             return; // pc 1427-1432 — the hasItem gate
         }
         self.inv_carried = (id, crate::world_view::item_max_stack(id));
+        // THE CLONE'S OWN TABLE RIDE (the 497 NEXT's own second lane
+        // — the safeClone's copyWithCount law the FULL copy the
+        // cursor takes, the COMPONENT ROWS the plain cursor never
+        // kept): the cursor's own three fields the plain reset wears
+        // first, the hovered seat's own stores the ride banks — the
+        // craft cells the grid's own arrays answer [the kind/wear/
+        // pairs the 343/368 rounds' own shape keeps], the store rows
+        // the inventory bank's own rows speak [the hotbar the menu-37
+        // key, the main the menu-10+9 fold], the result seat the
+        // store never mints the honest plain keeps; the stale rows
+        // the fresh read cleans, the wire lane the collect's own
+        // NONE wall keeps [the dev-230 record's own wall re-wears].
+        self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        self.inv_carried_damage_frac = 0.0;
+        self.inv_carried_enchants.clear();
+        if menu >= 1 && menu <= 9 {
+            let cell = (menu - 1) as usize;
+            self.inv_carried_potion_kind = self.table_grid_potion_kinds[cell];
+            self.inv_carried_damage_frac = self.table_grid_damage_frac[cell];
+            self.inv_carried_enchants = self.table_grid_enchants[cell].clone();
+        } else if menu >= 37 {
+            let idx = (menu - 37) as usize;
+            self.inv_carried_potion_kind = self.items_potion_kinds[idx];
+            self.inv_carried_damage_frac = self.items_damage_frac[idx];
+            self.inv_carried_enchants = self.inventory_enchants[idx].clone();
+        } else if menu >= 10 {
+            let idx = (menu - 10 + 9) as usize;
+            self.inv_carried_potion_kind = self.items_potion_kinds[idx];
+            self.inv_carried_damage_frac = self.items_damage_frac[idx];
+            self.inv_carried_enchants = self.inventory_enchants[idx].clone();
+        }
     }
 
     pub fn on_click(&mut self, mx: i32, my: i32) {
