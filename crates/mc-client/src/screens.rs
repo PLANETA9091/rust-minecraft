@@ -10373,6 +10373,26 @@ pub struct App {
     /// open door banks — the (id, count) grid the word never carried,
     /// the stale silence the kindless model wore the bank retires).
     pub table_grid_potion_kinds: [i32; 9],
+    /// THE TABLE CELLS' OWN WEAR SEATS (the autopush-492 round — the
+    /// dev-229 law the 3x3 cells re-wear: the placed worn piece the
+    /// cell's frac the seat banks, the click's own rides the four arms
+    /// speak, the emptied cell the pristine 0.0 wears — the TRANSIENT
+    /// menu the close the ride home the enumerate pass banks, the
+    /// landing seat the cell's own rows wear. The stale cursor the
+    /// wrong-row landing the silent loss the walk retires. The wire
+    /// session the honest 0.0 wall the data never carries — the
+    /// (id, count) belief the components never spoke).
+    pub table_grid_damage_frac: [f32; 9],
+    /// THE TABLE CELLS' OWN ENCHANT SEATS (the autopush-492 round —
+    /// the placed enchanted stack the cell's (idx, level) pairs the
+    /// same four arms bank: the pickup the cell's pairs the cursor
+    /// banks, the place the cursor's pairs the cell lays, the model's
+    /// own swap the pairs exchange, the merge the emptied cursor the
+    /// pristine wears, the on-take the consumed cell the reset speaks
+    /// — the enchanted bow the table the REAL pairs the foil pass
+    /// reads. The close the pairs the receiving seats ride home to.
+    /// The wire session the honest empty wall the pairs never carry).
+    pub table_grid_enchants: [Vec<(i32, i32)>; 9],
     /// The table grid's computed result slot (the CraftingMenu's slot
     /// 0 — the ctor's `addResultSlot(124, 35)`): the recompute law the
     /// slotsChanged walk keeps, [`Self::refresh_table_result`] the
@@ -13896,6 +13916,8 @@ impl App {
             craft_result: (0, 0),
             table_grid: [(0, 0); 9],
             table_grid_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 9],
+            table_grid_damage_frac: [0.0; 9],
+            table_grid_enchants: std::array::from_fn(|_| Vec::new()),
             table_result: (0, 0),
             table_panel: (0, 0),
             live_table_slots: [(0, 0); 46],
@@ -36233,13 +36255,29 @@ impl App {
                 }
             })
             .collect();
+        // THE CELLS' OWN DATA LEDGER (the autopush-492 round — the 491
+        // carried ride's own shape the cells re-wear: the wear + pairs
+        // the same filtered walk collects BEFORE the take the ids the
+        // drain zeroes, the zip the data the pairs keeps — the
+        // count-gate the same filter the ledger's own order answers)
+        let grid_data: Vec<(f32, Vec<(i32, i32)>)> = (0..9)
+            .filter(|&i| self.table_grid[i].1 > 0)
+            .map(|i| {
+                (
+                    self.table_grid_damage_frac[i],
+                    self.table_grid_enchants[i].clone(),
+                )
+            })
+            .collect();
         let contents: Vec<(i32, i32)> = self
             .table_grid
             .iter_mut()
             .map(std::mem::take)
             .filter(|c| c.1 > 0)
             .collect();
-        for ((id, count), kind) in contents.into_iter().zip(grid_kinds) {
+        for (((id, count), kind), (cell_frac, cell_ench)) in
+            contents.into_iter().zip(grid_kinds).zip(grid_data)
+        {
             // THE CELL'S OWN LANDING (the 361 law the grid's own words
             // re-wear — the kinded cell the first-empty seat the word
             // banks, the potion's max-stack-1 law the merge pass never
@@ -36260,13 +36298,20 @@ impl App {
                     rest -= take;
                 }
             }
-            for it in self.inventory.items.iter_mut() {
+            for (idx, it) in self.inventory.items.iter_mut().enumerate() {
                 if rest == 0 {
                     break;
                 }
                 if it.1 <= 0 {
                     *it = (id, rest);
                     rest = 0;
+                    // THE CELL'S OWN DATA RIDE (the autopush-492 round —
+                    // the 491 carried ride's own law the cells re-wear:
+                    // the receiving row the cell's own wear + pairs the
+                    // landing banks, the pristine cell the pristine rows
+                    // re-wears)
+                    self.items_damage_frac[idx] = cell_frac;
+                    self.inventory_enchants[idx] = cell_ench.clone();
                 }
             }
             if let Some(idx) = landing {
@@ -36275,13 +36320,27 @@ impl App {
                 }
             }
             if rest > 0 {
+                let before = self.drops.len();
                 self.spawn_drop_at_player(id, rest);
+                // THE FLOOR'S OWN DATA RIDE (the 491 law the cells
+                // re-wear — the remainder the cell's own wear + pairs
+                // keep: the drop the pickup's own ride re-banks)
+                if let Some(floor) = self.drops.get_mut(before) {
+                    floor.damage_frac = cell_frac;
+                    floor.enchantments = cell_ench
+                        .iter()
+                        .map(|&(ench_idx, level)| (ench_idx as usize, level))
+                        .collect();
+                }
             }
         }
         // THE BANK'S OWN CLEAR (the drain the grid emptied — the words
         // the same take the fresh NONE row wears, the reopen the door's
-        // own reset banks)
+        // own reset banks; the 492 round the wear + pairs seats the
+        // same take the pristine rows re-wears)
         self.table_grid_potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 9];
+        self.table_grid_damage_frac = [0.0; 9];
+        self.table_grid_enchants = std::array::from_fn(|_| Vec::new());
         self.hotbar_slots = self.inventory.hotbar();
         self.table_result = (0, 0);
         self.container_removed_rode = true; // the removed law rode
@@ -36342,6 +36401,13 @@ impl App {
                     cell.1 -= 1;
                     if cell.1 == 0 {
                         *cell = (0, 0);
+                        // THE EMPTIED CELL'S OWN RESET (the autopush-492
+                        // round — the 229 law the consumed ingredient's
+                        // own wear + pairs the craft the seats never
+                        // keep, the remainder stack the taller cell the
+                        // own rows wear)
+                        self.table_grid_damage_frac[i] = 0.0;
+                        self.table_grid_enchants[i].clear();
                     }
                     apply_remainder_cell(cell, *rem)
                 };
@@ -36450,6 +36516,26 @@ impl App {
             self.table_grid_potion_kinds[cell] = new_cell_kind;
             self.inv_carried_potion_kind = new_carried_kind;
         }
+        // THE DATA'S OWN GRID RIDE (the autopush-492 round — the 229
+        // law the 3x3 cells re-wear: the SAME four arms the kind bank
+        // speaks — the pickup the cell's wear + pairs the cursor banks,
+        // the place the cursor's data the cell lays, the model's own
+        // swap the pairs exchange, the merge the emptied cursor the
+        // pristine wears — the table's own tour the stale cursor the
+        // wrong-row landing the silent loss the walk retires, the
+        // plain-id verdict the model's own no-op the rows never move)
+        let old_carried = self.inv_carried;
+        swap_ride_data(
+            &mut self.table_grid_damage_frac[cell],
+            &mut self.table_grid_enchants[cell],
+            &mut self.inv_carried_damage_frac,
+            &mut self.inv_carried_enchants,
+            believed,
+            new_cell,
+            old_carried,
+            new_carried,
+            button == 0,
+        );
         self.table_grid[cell] = new_cell;
         self.inv_carried = new_carried;
         self.refresh_table_result();
@@ -40624,7 +40710,16 @@ impl App {
             } else {
                 crate::brewing_sim::POTION_KIND_NONE
             };
-            if kind != crate::brewing_sim::POTION_KIND_NONE {
+            // THE TABLE CELLS' OWN GLINT (the autopush-492 round — the
+            // 229 law the 3x3 cells re-wear: the enchanted cell the
+            // foil pass the SAME scroll phases the frame clock wears,
+            // the offline bank the seats the real grid keeps, the wire
+            // lane the plain draw the honest wall keeps — the enchanted
+            // arm FIRST the kind/plain chain the else arms keep)
+            let enchanted = !live && !self.table_grid_enchants[cell].is_empty();
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx + 1, sy + 1, self.frame_millis);
+            } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                 draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
             } else {
                 draw_item_icon(g, id, sx + 1, sy + 1);

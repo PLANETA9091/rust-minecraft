@@ -43627,8 +43627,10 @@ fn the_menus_the_glint_the_laws_wear() {
         }
     }
     assert!(scrolled > 0, "the scroll the distinct pixels wear");
-    // THE CRAFT GRID'S OWN WALL (the grid seat the store the map
-    // never keys — the enchanted bow the grid cell the plain pixels
+    // THE CRAFT GRID'S OWN WALL (the 492 round the seat's own bank
+    // the cells re-key — the grid cell's pairs the OWN bank the seat
+    // reads, the store row's pairs the map the cell never wears: the
+    // enchanted bow the grid cell the unbanked pairs the plain pixels
     // keep while the player row the SAME frame the tint wears)
     app.table_grid[0] = (bow, 1);
     app.frame_millis = 0;
@@ -44338,6 +44340,410 @@ fn the_craft_cells_the_glint_the_seats_wear() {
     // THE STORE SEAT'S OWN COUNT (the same icon the row 12 the same
     // tint count keeps — the footprint the one foil pass answers)
     let (sx, sy) = inventory_slot_origin(app.inv_panel, 12);
+    let mut row_diff = 0usize;
+    for py in 0..18i32 {
+        for px in 0..18i32 {
+            let x = sx + px;
+            let y = sy + py;
+            let o = ((y as usize) * ench.w + x as usize) * 3;
+            if ench.color[o] != plain.color[o]
+                || ench.color[o + 1] != plain.color[o + 1]
+                || ench.color[o + 2] != plain.color[o + 2]
+            {
+                row_diff += 1;
+            }
+        }
+    }
+    assert_eq!(
+        cell_diff, row_diff,
+        "the same icon the same tint count keeps"
+    );
+}
+
+/// THE TABLE CELLS' OWN DATA SEATS (the autopush-492 round — the
+/// dev-229 law the 3x3 cells re-wear): the worn piece the cell's
+/// frac the seat banks, the enchanted stack the cell's pairs the
+/// same arms keep — the table's own tour the RETURN round-trip the
+/// DIFFERENT-row landing the silent loss the walk retires, the stale
+/// cursor the wrong-row landing the pristine rows the law never
+/// wears, the close's own cells the ride home the enumerate pass
+/// banks, the drained grid the pristine rows the door re-wears.
+#[test]
+fn the_table_cells_the_data_the_tour_banks() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let power = the_menus_glint_power();
+    let pairs = vec![(power, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_crafting_table();
+    // THE SEATS' OWN PRISTINE (the fresh grid the zeros the ctor banks)
+    for cell in 0..9 {
+        assert_eq!(
+            app.table_grid_damage_frac[cell], 0.0,
+            "the fresh cell the 0.0 wears"
+        );
+        assert!(
+            app.table_grid_enchants[cell].is_empty(),
+            "the fresh cell the clear wears"
+        );
+    }
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.table_panel;
+    let store_seat = |i: usize| -> (i32, i32) {
+        let (x, y) = inventory_slot_origin(panel, i);
+        (x + 8, y + 8)
+    };
+    // THE PLACE ARM (the worn boots the cell the seat banks — the
+    // cursor's own seats the pristine wears, the stale data the walk
+    // never keeps)
+    app.inventory.items[9] = (boots, 1);
+    app.items_damage_frac[9] = 0.5;
+    let (ox, oy) = store_seat(9);
+    app.click_table_slot(ox, oy, 0); // the pickup
+    assert_eq!(app.inv_carried, (boots, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the wear the cursor banks"
+    );
+    app.click_table_cell(0, 0); // the place
+    assert_eq!(app.table_grid[0], (boots, 1), "the cell the stack lays");
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.5,
+        "the wear the cell banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the placed cursor the pristine wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the placed cursor the clear wears"
+    );
+    // THE STALE CURSOR'S OWN RETIRE (the pristine item the cursor the
+    // other traffic walks — the wrong-row landing the data never
+    // wears)
+    app.inventory.items[11] = (dirt, 1);
+    let (dx, dy) = store_seat(11);
+    app.click_table_slot(dx, dy, 0); // the pickup
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 1),
+        "the second pickup the carried banks"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the pristine pickup the 0.0 wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the pristine pickup the clear wears"
+    );
+    let (tx, ty) = store_seat(12);
+    app.click_table_slot(tx, ty, 0); // the place
+    assert_eq!(
+        app.items_damage_frac[12], 0.0,
+        "the wrong row the pristine keeps"
+    );
+    assert!(
+        app.inventory_enchants[12].is_empty(),
+        "the wrong row the clear keeps"
+    );
+    // THE ENCHANTED PLACE (the fished bow the cell the pairs bank)
+    app.inventory.items[10] = (bow, 1);
+    app.inventory_enchants[10] = pairs.clone();
+    let (bx, by) = store_seat(10);
+    app.click_table_slot(bx, by, 0); // the pickup
+    assert_eq!(
+        app.inv_carried_enchants, pairs,
+        "the pairs the cursor banks"
+    );
+    app.click_table_cell(1, 0); // the place
+    assert_eq!(
+        app.table_grid_enchants[1], pairs,
+        "the pairs the cell banks"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the placed cursor the clear wears"
+    );
+    // THE TOUR'S OWN RETURN (the cell the seat lends — the
+    // DIFFERENT-row landing the silent loss the walk retires)
+    app.click_table_cell(0, 0); // the cell 0 pickup
+    assert_eq!(app.inv_carried, (boots, 1), "the return the carried banks");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the wear the cursor banks"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.0,
+        "the emptied cell the 0.0 wears"
+    );
+    let (lx, ly) = store_seat(13);
+    app.click_table_slot(lx, ly, 0); // the DIFFERENT row
+    assert_eq!(
+        app.items_damage_frac[13], 0.5,
+        "the different row the wear banks"
+    );
+    assert_eq!(
+        app.inventory.items[13],
+        (boots, 1),
+        "the landing the stack wears"
+    );
+    // THE PAIRS' OWN RETURN (the enchanted cell the seat lends — the
+    // store row the landing the pairs banks)
+    app.click_table_cell(1, 0); // the cell 1 pickup
+    assert_eq!(
+        app.inv_carried_enchants, pairs,
+        "the pairs the cursor banks"
+    );
+    assert!(
+        app.table_grid_enchants[1].is_empty(),
+        "the emptied cell the clear wears"
+    );
+    let (lx2, ly2) = store_seat(14);
+    app.click_table_slot(lx2, ly2, 0); // the DIFFERENT row
+    assert_eq!(
+        app.inventory_enchants[14], pairs,
+        "the different row the pairs banks"
+    );
+    assert!(
+        app.table_grid_enchants[0].is_empty(),
+        "the exited cells the clear keep"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[1], 0.0,
+        "the exited cells the pristine keep"
+    );
+    // THE CLOSE'S OWN RIDE HOME (the worn + the enchanted cells the
+    // enumerate pass the receiving rows banks — the drained grid the
+    // pristine rows the door re-wears)
+    let (rx, ry) = store_seat(13);
+    app.click_table_slot(rx, ry, 0); // the boots the cursor re-banks
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the store pickup the wear banks"
+    );
+    app.click_table_cell(2, 0); // the place
+    assert_eq!(
+        app.table_grid_damage_frac[2], 0.5,
+        "the wear the cell re-banks"
+    );
+    let (rx2, ry2) = store_seat(14);
+    app.click_table_slot(rx2, ry2, 0); // the bow the cursor re-banks
+    assert_eq!(
+        app.inv_carried_enchants, pairs,
+        "the store pickup the pairs banks"
+    );
+    app.click_table_cell(3, 0); // the place
+    assert_eq!(
+        app.table_grid_enchants[3], pairs,
+        "the pairs the cell re-banks"
+    );
+    app.close_crafting_table(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
+    for cell in 0..9 {
+        assert_eq!(
+            app.table_grid[cell],
+            (0, 0),
+            "the drained cell the empty wears"
+        );
+        assert_eq!(
+            app.table_grid_damage_frac[cell], 0.0,
+            "the drained frac the pristine wears"
+        );
+        assert!(
+            app.table_grid_enchants[cell].is_empty(),
+            "the drained pairs the clear wear"
+        );
+    }
+    // THE LANDINGS' OWN BANKS (the fresh rows the scan order speaks —
+    // the max-1 boots the merge pass never speaks, the bow the pairs
+    // the same fresh row wears)
+    assert_eq!(
+        app.inventory.items[0],
+        (boots, 1),
+        "the boots the fresh row banks"
+    );
+    assert_eq!(app.items_damage_frac[0], 0.5, "the wear the landing banks");
+    assert_eq!(
+        app.inventory.items[1],
+        (bow, 1),
+        "the bow the fresh row banks"
+    );
+    assert_eq!(
+        app.inventory_enchants[1], pairs,
+        "the pairs the landing banks"
+    );
+}
+
+/// THE TABLE CELLS' OWN TAKE (the autopush-492 round — the 229 law
+/// the on-take walk's own seats the consumed cell the reset speaks):
+/// the recipe the ingredient the craft consumes the cell the EMPTY
+/// answers, the wear + pairs the seats never keep — the taller cell
+/// the remainder the own rows wear, the result stack the pristine
+/// the cursor banks.
+#[test]
+fn the_table_cells_the_take_the_empty_resets() {
+    let log = mc_registry::item_id_by_name("oak_log").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let power = the_menus_glint_power();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_crafting_table();
+    // THE REAL PANEL THE RENDER BANKS (the 355 harness the door wears)
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    let panel = app.table_panel;
+    let store_seat = |i: usize| -> (i32, i32) {
+        let (x, y) = inventory_slot_origin(panel, i);
+        (x + 8, y + 8)
+    };
+    // THE EMPTIED CELL'S OWN RESET (the single log the craft the cell
+    // the empty answers — the seats the stale data never keep)
+    app.table_grid[0] = (log, 1);
+    app.table_grid_damage_frac[0] = 0.5;
+    app.table_grid_enchants[0] = vec![(power, 2)];
+    app.refresh_table_result();
+    assert_eq!(
+        app.table_result,
+        (planks, 4),
+        "the recipe the result speaks"
+    );
+    let (rx, ry) = table_craft_origin(panel, 9);
+    app.click_table_slot(rx + 8, ry + 8, 0);
+    assert_eq!(app.inv_carried, (planks, 4), "the result the cursor banks");
+    assert_eq!(
+        app.table_grid[0],
+        (0, 0),
+        "the consumed cell the empty wears"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.0,
+        "the emptied cell the pristine wears"
+    );
+    assert!(
+        app.table_grid_enchants[0].is_empty(),
+        "the emptied cell the clear wears"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the result the pristine wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the result the pairs never carry"
+    );
+    // THE TALLER CELL'S OWN KEEP (the consumed one the remainder the
+    // own seats wear)
+    let (px, py) = store_seat(15);
+    app.click_table_slot(px, py, 0); // the planks the row banks
+    assert_eq!(
+        app.inventory.items[15],
+        (planks, 4),
+        "the planks the row banks"
+    );
+    app.table_grid[0] = (log, 2);
+    app.table_grid_damage_frac[0] = 0.5;
+    app.table_grid_enchants[0] = vec![(power, 2)];
+    app.refresh_table_result();
+    app.click_table_slot(rx + 8, ry + 8, 0);
+    assert_eq!(
+        app.table_grid[0],
+        (log, 1),
+        "the consumed one the remainder keeps"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[0], 0.5,
+        "the remainder the own frac wears"
+    );
+    assert_eq!(
+        app.table_grid_enchants[0],
+        vec![(power, 2)],
+        "the remainder the own pairs wear"
+    );
+    // the second result the cursor banks — the row the merge rides
+    app.click_table_slot(px, py, 0);
+    assert_eq!(
+        app.inventory.items[15],
+        (planks, 8),
+        "the merge the row grows"
+    );
+}
+
+/// THE TABLE CELLS' OWN GLINT (the autopush-492 round — the 229 law
+/// the 3x3 cells re-wear): the enchanted cell the foil pass the SAME
+/// scroll phases the store seat wears, the additive law the channels
+/// never darken, the TINT COUNT the same 16x16 icon the footprint
+/// keeps, the pristine cell the plain pixels the cleared/set frames
+/// the identical answer keeps.
+#[test]
+fn the_table_cells_the_glint_the_seats_wear() {
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let power = the_menus_glint_power();
+    let pairs = vec![(power, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_crafting_table();
+    app.table_grid[1] = (bow, 1);
+    app.inventory.items[12] = (bow, 1);
+    // THE FRAME TRIO (the warm the lane settles, the cleared seats the
+    // plain frame wears, the enchanted seats the foil frame answers —
+    // the same millis the only difference the foil pass speaks)
+    app.frame_millis = 0;
+    let warm = the_menus_glint_render(&mut app);
+    let _ = warm;
+    app.frame_millis = 0;
+    let plain = the_menus_glint_render(&mut app);
+    app.table_grid_enchants[1] = pairs.clone();
+    app.inventory_enchants[12] = pairs.clone();
+    app.frame_millis = 0;
+    let ench = the_menus_glint_render(&mut app);
+    // THE CELL'S OWN BOX (the table_craft_origin the cell 1 the +1
+    // inset the draw wears)
+    let (gx, gy) = table_craft_origin(app.table_panel, 1);
+    let mut cell_diff = 0usize;
+    for py in 0..18i32 {
+        for px in 0..18i32 {
+            let x = gx + px;
+            let y = gy + py;
+            let o = ((y as usize) * ench.w + x as usize) * 3;
+            for k in 0..3 {
+                assert!(
+                    ench.color[o + k] >= plain.color[o + k],
+                    "the additive law the channel never darkens at ({x},{y})[{k}]"
+                );
+            }
+            if ench.color[o] != plain.color[o]
+                || ench.color[o + 1] != plain.color[o + 1]
+                || ench.color[o + 2] != plain.color[o + 2]
+            {
+                cell_diff += 1;
+            }
+        }
+    }
+    assert!(cell_diff > 0, "the enchanted cell the foil wears");
+    // THE STORE SEAT'S OWN COUNT (the same icon the row 12 the same
+    // tint count keeps — the footprint the one foil pass answers)
+    let (sx, sy) = inventory_slot_origin(app.table_panel, 12);
     let mut row_diff = 0usize;
     for py in 0..18i32 {
         for px in 0..18i32 {
