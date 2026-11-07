@@ -46837,3 +46837,140 @@ fn the_clone_the_double_the_kind_banks() {
         "the stale store word the honest NONE keeps"
     );
 }
+
+/// THE CLONE'S OWN ENDER RIDE (the 502 NEXT's own third lane the
+/// round banks — the 233/501/502 family's own shape the shared door
+/// re-wears): the chest clone's OFFLINE lane the ender cell's own
+/// 27-slot shared grid the round wakes — THE ENDER'S OWN KIND FLAG
+/// the shared door banks (the `chest_window_ender` field the family
+/// flag's own fourth twin wears — the is_ender route the flag sets,
+/// the chest/shulker canvases the reset keeps, the wire lane the
+/// flag never reads), the offline lane the flag QUARTET keys (the
+/// hopper OR the barrel OR the double OR the ender the arm wakes,
+/// the single-chest/shulker stand-ins the 605-law the silence
+/// keeps), the kind read NO walk moves — the generalized read the
+/// `slot < chest_slots.len()` test the shared 27 the free serves
+/// (the ROW STORE's own word the shared kinds speak), the mirror
+/// rows the id-gated mapped read lends, the carried-empty + hasItem
+/// gates the doClick pcs walk keeps, the stale word the fresh read
+/// cleans, the seat's own rows the copy never touches (the shared
+/// jar the safeClone's own silence keeps), the SECOND cell the ONE
+/// store the same law re-loads (the shared-inventory law the
+/// autopush-289 round banks, the flag the shared door re-arms).
+#[test]
+fn the_clone_the_ender_the_kind_banks() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.game_mode = crate::screens::GameMode::Creative;
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let a = (c, surface + 1, c); // the FIRST ender cell
+    let b = (c + 2, surface + 1, c); // the SECOND cell — the shared jar's own twin
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(a.0, a.1, a.2, crate::world::ENDER_CHEST);
+        w.set(b.0, b.1, b.2, crate::world::ENDER_CHEST);
+    }
+    // THE SHARED JAR'S OWN SEED (the ONE store the every cell binds —
+    // the grid the open arm loads, the kind row the same load wears)
+    app.ender_chest_store[0] = (potion, 1);
+    app.ender_chest_store_potion_kinds[0] = kind_a;
+    app.open_chest_for(a);
+    assert_eq!(
+        app.chest_slots.len(),
+        27,
+        "the shared jar's own 27 slots the open wears"
+    );
+    assert!(
+        app.container_open_ender,
+        "the flush's own route the open arms"
+    );
+    assert!(
+        app.chest_window_ender,
+        "the shared door's own flag the open banks"
+    );
+    assert!(
+        !app.chest_window_hopper && !app.chest_window_barrel && !app.chest_window_double,
+        "the other canvases the reset keeps"
+    );
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the shared grid the open loads"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], kind_a,
+        "the shared kind row the same load wears"
+    );
+    // THE GRID CELL'S OWN COPY (the ROW STORE's own word the cursor
+    // banks — the potion's 1-cap the FULL max takes)
+    app.chest_slot_rects = vec![(100, 100, 0)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the potion copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind_a,
+        "the shared row's word the cursor banks"
+    );
+    assert_eq!(
+        app.ender_chest_store[0],
+        (potion, 1),
+        "the shared jar the copy never touches"
+    );
+    // THE KINDLESS GRID CELL (the stale word the id-gate's silence
+    // cleans — the dirt row the honest NONE keeps)
+    app.chest_carried = (0, 0);
+    app.chest_slots[1] = (dirt, 3);
+    app.chest_row_potion_kinds[1] = kind_c;
+    app.chest_slot_rects = vec![(100, 100, 1)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(app.chest_carried, (dirt, 64), "the dirt copy the max takes");
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the stale store word the honest NONE keeps"
+    );
+    // THE MIRROR ROW'S OWN COPY (the id-gated mapped read the kind
+    // banks — the mirror 0 the main row 9 the map keys)
+    app.chest_carried = (0, 0);
+    app.chest_mirror[0] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind_b;
+    app.chest_slot_rects = vec![(100, 100, 27)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the mirror copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind_b,
+        "the believed row's word the map banks"
+    );
+    // THE SECOND CELL'S OWN SHARED LOAD (the ONE store the every cell
+    // binds — the clone lane's flag the shared door re-arms, the
+    // seeded slot the same jar re-loads)
+    app.open_chest_for(b);
+    assert!(
+        app.chest_window_ender,
+        "the shared door the second open re-arms"
+    );
+    assert_eq!(
+        app.chest_slots[0],
+        (potion, 1),
+        "the seeded slot the shared jar re-loads"
+    );
+}

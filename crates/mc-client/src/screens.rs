@@ -9569,6 +9569,16 @@ pub struct App {
     /// menu type the server speaks — the offline canvas alone the flag
     /// banks).
     pub chest_window_double: bool,
+    /// THE ENDER WINDOW'S OWN KIND FLAG (the offline clone lane's key
+    /// — the 233/501/502 family's own flag the shared door banks): the
+    /// chest's own openers reset it (the single chest's default canvas
+    /// the family law keeps), the ender's own open branch sets it (the
+    /// is_ender route the [`Self::open_chest_for`] walk rides — the
+    /// shared jar's 27-slot grid the ONE store wears). The LIVE lane
+    /// the flag never reads (the wire's own OpenScreen word the menu
+    /// type the server speaks — the offline canvas alone the flag
+    /// banks; the shared store the flush's own route the flag arms).
+    pub chest_window_ender: bool,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -13796,6 +13806,7 @@ impl App {
             chest_window_hopper: false,
             chest_window_barrel: false,
             chest_window_double: false,
+            chest_window_ender: false,
             live_clicks: None,
             chest_live_window: None,
             chest_slot_rects: Vec::new(),
@@ -26288,6 +26299,7 @@ impl App {
         self.chest_window_hopper = false;
         self.chest_window_barrel = false;
         self.chest_window_double = false;
+        self.chest_window_ender = false;
         // the deterministic scene the fresh grid keeps — the flush key
         // the scene NEVER wears (the per-cell stores the right-click
         // lane's own cells serve)
@@ -30666,6 +30678,7 @@ impl App {
         self.chest_window_hopper = false;
         self.chest_window_barrel = false;
         self.chest_window_double = false;
+        self.chest_window_ender = false;
         // THE DOUBLE'S OWN COMBINE (the dev-71 round — javap 26.2 the
         // DoubleBlockCombiner walk the chest menu provider rides: the
         // opened chest's variant type the connected direction reads,
@@ -30719,6 +30732,11 @@ impl App {
             .is_some_and(|w| w.get(pos.0, pos.1, pos.2) == crate::world::ENDER_CHEST);
         let store = if is_ender {
             self.container_open_ender = true;
+            // THE ENDER'S OWN KIND FLAG (the offline clone lane's own
+            // key the shared door banks — the chest/shulker canvases
+            // the reset keeps, the shared jar's own door the flag
+            // wears)
+            self.chest_window_ender = true;
             self.ender_chest_store.clone()
         } else {
             self.container_open_ender = false;
@@ -31007,6 +31025,7 @@ impl App {
         self.chest_window_hopper = false;
         self.chest_window_barrel = false;
         self.chest_window_double = false;
+        self.chest_window_ender = false;
         self.chest_window_shulker = true;
         // THE SHULKER'S OWN OPEN BYTE (the dev-193 round — the vanilla
         // chest the OPEN blockstate the family never carries, the
@@ -31108,6 +31127,7 @@ impl App {
         self.chest_window_hopper = true;
         self.chest_window_barrel = false;
         self.chest_window_double = false;
+        self.chest_window_ender = false;
         // THE FAMILY'S OWN VOICE (the counter law the chest walk keeps
         // — the hopper kind the vanilla's own silence arm the emit
         // call returns: the ContainerOpenersCounter the HopperBlock
@@ -60768,11 +60788,16 @@ impl App {
         if !self.chest_is_live {
             // THE HOPPER'S OWN OFFLINE LANE (the five-seat door the
             // 233 round wakes — THE BARREL'S OWN LANE the 27-cell door
-            // the round serves; the chest/shulker family's own doors
-            // the silence keeps): the door's grid + the mirror rows
-            // the safeClone walk serves, the shared cursor the
-            // offline lane banks
-            if !self.chest_window_hopper && !self.chest_window_barrel && !self.chest_window_double {
+            // the round serves; THE ENDER'S OWN LANE the shared jar's
+            // own 27-cell door the round wakes; the chest/shulker
+            // family's own doors the silence keeps): the door's grid
+            // + the mirror rows the safeClone walk serves, the shared
+            // cursor the offline lane banks
+            if !self.chest_window_hopper
+                && !self.chest_window_barrel
+                && !self.chest_window_double
+                && !self.chest_window_ender
+            {
                 return; // the chest/shulker stand-in: no window, no click
             }
             let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
@@ -86085,6 +86110,7 @@ impl App {
                 self.chest_window_hopper = hopper;
                 self.chest_window_barrel = false;
                 self.chest_window_double = false;
+                self.chest_window_ender = false;
                 // THE WINDOW'S OWN NAME (the same decode ride — the
                 // OpenScreen Component the 3x3 canvas's round owns,
                 // the custom name the anvil rows speak; the None the
