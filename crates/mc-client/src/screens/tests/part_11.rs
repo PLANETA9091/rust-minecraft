@@ -46687,3 +46687,153 @@ fn the_clone_the_barrel_the_kind_banks() {
         "the offline shulker the silence keeps"
     );
 }
+
+/// THE CLONE'S OWN DOUBLE RIDE (the 501 NEXT's own third lane — the
+/// 54-slot compound the partner combine wears the chest clone's own
+/// arm the round wakes): the double flag the open branch banks, the
+/// grid's 0..54 the two stores' own projection reads (the partner
+/// rows the head holds, the opened cell's own rows the tail rides),
+/// the mirror rows the same read re-keys.
+#[test]
+fn the_clone_the_double_the_kind_banks() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.game_mode = crate::screens::GameMode::Creative;
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let a = (c, surface + 1, c); // the LEFT half
+    let b = (c + 1, surface + 1, c); // the RIGHT half
+    {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(a.0, a.1, a.2, crate::world::CHEST);
+        w.set(b.0, b.1, b.2, crate::world::CHEST);
+        w.set_variant(
+            a.0,
+            a.1,
+            a.2,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_NORTH,
+                crate::world::CHEST_TYPE_LEFT,
+            ),
+        );
+        w.set_variant(
+            b.0,
+            b.1,
+            b.2,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_NORTH,
+                crate::world::CHEST_TYPE_RIGHT,
+            ),
+        );
+    }
+    app.open_chest_for(a);
+    assert_eq!(
+        app.chest_slots.len(),
+        54,
+        "the double the compound's 54 slots wears"
+    );
+    assert!(app.chest_window_double, "the double canvas the flag banks");
+    assert!(
+        !app.chest_window_hopper && !app.chest_window_barrel,
+        "the other canvases the reset keeps"
+    );
+    // THE PARTNER CELL'S OWN COPY (the ROW STORE's own word the
+    // cursor banks — the head rows the partner's own store holds)
+    app.chest_slots[3] = (potion, 2);
+    app.chest_row_potion_kinds[3] = kind_a;
+    app.chest_slot_rects = vec![(100, 100, 3)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the potion's 1-cap the FULL max takes"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind_a,
+        "the partner row's word the cursor banks"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[3], kind_a,
+        "the cell the copy never touches"
+    );
+    // THE OPENED CELL'S OWN COPY (the tail rows the opened store
+    // holds — the +27 shift the compound keys)
+    app.chest_carried = (0, 0);
+    app.chest_slots[30] = (potion, 1);
+    app.chest_row_potion_kinds[30] = kind_b;
+    app.chest_slot_rects = vec![(100, 100, 30)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the opened copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind_b,
+        "the opened row's word the cursor banks"
+    );
+    // THE MIRROR ROW'S OWN COPY (the id-gated mapped read the kind
+    // banks — the mirror 0 the main row 9 the map keys)
+    app.chest_carried = (0, 0);
+    app.chest_mirror[0] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind_c;
+    app.chest_slot_rects = vec![(100, 100, 54)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(
+        app.chest_carried,
+        (potion, 1),
+        "the mirror copy the 1-cap takes"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, kind_c,
+        "the mirror row's word the cursor banks"
+    );
+    // THE NON-POTION'S OWN HONEST NONE (the stale word the id-gate
+    // cleans — the mirror 31 the hotbar row 4 the map re-keys)
+    app.chest_carried = (0, 0);
+    app.chest_carried_potion_kind = kind_a;
+    app.chest_mirror[31] = (dirt, 5);
+    app.inventory.items[4] = (dirt, 5);
+    app.items_potion_kinds[4] = kind_c;
+    app.chest_slot_rects = vec![(100, 100, 85)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(app.chest_carried, (dirt, 64), "the dirt copy the max takes");
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the stale word the honest NONE keeps"
+    );
+    assert_eq!(
+        app.inventory.items[4],
+        (dirt, 5),
+        "the seat the copy never touches"
+    );
+    // THE GRID CELL'S OWN KINDLESS ROW (the stale store word the
+    // id-gate's silence cleans)
+    app.chest_carried = (0, 0);
+    app.chest_carried_potion_kind = kind_b;
+    app.chest_slots[50] = (dirt, 1);
+    app.chest_row_potion_kinds[50] = kind_c;
+    app.chest_slot_rects = vec![(100, 100, 50)];
+    app.on_container_clone_click(108, 108);
+    assert_eq!(
+        app.chest_carried,
+        (dirt, 64),
+        "the kindless copy the max takes"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the stale store word the honest NONE keeps"
+    );
+}
