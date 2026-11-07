@@ -40376,6 +40376,33 @@ impl App {
         }
     }
 
+    /// THE BREWING SEAT'S OWN KIND READ (the 499 dispenser read's own
+    /// twin the 354 tooltip law re-wears — the id-gated normalized
+    /// word the seat answers: the stand's five the KIND STORE's own
+    /// word speaks, the mirror rows the INVENTORY bank's mapped read
+    /// lends, the stale word the non-potion seat the honest NONE
+    /// keeps, the stray seat the same silence wears).
+    fn brewing_seat_potion_kind(&self, seat: usize) -> i32 {
+        let (id, _) = if seat < 5 {
+            self.brewing_slots.get(seat).copied().unwrap_or((0, 0))
+        } else {
+            match Self::brewing_menu_to_inventory(seat) {
+                Some(row) => self.inventory.items.get(row).copied().unwrap_or((0, 0)),
+                None => return crate::brewing_sim::POTION_KIND_NONE,
+            }
+        };
+        if !crate::world::brewing_is_potion_kind(id) {
+            return crate::brewing_sim::POTION_KIND_NONE;
+        }
+        if seat < 5 {
+            self.brewing_kinds[seat]
+        } else {
+            Self::brewing_menu_to_inventory(seat)
+                .map(|row| self.items_potion_kinds[row])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        }
+    }
+
     /// THE BREWING STAND'S OWN TOOLTIP SEAT (the autopush-354 round —
     /// the 351/352 law the container family's own canvases re-wear:
     /// the hovered seat's rows the shared lane speaks, the stand's
@@ -60582,6 +60609,7 @@ impl App {
             ScreenKind::Furnace => self.clone_furnace_seat(mx, my),
             ScreenKind::Crafting => self.clone_table_seat(mx, my),
             ScreenKind::Dispenser => self.clone_dispenser_seat(mx, my),
+            ScreenKind::Brewing => self.clone_brewing_seat(mx, my),
             _ => {} // the world/other screens the container walk never reads
         }
     }
@@ -61024,6 +61052,97 @@ impl App {
         // kindless cursor the wall keeps [the dev-230 record's own
         // wall re-wears].
         self.dispenser_carried_potion_kind = self.dispenser_seat_potion_kind(s);
+    }
+
+    /// THE BREWING SEAT'S OWN CLONE (the brewing click walk's own two
+    /// lanes the arm wears — the 499 NEXT's own third lane the round
+    /// banks): the stand's own cursor the safeClone law serves either
+    /// lane [the offline the carried pair keeps, the live the
+    /// authoritative cursor banks], the stand's five the KIND STORE's
+    /// own words speak, the mirror rows the write-through projection
+    /// the inventory IS — the row's stack the inventory's own cell
+    /// reads, the kind word the id-gated read lends (the
+    /// [`Self::brewing_seat_potion_kind`] read the arm banks), the
+    /// wire lane the belief's own seat speaks — the kindless cursor
+    /// the honest NONE wall keeps [the dev-230 record's own wall
+    /// re-wears]. The safeClone law the cursor ALONE mutates — the
+    /// hovered seat the copy never touches.
+    fn clone_brewing_seat(&mut self, mx: i32, my: i32) {
+        if self.brewing_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let s = slot as usize;
+        if self.world_is_network && self.brewing_is_live {
+            // THE WIRE LANE (the brewing click walk's own split the
+            // arm wears): the packet the live session speaks, the
+            // belief's cursor the safeClone serves
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, state_id)) = self.brewing_live_window else {
+                return; // no window identity — nothing to echo against
+            };
+            if self.live_brewing_carried.1 > 0 {
+                return; // doClick pc 1400-1407 — the carried-empty gate
+            }
+            let (id, count) = if s < 5 {
+                self.brewing_slots.get(s).copied().unwrap_or((0, 0))
+            } else {
+                self.brewing_mirror.get(s - 5).copied().unwrap_or((0, 0))
+            };
+            if count <= 0 || id == 0 {
+                return; // pc 1427-1432 — the hasItem gate
+            }
+            let carried = (id, crate::world_view::item_max_stack(id));
+            self.live_brewing_carried = carried;
+            // THE WIRE'S OWN KIND WALL (the belief's rows the kind
+            // never carries — the honest NONE the cursor wears)
+            self.brewing_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot,
+                    button: 2,
+                    input: crate::world_view::ContainerInput::Clone,
+                    changed: Vec::new(), // the hovered seat the copy NEVER touches
+                    carried,
+                },
+            ));
+            return;
+        }
+        if self.brewing_carried.1 > 0 {
+            return; // doClick pc 1400-1407 — the carried-empty gate
+        }
+        let (id, count) = if s < 5 {
+            // THE STAND'S OWN SEAT (the sim array the store reads)
+            self.brewing_slots.get(s).copied().unwrap_or((0, 0))
+        } else {
+            // THE MIRROR ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the row's stack the inventory's own cell
+            // answers, the offline walk's own convention)
+            match Self::brewing_menu_to_inventory(s) {
+                Some(idx) => self.inventory.items[idx],
+                None => return, // the stray seat the map never names
+            }
+        };
+        if count <= 0 || id == 0 {
+            return; // pc 1427-1432 — the hasItem gate
+        }
+        self.brewing_carried = (id, crate::world_view::item_max_stack(id));
+        // THE CLONE'S OWN BREWING RIDE (the 497 ride's own shape the
+        // brewing lane re-wears — the KIND WORD the plain cursor
+        // never kept): the hovered seat's own word the carried banks
+        // — the stand's five the KIND STORE's word speaks, the mirror
+        // rows the id-gated mapped read answers [the potion row the
+        // bank's own cell answers, the kindless stack the honest NONE
+        // keeps], the stale word the fresh read cleans, the wire lane
+        // the kindless cursor the wall keeps [the dev-230 record's
+        // own wall re-wears].
+        self.brewing_carried_kind = self.brewing_seat_potion_kind(s);
     }
 
     pub fn on_click(&mut self, mx: i32, my: i32) {
