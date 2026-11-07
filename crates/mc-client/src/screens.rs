@@ -10329,6 +10329,26 @@ pub struct App {
     /// drains). The id gate the normalized read the stale word the
     /// non-potion cells never lends ([`Self::click_craft_cell`]).
     pub craft_grid_potion_kinds: [i32; 4],
+    /// THE CRAFT CELLS' OWN WEAR SEATS (the dev-229 round — the 2x2
+    /// grid the 491 walk's own parallel row answers: the placed worn
+    /// piece the cell's frac the seat banks, the click's own rides the
+    /// four arms speak, the emptied cell the pristine 0.0 wears — the
+    /// PERSISTENT cells the persistent seats wear, the close the grid
+    /// keeps the bank the same ride never drains. The craft-grid tour
+    /// the stale cursor the wrong-row landing the silent loss the walk
+    /// retires. The wire session the honest 0.0 wall the data never
+    /// carries — the (id, count) belief the components never spoke).
+    pub craft_grid_damage_frac: [f32; 4],
+    /// THE CRAFT CELLS' OWN ENCHANT SEATS (the dev-229 round — the
+    /// placed enchanted stack the cell's (idx, level) pairs the same
+    /// four arms bank: the pickup the cell's pairs the cursor banks,
+    /// the place the cursor's pairs the cell lays, the model's own
+    /// swap the pairs exchange, the merge the emptied cursor the
+    /// pristine wears, the on-take the consumed cell the reset speaks
+    /// — the enchanted bow the grid the REAL pairs the foil pass
+    /// reads. The wire session the honest empty wall the pairs never
+    /// carry).
+    pub craft_grid_enchants: [Vec<(i32, i32)>; 4],
     /// The craft grid's computed result slot (the InventoryMenu's slot
     /// 0 — the ctor's `addResultSlot(154, 28)`): the recompute law
     /// `InventoryMenu.slotsChanged` walks every container mutation
@@ -13871,6 +13891,8 @@ impl App {
             inv_panel: (0, 0),
             craft_grid: [(0, 0); 4],
             craft_grid_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 4],
+            craft_grid_damage_frac: [0.0; 4],
+            craft_grid_enchants: std::array::from_fn(|_| Vec::new()),
             craft_result: (0, 0),
             table_grid: [(0, 0); 9],
             table_grid_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 9],
@@ -36938,6 +36960,13 @@ impl App {
                     cell.1 -= 1;
                     if cell.1 == 0 {
                         *cell = (0, 0);
+                        // THE EMPTIED CELL'S OWN RESET (the dev-229
+                        // round — the consumed ingredient's own wear +
+                        // pairs the craft the seats never keep, the
+                        // remainder stack the taller cell the own rows
+                        // wear)
+                        self.craft_grid_damage_frac[i] = 0.0;
+                        self.craft_grid_enchants[i].clear();
                     }
                     apply_remainder_cell(cell, *rem)
                 };
@@ -37049,6 +37078,26 @@ impl App {
             self.craft_grid_potion_kinds[cell] = new_cell_kind;
             self.inv_carried_potion_kind = new_carried_kind;
         }
+        // THE DATA'S OWN GRID RIDE (the dev-229 round — the 491 walk's
+        // own law the 2x2 cells re-wear: the SAME four arms the kind
+        // bank speaks — the pickup the cell's wear + pairs the cursor
+        // banks, the place the cursor's data the cell lays, the model's
+        // own swap the pairs exchange, the merge the emptied cursor the
+        // pristine wears — the craft-grid tour the stale cursor the
+        // wrong-row landing the silent loss the walk retires, the
+        // plain-id verdict the model's own no-op the rows never move)
+        let old_carried = self.inv_carried;
+        swap_ride_data(
+            &mut self.craft_grid_damage_frac[cell],
+            &mut self.craft_grid_enchants[cell],
+            &mut self.inv_carried_damage_frac,
+            &mut self.inv_carried_enchants,
+            believed,
+            new_cell,
+            old_carried,
+            new_carried,
+            button == 0,
+        );
         self.craft_grid[cell] = new_cell;
         self.inv_carried = new_carried;
         self.refresh_craft_result();
@@ -39165,7 +39214,17 @@ impl App {
             } else {
                 crate::brewing_sim::POTION_KIND_NONE
             };
-            if kind != crate::brewing_sim::POTION_KIND_NONE {
+            // THE CRAFT CELLS' OWN GLINT (the dev-229 round — the 228
+            // family law the 2x2 cells re-wear: the enchanted cell the
+            // foil pass the SAME scroll phases the frame clock wears,
+            // the offline store the seats the real grid keeps, the
+            // wire lane the plain draw the honest wall keeps — the
+            // enchanted arm FIRST the kind/plain chain the else arms
+            // keep)
+            let enchanted = !self.world_is_network && !self.craft_grid_enchants[cell].is_empty();
+            if enchanted {
+                draw_item_icon_enchanted(g, a, id, sx + 1, sy + 1, self.frame_millis);
+            } else if kind != crate::brewing_sim::POTION_KIND_NONE {
                 draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
             } else {
                 draw_item_icon(g, id, sx + 1, sy + 1);
