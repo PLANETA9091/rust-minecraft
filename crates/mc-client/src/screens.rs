@@ -60706,10 +60706,48 @@ impl App {
     /// law the arm wears — the offline stand-in no window keeps): the
     /// grid's 0..27 and the mirror's 27..63 the belief read answers,
     /// the safeClone law the cursor ALONE mutates, the packet the
-    /// window's own identity names.
+    /// window's own identity names. THE HOPPER'S OWN OFFLINE LANE (the
+    /// 500 NEXT's own tail lane the round banks — the five-seat door
+    /// the offline world opens the arm answers): the flag the hopper
+    /// door alone wears the lane keys, the chest/barrel/shulker
+    /// stand-ins the 605-law the silence keeps, the stand's five the
+    /// slots array reads, the mirror rows the write-through projection
+    /// reads, the hovered seat's own kind word the carried banks (the
+    /// [`Self::hopper_seat_potion_kind`] read the arm banks).
     fn clone_chest_seat(&mut self, mx: i32, my: i32) {
         if !self.chest_is_live {
-            return; // the offline stand-in: no window, no click
+            // THE HOPPER'S OWN OFFLINE LANE (the five-seat door the
+            // offline stand-in alone wears — the chest family's own
+            // doors the silence keeps): the stand's five + the mirror
+            // rows the safeClone walk serves, the shared cursor the
+            // offline lane banks
+            if !self.chest_window_hopper {
+                return; // the chest/barrel stand-in: no window, no click
+            }
+            let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
+                return; // the press landed between the slots — the null hover
+            };
+            if self.chest_carried.1 > 0 {
+                return; // doClick pc 1400-1407 — the carried-empty gate
+            }
+            let (id, count) = if (slot as usize) < self.chest_slots.len() {
+                self.chest_slots[slot as usize]
+            } else {
+                self.chest_mirror[slot as usize - self.chest_slots.len()]
+            };
+            if count <= 0 || id == 0 {
+                return; // pc 1427-1432 — the hasItem gate
+            }
+            let carried = (id, crate::world_view::item_max_stack(id));
+            self.chest_carried = carried;
+            // THE HOPPER'S OWN KIND BANK (the ONE assignment the ride
+            // answers — the stale word the fresh read cleans): the
+            // stand's five the ROW STORE's own word speaks, the mirror
+            // rows the id-gated mapped read lends, the seat's own rows
+            // the copy never touches (the safeClone's own silence the
+            // changed stores keep)
+            self.chest_carried_potion_kind = self.hopper_seat_potion_kind(slot as usize);
+            return;
         }
         let Some((window_id, state_id)) = self.chest_live_window else {
             return; // no window identity — nothing to echo against
@@ -70713,6 +70751,28 @@ impl App {
                 .get(row)
                 .copied()
                 .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            _ => crate::brewing_sim::POTION_KIND_NONE,
+        }
+    }
+
+    /// THE HOPPER SEAT'S OWN KIND READ (the 500 brewing read's own
+    /// twin — the 366 render law's own lanes the walk re-keys): the
+    /// stand's five the ROW STORE's own word speaks (the
+    /// [`Self::chest_row_potion_kind`] id-gated read answers), the
+    /// mirror rows the id-gated mapped read lends (the believed row's
+    /// own id the gate keys — the potion row the bank's own cell
+    /// answers, the kindless stack the honest NONE keeps).
+    fn hopper_seat_potion_kind(&self, slot: usize) -> i32 {
+        if slot < 5 {
+            return self.chest_row_potion_kind(slot);
+        }
+        let idx = slot - 5;
+        match self.chest_mirror.get(idx) {
+            Some(&(id, _)) if crate::world::brewing_is_potion_kind(id) => {
+                Self::chest_mirror_to_inventory(idx)
+                    .map(|row| self.items_potion_kinds[row])
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            }
             _ => crate::brewing_sim::POTION_KIND_NONE,
         }
     }
