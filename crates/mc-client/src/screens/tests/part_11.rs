@@ -47531,3 +47531,248 @@ fn the_world_lane_the_screen_gate_the_digits_wear() {
         "the world lane the chart consumes"
     );
 }
+
+/// THE CHEST SWAP'S OWN WORD RIDE (the autopush-507 round — the
+/// offline twin the generic_9x3's seats answer: the CASE D trade the
+/// kind_a/kind_b words the cell + row exchange, the non-potion
+/// swap-in the kindless answer banks, the CASE B the sword's wear +
+/// pairs the empty row banks [the drained store row the pristine
+/// rows wear], the same hotbar seat the identical pair the silence
+/// keeps)
+#[test]
+fn the_chest_swap_the_words_the_pairs_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Chest);
+    let panel = chest_panel_origin(640, 360);
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.chest_slot_rects = (0..27)
+        .map(|i| {
+            let (sx, sy) = chest_container_slot(panel, i);
+            (sx + 1, sy + 1, i as i16)
+        })
+        .chain((0..36).map(|i| {
+            let (sx, sy) = chest_mirror_slot(panel, i);
+            (sx + 1, sy + 1, (27 + i) as i16)
+        }))
+        .collect();
+    // THE CASE D'S OWN TRADE (the cell's potion the row's potion
+    // trades — the words the seats exchange)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = kind_a;
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_b;
+    let (cx, cy) = chest_container_slot(panel, 0);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_chest_swap_key(0), "the trade consumes");
+    assert_eq!(app.chest_slots[0], (potion, 1), "the cell the pair's wears");
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the pair's wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], kind_b,
+        "the word the cell rode"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    assert_eq!(
+        app.chest_mirror[27],
+        (potion, 1),
+        "the sync the row re-projects"
+    );
+    // THE NON-POTION SWAP-IN'S OWN KINDLESS ANSWER (the planks the
+    // potion's old cell wears — the stale word the honest NONE
+    // retires)
+    app.chest_slots[0] = (potion, 1);
+    app.chest_row_potion_kinds[0] = kind_a;
+    app.inventory.items[0] = (planks, 4);
+    app.items_potion_kinds[0] = none;
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_chest_swap_key(0), "the trade consumes");
+    assert_eq!(app.chest_slots[0], (planks, 4), "the cell the planks wears");
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the potion wears"
+    );
+    assert_eq!(
+        app.chest_row_potion_kinds[0], none,
+        "the kindless answer banks"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE CASE B'S OWN BANK (the store row's sword the wear + pairs
+    // the empty row banks — the drained row the pristine rows wear;
+    // the mirror row 12 the items 21 answers — the mapped row the
+    // walk reads)
+    app.chest_slots[0] = (0, 0);
+    app.chest_row_potion_kinds[0] = none;
+    app.inventory.items[21] = (sword, 1);
+    app.items_potion_kinds[21] = none;
+    app.items_damage_frac[21] = 0.4;
+    app.inventory_enchants[21] = vec![(sharp, 5)];
+    app.inventory.items[2] = (0, 0);
+    app.items_potion_kinds[2] = none;
+    app.items_damage_frac[2] = 0.0;
+    app.inventory_enchants[2] = Vec::new();
+    let (mx3, my3) = chest_mirror_slot(panel, 12);
+    app.mouse_pos = Some((mx3 + 8, my3 + 8));
+    assert!(app.on_chest_swap_key(2), "the take consumes");
+    assert_eq!(app.inventory.items[21], (0, 0), "the store row empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (sword, 1),
+        "the row the sword rides"
+    );
+    assert_eq!(app.items_damage_frac[2], 0.4, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(sharp, 5)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[21], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[21].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[21], none,
+        "the drained word the pristine wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the identical pair the walk sets back)
+    app.inventory.items[5] = (planks, 2);
+    app.items_potion_kinds[5] = none;
+    let (sx, sy) = chest_mirror_slot(panel, 32);
+    app.mouse_pos = Some((sx + 8, sy + 8));
+    assert!(app.on_chest_swap_key(5), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[5],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE CHEST SWAP'S OWN GRID BANK (the autopush-507 round — the CASE
+/// C the row's potion the empty cell lays [the word the place banks],
+/// the SPLIT law the max wears [the word the split rides], the CASE B
+/// the offhand the grid stack rides, the both-empty press the
+/// consumed silence keeps, the carried gate the false verdict wears)
+#[test]
+fn the_chest_swap_the_grid_the_split_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let egg = mc_registry::item_id_by_name("egg").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Chest);
+    let panel = chest_panel_origin(640, 360);
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.chest_slot_rects = (0..27)
+        .map(|i| {
+            let (sx, sy) = chest_container_slot(panel, i);
+            (sx + 1, sy + 1, i as i16)
+        })
+        .chain((0..36).map(|i| {
+            let (sx, sy) = chest_mirror_slot(panel, i);
+            (sx + 1, sy + 1, (27 + i) as i16)
+        }))
+        .collect();
+    // THE CASE C'S OWN PLACE (the row's potion the empty cell lays —
+    // the word the place banks)
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_a;
+    let (cx, cy) = chest_container_slot(panel, 4);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_chest_swap_key(0), "the place consumes");
+    assert_eq!(app.chest_slots[4], (potion, 1), "the cell the row's wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[4], kind_a,
+        "the word the place banks"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the row empties");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained row the pristine wears"
+    );
+    assert_eq!(app.chest_mirror[27], (0, 0), "the sync the row re-projects");
+    // THE SPLIT'S OWN LAW (the row's 20 eggs the max 16 wears — the
+    // cell takes max, the row the remainder keeps)
+    app.inventory.items[0] = (egg, 20);
+    app.items_potion_kinds[0] = none;
+    let (cx2, cy2) = chest_container_slot(panel, 7);
+    app.mouse_pos = Some((cx2 + 8, cy2 + 8));
+    assert!(app.on_chest_swap_key(0), "the split consumes");
+    assert_eq!(app.chest_slots[7], (egg, 16), "the cell the max wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[7], none,
+        "the kindless answer banks"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (egg, 4),
+        "the row the remainder keeps"
+    );
+    // THE POTION'S OWN SPLIT (the max 1 the potion wears — the cell
+    // takes one, the row the remainder keeps, the word the split
+    // rides)
+    app.inventory.items[0] = (potion, 40);
+    app.items_potion_kinds[0] = kind_a;
+    let (cx3, cy3) = chest_container_slot(panel, 9);
+    app.mouse_pos = Some((cx3 + 8, cy3 + 8));
+    assert!(app.on_chest_swap_key(0), "the split consumes");
+    assert_eq!(app.chest_slots[9], (potion, 1), "the cell the max wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[9], kind_a,
+        "the word the split rides"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 39),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], kind_a,
+        "the remainder the word keeps"
+    );
+    // THE CASE B'S OWN OFFHAND RIDE (the grid stack the offhand wears
+    // — the cell EMPTIES, the hotbar rows untouched)
+    app.chest_slots[6] = (dirt, 32);
+    app.inventory.offhand[0] = (0, 0);
+    let (cx4, cy4) = chest_container_slot(panel, 6);
+    app.mouse_pos = Some((cx4 + 8, cy4 + 8));
+    assert!(app.on_chest_swap_key(40), "the F arm consumes");
+    assert_eq!(app.chest_slots[6], (0, 0), "the cell empties");
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 32),
+        "the offhand rides AS-IS"
+    );
+    // THE BOTH-EMPTY'S OWN SILENCE (the consumed verdict keeps)
+    let (ex, ey) = chest_container_slot(panel, 20);
+    app.mouse_pos = Some((ex + 8, ey + 8));
+    assert!(app.on_chest_swap_key(3), "the silence still consumes");
+    // THE CARRIED GATE'S OWN REFUSAL (the cursor's own stack the walk
+    // refuses)
+    app.chest_carried = (dirt, 1);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(!app.on_chest_swap_key(0), "the carried gate refuses");
+    app.chest_carried = (0, 0);
+}

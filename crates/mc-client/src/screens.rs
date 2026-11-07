@@ -46178,8 +46178,10 @@ impl App {
     /// - the hovered-slot gate (pc 13-17 — `hoveredSlot != null`):
     ///   the rects the render never spoke, the cursor the frame
     ///   stream never fed — the null verdict the false return keeps;
-    /// - the window gate: the offline stand-in no window keeps (the
-    ///   chest the LIVE session alone wears — the chest Q's own law).
+    /// - the window gate: the WIRE lane the live session's own
+    ///   identity keeps — the offline stand-in the twin's own lane
+    ///   answers (the autopush-507 split the table walk re-wears: the
+    ///   offline store the same four arms the local belief answers).
     /// THE SEATS (the generic_9x3 menu's own slot list the ctor
     /// speaks — the grid 0..26, the player store mirror 27..62, the
     /// mirror's hotbar rows 54..62): ALL plain Slots (the chest Q
@@ -46197,12 +46199,55 @@ impl App {
     /// The true verdict the digit CONSUMES either way (the both-empty
     /// press the consumed silence keeps — the packet STILL rides, the
     /// slotClicked call the keyPressed walk keeps unconditional).
+    /// THE LANES' OWN SPLIT (the autopush-507 round — the table walk's
+    /// own split the chest screen re-wears): the wire session the
+    /// belief's own table answers ([`Self::on_chest_swap_key_wire`],
+    /// the body the byte-identical ride keeps), the OFFLINE sim the
+    /// local store the same four arms re-wears
+    /// ([`Self::chest_swap_table`] — the doClick SWAP table pc
+    /// 1079-1382 the offline store answers, the digit the stand-in's
+    /// checkHotbarKeyPressed walk finally speaks).
     pub fn on_chest_swap_key(&mut self, button: usize) -> bool {
         if self.screen != ScreenKind::Chest || self.dead {
             return false;
         }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's swap the BELIEF the
+            // same table answers, the packet the command lane speaks —
+            // the offline store NOT the truth there.
+            return self.on_chest_swap_key_wire(button);
+        }
+        // THE OFFLINE TWIN'S OWN GATES (the table walk's own shape the
+        // Q-drop lane mirrors — the carried, the rects, the cursor,
+        // the hovered seat the SAME geometry walk the click lane
+        // answers)
+        if self.chest_carried.1 > 0 {
+            return false; // the getCarried().isEmpty() arm — the
+                          // cursor's own stack the walk refuses
+        }
+        if self.chest_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.chest_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
+        self.chest_swap_table(button, slot as usize)
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// checkHotbarKeyPressed gates, the window's own belief the
+    /// [`wire_chest_swap`] free fn answers): the window identity the
+    /// live session alone arms, the carried gate the LIVE cursor's
+    /// pair speaks, the rects/cursor gates the SAME geometry walk the
+    /// offline lane keeps, the hovered seat the inline walk the click
+    /// lane's own shape mirrors. The true verdict the digit CONSUMES
+    /// either way.
+    fn on_chest_swap_key_wire(&mut self, button: usize) -> bool {
         let Some((window_id, state_id)) = self.chest_live_window else {
-            return false; // the offline stand-in: no window, no click
+            return false; // no window — the belief never armed
         };
         if self.chest_slot_rects.is_empty() {
             return false; // no render spoke yet — no geometry to hit
@@ -46240,6 +46285,239 @@ impl App {
             &mut self.live_inv_slots[45],
         );
         true
+    }
+
+    /// THE CHEST'S OWN SWAP TABLE (the offline twin — the autopush-507
+    /// ride the table walk's own shape the generic_9x3's seats answer:
+    /// the doClick SWAP table pc 1079-1382 the OFFLINE store
+    /// re-answers, the four arms the click walks' laws speak). The
+    /// seats the offline numbering the REAL inventory speaks — the
+    /// grid 0..N the container's own rows bank (N the single's 27,
+    /// the double's 54, the hopper's 5), the store rows N..N+36 the
+    /// REAL inventory's own rows answer (the main N..N+27 the items
+    /// 9..36 keep, the hotbar N+27..N+36 the items 0..9 speak — the
+    /// offline click walk's own numbering the twin re-wears, the
+    /// mirror the projection the sync re-answers). The arms the pc
+    /// walk's own verdicts keep:
+    /// - the both-empty press the consumed silence answers (pc
+    ///   1130-1146);
+    /// - the same seat's own silence the identical pair sets back
+    ///   (the hotbar row the hovered store row's own index names;
+    ///   the offhand row the seat's menu id never wears — no
+    ///   same-seat press the F arm speaks);
+    /// - CASE B (pc 1149-1202) the hovered stack the button row rides
+    ///   AS-IS, the seat EMPTIES — the chest's seats the plain
+    ///   mayPickup the unconditional TRUE keeps;
+    /// - CASE C (pc 1205-1273) the row's stack places — the chest's
+    ///   seats the plain mayPlace the unconditional TRUE keeps [the
+    ///   base Slot's iconst_1 pair the swap walk banks], the SPLIT
+    ///   law the max wears;
+    /// - CASE D (pc 1276-1379) the pairs trade — the over-max row the
+    ///   split + the `Inventory.add` ride answers, the straight trade
+    ///   the words + the pairs exchange.
+    /// The kind rows the dev-235 ride banks (the grid the ROW BANK's
+    /// own word keeps, the store rows the shared bank's seats answer;
+    /// the container cells the component-less model the wear/pairs
+    /// never carried — the ride's frac/ench the store rows alone
+    /// speak); the grid mutation the fill ride answers, the mirror
+    /// the sync re-projects (the HUD row the same refresh answers).
+    fn chest_swap_table(&mut self, button: usize, menu: usize) -> bool {
+        debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+        let n = self.chest_slots.len();
+        // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(
+        // button)` walk): the digits the hotbar rows answer, button 40
+        // the player Inventory's OFFHAND speaks
+        let (row_id, row_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        // THE HOVERED SEAT'S OWN PAIR (the offline numbering the real
+        // inventory speaks — the grid the store's own rows answer,
+        // the main rows the items 9..36 keep, the hotbar the items
+        // 0..9 speak)
+        let mapped = if menu >= n {
+            Some(if menu < n + 27 {
+                9 + menu - n
+            } else {
+                menu - n - 27
+            })
+        } else {
+            None
+        };
+        let (hover_id, hover_count) = match mapped {
+            Some(mi) => self.inventory.items[mi],
+            None => self.chest_slots[menu],
+        };
+        if row_count <= 0 && hover_count <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered
+        // store row's own index names — the menus N+27..N+36 the
+        // digits speak; the offhand row the seat's menu id never
+        // wears)
+        if button != 40 && menu >= n + 27 && menu - n - 27 == button {
+            return true;
+        }
+        // THE ROWS' OWN PRE-READS (the 491/377 law's own hoist the
+        // swap table re-wears — the ride the writes pre-key: the
+        // hover seat's word + pairs the normalized reads speak, the
+        // button row's the own bank's word; the container cells the
+        // component-less model the frac/ench the honest zeros keep)
+        let (hover_kind, hover_frac, hover_ench) = match mapped {
+            None => (self.chest_row_potion_kind(menu), 0.0, Vec::new()),
+            Some(mi) => (
+                self.row_potion_kind(mi),
+                self.items_damage_frac[mi],
+                self.inventory_enchants[mi].clone(),
+            ),
+        };
+        let row_kind = if crate::world::brewing_is_potion_kind(row_id) {
+            if button == 40 {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT]
+            } else {
+                self.items_potion_kinds[button]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let (row_frac, row_ench) = if button == 40 {
+            (
+                self.items_damage_frac[OFFHAND_KIND_SEAT],
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+            )
+        } else {
+            (
+                self.items_damage_frac[button],
+                self.inventory_enchants[button].clone(),
+            )
+        };
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the seat EMPTIES — the plain seats'
+            // mayPickup the unconditional TRUE answers
+            self.chest_swap_seat_write(
+                menu,
+                (0, 0),
+                crate::brewing_sim::POTION_KIND_NONE,
+                0.0,
+                &[],
+            );
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE RIDE'S OWN BANKS (the 491 law the swap table
+            // re-wears — the hovered stack's word + pairs the button
+            // row banks, the emptied seat the pristine rows wear)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+            self.chest_swap_tail(menu);
+            return true;
+        }
+        if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // SPLIT law the max wears (getMaxStackSize(stack) = min(
+            // 64, the item's own))
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                self.chest_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+                self.inventory_set_row(button, (row_id, row_count - max));
+                // THE SPLIT'S OWN COPY-BANK (the qc drag's own law the
+                // split re-wears — the destination the source's word
+                // banks, the remainder the own rows keep)
+            } else {
+                self.chest_swap_seat_write(
+                    menu,
+                    (row_id, row_count),
+                    row_kind,
+                    row_frac,
+                    &row_ench,
+                );
+                self.inventory_set_row(button, (0, 0));
+                // THE PLACE'S OWN RIDE (the kind the whole-stack move
+                // keeps — the drained row the pristine rows wear)
+                self.swap_table_button_rows_write(
+                    button,
+                    crate::brewing_sim::POTION_KIND_NONE,
+                    0.0,
+                    &[],
+                );
+            }
+            self.chest_swap_tail(menu);
+            return true;
+        }
+        // CASE D (pc 1276-1379): both filled — the plain slots' gates
+        // the mayPickup && mayPlace the unconditional TRUE pair keeps
+        let max = crate::world_view::item_max_stack(row_id);
+        if row_count > max {
+            // pc 1315-1355: the split(max) — the seat takes max, the
+            // row the remainder keeps, the ORIGINAL hovered stack the
+            // INVENTORY add rides (the add's own merge-then-first-
+            // empty law), the leftover the drop speaks
+            self.chest_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+            self.inventory_set_row(button, (row_id, row_count - max));
+            let (leftover, _spoke) =
+                self.inventory
+                    .add(self.selected_hotbar, hover_id, hover_count, false);
+            if leftover > 0 {
+                self.spawn_drop_at_player(hover_id, leftover);
+            }
+        } else {
+            // pc 1358-1379: the straight trade — the row the hovered
+            // stack takes, the seat the row's stack wears
+            self.chest_swap_seat_write(menu, (row_id, row_count), row_kind, row_frac, &row_ench);
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE TRADE'S OWN PAIR RIDE (the words + the pairs the
+            // seats exchange — the identical pair the swap the no-op
+            // keeps)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+        }
+        self.chest_swap_tail(menu);
+        true
+    }
+
+    /// THE CHEST SEAT'S OWN SWAP WRITE (the ride's landing — the
+    /// hover seat's stack + word the seat's own rows bank: the grid
+    /// the store's own pair + the ROW BANK's word keeps, the store
+    /// rows the REAL inventory's rows answer [the word + the pairs
+    /// the shared bank's seats keep]; the container cells the
+    /// component-less model the frac/ench never carried — the args
+    /// the store rows alone answer)
+    fn chest_swap_seat_write(
+        &mut self,
+        menu: usize,
+        stack: (i32, i32),
+        kind: i32,
+        frac: f32,
+        ench: &[(i32, i32)],
+    ) {
+        let n = self.chest_slots.len();
+        if menu < n {
+            self.chest_slots[menu] = stack;
+            if menu < self.chest_row_potion_kinds.len() {
+                self.chest_row_potion_kinds[menu] = kind;
+            }
+        } else {
+            let i = if menu < n + 27 {
+                9 + menu - n
+            } else {
+                menu - n - 27
+            };
+            self.inventory.items[i] = stack;
+            self.items_potion_kinds[i] = kind;
+            self.items_damage_frac[i] = frac;
+            self.inventory_enchants[i] = ench.to_vec();
+        }
+    }
+
+    /// THE CHEST SWAP'S OWN TAIL (the mutations' own ride — the grid
+    /// mutation the fill ride answers [the comparator the mid-open
+    /// beat the vanilla updateNeighbourForOutputSignal law re-reads;
+    /// the inventory-side seats the store untouched the silence
+    /// keeps], the mirror the sync re-projects — the HUD row the same
+    /// refresh answers)
+    fn chest_swap_tail(&mut self, menu: usize) {
+        if menu < self.chest_slots.len() {
+            self.container_transfer_fill_ride();
+        }
+        self.chest_mirror_sync_from_inventory();
     }
 
     /// THE SURVIVAL SCREEN'S OWN HOTBAR KEYS (javap 26.2 — the 2dc72797
