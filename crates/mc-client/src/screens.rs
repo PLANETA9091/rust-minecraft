@@ -19204,6 +19204,38 @@ impl App {
                                         }
                                     }
                                 }
+                                // THE OFFHAND'S OWN KIND RIDE (the
+                                // 37th row the kind loop never
+                                // rides — the inv_before the
+                                // 36-row array the seat never
+                                // snapshots): the kindless drop
+                                // the ride never wears, the
+                                // potion drop's landing the
+                                // seat's word the grow arm banks
+                                // [the landed stack's own word the
+                                // row re-answers — the wear/ench
+                                // rides' own 37th-seat family law
+                                // the ride keeps, the stale row
+                                // the later potion never wears —
+                                // the dev-201 seat-clear law's own
+                                // parity answers], the emptied
+                                // seat the reset keeps, the
+                                // untouched seat the kind it had
+                                // keeps; the fill arm the scan's
+                                // own law never offers [the empty
+                                // seat the remaining-space walk
+                                // never rides — the free-slot
+                                // fallback the 0..36 rows alone
+                                // scans]).
+                                if drop_kind != crate::brewing_sim::POTION_KIND_NONE {
+                                    let now_oh = self.inventory.offhand[0].1;
+                                    if now_oh <= 0 && wear_before_offhand.1 > 0 {
+                                        self.items_potion_kinds[OFFHAND_KIND_SEAT] =
+                                            crate::brewing_sim::POTION_KIND_NONE;
+                                    } else if now_oh > wear_before_offhand.1 {
+                                        self.items_potion_kinds[OFFHAND_KIND_SEAT] = drop_kind;
+                                    }
+                                }
                                 // THE DAMAGE BAR'S OWN RIDE (the
                                 // durbar_511 census the strip's laws
                                 // banks — the grow rows the landed

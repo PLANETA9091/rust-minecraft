@@ -45649,3 +45649,125 @@ fn the_pickup_the_offhand_the_ench_banks() {
         "the fresh landing the plain rows wear"
     );
 }
+
+/// THE PICKUP'S OWN OFFHAND KIND (the dev-231 round — the kind ride's
+/// own 37th row the 0..36 loop never rode: the inv_before the 36-row
+/// array the seat never snapshots — the potion drop's landing the
+/// seat's word the grow arm banks, the landed stack's own word the
+/// row re-answers, the kindless drop the gate the ride never wears,
+/// the untouched seat the kind it had keeps; the real potion's own
+/// cap the merge the registry refuses — the 1-cap the
+/// remaining-space walk never offers, the free-slot lane the hotbar
+/// row banks).
+#[test]
+fn the_pickup_the_offhand_the_kind_banks() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = crate::screens::App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x, body.y, body.z);
+    let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+    // THE KINDED STACKABLE'S OWN MERGE (the dirt seat the model's own
+    // door wears — the word the grow arm banks, the stale kind_a the
+    // landed word re-answers)
+    app.inventory.offhand[0] = (dirt, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(1, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.potion_kind = kind_b;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 2),
+        "the merge the offhand seat grows"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind_b,
+        "the landing's word the offhand row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[1], none,
+        "the untouched hotbar row the NONE keeps"
+    );
+    // THE KINDLESS DROP'S OWN GATE (the plain landing the ride never
+    // wears — the seat's word the kindless merge never touches)
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(2, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the kindless merge the seat grows"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind_a,
+        "the kindless drop the seat's word keeps"
+    );
+    // THE OTHER-ID DROP'S OWN LANE (the free-slot fallback the 0..36
+    // rows the fresh landing wears — the offhand's row the untouched
+    // seat the kind keeps)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(3, cobble, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the other id the offhand walks past"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (cobble, 1),
+        "the free slot the fresh landing holds"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind_a,
+        "the untouched seat the kind keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the kindless landing the hotbar row never wears"
+    );
+    // THE REAL POTION'S OWN CAP (the 1-cap the merge the registry
+    // refuses — the remaining-space walk the seat never offers, the
+    // free-slot lane the hotbar row the word banks, the offhand's row
+    // the untouched kind keeps)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(4, potion, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.potion_kind = kind_b;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (potion, 1),
+        "the cap the offhand merge refuses"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (potion, 1),
+        "the free slot the potion lands"
+    );
+    assert_eq!(
+        app.items_potion_kinds[1], kind_b,
+        "the fill arm the hotbar row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind_a,
+        "the refused merge the seat's kind keeps"
+    );
+}
