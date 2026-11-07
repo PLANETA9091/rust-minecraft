@@ -19134,6 +19134,7 @@ impl App {
                             let drop_wear = d.damage_frac;
                             let drop_ench = d.enchantments.clone();
                             let wear_before = self.inventory.items;
+                            let wear_before_offhand = self.inventory.offhand[0];
                             let inv_before = if drop_kind != crate::brewing_sim::POTION_KIND_NONE {
                                 Some(self.inventory.items)
                             } else {
@@ -19223,6 +19224,27 @@ impl App {
                                         self.items_damage_frac[i] = 0.0;
                                     } else if now > wear_before[i].1 {
                                         self.items_damage_frac[i] = drop_wear;
+                                    }
+                                }
+                                // THE OFFHAND'S OWN WEAR RIDE (the
+                                // 37th row the 0..36 loop never
+                                // rides — the merge landing the
+                                // offhand's own wear the seat banks,
+                                // the [`OFFHAND_KIND_SEAT`] parity
+                                // the swap ride's row keeps): the
+                                // grow arm the drop's wear banks [the
+                                // remaining-space scan the seat's own
+                                // arm the merge landing wears — the
+                                // free-slot fallback the seat never
+                                // offers], the emptied seat the reset
+                                // keeps, the untouched seat the wear
+                                // it had keeps).
+                                {
+                                    let now_oh = self.inventory.offhand[0].1;
+                                    if now_oh <= 0 && wear_before_offhand.1 > 0 {
+                                        self.items_damage_frac[OFFHAND_KIND_SEAT] = 0.0;
+                                    } else if now_oh > wear_before_offhand.1 {
+                                        self.items_damage_frac[OFFHAND_KIND_SEAT] = drop_wear;
                                     }
                                 }
                                 // THE ENCHANT'S OWN RIDE (the

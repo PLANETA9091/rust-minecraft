@@ -45463,3 +45463,93 @@ fn the_offhand_swap_the_wear_rides() {
         "the pristine trade the hotbar seat the 0.0 keeps"
     );
 }
+
+/// THE PICKUP'S OWN OFFHAND WEAR (the autopush-495 round — the
+/// landing's 37th row the 0..36 loop never rode: the merge landing
+/// the offhand's own wear the seat banks, the [`OFFHAND_KIND_SEAT`]
+/// parity the swap ride's row keeps — the remaining-space scan the
+/// seat's own arm the merge landing wears, the free-slot fallback
+/// the seat never offers).
+#[test]
+fn the_pickup_the_offhand_the_wear_banks() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+    let mut app = crate::screens::App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let body = app.body.as_ref().unwrap();
+    let (bx, by, bz) = (body.x, body.y, body.z);
+    let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+    // THE OFFHAND'S OWN STACK (the merge landing the seat's own arm
+    // wears — the 0..36 rows the other ids the scan walks past, the
+    // seat's own wear the row wears)
+    app.inventory.offhand[0] = (dirt, 1);
+    app.items_damage_frac[OFFHAND_KIND_SEAT] = 0.25;
+    // the untouched hotbar row's own wear
+    app.items_damage_frac[0] = 0.9;
+    // THE WORN DROP'S OWN MERGE (the 0.5 frac the offhand's grow arm
+    // banks — the seat's old 0.25 the landed word re-wears)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(1, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.damage_frac = 0.5;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 2),
+        "the merge the offhand seat grows"
+    );
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.5,
+        "the landing's wear the offhand row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.9,
+        "the untouched hotbar row the wear keeps"
+    );
+    // THE PRISTINE MERGE'S OWN RESET (the 0.0 drop the grow arm the
+    // landed word banks — the stale bar the merge never keeps)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(2, dirt, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.damage_frac = 0.0;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the pristine merge the seat grows"
+    );
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.0,
+        "the pristine merge the seat's row resets"
+    );
+    // THE OTHER-ID DROP'S OWN LANE (the free-slot fallback the 0..36
+    // rows the fresh landing wears — the offhand's row the untouched
+    // seat the wear keeps)
+    let mut drop =
+        crate::drops::ItemDrop::spawn_entity_loot(3, cobble, 1, bx, by + 0.5, bz, &mut rng);
+    drop.pickup_delay = 0;
+    drop.damage_frac = 0.7;
+    app.drops.push(drop);
+    app.update();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the other id the offhand walks past"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (cobble, 1),
+        "the free slot the fresh landing holds"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.7,
+        "the fresh landing the hotbar row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.0,
+        "the untouched seat the 0.0 keeps"
+    );
+}
