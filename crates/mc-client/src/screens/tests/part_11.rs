@@ -45374,3 +45374,92 @@ fn the_offhand_enchant_the_seat_the_rides_wear() {
         "the wrap's own seat the line reads"
     );
 }
+
+/// THE OFFHAND'S OWN WEAR RIDE (the dev-230 round — the damaged stack
+/// the F trade the bar keeps: the bank's hotbar seat and the
+/// offhand's 36 the frac exchange, the enchanted pairs the same
+/// trade the 494 law re-wears, the swap-back the bar re-answers, the
+/// pristine trade the 0.0 the exchange keeps).
+#[test]
+fn the_offhand_swap_the_wear_rides() {
+    use mc_registry::generated::enchantments as ench_mod;
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let shield = mc_registry::item_id_by_name("shield").unwrap();
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let mut app = App::new(230);
+    app.enter_world();
+    // THE WORN TRADE (the hotbar seat the 0.5 wear + the pairs bank —
+    // the F swap the offhand the bar + the glint keep, the shield's
+    // own 0.25 the hotbar seat wears)
+    app.inventory.items[0] = (sword, 1);
+    app.items_damage_frac[0] = 0.5;
+    app.inventory_enchants[0] = vec![(sharp, 3)];
+    app.inventory.offhand[0] = (shield, 1);
+    app.items_damage_frac[OFFHAND_KIND_SEAT] = 0.25;
+    app.on_swap_offhand_key();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (sword, 1),
+        "the swap the stack trades"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (shield, 1),
+        "the hotbar seat the shield wears"
+    );
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.5,
+        "the offhand seat the bar keeps"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.25,
+        "the hotbar seat the shield's own wear wears"
+    );
+    assert_eq!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT],
+        vec![(sharp, 3)],
+        "the offhand seat the pairs keep"
+    );
+    assert!(
+        app.inventory_enchants[0].is_empty(),
+        "the hotbar row the pristine wears"
+    );
+    // THE SWAP-BACK (the bar + the pairs the store rows re-answer —
+    // the shield's wear the offhand seat re-banks)
+    app.on_swap_offhand_key();
+    assert_eq!(
+        app.inventory.items[0],
+        (sword, 1),
+        "the swap-back the sword re-trades"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.5,
+        "the hotbar seat the bar re-answers"
+    );
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.25,
+        "the offhand seat the shield's wear re-answers"
+    );
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(sharp, 3)],
+        "the store row the pairs re-answer"
+    );
+    // THE PRISTINE TRADE (the plain stacks the 0.0 the exchange keeps
+    // — the wall the trade never moves)
+    app.inventory.items[0] = (shield, 1);
+    app.items_damage_frac[0] = 0.0;
+    app.inventory_enchants[0].clear();
+    app.inventory.offhand[0] = (sword, 1);
+    app.items_damage_frac[OFFHAND_KIND_SEAT] = 0.0;
+    app.inventory_enchants[OFFHAND_KIND_SEAT].clear();
+    app.on_swap_offhand_key();
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.0,
+        "the pristine trade the offhand seat the 0.0 keeps"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.0,
+        "the pristine trade the hotbar seat the 0.0 keeps"
+    );
+}

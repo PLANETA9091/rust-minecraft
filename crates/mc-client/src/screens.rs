@@ -56498,7 +56498,10 @@ impl App {
     /// and the offhand's [`OFFHAND_KIND_SEAT`], the live bank the same
     /// pair the prediction's own truth wears — the sub-echo window the
     /// wholesale refresh re-banks, the 343/345 law the click lanes'
-    /// believed kind wears). The projections the SAME-frame reads answer: the live hand the
+    /// believed kind wears). THE ENCHANT'S + THE WEAR'S OWN RIDES (the
+    /// 494/230 rounds — the offline bank the ench pairs + the wear
+    /// frac the same trade exchanges, the live lanes the wire's
+    /// honest walls keep). The projections the SAME-frame reads answer: the live hand the
     /// `live_held_updated` reload walks (the id change the reload key
     /// speaks), the offline hand the held_id/load walk, the HUD rows
     /// the next frame's own projection.
@@ -56555,6 +56558,14 @@ impl App {
             // the components the wire lane never carries the live
             // swap never wears)
             self.inventory_enchants.swap(sel, OFFHAND_KIND_SEAT);
+            // THE WEAR'S OWN RIDE (the dev-230 round — the damaged
+            // stack the same trade the bar keeps: the bank's hotbar
+            // seat and the offhand's 36 the frac exchange, the strip
+            // the offhand seat wears, the swap-back the bar
+            // re-answers; the LIVE lane the wire's honest wall keeps —
+            // the wire seats the 0.0 wall the gate never passes, the
+            // 0.0 the 0.0 the swap the wall never moves)
+            self.items_damage_frac.swap(sel, OFFHAND_KIND_SEAT);
             let id = self.held_id();
             self.load_held_payload_from_id(id);
         }
