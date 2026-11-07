@@ -10052,8 +10052,13 @@ pub struct App {
     /// answers [the enchanted pair the merge lane never rides], the
     /// store the SAME 36-slot numbering keys, the reopen the mirror
     /// load answers). The enchanted item's own data the tooltip/glint
-    /// rounds read.
-    pub inventory_enchants: [Vec<(i32, i32)>; 36],
+    /// rounds read. THE 37TH SEAT (the 494 round — the offhand's own
+    /// seat the [`OFFHAND_KIND_SEAT`] parity banks): the swap/drag/
+    /// click rides the store's own law the pairs answer, the tooltip
+    /// wall the seat's own rows read, the drop's own landing the
+    /// honest wall the merge arm keeps [the mergelaw_513 census the
+    /// offhand arm the gate never wears].
+    pub inventory_enchants: [Vec<(i32, i32)>; 37],
     /// THE PLAYER ROWS' OWN POTION-KIND BANK (the dev-199 round — the
     /// `PotionContents` component the (id, count) pair the rows never
     /// carry, the side lane the SAME 36-slot numbering keys: 0..9 the
@@ -37423,6 +37428,24 @@ impl App {
             let (id, count) = believed;
             let (changed, rest) =
                 crate::world_view::predict_quick_move_to_store(&self.inventory.items, id, count);
+            // THE SHIFT'S OWN DATA RIDE (the 494 round — the offhand's
+            // own 37TH seat the moved stack's wear + pairs the lanes
+            // ride: the empty fills the source's own rows bank, the
+            // drained seat the pristine rows wear, the remainder the
+            // seat's own rows keep — the 491 walk's own shape the
+            // quick-move's data ride re-wears)
+            let src_frac = self.items_damage_frac[OFFHAND_KIND_SEAT];
+            let src_ench = self.inventory_enchants[OFFHAND_KIND_SEAT].clone();
+            for (idx, _) in &changed {
+                if self.inventory.items[*idx].1 <= 0 {
+                    self.items_damage_frac[*idx] = src_frac;
+                    self.inventory_enchants[*idx] = src_ench.clone();
+                }
+            }
+            if rest <= 0 {
+                self.items_damage_frac[OFFHAND_KIND_SEAT] = 0.0;
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clear();
+            }
             for (i, pair) in &changed {
                 self.inventory.items[*i] = *pair;
             }
@@ -37498,6 +37521,24 @@ impl App {
             self.items_potion_kinds[OFFHAND_KIND_SEAT] = new_seat_kind;
             self.inv_carried_potion_kind = new_carried_kind;
         }
+        // THE CLICK'S OWN WORD RIDE (the 494 round — the store rows'
+        // own law the offhand's 37TH seat re-wears: the PICKUP the
+        // seat's wear + pairs the cursor banks, the PLACE the
+        // cursor's own rows the seat lays, the MODEL'S OWN SWAP the
+        // pairs exchange, the MERGE the emptied cursor the pristine
+        // wears — the shared helper the four arms the plain walk
+        // wears [the wear row the same call the seat banks])
+        swap_ride_data(
+            &mut self.items_damage_frac[OFFHAND_KIND_SEAT],
+            &mut self.inventory_enchants[OFFHAND_KIND_SEAT],
+            &mut self.inv_carried_damage_frac,
+            &mut self.inv_carried_enchants,
+            believed,
+            new_slot,
+            self.inv_carried,
+            new_carried,
+            button == 0,
+        );
         self.inventory.offhand[0] = new_slot;
         self.inv_carried = new_carried;
     }
@@ -48581,9 +48622,16 @@ impl App {
                     InventoryHover::Offhand => {
                         self.items_potion_kinds[OFFHAND_KIND_SEAT] = self.inv_carried_potion_kind;
                         // THE DRAG'S OWN WEAR SEAT (the 491 round — the
-                        // 37TH seat the frac banks, the ench rows the
-                        // 36-row shape the offhand never mints)
+                        // 37TH seat the frac banks; the ench rows the
+                        // 494 round the same seat the pair bank wears)
                         self.items_damage_frac[OFFHAND_KIND_SEAT] = self.inv_carried_damage_frac;
+                        // THE DRAG'S OWN PAIR BANK (the 494 round — the
+                        // 37TH seat the carried pairs the landing
+                        // banks, the enchanted stack the offhand seat
+                        // the glint wears, the occupied seat the merge
+                        // the empty gate never enters)
+                        self.inventory_enchants[OFFHAND_KIND_SEAT] =
+                            self.inv_carried_enchants.clone();
                     }
                     _ => {}
                 }
@@ -56499,6 +56547,14 @@ impl App {
             // 36 the same trade exchanges, the offline fill walk's
             // own numbering the bank wears)
             self.items_potion_kinds.swap(sel, OFFHAND_KIND_SEAT);
+            // THE ENCHANT'S OWN RIDE (the 494 round — the enchanted
+            // stack the same trade the pairs keep: the bank's hotbar
+            // seat and the offhand's 36 the rows exchange, the glint
+            // the offhand seat wears, the swap-back the store rows
+            // re-answer; the live lane the wire's honest wall keeps —
+            // the components the wire lane never carries the live
+            // swap never wears)
+            self.inventory_enchants.swap(sel, OFFHAND_KIND_SEAT);
             let id = self.held_id();
             self.load_held_payload_from_id(id);
         }
@@ -57914,11 +57970,13 @@ impl App {
         // WIRE stacks the component data the (id, count) model never
         // carries [the honest wall the dev-196 round banks — the
         // server's own components the wire lane never wears], the
-        // OTHER seats [armor/offhand/craft/result] the stores the
-        // table's ride-home never lands — the empty stores the same
-        // silence keeps)
+        // OTHER seats [armor/craft/result] the stores the table's
+        // ride-home never lands — the empty stores the same silence
+        // keeps; THE OFFHAND'S OWN SEAT the 494 round the wall
+        // re-keys — the 37TH seat the hovered cell the pairs read)
         let ench = match hover {
             InventoryHover::Store(i) => self.inventory_enchants.get(i).cloned().unwrap_or_default(),
+            InventoryHover::Offhand => self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
             _ => Vec::new(),
         };
         if count <= 0 {
@@ -58042,10 +58100,15 @@ impl App {
                     // bank's [`OFFHAND_KIND_SEAT`] the wrapped tooltip the
                     // 346 law's own seat re-wears: the hovered shield cell
                     // the kinded name the survival arm answers, the armor
-                    // rows the kind never carries the wall the MAX keeps)
-                    CreativeWrapSlot::Offhand => {
-                        (self.inventory.offhand[0], Vec::new(), OFFHAND_KIND_SEAT)
-                    }
+                    // rows the kind never carries the wall the MAX keeps;
+                    // THE PAIRS' OWN SEAT (the 494 round) the 37TH row
+                    // the tooltip's own ench lines read — the enchanted
+                    // offhand stack the same lines the store rows wear)
+                    CreativeWrapSlot::Offhand => (
+                        self.inventory.offhand[0],
+                        self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+                        OFFHAND_KIND_SEAT,
+                    ),
                     // THE STORE SEATS (the main/hotbar rows the REAL
                     // inventory keeps — the enchanted stacks the store's
                     // own rows answer, the ride-home numbering the keys)
@@ -97891,11 +97954,13 @@ fn swap_ride_data(
 /// own identity keep — the vanilla's own refuse-to-merge the
 /// unstackable pairs the data never eats. The armor destinations the
 /// wall the ride never keys — the 37-row shape the store seats the
-/// offhand alone wears, the moved piece the rows the seat never
-/// mints [the 487 law the armor rows the bank never carries]).
+/// offhand alone wears [the 494 round the ENCH rows the same shape
+/// re-wear — the 37TH seat the offhand's own pairs bank], the moved
+/// piece the rows the seat never mints [the 487 law the armor rows
+/// the bank never carries]).
 fn quick_move_data_ride(
     fracs: &mut [f32; 37],
-    enchs: &mut [Vec<(i32, i32)>; 36],
+    enchs: &mut [Vec<(i32, i32)>; 37],
     changed: &[(usize, (i32, i32))],
     store: usize,
     src_frac: f32,
@@ -97924,7 +97989,10 @@ fn quick_move_data_ride(
 /// THE OFFHAND'S OWN KIND SEAT (the autopush-346 round — the bank's
 /// 37TH seat the index answers): the offhand's kind the wire's
 /// kinds[45] re-seats, the swap/drop rides the same seat the move
-/// lanes consult (the dev-201 round the constant names).
+/// lanes consult (the dev-201 round the constant names). THE ENCH
+/// ROWS' OWN SEAT (the 494 round — `inventory_enchants` the same
+/// 37-row shape the pairs bank: the swap/drag/click rides the seat
+/// the store's own law answers, the tooltip wall the rows read).
 pub const OFFHAND_KIND_SEAT: usize = 36;
 
 /// THE KIND BANK'S OWN SEAT MAP (the 343 remap the ride re-keys): the

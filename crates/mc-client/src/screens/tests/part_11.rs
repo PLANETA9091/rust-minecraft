@@ -45184,3 +45184,193 @@ fn the_table_shift_the_store_the_grid_banks() {
         "the row the fallback drains"
     );
 }
+
+/// THE OFFHAND'S OWN ENCHANT SEAT (the 494 round — the 37-row shape
+/// the ench rows the offhand mints: the swap the pairs exchange, the
+/// drag the carried pairs the landing banks, the click the four arms
+/// the store's own law wears, the shift the moved stack's rows the
+/// empty fills bank, the tooltip wall the 37TH seat's own rows read).
+#[test]
+fn the_offhand_enchant_the_seat_the_rides_wear() {
+    use mc_registry::generated::enchantments as ench_mod;
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let power = ench_mod::enchantment_index("power").unwrap() as i32;
+    let mut app = App::new(494);
+    app.enter_world();
+    // THE SEAT'S OWN SHAPE (the 37 rows the store wears — the 36TH
+    // index the offhand's own seat the kind bank's parity keeps)
+    assert_eq!(
+        app.inventory_enchants.len(),
+        37,
+        "the 37TH seat the shape wears"
+    );
+    // THE SWAP'S OWN RIDE (the F key the same trade the pairs keep —
+    // the enchanted sword the offhand the glint wears, the hotbar
+    // row the pristine wears, the swap-back the store rows
+    // re-answer)
+    app.inventory.items[0] = (sword, 1);
+    app.inventory_enchants[0] = vec![(sharp, 5)];
+    app.on_swap_offhand_key();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (sword, 1),
+        "the swap the stack trades"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the hotbar seat the trade empties"
+    );
+    assert_eq!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT],
+        vec![(sharp, 5)],
+        "the offhand seat the pairs keep"
+    );
+    assert!(
+        app.inventory_enchants[0].is_empty(),
+        "the hotbar row the pristine wears"
+    );
+    app.on_swap_offhand_key();
+    assert_eq!(
+        app.inventory.items[0],
+        (sword, 1),
+        "the swap-back the stack re-trades"
+    );
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(sharp, 5)],
+        "the store row the pairs re-answer"
+    );
+    assert!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT].is_empty(),
+        "the offhand seat the pristine wears"
+    );
+    app.inventory.items[0] = (0, 0);
+    app.inventory_enchants[0].clear();
+    // THE DRAG'S OWN PAIR BANK (the quick-craft place the carried
+    // pairs the 37TH seat banks — the carried empties the tail
+    // clears, the occupied seat the merge the empty gate never
+    // enters)
+    app.open_inventory();
+    app.inventory.offhand[0] = (0, 0);
+    app.inv_carried = (sword, 1);
+    app.inv_carried_enchants = vec![(power, 2)];
+    app.qc_slots = vec![45];
+    app.qc_type = 0;
+    app.qc_distribute_offline();
+    assert_eq!(
+        app.inventory.offhand[0],
+        (sword, 1),
+        "the drag the offhand stacks"
+    );
+    assert_eq!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT],
+        vec![(power, 2)],
+        "the 37TH seat the pairs bank"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the emptied carried the pristine wears"
+    );
+    // THE CLICK'S OWN WORD RIDE (the four arms the store rows wear:
+    // the PICKUP the seat's pairs the cursor banks, the PLACE the
+    // cursor's own rows the seat lays)
+    app.inv_carried = (0, 0);
+    app.inv_carried_enchants.clear();
+    app.click_offhand_slot(0);
+    assert_eq!(app.inv_carried, (sword, 1), "the pickup the cursor stacks");
+    assert_eq!(
+        app.inv_carried_enchants,
+        vec![(power, 2)],
+        "the seat's pairs the cursor banks"
+    );
+    assert!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT].is_empty(),
+        "the emptied seat the pristine wears"
+    );
+    app.click_offhand_slot(0);
+    assert_eq!(
+        app.inventory.offhand[0],
+        (sword, 1),
+        "the place the seat stacks"
+    );
+    assert_eq!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT],
+        vec![(power, 2)],
+        "the cursor's pairs the seat lays"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the emptied carried the pristine wears"
+    );
+    // THE SHIFT'S OWN DATA RIDE (the empty fill the source's own rows
+    // bank, the drained seat the pristine rows wear — the main rows
+    // the store 9 the landing answers)
+    app.inv_carried = (0, 0);
+    app.inv_carried_enchants.clear();
+    app.inventory.offhand[0] = (bow, 1);
+    app.inventory_enchants[OFFHAND_KIND_SEAT] = vec![(power, 4)];
+    app.items_damage_frac[OFFHAND_KIND_SEAT] = 0.5;
+    app.shift_down = true;
+    app.click_offhand_slot(0);
+    app.shift_down = false;
+    assert_eq!(
+        app.inventory.offhand[0],
+        (0, 0),
+        "the drained seat the shift empties"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (bow, 1),
+        "the first empty row the stack banks"
+    );
+    assert_eq!(
+        app.inventory_enchants[9],
+        vec![(power, 4)],
+        "the landing row the pairs keep"
+    );
+    assert_eq!(
+        app.items_damage_frac[9], 0.5,
+        "the landing row the wear keeps"
+    );
+    assert!(
+        app.inventory_enchants[OFFHAND_KIND_SEAT].is_empty(),
+        "the drained seat the pristine wears"
+    );
+    assert_eq!(
+        app.items_damage_frac[OFFHAND_KIND_SEAT], 0.0,
+        "the drained seat the bar resets"
+    );
+    // THE TOOLTIP'S OWN WALL RE-KEY (the survival arm the 37TH seat's
+    // own rows the lines read — the empty wall the honest shape
+    // retires)
+    app.inv_panel = inventory_panel_origin(640, 360);
+    app.inventory.offhand[0] = (sword, 1);
+    app.inventory_enchants[OFFHAND_KIND_SEAT] = vec![(sharp, 5)];
+    let (ox2, oy2) = offhand_slot_origin(app.inv_panel);
+    let (_, rows) = app
+        .item_tooltip_hover(ox2 + 8, oy2 + 8)
+        .expect("the offhand seat the rows speak");
+    assert_eq!(rows.len(), 2, "the name + the line the seat wears");
+    assert_eq!(rows[1].0, "Sharpness V", "the 37TH seat the line reads");
+    // THE CREATIVE WRAP'S OWN WALL (the same seat the wrapped cell
+    // reads — the picker's own offhand the same lines the store rows
+    // wear)
+    app.game_mode = GameMode::Creative;
+    app.open_inventory();
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    app.creative_panel = (100, 50);
+    let (_, rows) = app
+        .creative_item_tooltip_hover(100 + 35 + 8, 50 + 20 + 8)
+        .expect("the wrapped seat the gate answers");
+    assert_eq!(rows.len(), 2, "the name + the line the wrap wears");
+    assert_eq!(
+        rows[1].0, "Sharpness V",
+        "the wrap's own seat the line reads"
+    );
+}
