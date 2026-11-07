@@ -43660,3 +43660,380 @@ fn the_menus_the_glint_the_laws_wear() {
         "the grid seat the store the wall never keys — the plain pixels keep"
     );
 }
+
+/// THE SWAP WALK'S OWN DATA RIDE (the 491 round — the two parallel
+/// rows the (id, count) moves the cursor's own seats bank: the four
+/// arms the kind's own law wears answer — the pickup the seat's data
+/// the cursor banks, the place the cursor's data the seat lays, the
+/// model's own swap the pairs exchange, the merge the emptied cursor
+/// the pristine wears, the same-id full pair the model's own no-op
+/// the rows never move — the ghost glint the wrong row the desync
+/// the walk retires).
+#[test]
+fn the_swap_walk_the_rows_the_cursor_banks() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap() as i32;
+    let pairs = vec![(power, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE PICKUP ARM (the seat's own data the cursor banks, the
+    // emptied seat the pristine rows wear)
+    app.inventory.items[9] = (boots, 1);
+    app.items_damage_frac[9] = 0.5;
+    app.inventory_enchants[9] = pairs.clone();
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+    app.click_inventory_slot(ox + 8, oy + 8, 0);
+    assert_eq!(app.inv_carried, (boots, 1), "the pickup the carried banks");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the wear the cursor banks"
+    );
+    assert_eq!(
+        app.inv_carried_enchants, pairs,
+        "the pairs the cursor banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[9], 0.0,
+        "the emptied seat the 0.0 wears"
+    );
+    assert!(
+        app.inventory_enchants[9].is_empty(),
+        "the emptied seat the clear wears"
+    );
+    // THE PLACE ARM (the cursor's own data the new seat lays)
+    let (px, py) = inventory_slot_origin(app.inv_panel, 12);
+    app.click_inventory_slot(px + 8, py + 8, 0);
+    assert_eq!(app.inv_carried, (0, 0), "the place the carried empties");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the placed cursor the pristine wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the placed cursor the clear wears"
+    );
+    assert_eq!(
+        app.inventory.items[12],
+        (boots, 1),
+        "the new seat the stack lays"
+    );
+    assert_eq!(app.items_damage_frac[12], 0.5, "the new seat the wear lays");
+    assert_eq!(
+        app.inventory_enchants[12], pairs,
+        "the new seat the pairs lay"
+    );
+    // THE MODEL'S OWN SWAP (the worn carried the pristine dirt seat
+    // exchanges — the pairs the data ride)
+    let (qx, qy) = inventory_slot_origin(app.inv_panel, 12);
+    app.click_inventory_slot(qx + 8, qy + 8, 0);
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.5,
+        "the re-pickup the wear banks"
+    );
+    app.inventory.items[13] = (dirt, 1);
+    app.items_damage_frac[13] = 0.9;
+    let (sx, sy) = inventory_slot_origin(app.inv_panel, 13);
+    app.click_inventory_slot(sx + 8, sy + 8, 0);
+    assert_eq!(
+        app.inventory.items[13],
+        (boots, 1),
+        "the swap the seat the boots lay"
+    );
+    assert_eq!(
+        app.items_damage_frac[13], 0.5,
+        "the swap the seat the wear keeps"
+    );
+    assert_eq!(
+        app.inventory_enchants[13], pairs,
+        "the swap the seat the pairs keep"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (dirt, 1),
+        "the swap the carried the dirt keeps"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.9,
+        "the swapped cursor the dirt's wear keeps"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the swapped cursor the dirt's clear keeps"
+    );
+    // THE MERGE ARM (the same-id stack the cursor eats — the seat its
+    // own rows keep, the emptied cursor the pristine wears)
+    app.inv_carried = (dirt, 10);
+    app.inv_carried_damage_frac = 0.9;
+    app.inventory.items[14] = (dirt, 5);
+    let (mx2, my2) = inventory_slot_origin(app.inv_panel, 14);
+    app.click_inventory_slot(mx2 + 8, my2 + 8, 0);
+    assert_eq!(
+        app.inventory.items[14],
+        (dirt, 15),
+        "the merge the seat the count banks"
+    );
+    assert_eq!(app.inv_carried, (0, 0), "the merge the carried empties");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the merged cursor the pristine wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the merged cursor the clear wears"
+    );
+    assert_eq!(
+        app.items_damage_frac[14], 0.0,
+        "the merged seat its own 0.0 keeps"
+    );
+    // THE NO-OP PAIR (the same-id max-1 pair the model never moves —
+    // the rows the seats keep)
+    app.inv_carried = (boots, 1);
+    app.inv_carried_damage_frac = 0.0;
+    app.inventory.items[15] = (boots, 1);
+    app.items_damage_frac[15] = 0.3;
+    let (nx, ny) = inventory_slot_origin(app.inv_panel, 15);
+    app.click_inventory_slot(nx + 8, ny + 8, 0);
+    assert_eq!(
+        app.inventory.items[15],
+        (boots, 1),
+        "the full pair the seat keeps"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (boots, 1),
+        "the full pair the cursor keeps"
+    );
+    assert_eq!(
+        app.items_damage_frac[15], 0.3,
+        "the no-op pair the seat's wear keeps"
+    );
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the no-op pair the cursor's pristine keeps"
+    );
+}
+
+/// THE QUICK-MOVE'S OWN DATA RIDE (the 491 round — the moved stack's
+/// own wear + pairs the lanes ride: the drained source the pristine
+/// resets, the empty-fill destination the source's data banks, the
+/// merge destination its own rows keep, the armor seat the wall the
+/// ride never keys).
+#[test]
+fn the_swap_walk_the_quick_move_the_rows_ride() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap() as i32;
+    let pairs = vec![(power, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE HOTBAR SOURCE'S OWN RIDE (the moved stack the data banks,
+    // the drained source the pristine rows wear — the BOW the walk's
+    // own stack speaks, the armor arm the equippable boots the later
+    // wall wears)
+    app.inventory.items[0] = (bow, 1);
+    app.items_damage_frac[0] = 0.4;
+    app.inventory_enchants[0] = pairs.clone();
+    app.on_shift_down(true);
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+    app.click_inventory_slot(ox + 8, oy + 8, 0);
+    app.on_shift_down(false);
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the quick-move the source drains"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.0,
+        "the drained source the 0.0 wears"
+    );
+    assert!(
+        app.inventory_enchants[0].is_empty(),
+        "the drained source the clear wears"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (bow, 1),
+        "the landing the seat holds"
+    );
+    assert_eq!(app.items_damage_frac[9], 0.4, "the landing the wear banks");
+    assert_eq!(
+        app.inventory_enchants[9], pairs,
+        "the landing the pairs bank"
+    );
+    // THE MERGE DESTINATION'S OWN WALL (the occupied row the merge
+    // eats — its own rows keep, the drained source the pristine
+    // wears; the whole stack the room takes — the split the row's
+    // own shape never speaks)
+    app.inventory.items[2] = (dirt, 40);
+    app.inventory.items[11] = (dirt, 24);
+    app.items_damage_frac[11] = 0.7;
+    app.on_shift_down(true);
+    let (qx, qy) = inventory_slot_origin(app.inv_panel, 11);
+    app.click_inventory_slot(qx + 8, qy + 8, 0);
+    app.on_shift_down(false);
+    assert_eq!(
+        app.inventory.items[2],
+        (dirt, 64),
+        "the merge the dest banks the count"
+    );
+    assert_eq!(
+        app.inventory.items[11],
+        (0, 0),
+        "the merge the source drains"
+    );
+    assert_eq!(
+        app.items_damage_frac[2], 0.0,
+        "the merge the dest its own 0.0 keeps"
+    );
+    assert_eq!(
+        app.items_damage_frac[11], 0.0,
+        "the merge the source the 0.0 wears"
+    );
+    assert!(
+        app.inventory_enchants[11].is_empty(),
+        "the merge the source the clear wears"
+    );
+    // THE ARMOR SEAT'S OWN WALL (the moved piece the rows the seat
+    // never mints — the drained source the pristine wears)
+    app.inventory.items[12] = (boots, 1);
+    app.items_damage_frac[12] = 0.6;
+    app.on_shift_down(true);
+    let (ax, ay) = inventory_slot_origin(app.inv_panel, 12);
+    app.click_inventory_slot(ax + 8, ay + 8, 0);
+    app.on_shift_down(false);
+    assert_eq!(
+        app.inventory.armor[3],
+        (boots, 1),
+        "the armor arm the piece equips"
+    );
+    assert_eq!(
+        app.inventory.items[12],
+        (0, 0),
+        "the armor arm the source drains"
+    );
+    assert_eq!(
+        app.items_damage_frac[12], 0.0,
+        "the armor wall the source the 0.0 wears"
+    );
+}
+
+/// THE RIDE HOME'S OWN DATA BANKS (the 491 round — the closes the
+/// receiving empty row the cursor's own seats bank, the full store's
+/// remainder the floor drop's own fields keep, the throw the aimed
+/// drop the same ride wears — the emptied carried the pristine rows
+/// wear).
+#[test]
+fn the_swap_walk_the_close_the_ride_home_banks() {
+    let boots = mc_registry::item_id_by_name("leather_boots").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let power = mc_registry::generated::enchantments::enchantment_index("power").unwrap();
+    let pairs = vec![(power as i32, 4)];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE RIDE HOME (the close the receiving empty row the data banks)
+    app.inv_carried = (boots, 1);
+    app.inv_carried_damage_frac = 0.5;
+    app.inv_carried_enchants = pairs.clone();
+    app.close_inventory(ScreenKind::World);
+    assert_eq!(app.inv_carried, (0, 0), "the close the carried returns");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the returned cursor the pristine wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the returned cursor the clear wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (boots, 1),
+        "the ride home the seat holds"
+    );
+    assert_eq!(
+        app.items_damage_frac[0], 0.5,
+        "the ride home the wear banks"
+    );
+    assert_eq!(
+        app.inventory_enchants[0], pairs,
+        "the ride home the pairs bank"
+    );
+    // THE FULL STORE'S OWN FLOOR RIDE (the remainder the cursor's own
+    // data keeps — the drop the pickup's own ride re-banks)
+    app.open_inventory();
+    app.items_damage_frac = [0.0; 37];
+    for v in app.inventory_enchants.iter_mut() {
+        v.clear();
+    }
+    for it in app.inventory.items.iter_mut() {
+        *it = (dirt, 64);
+    }
+    app.inv_carried = (boots, 1);
+    app.inv_carried_damage_frac = 0.5;
+    app.inv_carried_enchants = pairs.clone();
+    app.close_inventory(ScreenKind::World);
+    assert_eq!(app.inv_carried, (0, 0), "the full store the carried drops");
+    assert_eq!(
+        app.items_damage_frac[0], 0.0,
+        "the full store the rows the pristine keep"
+    );
+    assert_eq!(app.drops.len(), 1, "the remainder the floor spawn speaks");
+    assert_eq!(
+        app.drops[0].damage_frac, 0.5,
+        "the floor drop the wear keeps"
+    );
+    assert_eq!(
+        app.drops[0].enchantments,
+        vec![(power, 4)],
+        "the floor drop the pairs keep"
+    );
+    // THE THROW'S OWN DATA RIDE (the aimed drop the cursor's own data
+    // keeps, the emptied carried the pristine wears)
+    app.drops.clear();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.open_inventory();
+    app.inv_carried = (boots, 1);
+    app.inv_carried_damage_frac = 0.5;
+    app.inv_carried_enchants = pairs.clone();
+    app.throw_carried_outside(0);
+    assert_eq!(app.inv_carried, (0, 0), "the throw the carried drops");
+    assert_eq!(
+        app.inv_carried_damage_frac, 0.0,
+        "the thrown cursor the pristine wears"
+    );
+    assert!(
+        app.inv_carried_enchants.is_empty(),
+        "the thrown cursor the clear wears"
+    );
+    assert_eq!(app.drops.len(), 1, "the throw the drop spawns");
+    assert_eq!(
+        app.drops[0].damage_frac, 0.5,
+        "the thrown drop the wear keeps"
+    );
+    assert_eq!(
+        app.drops[0].enchantments,
+        vec![(power, 4)],
+        "the thrown drop the pairs keep"
+    );
+}

@@ -10290,6 +10290,22 @@ pub struct App {
     /// lane keeps — the offline world the SAME law the local word
     /// answers).
     pub inv_carried_potion_kind: i32,
+    /// THE OFFLINE CURSOR'S OWN WEAR SEAT (the 491 round — the carried
+    /// stack's own damage frac the swap walk's parallel rows bank: the
+    /// pickup the seat's frac the cursor banks, the place the cursor's
+    /// frac the seat lays, the model's own swap the pairs exchange,
+    /// the emptied carried the pristine 0.0 wears — the ghost bar the
+    /// wrong row the desync the walk retires. The wire session the
+    /// honest 0.0 wall the data never carries).
+    pub inv_carried_damage_frac: f32,
+    /// THE OFFLINE CURSOR'S OWN ENCHANT SEAT (the 491 round — the
+    /// carried stack's own (idx, level) pairs the same four arms bank:
+    /// the pickup the seat's pairs the cursor banks, the place the
+    /// cursor's pairs the seat lays, the swap the pairs exchange, the
+    /// emptied carried the clear wears — the ghost glint the wrong row
+    /// the desync the walk retires. The wire session the honest empty
+    /// wall the pairs never carry).
+    pub inv_carried_enchants: Vec<(i32, i32)>,
     /// The inventory panel's GUI origin the LAST render laid out —
     /// the click lane's own geometry (the chest's render-then-hit
     /// pattern; the static layout needs no per-slot rects). The (0, 0)
@@ -13850,6 +13866,8 @@ impl App {
             qc_remainder: 0,
             inv_carried: (0, 0),
             inv_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
+            inv_carried_damage_frac: 0.0,
+            inv_carried_enchants: Vec::new(),
             inv_panel: (0, 0),
             craft_grid: [(0, 0); 4],
             craft_grid_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 4],
@@ -26322,8 +26340,11 @@ impl App {
         }
         self.inv_carried = (0, 0);
         // the fresh-open pair (the carried's own word the same silence
-        // keeps — no kind survives the screen's own open)
+        // keeps — no kind survives the screen's own open; the 491 round
+        // the data seats the same silence banks)
         self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        self.inv_carried_damage_frac = 0.0;
+        self.inv_carried_enchants.clear();
         self.open(ScreenKind::Inventory);
     }
 
@@ -26352,6 +26373,11 @@ impl App {
             // the seat banks; the merge pass the full seats the
             // potion's own max-stack-1 law never speaks)
             let carried_kind = self.inv_carried_potion_kind;
+            // THE DATA'S OWN RIDE HOME (the 491 round — the cursor's own
+            // wear + ench seats the receiving row banks, the pristine
+            // carried the pristine rows wear)
+            let carried_frac = self.inv_carried_damage_frac;
+            let carried_ench = self.inv_carried_enchants.clone();
             let mut rest = count;
             // pass 1: the same-item merges (the add walk's own order)
             for it in self.inventory.items.iter_mut() {
@@ -26376,6 +26402,10 @@ impl App {
                     // close's own ride-home shape — the non-potion
                     // carried the NONE seat the same value wears)
                     self.items_potion_kinds[idx] = carried_kind;
+                    // the receiving row the data banks (the 491 round —
+                    // the cursor's own seats the landing wears)
+                    self.items_damage_frac[idx] = carried_frac;
+                    self.inventory_enchants[idx] = carried_ench.clone();
                 }
             }
             // a full store drops the remainder on the floor (the vanilla
@@ -26386,7 +26416,7 @@ impl App {
                     let (dx, dy, dz) = (b.x, b.y + 1.0, b.z);
                     let did = self.next_drop_id;
                     self.next_drop_id += 1;
-                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    let mut floor = crate::drops::ItemDrop::spawn_entity_loot(
                         did,
                         id,
                         rest,
@@ -26394,13 +26424,26 @@ impl App {
                         dy,
                         dz,
                         &mut self.mob_rng,
-                    ));
+                    );
+                    // THE FLOOR'S OWN DATA RIDE (the 491 round — the
+                    // remainder the cursor's own wear + pairs keep: the
+                    // drop the pickup's own ride re-banks)
+                    floor.damage_frac = carried_frac;
+                    floor.enchantments = carried_ench
+                        .iter()
+                        .map(|&(ench_idx, level)| (ench_idx as usize, level))
+                        .collect();
+                    self.drops.push(floor);
                 }
             }
             self.inv_carried = (0, 0);
             // the word the ride home drops (the carried's own emptiness
             // — the same silence the brewing close's word drop speaks)
             self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+            // the data the ride home drops (the 491 round — the
+            // cursor's own seats the emptiness the pristine wears)
+            self.inv_carried_damage_frac = 0.0;
+            self.inv_carried_enchants.clear();
             self.hotbar_slots = self.inventory.hotbar();
         }
         // THE DOUBLE-CLICK STATE'S OWN RESET (the vanilla screen the
@@ -28802,6 +28845,21 @@ impl App {
                         src_kind,
                         &old_dests,
                     );
+                    // THE QUICK-MOVE'S OWN DATA RIDE (the 491 round — the
+                    // wrapped rows the same seats the survival walk banks:
+                    // the source the rides pre-key, the rows the writes
+                    // never moved)
+                    let src_frac = self.items_damage_frac[i];
+                    let src_ench = self.inventory_enchants[i].clone();
+                    quick_move_data_ride(
+                        &mut self.items_damage_frac,
+                        &mut self.inventory_enchants,
+                        &changed,
+                        i,
+                        src_frac,
+                        &src_ench,
+                        &old_dests,
+                    );
                 } else {
                     // THE PICKUP PAIR (the doClick PICKUP arms the base
                     // Slot's law answers — the same walk the survival
@@ -28994,6 +29052,10 @@ impl App {
                 self.inv_carried = (carried.0, left);
                 if left <= 0 {
                     self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    // the emptied carried the data seats (the 491 round
+                    // — the pristine rows the emptiness wears)
+                    self.inv_carried_damage_frac = 0.0;
+                    self.inv_carried_enchants.clear();
                 }
             }
             return;
@@ -29006,6 +29068,9 @@ impl App {
             if button == 0 {
                 self.inv_carried = (0, 0);
                 self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                // the destroyed carried the data seats (the 491 round)
+                self.inv_carried_damage_frac = 0.0;
+                self.inv_carried_enchants.clear();
             } else {
                 let left = carried.1 - 1;
                 if left > 0 {
@@ -29013,6 +29078,9 @@ impl App {
                 } else {
                     self.inv_carried = (0, 0);
                     self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+                    // the eaten carried the data seats (the 491 round)
+                    self.inv_carried_damage_frac = 0.0;
+                    self.inv_carried_enchants.clear();
                 }
             }
             return;
@@ -29026,6 +29094,10 @@ impl App {
                 hovered.1
             };
             self.inv_carried = (hovered.0, count);
+            // the palette's own take the data seats (the 491 round —
+            // the palette stack the pristine rows wear)
+            self.inv_carried_damage_frac = 0.0;
+            self.inv_carried_enchants.clear();
         }
     }
 
@@ -29071,6 +29143,20 @@ impl App {
             self.items_potion_kinds[slot] = new_seat_kind;
             self.inv_carried_potion_kind = new_carried_kind;
         }
+        // THE SWAP WALK'S OWN DATA RIDE (the 491 round — the wrapped
+        // bottom row the same four arms the survival walk banks: the
+        // shared store the cursor's own data rides)
+        swap_ride_data(
+            &mut self.items_damage_frac[slot],
+            &mut self.inventory_enchants[slot],
+            &mut self.inv_carried_damage_frac,
+            &mut self.inv_carried_enchants,
+            believed,
+            new_cell,
+            self.inv_carried,
+            new_carried,
+            button == 0,
+        );
         self.inventory.items[slot] = new_cell;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
@@ -29920,6 +30006,11 @@ impl App {
             // CreativeSetSlot commands the menu ids wear, the same law
             // the swap lane and the hotbar load speak)
             let mut words: Vec<(i32, (i32, i32))> = Vec::new();
+            // THE DATA'S OWN RIDE HOME (the 491 round — the cursor's own
+            // wear + ench seats the receiving row banks, the pristine
+            // carried the pristine rows wear)
+            let carried_frac = self.inv_carried_damage_frac;
+            let carried_ench = self.inv_carried_enchants.clone();
             // pass 1: the same-item merges (the add walk's own order)
             for (idx, it) in self.inventory.items.iter_mut().enumerate() {
                 if rest == 0 {
@@ -29940,6 +30031,10 @@ impl App {
                 if it.1 <= 0 {
                     *it = (id, rest);
                     rest = 0;
+                    // the receiving row the data banks (the 491 round —
+                    // the cursor's own seats the landing wears)
+                    self.items_damage_frac[idx] = carried_frac;
+                    self.inventory_enchants[idx] = carried_ench.clone();
                     words.push((store_menu_id(idx), *it));
                 }
             }
@@ -29950,7 +30045,7 @@ impl App {
                     let (dx, dy, dz) = (b.x, b.y + 1.0, b.z);
                     let did = self.next_drop_id;
                     self.next_drop_id += 1;
-                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    let mut floor = crate::drops::ItemDrop::spawn_entity_loot(
                         did,
                         id,
                         rest,
@@ -29958,10 +30053,23 @@ impl App {
                         dy,
                         dz,
                         &mut self.mob_rng,
-                    ));
+                    );
+                    // THE FLOOR'S OWN DATA RIDE (the 491 round — the
+                    // remainder the cursor's own wear + pairs keep: the
+                    // drop the pickup's own ride re-banks)
+                    floor.damage_frac = carried_frac;
+                    floor.enchantments = carried_ench
+                        .iter()
+                        .map(|&(ench_idx, level)| (ench_idx as usize, level))
+                        .collect();
+                    self.drops.push(floor);
                 }
             }
             self.inv_carried = (0, 0);
+            // the data the ride home drops (the 491 round — the
+            // cursor's own seats the emptiness the pristine wears)
+            self.inv_carried_damage_frac = 0.0;
+            self.inv_carried_enchants.clear();
             self.hotbar_slots = self.inventory.hotbar();
             // THE LIVE WORDS (the touched slots the ascending order
             // speak — the client-authoritative creative write the
@@ -29992,6 +30100,11 @@ impl App {
         self.table_result = (0, 0);
         self.inv_carried = (0, 0);
         self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        // the fresh open's own data seats (the 491 round — no carried
+        // stack survives a world press, the seats the same silence
+        // banks)
+        self.inv_carried_damage_frac = 0.0;
+        self.inv_carried_enchants.clear();
         self.open(ScreenKind::Crafting);
     }
 
@@ -36020,6 +36133,11 @@ impl App {
             } else {
                 None
             };
+            // THE DATA'S OWN RIDE HOME (the 491 round — the cursor's own
+            // wear + ench seats the receiving row banks, the pristine
+            // carried the pristine rows wear)
+            let carried_frac = self.inv_carried_damage_frac;
+            let carried_ench = self.inv_carried_enchants.clone();
             let mut rest = count;
             for it in self.inventory.items.iter_mut() {
                 if rest == 0 {
@@ -36031,13 +36149,17 @@ impl App {
                     rest -= take;
                 }
             }
-            for it in self.inventory.items.iter_mut() {
+            for (idx, it) in self.inventory.items.iter_mut().enumerate() {
                 if rest == 0 {
                     break;
                 }
                 if it.1 <= 0 {
                     *it = (id, rest);
                     rest = 0;
+                    // the receiving row the data banks (the 491 round —
+                    // the cursor's own seats the landing wears)
+                    self.items_damage_frac[idx] = carried_frac;
+                    self.inventory_enchants[idx] = carried_ench.clone();
                 }
             }
             if let Some(idx) = landing {
@@ -36046,7 +36168,18 @@ impl App {
                 }
             }
             if rest > 0 {
+                let before = self.drops.len();
                 self.spawn_drop_at_player(id, rest);
+                // THE FLOOR'S OWN DATA RIDE (the 491 round — the
+                // remainder the cursor's own wear + pairs keep: the
+                // drop the pickup's own ride re-banks)
+                if let Some(floor) = self.drops.get_mut(before) {
+                    floor.damage_frac = carried_frac;
+                    floor.enchantments = carried_ench
+                        .iter()
+                        .map(|&(ench_idx, level)| (ench_idx as usize, level))
+                        .collect();
+                }
             }
             self.inv_carried = (0, 0);
         }
@@ -36054,6 +36187,10 @@ impl App {
         // banks, the cursor's own emptiness the silence wears — the
         // chest's own close law the table's walk keeps)
         self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        // the data the ride home spent (the 491 round — the cursor's
+        // own seats the emptiness the pristine wears)
+        self.inv_carried_damage_frac = 0.0;
+        self.inv_carried_enchants.clear();
         // the grid's own clearContainer walk (each cell rides home):
         // the contents the take-first drain collects (the
         // removeItemNoUpdate walk the vanilla loop speaks), the
@@ -36440,6 +36577,20 @@ impl App {
                 src_kind,
                 &old_dests,
             );
+            // THE QUICK-MOVE'S OWN DATA RIDE (the 491 round — the table's
+            // own shift lane the same seats the survival walk banks: the
+            // source the rides pre-key, the rows the writes never moved)
+            let src_frac = self.items_damage_frac[store];
+            let src_ench = self.inventory_enchants[store].clone();
+            quick_move_data_ride(
+                &mut self.items_damage_frac,
+                &mut self.inventory_enchants,
+                &changed,
+                store,
+                src_frac,
+                &src_ench,
+                &old_dests,
+            );
             return;
         }
         let believed = self.inventory.items[store];
@@ -36508,6 +36659,21 @@ impl App {
             self.items_potion_kinds[store] = new_seat_kind;
             self.inv_carried_potion_kind = new_carried_kind;
         }
+        // THE SWAP WALK'S OWN DATA RIDE (the 491 round — the two
+        // parallel rows the four arms the kind's own law wears answer:
+        // the table's own store lanes the same seats the survival walk
+        // banks — the shared store the cursor's own data rides)
+        swap_ride_data(
+            &mut self.items_damage_frac[store],
+            &mut self.inventory_enchants[store],
+            &mut self.inv_carried_damage_frac,
+            &mut self.inv_carried_enchants,
+            believed,
+            new_slot,
+            self.inv_carried,
+            new_carried,
+            button == 0,
+        );
         self.inventory.items[store] = new_slot;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
@@ -37651,6 +37817,20 @@ impl App {
                 src_kind,
                 &old_dests,
             );
+            // THE QUICK-MOVE'S OWN DATA RIDE (the 491 round — the moved
+            // stack's own wear + ench pairs the lanes ride: the source
+            // the rides pre-key, the rows the writes never moved)
+            let src_frac = self.items_damage_frac[store];
+            let src_ench = self.inventory_enchants[store].clone();
+            quick_move_data_ride(
+                &mut self.items_damage_frac,
+                &mut self.inventory_enchants,
+                &changed,
+                store,
+                src_frac,
+                &src_ench,
+                &old_dests,
+            );
             return;
         }
         let believed = self.inventory.items[store];
@@ -37718,6 +37898,22 @@ impl App {
             self.items_potion_kinds[store] = new_seat_kind;
             self.inv_carried_potion_kind = new_carried_kind;
         }
+        // THE SWAP WALK'S OWN DATA RIDE (the 491 round — the two
+        // parallel rows the four arms the kind's own law wears answer:
+        // the 487 wear row + the 489 ench pairs the cursor's own seats
+        // bank, the ghost glint the wrong row the desync the walk
+        // retires)
+        swap_ride_data(
+            &mut self.items_damage_frac[store],
+            &mut self.inventory_enchants[store],
+            &mut self.inv_carried_damage_frac,
+            &mut self.inv_carried_enchants,
+            believed,
+            new_slot,
+            self.inv_carried,
+            new_carried,
+            button == 0,
+        );
         self.inventory.items[store] = new_slot;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
@@ -37817,6 +38013,20 @@ impl App {
         // speaks, the remainder the own kind keeps)
         if new_carried.1 <= 0 {
             self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+            // THE THROW'S OWN DATA RIDE (the 491 round — the whole
+            // throw the wear + pairs the drop keeps, the emptied
+            // carried the pristine rows wear; the aimed impulse the
+            // drop_item_entity_aimed walk's own drop carries)
+            if let Some(floor) = self.drops.last_mut() {
+                floor.damage_frac = self.inv_carried_damage_frac;
+                floor.enchantments = self
+                    .inv_carried_enchants
+                    .iter()
+                    .map(|&(ench_idx, level)| (ench_idx as usize, level))
+                    .collect();
+            }
+            self.inv_carried_damage_frac = 0.0;
+            self.inv_carried_enchants.clear();
         }
     }
 
@@ -48033,10 +48243,18 @@ impl App {
             if seat_count == 0 {
                 match hover {
                     InventoryHover::Store(i) => {
-                        self.items_potion_kinds[i] = self.inv_carried_potion_kind
+                        self.items_potion_kinds[i] = self.inv_carried_potion_kind;
+                        // THE DRAG'S OWN DATA BANK (the 491 round — the
+                        // placed stack's own wear + pairs the row banks)
+                        self.items_damage_frac[i] = self.inv_carried_damage_frac;
+                        self.inventory_enchants[i] = self.inv_carried_enchants.clone();
                     }
                     InventoryHover::Offhand => {
-                        self.items_potion_kinds[OFFHAND_KIND_SEAT] = self.inv_carried_potion_kind
+                        self.items_potion_kinds[OFFHAND_KIND_SEAT] = self.inv_carried_potion_kind;
+                        // THE DRAG'S OWN WEAR SEAT (the 491 round — the
+                        // 37TH seat the frac banks, the ench rows the
+                        // 36-row shape the offhand never mints)
+                        self.items_damage_frac[OFFHAND_KIND_SEAT] = self.inv_carried_damage_frac;
                     }
                     _ => {}
                 }
@@ -48047,6 +48265,10 @@ impl App {
                                                                         // remainder the same stack the word keeps)
         if self.inv_carried.1 <= 0 {
             self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+            // the drag's own data seats (the 491 round — the emptied
+            // carried the pristine rows wear)
+            self.inv_carried_damage_frac = 0.0;
+            self.inv_carried_enchants.clear();
         }
         self.hotbar_slots = self.inventory.hotbar();
         if grid_touched {
@@ -48215,6 +48437,10 @@ impl App {
             if seat_count == 0 && menu >= 10 {
                 let row = if menu < 37 { menu - 1 } else { menu - 37 };
                 self.items_potion_kinds[row] = self.inv_carried_potion_kind;
+                // THE DRAG'S OWN DATA BANK (the 491 round — the placed
+                // stack's own wear + pairs the row banks)
+                self.items_damage_frac[row] = self.inv_carried_damage_frac;
+                self.inventory_enchants[row] = self.inv_carried_enchants.clone();
             }
         }
         self.inv_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
@@ -48222,6 +48448,10 @@ impl App {
                                                                         // remainder the same stack the word keeps)
         if self.inv_carried.1 <= 0 {
             self.inv_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+            // the drag's own data seats (the 491 round — the emptied
+            // carried the pristine rows wear)
+            self.inv_carried_damage_frac = 0.0;
+            self.inv_carried_enchants.clear();
         }
         self.hotbar_slots = self.inventory.hotbar();
         if grid_touched {
@@ -97267,6 +97497,97 @@ fn quick_move_kind_ride(
     for (idx, old) in old_dests {
         if *idx != store && old.1 <= 0 {
             kinds[*idx] = src_kind;
+        }
+    }
+}
+
+/// THE SWAP WALK'S OWN DATA RIDE (the 491 round — the two parallel
+/// rows the (id, count) moves the cursor's own seats bank: the 487
+/// wear row + the 489 ench pairs the four arms the kind's own law
+/// wears answer — the PICKUP the seat's data the cursor banks, the
+/// PLACE the cursor's data the seat lays, the MODEL'S OWN SWAP the
+/// pairs exchange, the MERGE the emptied cursor the pristine wears.
+/// The same-id full pair the model's own no-op the rows never move —
+/// the model the plain id test speaks (the component law the potion
+/// pairs the kind ride's own lane answers, the data rows the
+/// pristine pairs the no-op never wears), the same-id pair the
+/// max-1 room closes. The right press the never-swap law keeps —
+/// the split's own arms the seat-gone/carried-gone flags wear).
+fn swap_ride_data(
+    seat_frac: &mut f32,
+    seat_ench: &mut Vec<(i32, i32)>,
+    carried_frac: &mut f32,
+    carried_ench: &mut Vec<(i32, i32)>,
+    believed: (i32, i32),
+    new_slot: (i32, i32),
+    old_carried: (i32, i32),
+    new_carried: (i32, i32),
+    left: bool,
+) {
+    let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+    let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+    let carried_gone = old_carried.1 > 0 && new_carried.1 <= 0;
+    let carried_new = old_carried.1 <= 0 && new_carried.1 > 0;
+    if seat_gone && carried_new {
+        // THE PICKUP — the seat's own data the cursor banks, the
+        // emptied seat the pristine rows wear
+        *carried_frac = *seat_frac;
+        *carried_ench = seat_ench.clone();
+        *seat_frac = 0.0;
+        seat_ench.clear();
+    } else if carried_gone && seat_new {
+        // THE PLACE — the cursor's own data the seat banks, the
+        // emptied cursor the pristine rows wear
+        *seat_frac = *carried_frac;
+        *seat_ench = carried_ench.clone();
+        *carried_frac = 0.0;
+        carried_ench.clear();
+    } else if left && believed.1 > 0 && new_slot.1 > 0 && believed.0 != new_slot.0 {
+        // THE MODEL'S OWN SWAP — the pairs the data exchange
+        std::mem::swap(seat_frac, carried_frac);
+        std::mem::swap(seat_ench, carried_ench);
+    } else if carried_gone {
+        // THE MERGE — the seat keeps its own identity, the emptied
+        // cursor the pristine rows wear (the vanilla's own
+        // refuse-to-merge the unstackable pairs the arm never speaks)
+        *carried_frac = 0.0;
+        carried_ench.clear();
+    }
+}
+
+/// THE QUICK-MOVE'S OWN DATA RIDE (the 491 round — the moved stack's
+/// own wear + ench pairs the lanes ride: the drained source the
+/// pristine resets, the remainder the own rows keep, the empty-fill
+/// destinations the source's data bank, the merge destinations the
+/// own identity keep — the vanilla's own refuse-to-merge the
+/// unstackable pairs the data never eats. The armor destinations the
+/// wall the ride never keys — the 37-row shape the store seats the
+/// offhand alone wears, the moved piece the rows the seat never
+/// mints [the 487 law the armor rows the bank never carries]).
+fn quick_move_data_ride(
+    fracs: &mut [f32; 37],
+    enchs: &mut [Vec<(i32, i32)>; 36],
+    changed: &[(usize, (i32, i32))],
+    store: usize,
+    src_frac: f32,
+    src_ench: &[(i32, i32)],
+    old_dests: &[(usize, (i32, i32))],
+) {
+    // THE SOURCE'S OWN TAIL (the drained source the pristine resets —
+    // the remainder the own rows keep, the no-op walk the ride never
+    // speaks)
+    if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == store) {
+        if src_new.1 <= 0 {
+            fracs[store] = 0.0;
+            enchs[store].clear();
+        }
+    }
+    // THE DESTINATIONS' OWN BANKS (the empty fill the moved stack's
+    // own data wears — the merge the original keeps)
+    for (idx, old) in old_dests {
+        if *idx != store && old.1 <= 0 {
+            fracs[*idx] = src_frac;
+            enchs[*idx] = src_ench.to_vec();
         }
     }
 }
