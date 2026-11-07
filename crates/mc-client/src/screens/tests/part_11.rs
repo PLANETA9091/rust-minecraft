@@ -47284,6 +47284,197 @@ fn the_swap_table_the_grid_the_word_banks() {
     );
 }
 
+/// THE TABLE SWAP'S OWN WORD RIDE (the autopush-506 round — the
+/// offline twin the crafting screen's seats answer: the CASE D trade
+/// the kind_a/kind_b words the cell + row exchange, the non-potion
+/// swap-in the kindless answer banks, the CASE B the sword's wear +
+/// pairs the empty row banks [the drained cell the pristine rows
+/// wear], the same hotbar seat the identical pair the silence keeps)
+#[test]
+fn the_table_swap_the_words_the_pairs_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_crafting_table();
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    app.table_panel = panel;
+    // THE CASE D'S OWN TRADE (the cell's potion the row's potion
+    // trades — the words the seats exchange)
+    app.table_grid[0] = (potion, 1);
+    app.table_grid_potion_kinds[0] = kind_a;
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_b;
+    let (cx, cy) = table_craft_origin(panel, 0);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(0), "the trade consumes");
+    assert_eq!(app.table_grid[0], (potion, 1), "the cell the pair's wears");
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the pair's wears"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[0], kind_b,
+        "the word the cell rode"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE NON-POTION SWAP-IN'S OWN KINDLESS ANSWER (the planks the
+    // potion's old cell wears — the stale word the honest NONE
+    // retires)
+    app.table_grid[0] = (potion, 1);
+    app.table_grid_potion_kinds[0] = kind_a;
+    app.inventory.items[0] = (planks, 4);
+    app.items_potion_kinds[0] = none;
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(0), "the trade consumes");
+    assert_eq!(app.table_grid[0], (planks, 4), "the cell the planks wears");
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the potion wears"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the kindless answer banks"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE CASE B'S OWN BANK (the sword the wear + pairs the empty row
+    // banks — the drained cell the pristine rows wear)
+    app.table_grid[0] = (0, 0);
+    app.table_grid_potion_kinds[0] = none;
+    app.table_grid[1] = (sword, 1);
+    app.table_grid_damage_frac[1] = 0.4;
+    app.table_grid_enchants[1] = vec![(sharp, 5)];
+    app.inventory.items[0] = (0, 0);
+    app.items_potion_kinds[0] = none;
+    let (c1x, c1y) = table_craft_origin(panel, 1);
+    app.mouse_pos = Some((c1x + 8, c1y + 8));
+    assert!(app.on_table_swap_key(0), "the take consumes");
+    assert_eq!(app.table_grid[1], (0, 0), "the cell empties");
+    assert_eq!(
+        app.inventory.items[0],
+        (sword, 1),
+        "the row the sword rides"
+    );
+    assert_eq!(app.items_damage_frac[0], 0.4, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[0],
+        vec![(sharp, 5)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.table_grid_damage_frac[1], 0.0,
+        "the drained cell the pristine wears"
+    );
+    assert!(
+        app.table_grid_enchants[1].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[1], none,
+        "the drained word the pristine wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the identical pair the walk sets back)
+    app.inventory.items[5] = (planks, 2);
+    app.items_potion_kinds[5] = none;
+    let (sx, sy) = inventory_slot_origin(panel, 5);
+    app.mouse_pos = Some((sx + 8, sy + 8));
+    assert!(app.on_table_swap_key(5), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[5],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE TABLE SWAP'S OWN GRID BANK (the autopush-506 round — the CASE
+/// C the row's potion the empty cell lays [the word the place banks],
+/// the CASE B the result take the kindless answer the button row
+/// banks, the table_on_take the consumed cells the retire speaks, the
+/// result's own refusal the CASE C/D presses keep)
+#[test]
+fn the_table_swap_the_grid_the_take_speaks() {
+    let log = mc_registry::item_id_by_name("oak_log").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_crafting_table();
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    app.table_panel = panel;
+    // THE CASE C'S OWN PLACE (the row's potion the empty craft cell
+    // lays — the word the place banks, the recompute the mutation
+    // follows)
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_a;
+    let (cx, cy) = table_craft_origin(panel, 3);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(0), "the place consumes");
+    assert_eq!(app.table_grid[3], (potion, 1), "the cell the row's wears");
+    assert_eq!(
+        app.table_grid_potion_kinds[3], kind_a,
+        "the word the place banks"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the row empties");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained row the pristine wears"
+    );
+    // THE CASE B'S OWN TAKE (the result the button row rides — the
+    // kindless answer the row banks, the table_on_take the consumed
+    // cell the retire speaks, the crafted stat the awardStat law
+    // banks)
+    app.table_grid[3] = (0, 0);
+    app.table_grid_potion_kinds[3] = none;
+    app.table_grid[0] = (log, 1);
+    app.refresh_table_result();
+    assert_eq!(app.table_result, (planks, 4), "the recipe speaks");
+    let (rx, ry) = table_craft_origin(panel, 9);
+    app.mouse_pos = Some((rx + 8, ry + 8));
+    assert!(app.on_table_swap_key(0), "the take consumes");
+    assert_eq!(
+        app.inventory.items[0],
+        (planks, 4),
+        "the result the row rides"
+    );
+    assert_eq!(app.items_potion_kinds[0], none, "the kindless answer banks");
+    assert_eq!(app.table_result, (0, 0), "the result empties");
+    assert_eq!(app.table_grid[0], (0, 0), "the take consumes");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the drained cell the retire keeps"
+    );
+    assert_eq!(
+        *app.stats.crafted.get(&planks).unwrap_or(&0),
+        4,
+        "the crafted stat banks"
+    );
+    // THE RESULT'S OWN REFUSAL (the mayPlace the iconst_0 the place
+    // arms refuse — the CASE C press the consumed silence keeps)
+    app.inventory.items[0] = (planks, 4);
+    app.table_result = (0, 0);
+    app.mouse_pos = Some((rx + 8, ry + 8));
+    assert!(app.on_table_swap_key(0), "the refusal consumes");
+    assert_eq!(app.table_result, (0, 0), "the empty result stays");
+    assert_eq!(
+        app.inventory.items[0],
+        (planks, 4),
+        "the row the refusal keeps"
+    );
+}
+
 /// THE WORLD LANE'S OWN SCREEN GATE (the autopush-505 round — the
 /// number-key + the profiler digit the screen==null verdict the
 /// vanilla handleKeybinds lane re-wears): the open container screen
