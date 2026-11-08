@@ -48484,3 +48484,391 @@ fn the_enchant_the_wire_swap_the_belief_wears() {
         "no session — the sink gate refuses"
     );
 }
+
+/// THE DISPENSER SWAP'S OWN WORDS BANK (the autopush-511 round — the
+/// furnace/brewing twins' own shape the 3x3 canvas re-wears: the
+/// CASE D trade the kind_a/kind_b words the seats exchange, the
+/// non-potion swap-in the kindless answer banks, the CASE B the
+/// sword's wear + pairs the empty row banks [the drained row the
+/// pristine rows wear, the HUD row + the mirror row the sync wears],
+/// the same seat the identical pair sets back)
+#[test]
+fn the_dispenser_swap_the_words_the_pairs_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Dispenser);
+    // THE CASE D'S OWN TRADE (the grid cell's potion the row's
+    // potion trades — the words the seats exchange)
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_slots[0] = (potion, 1);
+    app.dispenser_row_potion_kinds = vec![none; 9];
+    app.dispenser_row_potion_kinds[0] = kind_a;
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_b;
+    app.dispenser_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(0), "the trade consumes");
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the nine the pair's wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the pair's wears"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[0], kind_b,
+        "the word the seat rode"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE NON-POTION SWAP-IN'S OWN KINDLESS ANSWER (the planks the
+    // potion's old grid cell wears — the stale word the honest NONE
+    // retires)
+    app.dispenser_slots[0] = (potion, 1);
+    app.dispenser_row_potion_kinds[0] = kind_a;
+    app.inventory.items[0] = (planks, 4);
+    app.items_potion_kinds[0] = none;
+    app.dispenser_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(0), "the trade consumes");
+    assert_eq!(
+        app.dispenser_slots[0],
+        (planks, 4),
+        "the seat the planks wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the potion wears"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[0], none,
+        "the kindless answer banks"
+    );
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE CASE B'S OWN BANK (the store row's sword the wear + pairs
+    // the empty row banks — the drained row the pristine rows wear;
+    // the store row 12 the items 12 answers — the mapped row the
+    // walk reads; the HUD row the sync follows)
+    app.inventory.items[12] = (sword, 1);
+    app.items_potion_kinds[12] = none;
+    app.items_damage_frac[12] = 0.4;
+    app.inventory_enchants[12] = vec![(sharp, 5)];
+    app.inventory.items[2] = (0, 0);
+    app.items_potion_kinds[2] = none;
+    app.items_damage_frac[2] = 0.0;
+    app.inventory_enchants[2] = Vec::new();
+    app.dispenser_slot_rects = vec![(100, 100, 12)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(2), "the take consumes");
+    assert_eq!(app.inventory.items[12], (0, 0), "the store row empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (sword, 1),
+        "the row the sword rides"
+    );
+    assert_eq!(app.items_damage_frac[2], 0.4, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(sharp, 5)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[12], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[12].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[12], none,
+        "the drained word the pristine wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (sword, 1),
+        "the HUD row the sync wears"
+    );
+    assert_eq!(
+        app.dispenser_mirror[3],
+        (0, 0),
+        "the mirror row the sync wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the identical pair the walk sets back)
+    app.inventory.items[1] = (planks, 2);
+    app.items_potion_kinds[1] = none;
+    app.dispenser_slot_rects = vec![(100, 100, 37)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(1), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[1],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE DISPENSER SWAP'S OWN TRIO BANK (the autopush-511 round — the
+/// CASE C the row's potion the empty grid cell lays [the word the
+/// place banks], the SPLIT law the max wears, the CASE B the offhand
+/// the trio stack rides, the both-empty press the consumed silence
+/// keeps, the carried gate the false verdict wears)
+#[test]
+fn the_dispenser_swap_the_trio_the_plain_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let egg = mc_registry::item_id_by_name("egg").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Dispenser);
+    // THE CASE C'S OWN PLACE (the row's potion the empty grid cell
+    // lays — the word the place banks, the drained row the pristine
+    // rows wear, the HUD row the sync wears)
+    app.dispenser_slots = vec![(0, 0); 9];
+    app.dispenser_row_potion_kinds = vec![none; 9];
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_b;
+    app.dispenser_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(0), "the place consumes");
+    assert_eq!(
+        app.dispenser_slots[0],
+        (potion, 1),
+        "the cell the potion lays"
+    );
+    assert_eq!(
+        app.dispenser_row_potion_kinds[0], kind_b,
+        "the word the place banks"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the drained row empties");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained word the pristine wears"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync wears");
+    // THE SPLIT LAW'S OWN MAX (the 20 eggs the grid cell the max 16
+    // wears — the row the remainder keeps)
+    app.inventory.items[0] = (egg, 20);
+    app.items_potion_kinds[0] = none;
+    app.dispenser_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(0), "the split consumes");
+    assert_eq!(app.dispenser_slots[1], (egg, 16), "the cell the max wears");
+    assert_eq!(app.inventory.items[0], (egg, 4), "the row the remainder");
+    // THE CASE B'S OWN OFFHAND RIDE (the F key the grid trio rides —
+    // the outside seat the ride banks)
+    app.dispenser_slots[2] = (dirt, 3);
+    app.dispenser_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(40), "the offhand consumes");
+    assert_eq!(app.dispenser_slots[2], (0, 0), "the cell empties");
+    assert_eq!(
+        app.inventory.offhand[0],
+        (dirt, 3),
+        "the offhand the trio rides"
+    );
+    // THE BOTH-EMPTY PRESS'S OWN SILENCE (the consumed true the
+    // mutations never speak)
+    app.dispenser_slot_rects = vec![(100, 100, 8)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_dispenser_swap_key(7), "the silence consumes");
+    assert_eq!(app.dispenser_slots[8], (0, 0), "the seat the empty keeps");
+    assert_eq!(app.inventory.items[7], (0, 0), "the row the empty keeps");
+    // THE CARRIED GATE'S OWN FALSE (the cursor's stack the walk
+    // refuses)
+    app.dispenser_carried = (dirt, 1);
+    assert!(
+        !app.on_dispenser_swap_key(0),
+        "the carried cursor the gate refuses"
+    );
+}
+
+/// THE DISPENSER STAND'S OWN SWAP KEY WEARS (the autopush-511 round —
+/// the wire twin the believed walk banks: the GENERIC_3X3 route the
+/// window identity arms, the gates' false verdicts the lanes keep,
+/// the ARM B the digit's CASE B the deltas mints [the seat the
+/// belief empties, the store row the mirror rides, the HUD row the
+/// sync wears], the ARM C the offhand's CASE B the seat's own delta
+/// the map names, the ARM D the carried gate the false verdict
+/// wears, the ARM E the no-window lane the silence keeps)
+#[test]
+fn the_dispenser_stand_the_swap_key_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 6 the window
+    // opens — the identity the keys echo against, the seats the
+    // wholesale banks, the mirror the hotbar row the feed keeps)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 45];
+    slots[0] = (potion, 1);
+    slots[38] = (dirt, 2);
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_GENERIC_3X3,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 11,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    assert!(app.dispenser_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.dispenser_live_window,
+        Some((6, 11)),
+        "the identity the keys echo against"
+    );
+
+    // THE NO-SCREEN + NO-GEOMETRY LANES (the walk the gates keep —
+    // the false verdicts the world chain answers, no packet the
+    // lanes mint)
+    app.screen = ScreenKind::World;
+    assert!(
+        !app.on_dispenser_swap_key(3),
+        "the world screen the swap key refuses"
+    );
+    app.screen = ScreenKind::Dispenser;
+    app.dispenser_slot_rects.clear();
+    assert!(
+        !app.on_dispenser_swap_key(3),
+        "no render spoke — the geometry gate refuses"
+    );
+    app.dispenser_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = None;
+    assert!(
+        !app.on_dispenser_swap_key(3),
+        "no cursor — the hovered-slot gate refuses"
+    );
+
+    // ARM B — THE DIGIT'S OWN BELIEF WALK (the grid cell the digit
+    // 3 takes — the SWAP input the packet rides, the belief's own
+    // table the deltas mints, the seats the belief's CASE B answers
+    // [the hotbar row 3 the menu 39 speaks, the mirror cell the +9
+    // shift wears])
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_dispenser_swap_key(3),
+        "the digit the walk consumes — the true verdict"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 6, "the window id the echo wears");
+            assert_eq!(click.state_id, 11, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the grid seat the packet rides");
+            assert_eq!(click.button, 3, "the digit the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the key speaks"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0)), (39, (potion, 1))],
+                "the belief's CASE B the deltas mint — the seat the
+                empties the row rides [the hotbar row 3 the menu 39
+                speaks]"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the packet carries"
+            );
+        }
+        other => panic!("the digit press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.dispenser_slots[0],
+        (0, 0),
+        "the grid seat the belief empties"
+    );
+    assert_eq!(
+        app.dispenser_mirror[30],
+        (potion, 1),
+        "the store row the belief rides"
+    );
+    assert_eq!(
+        app.hotbar_slots[3],
+        (potion, 1),
+        "the HUD row the sync wears"
+    );
+    assert_eq!(
+        app.dispenser_carried,
+        (0, 0),
+        "the cursor the key never mints"
+    );
+
+    // ARM C — THE OFFHAND'S OWN BELIEF WALK (button 40 the
+    // keySwapOffhand arm the pcs 20-57 bipush answers — the same
+    // SWAP input the packet rides; the wholesale lane's own re-bank
+    // the grid seat the walk re-arms, the offhand the changed map
+    // never names)
+    app.dispenser_slots[0] = (potion, 1);
+    assert!(
+        app.on_dispenser_swap_key(40),
+        "the offhand key the walk consumes"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 0, "the hovered seat the packet rides");
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the F-key speaks"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0))],
+                "the seat's own delta the map names, the offhand the
+                outside-menu seat the map can't speak"
+            );
+        }
+        other => panic!("the offhand press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.live_inv_slots[45],
+        (potion, 1),
+        "the offhand's own belief the ride banks"
+    );
+
+    // ARM D — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
+    // the walk opens with — the believed cursor the wholesale banks,
+    // the false verdict BEFORE the packet lane keeps)
+    app.dispenser_carried = (dirt, 1);
+    assert!(
+        !app.on_dispenser_swap_key(3),
+        "the carried cursor the gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the refusal no packet mints");
+    app.dispenser_carried = (0, 0);
+
+    // ARM E — THE NO-WINDOW LANE (the offline stand-in no window
+    // keeps — the swap lane the wire's own shape refuses)
+    app.dispenser_live_window = None;
+    assert!(
+        !app.on_dispenser_swap_key(3),
+        "no window — the identity gate refuses"
+    );
+}

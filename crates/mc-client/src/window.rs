@@ -2865,6 +2865,11 @@ pub fn run_gui_app(
                 // own mayPlace the non-lapis row the F-key never
                 // lands)
                 && !app.on_enchant_swap_key(40)
+                // THE DISPENSER'S OWN SWAP (the same base-class walk
+                // the furnace/brewing rounds wear — the checkHotbar-
+                // KeyPressed arms the dispenser screen answers, the
+                // plain mayPickup/mayPlace pair the 3x3 canvas keeps)
+                && !app.on_dispenser_swap_key(40)
                 && !app.on_creative_swap_key(40)
             {
                 app.on_swap_offhand_key();
@@ -2944,6 +2949,12 @@ pub fn run_gui_app(
                         // mayPlace the non-lapis row the digits
                         // never land)
                         && !app.on_enchant_swap_key(i)
+                        // THE DISPENSER'S OWN SWAP (the same
+                        // base-class walk the furnace/brewing rounds
+                        // wear — the nine the plain pair the digits
+                        // answer, the believed walk the packet lane
+                        // banks)
+                        && !app.on_dispenser_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)
