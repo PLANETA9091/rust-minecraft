@@ -49589,3 +49589,424 @@ fn the_beacon_stand_the_swap_key_wears() {
         "no session — the sink gate refuses"
     );
 }
+
+/// THE MERCHANT SWAP'S OWN TRADE SEATS (the autopush-514 round — the
+/// quartet's tail lane the wheel wears: the CASE D the input's
+/// emerald the row's diamond trades [the pairs the seats exchange,
+/// the HUD row the sync wears], the result's CASE C + CASE D the
+/// mayPlace refusal the consumed silences wear [BOTH stay], the
+/// CASE B the input the empty row banks [the drained seat the
+/// pristine pair, the HUD row the sync], the CASE B the result the
+/// trade's apply the onTake walk wears [the uses the offer banks,
+/// the xp the reward rides, the cost the shrink drains, the traded
+/// stat the success arm])
+#[test]
+fn the_merchant_swap_the_trade_seats_the_rows_ride() {
+    use crate::world_view::MerchantOfferView;
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slots = vec![(0, 0); 39];
+    // THE CASE D'S OWN TRADE (the input 0's emerald the hotbar row's
+    // diamond trades — the digit 1 the items 1 row answers, the
+    // pairs the seats exchange, the HUD row the sync wears)
+    app.merchant_slots[0] = (emerald, 2);
+    app.inventory.items[1] = (diamond, 1);
+    app.merchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(1), "the trade consumes");
+    assert_eq!(
+        app.merchant_slots[0],
+        (diamond, 1),
+        "the seat the diamond wears"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (emerald, 2),
+        "the row the emerald wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[1],
+        (emerald, 2),
+        "the HUD row the sync wears"
+    );
+    // THE RESULT'S OWN CASE C REFUSAL (the empty result the
+    // mayPlace verdict keeps — the row's wheat the consumed silence
+    // banks, BOTH seats stay)
+    app.merchant_slots[2] = (0, 0);
+    app.inventory.items[1] = (emerald, 3);
+    app.merchant_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_merchant_swap_key(1),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(app.merchant_slots[2], (0, 0), "the seat the silence keeps");
+    assert_eq!(
+        app.inventory.items[1],
+        (emerald, 3),
+        "the row the silence keeps"
+    );
+    // THE RESULT'S OWN CASE D REFUSAL (the filled result the same
+    // verdict keeps — the pairs the BOTH-stay silence banks)
+    app.merchant_slots[2] = (bread, 1);
+    app.inventory.items[1] = (emerald, 3);
+    assert!(
+        app.on_merchant_swap_key(1),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the seat the silence keeps"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (emerald, 3),
+        "the row the silence keeps"
+    );
+    // THE CASE B'S OWN INPUT BANK (the input's stack the empty row
+    // banks — the drained seat the pristine pair wears, the HUD row
+    // the sync follows)
+    app.merchant_slots[0] = (emerald, 2);
+    app.inventory.items[5] = (0, 0);
+    app.merchant_slots[5] = (0, 0);
+    app.merchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(5), "the take consumes");
+    assert_eq!(app.merchant_slots[0], (0, 0), "the drained seat empties");
+    assert_eq!(
+        app.inventory.items[5],
+        (emerald, 2),
+        "the row the stack banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[5],
+        (emerald, 2),
+        "the HUD row the sync wears"
+    );
+    // THE CASE B'S OWN RESULT TAKE (the result's stack the empty row
+    // banks — the trade's apply the onTake walk serves: the uses the
+    // offer banks, the xp the reward rides, the cost the shrink
+    // drains, the traded stat the success arm, the carried the SWAP
+    // never touches)
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app.merchant_slots[0] = (emerald, 4);
+    app.merchant_slots[1] = (0, 0);
+    app.merchant_slots[2] = (bread, 1);
+    app.merchant_active_offer = Some(0);
+    app.inventory.items[2] = (0, 0);
+    app.merchant_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(2), "the take consumes");
+    assert_eq!(
+        app.inventory.items[2],
+        (bread, 1),
+        "the row the result banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (bread, 1),
+        "the HUD row the sync wears"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the cost-A the take's own shrink drains"
+    );
+    assert_eq!(app.merchant_xp, 5, "the xp the reward speaks");
+    assert_eq!(
+        app.merchant_offers[0].uses, 1,
+        "the uses the notify increments"
+    );
+    assert_eq!(
+        app.stats.traded_with_villager, 1,
+        "the traded stat the success arm wears"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (0, 0),
+        "the carried the SWAP never touches"
+    );
+    // THE OFFERLESS RESULT'S OWN SILENCE (the mayPickup verdict the
+    // offerless bank keeps — the stack the consumed silence banks)
+    app.merchant_slots[2] = (bread, 1);
+    app.merchant_active_offer = None;
+    assert!(
+        app.on_merchant_swap_key(2),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the seat the silence keeps"
+    );
+    assert_eq!(
+        app.inventory.items[2],
+        (bread, 1),
+        "the row the silence keeps"
+    );
+}
+
+/// THE MERCHANT SWAP'S OWN ROWS THE WORDS RIDE (the autopush-514
+/// round — the CASE D the two potions the kind words exchange [the
+/// seat + the row the words swap, the believed row the sync wears],
+/// the CASE C the row's dirt the input's 64-cap the split speaks,
+/// the CASE B the store row's sword the wear + pairs the empty row
+/// banks [the drained row the pristine rows wear], the same seat the
+/// identical pair sets back)
+#[test]
+fn the_merchant_swap_the_rows_the_words_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slots = vec![(0, 0); 39];
+    // THE CASE D'S OWN KIND EXCHANGE (the menu 12 the items 18
+    // answers — the seat's kind_a the row banks, the row's kind_b
+    // the seat banks, the believed row the sync wears)
+    app.inventory.items[18] = (potion, 1);
+    app.items_potion_kinds[18] = kind_a;
+    app.inventory.items[1] = (potion, 1);
+    app.items_potion_kinds[1] = kind_b;
+    app.merchant_slots[12] = (potion, 1);
+    app.merchant_slot_rects = vec![(100, 100, 12)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(1), "the trade consumes");
+    assert_eq!(app.items_potion_kinds[18], kind_b, "the word the seat rode");
+    assert_eq!(app.items_potion_kinds[1], kind_a, "the word the row rode");
+    assert_eq!(
+        app.merchant_slots[12],
+        (potion, 1),
+        "the believed row the sync wears"
+    );
+    // THE CASE C'S OWN SPLIT (the row's 70 dirt the input seat's
+    // 64-cap wears — the hovered menu 5 the items 11 cell the EMPTY
+    // seat answers, the digit 1 the items 1 row the stack keeps:
+    // the seat the cap wears, the row the remainder banks)
+    app.inventory.items[11] = (0, 0);
+    app.merchant_slots[5] = (0, 0);
+    app.inventory.items[1] = (dirt, 70);
+    app.merchant_slot_rects = vec![(100, 100, 5)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(1), "the split consumes");
+    assert_eq!(app.merchant_slots[5], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.inventory.items[11],
+        (dirt, 64),
+        "the seat's own row the cap banks"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (dirt, 6),
+        "the split's own remainder the row keeps"
+    );
+    // THE CASE B'S OWN BANK (the store row 10's sword the wear 0.6
+    // + pairs the empty row banks — the menu 10 the items 16
+    // answers, the drained row the pristine rows wear, the HUD row
+    // + the believed row the sync follows)
+    app.inventory.items[16] = (sword, 1);
+    app.items_damage_frac[16] = 0.6;
+    app.inventory_enchants[16] = vec![(sharp, 4)];
+    app.merchant_slots[10] = (sword, 1);
+    app.inventory.items[2] = (0, 0);
+    app.items_damage_frac[2] = 0.0;
+    app.inventory_enchants[2] = Vec::new();
+    app.merchant_slot_rects = vec![(100, 100, 10)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(2), "the take consumes");
+    assert_eq!(app.inventory.items[16], (0, 0), "the store row empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (sword, 1),
+        "the row the sword banks"
+    );
+    assert_eq!(app.items_damage_frac[2], 0.6, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(sharp, 4)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[16], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[16].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.merchant_slots[10],
+        (0, 0),
+        "the believed row the sync wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (sword, 1),
+        "the HUD row the sync wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the menu 31 the items 1 cell answers,
+    // the identical pair the walk sets back)
+    app.inventory.items[1] = (dirt, 2);
+    app.merchant_slots[31] = (dirt, 2);
+    app.merchant_slot_rects = vec![(100, 100, 31)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(1), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[1],
+        (dirt, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE MERCHANT STAND'S OWN SWAP KEY (the autopush-514 round — the
+/// MENU_TYPE_MERCHANT route the window identity arms [the live flag
+/// + the window the feed wears], the gates' false verdicts the lanes
+/// keep, the ARM B the digit's prediction-free echo the EMPTY deltas
+/// + the believed carried the packet rides [the belief the echo
+/// never mutates — the trade seat the walk never touches], the ARM C
+/// the carried gate the false verdict wears, the ARM D the no-window
+/// lane the silence keeps, the ARM E the no-session lane the silence
+/// keeps)
+#[test]
+fn the_merchant_stand_the_swap_key_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 18 the window
+    // opens — the identity the keys echo against, the trade seats +
+    // the store rows the wholesale banks)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (emerald, 1);
+    slots[10] = (dirt, 2);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    assert!(app.merchant_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.merchant_live_window,
+        Some((9, 7)),
+        "the identity the keys echo against"
+    );
+
+    // THE NO-SCREEN + NO-GEOMETRY LANES (the walk the gates keep —
+    // the false verdicts the world chain answers, no packet the
+    // lanes mint)
+    app.screen = ScreenKind::World;
+    assert!(
+        !app.on_merchant_swap_key(3),
+        "the world screen the swap key refuses"
+    );
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects.clear();
+    assert!(
+        !app.on_merchant_swap_key(3),
+        "no render spoke — the geometry gate refuses"
+    );
+    app.merchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = None;
+    assert!(
+        !app.on_merchant_swap_key(3),
+        "no cursor — the hovered-slot gate refuses"
+    );
+
+    // ARM B — THE DIGIT'S OWN PREDICTION-FREE ECHO (the Swap input
+    // the packet rides — the EMPTY delta list the believed cursor
+    // the echo wears, the belief the echo never mutates, the
+    // server's own SWAP table the verdict answers)
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_merchant_swap_key(3),
+        "the digit the walk consumes — the true verdict"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 9, "the window id the echo wears");
+            assert_eq!(click.state_id, 7, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the trade seat the packet rides");
+            assert_eq!(click.button, 3, "the digit the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the key speaks"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the EMPTY deltas the prediction-free echo wears"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the packet carries"
+            );
+        }
+        other => panic!("the digit press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.merchant_slots[0],
+        (emerald, 1),
+        "the belief the echo never mutates"
+    );
+
+    // ARM C — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
+    // the walk opens with — the false verdict BEFORE the packet lane
+    // keeps)
+    app.merchant_carried = (dirt, 1);
+    assert!(
+        !app.on_merchant_swap_key(3),
+        "the carried cursor the gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the refusal no packet mints");
+    app.merchant_carried = (0, 0);
+
+    // ARM D — THE NO-WINDOW LANE (the offline stand-in no window
+    // keeps — the swap lane the wire's own shape refuses)
+    app.merchant_live_window = None;
+    assert!(
+        !app.on_merchant_swap_key(3),
+        "no window — the identity gate refuses"
+    );
+
+    // ARM E — THE NO-SESSION LANE (the command dies on the frame
+    // thread — no session the sink never answers)
+    app.merchant_live_window = Some((9, 7));
+    app.live_clicks = None;
+    assert!(
+        !app.on_merchant_swap_key(3),
+        "no session — the sink gate refuses"
+    );
+}

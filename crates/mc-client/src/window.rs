@@ -2881,6 +2881,11 @@ pub fn run_gui_app(
                 // the beacon screen answers, the payment seat's own
                 // tag gate the non-coin row the F-key never lands)
                 && !app.on_beacon_swap_key(40)
+                // THE MERCHANT'S OWN SWAP (the same base-class walk
+                // the beacon round wears — the checkHotbarKeyPressed
+                // arms the merchant screen answers, the result seat's
+                // own mayPlace verdict the place arms never land)
+                && !app.on_merchant_swap_key(40)
                 && !app.on_creative_swap_key(40)
             {
                 app.on_swap_offhand_key();
@@ -2976,6 +2981,11 @@ pub fn run_gui_app(
                         // seat's own tag gate the non-coin row the
                         // digits never land)
                         && !app.on_beacon_swap_key(i)
+                        // THE MERCHANT'S OWN SWAP (the same base-class
+                        // walk the beacon round wears — the result
+                        // seat's own mayPlace verdict the place arms
+                        // the digits never land)
+                        && !app.on_merchant_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)
