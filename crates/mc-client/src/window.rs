@@ -2876,6 +2876,11 @@ pub fn run_gui_app(
                 // mayPlace-false + the mayPickup cost gates the F-key
                 // never lands)
                 && !app.on_anvil_swap_key(40)
+                // THE BEACON'S OWN SWAP (the same base-class walk the
+                // anvil round wears — the checkHotbarKeyPressed arms
+                // the beacon screen answers, the payment seat's own
+                // tag gate the non-coin row the F-key never lands)
+                && !app.on_beacon_swap_key(40)
                 && !app.on_creative_swap_key(40)
             {
                 app.on_swap_offhand_key();
@@ -2966,6 +2971,11 @@ pub fn run_gui_app(
                         // seat's own mayPlace-false + the mayPickup
                         // cost gates the digits never land)
                         && !app.on_anvil_swap_key(i)
+                        // THE BEACON'S OWN SWAP (the same base-class
+                        // walk the anvil round wears — the payment
+                        // seat's own tag gate the non-coin row the
+                        // digits never land)
+                        && !app.on_beacon_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)

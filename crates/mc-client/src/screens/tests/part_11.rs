@@ -49281,3 +49281,311 @@ fn the_anvil_stand_the_swap_key_wears() {
         "no session — the sink gate refuses"
     );
 }
+
+/// THE BEACON SWAP'S OWN PAYMENT BANK (the autopush-513 round — the
+/// CASE D the payment's coin the row's diamond trades [the pairs the
+/// seats exchange, the HUD row the sync wears], the CASE C the
+/// non-coin row the consumed silence wears [BOTH stay], the CASE C
+/// the five-coin row the single-coin cap the split speaks [the seat
+/// the one wears, the row the four keeps], the CASE B the coin the
+/// empty row banks [the drained seat the pristine pair wears, the
+/// HUD row the sync follows])
+#[test]
+fn the_beacon_swap_the_payment_the_rows_ride() {
+    let gold = mc_registry::item_id_by_name("gold_ingot").unwrap();
+    let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Beacon);
+    // THE CASE D'S OWN TRADE (the payment's coin the row's diamond
+    // trades — the pairs the seats exchange, the plain mayPickup the
+    // payment's own walk keeps)
+    app.beacon_payment = (gold, 1);
+    app.inventory.items[1] = (diamond, 1);
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(1), "the trade consumes");
+    assert_eq!(
+        app.beacon_payment,
+        (diamond, 1),
+        "the seat the diamond wears"
+    );
+    assert_eq!(app.inventory.items[1], (gold, 1), "the row the coin wears");
+    assert_eq!(app.hotbar_slots[1], (gold, 1), "the HUD row the sync wears");
+    // THE NON-COIN ROW'S OWN CONSUMED SILENCE (the dirt the
+    // mayPlace tag gate refuses — BOTH seats stay, the press the
+    // consumed verdict keeps)
+    app.beacon_payment = (0, 0);
+    app.inventory.items[1] = (dirt, 4);
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_beacon_swap_key(1),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(app.beacon_payment, (0, 0), "the seat the silence keeps");
+    assert_eq!(
+        app.inventory.items[1],
+        (dirt, 4),
+        "the row the silence keeps"
+    );
+    // THE FIVE-COIN ROW'S OWN SPLIT (the single-coin cap the seat's
+    // own max wears — the seat the one wears, the row the four keeps)
+    app.beacon_payment = (0, 0);
+    app.inventory.items[1] = (gold, 5);
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(1), "the split consumes");
+    assert_eq!(app.beacon_payment, (gold, 1), "the seat the cap wears");
+    assert_eq!(
+        app.inventory.items[1],
+        (gold, 4),
+        "the row the remainder keeps"
+    );
+    // THE CASE B'S OWN BANK (the coin the empty row banks — the
+    // drained seat the pristine pair wears, the HUD row the sync
+    // follows)
+    app.beacon_payment = (diamond, 1);
+    app.inventory.items[2] = (0, 0);
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(2), "the take consumes");
+    assert_eq!(app.beacon_payment, (0, 0), "the drained seat empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (diamond, 1),
+        "the row the coin banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (diamond, 1),
+        "the HUD row the sync wears"
+    );
+}
+
+/// THE BEACON SWAP'S OWN MIRROR BANK (the autopush-513 round — the
+/// CASE D the two potions the kind words exchange [the seat + the
+/// row the words swap, the mirror row the sync wears], the CASE B
+/// the store row's sword the wear + pairs the empty row banks [the
+/// drained row the pristine rows wear, the HUD + the mirror rows
+/// the sync follows], the same seat the identical pair sets back)
+#[test]
+fn the_beacon_swap_the_mirror_rows_the_words_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Beacon);
+    // THE CASE D'S OWN KIND EXCHANGE (the menu 12 the items 20
+    // answers — the seat's kind_a the row banks, the row's kind_b
+    // the seat banks, the mirror row the sync wears)
+    app.inventory.items[20] = (potion, 1);
+    app.items_potion_kinds[20] = kind_a;
+    app.inventory.items[1] = (potion, 1);
+    app.items_potion_kinds[1] = kind_b;
+    app.beacon_slot_rects = vec![(100, 100, 12)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(1), "the trade consumes");
+    assert_eq!(app.items_potion_kinds[20], kind_b, "the word the seat rode");
+    assert_eq!(app.items_potion_kinds[1], kind_a, "the word the row rode");
+    assert_eq!(
+        app.beacon_mirror[11],
+        (potion, 1),
+        "the mirror row the sync wears"
+    );
+    // THE CASE B'S OWN BANK (the store row 10's sword the wear 0.6
+    // + pairs the empty row banks — the menu 10 the items 18
+    // answers, the drained row the pristine rows wear, the HUD row
+    // + the mirror row 9 the sync follows)
+    app.inventory.items[18] = (sword, 1);
+    app.items_damage_frac[18] = 0.6;
+    app.inventory_enchants[18] = vec![(sharp, 4)];
+    app.inventory.items[2] = (0, 0);
+    app.items_damage_frac[2] = 0.0;
+    app.inventory_enchants[2] = Vec::new();
+    app.beacon_slot_rects = vec![(100, 100, 10)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(2), "the take consumes");
+    assert_eq!(app.inventory.items[18], (0, 0), "the store row empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (sword, 1),
+        "the row the sword banks"
+    );
+    assert_eq!(app.items_damage_frac[2], 0.6, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(sharp, 4)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[18], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[18].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.beacon_mirror[9],
+        (0, 0),
+        "the mirror row the sync wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (sword, 1),
+        "the HUD row the sync wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the menu 29 the items 1 cell answers,
+    // the identical pair the walk sets back)
+    app.inventory.items[1] = (planks, 2);
+    app.beacon_slot_rects = vec![(100, 100, 29)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(1), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[1],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE BEACON STAND'S OWN SWAP KEY (the autopush-513 round — the
+/// MENU_TYPE_BEACON route the window identity arms [the live flag
+/// + the window the feed wears], the gates' false verdicts the
+/// lanes keep, the ARM B the digit's prediction-free echo the EMPTY
+/// deltas + the believed carried the packet rides [the belief the
+/// echo never mutates — the payment seat the walk never touches],
+/// the ARM C the carried gate the false verdict wears, the ARM D
+/// the no-window lane the silence keeps, the ARM E the no-session
+/// lane the silence keeps)
+#[test]
+fn the_beacon_stand_the_swap_key_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let gold = mc_registry::item_id_by_name("gold_ingot").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 9 the window
+    // opens — the identity the keys echo against, the payment + the
+    // mirror rows the wholesale banks)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 37];
+    slots[0] = (gold, 1);
+    slots[10] = (dirt, 2);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    assert!(app.beacon_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.beacon_live_window,
+        Some((9, 7)),
+        "the identity the keys echo against"
+    );
+
+    // THE NO-SCREEN + NO-GEOMETRY LANES (the walk the gates keep —
+    // the false verdicts the world chain answers, no packet the
+    // lanes mint)
+    app.screen = ScreenKind::World;
+    assert!(
+        !app.on_beacon_swap_key(3),
+        "the world screen the swap key refuses"
+    );
+    app.screen = ScreenKind::Beacon;
+    app.beacon_slot_rects.clear();
+    assert!(
+        !app.on_beacon_swap_key(3),
+        "no render spoke — the geometry gate refuses"
+    );
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = None;
+    assert!(
+        !app.on_beacon_swap_key(3),
+        "no cursor — the hovered-slot gate refuses"
+    );
+
+    // ARM B — THE DIGIT'S OWN PREDICTION-FREE ECHO (the Swap input
+    // the packet rides — the EMPTY delta list the believed cursor
+    // the echo wears, the belief the echo never mutates, the
+    // server's own SWAP table the verdict answers)
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_beacon_swap_key(3),
+        "the digit the walk consumes — the true verdict"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 9, "the window id the echo wears");
+            assert_eq!(click.state_id, 7, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the payment seat the packet rides");
+            assert_eq!(click.button, 3, "the digit the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the key speaks"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the EMPTY deltas the prediction-free echo wears"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the packet carries"
+            );
+        }
+        other => panic!("the digit press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.beacon_payment,
+        (gold, 1),
+        "the belief the echo never mutates"
+    );
+
+    // ARM C — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
+    // the walk opens with — the false verdict BEFORE the packet lane
+    // keeps)
+    app.beacon_carried = (dirt, 1);
+    assert!(
+        !app.on_beacon_swap_key(3),
+        "the carried cursor the gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the refusal no packet mints");
+    app.beacon_carried = (0, 0);
+
+    // ARM D — THE NO-WINDOW LANE (the offline stand-in no window
+    // keeps — the swap lane the wire's own shape refuses)
+    app.beacon_live_window = None;
+    assert!(
+        !app.on_beacon_swap_key(3),
+        "no window — the identity gate refuses"
+    );
+
+    // ARM E — THE NO-SESSION LANE (the command dies on the frame
+    // thread — no session the sink never answers)
+    app.beacon_live_window = Some((9, 7));
+    app.live_clicks = None;
+    assert!(
+        !app.on_beacon_swap_key(3),
+        "no session — the sink gate refuses"
+    );
+}

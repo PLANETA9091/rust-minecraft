@@ -60158,6 +60158,356 @@ impl App {
         }
     }
 
+    /// THE BEACON'S OWN SWAP KEY (javap 26.2 — the SAME
+    /// checkHotbarKeyPressed walk the anvil/dispenser rounds bank,
+    /// the AbstractContainerScreen base class the BeaconScreen's own
+    /// extension inherits: the offhand key FIRST — the
+    /// `slotClicked(hovered, hovered.index, 40, SWAP)` walk rides,
+    /// the keyHotbarSlots loop after — the digit's
+    /// `slotClicked(hovered, hovered.index, i, SWAP)`). THE LANES'
+    /// OWN SPLIT the world gate banks (the anvil 512 split the
+    /// family law the beacon screen re-wears — the wire the
+    /// prediction-free echo answers, the offline the local store the
+    /// same four arms re-wears).
+    pub fn on_beacon_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Beacon || self.dead {
+            return false;
+        }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's swap the PACKET the
+            // echo lane answers — the client's compute the wire never
+            // rides, the corrections the wholesale lane re-banks.
+            return self.on_beacon_swap_key_wire(button);
+        }
+        // THE OFFLINE TWIN'S OWN GATES (the family walk's own shape —
+        // the carried, the rects, the cursor, the hovered seat the
+        // SAME geometry walk the click lane answers)
+        if self.beacon_carried.1 > 0 {
+            return false; // the getCarried().isEmpty() arm — the
+                          // cursor's own stack the walk refuses
+        }
+        if self.beacon_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.beacon_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
+        self.beacon_swap_table(button, slot as usize)
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the anvil's prediction-free echo
+    /// the same shape re-wears — the EMPTY delta list the believed
+    /// cursor the packet rides, the server's own SWAP table the
+    /// verdict serves, the belief the echo never mutates). THE
+    /// GATES: the rects the last render laid, the cursor the frame
+    /// stream fed, the LIVE window (the offline stand-in no window
+    /// keeps), the CARRIED gate the false BEFORE the packet lane
+    /// keeps.
+    fn on_beacon_swap_key_wire(&mut self, button: usize) -> bool {
+        if self.beacon_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.beacon_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
+        // THE CARRIED GATE (checkHotbarKeyPressed pc 0-10 — the
+        // getCarried().isEmpty() arm the walk opens with; the
+        // believed cursor the wholesale banks)
+        if self.beacon_carried.1 > 0 {
+            return false;
+        }
+        let Some((window_id, state_id)) = self.beacon_live_window else {
+            return false; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: slot as i16,
+                button: button as i8,
+                input: crate::world_view::ContainerInput::Swap,
+                changed: Vec::new(),
+                carried: self.beacon_carried,
+            },
+        ));
+        true
+    }
+
+    /// THE BEACON'S OWN SWAP TABLE (the offline twin — the anvil 512
+    /// round's shape the payment seat re-wears: the doClick SWAP
+    /// table pc 1079-1382 the OFFLINE store re-answers, the four
+    /// arms the click walks' laws speak). The seats the flat
+    /// 37-slot belief the both lanes speak — the payment 0 the own
+    /// transient pair keeps, the store rows 1..36 the write-through
+    /// projection keeps (the main 1..27 the items 9..35 answer, the
+    /// hotbar 28..36 the items 0..8 speak — the offline click walk's
+    /// own numbering the twin re-wears). The arms the pc walk's own
+    /// verdicts keep:
+    /// - the both-empty press the consumed silence answers (pc
+    ///   1130-1146);
+    /// - the same seat's own silence the identical pair sets back
+    ///   (the hotbar row the hovered store row's own index names;
+    ///   the offhand row the seat's menu id never wears);
+    /// - CASE B (pc 1149-1202) the hovered stack the button row
+    ///   rides AS-IS, the seat EMPTIES — the payment + the mirror
+    ///   rows the plain mayPickup the offline click lane keeps (the
+    ///   PaymentSlot no mayPickup override wears, the standard rows
+    ///   the base Slot's own default answers);
+    /// - CASE C (pc 1205-1273) the row's stack places — the
+    ///   payment's own tag gate the refusal the consumed silence
+    ///   keeps (the BEACON_PAYMENT_ITEMS verdict the qc paint's own
+    ///   walk banks), the SPLIT law the seat's own max wears (the
+    ///   PaymentSlot.getMaxStackSize the single coin caps, the
+    ///   mirror rows the item's own max keeps);
+    /// - CASE D (pc 1276-1379) the pairs trade — the same tag gate
+    ///   the BOTH-stay refusal keeps, the over-max row the split +
+    ///   the `Inventory.add` ride answers, the straight trade the
+    ///   words + the pairs exchange.
+    /// The kind rows the 354 read's own write twin banks (the beacon
+    /// the per-cell store never wears — the payment the field-less
+    /// pair keeps, the mirror rows the shared bank's seats answer —
+    /// the id gate the normalized reads wear); the mirror row + the
+    /// HUD row the sync follows.
+    fn beacon_swap_table(&mut self, button: usize, menu: usize) -> bool {
+        debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+        // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(
+        // button)` walk): the digits the hotbar rows answer, button 40
+        // the player Inventory's OFFHAND speaks
+        let (row_id, row_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        // THE HOVERED SEAT'S OWN PAIR (the flat 37 belief the both
+        // lanes speak — the payment the own transient pair answers,
+        // the store rows the REAL inventory's own rows speak [the
+        // offline click walk's own convention the projection keeps])
+        let mapped = Self::beacon_menu_to_inventory(menu);
+        let (hover_id, hover_count) = match mapped {
+            Some(mi) => self.inventory.items[mi],
+            None => self.beacon_payment,
+        };
+        if row_count <= 0 && hover_count <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered
+        // store row's own index names — the menus 28..36 the digits
+        // speak; the offhand row the seat's menu id never wears)
+        if button != 40 && menu >= 28 && menu - 28 == button {
+            return true;
+        }
+        // THE ROWS' OWN PRE-READS (the 491/377 law's own hoist the
+        // swap table re-wears — the ride the writes pre-key: the
+        // hover seat's word the id-gated normalized read speaks [the
+        // payment the field-less NONE keeps, the store rows the
+        // INVENTORY bank's mapped read lends], the button row's the
+        // own bank's word)
+        let hover_kind = match mapped {
+            Some(mi) => {
+                if crate::world::brewing_is_potion_kind(hover_id) {
+                    self.items_potion_kinds[mi]
+                } else {
+                    crate::brewing_sim::POTION_KIND_NONE
+                }
+            }
+            None => crate::brewing_sim::POTION_KIND_NONE,
+        };
+        let (hover_frac, hover_ench) = match mapped {
+            Some(mi) => (
+                self.items_damage_frac[mi],
+                self.inventory_enchants[mi].clone(),
+            ),
+            None => (0.0, Vec::new()),
+        };
+        let row_kind = if crate::world::brewing_is_potion_kind(row_id) {
+            if button == 40 {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT]
+            } else {
+                self.items_potion_kinds[button]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let (row_frac, row_ench) = if button == 40 {
+            (
+                self.items_damage_frac[OFFHAND_KIND_SEAT],
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+            )
+        } else {
+            (
+                self.items_damage_frac[button],
+                self.inventory_enchants[button].clone(),
+            )
+        };
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the seat EMPTIES — the plain
+            // mayPickup the offline click lane keeps
+            self.beacon_swap_seat_write(
+                menu,
+                (0, 0),
+                crate::brewing_sim::POTION_KIND_NONE,
+                0.0,
+                &[],
+            );
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE RIDE'S OWN BANKS (the 491 law the swap table
+            // re-wears — the hovered stack's word + pairs the button
+            // row banks, the emptied seat the pristine rows wear)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+            self.beacon_swap_tail();
+            return true;
+        }
+        if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // payment's own tag gate the refusal the consumed
+            // silence keeps, the SPLIT law the seat's own max wears
+            if !beacon_qc_seat_may_place(menu, row_id) {
+                return true; // the consumed silence — BOTH seats stay
+            }
+            let max = self.beacon_seat_max(menu, row_id);
+            if row_count > max {
+                self.beacon_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+                self.inventory_set_row(button, (row_id, row_count - max));
+                // THE SPLIT'S OWN COPY-BANK (the qc drag's own law the
+                // split re-wears — the destination the source's word
+                // banks, the remainder the own rows keep)
+            } else {
+                self.beacon_swap_seat_write(
+                    menu,
+                    (row_id, row_count),
+                    row_kind,
+                    row_frac,
+                    &row_ench,
+                );
+                self.inventory_set_row(button, (0, 0));
+                // THE PLACE'S OWN RIDE (the kind the whole-stack move
+                // keeps — the drained row the pristine rows wear)
+                self.swap_table_button_rows_write(
+                    button,
+                    crate::brewing_sim::POTION_KIND_NONE,
+                    0.0,
+                    &[],
+                );
+            }
+            self.beacon_swap_tail();
+            return true;
+        }
+        // CASE D (pc 1276-1379): both filled — the same tag gate the
+        // BOTH-stay refusal keeps, the over-max row the split + the
+        // `Inventory.add` ride answers, the straight trade the words
+        // + the pairs exchange
+        if !beacon_qc_seat_may_place(menu, row_id) {
+            return true; // the consumed silence — BOTH seats stay
+        }
+        let max = self.beacon_seat_max(menu, row_id);
+        if row_count > max {
+            // pc 1315-1355: the split(max) — the seat takes max, the
+            // row the remainder keeps, the ORIGINAL hovered stack the
+            // INVENTORY add rides (the add's own merge-then-first-
+            // empty law), the leftover the drop speaks
+            self.beacon_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+            self.inventory_set_row(button, (row_id, row_count - max));
+            let (leftover, _spoke) =
+                self.inventory
+                    .add(self.selected_hotbar, hover_id, hover_count, false);
+            if leftover > 0 {
+                self.spawn_drop_at_player(hover_id, leftover);
+            }
+        } else {
+            // pc 1358-1379: the straight trade — the row the hovered
+            // stack takes, the seat the row's stack wears
+            self.beacon_swap_seat_write(menu, (row_id, row_count), row_kind, row_frac, &row_ench);
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE TRADE'S OWN PAIR RIDE (the words + the pairs the
+            // seats exchange — the identical pair the swap the no-op
+            // keeps)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+        }
+        self.beacon_swap_tail();
+        true
+    }
+
+    /// THE BEACON SEAT'S OWN SWAP WRITE (the ride's landing — the
+    /// hover seat's stack + word the seat's own rows bank: the
+    /// payment the own transient pair keeps, the store rows the
+    /// REAL inventory's rows answer [the write-through the
+    /// projection keeps — the pair + the pairs the shared bank's
+    /// seats speak; the payment the field-less pair the word never
+    /// lends])
+    fn beacon_swap_seat_write(
+        &mut self,
+        menu: usize,
+        stack: (i32, i32),
+        kind: i32,
+        frac: f32,
+        ench: &[(i32, i32)],
+    ) {
+        if menu == 0 {
+            self.beacon_payment = stack;
+        }
+        if let Some(row) = Self::beacon_menu_to_inventory(menu) {
+            self.inventory.items[row] = stack;
+            self.items_potion_kinds[row] = kind;
+            self.items_damage_frac[row] = frac;
+            self.inventory_enchants[row] = ench.to_vec();
+        }
+    }
+
+    /// THE BEACON SEAT'S OWN MAX (the Slot.getMaxStackSize walk —
+    /// the PaymentSlot the single coin caps [the `return 1` the
+    /// payment slot's own override wears], the standard rows the
+    /// item's own max keeps).
+    fn beacon_seat_max(&self, menu: usize, row_id: i32) -> i32 {
+        if menu == 0 {
+            1
+        } else {
+            crate::world_view::item_max_stack(row_id)
+        }
+    }
+
+    /// THE BEACON SWAP'S OWN TAIL (the mutations' own ride — the
+    /// mirror the write-through projection keeps, the mirror row +
+    /// the HUD row the sync follows [the dispenser sync the hotbar
+    /// HUD the same walk re-banks]).
+    fn beacon_swap_tail(&mut self) {
+        if self.beacon_mirror.len() != 36 {
+            self.beacon_mirror.resize(36, (0, 0));
+        }
+        for i in 0..27 {
+            self.beacon_mirror[i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.beacon_mirror[27 + i] = self.inventory.items[i];
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE BEACON'S OWN MENU-TO-INVENTORY SEAT (the standard rows'
+    /// own map — the menu 1..27 the main grid the items the SAME
+    /// numbering answers [the menu 1 the items 9 cell the open
+    /// walk's own projection keeps], the 28..36 the hotbar row the
+    /// -28 shift speaks; the payment seat the None the own
+    /// transient pair wears).
+    fn beacon_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (1..28).contains(&menu) {
+            Some(menu + 8)
+        } else if (28..37).contains(&menu) {
+            Some(menu - 28)
+        } else {
+            None
+        }
+    }
+
     /// THE DISPENSER'S OWN SWAP KEY (javap 26.2 — the SAME
     /// checkHotbarKeyPressed walk the furnace/brewing rounds bank,
     /// the AbstractContainerScreen base class the DispenserScreen's
