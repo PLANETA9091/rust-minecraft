@@ -49879,15 +49879,15 @@ fn the_merchant_swap_the_rows_the_words_ride() {
     );
 }
 
-/// THE MERCHANT STAND'S OWN SWAP KEY (the autopush-514 round — the
-/// MENU_TYPE_MERCHANT route the window identity arms [the live flag
-/// + the window the feed wears], the gates' false verdicts the lanes
-/// keep, the ARM B the digit's prediction-free echo the EMPTY deltas
-/// + the believed carried the packet rides [the belief the echo
-/// never mutates — the trade seat the walk never touches], the ARM C
-/// the carried gate the false verdict wears, the ARM D the no-window
-/// lane the silence keeps, the ARM E the no-session lane the silence
-/// keeps)
+/// THE MERCHANT STAND'S OWN SWAP KEY (the autopush-515 round the ARM
+/// B the 509 belief walk re-wears — the MENU_TYPE_MERCHANT route the
+/// window identity arms [the live flag + the window the feed wears],
+/// the gates' false verdicts the lanes keep, the ARM B the digit's
+/// prediction the CHANGED deltas + the believed tables the walk
+/// pre-applies [the ride the seat empties, the digit's row the stack
+/// banks, the HUD row the sync], the ARM C the carried gate the
+/// false verdict wears, the ARM D the no-window lane the silence
+/// keeps, the ARM E the no-session lane the silence keeps)
 #[test]
 fn the_merchant_stand_the_swap_key_wears() {
     use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
@@ -49944,10 +49944,12 @@ fn the_merchant_stand_the_swap_key_wears() {
         "no cursor — the hovered-slot gate refuses"
     );
 
-    // ARM B — THE DIGIT'S OWN PREDICTION-FREE ECHO (the Swap input
-    // the packet rides — the EMPTY delta list the believed cursor
-    // the echo wears, the belief the echo never mutates, the
-    // server's own SWAP table the verdict answers)
+    // ARM B — THE DIGIT'S OWN BELIEF WALK (the 509 brewing record's
+    // own upgrade the shape wears — the Swap input the packet rides
+    // with the CHANGED deltas the batch map names, the believed
+    // tables the four arms pre-apply, the vanilla client's own
+    // prediction the lane speaks; the hovered seat 0's emerald the
+    // digit-3 row 33 banks, the seat EMPTIES)
     app.mouse_pos = Some((108, 108));
     assert!(
         app.on_merchant_swap_key(3),
@@ -49964,9 +49966,10 @@ fn the_merchant_stand_the_swap_key_wears() {
                 ContainerInput::Swap,
                 "the swap input the key speaks"
             );
-            assert!(
-                click.changed.is_empty(),
-                "the EMPTY deltas the prediction-free echo wears"
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32)), (33i16, (emerald, 1))],
+                "the CHANGED deltas the batch map names"
             );
             assert_eq!(
                 click.carried,
@@ -49978,8 +49981,18 @@ fn the_merchant_stand_the_swap_key_wears() {
     }
     assert_eq!(
         app.merchant_slots[0],
+        (0, 0),
+        "the hovered seat the ride empties"
+    );
+    assert_eq!(
+        app.merchant_slots[33],
         (emerald, 1),
-        "the belief the echo never mutates"
+        "the digit's row the stack banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[3],
+        (emerald, 1),
+        "the HUD row the belief syncs"
     );
 
     // ARM C — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
@@ -50008,5 +50021,241 @@ fn the_merchant_stand_the_swap_key_wears() {
     assert!(
         !app.on_merchant_swap_key(3),
         "no session — the sink gate refuses"
+    );
+}
+
+/// THE MERCHANT WIRE SWAP'S OWN VERDICTS (the autopush-515 round —
+/// the 509 belief walk the merchant wire banks: the CASE D the
+/// straight trade the believed seats exchange [the deltas the batch
+/// map names], the CASE C the row's 70 dirt the input seat's 64-cap
+/// the split speaks [the seat the cap wears, the row the remainder
+/// keeps, the deltas ride], the result 2's CASE C the mayPlace
+/// refusal the prediction never mints [the EMPTY changed map the
+/// packet keeps, the belief the refusal never mutates], the
+/// both-empty press the silence CONSUMES and the packet keeps)
+#[test]
+fn the_merchant_wire_swap_the_verdicts_the_deltas_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (emerald, 2);
+    slots[31] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    // THE CASE D'S OWN STRAIGHT TRADE (the input's emerald the
+    // digit-1 row's dirt exchanges — the deltas the batch map names,
+    // the HUD row the belief syncs)
+    assert!(app.on_merchant_swap_key(1), "the trade consumes");
+    assert_eq!(app.merchant_slots[0], (dirt, 1), "the seat the dirt wears");
+    assert_eq!(
+        app.merchant_slots[31],
+        (emerald, 2),
+        "the row the emerald wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[1],
+        (emerald, 2),
+        "the HUD row the belief syncs"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(31i16, (emerald, 2)), (0i16, (dirt, 1))],
+                "the deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the row's 70 dirt the input seat's
+    // 64-cap wears — the seat 5 the cap keeps, the digit-1 row the
+    // remainder banks)
+    app.merchant_slots[5] = (0, 0);
+    app.merchant_slots[31] = (dirt, 70);
+    app.merchant_slot_rects = vec![(100, 100, 5)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(1), "the split consumes");
+    assert_eq!(app.merchant_slots[5], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.merchant_slots[31],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.hotbar_slots[1],
+        (dirt, 6),
+        "the HUD row the belief syncs"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(5i16, (dirt, 64)), (31i16, (dirt, 6))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE RESULT'S OWN CASE C REFUSAL (the mayPlace iconst_0 the
+    // prediction never mints — the EMPTY changed map the packet
+    // keeps, the belief the refusal never mutates)
+    app.merchant_slots[2] = (0, 0);
+    app.merchant_slots[31] = (emerald, 3);
+    app.merchant_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_merchant_swap_key(1),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(app.merchant_slots[2], (0, 0), "the seat the silence keeps");
+    assert_eq!(
+        app.merchant_slots[31],
+        (emerald, 3),
+        "the row the silence keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert!(
+                click.changed.is_empty(),
+                "the refusal the EMPTY changed map wears"
+            );
+        }
+        other => panic!("the refusal press the packet speaks, not {other:?}"),
+    }
+    // THE BOTH-EMPTY PRESS'S OWN CONSUMED SILENCE (the fired law the
+    // walk refuses — the packet keeps, no delta the map names)
+    app.merchant_slots[5] = (0, 0);
+    app.merchant_slots[31] = (0, 0);
+    app.merchant_slot_rects = vec![(100, 100, 5)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_merchant_swap_key(1),
+        "the silence the consumed verdict wears"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert!(
+                click.changed.is_empty(),
+                "the silence the EMPTY changed map wears"
+            );
+        }
+        other => panic!("the silence press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE MERCHANT WIRE SWAP'S OWN OFFHAND + THE ADD RIDE (the
+/// autopush-515 round — the F-key the offhand's own belief the ride
+/// banks [the outside-menu seat the changed map can't name, the HUD
+/// the sync keeps], the CASE D the row's 70 dirt the over-max split
+/// the add ride wears [the ORIGINAL hovered stack the merge speaks,
+/// the deltas the batch map names])
+#[test]
+fn the_merchant_wire_swap_the_offhand_the_add_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (emerald, 1);
+    slots[33] = (0, 0);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Merchant;
+    // THE F-KEY'S OWN OFFHAND BANK (the hovered seat 0's emerald the
+    // offhand's own belief banks — the outside-menu seat the changed
+    // map can't name, the packet the ONE delta rides)
+    app.merchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_merchant_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (emerald, 1),
+        "the offhand the ride banks"
+    );
+    assert_eq!(app.merchant_slots[0], (0, 0), "the seat the ride empties");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN OVER-MAX SPLIT + THE ADD RIDE (the row's 70
+    // dirt the input seat's 64-cap wears — the seat the cap keeps,
+    // the digit-1 row the remainder banks, the ORIGINAL hovered
+    // emerald the merge ride speaks [the selected row the scan's
+    // head wears])
+    app.merchant_slots[0] = (emerald, 3);
+    app.merchant_slots[31] = (dirt, 70);
+    app.merchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    app.selected_hotbar = 1;
+    assert!(app.on_merchant_swap_key(1), "the split consumes");
+    assert_eq!(app.merchant_slots[0], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.merchant_slots[31],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[30],
+        (emerald, 3),
+        "the add ride the first-empty row banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![
+                    (0i16, (dirt, 64)),
+                    (31i16, (dirt, 6)),
+                    (30i16, (emerald, 3)),
+                ],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE HUD ROW'S OWN SYNC (the digit-1 row the remainder wears —
+    // the every-mutation law the HUD syncs)
+    assert_eq!(
+        app.hotbar_slots[1],
+        (dirt, 6),
+        "the HUD row the belief syncs"
     );
 }
