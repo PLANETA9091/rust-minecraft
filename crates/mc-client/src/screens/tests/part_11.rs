@@ -53609,6 +53609,109 @@ fn the_inventory_wire_swap_the_kind_split_the_offhand_wears() {
     }
 }
 
+/// THE INVENTORY SWAP'S OWN OFFLINE WORD RIDE (the 528 survey's own
+/// record — the 526 wire kinds' own twin the offline lane pins): the
+/// `inventory_swap_table` the kind words the PRE-READS the rides
+/// bank (the 491/377 law the offline table wears — the hover seat's
+/// word + pairs the normalized reads speak, the button row's the own
+/// bank's word, the rowless seats the pristine reads keep): the CASE
+/// D row-to-row trade the words the pairs exchange, the CASE B the
+/// craft cell's kinded word the empty row banks (the drained cell
+/// the 229 law the retire speaks), the F-key the offhand word the
+/// store row trades.
+#[test]
+fn the_inventory_swap_the_offline_the_words_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // THE CASE D'S OWN TRADE (the store row's potion the hotbar's
+    // trades — the words the pairs exchange)
+    app.inventory.items[10] = (potion, 1);
+    app.items_potion_kinds[10] = kind_a;
+    app.inventory.items[2] = (potion, 1);
+    app.items_potion_kinds[2] = kind_b;
+    let (ox, oy) = inventory_slot_origin(app.inv_panel, 10);
+    app.mouse_pos = Some((ox + 8, oy + 8));
+    assert!(app.on_inventory_swap_key(2), "the trade consumes");
+    assert_eq!(
+        app.inventory.items[10],
+        (potion, 1),
+        "the seat the pair's wears"
+    );
+    assert_eq!(
+        app.inventory.items[2],
+        (potion, 1),
+        "the row the pair's wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], kind_b,
+        "the row's word the seat banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[2], kind_a,
+        "the seat's word the row banks"
+    );
+    // THE CASE B'S OWN BANK (the craft cell's kinded potion the
+    // empty row rides — the cell's own word the row banks, the
+    // drained cell the NONE retires)
+    app.craft_grid[0] = (potion, 1);
+    app.craft_grid_potion_kinds[0] = kind_c;
+    let (cx, cy) = craft_slot_origin(app.inv_panel, 0);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_inventory_swap_key(3), "the ride consumes");
+    assert_eq!(app.craft_grid[0], (0, 0), "the cell empties");
+    assert_eq!(
+        app.craft_grid_potion_kinds[0], none,
+        "the drained cell the NONE retires"
+    );
+    assert_eq!(
+        app.inventory.items[3],
+        (potion, 1),
+        "the row the cell's wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], kind_c,
+        "the cell's word the row banks"
+    );
+    // THE F-KEY'S OWN TRADE (the offhand's kinded potion the store
+    // row trades — the OFFHAND seat's word the pair rides)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_a;
+    app.inventory.items[14] = (potion, 1);
+    app.items_potion_kinds[14] = kind_b;
+    let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 14);
+    app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+    assert!(app.on_inventory_swap_key(40), "the F consumes");
+    assert_eq!(
+        app.inventory.offhand[0],
+        (potion, 1),
+        "the offhand the pair's wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[OFFHAND_KIND_SEAT], kind_b,
+        "the row's word the offhand banks"
+    );
+    assert_eq!(
+        app.inventory.items[14],
+        (potion, 1),
+        "the seat the pair's wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[14], kind_a,
+        "the offhand's word the seat banks"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the
