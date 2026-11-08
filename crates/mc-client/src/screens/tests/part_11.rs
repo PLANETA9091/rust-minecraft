@@ -27460,6 +27460,11 @@ fn the_brewing_stand_the_swap_key_wears() {
     // twin's own shape the wire lane re-wears], the seats the
     // belief's CASE B answers)
     app.mouse_pos = Some((100 + 56 + 8, 100 + 51 + 8));
+    // THE KIND'S OWN SEAT (the autopush-519 re-wear — the bottle
+    // seat's swiftness word the walk's ride banks: the drained seat
+    // the NONE retires, the digit's row the shared bank's word
+    // wears)
+    app.brewing_kinds[0] = crate::brewing_sim::POTION_SWIFTNESS;
     assert!(
         app.on_brewing_swap_key(3),
         "the digit the walk consumes — the true verdict"
@@ -27509,6 +27514,16 @@ fn the_brewing_stand_the_swap_key_wears() {
         app.live_brewing_carried,
         (0, 0),
         "the cursor the key never mints"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drained seat the word retires — the ride the NONE wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3],
+        crate::brewing_sim::POTION_SWIFTNESS,
+        "the digit's row the word banks — the ride the seat 3 wears"
     );
 
     // ARM C — THE OFFHAND'S OWN BELIEF WALK (button 40 the
@@ -51078,6 +51093,282 @@ fn the_dispenser_wire_swap_the_kind_split_the_offhand_wears() {
             assert_eq!(
                 click.changed,
                 vec![(5i16, (dirt, 64)), (39i16, (dirt, 6))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE BREWING WIRE SWAP'S OWN KIND VERDICTS (the autopush-519 round —
+/// the 518 dispenser shape the stand's five re-wears: the CASE B the
+/// bottle seat's swiftness potion the EMPTY digit-3 row banks [the
+/// ROW-EMPTY arm the ride serves — the drained seat the NONE word
+/// retires, the shared bank's digit cell the ride's word lends], the
+/// CASE D the same-id DIFFERENT-kind pair the straight trade
+/// exchanges [the 372 law's own answer — the words the pairs the
+/// seats exchange], the CASE C the whole-place the row's word the
+/// seat banks [the drained button row the NONE retires])
+#[test]
+fn the_brewing_wire_swap_the_kinds_the_words_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 41];
+    slots[0] = (potion, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Brewing;
+    app.brewing_kinds = [crate::brewing_sim::POTION_SWIFTNESS; 5];
+    // THE CASE B'S OWN KIND RIDE (the bottle seat's swiftness potion
+    // the EMPTY digit-3 row banks — the ROW-EMPTY arm the ride serves,
+    // the drained seat the NONE word retires, the shared bank's digit
+    // cell the ride's word lends)
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(3), "the ride consumes");
+    assert_eq!(
+        app.brewing_slots[0],
+        (0, 0),
+        "the drained seat the pair empties"
+    );
+    assert_eq!(
+        app.brewing_mirror[30],
+        (potion, 1),
+        "the digit's row the pair banks"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drained seat the word retires"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3],
+        crate::brewing_sim::POTION_SWIFTNESS,
+        "the digit's row the word banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32)), (35i16, (potion, 1))],
+                "the ride's deltas the batch map names"
+            );
+        }
+        other => panic!("the ride press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN KIND EXCHANGE (the same-id DIFFERENT-kind pair
+    // the straight trade exchanges — the 372 component law's own
+    // answer the swap wears: the words the pairs the seats exchange)
+    app.brewing_slots[0] = (potion, 1);
+    app.brewing_kinds[0] = crate::brewing_sim::POTION_HEALING;
+    app.brewing_mirror[30] = (potion, 1);
+    app.items_potion_kinds[3] = crate::brewing_sim::POTION_SWIFTNESS;
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(3), "the trade consumes");
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_SWIFTNESS,
+        "the seat the row's word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3],
+        crate::brewing_sim::POTION_HEALING,
+        "the row the hovered word banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(35i16, (potion, 1)), (0i16, (potion, 1))],
+                "the trade's deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN KIND BANK (the digit row's potion the empty
+    // bottle seat 2 banks — the seat the row's word lends, the
+    // drained button row the NONE retires)
+    app.brewing_slots[2] = (0, 0);
+    app.brewing_mirror[30] = (potion, 1);
+    app.items_potion_kinds[3] = crate::brewing_sim::POTION_SWIFTNESS;
+    app.brewing_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(3), "the place consumes");
+    assert_eq!(app.brewing_slots[2], (potion, 1), "the seat the pair banks");
+    assert_eq!(
+        app.brewing_kinds[2],
+        crate::brewing_sim::POTION_SWIFTNESS,
+        "the seat the row's word banks"
+    );
+    assert_eq!(
+        app.brewing_mirror[30],
+        (0, 0),
+        "the drained row the pair empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drained row the word retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(35i16, (0i32, 0i32)), (2i16, (potion, 1))],
+                "the place's deltas the batch map names"
+            );
+        }
+        other => panic!("the place press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE BREWING WIRE SWAP'S OWN KIND SPLITS (the autopush-519 round —
+/// the stale word the row's own word retires: the CASE D the row's 70
+/// dirt the 64-cap split the seat's stale potion word retires [the
+/// row's NONE word the seat banks, the add ride the pairs serve], the
+/// CASE C the split the MIRROR seat's stale word retires [the +4
+/// shift the shared bank's cell re-keys — the row's own word the
+/// remainder keeps], the F-key the seat's potion the offhand's seat
+/// 36 word banks [the drained seat the NONE retires])
+#[test]
+fn the_brewing_wire_swap_the_kind_split_the_offhand_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 41];
+    slots[0] = (potion, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Brewing;
+    app.brewing_kinds[0] = crate::brewing_sim::POTION_NIGHT_VISION;
+    // THE F-KEY'S OWN OFFHAND KIND BANK (the bottle seat's potion the
+    // offhand's own belief banks — the pair the slot 45 speaks, the
+    // word the seat 36 lends, the drained seat the NONE retires)
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (potion, 1),
+        "the offhand the pair banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[36],
+        crate::brewing_sim::POTION_NIGHT_VISION,
+        "the offhand the word banks"
+    );
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drained seat the word retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN SPLIT (the digit row's 70 dirt the 64-cap
+    // wears — the seat's STALE potion word the row's own NONE word
+    // retires, the remainder the row keeps, the ORIGINAL hovered
+    // emerald the add ride banks)
+    app.brewing_slots[0] = (emerald, 2);
+    app.brewing_kinds[0] = crate::brewing_sim::POTION_SWIFTNESS;
+    app.brewing_mirror[30] = (dirt, 70);
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(3), "the split consumes");
+    assert_eq!(app.brewing_slots[0], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.brewing_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the stale word the row's own word retires"
+    );
+    assert_eq!(
+        app.brewing_mirror[30],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.brewing_mirror[27],
+        (emerald, 2),
+        "the add ride the first-empty row banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![
+                    (0i16, (dirt, 64)),
+                    (35i16, (dirt, 6)),
+                    (32i16, (emerald, 2)),
+                ],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the digit row's 70 dirt the EMPTY
+    // MIRROR seat 5's 64-cap wears — the seat's STALE word the row's
+    // own NONE word retires [the +4 shift the shared bank's cell 9
+    // re-keys], the row's remainder the own word keeps; the seat the
+    // ROW-EMPTY arm serves — the word alone the stale cell wears)
+    app.items_potion_kinds[9] = crate::brewing_sim::POTION_HEALING;
+    app.brewing_mirror[30] = (dirt, 70);
+    app.brewing_slot_rects = vec![(100, 100, 5)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(3), "the split consumes");
+    assert_eq!(app.brewing_mirror[0], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.items_potion_kinds[9],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the stale word the row's own word retires"
+    );
+    assert_eq!(
+        app.brewing_mirror[30],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(5i16, (dirt, 64)), (35i16, (dirt, 6))],
                 "the split's deltas the batch map names"
             );
         }
