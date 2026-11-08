@@ -53712,6 +53712,68 @@ fn the_inventory_swap_the_offline_the_words_ride() {
     );
 }
 
+/// THE TABLE DROP KEY'S OWN KIND RETIRE (the take-key census's own
+/// table lane — the dev-199/dev-201 walk's own law the Q twin wears):
+/// the offline CraftingScreen's Q the drained seats the banks clear
+/// (the 381 quick-move + the 201 inventory lane the same law the
+/// family keeps): the CASE CELL the kinded potion the grid drains
+/// (the cell's word the NONE retires, the lone cell the recompute
+/// the empty verdict speaks), the CASE STORE the kinded potion the
+/// row drains (the seat's word the NONE retires, the HUD the
+/// every-mutation law syncs), the KINDLESS drain the bank the
+/// silence keeps.
+#[test]
+fn the_table_drop_key_the_kinds_the_seats_retire() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Crafting);
+    app.table_panel = inventory_panel_origin(640, 360);
+    // THE CASE CELL'S OWN RETIRE (the kinded potion the grid cell
+    // drains — the cell's word the bank clears)
+    app.table_grid[3] = (potion, 1);
+    app.table_grid_potion_kinds[3] = kind_a;
+    let (cx, cy) = table_craft_origin(app.table_panel, 3);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    app.on_table_drop_key(true);
+    assert_eq!(app.table_grid[3], (0, 0), "the cell the Q drains");
+    assert_eq!(
+        app.table_grid_potion_kinds[3], none,
+        "the drained cell the word retires"
+    );
+    assert_eq!(app.table_result, (0, 0), "the lone cell no recipe");
+    assert_eq!(app.inv_carried, (0, 0), "the cursor never touched");
+    // THE CASE STORE'S OWN RETIRE (the kinded potion the row drains
+    // — the seat's word the bank clears, the HUD the sync keeps)
+    app.inventory.items[2] = (potion, 1);
+    app.items_potion_kinds[2] = kind_b;
+    let (ox, oy) = inventory_slot_origin(app.table_panel, 2);
+    app.mouse_pos = Some((ox + 8, oy + 8));
+    app.on_table_drop_key(true);
+    assert_eq!(app.inventory.items[2], (0, 0), "the row the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the drained seat the word retires"
+    );
+    assert_eq!(app.hotbar_slots[2], (0, 0), "the HUD synced");
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the seat
+    // drains — the bank the NONE the drain never mints)
+    app.inventory.items[5] = (dirt, 7);
+    let (ox2, oy2) = inventory_slot_origin(app.table_panel, 5);
+    app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+    app.on_table_drop_key(true);
+    assert_eq!(app.inventory.items[5], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.items_potion_kinds[5], none,
+        "the kindless drain the silence keeps"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the

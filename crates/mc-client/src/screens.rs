@@ -45545,7 +45545,10 @@ impl App {
     /// the cell's mutation the recipe verdict answers (the
     /// [`Self::refresh_table_result`] walk the cell PICKUP lane
     /// speaks — the setChanged chain the doClick arm's tryRemove
-    /// fires), the store row the HUD hotbar row syncs.
+    /// fires), the store row the HUD hotbar row syncs, THE DRAINED
+    /// SEATS the banks clear (the dev-199/dev-201 law the table lane
+    /// re-wears — the cell's kind + the row's kind the NONE retires,
+    /// the same walk the dev-236 round the take-key census pins).
     pub fn on_table_drop_key(&mut self, whole_stack: bool) {
         if self.world_is_network {
             // THE WIRE GATE: the live session's Q the BELIEF the same
@@ -45606,11 +45609,25 @@ impl App {
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
         if let Some(cell) = cell {
             self.table_grid[cell] = new;
+            // THE DRAINED CELL'S OWN KIND RETIRE (the click lane's own
+            // drain law the Q walk re-wears — the dev-201 store seat's
+            // own shape the grid cell answers, the stale kind the
+            // later potion never wears)
+            if new.1 <= 0 {
+                self.table_grid_potion_kinds[cell] = crate::brewing_sim::POTION_KIND_NONE;
+            }
             // the cell's own setChanged the recipe verdict answers —
             // the recompute the doClick arm's tryRemove fires
             self.refresh_table_result();
         } else if let Some(store) = store {
             self.inventory.items[store] = new;
+            // THE DRAINED SEAT'S OWN KIND RETIRE (the dev-201 walk's
+            // own law the table's store lane re-wears — the emptied
+            // row the bank clears, the stale kind the later potion
+            // never wears)
+            if new.1 <= 0 {
+                self.items_potion_kinds[store] = crate::brewing_sim::POTION_KIND_NONE;
+            }
             self.hotbar_slots = self.inventory.hotbar();
         }
         // NO swing, the container STAYS OPEN (the inventory walk's own
