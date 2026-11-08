@@ -49548,10 +49548,14 @@ fn the_beacon_stand_the_swap_key_wears() {
         "no cursor — the hovered-slot gate refuses"
     );
 
-    // ARM B — THE DIGIT'S OWN PREDICTION-FREE ECHO (the Swap input
-    // the packet rides — the EMPTY delta list the believed cursor
-    // the echo wears, the belief the echo never mutates, the
-    // server's own SWAP table the verdict answers)
+    // ARM B — THE DIGIT'S OWN BELIEF WALK (the 509 brewing record's
+    // own upgrade the 517 lane banks — the Swap input the packet
+    // rides with the CHANGED deltas the batch map names, the flat
+    // belief the ride pre-applies, the write-back the changed map
+    // serves; the hovered payment 0's gold the digit-3 row 31 banks,
+    // the seat EMPTIES, the HUD row the belief syncs, the FILLED
+    // row's own name cell the walk never touches)
+    app.items_custom_names[3] = Some("the row's own word".to_string());
     app.mouse_pos = Some((108, 108));
     assert!(
         app.on_beacon_swap_key(3),
@@ -49568,9 +49572,10 @@ fn the_beacon_stand_the_swap_key_wears() {
                 ContainerInput::Swap,
                 "the swap input the key speaks"
             );
-            assert!(
-                click.changed.is_empty(),
-                "the EMPTY deltas the prediction-free echo wears"
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32)), (31i16, (gold, 1))],
+                "the CHANGED deltas the batch map names"
             );
             assert_eq!(
                 click.carried,
@@ -49582,8 +49587,23 @@ fn the_beacon_stand_the_swap_key_wears() {
     }
     assert_eq!(
         app.beacon_payment,
+        (0, 0),
+        "the hovered seat the ride empties"
+    );
+    assert_eq!(
+        app.beacon_mirror[30],
         (gold, 1),
-        "the belief the echo never mutates"
+        "the digit's row the stack banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[3],
+        (gold, 1),
+        "the HUD row the belief syncs"
+    );
+    assert_eq!(
+        app.items_custom_names[3],
+        Some("the row's own word".to_string()),
+        "the filled row's word the walk keeps"
     );
 
     // ARM C — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
@@ -50524,6 +50544,251 @@ fn the_anvil_wire_swap_the_offhand_the_add_ride() {
                     (31i16, (dirt, 6)),
                     (30i16, (emerald, 3)),
                 ],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE BEACON WIRE SWAP'S OWN VERDICTS (the autopush-517 round — the
+/// CASE D the payment's gold the digit row's emerald trades [the
+/// payment-item's own verdict the trade keeps, the deltas the batch
+/// map names, the HUD row the sync wears], the CASE C the 70-dirt
+/// split the cap + the remainder wear [the deltas the recv consumes],
+/// the CASE C the non-coin row the payment's own refusal the EMPTY
+/// map keeps [BOTH seats stay], the CASE B the mirror row's stack the
+/// empty digit row banks [the drained row's name the INVENTORY
+/// bank's own cell retires — the menu the +8 shift keys])
+#[test]
+fn the_beacon_wire_swap_the_verdicts_the_deltas_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let gold = mc_registry::item_id_by_name("gold_ingot").unwrap();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 37];
+    slots[0] = (gold, 1);
+    slots[32] = (emerald, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Beacon;
+    // THE CASE D'S OWN STRAIGHT TRADE (the payment's gold the
+    // digit-4 row's emerald exchanges — the payment-item's own tag
+    // verdict the trade keeps, the deltas the batch map names, the
+    // HUD row the belief syncs)
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(4), "the trade consumes");
+    assert_eq!(
+        app.beacon_payment,
+        (emerald, 1),
+        "the seat the emerald wears"
+    );
+    assert_eq!(app.beacon_mirror[31], (gold, 1), "the row the gold wears");
+    assert_eq!(
+        app.hotbar_slots[4],
+        (gold, 1),
+        "the HUD row the belief syncs"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(32i16, (gold, 1)), (0i16, (emerald, 1))],
+                "the deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the row's 70 dirt the mirror row's
+    // 64-cap wears — the seat 10 the cap keeps, the digit-4 row the
+    // remainder banks)
+    app.beacon_mirror[9] = (0, 0);
+    app.beacon_mirror[31] = (dirt, 70);
+    app.beacon_slot_rects = vec![(100, 100, 10)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(4), "the split consumes");
+    assert_eq!(app.beacon_mirror[9], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.beacon_mirror[31],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.hotbar_slots[4],
+        (dirt, 6),
+        "the HUD row the belief syncs"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(10i16, (dirt, 64)), (32i16, (dirt, 6))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE PAYMENT'S OWN CASE C REFUSAL (the non-coin row the
+    // BEACON_PAYMENT_ITEMS tag verdict refuses — the prediction
+    // never mints, the EMPTY changed map the packet keeps, the
+    // belief the refusal never mutates)
+    app.beacon_payment = (0, 0);
+    app.beacon_mirror[31] = (dirt, 3);
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_beacon_swap_key(4),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(app.beacon_payment, (0, 0), "the seat the silence keeps");
+    assert_eq!(
+        app.beacon_mirror[31],
+        (dirt, 3),
+        "the row the silence keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert!(
+                click.changed.is_empty(),
+                "the refusal the EMPTY changed map wears"
+            );
+        }
+        other => panic!("the refusal press the packet speaks, not {other:?}"),
+    }
+    // THE CASE B'S OWN BANK (the mirror row 10's stack the empty
+    // digit-2 row banks — the drained row the INVENTORY bank's own
+    // name cell the retirement wears [the menu 10 the items 18 cell
+    // the +8 shift answers])
+    app.beacon_mirror[9] = (emerald, 1);
+    app.items_custom_names[18] = Some("the named row".to_string());
+    app.beacon_slot_rects = vec![(100, 100, 10)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(2), "the take consumes");
+    assert_eq!(app.beacon_mirror[9], (0, 0), "the drained row empties");
+    assert_eq!(
+        app.beacon_mirror[29],
+        (emerald, 1),
+        "the digit's row the stack banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (emerald, 1),
+        "the HUD row the belief syncs"
+    );
+    assert_eq!(
+        app.items_custom_names[18], None,
+        "the drained row's name retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(10i16, (0i32, 0i32)), (30i16, (emerald, 1))],
+                "the ride's deltas the batch map names"
+            );
+        }
+        other => panic!("the take press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE BEACON WIRE SWAP'S OWN OFFHAND + THE ADD RIDE (the autopush-517
+/// round — the F-key the payment's gold the offhand's own belief banks
+/// [the outside-menu seat the changed map can't name, the packet the
+/// ONE delta rides], the CASE D the row's 70 dirt the over-max split
+/// the add ride wears [the ORIGINAL hovered gold the first-empty row
+/// the merge banks — the beacon menu's own numbering the scan keys,
+/// the deltas the batch map names])
+#[test]
+fn the_beacon_wire_swap_the_offhand_the_add_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let gold = mc_registry::item_id_by_name("gold_ingot").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 37];
+    slots[0] = (gold, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 9,
+        menu_type_id: crate::world_model::MENU_TYPE_BEACON,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 7,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Beacon;
+    // THE F-KEY'S OWN OFFHAND BANK (the hovered payment's gold the
+    // offhand's own belief banks — the outside-menu seat the changed
+    // map can't name, the packet the ONE delta rides)
+    app.beacon_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_beacon_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (gold, 1),
+        "the offhand the ride banks"
+    );
+    assert_eq!(app.beacon_payment, (0, 0), "the seat the ride empties");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN OVER-MAX SPLIT + THE ADD RIDE (the digit-4
+    // row's 70 dirt the mirror row 10's 64-cap wears — the seat the
+    // cap keeps, the digit-4 row the remainder banks, the ORIGINAL
+    // hovered gold the first-empty hotbar row the merge banks [the
+    // selected row the scan's head wears, the menu 28 the first
+    // empty the scan answers])
+    app.beacon_mirror[9] = (gold, 3);
+    app.beacon_mirror[31] = (dirt, 70);
+    app.beacon_mirror[28] = (0, 0);
+    app.beacon_slot_rects = vec![(100, 100, 10)];
+    app.mouse_pos = Some((108, 108));
+    app.selected_hotbar = 1;
+    assert!(app.on_beacon_swap_key(4), "the split consumes");
+    assert_eq!(app.beacon_mirror[9], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.beacon_mirror[31],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.beacon_mirror[27],
+        (gold, 3),
+        "the add ride the first-empty row banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(10i16, (dirt, 64)), (32i16, (dirt, 6)), (28i16, (gold, 3)),],
                 "the split + the add's deltas the batch map names"
             );
         }

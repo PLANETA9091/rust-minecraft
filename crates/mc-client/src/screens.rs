@@ -60251,14 +60251,19 @@ impl App {
         self.beacon_swap_table(button, slot as usize)
     }
 
-    /// THE WIRE GATE'S OWN WALK (the anvil's prediction-free echo
-    /// the same shape re-wears — the EMPTY delta list the believed
-    /// cursor the packet rides, the server's own SWAP table the
-    /// verdict serves, the belief the echo never mutates). THE
-    /// GATES: the rects the last render laid, the cursor the frame
-    /// stream fed, the LIVE window (the offline stand-in no window
-    /// keeps), the CARRIED gate the false BEFORE the packet lane
-    /// keeps.
+    /// THE WIRE GATE'S OWN WALK (the 509 brewing record's own belief
+    /// walk the 517 lane banks — the [`wire_beacon_swap`] fn the
+    /// flat 37 numbering wears: the payment 0 the own transient pair
+    /// answers, the mirror the flat 1..36 the same numbering speaks,
+    /// the four arms the believed tables pre-apply, the packet the
+    /// CHANGED deltas the batch map names, the write-back the changed
+    /// map the believed fields re-banks, the drained words the gather
+    /// walk's own retirement wears [the prediction-free echo the
+    /// 513's first form spoke, the drift walk the later round owes]).
+    /// THE GATES: the rects the last render laid, the cursor the
+    /// frame stream fed, the LIVE window (the offline stand-in no
+    /// window keeps), the CARRIED gate the false BEFORE the packet
+    /// lane keeps (the believed cursor the wholesale banks).
     fn on_beacon_swap_key_wire(&mut self, button: usize) -> bool {
         if self.beacon_slot_rects.is_empty() {
             return false; // no render spoke yet — no geometry to hit
@@ -60281,17 +60286,57 @@ impl App {
         let Some(sink) = self.live_clicks.as_ref() else {
             return false; // no live session — the command dies on the frame thread
         };
-        let _ = sink.send(crate::world_view::ContainerCommand::Click(
-            crate::world_view::ContainerClick {
-                window_id,
-                state_id,
-                slot: slot as i16,
-                button: button as i8,
-                input: crate::world_view::ContainerInput::Swap,
-                changed: Vec::new(),
-                carried: self.beacon_carried,
-            },
-        ));
+        // THE FLAT BELIEF'S OWN COMPOSE (the gather walk's own
+        // snapshot law the swap lane re-wears — the payment + the
+        // mirror the flat 37 numbering wears, the write-back the
+        // changed map serves)
+        let mut flat: Vec<(i32, i32)> = Vec::with_capacity(37);
+        flat.push(self.beacon_payment);
+        flat.extend_from_slice(&self.beacon_mirror);
+        if flat.len() < 37 {
+            flat.resize(37, (0, 0));
+        }
+        // THE BELIEF WALK (the 515/516 record's own upgrade the shape
+        // wears — the four arms the believed tables pre-apply, the
+        // packet the CHANGED deltas the batch map names, the offhand
+        // the outside-menu seat the belief banks)
+        let changed = wire_beacon_swap(
+            sink,
+            &mut flat,
+            &mut self.hotbar_slots,
+            self.selected_hotbar,
+            slot as usize,
+            button,
+            window_id,
+            state_id,
+            self.beacon_carried,
+            &mut self.live_inv_slots[45],
+        );
+        // THE WRITE-BACK (the gather walk's own changed law — the
+        // flat the believed fields re-banks: the payment 0 the own
+        // pair answers, the mirror rows the 1-shift speaks)
+        for (menu_id, pair) in &changed {
+            let idx = *menu_id as usize;
+            if idx == 0 {
+                self.beacon_payment = *pair;
+            } else if idx >= 1 && idx - 1 < self.beacon_mirror.len() {
+                self.beacon_mirror[idx - 1] = *pair;
+            }
+        }
+        // THE DRAINED SEAT'S OWN WORD RETIRE (the gather walk's own
+        // law — the (0,0) write-through the stale word retires: the
+        // drained mirror row the INVENTORY bank's own name cell
+        // retires [the menu's own map the cell keys], the payment the
+        // field-less pair the word never lends)
+        for (menu_id, pair) in &changed {
+            if pair.1 > 0 {
+                continue; // the kept row the word the count speaks
+            }
+            let idx = *menu_id as usize;
+            if let Some(inv) = Self::beacon_menu_to_inventory(idx) {
+                self.items_custom_names[inv] = None;
+            }
+        }
         true
     }
 
@@ -104309,6 +104354,71 @@ fn belief_merchant_slots_add(
     }
 }
 
+/// THE BELIEF'S OWN INVENTORY ADD OVER THE BEACON'S OWN NUMBERING
+/// (the Inventory.add's merge-then-first-empty walk the flat mirror
+/// re-keys — the 515 merchant record's own
+/// [`belief_merchant_slots_add`] shape the beacon lane re-wears):
+/// the hotbar rows the menus 28..37 speak (the selected row the
+/// scan's head wears — menu 28 + selected), the main grid the menus
+/// 1..28 answers, the leftover the server's drop lane speaks (the
+/// return the caller's leftover count keeps). A free function — the
+/// flat slice the frame thread's borrow never crosses.
+fn belief_beacon_inventory_add(
+    seats: &mut [(i32, i32)],
+    selected: usize,
+    id: i32,
+    count: i32,
+    changed: &mut Vec<(i16, (i32, i32))>,
+) -> i32 {
+    if count <= 0 {
+        return 0; // the isEmpty gate (pc 0-8) — nothing walks
+    }
+    let cap = crate::world_view::item_max_stack(id);
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < cap;
+    let candidate = |seats: &[(i32, i32)]| {
+        let sel_seat = 28 + selected;
+        if has_space(seats[sel_seat]) {
+            Some(sel_seat)
+        } else {
+            (28..37)
+                .find(|&m| has_space(seats[m]))
+                .or_else(|| (1..28).find(|&m| has_space(seats[m])))
+                .or_else(|| {
+                    (28..37)
+                        .find(|&m| seats[m].1 <= 0)
+                        .or_else(|| (1..28).find(|&m| seats[m].1 <= 0))
+                })
+        }
+    };
+    let mut remaining = count;
+    loop {
+        let before = remaining; // count_in — the loop head's own refresh
+        let Some(slot) = candidate(seats) else {
+            return remaining; // the pass stalled — the no-home arm
+        };
+        // addResource's own walk: the empty slot takes the id, the
+        // fill rides the item's-own-max space, the leftover returns
+        let (_, cur_count) = seats[slot];
+        if cur_count <= 0 {
+            seats[slot] = (id, 0);
+        }
+        let space = cap - seats[slot].1;
+        let take = remaining.min(space);
+        if take > 0 {
+            seats[slot].1 += take;
+            remaining -= take;
+            // THE CHANGED MAP'S OWN MENU ID (the batch delta the
+            // server's corrections re-bank — the seat the window's
+            // own id speaks, no re-key the shift never wears)
+            note_batch_change(changed, slot as i16, seats[slot]);
+        }
+        if remaining <= 0 || remaining >= before {
+            return remaining; // the empty stack's exit / the stalled pass
+        }
+        // the pass spoke (pc 60's `count < count_in`) — re-locate
+    }
+}
+
 /// THE SWAP TABLE OVER THE MERCHANT'S OWN BELIEF (javap 26.2 — the
 /// banked acm_fresh.txt doClick SWAP pcs 1079-1382 the MERCHANT
 /// MENU's own numbering re-keys, the walk the furnace round's
@@ -104488,6 +104598,217 @@ fn wire_merchant_swap(
     // even when the prediction refuses — the changed map the menu's
     // own state keeps, the cursor the SWAP arm never touches); the
     // changed map the RETURN speaks (the anvil 516 lane the
+    // write-back re-wears)
+    let changed_out = changed.clone();
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: menu as i16,
+            button: button as i8,
+            input: crate::world_view::ContainerInput::Swap,
+            changed,
+            carried,
+        },
+    ));
+    changed_out
+}
+
+/// THE SWAP TABLE OVER THE BEACON'S OWN BELIEF (javap 26.2 — the
+/// banked acm_fresh.txt doClick SWAP pcs 1079-1382 the BEACON MENU's
+/// own numbering re-keys, the walk the merchant round's
+/// [`wire_merchant_swap`] shape keeps — the 515/516 record's own
+/// belief-walk upgrade the beacon's wire lane banks): the button row
+/// the beacon menu's OWN hotbar rows speak (menus 28..36), button 40
+/// the player Inventory's OFFHAND answers. THE SEATS' OWN LAWS (the
+/// mayPickup/mayPlace pair the SWAP table keys): the payment 0 the
+/// own transient pair keeps — the mayPlace the BEACON_PAYMENT_ITEMS
+/// tag verdict answers ([`crate::world::is_beacon_payment_item`], the
+/// PaymentSlot's own `return 1` max the split law wears, the
+/// mayPickup no override the base Slot's plain TRUE keeps), the
+/// standard rows 1..36 the plain pair the base Slot's iconst_1
+/// keeps. THE TABLE (the fired law the both-empty press the silence
+/// CONSUMES and the packet keeps): the SAME-SEAT press the identical
+/// pair sets back (the empty changed map); CASE B (pcs 1149-1202)
+/// the row empty — the hovered stack rides AS-IS, the hovered seat
+/// EMPTIES; CASE C (pcs 1205-1273) the hovered empty — the row's
+/// stack places, the mayPlace gate the seat's own verdict keeps
+/// [the non-coin row the payment's own refusal the EMPTY changed map
+/// names], the SPLIT law the max wears; CASE D (pcs 1276-1379) both
+/// filled — the mayPlace gate the BOTH-stay refusal keeps, the
+/// split(max) + the ORIGINAL hovered stack the
+/// [`belief_beacon_inventory_add`] rides (the beacon menu's own
+/// numbering the scan keys — the hotbar 28..37 the selected head
+/// wears, the main 1..28 the merge-then-first-empty law answers),
+/// the straight trade the pairs exchange. THE HUD ROW'S BELIEF — the
+/// every-mutation law syncs (the beacon menu's hotbar rows the
+/// slice's own menus 28..37 speak). THE PACKET ALWAYS RIDES (the
+/// slotClicked call the keyPressed walk keeps once the hovered gate
+/// passed — the refusals the EMPTY changed map names, the cursor the
+/// SWAP arm never touches). A free function — the frame thread's
+/// disjoint field borrows (the live_clicks sink stays held across the
+/// walk, the merchant lane's own shape). THE CHANGED MAP the RETURN
+/// speaks (the 516 anvil lane the write-back re-wears — the flat
+/// compose the caller serves, the believed fields the changed map
+/// re-banks, the drained words the retirement walks).
+#[allow(clippy::too_many_arguments)]
+fn wire_beacon_swap(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    seats: &mut [(i32, i32)],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
+    menu: usize,
+    button: usize,
+    window_id: i32,
+    state_id: i32,
+    carried: (i32, i32),
+    offhand: &mut (i32, i32),
+) -> Vec<(i16, (i32, i32))> {
+    debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+    debug_assert!(menu < seats.len(), "the beacon seat's own bounds");
+    // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(button)`
+    // walk): the digits the beacon menu's OWN hotbar rows speak (the
+    // menus 28..36), button 40 the player Inventory's OFFHAND answers
+    // (the index 40 the bytecode keys) — the outside-menu seat the
+    // changed map can't name, the belief the [`App::live_inv_slots`]'s
+    // own slot 45 wears
+    let row_menu = if button == 40 {
+        None
+    } else {
+        Some(28 + button)
+    };
+    let (hover_id, hover_count) = seats[menu];
+    let (row_id, row_count) = match row_menu {
+        Some(rm) => seats[rm],
+        None => *offhand,
+    };
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    let fired = !(row_count <= 0 && hover_count <= 0);
+    if fired {
+        // THE SEAT'S mayPlace (the payment's own tag verdict the
+        // BEACON_PAYMENT_ITEMS gate keeps — the non-coin row the
+        // place arms refuse; the standard rows the plain TRUE wear;
+        // the verdict the CASE C/D arms alone consult)
+        let may_place = menu != 0 || crate::world::is_beacon_payment_item(row_id);
+        // THE SEAT'S OWN MAX (the Slot.getMaxStackSize walk — the
+        // PaymentSlot the single coin caps [the `return 1` the
+        // payment slot's own override wears], the standard rows the
+        // item's own max keeps)
+        let max = if menu == 0 {
+            1
+        } else {
+            crate::world_view::item_max_stack(row_id)
+        };
+        if Some(menu) == row_menu {
+            // THE SAME SEAT — the vanilla walk the identical pair
+            // sets back, no mutation the diff ever names (the offhand
+            // row the seat's menu id never wears — no same-seat press
+            // the F arm speaks)
+        } else if row_count <= 0 {
+            // CASE B (pcs 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered seat EMPTIES — the
+            // mayPickup gate ALL the beacon seats TRUE keep (the
+            // payment no override wears, the standard rows the base
+            // Slot's own default answers)
+            seats[menu] = (0, 0);
+            note_batch_change(&mut changed, menu as i16, (0, 0));
+            match row_menu {
+                Some(rm) => {
+                    seats[rm] = (hover_id, hover_count);
+                    note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                }
+                None => {
+                    // THE OFFHAND — the outside-menu seat the changed
+                    // map can't name (the Inventory.setItem the menu's
+                    // slot list never speaks)
+                    *offhand = (hover_id, hover_count);
+                }
+            }
+        } else if hover_count <= 0 {
+            // CASE C (pcs 1205-1273): the row's stack places — the
+            // mayPlace gate the seat's own verdict keeps, the SPLIT
+            // law the max wears
+            if may_place {
+                if row_count > max {
+                    seats[menu] = (row_id, max);
+                    note_batch_change(&mut changed, menu as i16, (row_id, max));
+                    match row_menu {
+                        Some(rm) => {
+                            seats[rm] = (row_id, row_count - max);
+                            note_batch_change(&mut changed, rm as i16, (row_id, row_count - max));
+                        }
+                        None => {
+                            *offhand = (row_id, row_count - max);
+                        }
+                    }
+                } else {
+                    match row_menu {
+                        Some(rm) => {
+                            seats[rm] = (0, 0);
+                            note_batch_change(&mut changed, rm as i16, (0, 0));
+                        }
+                        None => {
+                            *offhand = (0, 0);
+                        }
+                    }
+                    seats[menu] = (row_id, row_count);
+                    note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+                }
+            }
+        } else if may_place {
+            // CASE D (pcs 1276-1379): both filled — the mayPlace gate
+            // the BOTH-stay refusal keeps
+            if row_count > max {
+                // the split(max) — the seat takes max, the row the
+                // remainder keeps, the ORIGINAL hovered stack the add
+                // rides (the beacon menu's own numbering the scan
+                // keys — the leftover the server's drop lane)
+                let rest = row_count - max;
+                seats[menu] = (row_id, max);
+                note_batch_change(&mut changed, menu as i16, (row_id, max));
+                match row_menu {
+                    Some(rm) => {
+                        seats[rm] = (row_id, rest);
+                        note_batch_change(&mut changed, rm as i16, (row_id, rest));
+                    }
+                    None => {
+                        *offhand = (row_id, rest);
+                    }
+                }
+                let _leftover = belief_beacon_inventory_add(
+                    seats,
+                    selected,
+                    hover_id,
+                    hover_count,
+                    &mut changed,
+                );
+            } else {
+                // the straight trade — the row the hovered stack
+                // takes, the seat the row's stack wears
+                match row_menu {
+                    Some(rm) => {
+                        seats[rm] = (hover_id, hover_count);
+                        note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                    }
+                    None => {
+                        *offhand = (hover_id, hover_count);
+                    }
+                }
+                seats[menu] = (row_id, row_count);
+                note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+            }
+        }
+        // THE HUD ROW'S BELIEF — the every-mutation law syncs (the
+        // beacon menu's hotbar rows the slice's own menus 28..37
+        // speak)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&seats[28..37]);
+        *hotbar = row;
+    }
+    // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
+    // even when the prediction refuses — the changed map the menu's
+    // own state keeps, the cursor the SWAP arm never touches); the
+    // changed map the RETURN speaks (the 516 anvil lane the
     // write-back re-wears)
     let changed_out = changed.clone();
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
