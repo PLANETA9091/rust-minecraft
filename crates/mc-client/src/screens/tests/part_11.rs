@@ -52875,3 +52875,310 @@ fn the_anvil_wire_swap_the_word_split_the_offhand_wears() {
         other => panic!("the split press the packet speaks, not {other:?}"),
     }
 }
+
+/// THE ENCHANT WIRE SWAP'S OWN KIND VERDICTS (the autopush-525 round —
+/// the 520 lane's seats the field-less scratch the words never lend
+/// [the 524 trade seats' own verdict the kind-blind render lane
+/// re-wears], the shared bank the store rows the digits re-keys: the
+/// CASE D the row-to-row press the potion pair the words exchange
+/// [the shared bank's own cells the swap wears — the HUD row the
+/// same words the colors wear], the CASE C the whole-place the
+/// digit's swiftness potion the row's word retires [the seat the
+/// row's word banks — the field-less scratch the call's scope
+/// keeps], the CASE B the seat's potion the EMPTY row the kindless
+/// answer banks [the words the seats never lend — the drained seat
+/// the NONE retires])
+#[test]
+fn the_enchant_wire_swap_the_kinds_the_words_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let swift = crate::brewing_sim::POTION_SWIFTNESS;
+    let night = crate::brewing_sim::POTION_NIGHT_VISION;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (potion, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.enchant_panel = (100, 100);
+    // THE CASE D'S OWN KIND EXCHANGE (the row-to-row press the potion
+    // pair the words exchange — the digit-2 row's swiftness the
+    // digit-5 row's night-vision the straight trade banks: the words
+    // the pairs the shared bank's own cells exchange)
+    app.enchant_mirror[29] = (potion, 1);
+    app.items_potion_kinds[2] = swift;
+    app.enchant_mirror[32] = (potion, 1);
+    app.items_potion_kinds[5] = night;
+    app.enchant_slot_rects = vec![(100, 100, 31)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(5), "the trade consumes");
+    assert_eq!(
+        app.enchant_mirror[32],
+        (potion, 1),
+        "the row the hovered pair banks"
+    );
+    assert_eq!(
+        app.enchant_mirror[29],
+        (potion, 1),
+        "the hovered row the pair keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[5], swift,
+        "the row the hovered word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[2], night,
+        "the hovered row the row's word banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the digit speaks"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(34i16, (potion, 1)), (31i16, (potion, 1))],
+                "the trade's deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN KIND RETIRE (the digit-3 row's swiftness
+    // potion the empty item seat banks — the seat the row's word
+    // lends [the field-less scratch the call's scope keeps], the
+    // drained button row the NONE retires)
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_mirror[30] = (potion, 1);
+    app.items_potion_kinds[3] = swift;
+    app.enchant_mirror[29] = (0, 0);
+    app.items_potion_kinds[2] = none;
+    app.enchant_mirror[32] = (0, 0);
+    app.items_potion_kinds[5] = none;
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the place consumes");
+    assert_eq!(app.enchant_slots[0], (potion, 1), "the seat the pair banks");
+    assert_eq!(
+        app.items_potion_kinds[3], none,
+        "the drained row the word retires"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (0, 0),
+        "the drained row the empties"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(32i16, (0i32, 0i32)), (0i16, (potion, 1))],
+                "the place's deltas the batch map names"
+            );
+        }
+        other => panic!("the place press the packet speaks, not {other:?}"),
+    }
+    // THE CASE B'S OWN KINDLESS ANSWER (the item seat's potion the
+    // EMPTY digit-3 row banks — the words the seats never lend, the
+    // row the kindless answer wears [the scratch pair the word the
+    // call's own scope never banks])
+    app.enchant_slots[0] = (potion, 1);
+    app.enchant_mirror[30] = (0, 0);
+    app.items_potion_kinds[3] = none;
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the ride consumes");
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the drained seat the pair empties"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (potion, 1),
+        "the digit's row the pair banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], none,
+        "the row the kindless answer banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32)), (32i16, (potion, 1))],
+                "the ride's deltas the batch map names"
+            );
+        }
+        other => panic!("the ride press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE ENCHANT WIRE SWAP'S OWN KIND SPLITS (the autopush-525 round —
+/// the F-key the digit's potion the offhand's pair banks [the word
+/// the seat 36 the 45 sentinel banks — the drained row the NONE
+/// retires], the CASE D the row's 70 dirt the potion row's stale
+/// word retires [the add ride the first-empty hotbar row the pair
+/// banks — the words the add never banks], the CASE C the split the
+/// row's word the remainder keeps [the item seat's 1-max the split
+/// wears])
+#[test]
+fn the_enchant_wire_swap_the_kind_split_the_offhand_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let swift = crate::brewing_sim::POTION_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (potion, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.enchant_panel = (100, 100);
+    // THE F-KEY'S OWN OFFHAND RIDE (the digit-2 row's potion the
+    // offhand's own belief banks — the pair the slot 45 speaks, the
+    // word the seat 36 the 45 sentinel banks, the drained row the
+    // NONE retires)
+    app.enchant_mirror[29] = (potion, 1);
+    app.items_potion_kinds[2] = swift;
+    app.enchant_slot_rects = vec![(100, 100, 31)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (potion, 1),
+        "the offhand the pair banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[crate::screens::OFFHAND_KIND_SEAT],
+        swift,
+        "the offhand the word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the drained row the word retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the F-key speaks"
+            );
+            assert_eq!(
+                click.changed,
+                vec![(31i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN SPLIT (the digit-3 row's 70 dirt the potion
+    // row's own split wears — the STALE potion word the row's own
+    // NONE retires, the remainder the row keeps, the ORIGINAL
+    // hovered potion the add ride banks [the words the add never
+    // banks])
+    app.enchant_mirror[29] = (potion, 1);
+    app.items_potion_kinds[2] = swift;
+    app.enchant_mirror[30] = (dirt, 70);
+    app.live_inv_slots[45] = (0, 0);
+    app.items_potion_kinds[crate::screens::OFFHAND_KIND_SEAT] = none;
+    app.enchant_slot_rects = vec![(100, 100, 31)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the split consumes");
+    assert_eq!(app.enchant_mirror[29], (dirt, 64), "the row the max wears");
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the stale word the row's own retires"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.enchant_mirror[27],
+        (potion, 1),
+        "the add ride the first-empty hotbar row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the add ride the words never banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![
+                    (31i16, (dirt, 64)),
+                    (32i16, (dirt, 6)),
+                    (29i16, (potion, 1)),
+                ],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the digit-3 row's 5 potions the item
+    // seat's 1-max wears — the seat the row's word banks [the
+    // scratch the call's scope keeps], the remainder the row's own
+    // word keeps)
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_mirror[29] = (0, 0);
+    app.items_potion_kinds[2] = none;
+    app.enchant_mirror[30] = (potion, 5);
+    app.items_potion_kinds[3] = swift;
+    app.enchant_mirror[27] = (0, 0);
+    app.items_potion_kinds[0] = none;
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the split consumes");
+    assert_eq!(app.enchant_slots[0], (potion, 1), "the seat the max wears");
+    assert_eq!(
+        app.enchant_mirror[30],
+        (potion, 4),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], swift,
+        "the remainder the row's word keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (potion, 1)), (32i16, (potion, 4))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+}
