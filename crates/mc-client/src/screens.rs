@@ -32988,16 +32988,18 @@ impl App {
         self.anvil_swap_table(button, slot as usize)
     }
 
-    /// THE WIRE GATE'S OWN WALK (the prediction-free echo — the
-    /// click lane's own convention the swap re-wears [the empty
-    /// delta list the believed cursor the packet rides, the server's
-    /// own SWAP table the verdict answers, the corrections the
-    /// wholesale lane re-banks; the belief table the later round
-    /// owes if the drift speaks — the 421->509 brewing record the
-    /// same shape wears]). THE GATES: the rects the last render
-    /// laid, the cursor the frame stream fed, the LIVE window (the
-    /// offline stand-in no window keeps), the CARRIED gate the false
-    /// BEFORE the packet lane keeps (the believed cursor the
+    /// THE WIRE GATE'S OWN WALK (the 509 brewing record's own belief
+    /// walk the 516 lane banks — the [`wire_merchant_swap`] fn the
+    /// flat 39 numbering re-wears: the flat compose the trio + the
+    /// mirror serves, the four arms the believed tables pre-apply,
+    /// the packet the CHANGED deltas the batch map names, the
+    /// write-back the changed map the believed fields re-banks, the
+    /// drained words the gather walk's own retirement wears [the
+    /// prediction-free echo the 512's first form spoke, the drift
+    /// walk the later round owes]). THE GATES: the rects the last
+    /// render laid, the cursor the frame stream fed, the LIVE window
+    /// (the offline stand-in no window keeps), the CARRIED gate the
+    /// false BEFORE the packet lane keeps (the believed cursor the
     /// wholesale banks).
     fn on_anvil_swap_key_wire(&mut self, button: usize) -> bool {
         if self.anvil_slot_rects.is_empty() {
@@ -33021,17 +33023,68 @@ impl App {
         let Some(sink) = self.live_clicks.as_ref() else {
             return false; // no live session — the command dies on the frame thread
         };
-        let _ = sink.send(crate::world_view::ContainerCommand::Click(
-            crate::world_view::ContainerClick {
-                window_id,
-                state_id,
-                slot: slot as i16,
-                button: button as i8,
-                input: crate::world_view::ContainerInput::Swap,
-                changed: Vec::new(),
-                carried: self.anvil_carried,
-            },
-        ));
+        // THE FLAT BELIEF'S OWN COMPOSE (the gather walk's own
+        // snapshot law the swap lane re-wears — the trio + the mirror
+        // the flat 39 numbering wears, the write-back the changed map
+        // serves)
+        let mut flat: Vec<(i32, i32)> = Vec::with_capacity(39);
+        flat.push(self.anvil_slots[0]);
+        flat.push(self.anvil_slots[1]);
+        flat.push(self.anvil_result);
+        flat.extend_from_slice(&self.anvil_mirror);
+        if flat.len() < 39 {
+            flat.resize(39, (0, 0));
+        }
+        // THE BELIEF WALK (the 509 brewing record's own upgrade the
+        // shape wears — the 515 merchant lane the same fn the anvil
+        // flat re-keys: the four arms the believed tables pre-apply,
+        // the packet the CHANGED deltas the batch map names, the
+        // offhand the outside-menu seat the belief banks)
+        let changed = wire_merchant_swap(
+            sink,
+            &mut flat,
+            &mut self.hotbar_slots,
+            self.selected_hotbar,
+            slot as usize,
+            button,
+            window_id,
+            state_id,
+            self.anvil_carried,
+            &mut self.live_inv_slots[45],
+        );
+        // THE WRITE-BACK (the gather walk's own changed law — the
+        // flat the believed fields re-banks)
+        for (menu_id, pair) in &changed {
+            let idx = *menu_id as usize;
+            if idx < 2 {
+                self.anvil_slots[idx] = *pair;
+            } else if idx == 2 {
+                self.anvil_result = *pair;
+            } else if idx >= 3 && idx - 3 < self.anvil_mirror.len() {
+                self.anvil_mirror[idx - 3] = *pair;
+            }
+        }
+        // THE DRAINED SEAT'S OWN WORD RETIRE (the gather walk's own
+        // law — the (0,0) write-through the stale word retires: the
+        // drained input the trio lanes wear, the result the kind
+        // lane retires, the drained mirror row the INVENTORY bank's
+        // own name cell retires)
+        for (menu_id, pair) in &changed {
+            if pair.1 > 0 {
+                continue; // the kept row the word the count speaks
+            }
+            let idx = *menu_id as usize;
+            if idx < 2 {
+                self.anvil_names[idx] = None;
+                self.anvil_repair_costs[idx] = 0;
+                self.anvil_enchants[idx].clear();
+                self.anvil_seat_potion_kinds[idx] = crate::brewing_sim::POTION_KIND_NONE;
+            } else if idx == 2 {
+                self.anvil_seat_potion_kinds[2] = crate::brewing_sim::POTION_KIND_NONE;
+            } else if let Some(inv) = Self::anvil_menu_to_inventory(idx) {
+                self.items_custom_names[inv] = None;
+            }
+        }
         true
     }
 
@@ -104286,7 +104339,10 @@ fn belief_merchant_slots_add(
 /// passed — the refusals the EMPTY changed map names, the cursor the
 /// SWAP arm never touches). A free function — the frame thread's
 /// disjoint field borrows (the live_clicks sink stays held across the
-/// walk, the furnace lane's own shape).
+/// walk, the furnace lane's own shape). THE CHANGED MAP the RETURN
+/// speaks (the anvil 516 lane the write-back re-wears — the flat
+/// compose the caller serves, the believed fields the changed map
+/// re-banks, the drained words the retirement walks).
 #[allow(clippy::too_many_arguments)]
 fn wire_merchant_swap(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
@@ -104299,7 +104355,7 @@ fn wire_merchant_swap(
     state_id: i32,
     carried: (i32, i32),
     offhand: &mut (i32, i32),
-) {
+) -> Vec<(i16, (i32, i32))> {
     debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(menu < seats.len(), "the merchant seat's own bounds");
     // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(button)`
@@ -104430,7 +104486,10 @@ fn wire_merchant_swap(
     }
     // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
     // even when the prediction refuses — the changed map the menu's
-    // own state keeps, the cursor the SWAP arm never touches)
+    // own state keeps, the cursor the SWAP arm never touches); the
+    // changed map the RETURN speaks (the anvil 516 lane the
+    // write-back re-wears)
+    let changed_out = changed.clone();
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -104442,6 +104501,7 @@ fn wire_merchant_swap(
             carried,
         },
     ));
+    changed_out
 }
 
 /// THE SWAP TABLE OVER THE FURNACE'S OWN BELIEF (javap 26.2 — the

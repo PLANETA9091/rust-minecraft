@@ -49151,14 +49151,15 @@ fn the_anvil_swap_the_trio_the_result_wears() {
     );
 }
 
-/// THE ANVIL STAND'S OWN SWAP KEY WEARS (the autopush-512 round —
-/// the wire twin the prediction-free echo banks: the MENU_TYPE_ANVIL
-/// route the window identity arms, the gates' false verdicts the
-/// lanes keep, the ARM B the digit's echo the EMPTY deltas + the
-/// believed carried the packet rides [the belief the echo never
-/// mutates], the ARM C the carried gate the false verdict wears,
-/// the ARM D the no-window lane the silence keeps, the ARM E the
-/// no-session lane the silence keeps)
+/// THE ANVIL STAND'S OWN SWAP KEY WEARS (the autopush-516 round the
+/// ARM B the 509 belief walk re-wears — the MENU_TYPE_ANVIL route the
+/// window identity arms, the gates' false verdicts the lanes keep,
+/// the ARM B the digit's prediction the CHANGED deltas + the flat
+/// belief the walk pre-applies [the write-back the changed map
+/// serves, the drained input the trio lanes the retirement wears],
+/// the ARM C the carried gate the false verdict wears, the ARM D
+/// the no-window lane the silence keeps, the ARM E the no-session
+/// lane the silence keeps)
 #[test]
 fn the_anvil_stand_the_swap_key_wears() {
     use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
@@ -49215,10 +49216,16 @@ fn the_anvil_stand_the_swap_key_wears() {
         "no cursor — the hovered-slot gate refuses"
     );
 
-    // ARM B — THE DIGIT'S OWN PREDICTION-FREE ECHO (the Swap input
-    // the packet rides — the EMPTY delta list the believed cursor
-    // the echo wears, the belief the echo never mutates, the
-    // server's own SWAP table the verdict answers)
+    // ARM B — THE DIGIT'S OWN BELIEF WALK (the 509 brewing record's
+    // own upgrade the 516 lane banks — the Swap input the packet
+    // rides with the CHANGED deltas the batch map names, the flat
+    // belief the ride pre-applies, the write-back the changed map
+    // serves, the drained input the trio lanes the retirement wears;
+    // the hovered input 0's potion the digit-3 row 33 banks, the
+    // seat EMPTIES)
+    app.anvil_names[0] = Some("the sharp one".to_string());
+    app.anvil_repair_costs[0] = 3;
+    app.anvil_seat_potion_kinds[0] = crate::brewing_sim::POTION_SWIFTNESS;
     app.mouse_pos = Some((108, 108));
     assert!(
         app.on_anvil_swap_key(3),
@@ -49235,9 +49242,10 @@ fn the_anvil_stand_the_swap_key_wears() {
                 ContainerInput::Swap,
                 "the swap input the key speaks"
             );
-            assert!(
-                click.changed.is_empty(),
-                "the EMPTY deltas the prediction-free echo wears"
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32)), (33i16, (potion, 1))],
+                "the CHANGED deltas the batch map names"
             );
             assert_eq!(
                 click.carried,
@@ -49249,8 +49257,25 @@ fn the_anvil_stand_the_swap_key_wears() {
     }
     assert_eq!(
         app.anvil_slots[0],
+        (0, 0),
+        "the hovered seat the ride empties"
+    );
+    assert_eq!(
+        app.anvil_mirror[30],
         (potion, 1),
-        "the belief the echo never mutates"
+        "the digit's row the stack banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[3],
+        (potion, 1),
+        "the HUD row the belief syncs"
+    );
+    assert_eq!(app.anvil_names[0], None, "the drained name retires");
+    assert_eq!(app.anvil_repair_costs[0], 0, "the drained cost retires");
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0],
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the drained kind retires"
     );
 
     // ARM C — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
@@ -50258,4 +50283,250 @@ fn the_merchant_wire_swap_the_offhand_the_add_ride() {
         (dirt, 6),
         "the HUD row the belief syncs"
     );
+}
+
+/// THE ANVIL WIRE SWAP'S OWN VERDICTS (the autopush-516 round — the
+/// 509 belief walk the anvil wire banks: the CASE D the straight
+/// trade the flat belief exchanges [the write-back the trio + the
+/// mirror re-banks, the deltas the batch map names], the CASE C the
+/// row's 70 dirt the input seat's 64-cap the split speaks [the seat
+/// the cap wears, the row the remainder keeps], the result 2's CASE
+/// C the mayPlace refusal the prediction never mints [the EMPTY
+/// changed map the packet keeps, the belief the refusal never
+/// mutates], the drained mirror row the INVENTORY bank's own name
+/// cell the retirement wears)
+#[test]
+fn the_anvil_wire_swap_the_verdicts_the_deltas_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (emerald, 2);
+    slots[31] = (dirt, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 13,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Anvil;
+    // THE CASE D'S OWN STRAIGHT TRADE (the input's emerald the
+    // digit-1 row's dirt exchanges — the trio + the mirror the
+    // write-back re-banks, the HUD row the belief syncs)
+    app.anvil_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(1), "the trade consumes");
+    assert_eq!(app.anvil_slots[0], (dirt, 1), "the seat the dirt wears");
+    assert_eq!(
+        app.anvil_mirror[28],
+        (emerald, 2),
+        "the row the emerald wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[1],
+        (emerald, 2),
+        "the HUD row the belief syncs"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(31i16, (emerald, 2)), (0i16, (dirt, 1))],
+                "the deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the row's 70 dirt the input seat's
+    // 64-cap wears — the seat 5 the cap keeps, the digit-1 row the
+    // remainder banks)
+    app.anvil_mirror[2] = (0, 0);
+    app.anvil_mirror[28] = (dirt, 70);
+    app.anvil_slot_rects = vec![(100, 100, 5)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(1), "the split consumes");
+    assert_eq!(app.anvil_mirror[2], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.anvil_mirror[28],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.hotbar_slots[1],
+        (dirt, 6),
+        "the HUD row the belief syncs"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(5i16, (dirt, 64)), (31i16, (dirt, 6))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE RESULT'S OWN CASE C REFUSAL (the mayPlace iconst_0 the
+    // prediction never mints — the EMPTY changed map the packet
+    // keeps, the belief the refusal never mutates)
+    app.anvil_result = (0, 0);
+    app.anvil_mirror[28] = (emerald, 3);
+    app.anvil_names[5] = Some("the named row".to_string());
+    app.anvil_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_anvil_swap_key(1),
+        "the refusal the consumed verdict wears"
+    );
+    assert_eq!(app.anvil_result, (0, 0), "the seat the silence keeps");
+    assert_eq!(
+        app.anvil_mirror[28],
+        (emerald, 3),
+        "the row the silence keeps"
+    );
+    assert_eq!(
+        app.anvil_names[5],
+        Some("the named row".to_string()),
+        "the refusal the row's word keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert!(
+                click.changed.is_empty(),
+                "the refusal the EMPTY changed map wears"
+            );
+        }
+        other => panic!("the refusal press the packet speaks, not {other:?}"),
+    }
+    // THE CASE B'S OWN BANK (the mirror row 10's stack the empty
+    // digit-2 row banks — the drained row the INVENTORY bank's own
+    // name cell the retirement wears [the menu 10 the items 16 cell
+    // the +6 shift answers])
+    app.anvil_mirror[7] = (emerald, 1);
+    app.items_custom_names[16] = Some("the named row".to_string());
+    app.anvil_slot_rects = vec![(100, 100, 10)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(2), "the take consumes");
+    assert_eq!(app.anvil_mirror[7], (0, 0), "the drained row empties");
+    assert_eq!(
+        app.anvil_mirror[29],
+        (emerald, 1),
+        "the digit's row the stack banks"
+    );
+    assert_eq!(
+        app.items_custom_names[16], None,
+        "the drained row's name retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(10i16, (0i32, 0i32)), (32i16, (emerald, 1))],
+                "the ride's deltas the batch map names"
+            );
+        }
+        other => panic!("the take press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE ANVIL WIRE SWAP'S OWN OFFHAND + THE ADD RIDE (the autopush-516
+/// round — the F-key the input's stack the offhand's own belief banks
+/// [the outside-menu seat the changed map can't name, the packet the
+/// ONE delta rides], the CASE D the row's 70 dirt the over-max split
+/// the add ride wears [the ORIGINAL hovered emerald the first-empty
+/// row the merge banks, the deltas the batch map names])
+#[test]
+fn the_anvil_wire_swap_the_offhand_the_add_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (emerald, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 13,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Anvil;
+    // THE F-KEY'S OWN OFFHAND BANK (the hovered input's emerald the
+    // offhand's own belief banks — the outside-menu seat the changed
+    // map can't name, the packet the ONE delta rides)
+    app.anvil_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (emerald, 1),
+        "the offhand the ride banks"
+    );
+    assert_eq!(app.anvil_slots[0], (0, 0), "the seat the ride empties");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN OVER-MAX SPLIT + THE ADD RIDE (the row's 70
+    // dirt the input seat's 64-cap wears — the seat the cap keeps,
+    // the digit-1 row the remainder banks, the ORIGINAL hovered
+    // emerald the merge ride speaks [the selected row the scan's
+    // head wears, the first-empty mirror row the merge banks])
+    app.anvil_slots[0] = (emerald, 3);
+    app.anvil_mirror[28] = (dirt, 70);
+    app.anvil_mirror[29] = (0, 0);
+    app.anvil_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    app.selected_hotbar = 1;
+    assert!(app.on_anvil_swap_key(1), "the split consumes");
+    assert_eq!(app.anvil_slots[0], (dirt, 64), "the seat the cap wears");
+    assert_eq!(
+        app.anvil_mirror[28],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.anvil_mirror[27],
+        (emerald, 3),
+        "the add ride the first-empty row banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![
+                    (0i16, (dirt, 64)),
+                    (31i16, (dirt, 6)),
+                    (30i16, (emerald, 3)),
+                ],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
 }
