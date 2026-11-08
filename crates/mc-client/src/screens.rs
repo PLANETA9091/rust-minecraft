@@ -46001,28 +46001,34 @@ impl App {
     /// rides — NO hasItem gate the swap walk keeps, the both-empty
     /// press the consumed silence and the ALWAYS-PACKET law speak;
     /// AbstractContainerMenu.doClick SWAP pcs 1079-1382 the table the
-    /// [`wire_furnace_swap`] walk re-keys over the FURNACE MENU's own
-    /// numbering — the input 0, the fuel 1, the result 2, the
-    /// standard rows 3..38, the hotbar rows the menus 30..38 speak).
-    /// THE GATES: the screen/dead, the rects the last render laid,
-    /// the cursor the frame stream fed, the LIVE window (the
-    /// [`Self::furnace_live_window`] the OpenScreen word armed — the
-    /// offline stand-in no window keeps, the swap lane the wire's own
-    /// shape the chest/table rounds bank), the CARRIED gate the false
-    /// BEFORE the packet lane keeps. THE OFFHAND (button 40) the
-    /// furnace menu never slots — the F arm this walk's own bank wears
-    /// (the checkHotbarKeyPressed's own FIRST arm the
-    /// `slotClicked(hovered, hovered.index, 40, SWAP)` walk rides —
-    /// the outside-menu seat the changed map can't name, the player
-    /// Inventory's own offhand the `inventory.getItem(40)` walk
-    /// answers); the digits the button rows wear. The true verdict the
-    /// digit CONSUMES
-    /// either way (the SWAP arm ran — the refusals the
-    /// checkHotbarKeyPressed's own true-return keep); the false
-    /// verdicts the world chain answers.
+    /// swap lanes re-key over the FURNACE MENU's own numbering — the
+    /// input 0, the fuel 1, the result 2, the standard rows 3..38,
+    /// the hotbar rows the menus 30..38 speak). THE LANES' OWN SPLIT
+    /// (the autopush-508 round — the chest walk's own split the
+    /// furnace screen re-wears): the wire session the belief's own
+    /// table answers ([`Self::on_furnace_swap_key_wire`], the body
+    /// the byte-identical ride keeps), the OFFLINE sim the local
+    /// store the same four arms re-wears ([`Self::furnace_swap_table`]
+    /// — the doClick SWAP table pc 1079-1382 the offline store
+    /// answers, the digit the stand-in's checkHotbarKeyPressed walk
+    /// finally speaks).
     pub fn on_furnace_swap_key(&mut self, button: usize) -> bool {
         if self.screen != ScreenKind::Furnace || self.dead {
             return false;
+        }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's swap the BELIEF the
+            // same table answers, the packet the command lane speaks —
+            // the offline store NOT the truth there.
+            return self.on_furnace_swap_key_wire(button);
+        }
+        // THE OFFLINE TWIN'S OWN GATES (the chest walk's own shape the
+        // Q-drop lane mirrors — the carried, the rects, the cursor,
+        // the hovered seat the SAME geometry walk the click lane
+        // answers)
+        if self.furnace_carried.1 > 0 {
+            return false; // the getCarried().isEmpty() arm — the
+                          // cursor's own stack the walk refuses
         }
         if self.furnace_slot_rects.is_empty() {
             return false; // no render spoke yet — no geometry to hit
@@ -46033,8 +46039,38 @@ impl App {
         let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
             return false; // the press landed between the slots — the null hover
         };
+        self.furnace_swap_table(button, slot as usize)
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// checkHotbarKeyPressed gates, the window's own belief the
+    /// [`wire_furnace_swap`] free fn answers): the window identity the
+    /// live session alone arms, the carried gate the LIVE cursor's
+    /// pair speaks, the rects/cursor gates the SAME geometry walk the
+    /// offline lane keeps, the hovered seat the inline walk the click
+    /// lane's own shape mirrors. THE OFFHAND (button 40) the
+    /// furnace menu never slots — the F arm this walk's own bank wears
+    /// (the checkHotbarKeyPressed's own FIRST arm the
+    /// `slotClicked(hovered, hovered.index, 40, SWAP)` walk rides —
+    /// the outside-menu seat the changed map can't name, the player
+    /// Inventory's own offhand the `inventory.getItem(40)` walk
+    /// answers); the digits the button rows wear. The true verdict the
+    /// digit CONSUMES
+    /// either way (the SWAP arm ran — the refusals the
+    /// checkHotbarKeyPressed's own true-return keep); the false
+    /// verdicts the world chain answers.
+    fn on_furnace_swap_key_wire(&mut self, button: usize) -> bool {
+        if self.furnace_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.furnace_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
         let Some((window_id, state_id)) = self.furnace_live_window else {
-            return false; // the offline stand-in: no window, no click
+            return false; // no window — the belief never armed
         };
         // THE CARRIED GATE (pc 0-10 — the getCarried().isEmpty() arm
         // the walk opens with; the false verdict BEFORE the packet
@@ -46064,6 +46100,240 @@ impl App {
             &mut self.live_inv_slots[45],
         );
         true
+    }
+
+    /// THE FURNACE'S OWN SWAP TABLE (the offline twin — the autopush-
+    /// 508 ride the chest walk's own shape the furnace's seats answer:
+    /// the doClick SWAP table pc 1079-1382 the OFFLINE store
+    /// re-answers, the four arms the click walks' laws speak). The
+    /// seats the flat 39-slot belief the both lanes speak — the trio
+    /// 0..2 the furnace's own seats keep [the input 0, the fuel 1,
+    /// the result 2], the store rows 3..38 the write-through
+    /// projection keeps (the main 3..29 the items 9..35 answer, the
+    /// hotbar 30..38 the items 0..8 speak — the offline click walk's
+    /// own numbering the twin re-wears). The arms the pc walk's own
+    /// verdicts keep:
+    /// - the both-empty press the consumed silence answers (pc
+    ///   1130-1146);
+    /// - the same seat's own silence the identical pair sets back
+    ///   (the hotbar row the hovered store row's own index names;
+    ///   the offhand row the seat's menu id never wears — no
+    ///   same-seat press the F arm speaks);
+    /// - CASE B (pc 1149-1202) the hovered stack the button row rides
+    ///   AS-IS, the seat EMPTIES — the furnace's seats the plain
+    ///   mayPickup the offline click lane keeps [the result cell the
+    ///   plain take the walk answers — no onTake the trio's own
+    ///   result wears, the smelted stack the plain ride banks];
+    /// - CASE C (pc 1205-1273) the row's stack places — the RESULT
+    ///   cell the mayPlace iconst_0 the class returns the place arm
+    ///   refuses [the carried stack NEVER lands on the result cell —
+    ///   the offline click walk's own verdict the twin re-wears], the
+    ///   SPLIT law the max wears;
+    /// - CASE D (pc 1276-1379) the pairs trade — the result cell the
+    ///   same refusal keeps, the over-max row the split + the
+    ///   `Inventory.add` ride answers, the straight trade the words +
+    ///   the pairs exchange.
+    /// The kind rows the dev-235 ride banks (the trio the SEAT
+    /// STORE's own word keeps, the store rows the shared bank's seats
+    /// answer — the id gate the normalized reads wear; the trio the
+    /// component-less model the frac/ench never carried — the store
+    /// rows the shared bank's pairs alone speak); the trio mutation
+    /// the sim's own tick head re-reads (the setItem detector the
+    /// memory answers — no explicit re-ride the walk owes), the HUD
+    /// row the sync follows.
+    fn furnace_swap_table(&mut self, button: usize, menu: usize) -> bool {
+        debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+        // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(
+        // button)` walk): the digits the hotbar rows answer, button 40
+        // the player Inventory's OFFHAND speaks
+        let (row_id, row_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        // THE HOVERED SEAT'S OWN PAIR (the flat 39 belief the both
+        // lanes speak — the trio the store's own cells answer, the
+        // store rows the REAL inventory's own rows speak [the offline
+        // click walk's own convention the projection keeps])
+        let mapped = Self::furnace_menu_to_inventory(menu);
+        let (hover_id, hover_count) = match mapped {
+            Some(mi) => self.inventory.items[mi],
+            None => self.furnace_slots.get(menu).copied().unwrap_or((0, 0)),
+        };
+        if row_count <= 0 && hover_count <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered
+        // store row's own index names — the menus 30..38 the digits
+        // speak; the offhand row the seat's menu id never wears)
+        if button != 40 && menu >= 30 && menu - 30 == button {
+            return true;
+        }
+        // THE ROWS' OWN PRE-READS (the 491/377 law's own hoist the
+        // swap table re-wears — the ride the writes pre-key: the
+        // hover seat's word the id-gated normalized read speaks [the
+        // trio the SEAT STORE's word, the store rows the INVENTORY
+        // bank's mapped read lends], the button row's the own bank's
+        // word; the trio the component-less model the frac/ench the
+        // honest zeros keep)
+        let hover_kind = self.furnace_seat_potion_kind(menu);
+        let (hover_frac, hover_ench) = match mapped {
+            Some(mi) => (
+                self.items_damage_frac[mi],
+                self.inventory_enchants[mi].clone(),
+            ),
+            None => (0.0, Vec::new()),
+        };
+        let row_kind = if crate::world::brewing_is_potion_kind(row_id) {
+            if button == 40 {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT]
+            } else {
+                self.items_potion_kinds[button]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let (row_frac, row_ench) = if button == 40 {
+            (
+                self.items_damage_frac[OFFHAND_KIND_SEAT],
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+            )
+        } else {
+            (
+                self.items_damage_frac[button],
+                self.inventory_enchants[button].clone(),
+            )
+        };
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the seat EMPTIES — the furnace's
+            // seats' mayPickup the plain verdict the offline click
+            // lane keeps (the result cell the plain take the walk
+            // answers)
+            self.furnace_swap_seat_write(
+                menu,
+                (0, 0),
+                crate::brewing_sim::POTION_KIND_NONE,
+                0.0,
+                &[],
+            );
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE RIDE'S OWN BANKS (the 491 law the swap table
+            // re-wears — the hovered stack's word + pairs the button
+            // row banks, the emptied seat the pristine rows wear)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+            self.furnace_swap_tail();
+            return true;
+        }
+        if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // RESULT cell the mayPlace iconst_0 the class returns the
+            // place arm refuses (the arm the consumed silence keeps —
+            // the fuel seat the plain mayPlace the offline click lane
+            // keeps), the SPLIT law the max wears (getMaxStackSize(
+            // stack) = min(64, the item's own))
+            if menu == 2 {
+                return true; // the result cell the place refuses
+            }
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                self.furnace_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+                self.inventory_set_row(button, (row_id, row_count - max));
+                // THE SPLIT'S OWN COPY-BANK (the qc drag's own law the
+                // split re-wears — the destination the source's word
+                // banks, the remainder the own rows keep)
+            } else {
+                self.furnace_swap_seat_write(
+                    menu,
+                    (row_id, row_count),
+                    row_kind,
+                    row_frac,
+                    &row_ench,
+                );
+                self.inventory_set_row(button, (0, 0));
+                // THE PLACE'S OWN RIDE (the kind the whole-stack move
+                // keeps — the drained row the pristine rows wear)
+                self.swap_table_button_rows_write(
+                    button,
+                    crate::brewing_sim::POTION_KIND_NONE,
+                    0.0,
+                    &[],
+                );
+            }
+            self.furnace_swap_tail();
+            return true;
+        }
+        // CASE D (pc 1276-1379): both filled — the RESULT cell the
+        // same mayPlace refusal keeps, the plain seats' gates the
+        // mayPickup && mayPlace the unconditional TRUE pair keeps
+        if menu == 2 {
+            return true; // the result cell the place refuses
+        }
+        let max = crate::world_view::item_max_stack(row_id);
+        if row_count > max {
+            // pc 1315-1355: the split(max) — the seat takes max, the
+            // row the remainder keeps, the ORIGINAL hovered stack the
+            // INVENTORY add rides (the add's own merge-then-first-
+            // empty law), the leftover the drop speaks
+            self.furnace_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+            self.inventory_set_row(button, (row_id, row_count - max));
+            let (leftover, _spoke) =
+                self.inventory
+                    .add(self.selected_hotbar, hover_id, hover_count, false);
+            if leftover > 0 {
+                self.spawn_drop_at_player(hover_id, leftover);
+            }
+        } else {
+            // pc 1358-1379: the straight trade — the row the hovered
+            // stack takes, the seat the row's stack wears
+            self.furnace_swap_seat_write(menu, (row_id, row_count), row_kind, row_frac, &row_ench);
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE TRADE'S OWN PAIR RIDE (the words + the pairs the
+            // seats exchange — the identical pair the swap the no-op
+            // keeps)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+        }
+        self.furnace_swap_tail();
+        true
+    }
+
+    /// THE FURNACE SEAT'S OWN SWAP WRITE (the ride's landing — the
+    /// hover seat's stack + word the seat's own rows bank: the flat
+    /// belief the store's own pair keeps, the trio the SEAT STORE's
+    /// word answers, the store rows the REAL inventory's rows answer
+    /// [the write-through the projection keeps — the pair + the pairs
+    /// the shared bank's seats speak]; the trio the component-less
+    /// model the frac/ench never carries — the args the store rows
+    /// alone answer)
+    fn furnace_swap_seat_write(
+        &mut self,
+        menu: usize,
+        stack: (i32, i32),
+        kind: i32,
+        frac: f32,
+        ench: &[(i32, i32)],
+    ) {
+        if menu < self.furnace_slots.len() {
+            self.furnace_slots[menu] = stack;
+        }
+        self.furnace_seat_kind_put(menu, kind);
+        // THE STORE ROW'S OWN WRITE-THROUGH (the projection the
+        // inventory IS — the menu slot the inventory cell answers)
+        if let Some(row) = Self::furnace_menu_to_inventory(menu) {
+            self.inventory.items[row] = stack;
+            self.items_damage_frac[row] = frac;
+            self.inventory_enchants[row] = ench.to_vec();
+        }
+    }
+
+    /// THE FURNACE SWAP'S OWN TAIL (the mutations' own ride — the
+    /// trio mutation the sim's own tick head re-reads [the setItem
+    /// detector the memory answers — the cooking-words reset the
+    /// input's own change wears, no explicit re-ride the walk owes],
+    /// the store rows the write-through the projection keeps, the HUD
+    /// row the sync follows)
+    fn furnace_swap_tail(&mut self) {
+        self.hotbar_slots = self.inventory.hotbar();
     }
 
     /// THE CHEST'S OWN Q (the SAME keyPressed keyDrop arm — the
