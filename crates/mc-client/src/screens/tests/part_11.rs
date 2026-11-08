@@ -52236,3 +52236,345 @@ fn the_furnace_wire_swap_the_word_split_the_offhand_wears() {
         other => panic!("the split press the packet speaks, not {other:?}"),
     }
 }
+
+/// THE TABLE WIRE SWAP'S OWN KIND VERDICTS (the autopush-523 round —
+/// the 506 twin's craft/result seats the kind store the wire lane
+/// banks, the 522 furnace shape the grid 1..9 the same ride re-keys:
+/// the CASE B the craft cell's swiftness potion the EMPTY digit-3
+/// row banks [the ROW-EMPTY arm the ride serves — the drained cell
+/// the NONE word retires, the shared bank's digit cell the ride's
+/// word lends], the CASE B the RESULT take the stale grid word
+/// retires [the onTake's own decrement the emptied cell the word
+/// retires — the kindless answer the row banks], the CASE D the
+/// same-id DIFFERENT-kind pair the straight trade exchanges [the
+/// 372 law's own answer — the words the pairs the seats exchange],
+/// the CASE C the whole-place the row's word the craft cell banks
+/// [the drained button row the NONE retires])
+#[test]
+fn the_table_wire_swap_the_kinds_the_words_ride() {
+    use crate::world_view::ContainerCommand;
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let log = mc_registry::item_id_by_name("oak_log").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let swift = crate::brewing_sim::POTION_SWIFTNESS;
+    let night = crate::brewing_sim::POTION_NIGHT_VISION;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    app.open_crafting_table();
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    app.table_panel = panel;
+    app.table_is_live = true;
+    app.table_live_window = Some((8, 14));
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    assert_eq!(app.screen, ScreenKind::Crafting, "the table door opens");
+    // THE CASE B'S OWN KIND RIDE (the craft cell's swiftness potion
+    // the EMPTY digit-3 row banks — the ROW-EMPTY arm the ride
+    // serves, the drained cell the NONE word retires, the shared
+    // bank's digit cell the ride's word lends)
+    app.live_table_slots[2] = (potion, 1);
+    app.table_grid_potion_kinds[1] = swift;
+    let (cx, cy) = table_craft_origin(panel, 1);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(3), "the ride consumes");
+    assert_eq!(
+        app.live_table_slots[2],
+        (0, 0),
+        "the drained cell the pair empties"
+    );
+    assert_eq!(
+        app.live_table_slots[40],
+        (potion, 1),
+        "the digit's row the pair banks"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[1], none,
+        "the drained cell the word retires"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], swift,
+        "the digit's row the word banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[3],
+        (potion, 1),
+        "the HUD row the sync wears"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(2i16, (0i32, 0i32)), (40i16, (potion, 1))],
+                "the ride's deltas the batch map names"
+            );
+        }
+        other => panic!("the ride press the packet speaks, not {other:?}"),
+    }
+    // THE RESULT TAKE'S OWN KIND RETIRE (the log the planks recipe
+    // the result rides — the STALE grid word the emptied cell's own
+    // take retires, the kindless answer the digit row banks)
+    app.live_table_slots[1] = (log, 1);
+    app.table_grid_potion_kinds[0] = swift; // the stale word the bank keeps
+    app.live_table_slots[0] = (planks, 4);
+    app.live_table_slots[41] = (0, 0);
+    app.items_potion_kinds[4] = none;
+    let (rxx, ryy) = table_craft_origin(panel, 9);
+    app.mouse_pos = Some((rxx + 8, ryy + 8));
+    assert!(app.on_table_swap_key(4), "the take consumes");
+    assert_eq!(app.live_table_slots[0], (0, 0), "the result the row rides");
+    assert_eq!(app.live_table_slots[1], (0, 0), "the take the cell drains");
+    assert_eq!(
+        app.table_grid_potion_kinds[0], none,
+        "the stale word the emptied cell retires"
+    );
+    assert_eq!(
+        app.live_table_slots[41],
+        (planks, 4),
+        "the result the digit row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[4], none,
+        "the kindless answer the row banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[4],
+        (planks, 4),
+        "the HUD row the sync wears"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![
+                    (0i16, (0i32, 0i32)),
+                    (41i16, (planks, 4)),
+                    (1i16, (0i32, 0i32)),
+                ],
+                "the take's deltas the batch map names"
+            );
+        }
+        other => panic!("the take press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN KIND EXCHANGE (the same-id DIFFERENT-kind pair
+    // the straight trade exchanges — the 372 law's own answer the
+    // swap wears: the words the pairs the craft cell + the store row
+    // exchange)
+    app.live_table_slots[2] = (potion, 1);
+    app.table_grid_potion_kinds[1] = swift;
+    app.live_table_slots[40] = (potion, 1);
+    app.items_potion_kinds[3] = night;
+    let (cx, cy) = table_craft_origin(panel, 1);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(3), "the trade consumes");
+    assert_eq!(
+        app.live_table_slots[2],
+        (potion, 1),
+        "the cell the pair keeps"
+    );
+    assert_eq!(
+        app.live_table_slots[40],
+        (potion, 1),
+        "the row the pair keeps"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[1], night,
+        "the cell the row's word banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], swift,
+        "the row the hovered word banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(40i16, (potion, 1)), (2i16, (potion, 1))],
+                "the trade's deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN KIND BANK (the digit row's swiftness potion
+    // the empty craft cell banks — the cell the row's word lends,
+    // the drained button row the NONE retires)
+    app.live_table_slots[2] = (0, 0);
+    app.table_grid_potion_kinds[1] = none;
+    app.live_table_slots[40] = (potion, 1);
+    app.items_potion_kinds[3] = swift;
+    let (cx, cy) = table_craft_origin(panel, 1);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(3), "the place consumes");
+    assert_eq!(
+        app.live_table_slots[2],
+        (potion, 1),
+        "the cell the pair banks"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[1], swift,
+        "the cell the row's word banks"
+    );
+    assert_eq!(app.live_table_slots[40], (0, 0), "the drained row empties");
+    assert_eq!(
+        app.items_potion_kinds[3], none,
+        "the drained row the word retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(40i16, (0i32, 0i32)), (2i16, (potion, 1))],
+                "the place's deltas the batch map names"
+            );
+        }
+        other => panic!("the place press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE TABLE WIRE SWAP'S OWN WORD SPLITS (the autopush-523 round —
+/// the stale word the row's own words retire: the F-key the craft
+/// cell's potion the offhand's pair banks [the word the seat 36 the
+/// 45 sentinel banks — the drained cell the NONE retires], the CASE
+/// D the row's 70 dirt the cell's own split the stale word retires
+/// [the add ride the first-empty hotbar row the pair banks — the
+/// words the add never banks], the CASE C the split the LAPIS
+/// cell's stale word retires [the 64-cap the lapis verdict wears])
+#[test]
+fn the_table_wire_swap_the_word_split_the_offhand_wears() {
+    use crate::world_view::ContainerCommand;
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let swift = crate::brewing_sim::POTION_SWIFTNESS;
+    let night = crate::brewing_sim::POTION_NIGHT_VISION;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    app.open_crafting_table();
+    let panel = ((320 - 176) / 2, (180 - 166) / 2);
+    app.table_panel = panel;
+    app.table_is_live = true;
+    app.table_live_window = Some((8, 14));
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    assert_eq!(app.screen, ScreenKind::Crafting, "the table door opens");
+    // THE F-KEY'S OWN OFFHAND RIDE (the craft cell's potion the
+    // offhand's own belief banks — the pair the slot 45 speaks, the
+    // word the seat 36 the 45 sentinel banks, the drained cell the
+    // NONE retires)
+    app.live_table_slots[2] = (potion, 1);
+    app.table_grid_potion_kinds[1] = night;
+    let (cx, cy) = table_craft_origin(panel, 1);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (potion, 1),
+        "the offhand the pair banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[crate::screens::OFFHAND_KIND_SEAT],
+        night,
+        "the offhand the word banks"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[1], none,
+        "the drained cell the word retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(2i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN SPLIT (the digit row's 70 dirt the craft
+    // cell's own split wears — the cell's STALE word the row's own
+    // NONE retires, the remainder the row keeps, the ORIGINAL
+    // hovered potion the add ride banks [the words the add never
+    // banks])
+    app.live_table_slots[2] = (potion, 1);
+    app.table_grid_potion_kinds[1] = swift;
+    app.live_table_slots[40] = (dirt, 70);
+    let (cx, cy) = table_craft_origin(panel, 1);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(3), "the split consumes");
+    assert_eq!(
+        app.live_table_slots[2],
+        (dirt, 64),
+        "the cell the max wears"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[1], none,
+        "the stale word the row's own retires"
+    );
+    assert_eq!(
+        app.live_table_slots[40],
+        (dirt, 6),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.live_table_slots[37],
+        (potion, 1),
+        "the add ride the first-empty hotbar row banks"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the add ride the words never banks"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (potion, 1),
+        "the HUD row the sync wears"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(2i16, (dirt, 64)), (40i16, (dirt, 6)), (37i16, (potion, 1)),],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the digit row's 70 lapis the LAPIS
+    // cell's 64-cap wears — the cell's STALE word the row's own
+    // retires [the lapis verdict the id gate wears], the remainder
+    // the row keeps)
+    app.live_table_slots[3] = (0, 0);
+    app.table_grid_potion_kinds[2] = swift;
+    app.live_table_slots[40] = (lapis, 70);
+    let (cx, cy) = table_craft_origin(panel, 2);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    assert!(app.on_table_swap_key(3), "the split consumes");
+    assert_eq!(
+        app.live_table_slots[3],
+        (lapis, 64),
+        "the cell the cap wears"
+    );
+    assert_eq!(
+        app.table_grid_potion_kinds[2], none,
+        "the stale word the row's own retires"
+    );
+    assert_eq!(
+        app.live_table_slots[40],
+        (lapis, 6),
+        "the row the remainder keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(3i16, (lapis, 64)), (40i16, (lapis, 6))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+}

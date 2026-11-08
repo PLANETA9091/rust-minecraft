@@ -45838,6 +45838,12 @@ impl App {
             // the window-0 menu's own slot 45 the HUD rides, the
             // outside-menu seat the changed map can't name)
             &mut self.live_inv_slots[45],
+            // THE KINDS' OWN BANKS (the 372 component law's own ride
+            // the arms wear — the craft grid the GRID STORE's own
+            // word keeps, the shared bank the store rows + the
+            // offhand seat the digits/F-key re-keys)
+            &mut self.table_grid_potion_kinds,
+            &mut self.items_potion_kinds,
         );
         true
     }
@@ -104203,7 +104209,28 @@ fn wire_table_on_take(
 /// speak). THE PACKET ALWAYS RIDES (the slotClicked call the
 /// keyPressed walk keeps once the hovered gate passed — the
 /// refusals the EMPTY changed map names, the cursor the SWAP arm
-/// never touches). A free function — the frame thread's disjoint
+/// never touches). THE KINDS' OWN WORD RIDE (the 372 component
+/// law's own answer the swap arms wear — the dev-235 ride the
+/// offline table's kind lanes the wire lane re-wears): the
+/// `craft_kinds` the craft cells' own store speaks (the grid 1..9
+/// the [`Self::table_grid_potion_kinds`] word keeps — the result
+/// seat 0 the KINDLESS law keeps, the word lane the recipe's own
+/// answer never wears), the `inv_kinds` the shared bank the store
+/// rows + the offhand seat 36 answer [the 10..36 the m-1 map
+/// re-keys, the 37..45 the m-37 map the HUD rows re-keys, the
+/// F-key the 45 sentinel the seat re-keys], the reads the id-gated
+/// normalized words pre-key [the non-potion seat the kindless
+/// answer owes], the arms the words the pairs ride [the CASE B the
+/// hovered stack's word the row banks — the drained seat the NONE
+/// retires, the TAKE the emptied craft cell the word retires [the
+/// offline take law the wire lane re-wears], the CASE C the split
+/// the copy-bank the whole-place the row's word lends [the drained
+/// row the NONE retires], the CASE D the split the stale word the
+/// row's own retires [the add ride the words never speak], the
+/// straight trade the words the pairs exchange — the refusals the
+/// result seat's own arm speaks the words never touch, the words
+/// the CLIENT's own belief lanes stay, the changed map the pairs
+/// alone names]. A free function — the frame thread's disjoint
 /// field borrows (the live_clicks sink stays held across the walk,
 /// the chest lane's own shape).
 #[allow(clippy::too_many_arguments)]
@@ -104218,6 +104245,8 @@ fn wire_table_swap(
     state_id: i32,
     carried: (i32, i32),
     offhand: &mut (i32, i32),
+    craft_kinds: &mut [i32; 9],
+    inv_kinds: &mut [i32],
 ) {
     debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(menu < 46, "the table seat's own bounds");
@@ -104237,9 +104266,71 @@ fn wire_table_swap(
         Some(rm) => live_slots[rm],
         None => *offhand,
     };
+    // THE KINDS' OWN READS (the id-gated normalized words pre-key —
+    // the non-potion seat the kindless answer owes, the menu id the
+    // shared bank's own map re-keys: the craft cells the GRID STORE
+    // speaks, the store rows the m-1/m-37 map the inventory rows
+    // re-keys, the F-key the OFFHAND seat the 45 sentinel re-keys —
+    // the result seat 0 the KINDLESS law keeps)
+    let kind_read = |craft: &[i32; 9], inv: &[i32], m: usize, id: i32| -> i32 {
+        if !crate::world::brewing_is_potion_kind(id) {
+            return crate::brewing_sim::POTION_KIND_NONE;
+        }
+        match m {
+            1..10 => craft
+                .get(m - 1)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            10..37 => inv
+                .get(m - 1)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            45 => inv
+                .get(OFFHAND_KIND_SEAT)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            37..46 => inv
+                .get(m - 37)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE),
+            _ => crate::brewing_sim::POTION_KIND_NONE,
+        }
+    };
+    let hover_kind = kind_read(craft_kinds, inv_kinds, menu, hover_id);
+    let row_kind = if button == 40 {
+        if crate::world::brewing_is_potion_kind(row_id) {
+            inv_kinds
+                .get(OFFHAND_KIND_SEAT)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        }
+    } else {
+        kind_read(craft_kinds, inv_kinds, 37 + button, row_id)
+    };
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     let fired = !(row_count <= 0 && hover_count <= 0);
     if fired {
+        // THE KINDS' OWN WORD WRITE (the landing the arms serve —
+        // the seat's menu id the craft grid the shared bank
+        // re-keys, the same map the pairs wear; the 45 the OFFHAND
+        // menu sentinel the seat 36 re-keys — the flat model the
+        // 46-wall the menus speak, no mirror seat the sentinel ever
+        // wears; the result seat 0 the KINDLESS law keeps — the
+        // None cell the no-op wears)
+        let kind_write = |craft: &mut [i32; 9], inv: &mut [i32], m: usize, k: i32| {
+            let cell = match m {
+                1..10 => craft.get_mut(m - 1),
+                10..37 => inv.get_mut(m - 1),
+                45 => inv.get_mut(OFFHAND_KIND_SEAT),
+                37..46 => inv.get_mut(m - 37),
+                _ => None,
+            };
+            if let Some(cell) = cell {
+                *cell = k;
+            }
+        };
         let is_result = menu == 0;
         if Some(menu) == row_menu {
             // THE SAME SEAT — the vanilla walk the identical pair
@@ -104254,16 +104345,29 @@ fn wire_table_swap(
             // seats the TRUE pair)
             live_slots[menu] = (0, 0);
             note_batch_change(&mut changed, menu as i16, (0, 0));
+            // THE RIDE'S OWN WORD (the hovered stack's kind the
+            // button row banks, the drained seat the NONE retires —
+            // the result seat the KINDLESS answer the drained lane
+            // never wears [the None cell the no-op keeps])
+            kind_write(
+                craft_kinds,
+                inv_kinds,
+                menu,
+                crate::brewing_sim::POTION_KIND_NONE,
+            );
             match row_menu {
                 Some(rm) => {
                     live_slots[rm] = (hover_id, hover_count);
                     note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                    kind_write(craft_kinds, inv_kinds, rm, hover_kind);
                 }
                 None => {
                     // THE OFFHAND — the outside-menu seat the changed
                     // map can't name (the Inventory.setItem the menu's
-                    // slot list never speaks)
+                    // slot list never speaks); the word the seat 36
+                    // banks (the 45 sentinel the kind lane speaks)
                     *offhand = (hover_id, hover_count);
+                    kind_write(craft_kinds, inv_kinds, 45, hover_kind);
                 }
             }
             if is_result {
@@ -104273,6 +104377,20 @@ fn wire_table_swap(
                 // the entry the map's own put replaces)
                 for (slot, pair) in wire_table_on_take(live_slots, selected) {
                     note_batch_change(&mut changed, slot, pair);
+                }
+                // THE TAKE'S OWN RETIRE (the emptied craft cell the
+                // word retires — the offline take law the wire lane
+                // re-wears [the remainder's re-fill the non-potion
+                // pair the word never wears])
+                for cell in 1..10 {
+                    if live_slots[cell].1 <= 0 {
+                        kind_write(
+                            craft_kinds,
+                            inv_kinds,
+                            cell,
+                            crate::brewing_sim::POTION_KIND_NONE,
+                        );
+                    }
                 }
             }
         } else if hover_count <= 0 {
@@ -104285,6 +104403,10 @@ fn wire_table_swap(
                 if row_count > max {
                     live_slots[menu] = (row_id, max);
                     note_batch_change(&mut changed, menu as i16, (row_id, max));
+                    // THE SPLIT'S OWN COPY-BANK (the qc drag's own law
+                    // the split re-wears — the seat the row's word
+                    // banks, the remainder the own row's word keeps)
+                    kind_write(craft_kinds, inv_kinds, menu, row_kind);
                     match row_menu {
                         Some(rm) => {
                             live_slots[rm] = (row_id, row_count - max);
@@ -104299,13 +104421,31 @@ fn wire_table_swap(
                         Some(rm) => {
                             live_slots[rm] = (0, 0);
                             note_batch_change(&mut changed, rm as i16, (0, 0));
+                            // THE PLACE'S OWN RIDE (the kind the
+                            // whole-stack move keeps — the drained row
+                            // the NONE word wears)
+                            kind_write(
+                                craft_kinds,
+                                inv_kinds,
+                                rm,
+                                crate::brewing_sim::POTION_KIND_NONE,
+                            );
                         }
                         None => {
                             *offhand = (0, 0);
+                            kind_write(
+                                craft_kinds,
+                                inv_kinds,
+                                45,
+                                crate::brewing_sim::POTION_KIND_NONE,
+                            );
                         }
                     }
                     live_slots[menu] = (row_id, row_count);
                     note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+                    // THE PLACE'S OWN WORD (the seat the row's kind
+                    // banks — the whole-stack move the word rides)
+                    kind_write(craft_kinds, inv_kinds, menu, row_kind);
                 }
             }
         } else if !is_result {
@@ -104321,6 +104461,9 @@ fn wire_table_swap(
                 let rest = row_count - max;
                 live_slots[menu] = (row_id, max);
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
+                // THE SPLIT'S OWN WORD (the seat the row's kind banks
+                // — the stale word the row's own word retires)
+                kind_write(craft_kinds, inv_kinds, menu, row_kind);
                 match row_menu {
                     Some(rm) => {
                         live_slots[rm] = (row_id, rest);
@@ -104344,13 +104487,19 @@ fn wire_table_swap(
                     Some(rm) => {
                         live_slots[rm] = (hover_id, hover_count);
                         note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                        // THE TRADE'S OWN WORD RIDE (the words the
+                        // pairs the seats exchange — the 372
+                        // component law's own answer the swap wears)
+                        kind_write(craft_kinds, inv_kinds, rm, hover_kind);
                     }
                     None => {
                         *offhand = (hover_id, hover_count);
+                        kind_write(craft_kinds, inv_kinds, 45, hover_kind);
                     }
                 }
                 live_slots[menu] = (row_id, row_count);
                 note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+                kind_write(craft_kinds, inv_kinds, menu, row_kind);
             }
         }
         // THE HUD ROW'S BELIEF — the every-mutation law syncs (the
