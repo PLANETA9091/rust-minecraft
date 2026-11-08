@@ -48872,3 +48872,412 @@ fn the_dispenser_stand_the_swap_key_wears() {
         "no window — the identity gate refuses"
     );
 }
+
+/// THE ANVIL SWAP'S OWN WORDS BANK (the autopush-512 round — the
+/// family's four arms the transient trio re-wears: the CASE D trade
+/// the kind_a/kind_b words + the pairs + the NAMES the seats
+/// exchange, the non-potion swap-in the kindless answer banks, the
+/// CASE B the store row's sword the wear + pairs + name the empty
+/// row banks [the drained row the pristine rows + lanes wear, the
+/// HUD row + the mirror row the sync wears], the same seat the
+/// identical pair sets back)
+#[test]
+fn the_anvil_swap_the_words_the_pairs_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Anvil);
+    // THE CASE D'S OWN TRADE (the input seat's potion the row's
+    // potion trades — the words + the pairs + the names the seats
+    // exchange)
+    app.anvil_slots[0] = (potion, 1);
+    app.anvil_seat_potion_kinds[0] = kind_a;
+    app.anvil_names[0] = Some("A".to_string());
+    app.anvil_enchants[0] = vec![(sharp, 1)];
+    app.inventory.items[1] = (potion, 1);
+    app.items_potion_kinds[1] = kind_b;
+    app.items_custom_names[1] = Some("B".to_string());
+    app.inventory_enchants[1] = vec![(sharp, 2)];
+    app.anvil_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(1), "the trade consumes");
+    assert_eq!(app.anvil_slots[0], (potion, 1), "the seat the pair wears");
+    assert_eq!(
+        app.inventory.items[1],
+        (potion, 1),
+        "the row the pair wears"
+    );
+    assert_eq!(
+        app.anvil_names[0].as_deref(),
+        Some("B"),
+        "the name the seat rode"
+    );
+    assert_eq!(
+        app.anvil_enchants[0],
+        vec![(sharp, 2)],
+        "the pairs the seat rode"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], kind_b,
+        "the word the seat rode"
+    );
+    assert_eq!(
+        app.items_custom_names[1].as_deref(),
+        Some("A"),
+        "the name the row rode"
+    );
+    assert_eq!(
+        app.inventory_enchants[1],
+        vec![(sharp, 1)],
+        "the pairs the row rode"
+    );
+    assert_eq!(app.items_potion_kinds[1], kind_a, "the word the row rode");
+    // THE NON-POTION SWAP-IN'S OWN KINDLESS ANSWER (the planks the
+    // potion's old input seat wears — the stale word the honest NONE
+    // retires)
+    app.anvil_slots[0] = (potion, 1);
+    app.anvil_seat_potion_kinds[0] = kind_a;
+    app.anvil_names[0] = None;
+    app.anvil_enchants[0] = Vec::new();
+    app.inventory.items[1] = (planks, 4);
+    app.items_potion_kinds[1] = none;
+    app.items_custom_names[1] = None;
+    app.inventory_enchants[1] = Vec::new();
+    app.anvil_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(1), "the trade consumes");
+    assert_eq!(app.anvil_slots[0], (planks, 4), "the seat the planks wears");
+    assert_eq!(
+        app.inventory.items[1],
+        (potion, 1),
+        "the row the potion wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[0], none,
+        "the kindless answer banks"
+    );
+    assert_eq!(app.items_potion_kinds[1], kind_a, "the word the row rode");
+    // THE CASE B'S OWN BANK (the store row's sword the wear + pairs
+    // + name the empty row banks — the drained row the pristine rows
+    // + lanes wear; the store row 12 the items 18 answers — the
+    // mapped row the walk reads; the HUD row the sync follows)
+    app.inventory.items[18] = (sword, 1);
+    app.items_potion_kinds[18] = none;
+    app.items_damage_frac[18] = 0.4;
+    app.inventory_enchants[18] = vec![(sharp, 5)];
+    app.items_custom_names[18] = Some("Sword".to_string());
+    app.inventory.items[2] = (0, 0);
+    app.items_potion_kinds[2] = none;
+    app.items_damage_frac[2] = 0.0;
+    app.inventory_enchants[2] = Vec::new();
+    app.items_custom_names[2] = None;
+    app.anvil_slot_rects = vec![(100, 100, 12)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(2), "the take consumes");
+    assert_eq!(app.inventory.items[18], (0, 0), "the store row empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (sword, 1),
+        "the row the sword rides"
+    );
+    assert_eq!(app.items_damage_frac[2], 0.4, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(sharp, 5)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_custom_names[2].as_deref(),
+        Some("Sword"),
+        "the name the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[18], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[18].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.items_custom_names[18], None,
+        "the drained name the pristine wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (sword, 1),
+        "the HUD row the sync wears"
+    );
+    assert_eq!(app.anvil_mirror[9], (0, 0), "the mirror row the sync wears");
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the identical pair the walk sets back)
+    app.inventory.items[1] = (planks, 2);
+    app.items_custom_names[1] = None;
+    app.anvil_slot_rects = vec![(100, 100, 31)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(1), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[1],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE ANVIL SWAP'S OWN TRIO BANK (the autopush-512 round — the CASE
+/// C the row's potion the empty material seat lays [the lanes the
+/// row's words bank, the recompute the mutation follows], the
+/// result's own CASE C the mayPlace refusal keeps, the result's
+/// CASE B the mayPickup cost gate the false silence + the true take
+/// the xp charge + the consume arms + the stats bank wear, the
+/// carried gate the false verdict wears)
+#[test]
+fn the_anvil_swap_the_trio_the_result_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let iron = mc_registry::item_id_by_name("iron_ingot").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Anvil);
+    // THE CASE C'S OWN PLACE (the row's potion the empty material
+    // seat lays — the lanes the row's words bank, the drained row
+    // the pristine rows + lanes wear, the HUD row the sync wears)
+    app.anvil_slots[1] = (0, 0);
+    app.anvil_seat_potion_kinds[1] = none;
+    app.anvil_names[1] = None;
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_b;
+    app.items_custom_names[0] = Some("Brew".to_string());
+    app.anvil_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(0), "the place consumes");
+    assert_eq!(app.anvil_slots[1], (potion, 1), "the seat the potion lays");
+    assert_eq!(
+        app.anvil_seat_potion_kinds[1], kind_b,
+        "the word the place banks"
+    );
+    assert_eq!(
+        app.anvil_names[1].as_deref(),
+        Some("Brew"),
+        "the name the place banks"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the drained row empties");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained word the pristine wears"
+    );
+    assert_eq!(
+        app.items_custom_names[0], None,
+        "the drained name the pristine wears"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync wears");
+    // THE RESULT'S OWN CASE C REFUSAL (the mayPlace-false the row's
+    // stack never places — the consumed silence BOTH stay)
+    app.anvil_result = (dirt, 1);
+    app.inventory.items[0] = (planks, 2);
+    app.anvil_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_anvil_swap_key(0),
+        "the result's refusal the consumed silence wears"
+    );
+    assert_eq!(app.anvil_result, (dirt, 1), "the result the refusal keeps");
+    assert_eq!(
+        app.inventory.items[0],
+        (planks, 2),
+        "the row the refusal keeps"
+    );
+    // THE RESULT'S OWN CASE B — THE mayPickup FALSE (the xp-short
+    // the cost gate the silence keeps — BOTH stay)
+    app.anvil_cost = 3;
+    app.xp.level = 1;
+    app.inventory.items[2] = (0, 0);
+    assert!(
+        app.on_anvil_swap_key(2),
+        "the result's gate the consumed silence wears"
+    );
+    assert_eq!(app.anvil_result, (dirt, 1), "the result the gate keeps");
+    assert_eq!(app.inventory.items[2], (0, 0), "the row the gate keeps");
+    // THE RESULT'S OWN CASE B — THE TRUE TAKE (the xp the cost
+    // charges, the consume arms the inputs clear, the stats the
+    // crafted bank wears, the SWAP the carried never touches)
+    app.anvil_slots[0] = (planks, 2);
+    app.anvil_slots[1] = (iron, 1);
+    app.anvil_result = (iron, 1);
+    app.anvil_cost = 1;
+    app.xp.level = 30;
+    app.anvil_repair_item_count = 0;
+    app.anvil_only_renaming = false;
+    app.anvil_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_anvil_swap_key(2), "the take consumes");
+    assert_eq!(
+        app.inventory.items[2],
+        (iron, 1),
+        "the row the result rides"
+    );
+    assert_eq!(app.xp.level, 29, "the xp the cost charges");
+    assert_eq!(app.anvil_slots[0], (0, 0), "the input the ALWAYS-clear");
+    assert_eq!(app.anvil_slots[1], (0, 0), "the material the consume");
+    assert_eq!(app.anvil_result, (0, 0), "the result the take clears");
+    assert_eq!(
+        app.anvil_carried,
+        (0, 0),
+        "the carried the SWAP never touches"
+    );
+    assert_eq!(app.anvil_cost, 0, "the cost the zero reset wears");
+    assert_eq!(
+        app.stats.crafted.get(&iron).copied().unwrap_or(0),
+        1,
+        "the stats the crafted bank wears"
+    );
+    // THE CARRIED GATE'S OWN FALSE (the cursor's stack the walk
+    // refuses)
+    app.anvil_carried = (dirt, 1);
+    assert!(
+        !app.on_anvil_swap_key(0),
+        "the carried cursor the gate refuses"
+    );
+}
+
+/// THE ANVIL STAND'S OWN SWAP KEY WEARS (the autopush-512 round —
+/// the wire twin the prediction-free echo banks: the MENU_TYPE_ANVIL
+/// route the window identity arms, the gates' false verdicts the
+/// lanes keep, the ARM B the digit's echo the EMPTY deltas + the
+/// believed carried the packet rides [the belief the echo never
+/// mutates], the ARM C the carried gate the false verdict wears,
+/// the ARM D the no-window lane the silence keeps, the ARM E the
+/// no-session lane the silence keeps)
+#[test]
+fn the_anvil_stand_the_swap_key_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+
+    // APP ARM A — THE ROUTE'S OWN FEED (the menu type 8 the window
+    // opens — the identity the keys echo against, the seats the
+    // wholesale banks)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (potion, 1);
+    slots[35] = (dirt, 2);
+    app.live_container_updated(Some(LiveContainer {
+        id: 8,
+        menu_type_id: crate::world_model::MENU_TYPE_ANVIL,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 13,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    assert!(app.anvil_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.anvil_live_window,
+        Some((8, 13)),
+        "the identity the keys echo against"
+    );
+
+    // THE NO-SCREEN + NO-GEOMETRY LANES (the walk the gates keep —
+    // the false verdicts the world chain answers, no packet the
+    // lanes mint)
+    app.screen = ScreenKind::World;
+    assert!(
+        !app.on_anvil_swap_key(3),
+        "the world screen the swap key refuses"
+    );
+    app.screen = ScreenKind::Anvil;
+    app.anvil_slot_rects.clear();
+    assert!(
+        !app.on_anvil_swap_key(3),
+        "no render spoke — the geometry gate refuses"
+    );
+    app.anvil_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = None;
+    assert!(
+        !app.on_anvil_swap_key(3),
+        "no cursor — the hovered-slot gate refuses"
+    );
+
+    // ARM B — THE DIGIT'S OWN PREDICTION-FREE ECHO (the Swap input
+    // the packet rides — the EMPTY delta list the believed cursor
+    // the echo wears, the belief the echo never mutates, the
+    // server's own SWAP table the verdict answers)
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_anvil_swap_key(3),
+        "the digit the walk consumes — the true verdict"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 8, "the window id the echo wears");
+            assert_eq!(click.state_id, 13, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the input seat the packet rides");
+            assert_eq!(click.button, 3, "the digit the button byte wears");
+            assert_eq!(
+                click.input,
+                ContainerInput::Swap,
+                "the swap input the key speaks"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the EMPTY deltas the prediction-free echo wears"
+            );
+            assert_eq!(
+                click.carried,
+                (0, 0),
+                "the believed cursor the packet carries"
+            );
+        }
+        other => panic!("the digit press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.anvil_slots[0],
+        (potion, 1),
+        "the belief the echo never mutates"
+    );
+
+    // ARM C — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
+    // the walk opens with — the false verdict BEFORE the packet lane
+    // keeps)
+    app.anvil_carried = (dirt, 1);
+    assert!(
+        !app.on_anvil_swap_key(3),
+        "the carried cursor the gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the refusal no packet mints");
+    app.anvil_carried = (0, 0);
+
+    // ARM D — THE NO-WINDOW LANE (the offline stand-in no window
+    // keeps — the swap lane the wire's own shape refuses)
+    app.anvil_live_window = None;
+    assert!(
+        !app.on_anvil_swap_key(3),
+        "no window — the identity gate refuses"
+    );
+
+    // ARM E — THE NO-SESSION LANE (the command dies on the frame
+    // thread — no session the sink never answers)
+    app.anvil_live_window = Some((8, 13));
+    app.live_clicks = None;
+    assert!(
+        !app.on_anvil_swap_key(3),
+        "no session — the sink gate refuses"
+    );
+}

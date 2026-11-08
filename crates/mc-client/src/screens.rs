@@ -32947,6 +32947,378 @@ impl App {
         self.anvil_create_result();
     }
 
+    /// THE ANVIL'S OWN SWAP KEY (javap 26.2 — the SAME
+    /// checkHotbarKeyPressed walk the family rounds bank, the
+    /// AbstractContainerScreen base class the RepairScreen inherits:
+    /// the offhand key FIRST — the `slotClicked(hovered,
+    /// hovered.index, 40, SWAP)` walk rides, the keyHotbarSlots loop
+    /// after — the digit's `slotClicked(hovered, hovered.index, i,
+    /// SWAP)`). THE LANES' OWN SPLIT the world gate banks (the
+    /// furnace 508 + the brewing 509 + the enchant 510 + the
+    /// dispenser 511 splits the family law the anvil screen
+    /// re-wears — the wire the prediction-free echo the click lane's
+    /// own convention answers, the offline the local store the four
+    /// arms re-wears).
+    pub fn on_anvil_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Anvil || self.dead {
+            return false;
+        }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's swap the PACKET the
+            // echo lane answers — the client's compute the wire never
+            // rides, the corrections the wholesale lane re-banks.
+            return self.on_anvil_swap_key_wire(button);
+        }
+        // THE OFFLINE TWIN'S OWN GATES (the family walk's own shape —
+        // the carried, the rects, the cursor, the hovered seat the
+        // SAME geometry walk the click lane answers)
+        if self.anvil_carried.1 > 0 {
+            return false; // the getCarried().isEmpty() arm — the
+                          // cursor's own stack the walk refuses
+        }
+        if self.anvil_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
+        self.anvil_swap_table(button, slot as usize)
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the prediction-free echo — the
+    /// click lane's own convention the swap re-wears [the empty
+    /// delta list the believed cursor the packet rides, the server's
+    /// own SWAP table the verdict answers, the corrections the
+    /// wholesale lane re-banks; the belief table the later round
+    /// owes if the drift speaks — the 421->509 brewing record the
+    /// same shape wears]). THE GATES: the rects the last render
+    /// laid, the cursor the frame stream fed, the LIVE window (the
+    /// offline stand-in no window keeps), the CARRIED gate the false
+    /// BEFORE the packet lane keeps (the believed cursor the
+    /// wholesale banks).
+    fn on_anvil_swap_key_wire(&mut self, button: usize) -> bool {
+        if self.anvil_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            return false; // the press landed between the slots — the null hover
+        };
+        // THE CARRIED GATE (checkHotbarKeyPressed pc 0-10 — the
+        // getCarried().isEmpty() arm the walk opens with; the
+        // believed cursor the wholesale banks)
+        if self.anvil_carried.1 > 0 {
+            return false;
+        }
+        let Some((window_id, state_id)) = self.anvil_live_window else {
+            return false; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: slot as i16,
+                button: button as i8,
+                input: crate::world_view::ContainerInput::Swap,
+                changed: Vec::new(),
+                carried: self.anvil_carried,
+            },
+        ));
+        true
+    }
+
+    /// THE ANVIL'S OWN SWAP TABLE (the offline twin — the family's
+    /// four arms the transient trio re-wears: the doClick SWAP table
+    /// pc 1079-1382 the OFFLINE store re-answers). The seats the
+    /// flat 39-slot belief the both lanes speak — the trio the own
+    /// seats keep [the inputs 0/1 the pair + the lanes stores wear,
+    /// the result 2 the mayPlace-false the verdicts speak], the
+    /// store rows 3..38 the write-through projection keeps (the
+    /// main 3..29 the items 9..35 answer, the hotbar 30..38 the
+    /// items 0..8 speak — the offline click walk's own numbering the
+    /// twin re-wears). The arms the pc walk's own verdicts keep:
+    /// - the both-empty press the consumed silence answers (pc
+    ///   1130-1146);
+    /// - the same seat's own silence the identical pair sets back
+    ///   (the hotbar row the hovered store row's own index names;
+    ///   the offhand row the seat's menu id never wears);
+    /// - CASE B (pc 1149-1202) the hovered stack the button row
+    ///   rides AS-IS, the seat EMPTIES — the result the mayPickup
+    ///   verdict gates [the cost the false silence keeps — the take
+    ///   the xp the level demands serves, the stats' crafted bank +
+    ///   the onTake arms + the fresh compute the take walk serves],
+    ///   the inputs + the mirror rows the plain TRUE keep; the NAME
+    ///   lane the family's first anvil swap wears (the seat's word
+    ///   the row banks, the drained seat the pristine lanes wear);
+    /// - CASE C (pc 1205-1273) the row's stack places — the result
+    ///   the mayPlace refusal keeps [the consumed silence], the
+    ///   SPLIT law the max wears, the row's lanes the seat banks
+    ///   [the name + the pairs the copy-bank law rides, the drained
+    ///   row the pristine rows + lanes wear];
+    /// - CASE D (pc 1276-1379) the pairs trade — the result the
+    ///   BOTH-stay refusal keeps, the over-max row the split + the
+    ///   `Inventory.add` ride answers [the pairs the add's own walk
+    ///   answers — the name lane the fresh rows the family's add
+    ///   convention keeps], the straight trade the words + the
+    ///   pairs + the names exchange.
+    /// The kind rows the 354 read's own write twin banks (the trio
+    /// the SEAT STORE's word keeps, the mirror rows the shared
+    /// bank's seats answer — the id gate the normalized reads
+    /// wear); the inputs' own mutation the recompute the fresh
+    /// verdict answers, the mirror row + the HUD row the sync
+    /// follows.
+    fn anvil_swap_table(&mut self, button: usize, menu: usize) -> bool {
+        debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+        // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(
+        // button)` walk): the digits the hotbar rows answer, button 40
+        // the player Inventory's OFFHAND speaks
+        let (row_id, row_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        // THE HOVERED SEAT'S OWN PAIR (the flat 39 belief the both
+        // lanes speak — the trio the own seats answer, the mirror
+        // rows the REAL inventory's own rows speak [the offline
+        // click walk's own convention the projection keeps])
+        let mapped = Self::anvil_menu_to_inventory(menu);
+        let (hover_id, hover_count) = match menu {
+            0 => self.anvil_slots[0],
+            1 => self.anvil_slots[1],
+            2 => self.anvil_result,
+            m => Self::anvil_menu_to_inventory(m)
+                .map(|i| self.inventory.items[i])
+                .unwrap_or((0, 0)),
+        };
+        if row_count <= 0 && hover_count <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered
+        // store row's own index names — the menus 30..38 the digits
+        // speak; the offhand row the seat's menu id never wears)
+        if button != 40 && menu >= 30 && menu - 30 == button {
+            return true;
+        }
+        // THE ROWS' OWN PRE-READS (the 491/377 law's own hoist the
+        // swap table re-wears — the ride the writes pre-key: the
+        // trio the seat stores answer [the frac the transient model
+        // never carries], the mirror rows the shared bank's reads
+        // speak; the NAME lane the family's first anvil swap wears)
+        let hover_kind = self.anvil_seat_potion_kind(menu);
+        let hover_name = self.anvil_seat_name(menu);
+        let hover_ench = self.anvil_seat_enchants(menu);
+        let hover_frac = mapped.map(|i| self.items_damage_frac[i]).unwrap_or(0.0);
+        let row_name = if button == 40 {
+            self.items_custom_names[OFFHAND_KIND_SEAT].clone()
+        } else {
+            self.items_custom_names[button].clone()
+        };
+        let row_kind = if crate::world::brewing_is_potion_kind(row_id) {
+            if button == 40 {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT]
+            } else {
+                self.items_potion_kinds[button]
+            }
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let (row_frac, row_ench) = if button == 40 {
+            (
+                self.items_damage_frac[OFFHAND_KIND_SEAT],
+                self.inventory_enchants[OFFHAND_KIND_SEAT].clone(),
+            )
+        } else {
+            (
+                self.items_damage_frac[button],
+                self.inventory_enchants[button].clone(),
+            )
+        };
+        // THE SEAT'S mayPlace (the Slot.mayPlace walk — the result's
+        // iconst_0 the place arms refuse, the inputs + the store rows
+        // the plain slots' TRUE keeps)
+        let may_place = menu != 2;
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the seat EMPTIES — the result the
+            // mayPickup verdict gates (the cost the false silence
+            // keeps), the inputs + the mirror rows the plain TRUE
+            if menu == 2 && !self.anvil_may_pickup() {
+                return true; // the result's own refusal — the consumed silence
+            }
+            self.anvil_swap_seat_write(
+                menu,
+                (0, 0),
+                crate::brewing_sim::POTION_KIND_NONE,
+                0.0,
+                &[],
+            );
+            self.anvil_lanes_clear(menu);
+            self.inventory_set_row(button, (hover_id, hover_count));
+            // THE RIDE'S OWN BANKS (the 491 law the swap table
+            // re-wears — the hovered stack's word + pairs the button
+            // row banks, the NAME the seat's own lane rides, the
+            // emptied seat the pristine rows + lanes wear)
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+            self.anvil_swap_button_name_put(button, hover_name);
+            if menu == 2 {
+                // THE STATS' OWN CRAFTED BANK (the result seat's own
+                // take — the vanilla ResultSlot.onTake's awardStat law
+                // the ride wears) + THE TAKE'S OWN LAW (the xp charge
+                // + the consume arms + the cost zero + the fresh
+                // compute the take walk serves — the SWAP the carried
+                // never touches, the hand-over the now-empty result
+                // the harmless answer wears)
+                *self.stats.crafted.entry(hover_id).or_insert(0) += hover_count as i64;
+                self.anvil_take_result();
+            } else if menu <= 1 {
+                // THE INPUTS' OWN CHANGE (the slotsChanged walk — the
+                // fresh verdict the recompute answers)
+                self.anvil_create_result();
+            }
+            self.anvil_mirror_sync_from_inventory();
+            return true;
+        }
+        if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // result the mayPlace refusal keeps, the SPLIT law the
+            // max wears (getMaxStackSize(stack) = min(64, the item's
+            // own))
+            if !may_place {
+                return true; // the result's own refusal — the consumed silence
+            }
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                self.anvil_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+                self.anvil_lanes_put(menu, row_name, row_ench);
+                self.inventory_set_row(button, (row_id, row_count - max));
+                // THE SPLIT'S OWN COPY-BANK (the qc drag's own law the
+                // split re-wears — the destination the source's word
+                // + lanes banks, the remainder the own rows + lanes
+                // keep)
+            } else {
+                self.anvil_swap_seat_write(
+                    menu,
+                    (row_id, row_count),
+                    row_kind,
+                    row_frac,
+                    &row_ench,
+                );
+                self.anvil_lanes_put(menu, row_name, row_ench);
+                self.inventory_set_row(button, (0, 0));
+                // THE PLACE'S OWN RIDE (the kind + the name the
+                // whole-stack move keeps — the drained row the
+                // pristine rows + lanes wear)
+                self.swap_table_button_rows_write(
+                    button,
+                    crate::brewing_sim::POTION_KIND_NONE,
+                    0.0,
+                    &[],
+                );
+                self.anvil_swap_button_name_put(button, None);
+            }
+            if menu <= 1 {
+                self.anvil_create_result();
+            }
+            self.anvil_mirror_sync_from_inventory();
+            return true;
+        }
+        // CASE D (pc 1276-1379): both filled — only the mayPlace
+        // verdict gates (the mayPickup the plain seats never refuse,
+        // the result the BOTH-stay refusal keeps)
+        if !may_place {
+            return true;
+        }
+        let max = crate::world_view::item_max_stack(row_id);
+        if row_count > max {
+            // pc 1315-1355: the split(max) — the seat takes max, the
+            // row the remainder keeps, the ORIGINAL hovered stack the
+            // INVENTORY add rides (the add's own merge-then-first-
+            // empty law — the pairs the add answers, the name lane
+            // the fresh rows the family's add convention keeps), the
+            // leftover the drop speaks
+            self.anvil_swap_seat_write(menu, (row_id, max), row_kind, row_frac, &row_ench);
+            self.anvil_lanes_put(menu, row_name, row_ench);
+            self.inventory_set_row(button, (row_id, row_count - max));
+            let (leftover, _spoke) =
+                self.inventory
+                    .add(self.selected_hotbar, hover_id, hover_count, false);
+            if leftover > 0 {
+                self.spawn_drop_at_player(hover_id, leftover);
+            }
+        } else {
+            // pc 1358-1379: the straight trade — the words + the
+            // pairs + the names the seats exchange (the identical
+            // pair the swap the no-op keeps)
+            self.anvil_swap_seat_write(menu, (row_id, row_count), row_kind, row_frac, &row_ench);
+            self.anvil_lanes_put(menu, row_name, row_ench);
+            self.inventory_set_row(button, (hover_id, hover_count));
+            self.swap_table_button_rows_write(button, hover_kind, hover_frac, &hover_ench);
+            self.anvil_swap_button_name_put(button, hover_name);
+        }
+        if menu <= 1 {
+            self.anvil_create_result();
+        }
+        self.anvil_mirror_sync_from_inventory();
+        true
+    }
+
+    /// THE ANVIL SEAT'S OWN SWAP WRITE (the ride's landing — the
+    /// trio the transient seats answer [the pair + the kind the seat
+    /// stores wear], the mirror rows the REAL inventory's rows the
+    /// write-through keeps [the pair + the kind + the frac + the
+    /// pairs the shared bank's seats speak])
+    fn anvil_swap_seat_write(
+        &mut self,
+        menu: usize,
+        stack: (i32, i32),
+        kind: i32,
+        frac: f32,
+        ench: &[(i32, i32)],
+    ) {
+        match menu {
+            0 => {
+                self.anvil_slots[0] = stack;
+                self.anvil_seat_potion_kinds[0] = kind;
+            }
+            1 => {
+                self.anvil_slots[1] = stack;
+                self.anvil_seat_potion_kinds[1] = kind;
+            }
+            2 => {
+                self.anvil_result = stack;
+                self.anvil_seat_potion_kinds[2] = kind;
+            }
+            m => {
+                if let Some(idx) = Self::anvil_menu_to_inventory(m) {
+                    self.inventory.items[idx] = stack;
+                    self.items_potion_kinds[idx] = kind;
+                    self.items_damage_frac[idx] = frac;
+                    self.inventory_enchants[idx] = ench.to_vec();
+                }
+            }
+        }
+    }
+
+    /// THE SWAP'S OWN BUTTON NAME RIDE (the name lane the family's
+    /// first anvil swap wears — the digit the own row's name speaks,
+    /// the F key the offhand's seat 36 answers)
+    fn anvil_swap_button_name_put(&mut self, button: usize, name: Option<String>) {
+        let seat = if button == 40 {
+            OFFHAND_KIND_SEAT
+        } else {
+            button
+        };
+        self.items_custom_names[seat] = name;
+    }
+
     /// THE ANVIL'S OWN HOVER SEAT (the enchanting's own shape — the
     /// laid-out rects the 16x16 inner boxes answer).
     fn anvil_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {

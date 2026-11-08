@@ -2870,6 +2870,12 @@ pub fn run_gui_app(
                 // KeyPressed arms the dispenser screen answers, the
                 // plain mayPickup/mayPlace pair the 3x3 canvas keeps)
                 && !app.on_dispenser_swap_key(40)
+                // THE ANVIL'S OWN SWAP (the same base-class walk the
+                // family rounds wear — the checkHotbarKeyPressed arms
+                // the anvil screen answers, the result seat's own
+                // mayPlace-false + the mayPickup cost gates the F-key
+                // never lands)
+                && !app.on_anvil_swap_key(40)
                 && !app.on_creative_swap_key(40)
             {
                 app.on_swap_offhand_key();
@@ -2955,6 +2961,11 @@ pub fn run_gui_app(
                         // answer, the believed walk the packet lane
                         // banks)
                         && !app.on_dispenser_swap_key(i)
+                        // THE ANVIL'S OWN SWAP (the same base-class
+                        // walk the family rounds wear — the result
+                        // seat's own mayPlace-false + the mayPickup
+                        // cost gates the digits never land)
+                        && !app.on_anvil_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)
