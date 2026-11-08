@@ -48261,3 +48261,226 @@ fn the_brewing_swap_the_trio_the_plain_wears() {
     assert!(!app.on_brewing_swap_key(0), "the carried gate refuses");
     app.brewing_carried = (0, 0);
 }
+
+/// THE ENCHANT'S OWN WIRE SWAP (the autopush-510 round — the 409
+/// offline walk's own twin the BELIEF's own table answers: the
+/// lapis seat's CASE C the non-lapis refusal the empty changed map
+/// names [the packet STILL rides], the lapis place the deltas
+/// mints, the CASE B the item seat the belief empties the row
+/// rides, the CASE D the straight trade the pairs exchange, the
+/// same-seat silence, the offhand the outside-menu seat the map
+/// can't name, the carried gate the false verdict wears, the
+/// no-window + no-session lanes the silence keeps)
+#[test]
+fn the_enchant_the_wire_swap_the_belief_wears() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (dirt, 1); // the item seat
+    slots[29] = (dirt, 5); // the hotbar row 0 — menu 29
+    slots[30] = (lapis, 1); // the hotbar row 1 — menu 30
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 3,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    assert!(app.enchant_is_live, "the live flag the route wears");
+    assert_eq!(
+        app.enchant_live_window,
+        Some((6, 3)),
+        "the identity the keys echo against"
+    );
+    app.enchant_panel = (100, 100);
+
+    // ARM 1 — THE LAPIS SEAT'S OWN REFUSAL (the dirt row the
+    // mayPlace verdict refuses — the consumed silence the packet
+    // STILL names, the empty changed map the arms keep)
+    app.enchant_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        app.on_enchant_swap_key(0),
+        "the refusal still consumes — the true verdict"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 6, "the window id the echo wears");
+            assert_eq!(click.state_id, 3, "the state id the revision wears");
+            assert_eq!(click.slot, 1, "the lapis seat the packet rides");
+            assert_eq!(click.button, 0, "the digit the button byte wears");
+            assert_eq!(
+                click.input,
+                crate::world_view::ContainerInput::Swap,
+                "the swap input the key speaks"
+            );
+            assert!(
+                click.changed.is_empty(),
+                "the refusal the empty changed map names"
+            );
+        }
+        other => panic!("the refusal press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(app.enchant_slots[1], (0, 0), "the seat the refusal keeps");
+    assert_eq!(
+        app.enchant_mirror[27],
+        (dirt, 5),
+        "the row the refusal keeps"
+    );
+
+    // ARM 2 — THE LAPIS SEAT'S OWN PLACE (the wholesale re-bank the
+    // walk re-arms — the lapis row the seat lays, the deltas the
+    // walk mints, the HUD row the sync wears)
+    app.enchant_mirror[27] = (lapis, 5);
+    app.enchant_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(0), "the place consumes");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(29, (0, 0)), (1, (lapis, 5))],
+                "the place the deltas mints — the row the drain, the
+                seat the lays the menu ids name"
+            );
+        }
+        other => panic!("the place press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(app.enchant_slots[1], (lapis, 5), "the seat the lapis wears");
+    assert_eq!(app.enchant_mirror[27], (0, 0), "the row the drain wears");
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync wears");
+
+    // ARM 3 — THE ITEM SEAT'S OWN CASE B (the seat stack the empty
+    // row rides AS-IS — the seat EMPTIES, the deltas the walk mints)
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(2), "the take consumes");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0)), (31, (dirt, 1))],
+                "the CASE B the deltas mints — the seat the empties,
+                the row the rides [the hotbar row 2 the menu 31
+                speaks]"
+            );
+        }
+        other => panic!("the take press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(app.enchant_slots[0], (0, 0), "the seat the belief empties");
+    assert_eq!(
+        app.enchant_mirror[29],
+        (dirt, 1),
+        "the store row the belief rides"
+    );
+    assert_eq!(app.hotbar_slots[2], (dirt, 1), "the HUD row the sync wears");
+
+    // ARM 4 — THE STRAIGHT TRADE (the wholesale re-bank the walk
+    // re-arms — the row the hovered stack takes, the seat the row's
+    // stack wears — the pairs the seats exchange)
+    app.enchant_slots[0] = (lapis, 5);
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(1), "the trade consumes");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(30, (lapis, 5)), (0, (lapis, 1))],
+                "the trade the deltas mints — the pairs the seats
+                exchange"
+            );
+        }
+        other => panic!("the trade press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.enchant_slots[0],
+        (lapis, 1),
+        "the seat the row's stack wears"
+    );
+    assert_eq!(
+        app.enchant_mirror[28],
+        (lapis, 5),
+        "the row the hovered's takes"
+    );
+
+    // ARM 5 — THE SAME SEAT'S OWN SILENCE (the identical pair sets
+    // back, the empty changed map the press names)
+    app.enchant_slot_rects = vec![(100, 100, 30)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(1), "the same seat consumes");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 30, "the hotbar row the packet rides");
+            assert!(
+                click.changed.is_empty(),
+                "the identical pair the silence names"
+            );
+        }
+        other => panic!("the same-seat press the echo speaks, not {other:?}"),
+    }
+
+    // ARM 6 — THE OFFHAND'S OWN BELIEF WALK (button 40 the
+    // keySwapOffhand arm the pcs 20-57 bipush answers — the item
+    // seat the offhand rides, the changed map the outside-menu seat
+    // can't name)
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(40), "the F arm consumes");
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0))],
+                "the seat's own delta the map names, the offhand the
+                map can't speak"
+            );
+        }
+        other => panic!("the offhand press the echo speaks, not {other:?}"),
+    }
+    assert_eq!(
+        app.live_inv_slots[45],
+        (lapis, 1),
+        "the offhand's own belief the ride banks"
+    );
+
+    // ARM 7 — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
+    // the walk opens with — the false verdict BEFORE the packet lane)
+    app.enchant_carried = (dirt, 1);
+    app.mouse_pos = Some((108, 108));
+    assert!(
+        !app.on_enchant_swap_key(0),
+        "the carried cursor the gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the refusal no packet mints");
+    app.enchant_carried = (0, 0);
+
+    // ARM 8 — THE NO-WINDOW LANE (the offline stand-in no window
+    // keeps — the identity gate refuses)
+    app.enchant_live_window = None;
+    assert!(
+        !app.on_enchant_swap_key(0),
+        "no window — the identity gate refuses"
+    );
+    assert!(rx.try_recv().is_err(), "the silence no packet breaks");
+    app.enchant_live_window = Some((6, 3));
+
+    // ARM 9 — THE NO-SESSION LANE (the command dies on the frame
+    // thread — no session the sink never answers)
+    app.live_clicks = None;
+    assert!(
+        !app.on_enchant_swap_key(0),
+        "no session — the sink gate refuses"
+    );
+}
