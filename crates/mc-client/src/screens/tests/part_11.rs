@@ -27378,10 +27378,12 @@ fn the_brewing_stand_the_wire_title_wears() {
 /// THE BREWING STAND'S OWN SWAP KEY (the 214 dev round — the
 /// checkHotbarKeyPressed walk the stand screen answers: the digits
 /// the offhand 40 the `slotClicked(hovered, hovered.index, i, SWAP)`
-/// the same base-class walk rides, the prediction-free law the 421
-/// press echo banks — the packet the lane speaks, the seat the key
-/// never mints). The arms wear: the route feed, the digit's own
-/// echo, the offhand's own echo, the carried's own gate, the
+/// the same base-class walk rides; the autopush-509 round the
+/// prediction-free echo the BELIEF's own table re-wears [the
+/// furnace twin's own shape — the packet the lane speaks, the
+/// seats the belief's CASE B answers, the deltas the walk mints]).
+/// The arms wear: the route feed, the digit's own belief walk, the
+/// offhand's own belief walk, the carried's own gate, the
 /// no-window lane's own silence, the no-session lane's own silence,
 /// the no-geometry + no-hover + no-screen lanes' own silence.
 #[test]
@@ -27452,10 +27454,11 @@ fn the_brewing_stand_the_swap_key_wears() {
         "no cursor — the hovered-slot gate refuses"
     );
 
-    // ARM B — THE DIGIT'S OWN ECHO (the bottle seat the digit 3
-    // takes — the SWAP input the packet rides, the empty delta list
-    // the prediction-free lane wears, the seats the key never
-    // mints)
+    // ARM B — THE DIGIT'S OWN BELIEF WALK (the bottle seat the digit
+    // 3 takes — the SWAP input the packet rides, the belief's own
+    // table the deltas mints [the autopush-509 round — the furnace
+    // twin's own shape the wire lane re-wears], the seats the
+    // belief's CASE B answers)
     app.mouse_pos = Some((100 + 56 + 8, 100 + 51 + 8));
     assert!(
         app.on_brewing_swap_key(3),
@@ -27472,9 +27475,12 @@ fn the_brewing_stand_the_swap_key_wears() {
                 ContainerInput::Swap,
                 "the swap input the key speaks"
             );
-            assert!(
-                click.changed.is_empty(),
-                "the deltas the prediction never mints"
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0)), (35, (potion, 1))],
+                "the belief's CASE B the deltas mint — the seat the
+                empties the row rides [the hotbar row 3 the menu 35
+                speaks]"
             );
             assert_eq!(
                 click.carried,
@@ -27486,8 +27492,18 @@ fn the_brewing_stand_the_swap_key_wears() {
     }
     assert_eq!(
         app.brewing_slots[0],
+        (0, 0),
+        "the bottle seat the belief empties"
+    );
+    assert_eq!(
+        app.brewing_mirror[30],
         (potion, 1),
-        "the bottle seat the key never mints"
+        "the store row the belief rides"
+    );
+    assert_eq!(
+        app.hotbar_slots[3],
+        (potion, 1),
+        "the HUD row the sync wears"
     );
     assert_eq!(
         app.live_brewing_carried,
@@ -27495,9 +27511,12 @@ fn the_brewing_stand_the_swap_key_wears() {
         "the cursor the key never mints"
     );
 
-    // ARM C — THE OFFHAND'S OWN ECHO (button 40 the keySwapOffhand
-    // arm the pcs 20-57 bipush answers — the same SWAP input the
-    // packet rides)
+    // ARM C — THE OFFHAND'S OWN BELIEF WALK (button 40 the
+    // keySwapOffhand arm the pcs 20-57 bipush answers — the same
+    // SWAP input the packet rides; the wholesale lane's own re-bank
+    // the bottle seat the walk re-arms, the offhand the changed map
+    // never names)
+    app.brewing_slots[0] = (potion, 1);
     assert!(
         app.on_brewing_swap_key(40),
         "the offhand key the walk consumes"
@@ -27511,9 +27530,20 @@ fn the_brewing_stand_the_swap_key_wears() {
                 ContainerInput::Swap,
                 "the swap input the F-key speaks"
             );
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0))],
+                "the seat's own delta the map names, the offhand the
+                outside-menu seat the map can't speak"
+            );
         }
         other => panic!("the offhand press the echo speaks, not {other:?}"),
     }
+    assert_eq!(
+        app.live_inv_slots[45],
+        (potion, 1),
+        "the offhand's own belief the ride banks"
+    );
 
     // ARM D — THE CARRIED'S OWN GATE (the getCarried().isEmpty() arm
     // the walk opens with — the live cursor the wholesale banks, the
@@ -48020,4 +48050,214 @@ fn the_furnace_swap_the_trio_the_refusal_wears() {
     app.mouse_pos = Some((108, 108));
     assert!(!app.on_furnace_swap_key(0), "the carried gate refuses");
     app.furnace_carried = (0, 0);
+}
+
+/// THE BREWING SWAP'S OWN WORD RIDE (the autopush-509 round — the
+/// offline twin the flat 41's seats answer: the CASE D trade the
+/// kind_a/kind_b words the bottle seat + row exchange, the
+/// non-potion swap-in the kindless answer banks, the CASE B the
+/// sword's wear + pairs the empty row banks [the drained store row
+/// the pristine rows wear], the same hotbar seat the identical pair
+/// the silence keeps)
+#[test]
+fn the_brewing_swap_the_words_the_pairs_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+    let sword = mc_registry::item_id_by_name("diamond_sword").unwrap();
+    use mc_registry::generated::enchantments as ench_mod;
+    let sharp = ench_mod::enchantment_index("sharpness").unwrap() as i32;
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Brewing);
+    // THE CASE D'S OWN TRADE (the bottle seat's potion the row's
+    // potion trades — the words the seats exchange)
+    app.brewing_slots = vec![(0, 0); 5];
+    app.brewing_slots[0] = (potion, 1);
+    app.brewing_kinds[0] = kind_a;
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_b;
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(0), "the trade consumes");
+    assert_eq!(
+        app.brewing_slots[0],
+        (potion, 1),
+        "the five the pair's wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the pair's wears"
+    );
+    assert_eq!(app.brewing_kinds[0], kind_b, "the word the seat rode");
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE NON-POTION SWAP-IN'S OWN KINDLESS ANSWER (the planks the
+    // potion's old bottle seat wears — the stale word the honest NONE
+    // retires)
+    app.brewing_slots[0] = (potion, 1);
+    app.brewing_kinds[0] = kind_a;
+    app.inventory.items[0] = (planks, 4);
+    app.items_potion_kinds[0] = none;
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(0), "the trade consumes");
+    assert_eq!(
+        app.brewing_slots[0],
+        (planks, 4),
+        "the seat the planks wears"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the row the potion wears"
+    );
+    assert_eq!(app.brewing_kinds[0], none, "the kindless answer banks");
+    assert_eq!(app.items_potion_kinds[0], kind_a, "the word the row rode");
+    // THE CASE B'S OWN BANK (the store row's sword the wear + pairs
+    // the empty row banks — the drained row the pristine rows wear;
+    // the store row 12 the items 16 answers — the mapped row the
+    // walk reads; the HUD row the sync follows)
+    app.inventory.items[16] = (sword, 1);
+    app.items_potion_kinds[16] = none;
+    app.items_damage_frac[16] = 0.4;
+    app.inventory_enchants[16] = vec![(sharp, 5)];
+    app.inventory.items[2] = (0, 0);
+    app.items_potion_kinds[2] = none;
+    app.items_damage_frac[2] = 0.0;
+    app.inventory_enchants[2] = Vec::new();
+    app.brewing_slot_rects = vec![(100, 100, 12)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(2), "the take consumes");
+    assert_eq!(app.inventory.items[16], (0, 0), "the store row empties");
+    assert_eq!(
+        app.inventory.items[2],
+        (sword, 1),
+        "the row the sword rides"
+    );
+    assert_eq!(app.items_damage_frac[2], 0.4, "the wear the row banks");
+    assert_eq!(
+        app.inventory_enchants[2],
+        vec![(sharp, 5)],
+        "the pairs the row banks"
+    );
+    assert_eq!(
+        app.items_damage_frac[16], 0.0,
+        "the drained row the pristine wears"
+    );
+    assert!(
+        app.inventory_enchants[16].is_empty(),
+        "the drained pairs the pristine wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[16], none,
+        "the drained word the pristine wears"
+    );
+    assert_eq!(
+        app.hotbar_slots[2],
+        (sword, 1),
+        "the HUD row the sync wears"
+    );
+    assert_eq!(
+        app.brewing_mirror[11],
+        (0, 0),
+        "the mirror row the sync wears"
+    );
+    // THE SAME SEAT'S OWN SILENCE (the hotbar row the hovered store
+    // row's own index names — the identical pair the walk sets back)
+    app.inventory.items[5] = (planks, 2);
+    app.items_potion_kinds[5] = none;
+    app.brewing_slot_rects = vec![(100, 100, 37)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(5), "the same seat consumes");
+    assert_eq!(
+        app.inventory.items[5],
+        (planks, 2),
+        "the identical pair sets back"
+    );
+}
+
+/// THE BREWING SWAP'S OWN TRIO BANK (the autopush-509 round — the
+/// CASE C the row's potion the empty bottle seat lays [the word the
+/// place banks], the SPLIT law the max wears, the fuel seat the
+/// plain pair the place arms never refuse, the CASE B the offhand
+/// the trio stack rides, the both-empty press the consumed silence
+/// keeps, the carried gate the false verdict wears)
+#[test]
+fn the_brewing_swap_the_trio_the_plain_wears() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let egg = mc_registry::item_id_by_name("egg").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open(ScreenKind::Brewing);
+    // THE CASE C'S OWN PLACE (the row's potion the empty bottle seat
+    // lays — the word the place banks, the drained row the pristine
+    // rows wear)
+    app.brewing_slots = vec![(0, 0); 5];
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_a;
+    app.brewing_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(0), "the place consumes");
+    assert_eq!(
+        app.brewing_slots[1],
+        (potion, 1),
+        "the seat the potion wears"
+    );
+    assert_eq!(app.brewing_kinds[1], kind_a, "the word the place banks");
+    assert_eq!(app.inventory.items[0], (0, 0), "the row the drain wears");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the drained word the pristine wears"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row the sync wears");
+    // THE SPLIT LAW'S OWN MAX (the row's 20 eggs the ingredient seat
+    // takes 16, the row the remainder keeps)
+    app.inventory.items[1] = (egg, 20);
+    app.brewing_slot_rects = vec![(100, 100, 3)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(1), "the split consumes");
+    assert_eq!(app.brewing_slots[3], (egg, 16), "the seat the max wears");
+    assert_eq!(
+        app.inventory.items[1],
+        (egg, 4),
+        "the row the remainder keeps"
+    );
+    // THE CASE B'S OWN OFFHAND RIDE (the bottle stack the offhand
+    // wears — the seat EMPTIES, the hotbar rows untouched)
+    app.brewing_slots[2] = (potion, 1);
+    app.brewing_kinds[2] = kind_b;
+    app.inventory.offhand[0] = (0, 0);
+    app.brewing_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(40), "the F arm consumes");
+    assert_eq!(app.brewing_slots[2], (0, 0), "the seat empties");
+    assert_eq!(
+        app.brewing_kinds[2], none,
+        "the emptied seat the pristine word wears"
+    );
+    assert_eq!(
+        app.inventory.offhand[0],
+        (potion, 1),
+        "the offhand rides AS-IS"
+    );
+    // THE BOTH-EMPTY'S OWN SILENCE (the consumed verdict keeps)
+    app.brewing_slot_rects = vec![(100, 100, 20)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_brewing_swap_key(3), "the silence still consumes");
+    // THE CARRIED GATE'S OWN REFUSAL (the cursor's own stack the walk
+    // refuses)
+    app.brewing_carried = (dirt, 1);
+    app.brewing_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(!app.on_brewing_swap_key(0), "the carried gate refuses");
+    app.brewing_carried = (0, 0);
 }
