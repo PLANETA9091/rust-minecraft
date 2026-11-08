@@ -51375,3 +51375,286 @@ fn the_brewing_wire_swap_the_kind_split_the_offhand_wears() {
         other => panic!("the split press the packet speaks, not {other:?}"),
     }
 }
+
+/// THE ENCHANT WIRE SWAP'S OWN STORE VERDICTS (the autopush-520 round —
+/// the 510 offline walk's own ride law the wire lane re-wears: the
+/// CASE B the item seat's enchanted sword the EMPTY digit-3 row banks
+/// [the ROW-EMPTY arm the ride serves — the drained seat the empty
+/// store retires, the row's cell the ride's store wears], the CASE D
+/// the same-shape DIFFERENT-store pair the straight trade exchanges
+/// [the 510 swap law's own answer — the stores the seats exchange],
+/// the CASE C the whole-place the row's store the seat banks [the
+/// drained button row the empty store retires])
+#[test]
+fn the_enchant_wire_swap_the_stores_the_words_ride() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let bow = mc_registry::item_id_by_name("bow").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (sword, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.enchant_panel = (100, 100);
+    app.enchant_comps[0] = vec![(9, 4)];
+    // THE CASE B'S OWN STORE RIDE (the item seat's enchanted sword the
+    // EMPTY digit-3 row banks — the ROW-EMPTY arm the ride serves, the
+    // drained seat the empty store retires, the row's cell the ride's
+    // store wears)
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the ride consumes");
+    assert_eq!(
+        app.enchant_slots[0],
+        (0, 0),
+        "the drained seat the pair empties"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (sword, 1),
+        "the digit's row the pair banks"
+    );
+    assert!(
+        app.enchant_comps[0].is_empty(),
+        "the drained seat the store retires"
+    );
+    assert_eq!(
+        app.enchant_comps[32],
+        vec![(9, 4)],
+        "the digit's row the store banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32)), (32i16, (sword, 1))],
+                "the ride's deltas the batch map names"
+            );
+        }
+        other => panic!("the ride press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN STORE EXCHANGE (the same-shape DIFFERENT-store
+    // pair the straight trade exchanges — the 510 swap law's own
+    // answer the swap wears: the stores the seats exchange)
+    app.enchant_slots[0] = (sword, 1);
+    app.enchant_comps[0] = vec![(9, 4)];
+    app.enchant_mirror[30] = (bow, 1);
+    app.enchant_comps[32] = vec![(8, 3)];
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the trade consumes");
+    assert_eq!(
+        app.enchant_slots[0],
+        (bow, 1),
+        "the seat the row's pair wears"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (sword, 1),
+        "the row the hovered pair banks"
+    );
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(8, 3)],
+        "the seat the row's store banks"
+    );
+    assert_eq!(
+        app.enchant_comps[32],
+        vec![(9, 4)],
+        "the row the hovered store banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(32i16, (sword, 1)), (0i16, (bow, 1))],
+                "the trade's deltas the batch map names"
+            );
+        }
+        other => panic!("the trade press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN STORE BANK (the digit row's enchanted sword the
+    // empty item seat banks — the seat the row's store lends, the
+    // drained button row the empty store retires)
+    app.enchant_slots[0] = (0, 0);
+    app.enchant_comps[0] = Vec::new();
+    app.enchant_mirror[30] = (sword, 1);
+    app.enchant_comps[32] = vec![(9, 4)];
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the place consumes");
+    assert_eq!(app.enchant_slots[0], (sword, 1), "the seat the pair banks");
+    assert_eq!(
+        app.enchant_comps[0],
+        vec![(9, 4)],
+        "the seat the row's store banks"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (0, 0),
+        "the drained row the pair empties"
+    );
+    assert!(
+        app.enchant_comps[32].is_empty(),
+        "the drained row the store retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(32i16, (0i32, 0i32)), (0i16, (sword, 1))],
+                "the place's deltas the batch map names"
+            );
+        }
+        other => panic!("the place press the packet speaks, not {other:?}"),
+    }
+}
+
+/// THE ENCHANT WIRE SWAP'S OWN STORE SPLITS (the autopush-520 round —
+/// the stale store the row's own words retire: the CASE D the row's 70
+/// dirt the item seat's own 1-max split the seat's stale store retires
+/// [the row's empty store the seat banks, the add ride the pairs
+/// serve], the CASE C the split the LAPIS seat's stale store retires
+/// [the 64-cap the lapis verdict wears], the F-key the seat's sword
+/// the offhand's pair banks [the word the comp-less lane never
+/// carries — the drained seat the empty store retires])
+#[test]
+fn the_enchant_wire_swap_the_word_split_the_offhand_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let lapis = mc_registry::item_id_by_name("lapis_lazuli").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 38];
+    slots[0] = (sword, 1);
+    app.live_container_updated(Some(LiveContainer {
+        id: 6,
+        menu_type_id: crate::world_model::MENU_TYPE_ENCHANTMENT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.enchant_panel = (100, 100);
+    // THE F-KEY'S OWN OFFHAND RIDE (the item seat's sword the
+    // offhand's own belief banks — the pair the slot 45 speaks, the
+    // word the comp-less lane never carries, the drained seat the
+    // empty store retires)
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(40), "the offhand key consumes");
+    assert_eq!(
+        app.live_inv_slots[45],
+        (sword, 1),
+        "the offhand the pair banks"
+    );
+    assert!(
+        app.enchant_comps[0].is_empty(),
+        "the drained seat the store retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.button, 40, "the offhand the button byte wears");
+            assert_eq!(
+                click.changed,
+                vec![(0i16, (0i32, 0i32))],
+                "the ONE delta the menu seat names"
+            );
+        }
+        other => panic!("the offhand press the packet speaks, not {other:?}"),
+    }
+    // THE CASE D'S OWN SPLIT (the digit row's 70 dirt the item seat's
+    // own 1-max wears — the seat's STALE store the row's empty words
+    // retire, the remainder the row keeps, the ORIGINAL hovered
+    // emerald the add ride banks)
+    app.enchant_slots[0] = (emerald, 2);
+    app.enchant_comps[0] = vec![(9, 4)];
+    app.enchant_mirror[30] = (dirt, 70);
+    app.enchant_slot_rects = vec![(100, 100, 0)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the split consumes");
+    assert_eq!(
+        app.enchant_slots[0],
+        (dirt, 1),
+        "the seat the item-seat max wears"
+    );
+    assert!(
+        app.enchant_comps[0].is_empty(),
+        "the stale store the row's own empty retires"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (dirt, 69),
+        "the row the remainder keeps"
+    );
+    assert_eq!(
+        app.enchant_mirror[27],
+        (emerald, 2),
+        "the add ride the first-empty row banks"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![
+                    (0i16, (dirt, 1)),
+                    (32i16, (dirt, 69)),
+                    (29i16, (emerald, 2)),
+                ],
+                "the split + the add's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+    // THE CASE C'S OWN SPLIT (the digit row's 70 lapis the LAPIS
+    // seat's 64-cap wears — the seat's STALE store the row's own
+    // empty retires [the lapis verdict the mayPlace gate wears], the
+    // row's remainder the own store keeps)
+    app.enchant_slots[1] = (0, 0);
+    app.enchant_comps[1] = vec![(9, 4)];
+    app.enchant_mirror[30] = (lapis, 70);
+    app.enchant_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_enchant_swap_key(3), "the split consumes");
+    assert_eq!(app.enchant_slots[1], (lapis, 64), "the seat the cap wears");
+    assert!(
+        app.enchant_comps[1].is_empty(),
+        "the stale store the row's own empty retires"
+    );
+    assert_eq!(
+        app.enchant_mirror[30],
+        (lapis, 6),
+        "the row the remainder keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(1i16, (lapis, 64)), (32i16, (lapis, 6))],
+                "the split's deltas the batch map names"
+            );
+        }
+        other => panic!("the split press the packet speaks, not {other:?}"),
+    }
+}

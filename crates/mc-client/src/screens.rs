@@ -46209,6 +46209,10 @@ impl App {
             // `inventory.getItem(40)` the player Inventory answers —
             // the outside-menu seat the changed map can't name)
             &mut self.live_inv_slots[45],
+            // THE STORES' OWN WORD LANES (the ride the stores banks —
+            // the menu-keyed comps the offline walk's own 38-bank the
+            // wire arms ride, the offhand the comp-less seat keeps)
+            &mut self.enchant_comps,
         );
         true
     }
@@ -105907,7 +105911,20 @@ fn wire_dispenser_swap(
 /// refusal BOTH stay, the split(max) + the ORIGINAL hovered stack
 /// the [`belief_enchant_mirror_add`] rides (the mirror's own
 /// numbering the scan keys, the leftover the server's drop lane
-/// speaks) / the straight trade wears. THE HUD ROW'S BELIEF — the
+/// speaks) / the straight trade wears. THE STORES' OWN WORD BANK (the
+/// 510 offline walk's own ride law the wire lane RE-WEARS — the
+/// menu-keyed comps the four arms ride: the seat's store the menu id
+/// speaks, the button row's the 29+button cell answers, the OFFHAND
+/// the comp-less seat the plain Vec keeps; the CASE B the ride the
+/// store banks [the drained seat the empty store retires — the
+/// offhand arm the words the lane never carries], the CASE C the
+/// place the row's store banks [the placed half COPIES, the
+/// whole-place the button row retires], the CASE D the split the
+/// placed half the row's store copies, the straight trade the
+/// stores the seats exchange [the offhand arm the empty store the
+/// seat wears — the swap-with-empty law]). NO changed-map growth
+/// (the comps the CLIENT's own belief lanes — the wire protocol the
+/// pairs alone speaks). THE HUD ROW'S BELIEF — the
 /// every-mutation law syncs (the enchant menu's hotbar rows the
 /// mirror's own indices 27..36 speak). THE PACKET ALWAYS RIDES
 /// (the slotClicked call the keyPressed walk keeps once the hovered
@@ -105928,11 +105945,9 @@ fn wire_enchant_swap(
     state_id: i32,
     carried: (i32, i32),
     offhand: &mut (i32, i32),
+    comps: &mut [Vec<(i32, i32)>],
 ) {
-    debug_assert!(
-        button < 9 || button == 40,
-        "the SWAP input's own gate"
-    );
+    debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(
         menu < seats.len() + mirror.len(),
         "the enchant seat's own bounds"
@@ -105974,20 +105989,29 @@ fn wire_enchant_swap(
     } else {
         crate::world_view::item_max_stack(row_id)
     };
+    // THE STORES' OWN PRE-READS (the 510 offline walk's own hoist the
+    // wire lane re-wears — the menu-keyed banks the ride's words
+    // clone: the seat's store the menu id speaks, the button row's
+    // the 29+button cell answers, the OFFHAND the comp-less seat the
+    // plain Vec keeps)
+    let mut seat_store = comps.get(menu).cloned().unwrap_or_default();
+    let mut row_store = if button == 40 {
+        Vec::new()
+    } else {
+        comps.get(29 + button).cloned().unwrap_or_default()
+    };
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     let fired = !(row_count <= 0 && hover_count <= 0);
     if fired {
         // THE FLAT BELIEF'S OWN WRITE (the landing the arms serve)
-        let flat_set = |seats: &mut [(i32, i32)],
-                        mirror: &mut [(i32, i32)],
-                        m: usize,
-                        stack: (i32, i32)| {
-            if m < seats.len() {
-                seats[m] = stack;
-            } else if let Some(cell) = mirror.get_mut(m - 2) {
-                *cell = stack;
-            }
-        };
+        let flat_set =
+            |seats: &mut [(i32, i32)], mirror: &mut [(i32, i32)], m: usize, stack: (i32, i32)| {
+                if m < seats.len() {
+                    seats[m] = stack;
+                } else if let Some(cell) = mirror.get_mut(m - 2) {
+                    *cell = stack;
+                }
+            };
         if Some(menu) == row_menu {
             // THE SAME SEAT — the vanilla walk the identical pair
             // sets back, no mutation the diff ever names (the
@@ -105999,15 +106023,27 @@ fn wire_enchant_swap(
             // mayPickup gate ALL the enchant seats TRUE keep
             flat_set(seats, mirror, menu, (0, 0));
             note_batch_change(&mut changed, menu as i16, (0, 0));
+            // THE RIDE'S OWN WORD (the hovered stack's store the
+            // button row banks, the drained seat the empty store
+            // retires — the offline walk's own law the wire lane
+            // re-wears)
+            if let Some(cell) = comps.get_mut(menu) {
+                cell.clear();
+            }
             match row_menu {
                 Some(rm) => {
                     flat_set(seats, mirror, rm, (hover_id, hover_count));
                     note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                    if let Some(cell) = comps.get_mut(rm) {
+                        *cell = seat_store.clone();
+                    }
                 }
                 None => {
                     // THE OFFHAND — the outside-menu seat the changed
                     // map can't name (the Inventory.setItem the menu's
-                    // slot list never speaks)
+                    // slot list never speaks); the word the lane never
+                    // carries (the comp-less seat the 510 record's own
+                    // note keeps)
                     *offhand = (hover_id, hover_count);
                 }
             }
@@ -106020,6 +106056,11 @@ fn wire_enchant_swap(
                 if row_count > seat_max {
                     flat_set(seats, mirror, menu, (row_id, seat_max));
                     note_batch_change(&mut changed, menu as i16, (row_id, seat_max));
+                    // THE SPLIT'S OWN COPY-BANK (the placed half the
+                    // row's store copies — the 510 record's own law)
+                    if let Some(cell) = comps.get_mut(menu) {
+                        *cell = row_store.clone();
+                    }
                     match row_menu {
                         Some(rm) => {
                             flat_set(seats, mirror, rm, (row_id, row_count - seat_max));
@@ -106038,6 +106079,12 @@ fn wire_enchant_swap(
                         Some(rm) => {
                             flat_set(seats, mirror, rm, (0, 0));
                             note_batch_change(&mut changed, rm as i16, (0, 0));
+                            // THE PLACE'S OWN RIDE (the store the
+                            // whole-stack move keeps — the drained row
+                            // the empty store wears)
+                            if let Some(cell) = comps.get_mut(rm) {
+                                cell.clear();
+                            }
                         }
                         None => {
                             *offhand = (0, 0);
@@ -106045,6 +106092,11 @@ fn wire_enchant_swap(
                     }
                     flat_set(seats, mirror, menu, (row_id, row_count));
                     note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+                    // THE PLACE'S OWN WORD (the seat the row's store
+                    // banks — the whole-stack move the words ride)
+                    if let Some(cell) = comps.get_mut(menu) {
+                        *cell = row_store.clone();
+                    }
                 }
             }
         } else if !may_place {
@@ -106058,6 +106110,11 @@ fn wire_enchant_swap(
             let rest = row_count - seat_max;
             flat_set(seats, mirror, menu, (row_id, seat_max));
             note_batch_change(&mut changed, menu as i16, (row_id, seat_max));
+            // THE SPLIT'S OWN COPY-BANK (the seat the row's store
+            // banks — the stale store the row's own words retire)
+            if let Some(cell) = comps.get_mut(menu) {
+                *cell = row_store.clone();
+            }
             match row_menu {
                 Some(rm) => {
                     flat_set(seats, mirror, rm, (row_id, rest));
@@ -106076,9 +106133,27 @@ fn wire_enchant_swap(
                 Some(rm) => {
                     flat_set(seats, mirror, rm, (hover_id, hover_count));
                     note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                    // THE TRADE'S OWN STORE RIDE (the stores the
+                    // seats exchange — the 510 record's own swap law
+                    // the wire lane re-wears; the pre-read clones the
+                    // words the sequential writes wear)
+                    let seat_old = seat_store.clone();
+                    let row_old = row_store.clone();
+                    if let Some(cell) = comps.get_mut(menu) {
+                        *cell = row_old;
+                    }
+                    if let Some(cell) = comps.get_mut(rm) {
+                        *cell = seat_old;
+                    }
                 }
                 None => {
                     *offhand = (hover_id, hover_count);
+                    // THE OFFHAND'S OWN SWAP-WITH-EMPTY (the seat the
+                    // comp-less row's store wears — the empty store
+                    // the swap lands)
+                    if let Some(cell) = comps.get_mut(menu) {
+                        cell.clear();
+                    }
                 }
             }
             flat_set(seats, mirror, menu, (row_id, row_count));
