@@ -47329,6 +47329,108 @@ fn the_swap_table_the_grid_the_word_banks() {
     );
 }
 
+/// THE HOPPER SWAP'S OWN VERDICT (the 527 survey's own record — the
+/// 523 note's claim the five-seat door the round pins): the hopper
+/// the swap twin never wears — the chest door's own LEN-GENERIC rows
+/// the five the free answer (the `n` the `chest_slots.len()` keeps,
+/// the grid seats the `chest_row_potion_kind` id-gated read the
+/// hopper bank's own words speak [the `container_row_kinds_load` the
+/// withSize(5) rows the open door loads], the mirror rows the mapped
+/// reads answer). THE WALK the offline door the digits press: the
+/// CASE B the store's kinded potion the row banks (the drained seat
+/// the NONE retires), the CASE C the row's kinded potion the empty
+/// seat banks (the drained row the pristine wears), the CASE D trade
+/// the STALE seat word the row's own retires (the dirt the honest
+/// NONE the id-gate keeps).
+#[test]
+fn the_hopper_swap_the_chest_lane_the_words_bank() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::HOPPER);
+    app.open_hopper_for(cell);
+    assert_eq!(app.chest_slots.len(), 5, "the lone hopper the five banks");
+    assert_eq!(
+        app.chest_row_potion_kinds.len(),
+        5,
+        "the row bank the five words loads"
+    );
+    // THE CASE B'S OWN BANK (the store's kinded potion the digit row
+    // rides — the ROW BANK's own word the row banks, the drained seat
+    // the NONE retires)
+    app.chest_slots[2] = (potion, 1);
+    app.chest_row_potion_kinds[2] = kind_b;
+    app.chest_slot_rects = vec![(100, 100, 2)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_chest_swap_key(3), "the store ride consumes");
+    assert_eq!(
+        app.inventory.items[3],
+        (potion, 1),
+        "the seat the row rides"
+    );
+    assert_eq!(
+        app.items_potion_kinds[3], kind_b,
+        "the store's word the row banks"
+    );
+    assert_eq!(app.chest_slots[2], (0, 0), "the drained seat empties");
+    assert_eq!(
+        app.chest_row_potion_kinds[2], none,
+        "the drained seat the NONE retires"
+    );
+    // THE CASE C'S OWN PLACE (the row's kinded potion the empty seat
+    // lays — the row's own word the seat banks, the drained row the
+    // pristine rows wear)
+    app.inventory.items[3] = (potion, 1);
+    app.items_potion_kinds[3] = kind_a;
+    app.chest_slot_rects = vec![(100, 100, 4)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_chest_swap_key(3), "the place consumes");
+    assert_eq!(app.chest_slots[4], (potion, 1), "the seat the row's wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[4], kind_a,
+        "the row's word the seat banks"
+    );
+    assert_eq!(app.inventory.items[3], (0, 0), "the row empties");
+    assert_eq!(
+        app.items_potion_kinds[3], none,
+        "the drained row the pristine wears"
+    );
+    // THE CASE D'S OWN TRADE (the stale seat word the row's own
+    // retires — the dirt the honest NONE the id-gate keeps)
+    app.chest_slots[1] = (dirt, 64);
+    app.chest_row_potion_kinds[1] = kind_b;
+    app.inventory.items[3] = (potion, 1);
+    app.items_potion_kinds[3] = kind_a;
+    app.chest_slot_rects = vec![(100, 100, 1)];
+    app.mouse_pos = Some((108, 108));
+    assert!(app.on_chest_swap_key(3), "the trade consumes");
+    assert_eq!(app.chest_slots[1], (potion, 1), "the seat the potion wears");
+    assert_eq!(
+        app.chest_row_potion_kinds[1], kind_a,
+        "the row's word the seat banks"
+    );
+    assert_eq!(app.inventory.items[3], (dirt, 64), "the row the dirt wears");
+    assert_eq!(
+        app.items_potion_kinds[3], none,
+        "the stale word the honest NONE retires"
+    );
+}
+
 /// THE TABLE SWAP'S OWN WORD RIDE (the autopush-506 round — the
 /// offline twin the crafting screen's seats answer: the CASE D trade
 /// the kind_a/kind_b words the cell + row exchange, the non-potion
