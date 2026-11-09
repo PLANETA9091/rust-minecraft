@@ -57865,3 +57865,59 @@ fn the_horse_the_markings_the_layer_wears() {
         "the same uv the coat + the markings the differing words wear"
     );
 }
+
+/// THE HORSE'S OWN WIRE VARIANT (javap 26.2 `Horse` the
+/// HORSE_DATA_TYPE_VARIANT_ID doc banks — the DATA_ID_TYPE_VARIANT
+/// INT accessor the class tree lands at 19, the setVariantAndMarkings
+/// pack the low byte the variant + the high byte the markings wears,
+/// the getVariant/getMarkings folds the split speaks, the
+/// defineSynchedData iconst_0 the WHITE + NONE default keeps): the
+/// projection's decoded words the merge state rides, the fresh spawn
+/// the fields arms, the pose walk the re-tint re-wears, the never-
+/// spoken accessor the honest 0 pair the ctor's local default keeps,
+/// the OTHER kind's body the kind gate never arms.
+#[test]
+fn the_horse_the_wire_variant_the_state_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    // the fresh spawn: the horse's own packed words (the chestnut
+    // coat 2 + the black dots 4 the projection split) the state
+    // fields ride — the mesh + the markings render lanes read them
+    let mut w = wire_mob_named(7, 10.0, 64.0, 10.0, "minecraft:horse");
+    w.horse_variant = 2;
+    w.horse_markings = 4;
+    app.live_mobs_updated(vec![w]);
+    assert_eq!(app.net_mobs.len(), 1, "the horse projected v1");
+    assert_eq!(
+        app.net_mobs[0].kind,
+        crate::mob::MobKind::Horse,
+        "the drawn name the kind arms"
+    );
+    assert_eq!(app.net_mobs[0].horse_variant, 2, "the low byte the coat");
+    assert_eq!(app.net_mobs[0].horse_markings, 4, "the high byte the spots");
+    // the pose walk: the re-tint the packet's own words re-wear (the
+    // coat is STATE the server owns)
+    let mut w = wire_mob_named(7, 16.0, 64.0, 10.0, "minecraft:horse");
+    w.horse_variant = 6;
+    w.horse_markings = 1;
+    app.live_mobs_updated(vec![w]);
+    assert_eq!(app.net_mobs.len(), 1, "the walk the merge keeps");
+    assert_eq!(app.net_mobs[0].horse_variant, 6, "the re-tint rides");
+    assert_eq!(app.net_mobs[0].horse_markings, 1, "the spots re-wear");
+    // the kind gate: the zombie's body the horse words never arm —
+    // the honest 0 pair the ctor's local default keeps
+    let mut w = wire_mob_named(8, 30.0, 64.0, 10.0, "minecraft:horse");
+    w.horse_variant = 3;
+    w.horse_markings = 2;
+    app.live_mobs_updated(vec![w, wire_zombie(9, 40.0, 64.0, 10.0)]);
+    assert_eq!(app.net_mobs.len(), 2, "the horse AND the zombie project");
+    let z = app.net_mobs.iter().find(|m| m.id == 9).unwrap();
+    assert_eq!(z.kind, crate::mob::MobKind::Zombie);
+    assert_eq!(
+        z.horse_variant, 0,
+        "the gate the zombie's fields never arms"
+    );
+    assert_eq!(z.horse_markings, 0, "the honest NONE the silence keeps");
+}

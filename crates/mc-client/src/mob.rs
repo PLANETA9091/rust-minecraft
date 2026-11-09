@@ -567,6 +567,30 @@ pub const CHICKEN_DATA_SOUND_VARIANT_ID: u8 = 19;
 pub const PIG_DATA_SOUND_VARIANT_ID: u8 = 20;
 pub const COW_DATA_SOUND_VARIANT_ID: u8 = 19;
 
+/// THE HORSE'S OWN VARIANT-INT WIRE INDEX — the same class-tree walk
+/// the farm animals' holder slots wear, the equine branch's own two
+/// rungs the 26.2 javap speaks: Entity's 8 + LivingEntity's 7 + Mob's
+/// 1 + the AgeableMob pair (BABY 16, AGE_LOCKED 17) + Animal's ZERO
+/// defineId walk + AbstractHorse's own DATA_ID_FLAGS the 18 slot arms
+/// + Horse's own `DATA_ID_TYPE_VARIANT` the 19 slot names (each
+/// clinit the full count carries — AbstractHorse 1, Horse 1 — the
+/// sibling chains the same base the chicken 18 / pig 18-20 / cow
+/// 18-19 rows bank). The wire rides it as the INT serializer lane
+/// (id 1 — `EntityDataSerializers.INT` the
+/// `SynchedEntityData.set(Integer.valueOf)` walk speaks): the PACKED
+/// coat law the `setVariantAndMarkings` bytecode answers verbatim —
+/// `(variant.getId() & 0xFF) | ((markings.getId() << 8) & 0xFF00)`
+/// the setTypeVariant arg folds [pc 0-23], the low byte the Variant
+/// byId arm wears [`getVariant`'s `int & 0xFF` pc 0-11], the next
+/// byte the Markings byId arm wears [`getMarkings`'s
+/// `(int & 0xFF00) >> 8` pc 0-13]. The ctor default the
+/// `defineSynchedData` walk speaks verbatim (the
+/// `builder.define(DATA_ID_TYPE_VARIANT, iconst_0)` pair pc 5-13 —
+/// variant 0 WHITE + markings 0 NONE the vanilla client's own local
+/// default wears, the same 0 pair the spawner's finalize never
+/// speaks the silence keeps).
+pub const HORSE_DATA_TYPE_VARIANT_ID: u8 = 19;
+
 /// THE PIG'S OWN VARIANT WORD (the minecraft:pig_variant registry's
 /// own trio — the SAME temperate/cold/warm words the chicken's table
 /// keeps, the decode the shared law wears).

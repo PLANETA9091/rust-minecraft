@@ -68115,6 +68115,18 @@ impl App {
                     crate::mob::MobKind::Cow => w.cow_sound_variant.clone(),
                     _ => None,
                 };
+                // THE HORSE'S OWN VARIANT INT rides the spawn (the
+                // packed coat word the projection decoded — the low
+                // byte the variant, the high byte the markings, the
+                // getVariant/getMarkings folds the 26.2 bytecode
+                // speaks): the KIND gate the merge arms — the fields
+                // the mesh + the markings render lanes read, the
+                // never-spoken accessor the honest 0 pair the ctor's
+                // local default keeps
+                if let crate::mob::MobKind::Horse = m.kind {
+                    m.horse_variant = w.horse_variant;
+                    m.horse_markings = w.horse_markings;
+                }
                 // THE EQUIPMENT WORD rides the spawn (the Set Equipment
                 // store's MAINHAND the projection resolved — the armed
                 // spawn the hand the render lane draws from tick one,
@@ -68231,6 +68243,15 @@ impl App {
                 crate::mob::MobKind::Cow => w.cow_sound_variant.clone(),
                 _ => None,
             };
+            // THE HORSE'S OWN VARIANT INT rides with the pose (the same
+            // kind-gated fold the fresh spawn speaks — the coat is
+            // STATE the server owns, the re-tint the packet's own int
+            // the fields re-wear, the never-spoken accessor the
+            // honest 0 pair keeps)
+            if let crate::mob::MobKind::Horse = m.kind {
+                m.horse_variant = w.horse_variant;
+                m.horse_markings = w.horse_markings;
+            }
             // THE NAME WORD rides with the pose (the same binary
             // assign the fresh spawn speaks — the name is STATE, the
             // rename the server speaks replaces, the silence unnamed)

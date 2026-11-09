@@ -2326,6 +2326,26 @@ pub struct WireMob {
     /// THE COW SOUND VARIANT'S OWN WORD (the COW_SOUND_VARIANT holder
     /// the slot-19 entry carries — the same law the pair keeps).
     pub cow_sound_variant: Option<String>,
+    /// THE HORSE VARIANT'S OWN WORD (the DATA_ID_TYPE_VARIANT int the
+    /// slot-19 entry carries — the class-tree walk the
+    /// HORSE_DATA_TYPE_VARIANT_ID doc banks, the INT serializer the
+    /// plain lane rides): the PACKED coat the low byte wears (the
+    /// `getVariant`'s `int & 0xFF` arm — the Variant byId walk the
+    /// 26.2 bytecode speaks), the never-spoken accessor the honest 0
+    /// WHITE default keeps (the `defineSynchedData` iconst_0 pair the
+    /// ctor's own local default wears). The read is the HORSE's own
+    /// kind gate — the other bodies' index-19 traffic the word never
+    /// asks for — the merge arm the state fields sets, the render's
+    /// coat pick the verdict reads.
+    pub horse_variant: u8,
+    /// THE HORSE MARKINGS' OWN WORD (the same packed int the high
+    /// byte wears — `getMarkings`'s `(int & 0xFF00) >> 8` fold the
+    /// setVariantAndMarkings pair's own inverse speaks): the spots
+    /// byId walk the MarkingLayer's map keys, the never-spoken
+    /// accessor the honest 0 NONE default keeps (the overlay never
+    /// arms the clear coat), the same kind gate the variant word
+    /// keeps.
+    pub horse_markings: u8,
     /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
     /// the item id the registry's wire order resolves to the BARE
     /// name): the weapon the mob's own hand wears, the same word the
@@ -5046,6 +5066,7 @@ impl LiveView {
                     && type_name != "minecraft:sheep"
                     && type_name != "minecraft:spider"
                     && type_name != "minecraft:chicken"
+                    && type_name != "minecraft:horse"
                 {
                     return None; // not-yet-drawn types stay honest data
                 }
@@ -5234,6 +5255,34 @@ impl LiveView {
                         }
                     } else {
                         None
+                    },
+                    // THE HORSE VARIANT'S OWN WORD (the packed int the
+                    // DATA_ID_TYPE_VARIANT slot carries — the HORSE's
+                    // own kind gate the read keeps, the low byte the
+                    // getVariant law wears): the never-spoken accessor
+                    // the honest 0 the ctor's iconst_0 default keeps
+                    horse_variant: if type_name == "minecraft:horse" {
+                        match e.data.get(&crate::mob::HORSE_DATA_TYPE_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::Int(v)) => (*v & 0xFF) as u8,
+                            _ => 0,
+                        }
+                    } else {
+                        0
+                    },
+                    // THE HORSE MARKINGS' OWN WORD (the same packed
+                    // int's high byte — the getMarkings fold the
+                    // setVariantAndMarkings pair's inverse speaks):
+                    // the same gate the variant word keeps, the
+                    // never-spoken accessor the honest 0 NONE keeps
+                    horse_markings: if type_name == "minecraft:horse" {
+                        match e.data.get(&crate::mob::HORSE_DATA_TYPE_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::Int(v)) => {
+                                ((*v >> 8) & 0xFF) as u8
+                            }
+                            _ => 0,
+                        }
+                    } else {
+                        0
                     },
                     // THE EQUIPMENT WORD (the store's MAINHAND slot 0 —
                     // the Set Equipment packet the model merged, the
@@ -7848,6 +7897,93 @@ mod tests {
             "the cow's slot-18 holder the synced table resolves"
         );
         assert_eq!(cw.pig_variant, None, "the cow's body the pig word never asks for");
+    }
+
+    /// THE HORSE'S OWN VARIANT INT (the DATA_ID_TYPE_VARIANT packed
+    /// int the slot-19 entry carries — the class-tree walk the
+    /// HORSE_DATA_TYPE_VARIANT_ID doc banks): the wire int the
+    /// projection splits through the getVariant/getMarkings folds
+    /// (the low byte the coat, the high byte the spots — the
+    /// setVariantAndMarkings pair the 26.2 bytecode speaks), the
+    /// HORSE's own kind gate the read keeps (the other bodies'
+    /// index-19 traffic the word never asks for), the never-spoken
+    /// accessor the honest 0 pair the ctor's iconst_0 default wears.
+    #[test]
+    fn the_projection_carries_the_horse_variant_int() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = horse, id 1 = sheep — the
+        // horse the packed int's own body, the sheep the OTHER
+        // branch's
+        m.registry.entity_types =
+            vec!["minecraft:horse".to_string(), "minecraft:sheep".to_string()];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 9,
+            uuid: 1,
+            type_id: 0,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 10,
+            uuid: 2,
+            type_id: 1,
+            x: 30.0,
+            y: 64.0,
+            z: 32.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        let mut view = LiveView { model: m, side: 1 };
+        // the never-spoken accessor: the honest 0 pair both bodies'
+        // silence keeps (WHITE + NONE the ctor's iconst_0 wears)
+        let upd = view.refresh(example_mapper);
+        let h = upd.mobs.iter().find(|m| m.id == 9).unwrap();
+        assert_eq!(h.horse_variant, 0, "the silence the honest WHITE keeps");
+        assert_eq!(h.horse_markings, 0, "the silence the honest NONE keeps");
+        // THE PACKED INT's own ride (the chestnut coat + the black
+        // dots the setVariantAndMarkings fold packs — the 2 | 4 << 8
+        // int the wire carries): the low byte the variant split
+        // wears, the high byte the markings
+        view.model
+            .apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+                id: 9,
+                entries: vec![mc_protocol::play::SetEntityDataEntry {
+                    index: crate::mob::HORSE_DATA_TYPE_VARIANT_ID,
+                    serializer: mc_protocol::play::entity_data_serializers::INT,
+                    value: mc_protocol::play::EntityDataEntry::Int(2 | 4 << 8),
+                }],
+            }));
+        // the sheep's index-19 traffic: the data the horse word never
+        // asks for — the gate the other branch keeps
+        view.model
+            .apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+                id: 10,
+                entries: vec![mc_protocol::play::SetEntityDataEntry {
+                    index: crate::mob::HORSE_DATA_TYPE_VARIANT_ID,
+                    serializer: mc_protocol::play::entity_data_serializers::INT,
+                    value: mc_protocol::play::EntityDataEntry::Int(6 | 3 << 8),
+                }],
+            }));
+        let upd = view.refresh(example_mapper);
+        let h = upd.mobs.iter().find(|m| m.id == 9).unwrap();
+        assert_eq!(h.horse_variant, 2, "the low byte the coat id wears");
+        assert_eq!(h.horse_markings, 4, "the high byte the spots id wears");
+        let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(
+            s.horse_variant, 0,
+            "the sheep's index-19 traffic the gate refuses"
+        );
+        assert_eq!(s.horse_markings, 0, "the gate the other body keeps");
     }
 
     /// THE SPIDER'S OWN CLIMB WORD (the DATA_FLAGS_ID 16 byte's bit 0x1
