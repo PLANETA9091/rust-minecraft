@@ -56593,3 +56593,328 @@ fn the_offer_words_the_result_bank_wears() {
         "the hotbar row's own word the offer's product lays"
     );
 }
+
+/// THE TAKE-KEY CENSUS'S OWN COMPLETION RECORD (the autopush-541
+/// round — the Q family's TEN named lanes the walk answers ALL, the
+/// family record the census banks): the census's own PLAYER LANES
+/// the Q answers wear — the CASE WORLD the no-screen head the
+/// selected row drains, the CASE INVENTORY the store row the Q
+/// drains, the CASE CREATIVE the wrap row the Q drains, the CASE
+/// TABLE the grid cell the Q drains. Each press ONE drop the
+/// drained stack's own (id, count) the lane lends — the family
+/// record the census wears.
+#[test]
+fn the_census_the_player_lanes_the_q_answers() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE CASE WORLD'S OWN HEAD (the no-screen lane the selected
+    // row answers — the Q the whole stack throws)
+    app.screen = ScreenKind::World;
+    app.inventory.items[0] = (dirt, 4);
+    app.on_drop_key(true);
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the selected row the Q drains"
+    );
+    let d = app.drops.last().expect("the world throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 4),
+        "the world throw the stack wears"
+    );
+    // THE CASE INVENTORY'S OWN ROW (the store row the Q drains)
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    app.inventory.items[5] = (dirt, 3);
+    app.mouse_pos = Some((336, 246)); // store 5's own rect
+    app.on_inventory_drop_key(true);
+    assert_eq!(app.inventory.items[5], (0, 0), "the store row the Q drains");
+    let d = app
+        .drops
+        .last()
+        .expect("the inventory throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 3),
+        "the inventory throw the stack wears"
+    );
+    // THE CASE CREATIVE'S OWN WRAP (the wrap row the Q drains — the
+    // creative screen the mode the tab answers)
+    app.game_mode = GameMode::Creative;
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Creative, "the creative arm opens");
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    app.creative_panel = (100, 50);
+    app.inventory.items[12] = (dirt, 7);
+    let (wx, wy) = (100 + 9 + 3 * 18 + 8, 50 + 54 + 8); // main-12's own rect
+    app.mouse_pos = Some((wx, wy));
+    app.on_creative_drop_key(true);
+    assert_eq!(app.inventory.items[12], (0, 0), "the wrap row the Q drains");
+    let d = app
+        .drops
+        .last()
+        .expect("the creative throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 7),
+        "the creative throw the stack wears"
+    );
+    // THE CASE TABLE'S OWN CELL (the grid cell the Q drains)
+    app.game_mode = GameMode::Survival;
+    app.open(ScreenKind::Crafting);
+    app.table_panel = inventory_panel_origin(640, 360);
+    app.table_grid[3] = (dirt, 2);
+    let (cx, cy) = table_craft_origin(app.table_panel, 3);
+    app.mouse_pos = Some((cx + 8, cy + 8));
+    app.on_table_drop_key(true);
+    assert_eq!(app.table_grid[3], (0, 0), "the grid cell the Q drains");
+    assert_eq!(app.inv_carried, (0, 0), "the cursor never touched");
+    let d = app.drops.last().expect("the table throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 2),
+        "the table throw the stack wears"
+    );
+}
+
+/// THE TAKE-KEY CENSUS'S OWN COMPLETION RECORD (the autopush-541
+/// round — the family record's own CONTAINER LANES the Q answers
+/// wear): the CASE CHEST the live session the packet speaks [the
+/// local spawn the server's own lane keeps], the CASE FURNACE the
+/// fuel seat the Q drains, the CASE BREWING the bottle seat the Q
+/// drains, the CASE DISPENSER the grid seat the Q drains, the CASE
+/// ENCHANT the item seat the Q drains, the CASE ANVIL the input
+/// seat the Q drains, the CASE MERCHANT the payment seat the Q
+/// drains. Each offline press ONE drop the drained stack's own
+/// (id, count) the lane lends — the wire lane the packet the
+/// census wears.
+#[test]
+fn the_census_the_container_lanes_the_q_answers() {
+    use crate::world_view::{ContainerCommand, ContainerInput};
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    // THE CASE CHEST'S OWN PACKET (the live session the wire lane
+    // wears — the drained cell the Throw packet names, the local
+    // drop the server's own lane spawns)
+    app.open(ScreenKind::Chest);
+    let panel = chest_panel_origin(640, 360);
+    app.chest_panel = panel;
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_slot_rects = chest_rects_for(panel);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(click_tx);
+    app.chest_is_live = true;
+    app.chest_live_window = Some((5, 11));
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.chest_slots[6] = (dirt, 5);
+    let (gx, gy) = chest_container_slot(panel, 6);
+    app.mouse_pos = Some((gx + 9, gy + 9));
+    let drops_before = app.drops.len();
+    app.on_chest_drop_key(true);
+    assert_eq!(app.chest_slots[6], (0, 0), "the grid cell the Q drains");
+    assert_eq!(app.chest_carried, (0, 0), "the cursor never touched");
+    assert_eq!(
+        app.drops.len(),
+        drops_before,
+        "the wire lane the local spawn the wall keeps"
+    );
+    match click_rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(cmd) => {
+            assert_eq!(cmd.slot, 6, "the grid cell's own menu id");
+            assert_eq!(cmd.input, ContainerInput::Throw, "the Throw the Q wears");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE FURNACE'S OWN SEAT (the fuel seat the Q drains — the
+    // offline sim the drop spawns)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+    app.open_furnace(cell);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    app.furnace_slots[1] = (dirt, 3);
+    let (fx, fy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((fx + 8, fy + 8));
+    app.on_furnace_drop_key(true);
+    assert_eq!(app.furnace_slots[1], (0, 0), "the fuel seat the Q drains");
+    let d = app.drops.last().expect("the furnace throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 3),
+        "the furnace throw the stack wears"
+    );
+    // THE CASE BREWING'S OWN SEAT (the bottle seat the Q drains)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    app.open_brewing_for(cell);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    app.brewing_slots[1] = (dirt, 2);
+    let (bx, by) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((bx + 8, by + 8));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.brewing_slots[1], (0, 0), "the bottle seat the Q drains");
+    assert_eq!(app.brewing_carried, (0, 0), "the cursor never touched");
+    let d = app.drops.last().expect("the brewing throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 2),
+        "the brewing throw the stack wears"
+    );
+    // THE CASE DISPENSER'S OWN SEAT (the grid seat the Q drains)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+    app.open_dispenser_for(cell);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    app.dispenser_slots[2] = (dirt, 6);
+    let (dx, dy) = {
+        app.dispenser_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 2)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((dx + 8, dy + 8));
+    app.on_dispenser_drop_key(true);
+    assert_eq!(app.dispenser_slots[2], (0, 0), "the grid seat the Q drains");
+    assert_eq!(app.dispenser_carried, (0, 0), "the cursor never touched");
+    let d = app
+        .drops
+        .last()
+        .expect("the dispenser throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 6),
+        "the dispenser throw the stack wears"
+    );
+    // THE CASE ENCHANT'S OWN SEAT (the item seat the Q drains)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ENCHANTING_TABLE);
+    app.open_enchanting_for(cell);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    app.enchant_slots[0] = (dirt, 1);
+    let (ex, ey) = {
+        app.enchant_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((ex + 8, ey + 8));
+    app.on_enchant_drop_key(true);
+    assert_eq!(app.enchant_slots[0], (0, 0), "the item seat the Q drains");
+    let d = app.drops.last().expect("the enchant throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 1),
+        "the enchant throw the stack wears"
+    );
+    // THE CASE ANVIL'S OWN SEAT (the input seat the Q drains)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    app.anvil_slots[0] = (dirt, 9);
+    let (ax, ay) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((ax + 8, ay + 8));
+    app.on_anvil_drop_key(true);
+    assert_eq!(app.anvil_slots[0], (0, 0), "the input seat the Q drains");
+    let d = app.drops.last().expect("the anvil throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 9),
+        "the anvil throw the stack wears"
+    );
+    // THE CASE MERCHANT'S OWN SEAT (the payment seat the Q drains —
+    // the offline sim the drop spawns)
+    app.merchant_is_live = false;
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_carried = (0, 0);
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = (0..39)
+        .map(|i| (100 + (i as i32) * 20, 100, i as i16))
+        .collect();
+    app.merchant_slots[0] = (dirt, 8);
+    app.mouse_pos = Some((100 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the payment seat the Q drains"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the cursor never touched");
+    let d = app
+        .drops
+        .last()
+        .expect("the merchant throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 8),
+        "the merchant throw the stack wears"
+    );
+}
