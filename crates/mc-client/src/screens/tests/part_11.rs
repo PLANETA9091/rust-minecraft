@@ -53883,6 +53883,110 @@ fn the_furnace_drop_key_the_kinds_the_seats_retire() {
     );
 }
 
+/// THE CHEST DROP KEY'S OWN KIND RETIRE (the take-key census's own
+/// chest lane — the autopush-530 round the dev-236/237 law the open
+/// belief re-wears): the live window's Q the drained seats the banks
+/// clear (the swap/quick/click lanes' own seat writes the twin
+/// answers): the CASE GRID the kinded potion the cell drains (the
+/// chest bank's word the NONE retires), the CASE MIRROR MAIN the
+/// kinded potion the store row drains (the shared bank's +6 mapped
+/// seat the word retires), the CASE MIRROR HOTBAR the kinded potion
+/// the hotbar row drains (the -27 mapped seat the word retires, the
+/// HUD the every-mutation law syncs), the KINDLESS drain the bank
+/// the silence keeps.
+#[test]
+fn the_chest_drop_key_the_kinds_the_seats_retire() {
+    use crate::world_view::{ContainerCommand, ContainerInput};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(210);
+    app.enter_world();
+    app.open(ScreenKind::Chest);
+    let panel = chest_panel_origin(640, 360);
+    app.chest_panel = panel;
+    app.chest_slots = vec![(0, 0); 27];
+    app.chest_row_potion_kinds = vec![none; 27];
+    app.chest_mirror = vec![(0, 0); 36];
+    app.chest_slot_rects = chest_rects_for(panel);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(click_tx);
+    app.chest_is_live = true;
+    app.chest_live_window = Some((5, 11));
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    // THE CASE GRID'S OWN RETIRE (the kinded potion the cell drains
+    // — the chest bank's word the NONE retires)
+    app.chest_slots[6] = (potion, 1);
+    app.chest_row_potion_kinds[6] = kind_a;
+    let (gx, gy) = chest_container_slot(panel, 6);
+    app.mouse_pos = Some((gx + 9, gy + 9));
+    app.on_chest_drop_key(true);
+    assert_eq!(app.chest_slots[6], (0, 0), "the cell the Q drains");
+    assert_eq!(
+        app.chest_row_potion_kinds[6], none,
+        "the drained cell the word retires"
+    );
+    assert_eq!(app.chest_carried, (0, 0), "the cursor never touched");
+    match click_rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.slot, 6, "the grid cell's own menu id");
+            assert_eq!(c.input, ContainerInput::Throw);
+            assert_eq!(c.changed, vec![(6, (0, 0))], "the drain named");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE MIRROR MAIN'S OWN RETIRE (the kinded potion the store
+    // row drains — the shared bank's +6 mapped seat the word retires)
+    app.chest_mirror[10] = (potion, 1);
+    app.items_potion_kinds[19] = kind_b;
+    let (mx, my) = chest_mirror_slot(panel, 10);
+    app.mouse_pos = Some((mx + 9, my + 9));
+    app.on_chest_drop_key(true);
+    assert_eq!(app.chest_mirror[10], (0, 0), "the row the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[19], none,
+        "the mapped seat the word retires"
+    );
+    match click_rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.slot, 37, "the mirror row's own menu id");
+            assert_eq!(c.changed, vec![(37, (0, 0))], "the drain named");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE MIRROR HOTBAR'S OWN RETIRE (the kinded potion the
+    // hotbar row drains — the -27 mapped seat the word retires, the
+    // HUD the sync keeps)
+    app.chest_mirror[29] = (potion, 1);
+    app.items_potion_kinds[2] = kind_c;
+    let (hx, hy) = chest_mirror_slot(panel, 29);
+    app.mouse_pos = Some((hx + 9, hy + 9));
+    app.on_chest_drop_key(true);
+    assert_eq!(app.chest_mirror[29], (0, 0), "the hotbar the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.hotbar_slots[2], (0, 0), "the HUD synced");
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the row
+    // drains — the bank the NONE the drain never mints)
+    app.chest_mirror[31] = (dirt, 7);
+    app.items_potion_kinds[4] = none;
+    let (dx, dy) = chest_mirror_slot(panel, 31);
+    app.mouse_pos = Some((dx + 9, dy + 9));
+    app.on_chest_drop_key(true);
+    assert_eq!(app.chest_mirror[31], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.items_potion_kinds[4], none,
+        "the kindless drain the silence keeps"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the

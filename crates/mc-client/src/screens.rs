@@ -46921,7 +46921,11 @@ impl App {
     /// the SERVER's Add Entity lane spawns (no local prediction — the
     /// wire's own law the throw rounds keep); the mirror's hotbar
     /// rows (the menu 54..62 the store indices 27..35 speak) the HUD
-    /// row's belief syncs.
+    /// row's belief syncs, THE DRAINED SEATS the banks clear (the
+    /// dev-236/237 law the open belief re-wears — the grid cell's
+    /// chest bank word + the mirror row's mapped store seat the NONE
+    /// retires, the same walk the autopush-530 round the take-key
+    /// census's own chest lane answers).
     pub fn on_chest_drop_key(&mut self, whole_stack: bool) {
         if self.screen != ScreenKind::Chest {
             return; // this lane IS the container screen's own walk
@@ -46965,9 +46969,26 @@ impl App {
             let new = if whole_stack { (0, 0) } else { (id, count - 1) };
             if menu < n {
                 self.chest_slots[menu] = new;
+                // THE DRAINED CELL'S OWN KIND RETIRE (the dev-236/237
+                // law the chest's open belief re-wears — the swap/
+                // quick lanes' own seat writes the Q twin answers, the
+                // stale kind the later potion never wears)
+                if new.1 <= 0 && menu < self.chest_row_potion_kinds.len() {
+                    self.chest_row_potion_kinds[menu] = crate::brewing_sim::POTION_KIND_NONE;
+                }
             } else {
                 let mi = menu - n;
                 self.chest_mirror[mi] = new;
+                // THE DRAINED ROW'S OWN KIND RETIRE (the shared bank's
+                // mapped seat the quick lane's own numbering re-keys —
+                // the main the +6 shift answers, the hotbar the -27
+                // speaks, the drained row the word retires)
+                if new.1 <= 0 {
+                    let row = if mi < 27 { 9 + mi } else { mi - 27 };
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                }
                 if mi >= 27 {
                     let mut row = [(0, 0); 9];
                     row.copy_from_slice(&self.chest_mirror[27..36]);
