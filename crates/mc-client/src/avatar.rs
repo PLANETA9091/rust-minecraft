@@ -3228,6 +3228,111 @@ impl HorseModel {
     }
 }
 
+// ===========================================================================
+// THE HORSE MARKINGS LAYER (javap 26.2 `HorseMarkingLayer` the dev-239
+// census banks verbatim off the official jar — the same-model overlay
+// pass the layer stack speaks)
+// ===========================================================================
+
+/// THE MARKINGS' OWN TEXTURE SHA1S (the 26.2 jar's verbatim bytes,
+/// hashed over the extracted `entity/horse/horse_markings_*.png`
+/// rows) — the HorseMarkingLayer's LOCATION_BY_MARKINGS map the
+/// clinit's put walk banks: WHITE(1) → horse_markings_white(+_baby),
+/// WHITE_FIELD(2) → horse_markings_whitefield(+_baby), WHITE_DOTS(3)
+/// → horse_markings_whitedots(+_baby), BLACK_DOTS(4) →
+/// horse_markings_blackdots(+_baby). The NONE(0) row the map's own
+/// INVISIBLE pair serves (`minecraft:invisible` both lanes — the
+/// submit's `if_acmpeq` gate the layer keeps: the get returns the
+/// invisible textures, the render the same early return wears — no
+/// row the NONE kind ever loads).
+const HORSE_MARKINGS_PNG_SHA1S: [&str; 8] = [
+    "5526d3b93575459038638f0c0add8ea785584e43", // white adult
+    "395783da1c54f33ac3a65a3f8dadd1de431f58a7", // white baby
+    "518b04c8d6123b68506843ff4d4c2508e2439b0e", // whitefield adult
+    "e1c7949e817586aa1ef4d8f15fb378925ae6fac2", // whitefield baby
+    "f64d37776c003d9ec996cbd8d6312f19fcf85c43", // whitedots adult
+    "c0b37dffa35dab94897ca5d7074c29b55f3c83fb", // whitedots baby
+    "87eb8972b687ad50e5a6f08792c572a1531809c5", // blackdots adult
+    "ceb8f36d0773aef255323d5fd56346feb413760b", // blackdots baby
+];
+
+/// THE MARKINGS' OWN RUNTIME PATHS (the clinit's `textures/entity/
+/// horse/horse_markings_*.png` rows the Identifier.withDefaultNamespace
+/// walk speaks, the baby pair the is_baby arm answers — the bare jar
+/// layout the load root reads, the enum-id order the WHITE row wears:
+/// kind 1 = WHITE, 2 = WHITE_FIELD, 3 = WHITE_DOTS, 4 = BLACK_DOTS).
+const HORSE_MARKINGS_RUNTIME_PATHS: [&str; 8] = [
+    "entity/horse/horse_markings_white.png",
+    "entity/horse/horse_markings_white_baby.png",
+    "entity/horse/horse_markings_whitefield.png",
+    "entity/horse/horse_markings_whitefield_baby.png",
+    "entity/horse/horse_markings_whitedots.png",
+    "entity/horse/horse_markings_whitedots_baby.png",
+    "entity/horse/horse_markings_blackdots.png",
+    "entity/horse/horse_markings_blackdots_baby.png",
+];
+
+/// THE MARKINGS OVERLAY'S OWN MODEL — the HorseMarkingLayer's same
+/// model the `getParentModel()` submit re-wears: the markings pass
+/// draws the BODY's own quads (the HorseModel quads the layer's
+/// submitModel walk serves) sampled through the MARKINGS texture, the
+/// `RenderTypes.entityTranslucent(tex)` blend the alpha answers. Four
+/// kinds x the adult/baby pair — the NONE kind never loads a row (the
+/// invisible pair the map serves, the early return the gate keeps).
+pub struct HorseMarkingsModel {
+    /// rows[kind - 1] = [adult_rgba, baby_rgba] — the four loaded
+    /// kinds the enum id 1..4 the paths wear (the NONE id 0 the gate
+    /// refuses before any row the load serves)
+    rows: [[Vec<u8>; 2]; 4],
+}
+
+impl HorseMarkingsModel {
+    /// Load + sha1-verify all eight markings rows (the map the layer
+    /// wears — one missing row the None keeps, the markings pass
+    /// never renders). `None` = the layer never renders (the same
+    /// honesty the other paths speak: the renderer must not lie about
+    /// its data).
+    pub fn load(root: &Path) -> Option<HorseMarkingsModel> {
+        let mut rows: [[Vec<u8>; 2]; 4] = Default::default();
+        for (i, (path, sha1)) in HORSE_MARKINGS_RUNTIME_PATHS
+            .iter()
+            .zip(HORSE_MARKINGS_PNG_SHA1S.iter())
+            .enumerate()
+        {
+            let bytes = std::fs::read(root.join(path)).ok()?;
+            let digest = sha1::Sha1::digest(&bytes);
+            if hex::encode(digest) != *sha1 {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+                return None;
+            }
+            if i % 2 == 0 {
+                rows[i / 2][0] = rgba;
+            } else {
+                rows[i / 2][1] = rgba;
+            }
+        }
+        Some(HorseMarkingsModel { rows })
+    }
+
+    /// The markings texel at (u, v) — the RGBA row-major words, v
+    /// down (the 64x64 layout's own stride the load verified; u/v
+    /// clamp to the 64 the square layout keeps). `kind` 0 (the NONE
+    /// row) the caller's gate refuses before the pixel walk — the
+    /// defensive clamp the id 1..4 the paths wear.
+    pub fn pixel(&self, kind: u8, baby: bool, u: f32, v: f32) -> [u8; 4] {
+        let idx = ((kind as usize).min(4)).max(1) - 1;
+        let tex = &self.rows[idx][if baby { 1 } else { 0 }];
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [tex[o], tex[o + 1], tex[o + 2], tex[o + 3]]
+    }
+}
+
 /// THE HORSE'S OWN POSE (javap `AbstractEquineModel.setupAnim` the
 /// 26.2 bytecode banks — the port's EquineRenderState stand-in the
 /// honest absences wear: the eat/stand/feeding animations the offline

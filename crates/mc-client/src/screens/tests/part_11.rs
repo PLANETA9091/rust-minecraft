@@ -57727,3 +57727,141 @@ fn the_horse_the_mesh_the_quads_wear() {
         .count();
     assert!(differ > 0, "the walk the legs' own fold speaks");
 }
+
+/// THE HORSE MARKINGS LAYER'S OWN WALK (javap 26.2 `HorseMarkingLayer`
+/// + `Markings` the dev-239 census banks — the same-model overlay pass
+/// the LOCATION_BY_MARKINGS map serves, the entityTranslucent blend
+/// the texel's own alpha answers, the NONE kind the invisible pair's
+/// early return keeps, the WRAP strategy the by-id law wears): the
+/// eight rows the load sha1-verifies, the pixel lane the kind + the
+/// baby pair pick, the overlay quads the body's own set the layer
+/// re-wears, the NONE body the gate never arms.
+#[test]
+fn the_horse_the_markings_the_layer_wears() {
+    // THE LAYOUT'S OWN VERDICT (the real texture bytes the load
+    // sha1-verifies — the cached extract the port's own law keeps)
+    let root = assets_root();
+    let Some(model) = crate::avatar::HorseMarkingsModel::load(&root) else {
+        panic!("the cached extract the eight markings rows load");
+    };
+    // THE BY-ID'S OWN WRAP (javap `Markings.<clinit>` the tail walk
+    // banks — the `ByIdMap.continuous(..., WRAP)` putstatic the law
+    // speaks: the five rows the ctor's own ids wear, id 5 the NONE
+    // wrap serves, id -1 the BLACK_DOTS wrap serves — the coat
+    // Variant's CLAMP law a DIFFERENT map's own verdict)
+    assert_eq!(crate::mob::horse_markings_by_id(0), 0, "NONE the 0 id wears");
+    assert_eq!(crate::mob::horse_markings_by_id(1), 1, "WHITE the 1 id wears");
+    assert_eq!(
+        crate::mob::horse_markings_by_id(2),
+        2,
+        "WHITE_FIELD the 2 id wears"
+    );
+    assert_eq!(
+        crate::mob::horse_markings_by_id(3),
+        3,
+        "WHITE_DOTS the 3 id wears"
+    );
+    assert_eq!(
+        crate::mob::horse_markings_by_id(4),
+        4,
+        "BLACK_DOTS the 4 id wears"
+    );
+    assert_eq!(
+        crate::mob::horse_markings_by_id(5),
+        0,
+        "the out-of-bounds id the NONE wrap wears"
+    );
+    assert_eq!(
+        crate::mob::horse_markings_by_id(-1),
+        4,
+        "the negative id the BLACK_DOTS wrap wears"
+    );
+    // THE PIXEL'S OWN LANE (the marked kinds the 1..4 ids the paths
+    // wear — each kind's own marked texels the 64x64 decode answers,
+    // the white/whitedots rows the HALF-ALPHA shapes the translucent
+    // blend keeps [no opaque row the white ids ever speak], the
+    // transparent margins the cutout law keeps; the kindless 0 the
+    // defensive clamp the 1 row reads)
+    for kind in 1..5u8 {
+        for baby in [false, true] {
+            let mut marked = 0;
+            let mut clear = 0;
+            for v in 0..64u32 {
+                for u in 0..64u32 {
+                    let [r, g, b, a] = model.pixel(kind, baby, u as f32, v as f32);
+                    if a > 0 {
+                        marked += 1;
+                    } else {
+                        clear += 1;
+                    }
+                    let _ = (r, g, b);
+                }
+            }
+            assert!(
+                marked > 32 && clear > 1024,
+                "the kind {kind} baby {baby} row the marked+clear split wears"
+            );
+        }
+    }
+    // THE KINDS' OWN DISTINCT SKINS (the map's own rows the ids pick
+    // — the (23, 33) probe the four kinds the pairwise different
+    // texels speak)
+    let probe = (23.0f32, 33.0f32);
+    let white = model.pixel(1, false, probe.0, probe.1);
+    let whitefield = model.pixel(2, false, probe.0, probe.1);
+    let whitedots = model.pixel(3, false, probe.0, probe.1);
+    let blackdots = model.pixel(4, false, probe.0, probe.1);
+    let distinct = [
+        (white, whitefield),
+        (white, whitedots),
+        (white, blackdots),
+        (whitefield, whitedots),
+        (whitefield, blackdots),
+        (whitedots, blackdots),
+    ];
+    for (a, b) in distinct.iter() {
+        assert_ne!(a, b, "the kinds' own rows the distinct texels wear");
+    }
+    // THE BABY'S OWN ROW (the age split the map's own baby pair
+    // answers — the distinct skin the baby lane wears)
+    let adult_px = model.pixel(1, false, 11.0, 1.0);
+    let baby_px = model.pixel(1, true, 11.0, 1.0);
+    assert_ne!(
+        adult_px, baby_px,
+        "the baby the markings' own row the split wears"
+    );
+    // THE OVERLAY'S OWN QUADS (javap the `submitModel(getParentModel()
+    // ...)` walk the same pose serves — the markings pass the body's
+    // OWN quad set the layer re-wears, the same uv the different
+    // texture the two texts answer)
+    let Some(coats) = crate::avatar::HorseModel::load(&root) else {
+        panic!("the cached extract the fourteen coats load");
+    };
+    let state = crate::avatar::QuadrupedState {
+        yaw_deg: 0.0,
+        pitch_deg: 0.0,
+        head_yaw_off_deg: 0.0,
+        walk_pos: 0.0,
+        walk_speed: 0.0,
+        age_ticks: 0.0,
+        death_time: 0.0,
+    };
+    let feet = crate::math::Vec3::new(0.0, 0.0, 0.0);
+    let quads = coats.quads(&state, feet, 0.0, 0.0);
+    assert_eq!(
+        quads.len(),
+        11 * 6,
+        "the overlay's own geometry the body's 11-cube set wears"
+    );
+    // THE SAME GEOMETRY, THE DIFFERENT TEXTURE (the body's coat sample
+    // the markings sample the same (u, v) the two texts answer — the
+    // (0, 32) body texel the white coat's own pale row, the whitefield
+    // markings the same uv the transparent margin speaks): the same uv
+    // the two texts the differing words wear
+    let coat = coats.pixel(0, false, 0.0, 32.0);
+    let marking = model.pixel(2, false, 0.0, 32.0);
+    assert_ne!(
+        coat, marking,
+        "the same uv the coat + the markings the differing words wear"
+    );
+}

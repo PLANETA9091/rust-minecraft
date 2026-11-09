@@ -9067,6 +9067,14 @@ pub struct App {
     /// the horse never renders, the honest missing-asset law the
     /// other bodies keep)
     pub horse_model: Option<crate::avatar::HorseModel>,
+    /// THE HORSE MARKINGS LAYER'S OWN BAKE (javap `HorseMarkingLayer`
+    /// the 26.2 bytecode banks — the same-model overlay pass the
+    /// LOCATION_BY_MARKINGS map serves: the four kinds x the
+    /// adult/baby pair the HorseMarkingsModel.load sha1-verifies, the
+    /// NONE kind the invisible pair the early return keeps; `None` =
+    /// the markings pass never renders, the honest missing-asset law
+    /// the coat lane keeps)
+    pub horse_markings_model: Option<crate::avatar::HorseMarkingsModel>,
     /// THE FOURTH MOB's own WOOL (the SheepFurModel inflate-mesh over
     /// the sheep_wool.png texture — the SheepWoolLayer's own overlay,
     /// the dye tint the DyeColor table multiplies) — loaded lazily
@@ -13796,6 +13804,7 @@ impl App {
             wandering_trader_model: None,
             llama_model: None,
             horse_model: None,
+            horse_markings_model: None,
             sheep_wool_model: None,
             sheep_wool_undercoat_model: None,
             baby_sheep_model: None,
@@ -94515,6 +94524,12 @@ impl App {
         if self.horse_model.is_none() {
             self.horse_model = crate::avatar::HorseModel::load(&jar_root);
         }
+        // THE MARKINGS LAYER'S OWN LAZY LOAD (the eight-row set the
+        // same cache keeps — the load's sha1 verdict its own lane, the
+        // failed set the honest unseen keeps while the coat draws)
+        if self.horse_markings_model.is_none() {
+            self.horse_markings_model = crate::avatar::HorseMarkingsModel::load(&jar_root);
+        }
         // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
         // same cache keeps — each load's sha1 verdict its own lane,
         // the failed variant the honest unseen keeps while the others
@@ -94641,6 +94656,7 @@ impl App {
         let wandering_trader_model = self.wandering_trader_model.as_ref();
         let llama_model = self.llama_model.as_ref();
         let horse_model = self.horse_model.as_ref();
+        let horse_markings_model = self.horse_markings_model.as_ref();
         // the variants' honesty is ITS OWN lane: a failed variant skin
         // keeps only that variant's birds unseen, the temperate keeps
         // drawing
@@ -94687,6 +94703,13 @@ impl App {
         // adult's the sheep_wool.png (each lane's own Some the
         // unwrap's honesty reads)
         let mut wool_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3], bool)> = None;
+        // THE HORSE MARKINGS LAYER's out-of-band carry (the
+        // HorseMarkingLayer's own render order — the layer renders
+        // AFTER the body the same model re-wears, the quads the body
+        // pose's own set, the kind + the baby the closure's pick): the
+        // tuple rides the body draw the layer's order speaks, the NONE
+        // kind the invisible gate refuses
+        let mut markings_overlay: Option<(Vec<crate::avatar::AvatarQuad>, u8, bool)> = None;
         // THE UNDERCOAT LAYER's out-of-band carry (the
         // SheepWoolUndercoatLayer's own render order — SheepRenderer's
         // ctor bytecode adds the undercoat layer FIRST (loc 45..48),
@@ -94879,6 +94902,22 @@ impl App {
                     let variant = mob.horse_variant;
                     let baby = mob.is_baby();
                     let quads = horse.quads(&state, feet, cam.yaw, cam.pitch);
+                    // THE MARKINGS LAYER'S OWN GATE (javap `HorseMarkingLayer
+                    // .submit` the 26.2 bytecode banks — the map's get the
+                    // state.markings serves, the is_baby word the baby pick
+                    // arms, the `if_acmpeq INVISIBLE_TEXTURE` the NONE kind's
+                    // early return speaks): the NONE body the layer never
+                    // arms, the marked body the SAME quads the parent model
+                    // re-wears — the SECOND quads walk the same state the
+                    // layer's own submit pose serves (the overlay tuple the
+                    // body draw rides, the failed markings set the honest
+                    // bare-coat keeps)
+                    if let Some(mk) = horse_markings_model {
+                        if mob.horse_markings != 0 {
+                            let mk_quads = horse.quads(&state, feet, cam.yaw, cam.pitch);
+                            markings_overlay = Some((mk_quads, mob.horse_markings, baby));
+                        }
+                    }
                     (
                         quads,
                         Box::new(move |u, v| horse.pixel(variant, baby, u, v)),
@@ -96051,6 +96090,36 @@ impl App {
                     };
                     Some([r, g, b, a])
                 });
+            }
+            // THE HORSE MARKINGS LAYER's own draw (javap `HorseMarkingLayer
+            // .submit` the 26.2 bytecode banks — the layer renders the
+            // parent model's OWN quads through `RenderTypes.entity
+            // Translucent(tex)`, the `submitModel` walk the same pose the
+            // body draw serves): the LEQUAL depth func the coplanar
+            // body-mesh overlay answers (the tie the body's own face set
+            // speaks — the undercoat's law the same walk keeps), the NO-
+            // depth-write the translucent blend wears, the texel's own
+            // alpha the blend scales (the markings pngs the cutout
+            // margins the 0 keeps), the hurt shade the body's mix the
+            // layer multiplies (the getOverlayCoords word the body's own
+            // flash the pass re-wears)
+            if let Some((mk_quads, mk_kind, mk_baby)) = markings_overlay.take() {
+                let mk = horse_markings_model.unwrap();
+                let mk_sampled: Vec<crate::raster::SampledQuad> = mk_quads
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: "",
+                        tint: [q.shade * shade, q.shade * shade, q.shade * shade],
+                    })
+                    .collect();
+                fb.draw_translucent_sampled_quads_lequal(
+                    ctx.proj.mul(&ctx.view),
+                    &mk_sampled,
+                    1.0,
+                    &mut |_tex, u, v| Some(mk.pixel(mk_kind, mk_baby, u, v)),
+                );
             }
             // THE FLAME FEATURE (the burning mob's own overlay — the
             // vanilla draws the flame feature AFTER the body): the

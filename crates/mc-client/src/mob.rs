@@ -846,6 +846,23 @@ pub fn sheep_undercoat_shows(is_baby: bool, is_jeb: bool, wool_color: u8) -> boo
     !is_baby && (is_jeb || (wool_color & SHEEP_WOOL_COLOR_MASK) != 0)
 }
 
+/// THE MARKINGS' OWN BY-ID LAW (javap `Markings.<clinit>` the 26.2
+/// bytecode banks — the `ByIdMap.continuous(keyMapper, values(),
+/// ByIdMap$OutOfBoundsStrategy.WRAP)` putstatic the clinit's tail
+/// walk speaks): the five enum rows NONE(0)/WHITE(1)/WHITE_FIELD(2)/
+/// WHITE_DOTS(3)/BLACK_DOTS(4) the ctor's own id pairs wear, the
+/// out-of-bounds id the WRAP strategy answers — id 5 wraps to
+/// values[5 % 5] = NONE, id -1 wraps to values[4] = BLACK_DOTS (the
+/// java `Math.floorMod` semantics the negative half speaks — the
+/// coat Variant's CLAMP law the 546 round banks a DIFFERENT map's
+/// own verdict). The HorseRenderState.markings the wire never
+/// carries yet: the spawner's `Markings.byId(this.random.nextInt(5))`
+/// draw the finalize lane the later round wears, the layer map's get
+/// the id serves.
+pub fn horse_markings_by_id(id: i32) -> u8 {
+    (((id % 5) + 5) % 5) as u8
+}
+
 /// THE JEB_ RAINBOW'S OWN WORD (javap ColorLerper.getLerpedColor's
 /// law — the isJebSheep branch SheepRenderState.getWoolColor speaks,
 /// the input the state's ageInTicks): the 16-color cycle walks the
@@ -5496,6 +5513,15 @@ pub struct Zombie {
     /// The horse spawner the later round arms — the wire's variant
     /// byte the merge sets when the lane rides.
     pub horse_variant: u8,
+    /// THE HORSE MARKINGS' OWN WORD (javap `net.minecraft.world.entity
+    /// .animal.equine.Markings` the 26.2 bytecode banks — the
+    /// NONE(0)/WHITE(1)/WHITE_FIELD(2)/WHITE_DOTS(3)/BLACK_DOTS(4)
+    /// order the clinit's enum ctor walk speaks, the HorseRenderState
+    /// .markings the HorseMarkingLayer's LOCATION_BY_MARKINGS map the
+    /// get walk reads; the ctor's 0 the NONE row the vanilla client's
+    /// own local default wears — the wire's variant int the merge
+    /// sets when the lane rides).
+    pub horse_markings: u8,
     /// THE LEASH'S OWN LINK (javap `TraderLlama.setLeashedTo(trader,
     /// true)` the tryToSpawnLlamaFor walk banks — the holder entity's
     /// id the pair's rope reads; the ctor's None the honest un-leashed
@@ -5924,6 +5950,7 @@ impl Zombie {
             strength: 0,
             llama_variant: 0,
             horse_variant: 0,
+            horse_markings: 0,
             leashed_to: None,
             leash_angular_momentum: 0.0,
             eat_animation_tick: 0,
