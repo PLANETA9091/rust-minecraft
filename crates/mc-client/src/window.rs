@@ -2838,6 +2838,12 @@ pub fn run_gui_app(
                 // packet speaks — the autopush-532 round the Q
                 // family's 3x3 lane speaks)
                 app.on_dispenser_drop_key(q_ctrl);
+                // THE ENCHANTING TABLE'S OWN Q (the SAME arm — the
+                // EnchantmentMenu the base class keeps, the offline
+                // sim the local walk the lane wears, the live window
+                // the packet speaks — the autopush-533 round the Q
+                // family's table lane speaks)
+                app.on_enchant_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's

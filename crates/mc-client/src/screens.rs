@@ -46430,6 +46430,179 @@ impl App {
         true
     }
 
+    /// THE ENCHANTING'S OWN Q WALK (the autopush-533 round — the Q
+    /// family's enchanting lane the census pins: the SAME base-class
+    /// keyPressed keyDrop arm the creative/inventory/table/chest/
+    /// furnace/brewing/dispenser seven the dispatch chain wears, the
+    /// EnchantmentMenu the inheritance the vanilla owes). THE LANES'
+    /// OWN SPLIT (the 510 swap walk's own split the table re-wears):
+    /// the wire session the BELIEF the wire twin answers, the offline
+    /// sim the LOCAL store walk answers — the rects/cursor/hover
+    /// gates the SAME geometry walk the swap lane speaks, the hasItem
+    /// gate the keyPressed chain keeps BEFORE the lane, the carried
+    /// cursor the doClick arm's own refusal, the taken the tryRemove
+    /// law, the drop entity the AIMED look spawns, the pair seats the
+    /// plain take answers (the item seat the max-1 the drain speaks,
+    /// the lapis seat the mayPickup TRUE the base keeps), the store
+    /// rows the write-through projection syncs, the drained rows the
+    /// KIND lanes the shared bank retires (the pair the FIELD-LESS
+    /// seats the kind-blind lane keeps — no word the seats never
+    /// bank), the tail the mirror + HUD sync follows. NO swing, the
+    /// container STAYS OPEN.
+    pub fn on_enchant_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Enchanting || self.dead {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the offline store NOT the truth there (the 510
+            // swap walk's own gate the take re-wears).
+            self.on_enchant_drop_key_wire(whole_stack);
+            return;
+        }
+        if self.enchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.enchant_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let menu = slot as usize;
+        let (id, count) = if menu < 2 {
+            *self.enchant_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            match Self::enchant_menu_to_inventory(menu) {
+                Some(row) => self.inventory.items[row],
+                None => *self.enchant_mirror.get(menu - 2).unwrap_or(&(0, 0)),
+            }
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.enchant_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if menu < 2 {
+            self.enchant_slots[menu] = new;
+        } else if let Some(row) = Self::enchant_menu_to_inventory(menu) {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers)
+            self.inventory.items[row] = new;
+        }
+        // THE DRAINED ROW'S OWN KIND RETIRE (the dev-236/237/530 law
+        // the table's lane re-wears — the shared bank's mapped seat
+        // the FIELD WRITE clears; the pair the FIELD-LESS seats the
+        // kind-blind lane keeps — no word the seats never bank)
+        if new.1 <= 0 {
+            if let Some(row) = Self::enchant_menu_to_inventory(menu) {
+                if row < self.items_potion_kinds.len() {
+                    self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
+        }
+        // THE TAIL'S OWN SYNC (the mirror row + the HUD row the
+        // projection keeps — the swap lane's own tail the walk shares)
+        self.enchant_mirror_sync_from_inventory();
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the live belief the doClick THROW arm
+    /// answers, the chest walk's own shape the 38 seats re-wear):
+    /// the hovered+hasItem gates the SAME rects walk the offline lane
+    /// keeps, the take the live cursor's gate the carried refusal
+    /// opens, THE DRAINED ROWS the kind lanes the take arm retires
+    /// (the mirror row the shared bank's mapped seat the FIELD WRITES
+    /// clear — the sink borrow's own law the held command keeps, the
+    /// pair the FIELD-LESS seats the silence wears), the hotbar rows
+    /// the HUD belief syncs, the packet the command lane carries (the
+    /// EMPTY changed map the carried refusal names, the drop entity
+    /// the SERVER's Add Entity lane spawns — no local prediction).
+    fn on_enchant_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.enchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.enchant_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.enchant_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        // THE MIRROR'S OWN BOUNDS (the stand-in's fresh vec the resize
+        // arms — the wholesale lane the 36 rows keeps)
+        if self.enchant_mirror.len() != 36 {
+            self.enchant_mirror.resize(36, (0, 0));
+        }
+        let menu = slot as usize;
+        let (id, count) = if menu < 2 {
+            *self.enchant_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            *self.enchant_mirror.get(menu - 2).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence, NO packet
+        }
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.enchant_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            if menu < 2 {
+                self.enchant_slots[menu] = new;
+            } else {
+                let mi = menu - 2;
+                self.enchant_mirror[mi] = new;
+                if mi >= 27 {
+                    let mut row = [(0, 0); 9];
+                    row.copy_from_slice(&self.enchant_mirror[27..36]);
+                    self.hotbar_slots = row;
+                }
+            }
+            // THE DRAINED ROW'S OWN KIND RETIRE (the shared bank's
+            // mapped seat the FIELD WRITES clear — the pair the
+            // FIELD-LESS seats the silence wears)
+            if new.1 <= 0 {
+                if let Some(row) = Self::enchant_menu_to_inventory(menu) {
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                }
+            }
+            note_batch_change(&mut changed, slot, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.enchant_carried,
+            },
+        ));
+    }
+
     /// THE FURNACE'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
     /// arm the container rounds bank, the doClick THROW table the
     /// inventory round v0.3.718 keeps verbatim; the furnace family's
