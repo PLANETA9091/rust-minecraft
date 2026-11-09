@@ -2985,6 +2985,10 @@ fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
         // kind rides — the type filter's predicate the same table
         // the selector reads)
         crate::mob::MobKind::TraderLlama => "minecraft:trader_llama",
+        // THE HORSE'S OWN ID (the equine family's own row the same
+        // table the selector reads — the horse census the wire
+        // name speaks)
+        crate::mob::MobKind::Horse => "minecraft:horse",
     }
 }
 
@@ -7460,6 +7464,14 @@ pub enum ScreenKind {
     /// addToFooter walk banks, the Escape/Done the onClose walk the
     /// lastScreen (the pause) returns.
     Stats,
+    /// THE HORSE'S OWN SCREEN (javap 26.2 AbstractHorseScreen the
+    /// base class the vanilla owes — the AbstractHorseMenu the
+    /// tamed+owned horse's own inventory serves): the saddle/armor
+    /// seat pair the horse inventory's own base rows wear, the
+    /// player's own store the standard rows mirror, the Q the
+    /// container family's own chain speaks. The OFFLINE
+    /// deterministic stand-in; the wire menu the later round banks.
+    Horse,
 }
 
 /// THE GAME MODE THE SWITCHER SPEAKS (javap 26.2 GameType's own client
@@ -9650,6 +9662,42 @@ pub struct App {
     /// the layout, the press finds it). The 16x16 inner box only (the
     /// vanilla Slot's own hit shape, the inset sprite's inside).
     pub chest_slot_rects: Vec<(i32, i32, i16)>,
+    /// THE HORSE SEATS' OWN STORE (javap 26.2 AbstractHorseMenu — the
+    /// horse inventory's own base pair the horse's own store keeps:
+    /// the seat 0 the SADDLE lane answers, the seat 1 the horse armor
+    /// the mayPlace law wears; the offline sim the (id, count) model
+    /// the container family keeps). The seats the horse's OWN memory
+    /// speak — the close the seats keep (the horse's own store the
+    /// world remembers, the reopen continues).
+    pub horse_seats: [(i32, i32); 2],
+    /// THE HORSE SEATS' OWN KIND ROW (the container family's own
+    /// parallel — the seats the saddle/armor lanes the kindless model
+    /// the word never lends: the potion the saddle seat the mayPlace
+    /// law never holds, the armor seat the same law keeps; the row
+    /// the NONE the seats keep).
+    pub horse_seat_potion_kinds: [i32; 2],
+    /// THE HORSE PANEL'S OWN ORIGIN (the render-time layout the press
+    /// walk hit-tests — the chest panel's own convention): the horse
+    /// chrome's top-left in GUI space, `(0, 0)` until the first
+    /// render spoke.
+    pub horse_panel: (i32, i32),
+    /// The horse slot hit boxes the LAST render laid out: (x, y, the
+    /// MENU's own slot number) — the seats 0/1 the pair speaks, the
+    /// player's own store the 36 rows the menu ids 2..37 ride (the
+    /// same render-time geometry law the chest rects keep).
+    pub horse_slot_rects: Vec<(i32, i32, i16)>,
+    /// THE HORSE CARRIED'S OWN CURSOR (the offline sim's local lane —
+    /// the (id, count) sentinel the chest carried keeps; the horse
+    /// screen's own cursor the container family's shape wears).
+    pub horse_carried: (i32, i32),
+    /// THE HORSE'S OWN OWNED VERDICT (javap the
+    /// `HorseInventorySlot.mayPickup` law the
+    /// `!isTamed() || isOwnedBy(player)` walk speaks — the open lane
+    /// the tamed+owned horse alone serves, the verdict the own horse
+    /// the offline sim banks): the THROW arm's own gate the Q walk
+    /// reads — the foreign horse the drain the gate refuses, the own
+    /// horse the seats the walk serves.
+    pub horse_owned: bool,
     /// THE CHEST PANEL'S OWN ORIGIN (the render-time layout the press
     /// walk hit-tests — the furnace panel's own convention): the
     /// generic_9x3 chrome's top-left in GUI space, `(0, 0)` until the
@@ -13865,6 +13913,12 @@ impl App {
             chest_carried: (0, 0),
             chest_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             chest_open_cell: None,
+            horse_seats: [(0, 0); 2],
+            horse_seat_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 2],
+            horse_panel: (0, 0),
+            horse_slot_rects: Vec::new(),
+            horse_carried: (0, 0),
+            horse_owned: false,
             container_stores: std::collections::HashMap::new(),
             container_stores_potion_kinds: std::collections::HashMap::new(),
             ender_chest_store_potion_kinds: vec![crate::brewing_sim::POTION_KIND_NONE; 27],
@@ -26507,8 +26561,322 @@ impl App {
             ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             ScreenKind::Beacon => self.close_beacon(ScreenKind::World),
             ScreenKind::Merchant => self.close_merchant(ScreenKind::World),
+            ScreenKind::Horse => self.close_horse(ScreenKind::World),
             _ => {}
         }
+    }
+
+    /// THE HORSE'S OWN OPEN (javap 26.2 AbstractHorseScreen the
+    /// vanilla owes — the horse's own inventory the mobInteract lane
+    /// serves, the tamed+owned horse the vanilla walk alone opens):
+    /// the OFFLINE stand-in the container family's own shape keeps —
+    /// the seats the horse's OWN memory keeps (the first open the
+    /// fresh pair wears, the reopen continues — the horse's own store
+    /// the vanilla menu's close never clears), the cursor fresh-empty
+    /// (the open's own carried), the OWNED VERDICT the open lane's
+    /// own precondition banks (the `isTamed() && isOwnedBy(player)`
+    /// gate the AbstractHorse mobInteract walk arms — the opened
+    /// screen the own horse the sim speaks).
+    pub fn open_horse(&mut self) {
+        self.enter_world();
+        self.horse_owned = true;
+        self.horse_carried = (0, 0);
+        self.open(ScreenKind::Horse);
+    }
+
+    /// THE HORSE'S OWN CLOSE (the vanilla Escape/E on the horse's
+    /// screen — the container family's own close walk the
+    /// AbstractContainerScreen base keeps): the carried stack rides
+    /// home (the same-item merges, the first-empty pass, the full
+    /// store the remainder drops — the furnace close's own shape),
+    /// the SEATS the horse's OWN memory keeps (the vanilla menu's
+    /// close never clears the horse inventory — the reopen
+    /// continues), the screen the back seat wears.
+    pub fn close_horse(&mut self, back: ScreenKind) {
+        if self.horse_carried.1 > 0 {
+            let (id, count) = self.horse_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.horse_carried = (0, 0);
+        }
+        self.container_voice_emit(false);
+        self.container_removed_rode = true; // the removed law rode
+        self.open(back);
+    }
+
+    /// THE HORSE'S OWN HOVER SEAT (the container family's own
+    /// getHoveredSlot walk the horse's rects answer — the same
+    /// 16x16 inner box law the chest hover keeps).
+    pub fn horse_hover_seat(&self, mx: i32, my: i32) -> Option<(i32, i32, i16)> {
+        self.horse_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .copied()
+    }
+
+    /// THE HORSE'S OWN HIGHLIGHT SEAT (the shared
+    /// AbstractContainerScreen law the container rounds bank — the
+    /// NO-GATE law the plain verdict keeps, the empty seat the
+    /// highlight answers).
+    fn horse_highlight_origin(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        if self.screen != ScreenKind::Horse {
+            return None; // the horse's own screen the walk serves
+        }
+        let (sx, sy, _) = self.horse_hover_seat(mx, my)?;
+        Some((sx, sy))
+    }
+
+    /// THE HORSE MENU'S OWN INVENTORY SEAT (the standard rows' own
+    /// map — the menu 2..28 the main grid answers [the store rows
+    /// 9..35 the +7 shift keeps], the 29..37 the hotbar row the -29
+    /// shift speaks; the seats 0/1 the None the horse's own store
+    /// wears).
+    fn horse_menu_to_inventory(menu: usize) -> Option<usize> {
+        if (2..29).contains(&menu) {
+            Some(menu + 7)
+        } else if (29..38).contains(&menu) {
+            Some(menu - 29)
+        } else {
+            None
+        }
+    }
+
+    /// THE HORSE'S OWN RENDER (javap 26.2 AbstractHorseScreen — the
+    /// INVENTORY_LOCATION background the super ctor wears, the
+    /// vanilla extractBackground the same 176x166 blit speaks): the
+    /// world dimmed beneath, the LEGACY background texture blitted
+    /// at the centered panel, the saddle/armor seats the horse
+    /// inventory's own base pair wears (the seat origins the menu's
+    /// own layout keeps: the pair at panel-relative (8, 7) / (8, 25)
+    /// — the vertical pair the horse GUI's left column banks), the
+    /// player's own store the standard rows mirror, the highlight's
+    /// back layer the shared law speaks, the carried follow. NO
+    /// mannequin PiP — the equine preview the mesh round wears (the
+    /// horse body the vanilla PiP never drew, the port the mesh-less
+    /// honesty keeps).
+    fn render_horse(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.horse_panel = panel;
+        // the hit boxes: the menu's own numbering — the two horse
+        // seats (0 saddle, 1 armor) then the standard rows (2..37,
+        // the menu's own walk: the main grid 2..28 then the hotbar
+        // 29..37)
+        let seat_origins = [(8, 7), (8, 25)];
+        self.horse_slot_rects = seat_origins
+            .iter()
+            .enumerate()
+            .map(|(k, &(sx, sy))| (panel.0 + sx + 1, panel.1 + sy + 1, k as i16))
+            .chain((0..36).map(|i| {
+                let (sx, sy) = inventory_slot_origin(panel, i);
+                // the MENU id the store row wears (the horse menu's own
+                // numbering — the hotbar stores 0..8 the menus 29..37
+                // speak, the main grid 9..35 the menus 2..28 answer)
+                let menu = if i < 9 { 29 + i } else { i - 7 };
+                (sx + 1, sy + 1, menu as i16)
+            }))
+            .collect();
+        // THE INVENTORY'S OWN BACKGROUND (the AbstractHorseScreen the
+        // INVENTORY_LOCATION blit wears — the same 176x166 texture
+        // the survival screen keeps, the slot chrome the sprite bakes)
+        g.sprite_file_region(
+            a,
+            "gui/container/inventory.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
+        // THE HIGHLIGHT'S OWN BACK LAYER (the shared law the chest
+        // render banks — the hovered seat's own 24x24 sprite, the
+        // isHighlightable gate the plain verdict keeps; the headless
+        // scenes track no mouse — the pixel goldens never see this
+        // pass)
+        let highlight_origin = self
+            .mouse_pos
+            .and_then(|(mx, my)| self.horse_highlight_origin(mx, my));
+        if let Some((ox, oy)) = highlight_origin {
+            g.sprite_at_tinted(
+                a,
+                "container/slot_highlight_back",
+                ox - 4,
+                oy - 4,
+                24,
+                24,
+                [1.0, 1.0, 1.0, 1.0],
+            );
+        }
+        // THE SEATS' OWN CONTENTS (the horse inventory's own pair —
+        // the icon/count treatment the container family keeps, the
+        // kindless seats the NONE draw the same pixels the plain icon
+        // wears)
+        for (k, &(id, count)) in self.horse_seats.iter().enumerate() {
+            if count <= 0 {
+                continue;
+            }
+            let (sx, sy) = seat_origins[k];
+            draw_item_icon(g, id, panel.0 + sx + 1, panel.1 + sy + 1);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, panel.0 + sx + 17 - tw, panel.1 + sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE STORE'S OWN ROWS (the offline write-through the REAL
+        // inventory keeps — the projection the furnace rows' own law
+        // mirrors: the same icon/count treatment the standard grid
+        // rides)
+        for i in 0..36 {
+            let (id, count) = self.inventory.items[i];
+            if count <= 0 {
+                continue;
+            }
+            let (sx, sy) = inventory_slot_origin(panel, i);
+            let kind = if crate::world::brewing_is_potion_kind(id) {
+                self.items_potion_kinds[i]
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if kind != crate::brewing_sim::POTION_KIND_NONE {
+                draw_item_icon_kind(g, id, kind, sx + 1, sy + 1);
+            } else {
+                draw_item_icon(g, id, sx + 1, sy + 1);
+            }
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render, AbstractContainerScreen's post-panel pass): the
+        // offline sim's local cursor the same shape wears. The
+        // headless scenes track no mouse — the pixel goldens never
+        // see this pass.
+        if self.horse_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.horse_carried.0, mx - 8, my - 8);
+                if self.horse_carried.1 > 1 {
+                    let s = self.horse_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+    }
+
+    /// THE HORSE'S OWN Q (javap 26.2 AbstractContainerScreen.keyPressed's
+    /// keyDrop arm the AbstractHorseScreen the base class inherits —
+    /// the doClick THROW arm the family law keeps): the hovered
+    /// seat's stack the Q throws, the whole stack the Ctrl modifier
+    /// wears. THE GATES: the owned verdict the HorseInventorySlot
+    /// mayPickup law speaks (the foreign horse the THROW the gate
+    /// refuses), the rects the render never spoke the silence keeps,
+    /// the null hover the between-slots press keeps, the EMPTY
+    /// hovered seat the hasItem gate keeps, the carried cursor the
+    /// getCarried().isEmpty() gate refuses. THE WIRE the later round
+    /// banks (the live menu the server's own authority owns — the
+    /// offline sim the local walk the lane wears). The seats the
+    /// horse's OWN memory speak (no write-through — the player's own
+    /// store rows the write-through law the family keeps).
+    pub fn on_horse_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Horse || self.dead {
+            return; // this lane IS the horse screen's own walk
+        }
+        if !self.horse_owned {
+            // THE MAYPICKUP'S OWN GATE (the HorseInventorySlot law —
+            // the foreign horse's seats the THROW never takes)
+            return;
+        }
+        if self.world_is_network {
+            return; // the wire lane the later round banks — the live
+                    // menu the server's own authority owns
+        }
+        if self.horse_slot_rects.is_empty() || self.horse_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.horse_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let slot = slot as usize;
+        let (id, count) = if slot < 2 {
+            self.horse_seats[slot]
+        } else {
+            match Self::horse_menu_to_inventory(slot) {
+                Some(row) => self.inventory.items[row],
+                None => (0, 0),
+            }
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.horse_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        // THE THROWN SEAT'S OWN WORD (the horse seats the kindless
+        // model the word never lends, the store rows the REAL
+        // inventory the kind bank answers — the same accessor law the
+        // furnace lane keeps)
+        let thrown_kind = if slot < 2 {
+            crate::brewing_sim::POTION_KIND_NONE
+        } else {
+            Self::horse_menu_to_inventory(slot)
+                .filter(|&row| crate::world::brewing_is_potion_kind(id))
+                .map(|row| self.items_potion_kinds[row])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        };
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if slot < 2 {
+            self.horse_seats[slot] = new;
+            // THE DRAINED SEAT'S OWN KIND RETIRE (the kindless seats
+            // the NONE the row keeps — the family law the stale word
+            // never wears)
+            if new.1 <= 0 {
+                self.horse_seat_potion_kinds[slot] = crate::brewing_sim::POTION_KIND_NONE;
+            }
+        } else if let Some(row) = Self::horse_menu_to_inventory(slot) {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers,
+            // the click lane's own law the walk keeps)
+            self.inventory.items[row] = new;
+            if new.1 <= 0 {
+                self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
     }
 
     /// Open the survival inventory over the standing world (the vanilla
@@ -71798,6 +72166,7 @@ impl App {
             ScreenKind::Furnace => self.close_furnace(back),
             ScreenKind::Beacon => self.close_beacon(back),
             ScreenKind::Merchant => self.close_merchant(back),
+            ScreenKind::Horse => self.close_horse(back),
             ScreenKind::Crafting => self.close_crafting_table(back),
             ScreenKind::Creative => self.close_creative_picker(back),
             _ => self.open(back),
@@ -91387,6 +91756,19 @@ impl App {
                 // buttons, the pending content, the Done footer.
                 self.render_stats(&mut g, a, w, h);
             }
+            ScreenKind::Horse => {
+                // THE HORSE'S OWN ROUND (the vanilla AbstractHorseScreen
+                // over the frozen world — the container family's own
+                // shape the texture base keeps): world underneath,
+                // dimmed, the horse inventory's own canvas, the
+                // saddle/armor seats + the store rows, the carried
+                // follow — no PiP preview (the equine mesh the later
+                // round wears).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_horse(&mut g, a, gw, gh);
+            }
         }
     }
 
@@ -94454,6 +94836,17 @@ impl App {
                     let quads = llama.quads(&state, feet, cam.yaw, cam.pitch);
                     (quads, Box::new(move |u, v| llama.pixel(variant, u, v)))
                 }
+                crate::mob::MobKind::Horse => {
+                    // THE HORSE'S OWN UNDRAWN LANE (the equine mesh the
+                    // later round wears — the HorseModel's own body the
+                    // sha1-pinned texture the HorseRenderer bank pins;
+                    // the census row the kind table's exhaustiveness
+                    // keeps, the same unseen-body honesty the llama
+                    // sha1-fail lane wears. The horse SCREEN the kind's
+                    // own menu the round served — the world body the
+                    // mesh census the NEXT banks.)
+                    continue;
+                }
                 crate::mob::MobKind::Sheep => {
                     // THE COLOR WORD (SheepRenderState.getWoolColor's
                     // own law): the jeb_ name the checkMagicName gate
@@ -95336,6 +95729,14 @@ impl App {
                 crate::mob::MobKind::TraderLlama => (
                     crate::mob::TRADER_LLAMA_WIDTH as f32,
                     crate::mob::TRADER_LLAMA_HEIGHT as f32,
+                ),
+                // THE HORSE'S OWN SIZED PAIR (javap the EntityTypes
+                // clinit's HORSE registration — the sized(1.3964844f,
+                // 1.4f) the ldc_w pair the builder chain speaks, the
+                // same consts the box_for arm banks)
+                crate::mob::MobKind::Horse => (
+                    crate::mob::HORSE_WIDTH as f32,
+                    crate::mob::HORSE_HEIGHT as f32,
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {

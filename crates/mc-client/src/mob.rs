@@ -1251,6 +1251,27 @@ pub enum MobKind {
     /// setAge(0)-adult + the strength/variant/health randomize words
     /// the draw order banks.
     TraderLlama,
+    /// THE HORSE'S OWN KIND (javap 26.2 `Horse extends AbstractHorse`
+    /// the equine chain the llama_480 census banks — AbstractHorse →
+    /// Animal the supplier rows the chested overrides speak, the
+    /// `createBaseHorseAttributes` base the chested chain rides: the
+    /// `add(MAX_HEALTH, 53.0)` the ldc2_w keeps, the
+    /// `add(MOVEMENT_SPEED, 0.22499999403953552)` the chain the
+    /// chested override replaces — the horse's own supplier the two
+    /// base adds speak). The registration the EntityTypes clinit's
+    /// HORSE block arms (the sized(1.3964844f, 1.4f) pair the equine
+    /// box the HORSE_* consts bank, the CREATURE category the same
+    /// registration wears), the `Horse.isFood` gate the
+    /// golden_apple/golden_carrot pair answers, the registerGoals the
+    /// equine stroll 0.7 the super's goal table banks (the
+    /// RunAroundLikeCrazyGoal the untamed arm the tame word gates —
+    /// no PanicGoal the horse's own table speaks). The horse SCREEN
+    /// the kind's own menu serves (the AbstractHorseScreen the
+    /// base class the vanilla owes, the saddle/armor seats the
+    /// mayPickup laws the own walk speaks); the horse's own MESH the
+    /// later round wears — the render lane the unseen body the
+    /// llama sha1-fail honesty keeps.
+    Horse,
 }
 
 /// THE MOB CATEGORY'S OWN CENSUS SLICE (javap the 26.2 jar the
@@ -1335,6 +1356,11 @@ impl MobKind {
             // getstatic the builder's of() call reads, the equine
             // family the same word the spawn cap answers)
             MobKind::TraderLlama => MobCategory::Creature,
+            // THE HORSE'S OWN CREATURE WORD (javap the EntityTypes
+            // clinit's HORSE registration — the `MobCategory.CREATURE`
+            // getstatic the builder's of() call reads, the equine
+            // family the same word the spawn cap answers)
+            MobKind::Horse => MobCategory::Creature,
         }
     }
 }
@@ -1408,6 +1434,7 @@ impl MobKind {
             MobKind::Warden => "minecraft:warden",
             MobKind::WanderingTrader => "minecraft:wandering_trader",
             MobKind::TraderLlama => "minecraft:trader_llama",
+            MobKind::Horse => "minecraft:horse",
         }
     }
 
@@ -1502,6 +1529,11 @@ impl MobKind {
             // 3597 the same word wears: the equine sight line the
             // same explicit fold answers)
             MobKind::TraderLlama => 1.7764999866485596,
+            // THE HORSE'S OWN SIGHT LINE (javap the EntityTypes
+            // clinit's HORSE registration — the eyeHeight(1.13f) the
+            // builder chain keeps, the equine sight line the explicit
+            // fold answers)
+            MobKind::Horse => 1.1299999952316284,
         }
     }
 
@@ -1560,6 +1592,18 @@ impl MobKind {
             // band the two draws wear], the spawned llama's health
             // the finalize walk the spawn lane banks
             MobKind::TraderLlama => 53.0,
+            // THE HORSE'S OWN REGISTERED BASE (javap the 26.2 supplier
+            // chain the llama_480 census banks —
+            // `AbstractHorse.createBaseHorseAttributes` the
+            // `add(Attributes.MAX_HEALTH, 53.0)` the ldc2_w keeps, the
+            // chested chain the same base the builder never re-adds).
+            // The INSTANCE the finalize's randomize walk overrides —
+            // `AbstractHorse.randomizeAttributes` the
+            // `setBaseValue(generateMaxHealth(rng::nextInt))` walk
+            // speaks [15.0 + nextInt(8) + nextInt(9) — the [15, 30]
+            // band the two draws wear], the spawned horse's health
+            // the finalize walk the spawn lane banks
+            MobKind::Horse => 53.0,
         }
     }
 
@@ -1610,6 +1654,13 @@ impl MobKind {
             // prio-3 goal the selector never runs while the prio-1
             // panic arms])
             MobKind::TraderLlama => Some(2.0),
+            // THE HORSE'S OWN PANIC ABSENCE (javap `Horse.registerGoals`
+            // the 26.2 classfile speaks — the super's goal table the
+            // float + the stroll arms fill, the
+            // RunAroundLikeCrazyGoal the UNTAMED arm the tame word
+            // gates, no PanicGoal the horse's own table ever speaks —
+            // the None the equine's honest lane keeps)
+            MobKind::Horse => None,
         }
     }
 
@@ -1659,6 +1710,13 @@ impl MobKind {
             // the value REPLACES, the llama's own 0.175 word the
             // supplier registers)
             MobKind::TraderLlama => 0.17499999701976776,
+            // THE HORSE'S OWN ADD (javap
+            // `AbstractHorse.createBaseHorseAttributes` pc 3-9 the
+            // llama_480 census banks — the
+            // `add(MOVEMENT_SPEED, 0.22499999403953552)` the chain the
+            // chested override replaces rides FIRST, the horse's own
+            // supplier the base add speaks)
+            MobKind::Horse => 0.22499999403953552,
         }
     }
 
@@ -1712,6 +1770,12 @@ impl MobKind {
             // the addGoal walk keeps, the TraderLlama super the same
             // goal table rides)
             MobKind::TraderLlama => 0.7,
+            // THE HORSE'S OWN STROLL (javap the equine super's goal
+            // table the llama_480 census banks — the
+            // WaterAvoidingRandomStrollGoal(this, 0.7d) the prio-7 walk
+            // the AbstractHorse registerGoals keeps, the equine family
+            // the same word the plain walk wears)
+            MobKind::Horse => 0.7,
         }
     }
 
@@ -1823,6 +1887,14 @@ impl MobKind {
             (MobKind::TraderLlama, VoiceSlot::Ambient) => "entity.llama.ambient",
             (MobKind::TraderLlama, VoiceSlot::Hurt) => "entity.llama.hurt",
             (MobKind::TraderLlama, VoiceSlot::Death) => "entity.llama.death",
+            // THE HORSE'S OWN ROWS (javap `Horse.getAmbientSound` /
+            // `getHurtSound` / `getDeathSound` the 26.2 jar the
+            // HORSE_AMBIENT / HORSE_HURT / HORSE_DEATH getstatics the
+            // getters return — the classic words the sounds.json's own
+            // rows bank)
+            (MobKind::Horse, VoiceSlot::Ambient) => "entity.horse.ambient",
+            (MobKind::Horse, VoiceSlot::Hurt) => "entity.horse.hurt",
+            (MobKind::Horse, VoiceSlot::Death) => "entity.horse.death",
         }
     }
 
@@ -1920,6 +1992,19 @@ impl MobKind {
             // speaks), the Entity.playStepSound(pos, state) base impl
             // the wanderer arm's block walk keeps
             MobKind::TraderLlama => {
+                use mc_registry::generated::block_sounds as bs;
+                let idx = bs::sound_index(under?)?;
+                let (volume, pitch) =
+                    crate::sound::Lane::Step.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+                Some((crate::sound::Lane::Step.event_of(idx), volume, pitch))
+            }
+            // THE HORSE'S BASE LAW — the playStepSound override the
+            // Horse classfile never carries (javap the 26.2 classfile
+            // the method table names it not — the equine the base walk
+            // the llama's own absence keeps), the
+            // Entity.playStepSound(pos, state) base impl the block
+            // walk keeps
+            MobKind::Horse => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
                 let (volume, pitch) =
@@ -2192,6 +2277,14 @@ pub const WANDERING_TRADER_HEIGHT: f64 = 1.95;
 /// occupies).
 pub const TRADER_LLAMA_WIDTH: f64 = 0.8999999761581421;
 pub const TRADER_LLAMA_HEIGHT: f64 = 1.8700000047683716;
+
+/// THE HORSE'S OWN BOX (javap the EntityTypes clinit's HORSE
+/// registration — the sized(1.3964844f, 1.4f) the ldc_w pair the
+/// builder chain speaks, the equine box the same words the kind
+/// table's arms read).
+pub const HORSE_WIDTH: f64 = 1.3964844;
+pub const HORSE_HEIGHT: f64 = 1.4;
+
 /// THE TRADER LLAMA'S OWN DESPAWN SEED (javap `TraderLlama.<init>`
 /// pc 6-9 the llama_480 census banks — the `despawnDelay = 47999`
 /// the ldc the ctor stores, the ~40-minute clock the vanilla check
@@ -5963,6 +6056,11 @@ impl Zombie {
             // ldc_w pair the builder chain speaks, the equine box the
             // TRADER_LLAMA consts bank)
             MobKind::TraderLlama => (TRADER_LLAMA_WIDTH, TRADER_LLAMA_HEIGHT),
+            // THE HORSE'S OWN SIZED LAW (javap the EntityTypes clinit's
+            // HORSE registration — the sized(1.3964844f, 1.4f) the ldc_w
+            // pair the builder chain speaks, the equine box the HORSE_
+            // consts bank)
+            MobKind::Horse => (HORSE_WIDTH, HORSE_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -9067,6 +9165,11 @@ impl Zombie {
             // the hay_block rows the jar's own bytes keep, the
             // TraderLlama the super's gate inherits)
             MobKind::TraderLlama => held_item == "wheat" || held_item == "hay_block",
+            // THE HORSE'S OWN FOOD GATE (javap `Horse.isFood` the 26.2
+            // bytecode speaks — the golden_apple/golden_carrot pair the
+            // two is() calls the gate answers, the tame + breed foods
+            // the horse's own words wear)
+            MobKind::Horse => held_item == "golden_apple" || held_item == "golden_carrot",
         }
     }
 
@@ -9282,6 +9385,16 @@ impl Zombie {
             // gate the vanilla's own tag walk the lock the llama's
             // body never takes)
             MobKind::TraderLlama => {
+                held_item == "golden_dandelion" && self.age < 0 && self.age_lock_particle_timer == 0
+            }
+            // THE HORSE'S OWN ALWAYS-PASS (javap the jar's own
+            // cannot_be_age_locked.json the values speak —
+            // zombie_horse/skeleton_horse/villager the trio the tag
+            // names, the HORSE the json never carries: the equine the
+            // zoo's kinds the same always-pass rides, the gate the
+            // vanilla's own tag walk the lock the horse's body never
+            // takes)
+            MobKind::Horse => {
                 held_item == "golden_dandelion" && self.age < 0 && self.age_lock_particle_timer == 0
             }
         }
@@ -9651,6 +9764,20 @@ impl Zombie {
                 // data/minecraft/loot_table/entities/trader_llama.json
                 // the verbatim read — POOL 1 the LEATHER uniform 0..2
                 // the set_count's own band the roll keeps, the looting
+                // ench_count_increase the client's enchant lane never
+                // arms)
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("leather") {
+                        out.push((item, count));
+                    }
+                }
+            }
+            MobKind::Horse => {
+                // THE HORSE'S OWN POOL (the jar's
+                // data/minecraft/loot_table/entities/horse.json the
+                // verbatim read — POOL 1 the LEATHER uniform 0..2 the
+                // set_count's own band the roll keeps, the looting
                 // ench_count_increase the client's enchant lane never
                 // arms)
                 let count = self.rng.next_int_inclusive(0, 2);
@@ -10585,6 +10712,7 @@ pub fn kind_bb_width(kind: MobKind) -> f64 {
         MobKind::Warden => crate::sculk::WARDEN_MOB_WIDTH as f64,
         MobKind::WanderingTrader => WANDERING_TRADER_WIDTH,
         MobKind::TraderLlama => TRADER_LLAMA_WIDTH,
+        MobKind::Horse => HORSE_WIDTH,
     }
 }
 
@@ -20738,6 +20866,7 @@ mod tests {
             ),
             MobKind::WanderingTrader => (WANDERING_TRADER_WIDTH, WANDERING_TRADER_HEIGHT),
             MobKind::TraderLlama => (TRADER_LLAMA_WIDTH, TRADER_LLAMA_HEIGHT),
+            MobKind::Horse => (HORSE_WIDTH, HORSE_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);

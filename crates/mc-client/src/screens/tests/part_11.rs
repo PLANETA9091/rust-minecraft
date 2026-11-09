@@ -57333,3 +57333,300 @@ fn the_world_tint_the_kind_word_the_canvas_wears() {
     let drop_n = drop_at(none);
     ratio_law(&drop_k, &drop_n, "the drop");
 }
+
+/// THE HORSE'S OWN VANILLA ROWS (javap the 26.2 jar the equine chain
+/// the llama_480 census banks — the registration words, the supplier
+/// base, the goal words, the food gate, the loot pool: the census the
+/// kind rows the port banks):
+/// the CREATURE category, the sized(1.3964844f, 1.4f) +
+/// eyeHeight(1.13f) registration pair, the 53.0 supplier base + the
+/// [15, 30] randomized band the generateMaxHealth walk wears, the
+/// 0.22499999403953552 movement word the base add keeps, no panic
+/// goal the registerGoals table speaks, the prio-7 stroll 0.7 the
+/// equine super's goal table banks, the wire name pair (the
+/// from_wire_name the drawn-name honesty keeps — the horse's own mesh
+/// the later round wears, the fallback the zombie body speaks until
+/// the admission rides), the golden_apple/golden_carrot food pair,
+/// the horse voice rows, the leather pool the uniform 0..2 roll
+/// wears.
+#[test]
+fn the_horse_the_vanilla_rows_wear() {
+    use crate::drops::Lcg;
+    use crate::mob::{trader_llama_randomized_health, MobCategory, MobKind};
+    // THE REGISTRATION'S OWN WORDS
+    assert_eq!(
+        MobKind::Horse.mob_category(),
+        MobCategory::Creature,
+        "the CREATURE category the clinit's of() arms"
+    );
+    assert_eq!(
+        MobKind::Horse.wire_name(),
+        "minecraft:horse",
+        "the registry id the registration names"
+    );
+    // THE UNDRAWN HONESTY (the from_wire_name the drawn names alone
+    // admits — the horse's own mesh the later round wears, the wire's
+    // horse body the zombie fallback speaks until the admission rides)
+    assert_eq!(
+        MobKind::from_wire_name("minecraft:horse"),
+        MobKind::Zombie,
+        "the undrawn kind the honest fallback keeps"
+    );
+    assert_eq!(
+        MobKind::Horse.eye_height(),
+        1.1299999952316284,
+        "the explicit eyeHeight the registration keeps"
+    );
+    assert_eq!(
+        (crate::mob::HORSE_WIDTH, crate::mob::HORSE_HEIGHT),
+        (1.3964844, 1.4),
+        "the sized pair the registration's own words wear"
+    );
+    assert_eq!(
+        MobKind::Horse.max_health(),
+        53.0,
+        "the supplier base the horse chain's add keeps"
+    );
+    assert_eq!(
+        MobKind::Horse.movement_speed(),
+        0.22499999403953552,
+        "the base add the chested override replaces"
+    );
+    assert_eq!(
+        MobKind::Horse.panic_speed(),
+        None,
+        "no panic goal the horse's own table speaks"
+    );
+    assert_eq!(
+        MobKind::Horse.stroll_speed(),
+        0.7,
+        "the prio-7 stroll the equine super's table banks"
+    );
+    assert!(
+        !MobKind::Horse.is_monster(),
+        "the animal chain no monster wears"
+    );
+    assert!(
+        !MobKind::Horse.should_burn_in_day(),
+        "the equine no sun brand wears"
+    );
+    // THE VOICE ROWS (the horse's own words the getters bank)
+    assert_eq!(
+        MobKind::Horse.voice_event(crate::mob::VoiceSlot::Ambient),
+        "entity.horse.ambient",
+        "the ambient the horse's own getter answers"
+    );
+    assert_eq!(
+        MobKind::Horse.voice_event(crate::mob::VoiceSlot::Hurt),
+        "entity.horse.hurt",
+        "the hurt row the getter's getstatic wears"
+    );
+    assert_eq!(
+        MobKind::Horse.voice_event(crate::mob::VoiceSlot::Death),
+        "entity.horse.death",
+        "the death row the getter's getstatic wears"
+    );
+    // THE STEP'S BASE LAW + THE FOOD GATE (the Horse.isFood pair)
+    assert!(
+        MobKind::Horse.step_voice(Some("stone")).is_some(),
+        "the base block law the step voice keeps"
+    );
+    assert!(
+        MobKind::Horse.step_voice(None).is_none(),
+        "the air cell the cadence's gate refuses"
+    );
+    // the is_food rows the horse's own is() calls speak
+    let mut horse = crate::mob::Zombie::new(1, 0.0, 0.0, 0.0, 1);
+    horse.kind = MobKind::Horse;
+    assert!(
+        horse.is_food("golden_apple"),
+        "the golden_apple row the is() call banks"
+    );
+    assert!(
+        horse.is_food("golden_carrot"),
+        "the golden_carrot row the is() call banks"
+    );
+    assert!(
+        !horse.is_food("carrot"),
+        "the untamed hay the horse's gate refuses"
+    );
+    // THE HEALTH'S OWN WALK (the horse's own generateMaxHealth the
+    // same fn keeps — the [15, 30] band the two draws wear)
+    let mut rng = Lcg::new(0xBEEF);
+    for _ in 0..500 {
+        let h = trader_llama_randomized_health(&mut rng);
+        assert!(
+            (15.0..=30.0).contains(&h) && h.fract() == 0.0,
+            "the health the band the walk wears"
+        );
+    }
+    // THE LOOT POOL'S OWN ROLL (the leather uniform 0..2 the sweep
+    // banks — the horse's own pool the same law the llama wears)
+    let mut saw = [false; 3];
+    let mut horse = crate::mob::Zombie::new(1, 0.0, 0.0, 0.0, 1);
+    horse.kind = MobKind::Horse;
+    horse.health = 0.0; // the death crossing the loot walk demands
+    for _ in 0..400 {
+        for (item, count) in horse.death_loot(false) {
+            assert_eq!(item, crate::mob::wire_id("leather").unwrap_or(item));
+            saw[(count as usize).min(2)] = true;
+        }
+    }
+    assert!(saw[1] && saw[2], "the pool the [1, 2] rows the sweep wears");
+}
+
+/// THE HORSE'S OWN Q WALK (the autopush-545 round — the
+/// AbstractHorseScreen the base class the vanilla owes, the seats the
+/// Q the SAME chain speaks): the CASE SADDLE the seat the Q drains
+/// [the whole stack the seat empties, the drop the aimed walk
+/// spawns], the CASE ARMOR the second seat the same law wears, the
+/// CASE STORE ROW the write-through the real inventory keeps [the
+/// hotbar row the sync re-wears], the CASE FOREIGN the mayPickup law
+/// the THROW refuses [the own verdict the open lane banks, the
+/// foreign horse the seats the drain never takes], the CASE CARRIED
+/// the cursor gate the walk refuses, the CASE REOPEN the close the
+/// seats keep (the horse's own store the vanilla menu's close never
+/// clears). Each offline press ONE drop the drained stack's own
+/// (id, count) the lane lends — the cursor never touched.
+#[test]
+fn the_horse_the_q_answers_the_seats_wear() {
+    let saddle = mc_registry::item_id_by_name("saddle").unwrap();
+    let armor = mc_registry::item_id_by_name("iron_horse_armor").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    // THE RENDER'S OWN GEOMETRY (the layout the rects speak — the
+    // panel the render banks, the hit boxes the seat pair wears)
+    app.open_horse();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    assert_eq!(app.screen, ScreenKind::Horse, "the horse arm opens");
+    assert_eq!(
+        app.horse_panel,
+        inventory_panel_origin(320, 180),
+        "the panel the centered origin keeps"
+    );
+    assert_eq!(
+        app.horse_slot_rects.len(),
+        38,
+        "the 38 rects the menu wears"
+    );
+    // THE CASE SADDLE'S OWN SEAT (the seat 0 the Q drains)
+    app.horse_seats[0] = (saddle, 1);
+    let (x0, y0, slot0) = app.horse_slot_rects[0];
+    app.mouse_pos = Some((x0 + 8, y0 + 8));
+    assert_eq!(slot0, 0, "the seat 0 the menu numbering wears");
+    let drops_before = app.drops.len();
+    app.on_horse_drop_key(true);
+    assert_eq!(app.horse_seats[0], (0, 0), "the saddle seat the Q drains");
+    assert_eq!(app.horse_carried, (0, 0), "the cursor never touched");
+    let d = app.drops.last().expect("the saddle throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (saddle, 1),
+        "the saddle throw the stack wears"
+    );
+    assert_eq!(
+        app.drops.len(),
+        drops_before + 1,
+        "ONE drop the throw lends"
+    );
+    // THE CASE ARMOR'S OWN SEAT (the seat 1 the same law wears)
+    app.horse_seats[1] = (armor, 1);
+    let (x1, y1, slot1) = app.horse_slot_rects[1];
+    app.mouse_pos = Some((x1 + 8, y1 + 8));
+    assert_eq!(slot1, 1, "the seat 1 the menu numbering wears");
+    app.on_horse_drop_key(true);
+    assert_eq!(app.horse_seats[1], (0, 0), "the armor seat the Q drains");
+    let d = app.drops.last().expect("the armor throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (armor, 1),
+        "the armor throw the stack wears"
+    );
+    // THE CASE STORE ROW'S OWN WRITE-THROUGH (the hotbar store 5 the
+    // menu 34 answers — the real inventory the drain keeps, the
+    // hotbar row the sync re-wears)
+    app.inventory.items[5] = (dirt, 3);
+    let menu_row = app
+        .horse_slot_rects
+        .iter()
+        .find(|&&(_, _, s)| s == 34)
+        .copied()
+        .expect("the menu 34 the hotbar store wears");
+    app.mouse_pos = Some((menu_row.0 + 8, menu_row.1 + 8));
+    app.on_horse_drop_key(true);
+    assert_eq!(app.inventory.items[5], (0, 0), "the store row the Q drains");
+    assert_eq!(
+        app.hotbar_slots[5],
+        (0, 0),
+        "the hotbar row the sync re-wears"
+    );
+    let d = app.drops.last().expect("the store throw the spawn wears");
+    assert_eq!(
+        (d.item, d.count),
+        (dirt, 3),
+        "the store throw the stack wears"
+    );
+    // THE CASE FOREIGN'S OWN GATE (the mayPickup law the THROW
+    // refuses — the own verdict the open lane banks, the foreign
+    // horse the seats the drain never takes, the drop the silence
+    // never spawns)
+    app.horse_seats[0] = (saddle, 1);
+    app.horse_owned = false;
+    let (x0, y0, _) = app.horse_slot_rects[0];
+    app.mouse_pos = Some((x0 + 8, y0 + 8));
+    let drops_before = app.drops.len();
+    app.on_horse_drop_key(true);
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 1),
+        "the foreign seat the gate keeps"
+    );
+    assert_eq!(
+        app.drops.len(),
+        drops_before,
+        "the foreign gate the drop never spawns"
+    );
+    app.horse_owned = true;
+    // THE CASE CARRIED'S OWN GATE (the cursor the THROW refuses)
+    app.horse_carried = (dirt, 1);
+    app.mouse_pos = Some((x0 + 8, y0 + 8));
+    app.on_horse_drop_key(true);
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 1),
+        "the carried gate the seat keeps"
+    );
+    app.horse_carried = (0, 0);
+    // THE CASE REOPEN'S OWN MEMORY (the close the seats keep — the
+    // horse's own store the vanilla menu's close never clears, the
+    // reopen continues)
+    app.on_horse_drop_key(true);
+    assert_eq!(app.horse_seats[0], (0, 0), "the own horse the drain wears");
+    app.horse_seats[0] = (saddle, 2);
+    app.close_horse(ScreenKind::World);
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the close the back seat wears"
+    );
+    app.open_horse();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    assert_eq!(app.screen, ScreenKind::Horse, "the reopen the horse wears");
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 2),
+        "the seat the close the memory keeps"
+    );
+}

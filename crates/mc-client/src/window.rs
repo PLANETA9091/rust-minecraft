@@ -2859,6 +2859,13 @@ pub fn run_gui_app(
                 // setItem recompute the drain re-speaks, the result
                 // seat the silence the family law keeps)
                 app.on_merchant_drop_key(q_ctrl);
+                // THE HORSE'S OWN Q (the SAME arm — the
+                // AbstractHorseScreen the base class keeps, the
+                // offline sim the local walk the lane wears, the
+                // autopush-545 round the Q family's equine lane
+                // speaks, the saddle/armor seats the mayPickup law
+                // the own verdict gates)
+                app.on_horse_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
