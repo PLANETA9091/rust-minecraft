@@ -46603,6 +46603,205 @@ impl App {
         ));
     }
 
+    /// THE ANVIL'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
+    /// arm the container rounds bank, the AbstractContainerScreen
+    /// base class the RepairScreen inherits; the autopush-534 round
+    /// the Q family's LAST NAMED lane the census answers): the
+    /// hovered INPUT PAIR's or STORE ROW's stack the Q throws. THE
+    /// INPUT PAIR the plain take answers (the ItemCombinerMenu's own
+    /// SimpleContainer's plain Slots the mayPickup unconditional
+    /// TRUE keeps), the STANDARD ROWS the player's own store the
+    /// take speaks (the [`Self::anvil_menu_to_inventory`] map the
+    /// +6/-30 shifts keep), THE RESULT SEAT the SILENCE KEEPS (the
+    /// table walk's own verdict the family law re-wears — the
+    /// ResultSlot's safeTake chain the mayPickup verdict + the
+    /// onTake's xp charge + the input clears + the recompute wear,
+    /// the take's own lane the click walks already speak — the
+    /// [`Self::anvil_may_pickup`] + [`Self::anvil_take_result`] pair
+    /// the doClick TAKE arm owns). THE LANES' OWN SPLIT the walk
+    /// keeps (the enchant walk's own split the 39 seats re-wear):
+    /// the wire session the [`Self::on_anvil_drop_key_wire`] twin
+    /// answers, the offline sim the LOCAL store walk answers — the
+    /// rects/cursor/hover gates the SAME geometry walk the swap lane
+    /// speaks, the hasItem gate the keyPressed chain keeps BEFORE
+    /// the lane, the carried cursor the doClick arm's own refusal,
+    /// the taken the tryRemove law, the drop entity the AIMED look
+    /// spawns, the store rows the write-through projection syncs,
+    /// the drained seats the kind lanes the
+    /// [`Self::anvil_seat_kind_put`] helper retires (the trio the
+    /// seat store's own word answers, the rows the shared bank's
+    /// mapped seats the map speaks), the tail the mirror + HUD sync
+    /// follows. NO swing, the container STAYS OPEN.
+    pub fn on_anvil_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Anvil || self.dead {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the offline store NOT the truth there (the
+            // enchant walk's own gate the take re-wears).
+            self.on_anvil_drop_key_wire(whole_stack);
+            return;
+        }
+        if self.anvil_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let menu = slot as usize;
+        if menu == 2 {
+            // THE RESULT SEAT'S OWN SILENCE (the table walk's verdict
+            // the family law keeps — the safeTake chain the take's
+            // own lane the click walks answer)
+            return;
+        }
+        let (id, count) = if menu < 2 {
+            *self.anvil_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            match Self::anvil_menu_to_inventory(menu) {
+                Some(row) => self.inventory.items[row],
+                None => *self.anvil_mirror.get(menu - 3).unwrap_or(&(0, 0)),
+            }
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.anvil_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if menu < 2 {
+            self.anvil_slots[menu] = new;
+        } else if let Some(row) = Self::anvil_menu_to_inventory(menu) {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers)
+            self.inventory.items[row] = new;
+        }
+        // THE DRAINED SEAT'S OWN KIND RETIRE (the dev-236/237/530 law
+        // the family lanes re-wear — the unified write helper the
+        // swap/click lanes keep: the trio the seat store's own word
+        // answers, the rows the shared bank's mapped seats the map
+        // speaks)
+        if new.1 <= 0 {
+            self.anvil_seat_kind_put(menu, crate::brewing_sim::POTION_KIND_NONE);
+        }
+        // THE TAIL'S OWN SYNC (the mirror row + the HUD row the
+        // projection keeps — the swap lane's own tail the walk shares)
+        self.anvil_mirror_sync_from_inventory();
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the live belief the doClick THROW arm
+    /// answers, the enchant walk's own shape the 39 seats re-wear):
+    /// the hovered+hasItem gates the SAME rects walk the offline lane
+    /// keeps, the result seat the SILENCE keeps (the verdict the
+    /// family law the wire never un-speaks — no packet the refusal
+    /// rides), the take the live carried's gate the carried refusal
+    /// opens, THE DRAINED SEATS the kind lanes the FIELD WRITES
+    /// retire (the sink borrow's own law the held command keeps —
+    /// the trio the seat store answers, the rows the shared bank's
+    /// mapped seats), the hotbar rows the HUD belief syncs, the
+    /// packet the command lane carries (the EMPTY changed map the
+    /// carried refusal names, the drop entity the SERVER's Add
+    /// Entity lane spawns — no local prediction).
+    fn on_anvil_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.anvil_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.anvil_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.anvil_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        // THE MIRROR'S OWN BOUNDS (the stand-in's fresh vec the resize
+        // arms — the wholesale lane the 36 rows keeps)
+        if self.anvil_mirror.len() != 36 {
+            self.anvil_mirror.resize(36, (0, 0));
+        }
+        let menu = slot as usize;
+        if menu == 2 {
+            // THE RESULT SEAT'S OWN SILENCE (the family law the wire
+            // lane keeps — no packet the refusal rides, the take's
+            // own lane the click walks answer)
+            return;
+        }
+        let (id, count) = if menu < 2 {
+            *self.anvil_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            *self.anvil_mirror.get(menu - 3).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence, NO packet
+        }
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.anvil_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            if menu < 2 {
+                self.anvil_slots[menu] = new;
+            } else {
+                let mi = menu - 3;
+                self.anvil_mirror[mi] = new;
+                if mi >= 27 {
+                    let mut row = [(0, 0); 9];
+                    row.copy_from_slice(&self.anvil_mirror[27..36]);
+                    self.hotbar_slots = row;
+                }
+            }
+            // THE DRAINED SEAT'S OWN KIND RETIRE (the inline field
+            // writes the sink borrow's own law keeps — the trio the
+            // seat store answers, the rows the shared bank's mapped
+            // seats the map speaks)
+            if new.1 <= 0 {
+                if menu < 2 {
+                    if menu < self.anvil_seat_potion_kinds.len() {
+                        self.anvil_seat_potion_kinds[menu] = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                } else if let Some(row) = Self::anvil_menu_to_inventory(menu) {
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                }
+            }
+            note_batch_change(&mut changed, slot, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.anvil_carried,
+            },
+        ));
+    }
+
     /// THE FURNACE'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
     /// arm the container rounds bank, the doClick THROW table the
     /// inventory round v0.3.718 keeps verbatim; the furnace family's
