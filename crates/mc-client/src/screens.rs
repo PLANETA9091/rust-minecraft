@@ -46802,6 +46802,208 @@ impl App {
         ));
     }
 
+    /// THE MERCHANT'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
+    /// arm the container rounds bank, the doClick THROW table the
+    /// inventory round v0.3.718 keeps verbatim; the trade family's own
+    /// seats the VillagerMenu's numbering answers — the PAYMENT 0/1
+    /// the (136, 37)/(162, 37) seats speak, the RESULT 2 the (220, 37)
+    /// seat, the standard rows 3..38 the
+    /// addStandardInventorySlots(108, 84) walk lays — the main 3..29
+    /// the +6 shift, the hotbar 30..38 the -30 the HUD row keys): the
+    /// hovered slot's stack the Q throws. THE PAYMENT PAIR the plain
+    /// take answers (the plain Slot's mayPickup the unconditional TRUE
+    /// keeps — the doClick THROW's tryRemove walk the safeRemove
+    /// answers), the drained seats the SETITEM'S OWN LAW the
+    /// [`Self::merchant_update_sell`] recompute re-speaks (the
+    /// MerchantContainer.setItem gate the isPaymentSlot word answers —
+    /// the result seat the offer's own match the recompute wears), the
+    /// STANDARD ROWS the player's own store the take speaks (the
+    /// [`Self::merchant_menu_to_inventory`] map the +6/-30 shifts
+    /// keep), THE RESULT SEAT the SILENCE KEEPS (the table walk's own
+    /// verdict the family law re-wears — the MerchantResultSlot's
+    /// safeTake chain the mayTake verdict + the onTake's trade apply +
+    /// the payment clears + the recompute wear, the take's own lane
+    /// the click walks already speak — the
+    /// [`Self::merchant_result_take_click`] the doClick TAKE arm
+    /// owns). THE LANES' OWN SPLIT the walk keeps (the furnace walk's
+    /// own split the screen's own flag re-wears): the live session the
+    /// [`Self::on_merchant_drop_key_wire`] twin answers, the offline
+    /// sim the LOCAL store walk answers — the rects/cursor/hover gates
+    /// the SAME geometry walk the swap lane speaks, the hasItem gate
+    /// the keyPressed chain keeps BEFORE the lane, the carried cursor
+    /// the doClick arm's own refusal, the taken the tryRemove law, the
+    /// drop entity the AIMED look spawns, the store rows the
+    /// write-through projection syncs (the
+    /// [`Self::merchant_swap_tail`] tail the mirror rows + the HUD row
+    /// the sync keeps), the drained rows the kind lanes the shared
+    /// bank's mapped seats retire (the payment pair the kindless seats
+    /// the trade's own words never bank). NO swing, the container
+    /// STAYS OPEN.
+    pub fn on_merchant_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Merchant || self.dead {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.merchant_is_live {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the server's own bank the truth there (the
+            // furnace walk's own split the screen's own flag keeps).
+            self.on_merchant_drop_key_wire(whole_stack);
+            return;
+        }
+        if self.merchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.merchant_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let menu = slot as usize;
+        if menu == 2 {
+            // THE RESULT SEAT'S OWN SILENCE (the table walk's verdict
+            // the family law keeps — the safeTake chain the take's own
+            // lane the click walks answer)
+            return;
+        }
+        let (id, count) = if menu < 3 {
+            *self.merchant_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            match Self::merchant_menu_to_inventory(menu) {
+                Some(row) => self.inventory.items[row],
+                None => *self.merchant_slots.get(menu).unwrap_or(&(0, 0)),
+            }
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.merchant_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if menu < 3 {
+            self.merchant_slots[menu] = new;
+            // THE SETITEM'S OWN LAW (the payment write the
+            // isPaymentSlot gate the update re-speaks — the result
+            // seat the offer's own match the recompute wears)
+            self.merchant_update_sell();
+        } else if let Some(row) = Self::merchant_menu_to_inventory(menu) {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers)
+            self.inventory.items[row] = new;
+        }
+        // THE DRAINED ROW'S OWN KIND RETIRE (the dev-236/237/530 law
+        // the family lanes re-wear — the shared bank's mapped seat the
+        // map speaks; the payment pair the kindless seats the trade's
+        // own words never bank)
+        if new.1 <= 0 {
+            if let Some(row) = Self::merchant_menu_to_inventory(menu) {
+                if row < self.items_potion_kinds.len() {
+                    self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
+        }
+        // THE TAIL'S OWN SYNC (the projection rows + the HUD row the
+        // walk keeps — the swap lane's own tail the walk shares)
+        self.merchant_swap_tail();
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the live belief the doClick THROW arm
+    /// answers, the furnace walk's own shape the 39 seats re-wear):
+    /// the hovered+hasItem gates the SAME rects walk the offline lane
+    /// keeps, the result seat the SILENCE keeps (the verdict the
+    /// family law the wire never un-speaks — no packet the refusal
+    /// rides), the take the live carried's gate the carried refusal
+    /// opens, THE DRAINED ROWS the kind lanes the FIELD WRITES retire
+    /// (the sink borrow's own law the held command keeps — the shared
+    /// bank's mapped seats the map speaks), the hotbar rows the HUD
+    /// belief syncs, the packet the command lane carries (the EMPTY
+    /// changed map the carried refusal names, the drop entity the
+    /// SERVER's Add Entity lane spawns — no local prediction).
+    fn on_merchant_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.merchant_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.merchant_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.merchant_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        // THE STORE'S OWN BOUNDS (the stand-in's fresh vec the resize
+        // arms — the wholesale lane the 39 seats keeps)
+        if self.merchant_slots.len() != 39 {
+            self.merchant_slots.resize(39, (0, 0));
+        }
+        let menu = slot as usize;
+        if menu == 2 {
+            // THE RESULT SEAT'S OWN SILENCE (the family law the wire
+            // lane keeps — no packet the refusal rides, the take's own
+            // lane the click walks answer)
+            return;
+        }
+        let (id, count) = *self.merchant_slots.get(menu).unwrap_or(&(0, 0));
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence, NO packet
+        }
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.merchant_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            self.merchant_slots[menu] = new;
+            if menu >= 30 {
+                // THE HOTBAR'S OWN HUD (the belief rows the screen's
+                // own strip re-wears — the anvil walk's own slice the
+                // 30..39 keeps)
+                let mut row = [(0, 0); 9];
+                row.copy_from_slice(&self.merchant_slots[30..39]);
+                self.hotbar_slots = row;
+            }
+            // THE DRAINED ROW'S OWN KIND RETIRE (the inline field
+            // writes the sink borrow's own law keeps — the shared
+            // bank's mapped seat the map speaks)
+            if new.1 <= 0 {
+                if let Some(row) = Self::merchant_menu_to_inventory(menu) {
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                }
+            }
+            note_batch_change(&mut changed, slot, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.merchant_carried,
+            },
+        ));
+    }
+
     /// THE FURNACE'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
     /// arm the container rounds bank, the doClick THROW table the
     /// inventory round v0.3.718 keeps verbatim; the furnace family's

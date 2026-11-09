@@ -54990,6 +54990,253 @@ fn the_wire_anvil_drop_key_the_kinds_the_seats_retire() {
     }
 }
 
+/// THE MERCHANT DROP KEY'S OWN KIND RETIRE (the autopush-535 round —
+/// the take-key census's merchant lane the offline sim wears): the
+/// sim's Q the drained seats the kind lanes clear (the payment pair
+/// the plain take answers + the setItem recompute re-speaks, the
+/// store rows the shared bank's mapped seats speak, the RESULT SEAT
+/// the SILENCE keeps — the take lane the click walks already speak):
+/// the CASE PAYMENT the kinded potion the payment seat drains (the
+/// plain take the trade store's word retires, the recompute the
+/// offerless bank the empty result keeps), the CASE RESULT the
+/// charged result the Q never touches (the silence the mayTake +
+/// onTake chain the click lane owns), the CASE MAIN the kinded
+/// potion the store row drains (the mapped bank seat the word
+/// retires, the projection the tail re-syncs), the CASE HOTBAR the
+/// kinded potion the hotbar row drains (the word retires, the HUD
+/// the sync keeps), the KINDLESS drain the bank the silence keeps.
+#[test]
+fn the_merchant_drop_key_the_kinds_the_seats_retire() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE OFFLINE SIM'S OWN BANK (the wandering trader's open walk
+    // the trade lane keeps — the 39 empty seats the trade store
+    // wears, the live flag the FALSE the offline world speaks)
+    app.merchant_is_live = false;
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_carried = (0, 0);
+    app.screen = ScreenKind::Merchant;
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.merchant_slot_rects = (0..39)
+        .map(|i| (100 + (i as i32) * 20, 100, i as i16))
+        .collect();
+    // THE CASE PAYMENT'S OWN DRAIN (the kinded potion the payment
+    // seat drains — the plain take the trade store's own store
+    // retires, the setItem law the recompute re-speaks)
+    app.merchant_slots[0] = (potion, 1);
+    app.mouse_pos = Some((100 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the payment seat the Q drains"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the cursor never touched");
+    assert_eq!(
+        app.merchant_slots[2],
+        (0, 0),
+        "the recompute the offerless bank the empty keeps"
+    );
+    // THE CASE RESULT'S OWN SILENCE (the charged result the Q never
+    // touches — the safeTake chain the take's own lane the click
+    // walks answer)
+    app.merchant_slots[2] = (potion, 1);
+    app.mouse_pos = Some((100 + 2 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(
+        app.merchant_slots[2],
+        (potion, 1),
+        "the result the silence keeps"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the cursor never touched");
+    // THE CASE MAIN'S OWN RETIRE (the kinded potion the store row
+    // drains — the mapped bank seat the word retires, the projection
+    // the tail re-syncs)
+    app.inventory.items[14] = (potion, 1);
+    app.items_potion_kinds[14] = kind_b;
+    let (mx, my) = (100 + 8 * 20 + 8, 108);
+    app.mouse_pos = Some((mx, my));
+    app.on_merchant_drop_key(true);
+    assert_eq!(app.inventory.items[14], (0, 0), "the row the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.merchant_slots[8], (0, 0), "the projection re-synced");
+    // THE CASE HOTBAR'S OWN RETIRE (the kinded potion the hotbar row
+    // drains — the word retires, the HUD the sync keeps)
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_c;
+    app.mouse_pos = Some((100 + 30 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(app.inventory.items[0], (0, 0), "the hotbar the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD synced");
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the row
+    // drains — the bank the NONE the drain never mints)
+    app.inventory.items[9] = (dirt, 7);
+    app.mouse_pos = Some((100 + 3 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(app.inventory.items[9], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the kindless drain the silence keeps"
+    );
+}
+
+/// THE WIRE MERCHANT DROP KEY'S OWN KIND RETIRE (the autopush-535
+/// round — the take-key census's merchant lane the live belief
+/// wears): the live window's Q the drained seats the kind lanes clear
+/// (the payment pair the seat store's own words retire, the store
+/// rows the shared bank's mapped seats speak, the RESULT SEAT the
+/// SILENCE keeps — no packet the refusal rides): the CASE PAYMENT the
+/// kinded potion the payment seat drains (the packet the drain
+/// names), the CASE MAIN the kinded potion the store row drains (the
+/// mapped seat the word retires), the CASE HOTBAR the kinded potion
+/// the hotbar row drains (the word retires, the HUD the sync wears),
+/// the RESULT the charged stack the silence keeps, the KINDLESS drain
+/// the bank the silence keeps.
+#[test]
+fn the_wire_merchant_drop_key_the_kinds_the_seats_retire() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 39];
+    slots[0] = (potion, 1);
+    slots[8] = (potion, 1);
+    slots[30] = (potion, 1);
+    slots[2] = (dirt, 7);
+    app.live_container_updated(Some(LiveContainer {
+        id: 21,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 5,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Merchant;
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.merchant_slot_rects = (0..39)
+        .map(|i| (100 + (i as i32) * 20, 100, i as i16))
+        .collect();
+    // THE CASE PAYMENT'S OWN DRAIN (the kinded potion the payment
+    // seat drains — the packet the drain names)
+    app.mouse_pos = Some((100 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(
+        app.merchant_slots[0],
+        (0, 0),
+        "the payment seat the Q drains"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the cursor untouched");
+    match rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 21, "the window id the echo wears");
+            assert_eq!(click.state_id, 5, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the payment seat the packet rides");
+            assert_eq!(click.button, 1, "the Ctrl the byte keys");
+            assert_eq!(click.input, ContainerInput::Throw);
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0))],
+                "the drain the packet names"
+            );
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE MAIN'S OWN RETIRE (the kinded potion the store row
+    // drains — the shared bank's mapped seat the word retires)
+    app.items_potion_kinds[14] = kind_b;
+    app.mouse_pos = Some((100 + 8 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(app.merchant_slots[8], (0, 0), "the row the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the mapped seat the word retires"
+    );
+    match rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 8, "the store row's own menu id");
+            assert_eq!(click.changed, vec![(8, (0, 0))], "the drain named");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE HOTBAR'S OWN RETIRE (the kinded potion the hotbar row
+    // drains — the word retires, the HUD the sync wears)
+    app.items_potion_kinds[0] = kind_c;
+    app.mouse_pos = Some((100 + 30 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(app.merchant_slots[30], (0, 0), "the hotbar the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD synced");
+    match rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 30, "the hotbar row's own menu id");
+            assert_eq!(click.changed, vec![(30, (0, 0))], "the drain named");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE RESULT'S OWN SILENCE (the charged stack the Q never
+    // touches — no packet the refusal rides)
+    app.mouse_pos = Some((100 + 2 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(
+        app.merchant_slots[2],
+        (dirt, 7),
+        "the result the silence keeps"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the result seat the walk never answers"
+    );
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the row
+    // drains — the bank the NONE the drain never mints)
+    app.merchant_slots[4] = (dirt, 7);
+    app.mouse_pos = Some((100 + 4 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(app.merchant_slots[4], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.items_potion_kinds[10], none,
+        "the kindless drain the silence keeps"
+    );
+    match rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 4, "the kindless row's own menu id");
+            assert_eq!(click.changed, vec![(4, (0, 0))], "the drain named");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the

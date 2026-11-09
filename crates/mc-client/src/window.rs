@@ -2851,6 +2851,14 @@ pub fn run_gui_app(
                 // speaks, the result seat the silence the table law
                 // keeps)
                 app.on_anvil_drop_key(q_ctrl);
+                // THE MERCHANT'S OWN Q (the SAME arm — the
+                // MerchantScreen the base class keeps, the offline sim
+                // the local walk the lane wears, the live window the
+                // packet speaks — the autopush-535 round the Q
+                // family's trade lane speaks, the payment pair the
+                // setItem recompute the drain re-speaks, the result
+                // seat the silence the family law keeps)
+                app.on_merchant_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
