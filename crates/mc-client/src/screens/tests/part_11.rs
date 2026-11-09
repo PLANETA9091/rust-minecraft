@@ -53774,6 +53774,115 @@ fn the_table_drop_key_the_kinds_the_seats_retire() {
     );
 }
 
+/// THE FURNACE DROP KEY'S OWN KIND RETIRE (the take-key census's own
+/// completion lane — the dev-236 table twin the furnace re-wears):
+/// the offline FurnaceScreen's Q the drained seats the banks clear
+/// (the SEAT STORE's own put helper the two lanes answer): the CASE
+/// TRIO the kinded potion the fuel seat drains (the seat's word the
+/// NONE retires, the input's feed the Q never disturbs), the CASE
+/// ROW the kinded potion the hotbar seat drains (the write-through
+/// the real row empties, the shared bank's mapped seat the word
+/// retires, the HUD the every-mutation law syncs), the KINDLESS
+/// drain the bank the silence keeps.
+#[test]
+fn the_furnace_drop_key_the_kinds_the_seats_retire() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(214);
+    app.enter_world();
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(0, 0, 0, crate::world::FURNACE);
+    app.open_furnace((0, 0, 0));
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE CASE TRIO'S OWN RETIRE (the kinded potion the fuel seat
+    // drains — the seat's word the bank clears)
+    let (fx, fy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    app.furnace_slots[1] = (potion, 1);
+    app.furnace_seat_potion_kinds[1] = kind_a;
+    app.mouse_pos = Some((fx + 8, fy + 8));
+    app.on_furnace_drop_key(true);
+    assert_eq!(app.furnace_slots[1], (0, 0), "the fuel the Q drains");
+    assert_eq!(
+        app.furnace_seat_potion_kinds[1], none,
+        "the drained seat the word retires"
+    );
+    assert_eq!(app.furnace_carried, (0, 0), "the cursor never touched");
+    // THE CASE ROW'S OWN RETIRE (the kinded potion the hotbar seat
+    // drains — the write-through the real row empties, the mapped
+    // bank seat the word retires, the HUD the sync keeps)
+    let (hx, hy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 31)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.furnace_slots[31] = (potion, 1);
+    app.inventory.items[1] = (potion, 1);
+    app.items_potion_kinds[1] = kind_b;
+    app.mouse_pos = Some((hx + 8, hy + 8));
+    app.on_furnace_drop_key(true);
+    assert_eq!(app.furnace_slots[31], (0, 0), "the seat the Q drains");
+    assert_eq!(
+        app.inventory.items[1],
+        (0, 0),
+        "the write-through the real row empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[1], none,
+        "the drained row the word retires"
+    );
+    assert_eq!(app.hotbar_slots[1], (0, 0), "the HUD synced");
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the main row
+    // drains — the bank the NONE the drain never mints)
+    let (mx, my) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 3)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.furnace_slots[3] = (dirt, 7);
+    app.inventory.items[9] = (dirt, 7);
+    app.mouse_pos = Some((mx + 8, my + 8));
+    app.on_furnace_drop_key(true);
+    assert_eq!(app.furnace_slots[3], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the write-through the row empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the kindless drain the silence keeps"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the

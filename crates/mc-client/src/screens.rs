@@ -46434,6 +46434,10 @@ impl App {
     /// own refusal, the taken the tryRemove law, the drop entity the
     /// AIMED look spawns, the standard rows the write-through
     /// projection syncs — the click lane's own law the offline keeps);
+    /// THE DRAINED SEATS the banks clear (the dev-236 table lane's
+    /// own law the furnace twin re-wears — the trio seat's kind + the
+    /// standard row's kind the NONE retires, the same walk the
+    /// dev-237 round the take-key census completes);
     /// THE LIVE SESSION THE WIRE SPEAKS (the packet the command lane
     /// carries, the [`wire_inventory_drop`] walk the 39-slot belief
     /// re-keys, the HUD row the menu 30..39 range syncs, the drop
@@ -46478,6 +46482,14 @@ impl App {
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
         self.furnace_slots[slot] = new;
+        // THE DRAINED SEAT'S OWN KIND RETIRE (the dev-199/dev-201/
+        // dev-236 law the furnace lane re-wears — the trio seat the
+        // SEAT STORE's own word the put helper clears, the standard
+        // row the write-through map the shared bank's seat answers,
+        // the stale kind the later potion never wears)
+        if new.1 <= 0 {
+            self.furnace_seat_kind_put(slot, crate::brewing_sim::POTION_KIND_NONE);
+        }
         if slot >= 3 {
             // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
             // inventory IS — the menu slot the inventory cell answers,
