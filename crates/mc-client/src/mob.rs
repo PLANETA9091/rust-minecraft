@@ -856,11 +856,39 @@ pub fn sheep_undercoat_shows(is_baby: bool, is_jeb: bool, wool_color: u8) -> boo
 /// java `Math.floorMod` semantics the negative half speaks — the
 /// coat Variant's CLAMP law the 546 round banks a DIFFERENT map's
 /// own verdict). The HorseRenderState.markings the wire never
-/// carries yet: the spawner's `Markings.byId(this.random.nextInt(5))`
-/// draw the finalize lane the later round wears, the layer map's get
-/// the id serves.
+/// carries yet: the spawner's draw the finalize lane the dev-240
+/// round wears, the layer map's get the id serves.
 pub fn horse_markings_by_id(id: i32) -> u8 {
     (((id % 5) + 5) % 5) as u8
+}
+
+/// THE HORSE'S OWN SPAWN FINALIZE (javap `Horse.finalizeSpawn` 0-79
+/// the 26.2 jar the equine package speaks — the SpawnGroupData gate
+/// the draw serves): the HERD'S OWN VARIANT the `instanceof
+/// HorseGroupData` arm keeps [pc 8-13 — the pack data the plains
+/// herd the same-coat walk banks], the FRESH SPAWN the
+/// `Util.getRandom(Variant.values(), random)` draw answers [pc 29-40
+/// — the values array the `values[random.nextInt(values.length)]`
+/// fold the seven rows draws, the `new HorseGroupData(variant)` ctor
+/// pc 42-51 the herd's next member the data re-wears], and the
+/// MARKINGS DRAW the gate never rides [pc 53-67 — the unconditional
+/// `Util.getRandom(Markings.values(), random)` the
+/// setVariantAndMarkings pair banks: the SAME coat the per-member
+/// spots the herd wears, the five rows the draw splits]. The group
+/// arm's variant word the draw SKIPS [pc 13 ifeq 53 — the fresh
+/// arm's Variant draw + the ctor pc 13-53 the group arm never
+/// spends], the markings draw the FIRST stream word the skip makes.
+/// The `Util.getRandom` law the array-index fold speaks [javap
+/// `Util.getRandom(T[], RandomSource)` 0-10 — the
+/// `array[nextInt(array.length)]` verbatim the seven/five rows
+/// wear].
+pub fn horse_finalize_spawn(rng: &mut Lcg, group_variant: Option<u8>) -> (u8, u8) {
+    let variant = match group_variant {
+        Some(v) => v,
+        None => rng.next_int(7) as u8,
+    };
+    let markings = rng.next_int(5) as u8;
+    (variant, markings)
 }
 
 /// THE JEB_ RAINBOW'S OWN WORD (javap ColorLerper.getLerpedColor's
@@ -10317,21 +10345,29 @@ pub const CREATURE_PACK_MAX: i32 = 4;
 pub const CREATURE_CLUSTER_SIZE: i32 = 4;
 
 /// THE BIOME'S OWN WEIGHTED ROWS (the plains `MobSpawnSettings` the
-/// classic table keeps: sheep 12, pig 10, chicken 10, cow 8 — the
-/// chicken row the drawn set NOW carries, the four the registry admits
-/// the roll draws; the weighted pick the cumulative fold speaks, the
+/// classic table keeps: sheep 12, pig 10, chicken 10, cow 8, horse 5
+/// — the chicken row the drawn set the dev rounds carried, THE HORSE
+/// ROW the 26.2 jar's own
+/// `data/minecraft/worldgen/biome/plains.json` creature spawner the
+/// weight-5 band speaks [the `{"minecraft:horse", weight 5,
+/// minCount 2, maxCount 6}` row the json's own list order wears —
+/// the donkey weight-1 row the unadmitted kind the registry never
+/// carries the honest absence drops, the admitted five the sum 45
+/// the roll draws]; the weighted pick the cumulative fold speaks, the
 /// vanilla list order the ranges' own walk keeps — sheep, pig,
-/// chicken, cow, the nextInt(40) the total the sum speaks).
+/// chicken, cow, horse, the nextInt(45) the total the sum speaks).
 fn pick_creature_kind(rng: &mut Lcg) -> MobKind {
-    let roll = rng.next_int(40);
+    let roll = rng.next_int(45);
     if roll < 12 {
         MobKind::Sheep
     } else if roll < 22 {
         MobKind::Pig
     } else if roll < 32 {
         MobKind::Chicken
-    } else {
+    } else if roll < 40 {
         MobKind::Cow
+    } else {
+        MobKind::Horse
     }
 }
 
@@ -10449,9 +10485,16 @@ pub fn try_spawn_creatures(
     };
     // THE BIOME'S OWN PICK (getRandomSpawnMobAt's weighted fold)
     let kind = pick_creature_kind(rng);
-    // THE PACK'S OWN DRAW (295-323 — min=max=4 the +nextInt(1) answers)
-    let attempts =
-        CREATURE_PACK_MIN + rng.next_int((1 + CREATURE_PACK_MAX - CREATURE_PACK_MIN) as u64);
+    // THE PACK'S OWN DRAW (295-323 — `minCount + nextInt(1 + maxCount
+    // - minCount)` the drawn walk speaks: the four classic rows the
+    // 4..4 band the constants keep, THE HORSE'S OWN 2..6 BAND the
+    // plains json's row wears — the herd the bigger pack the band
+    // draws, the +nextInt(5) the five-wide spread answers)
+    let (pack_min, pack_max) = match kind {
+        MobKind::Horse => (2, 6),
+        _ => (CREATURE_PACK_MIN, CREATURE_PACK_MAX),
+    };
+    let attempts = pack_min + rng.next_int((1 + pack_max - pack_min) as u64);
     let mut spawned: i32 = 0;
     // THE GROUP DATA THE CALL CARRIES (AgeableMob.finalizeSpawn's loc4 —
     // the null the FIRST member's arm fills with the `(true)` ctor the
@@ -10459,6 +10502,12 @@ pub fn try_spawn_creatures(
     // the count walks, the SHARED body the 3-tries loop never resets —
     // the vanilla variable the loop OUTSIDE declares)
     let mut group_size: i32 = 0;
+    // THE HORSE GROUP'S OWN DATA (Horse.finalizeSpawn's loc4 — the
+    // HorseGroupData the herd's own variant banks: the FIRST member's
+    // fresh arm the draw fills, the later members the pack the
+    // variant re-wears, the shared body the loop never resets — the
+    // vanilla variable the walk's own tail declares)
+    let mut herd_variant: Option<u8> = None;
     // THE 3 TRIES (loc12's own loop — each re-arms the anchor x/z)
     for _ in 0..3 {
         let mut x = ax;
@@ -10514,6 +10563,21 @@ pub fn try_spawn_creatures(
             // registry's no-draw notes the stream never spends)
             if kind == MobKind::Sheep {
                 m.wool_color = sheep_spawn_color(rng);
+            }
+            // THE HORSE'S OWN FINALIZE (Horse.finalizeSpawn the walk
+            // the member wears: the herd's own variant the group data
+            // the first member's draw banks — the fresh arm the seven
+            // rows the draw spends, the later members the pack the
+            // variant re-wears [the group arm's draw the skip keeps],
+            // the markings the FIVE rows every member's own draw
+            // splits — the same coat the per-member spots the herd
+            // wears; the coat + the spots the render lane the
+            // dev-238/dev-239 rounds' own fields the body reads)
+            if kind == MobKind::Horse {
+                let (variant, markings) = horse_finalize_spawn(rng, herd_variant);
+                herd_variant = Some(variant);
+                m.horse_variant = variant;
+                m.horse_markings = markings;
             }
             // THE GROUP DATA'S OWN ARM (finalizeSpawn 15-66): the SIZE
             // gate the first member never rolls — groupSize 0 the ifle
@@ -18703,6 +18767,130 @@ mod tests {
         );
     }
 
+    /// THE HORSE'S OWN SPAWN FINALIZE THE CREATURE WALK WEARS (javap
+    /// `Horse.finalizeSpawn` 0-79 the dev-240 port banks): the DRAW's
+    /// own range the seven/five rows the sweep keeps, the PINNED fresh
+    /// pair the seed's stream speaks [the variant draw the FIRST word
+    /// the stream spends, the markings draw the SECOND word answers],
+    /// the GROUP arm the variant word the skip keeps [the same seed
+    /// the markings draw the FIRST word the skip makes — the pinned
+    /// pair the differing spots prove], the TABLE'S OWN HORSE ROW the
+    /// [40, 45) band the five kinds the sweep keeps, and the WALK'S
+    /// OWN HERD the plains json's 2..6 band the pack lands [the
+    /// SHARED coat the group data the members wear, the per-member
+    /// spots the draws the pack splits, the CLUSTER cap the 4 the
+    /// tail keeps].
+    #[test]
+    fn the_horse_the_spawn_finalize_herd_wears() {
+        // THE DRAW'S OWN RANGE (the seven/five rows the 256-seed sweep
+        // every pair keeps)
+        for seed in 0u64..256 {
+            let (variant, markings) = horse_finalize_spawn(&mut Lcg::new(seed), None);
+            assert!(
+                variant < 7,
+                "seed {seed} the variant the seven rows keeps"
+            );
+            assert!(
+                markings < 5,
+                "seed {seed} the markings the five rows keeps"
+            );
+        }
+        // THE PINNED FRESH PAIR (seed 11 the python-folded stream
+        // speaks: the variant draw the FIRST word spends
+        // [214109221285557 % 7 = 3], the markings draw the SECOND word
+        // answers [184571725159841 % 5 = 1])
+        let (variant, markings) = horse_finalize_spawn(&mut Lcg::new(11), None);
+        assert_eq!(
+            (variant, markings),
+            (3, 1),
+            "the fresh arm the stream's own order wears"
+        );
+        // THE GROUP ARM'S OWN SKIP (the same seed the variant word the
+        // pack re-wears — the markings draw the FIRST word the skip
+        // makes [214109221285557 % 5 = 2 the differing spot proves])
+        let (variant, markings) = horse_finalize_spawn(&mut Lcg::new(11), Some(3));
+        assert_eq!(
+            (variant, markings),
+            (3, 2),
+            "the group arm the variant draw skips"
+        );
+        // THE TABLE'S OWN HORSE ROW (the [40, 45) band the five kinds
+        // the 512-seed sweep every row draws)
+        let mut seen = [false; 5];
+        for seed in 0u64..512 {
+            let kind = pick_creature_kind(&mut Lcg::new(seed));
+            match kind {
+                MobKind::Sheep => seen[0] = true,
+                MobKind::Pig => seen[1] = true,
+                MobKind::Chicken => seen[2] = true,
+                MobKind::Cow => seen[3] = true,
+                MobKind::Horse => seen[4] = true,
+                _ => panic!("the {:?} kind the creature table never admits", kind),
+            }
+        }
+        assert!(
+            seen.iter().all(|&s| s),
+            "the five rows the 512-seed sweep every kind draws"
+        );
+        // THE WALK'S OWN HERD (the plains grass the creature lane
+        // lands — the horse seed the herd the 2..6 band the pack
+        // draws, the differing spots the per-member draws the pack
+        // wears)
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let (px, pz) = (32.0, 32.0);
+        let mut landed = None;
+        for seed in 0u64..1024 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let n = try_spawn_creatures(
+                &mut mobs,
+                &mut next_id,
+                px,
+                pz,
+                &world,
+                &mut Lcg::new(seed),
+            );
+            if n > 0
+                && mobs.iter().all(|m| m.kind == MobKind::Horse)
+                && mobs.iter().any(|m| m.horse_markings != mobs[0].horse_markings)
+            {
+                landed = Some((mobs, n));
+                break;
+            }
+        }
+        let (herd, n) = landed.expect("a horse herd the differing spots lands within 1024 seeds");
+        assert!(
+            (2..=6).contains(&n),
+            "the herd the {n} the plains row's own 2..6 band wears"
+        );
+        assert!(n <= 4, "the cluster cap the 4 the tail keeps");
+        let variant = herd[0].horse_variant;
+        assert!(variant < 7, "the herd coat the seven rows keeps");
+        for m in &herd {
+            assert_eq!(
+                m.horse_variant, variant,
+                "the herd the SHARED coat the group data wears"
+            );
+            assert!(m.horse_markings < 5, "the spots the five rows keep");
+        }
+        assert!(
+            herd.iter().any(|m| m.horse_markings != herd[0].horse_markings),
+            "the per-member spots the draw splits — the pack the differing marks wears"
+        );
+    }
+
     /// THE SPIDER'S OWN REGISTRATION WORDS (javap `EntityTypes` clinit
     /// the 26.2 jar speaks): the `sized(1.4F, 0.9F)` box the
     /// box_for answers, the `eyeHeight(0.6499999761581421F)` the
@@ -20936,12 +21124,15 @@ mod tests {
     }
 
     /// THE BABY ROLL'S OWN STREAM (the mirror-replay the same seed
-    /// walks: the anchor's two doubles, the kind's nextInt(40), the
-    /// pack's nextInt(1), the scatter's four nextInt(6) per attempt,
-    /// the landed member the ctor seed's next() + the yaw's
-    /// nextFloat(), the GROUP the members 2+ the ONE f32 roll speaks —
-    /// the first member the gate the short-circuit keeps; the yaw the
-    /// roll BEFORE rides, the final state the exact count the replay
+    /// walks: the anchor's two doubles, the kind's nextInt(45), the
+    /// pack's bound draw [the horse's 2..6 the nextInt(5) answers, the
+    /// four the nextInt(1) keeps], the scatter's four nextInt(6) per
+    /// attempt, the landed member the ctor seed's next() + the yaw's
+    /// nextFloat() + the HORSE DRAWS the dev-240 arm wears [the
+    /// variant the FIRST member spends, the spots every member draws],
+    /// the GROUP the members 2+ the ONE f32 roll speaks — the first
+    /// member the gate the short-circuit keeps; the yaw the roll
+    /// BEFORE rides, the final state the exact count the replay
     /// refuses to shift).
     #[test]
     fn the_pack_baby_roll_the_stream_the_order_keeps() {
@@ -20980,12 +21171,35 @@ mod tests {
         let dist = SPAWN_MIN_DIST + probe.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
         let ax = (32.0 + ang.cos() * dist).floor() as i32;
         let az = (32.0 + ang.sin() * dist).floor() as i32;
-        let _kind_roll = probe.next_int(40);
-        let attempts = CREATURE_PACK_MIN
-            + probe.next_int((1 + CREATURE_PACK_MAX - CREATURE_PACK_MIN) as u64);
+        // THE KIND'S OWN ROLL (the dev-240 table the 45 the admitted
+        // rows speak — the mirror the fold re-wears)
+        let roll = probe.next_int(45);
+        let kind = if roll < 12 {
+            MobKind::Sheep
+        } else if roll < 22 {
+            MobKind::Pig
+        } else if roll < 32 {
+            MobKind::Chicken
+        } else if roll < 40 {
+            MobKind::Cow
+        } else {
+            MobKind::Horse
+        };
+        // THE PACK'S OWN BOUND (the horse's 2..6 the row speaks, the
+        // four the 4..4 band the constants keep)
+        let (pmin, pmax) = if kind == MobKind::Horse {
+            (2, 6)
+        } else {
+            (CREATURE_PACK_MIN, CREATURE_PACK_MAX)
+        };
+        let attempts = pmin + probe.next_int((1 + pmax - pmin) as u64);
         let mut yaws: Vec<f32> = Vec::new();
         let mut group_size = 0i32;
         let mut spawned = 0i32;
+        // THE HORSE GROUP'S OWN SLOT (the herd the variant the data
+        // banks — the fresh arm the seven rows the draw spends, the
+        // later members the skip the five rows the spots speak)
+        let mut herd: Option<u8> = None;
         'outer: for _ in 0..3 {
             let mut x = ax;
             let mut z = az;
@@ -20998,10 +21212,26 @@ mod tests {
                     continue;
                 }
                 // the flat grass the spot rules keep (no draws — the
-                // ctor seed + the yaw + the group roll the landed
-                // member's own chain speaks)
+                // ctor seed + the yaw + the horse draws + the group
+                // roll the landed member's own chain speaks)
                 let _seed_draw = probe.next();
                 yaws.push(probe.next_f32() * 360.0);
+                // THE HORSE'S OWN FINALIZE DRAW (the dev-240 walk the
+                // member wears — the variant the FIRST member's fresh
+                // arm spends, the spots the FIVE rows every member
+                // draws, the group arm the variant word skips)
+                if kind == MobKind::Horse {
+                    if herd.is_none() {
+                        herd = Some(probe.next_int(7) as u8);
+                    }
+                    let _spots = probe.next_int(5);
+                }
+                // THE SHEEP'S OWN COLOR DRAW (the walk the member
+                // wears — the mirror the REAL fn re-calls, the stream
+                // the same one-roll spend keeps)
+                if kind == MobKind::Sheep {
+                    let _color = sheep_spawn_color(&mut probe);
+                }
                 if group_size > 0 {
                     let _roll = probe.next_f32();
                 }
@@ -21021,10 +21251,7 @@ mod tests {
         // THE YAWS THE ORDER SPEAKS (a roll drawn before the yaw the
         // member's own heading the different word speaks)
         for (m, y) in mobs.iter().zip(yaws.iter()) {
-            assert!(
-                (m.yaw - y).abs() < 1e-9,
-                "the yaw the roll BEFORE keeps"
-            );
+            assert!((m.yaw - y).abs() < 1e-9, "the yaw the roll BEFORE keeps");
         }
         // THE FIRST MEMBER THE GATE KEEPS (the replay's groupSize the
         // same zero the walk's own first arm holds)
@@ -25252,13 +25479,15 @@ mod tests {
     }
 
     /// THE PLAINS WEIGHTS THE CHICKEN BAND CARRIES (the classic table
-    /// sheep 12 / pig 10 / chicken 10 / cow 8 — the nextInt(40) the
-    /// sum speaks, the vanilla list order the cumulative ranges keep;
-    /// the 4000-seed walk the quarter band the chicken's 10/40 draws).
+    /// sheep 12 / pig 10 / chicken 10 / cow 8 / horse 5 — the
+    /// nextInt(45) the sum speaks, the vanilla list order the
+    /// cumulative ranges keep [the horse row the dev-240 round's own
+    /// weight-5 band wears]; the 4000-seed walk the bands the shares
+    /// draw).
     #[test]
     fn the_plains_weights_the_chicken_band_carries() {
         let n = 4000u32;
-        let (mut sheep, mut pig, mut chicken, mut cow) = (0i32, 0i32, 0i32, 0i32);
+        let (mut sheep, mut pig, mut chicken, mut cow, mut horse) = (0i32, 0i32, 0i32, 0i32, 0i32);
         for seed in 0..n {
             let mut rng = Lcg::new(seed as u64);
             match pick_creature_kind(&mut rng) {
@@ -25266,18 +25495,44 @@ mod tests {
                 MobKind::Pig => pig += 1,
                 MobKind::Chicken => chicken += 1,
                 MobKind::Cow => cow += 1,
+                MobKind::Horse => horse += 1,
                 other => panic!("the creature lane the zombie never draws: {other:?}"),
             }
         }
-        // the bands the weights speak: 12/40, 10/40, 10/40, 8/40 —
-        // the quarter band the chicken's own share, +-400 the random
-        // walk's tolerance the other tests keep
-        let quarter = (n / 4) as i32;
+        // the bands the weights speak: 12/45, 10/45, 10/45, 8/45,
+        // 5/45 — the horse's own weight-5 band the dev-240 row wears,
+        // +-400 the random walk's tolerance the other tests keep
         for (name, band, lo, hi) in [
-            ("sheep", sheep, (n * 12 / 40) as i32 - 400, (n * 12 / 40) as i32 + 400),
-            ("pig", pig, (n * 10 / 40) as i32 - 400, (n * 10 / 40) as i32 + 400),
-            ("chicken", chicken, quarter - 400, quarter + 400),
-            ("cow", cow, (n * 8 / 40) as i32 - 400, (n * 8 / 40) as i32 + 400),
+            (
+                "sheep",
+                sheep,
+                (n * 12 / 45) as i32 - 400,
+                (n * 12 / 45) as i32 + 400,
+            ),
+            (
+                "pig",
+                pig,
+                (n * 10 / 45) as i32 - 400,
+                (n * 10 / 45) as i32 + 400,
+            ),
+            (
+                "chicken",
+                chicken,
+                (n * 10 / 45) as i32 - 400,
+                (n * 10 / 45) as i32 + 400,
+            ),
+            (
+                "cow",
+                cow,
+                (n * 8 / 45) as i32 - 400,
+                (n * 8 / 45) as i32 + 400,
+            ),
+            (
+                "horse",
+                horse,
+                (n * 5 / 45) as i32 - 400,
+                (n * 5 / 45) as i32 + 400,
+            ),
         ] {
             assert!(
                 (lo..=hi).contains(&band),
