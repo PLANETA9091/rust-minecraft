@@ -368,6 +368,33 @@ pub const CHICKEN_FOOD: [&str; 6] = [
     "pitcher_pod",
 ];
 
+/// THE HORSE'S OWN FOOD TAG (the jar's
+/// `data/minecraft/tags/item/horse_food.json` verbatim — the eight
+/// rows the tag keeps; `AbstractHorse.isFood` the `is(ItemTags.
+/// HORSE_FOOD)` walk speaks — javap `getstatic #639 HORSE_FOOD:
+/// Lnet/minecraft/tags/TagKey;` the single is() call the body keeps).
+/// The red_mushroom row `handleEating`'s own switch speaks (pc 105-129
+/// — heal 3.0 / age-up 0 / temper 3) the tag never admits: the
+/// isFood gate the fedFood entry arms refuses it before the walk.
+pub const HORSE_FOOD: [&str; 8] = [
+    "wheat",
+    "sugar",
+    "hay_block",
+    "apple",
+    "carrot",
+    "golden_carrot",
+    "golden_apple",
+    "enchanted_golden_apple",
+];
+
+/// THE HORSE'S OWN TEMPER CEILING (javap `AbstractHorse.getMaxTemper`
+/// — the `bipush 100` the body keeps, the Horse the base's row
+/// inherits [no override the subclass speaks]); the fedFood walk's
+/// `modifyTemper` the `Mth.clamp(getTemper() + amount, 0, max)` fold
+/// the ceiling answers, the temper-full gate `getTemper() >=
+/// getMaxTemper()` the arm's own skip keeps.
+pub const HORSE_MAX_TEMPER: i32 = 100;
+
 /// `AgeableMob.getBabyStartAge` (javap: `return -24000` — the grow-up
 /// countdown the child's birth arms; the age walks UP toward 0 the
 /// aiStep's own walk speaks, the adult the zero crossing names).
@@ -1147,6 +1174,52 @@ pub enum MobInteract {
     /// pc 75-87 the wire's own OpenScreen word the merchant menu
     /// arms (the screen the server the authority keeps).
     Talk,
+    /// THE HORSE'S OWN FED-FOOD ARM (javap `Horse.mobInteract` 77-93
+    /// — the isFood gate the HORSE_FOOD tag arms, the `fedFood
+    /// (player, stack)` the arm returns — fedFood's own body the
+    /// handleEating boolean the verdict folds: the `ate` word the
+    /// handleEating's `loc3` answer carries [the heal/baby-age-up/
+    /// temper arms the walk's own truth speaks], the `loved` word
+    /// the golden rows' setInLove arms carry [the golden_carrot pc
+    /// 176-214, the golden_apple/enchanted pair pc 251-286 — the
+    /// `isTamed && getAge() == 0 && !isInLove()` gate the 600 arms]),
+    /// the SUCCESS_SERVER return the client's own prediction the
+    /// same verdict wears. The consume(1) the inventory-less lane
+    /// honest-skips (the Feed verdict's own note the walk keeps).
+    FedFood { ate: bool, loved: bool },
+    /// THE HORSE'S OWN BUCK ARM (javap `Horse.mobInteract` 94-108 —
+    /// the `!isTamed()` gate the arm's own order keeps, the
+    /// `makeMad()` call the walk runs: the isStanding guard pc 0-4
+    /// + the level.isClientSide door pc 8-14 + the
+    /// `standIfPossible()` rear pc 17-20 [the rearing pose the
+    /// client's pose lanes never bank — the honest skip the
+    /// render's vocabulary keeps] + the `makeSound(getAngrySound())`
+    /// the angry voice speaks — the HORSE_ANGRY / HORSE_ANGRY_BABY
+    /// pair the isBaby split picks], the `SUCCESS` return pc 105-108
+    /// the CLIENT swing the verdict carries).
+    MakeMad,
+    /// THE HORSE'S OWN RIDE ARM (javap `AbstractHorse.mobInteract`
+    /// 107-115 — the fall-through arm the chain's own tail keeps:
+    /// the `doPlayerRide(player)` the walk runs [the setEating(false)
+    /// + the clearStanding() pc 0-8 the client's pose words never
+    /// bank, the `player.setYRot(getYRot())` pc 19-24 the SERVER arm
+    /// the yaw snap the offline truth speaks, the startRiding the
+    /// server arm the mount rides], the `SUCCESS` return pc 112-115
+    /// the mount verdict carries). The sneak the fall-through NEVER
+    /// gates — the untamed adult's right-click mounts the saddle the
+    /// bit never reads (the pig's isSaddled arm the horse's own walk
+    /// never wears).
+    HorseRide,
+    /// THE HORSE'S OWN GUI ARM (javap `AbstractHorse.mobInteract`
+    /// 21-43 — the `isTamed() && player.isSecondaryUseActive()` gate
+    /// the arm's own pair keeps, the `openCustomInventoryScreen
+    /// (player)` pc 35-40 the tamed+sneak body answers, the SUCCESS
+    /// return pc 40-43 the CLIENT swing the verdict carries). The
+    /// screen the honest skip keeps — the horse's saddle/armor slots
+    /// the SERVER state the container word owns (the wire's own
+    /// window the later round arms, the trader's openTradingScreen
+    /// tail the Talk verdict's same skip the precedent keeps).
+    OpenInventory,
 }
 
 impl MobInteract {
@@ -5574,6 +5647,15 @@ pub struct Zombie {
     /// own local default wears — the wire's variant int the merge
     /// sets when the lane rides).
     pub horse_markings: u8,
+    /// THE HORSE'S OWN TEMPER (javap `AbstractHorse.temper` the
+    /// `protected int temper` field the jar keeps, the
+    /// DEFAULT_TEMPER static the clinit's 0 keeps): the fedFood
+    /// walk's `modifyTemper` the clamp [0, HORSE_MAX_TEMPER] fold
+    /// walks, the taming minigame the ride lane the state reads; the
+    /// ctor's 0 the honest untamed default wears — the wire's own
+    /// mobs the field never carries (the flags word the later round
+    /// arms).
+    pub temper: i32,
     /// THE LEASH'S OWN LINK (javap `TraderLlama.setLeashedTo(trader,
     /// true)` the tryToSpawnLlamaFor walk banks — the holder entity's
     /// id the pair's rope reads; the ctor's None the honest un-leashed
@@ -6003,6 +6085,7 @@ impl Zombie {
             llama_variant: 0,
             horse_variant: 0,
             horse_markings: 0,
+            temper: 0,
             leashed_to: None,
             leash_angular_momentum: 0.0,
             eat_animation_tick: 0,
@@ -8918,17 +9001,55 @@ impl Zombie {
     /// THE PIG'S OWN EAT WORD (javap `Pig.playEatingSound` — the
     /// `getSoundSet().eatSound()` the makeSound walk plays; the synced
     /// word the set picks, the classic the never-spoken slot's honest
-    /// default keeps). The non-pig kinds the kind's own silence keeps
-    /// (the Sheep/Cow the base's own empty playEatingSound law speaks —
-    /// no eat row the sound sets name).
+    /// default keeps). The other kinds the kind's own silence keeps
+    /// (the Sheep/Cow the base's own empty playEatingSound law speaks
+    /// — no eat row the sound sets name; the HORSE the override the
+    /// dev-242's getEatingSound walk banks — the pair the isBaby
+    /// split picks).
     pub fn eat_voice(&self) -> Option<&'static str> {
-        if self.kind != MobKind::Pig {
-            return None;
+        match self.kind {
+            MobKind::Pig => Some(match self.farm_sound_variant.as_deref() {
+                Some(v) => farm_sound_variant_eat(v, self.is_baby()).unwrap_or("entity.pig.eat"),
+                None => "entity.pig.eat",
+            }),
+            // THE HORSE'S OWN EAT WORD (javap `Horse.getEatingSound`
+            // the 26.2 bytecode speaks — the isBaby split the pair
+            // picks: the HORSE_EAT_BABY the `entity.baby_horse.eat`
+            // id the SoundEvents clinit registers [pc 7-10], the
+            // HORSE_EAT the `entity.horse.eat` id the adult keeps
+            // [pc 13-16]; the `eating()` tail the fedFood walk speaks
+            // plays the same word the openMouth pose the client's
+            // render never banks)
+            MobKind::Horse => Some(if self.is_baby() {
+                "entity.baby_horse.eat"
+            } else {
+                "entity.horse.eat"
+            }),
+            // the Sheep/Cow the base's own empty playEatingSound law
+            // speaks — no eat row the sound sets name
+            _ => None,
         }
-        Some(match self.farm_sound_variant.as_deref() {
-            Some(v) => farm_sound_variant_eat(v, self.is_baby()).unwrap_or("entity.pig.eat"),
-            None => "entity.pig.eat",
-        })
+    }
+
+    /// THE HORSE'S OWN ANGRY WORD (javap `Horse.getAngrySound` the
+    /// 26.2 bytecode speaks — the isBaby split the pair picks: the
+    /// HORSE_ANGRY_BABY the `entity.baby_horse.angry` id the
+    /// SoundEvents clinit registers [pc 7-10], the HORSE_ANGRY the
+    /// `entity.horse.angry` id the adult keeps [pc 13-16]; the
+    /// makeMad walk the buck arm serves plays the same word the
+    /// `standIfPossible` rear the client's pose lanes never bank).
+    /// The other kinds the base's own null law keeps (javap
+    /// `AbstractHorse.getAngrySound` the `aconst_null` the default
+    /// speaks — no angry voice the kinds name).
+    pub fn angry_voice(&self) -> Option<&'static str> {
+        match self.kind {
+            MobKind::Horse => Some(if self.is_baby() {
+                "entity.baby_horse.angry"
+            } else {
+                "entity.horse.angry"
+            }),
+            _ => None,
+        }
     }
 
     /// `LivingEntity.getVoicePitch` — the hurt/death/ambient voices'
@@ -8964,7 +9085,57 @@ impl Zombie {
     /// lane. The loot's lane the shear's own shape keeps (the drops
     /// spawn the caller's walk speaks).
     pub fn mob_interact(&mut self, held_item: &str, rng: &mut Lcg) -> MobInteract {
+        self.mob_interact_with_sneak(held_item, false, rng)
+    }
+
+    /// The mob.interact table's own walk the SECONDARY-USE word the
+    /// caller's sneak state rides (javap the 26.2 dispatch the
+    /// `player.isSecondaryUseActive()` reads the chain's own gates
+    /// answer — the horse's tamed-sneak GUI arm the word splits, the
+    /// pig's stand-down the caller's own verdict post speaks). The
+    /// sneak-less callers the `false` word the delegate rides.
+    pub fn mob_interact_with_sneak(
+        &mut self,
+        held_item: &str,
+        sneak: bool,
+        rng: &mut Lcg,
+    ) -> MobInteract {
         match held_item {
+            // THE HORSE'S OWN INTERACT WALK (javap `Horse.mobInteract`
+            // 0-115 the 26.2 bytecode the subclass's own override
+            // keeps — the chain the fold speaks): the pre-check
+            // `loc3 = !(isBaby() || (isTamed() && sneak))` pc 0-26
+            // arms, the super fall `isVehicle() || loc3 ||
+            // (isBaby() && holding GOLDEN_DANDELION)` pc 27-61 the
+            // AbstractHorse chain the helper answers; the horse's OWN
+            // arms pc 62-108 the fall-through body keeps — the
+            // isFood gate the fedFood arm, the `!isTamed()` gate the
+            // makeMad arm, the miss the super chain the tail serves
+            // (the tamed+sneak body the GUI arm the helper re-arms).
+            _ if self.kind == MobKind::Horse => {
+                let tamed_sneak = self.tamed && sneak;
+                let baby = self.is_baby();
+                let to_super = self.passenger.is_some()
+                    || !(baby || tamed_sneak)
+                    || (baby && held_item == "golden_dandelion");
+                if !to_super {
+                    // THE HORSE'S OWN ARMS (pc 62-108 — the non-empty
+                    // stack the pc 69-74 gate reads)
+                    if !held_item.is_empty() {
+                        // THE FED-FOOD ARM (pc 77-93 — the isFood
+                        // gate the HORSE_FOOD tag arms)
+                        if self.is_food(held_item) {
+                            return self.fed_food(held_item);
+                        }
+                        // THE BUCK ARM (pc 94-108 — the !isTamed gate
+                        // the makeMad walk speaks)
+                        if !self.tamed {
+                            return MobInteract::MakeMad;
+                        }
+                    }
+                }
+                self.horse_super_chain(held_item, sneak)
+            }
             "shears" if self.kind == MobKind::Sheep && self.ready_for_shearing() => {
                 MobInteract::Shear(self.shear(rng))
             }
@@ -9084,6 +9255,141 @@ impl Zombie {
             // own PASS the walk returns
             _ => MobInteract::Pass,
         }
+    }
+
+    /// `AbstractHorse.handleEating`'s OWN ROWS (javap the 26.2
+    /// bytecode the switch speaks — the `(heal, ageUp, temper, loves)`
+    /// quads the `loc4/loc5/loc6` locals carry: WHEAT pc 11-31 the
+    /// `2.0f / 20 / 3` row, SUGAR pc 34-54 `1.0f / 30 / 3`,
+    /// HAY_BLOCK pc 57-80 `20.0f / 180` [the temper local the row
+    /// never sets — the grow arm's `loc6 > 0` gate the feed temper
+    /// the hay never raises], APPLE pc 80-105 `3.0f / 60 / 3`,
+    /// RED_MUSHROOM pc 105-129 `3.0f / 0 / 3` [the row the
+    /// HORSE_FOOD tag never admits — the isFood gate the fedFood
+    /// entry arms refuses it before the walk, the honest dead row
+    /// the jar's own bytes keep], CARROT pc 129-154 `3.0f / 60 / 3`,
+    /// GOLDEN_CARROT pc 154-217 `4.0f / 60 / 5` + the setInLove arm
+    /// pc 176-214, GOLDEN_APPLE/ENCHANTED pc 217-289 `10.0f / 240 /
+    /// 10` + the setInLove arm pc 251-286 — the love arms the
+    /// `isTamed && getAge() == 0 && !isInLove()` gate the 600 arms).
+    fn horse_food_row(held_item: &str) -> (f32, i32, i32, bool) {
+        match held_item {
+            "wheat" => (2.0, 20, 3, false),
+            "sugar" => (1.0, 30, 3, false),
+            "hay_block" => (20.0, 180, 0, false),
+            "apple" => (3.0, 60, 3, false),
+            // the row the tag never admits (the isFood gate the
+            // fedFood entry arms refuses) — the jar's own switch
+            // keeps it
+            "red_mushroom" => (3.0, 0, 3, false),
+            "carrot" => (3.0, 60, 3, false),
+            "golden_carrot" => (4.0, 60, 5, true),
+            "golden_apple" | "enchanted_golden_apple" => (10.0, 240, 10, true),
+            _ => (0.0, 0, 0, false),
+        }
+    }
+
+    /// `AbstractHorse.fedFood` verbatim (javap the 26.2 bytecode —
+    /// the `handleEating(player, stack)` boolean pc 0-6 the verdict
+    /// folds, the `stack.consume(1, player)` pc 7-14 the ate arm
+    /// spends [the inventory-less lane the Feed verdict's own note
+    /// honest-skips], the SUCCESS_SERVER return pc 31-34 the ate arm
+    /// carries — the client's own prediction the same verdict wears).
+    /// THE HANDLE-EATING WALK the body banks (javap pc 289-446 — the
+    /// arms the `loc3` boolean folds): the HEAL arm pc 289-315 the
+    /// `getHealth() < getMaxHealth() && heal > 0` gate the
+    /// min-clamp walk answers, the BABY AGE-UP arm pc 316-383 the
+    /// `isBaby() && ageUp > 0 && !isAgeLocked()` gate the single-arg
+    /// `ageUp(ageUp)` walk arms [the HAPPY_VILLAGER particle pc
+    /// 335-365 the offline lane's burst vocabulary never banks — the
+    /// honest skip the particle words keep], the TEMPER arm pc
+    /// 384-430 the `grow > 0 && (ate || !isTamed()) &&
+    /// getTemper() < getMaxTemper()` gate the modifyTemper clamp
+    /// [0, HORSE_MAX_TEMPER] answers, the `eating()` tail pc 434-442
+    /// the ate arm speaks [the openMouth the client's pose lanes
+    /// never bank, the GameEvent.EAT the caller's voice walk serves].
+    fn fed_food(&mut self, held_item: &str) -> MobInteract {
+        let mut ate = false;
+        let mut loved = false;
+        let (heal, age_up_secs, temper_inc, loves) = Self::horse_food_row(held_item);
+        // THE SET-IN-LOVE ARMS (the golden rows' own tail pc 176-214
+        // + pc 251-286 — the `!level().isClientSide` server arm the
+        // offline truth speaks, the `isTamed && getAge() == 0 &&
+        // !isInLove()` gate the canFallInLove fold answers, the
+        // `setInLove(player)` the 600 arms the feed walk's own law
+        // keeps)
+        if loves && self.tamed && self.age == 0 && self.in_love <= 0 {
+            self.in_love = 600;
+            loved = true;
+            ate = true;
+        }
+        // THE HEAL ARM (pc 289-315 — the same min-clamp the effects'
+        // heal walk keeps, the registered base the max_health row
+        // speaks)
+        if self.health < self.kind.max_health() && heal > 0.0 {
+            self.health = (self.health + heal).min(self.kind.max_health());
+            ate = true;
+        }
+        // THE BABY AGE-UP ARM (pc 316-383 — the age-locked body the
+        // gate refuses, the single-arg ageUp the over-grow window
+        // never arms)
+        if self.is_baby() && age_up_secs > 0 && !self.age_locked {
+            self.age_up(age_up_secs, false);
+            ate = true;
+        }
+        // THE TEMPER ARM (pc 384-430 — the temper-full gate the
+        // arm's own skip keeps, the modifyTemper the Mth.clamp fold
+        // [0, HORSE_MAX_TEMPER] the ceiling answers)
+        if temper_inc > 0 && (ate || !self.tamed) && self.temper < HORSE_MAX_TEMPER {
+            self.temper = (self.temper + temper_inc).clamp(0, HORSE_MAX_TEMPER);
+            ate = true;
+        }
+        MobInteract::FedFood { ate, loved }
+    }
+
+    /// `AbstractHorse.mobInteract`'s OWN CHAIN (javap pc 0-115 the
+    /// super body the Horse override falls to — the arms the offline
+    /// walk serves): the VEHICLE/BABY arm pc 0-20 the Animal super's
+    /// food walk keeps [the dandelion the AgeableMob arm answers,
+    /// the isFood hit the feed walk serves, the miss the PASS the
+    /// super's tail returns], the TAMED+SNEAK GUI arm pc 21-43 the
+    /// openCustomInventoryScreen walk answers, the ITEM-SIDE arms pc
+    /// 44-106 the honest skip keeps [the `stack.interactLivingEntity`
+    /// pc 57-78 the item vocabulary never banks — the leash the
+    /// dispatch's own walk serves BEFORE the table, the BODY-ARMOR
+    /// arm pc 84-106 the armor slot the flags word the later round
+    /// arms — both the fall-through the ride tail keeps], the
+    /// doPlayerRide fall-through pc 107-115 the ride verdict
+    /// answers. The sneak the GUI arm's own gate reads (pc 21-32 —
+    /// the `isSecondaryUseActive` word the caller's sneak state
+    /// carries), the ride tail the sneak NEVER gates.
+    fn horse_super_chain(&mut self, held_item: &str, sneak: bool) -> MobInteract {
+        // THE VEHICLE/BABY ARM (pc 0-20 — the Animal.mobInteract
+        // super's own walk the chain serves)
+        if self.passenger.is_some() || self.is_baby() {
+            // THE AGEABLEMOB'S OWN DANDELION ARM (the AgeableMob
+            // super's own lane the Animal chain feeds — the canUse
+            // gate the CANNOT_BE_AGE_LOCKED tag never carries the
+            // horse's body)
+            if self.can_use_golden_dandelion(held_item) {
+                return self.use_golden_dandelion();
+            }
+            // THE FOOD ARM (the isFood hit the feed walk serves —
+            // the horse's HORSE_FOOD gate the same table reads)
+            if self.is_food(held_item) {
+                return self.feed();
+            }
+            // the super's miss: the PASS the fall-through answers
+            return MobInteract::Pass;
+        }
+        // THE GUI ARM (pc 21-43 — the tamed+sneak body the
+        // openCustomInventoryScreen walk answers)
+        if self.tamed && sneak {
+            return MobInteract::OpenInventory;
+        }
+        // THE ITEM-SIDE ARMS pc 44-106 the honest skip keeps — the
+        // fall-through the ride tail answers (pc 107-115)
+        MobInteract::HorseRide
     }
 
     /// THE TAME WALK'S OWN ROLL (javap `Wolf.tryToTame` the 26.2
@@ -9261,11 +9567,17 @@ impl Zombie {
             // the hay_block rows the jar's own bytes keep, the
             // TraderLlama the super's gate inherits)
             MobKind::TraderLlama => held_item == "wheat" || held_item == "hay_block",
-            // THE HORSE'S OWN FOOD GATE (javap `Horse.isFood` the 26.2
-            // bytecode speaks — the golden_apple/golden_carrot pair the
-            // two is() calls the gate answers, the tame + breed foods
-            // the horse's own words wear)
-            MobKind::Horse => held_item == "golden_apple" || held_item == "golden_carrot",
+            // THE HORSE'S OWN FOOD GATE (javap `AbstractHorse.isFood`
+            // the 26.2 bytecode speaks — the `getstatic HORSE_FOOD`
+            // TagKey the single `is(ItemTags.HORSE_FOOD)` call the
+            // body keeps, the HORSE_FOOD tag the eight rows the jar's
+            // own tags/item/horse_food.json verbatim wears; the
+            // golden_apple/golden_carrot pair the OLD two-row gate the
+            // fedFood lane replaces — the love lane the rows the
+            // handleEating walk's own setInLove arms speak, the wheat/
+            // sugar/hay_block/apple/carrot feeds the tag the walk
+            // admits)
+            MobKind::Horse => HORSE_FOOD.contains(&held_item),
         }
     }
 
@@ -18913,6 +19225,235 @@ mod tests {
             herd.iter().any(|m| m.horse_markings != herd[0].horse_markings),
             "the per-member spots the draw splits — the pack the differing marks wears"
         );
+    }
+
+    /// THE HORSE'S OWN INTERACT WALK THE CHAIN WEARS (javap
+    /// `Horse.mobInteract` 0-115 + `AbstractHorse.mobInteract` 0-115 +
+    /// `AbstractHorse.fedFood` + `AbstractHorse.handleEating` the
+    /// dev-242 port banks): the TAG the eight rows the HORSE_FOOD
+    /// gate admits [the red_mushroom the dead row the tag refuses],
+    /// the FOLD the untamed adult the super fall answers [the ride
+    /// tail the wheat hand never feeds], the FED-FOOD ARMS the
+    /// tamed+sneak body serves [the love arm the golden rows carry,
+    /// the temper arm the ate gate the clamp ceiling answers, the
+    /// heal arm the min-clamp the registered base keeps, the hay the
+    /// temper local never sets], the BABY ARMS the foal body speaks
+    /// [the age-up the single-arg walk banks, the buck the non-food
+    /// stack arms, the dandelion the super fall the AgeableMob arm
+    /// answers], the GUI ARM the tamed+sneak empty hand answers [the
+    /// no-sneak tamed adult the ride tail keeps], and the VEHICLE
+    /// arm the ridden hull the super's miss the PASS answers.
+    #[test]
+    fn the_horse_the_interact_walk_the_chain_wears() {
+        // THE TAG'S OWN ROWS (the HORSE_FOOD gate the eight rows
+        // admits — the red_mushroom the dead row the tag refuses, the
+        // miss the honest false keeps)
+        let mut horse = Zombie::new(1, 0.0, 64.0, 0.0, 3);
+        horse.kind = MobKind::Horse;
+        for food in HORSE_FOOD {
+            assert!(horse.is_food(food), "the tag the {food} row admits");
+        }
+        assert!(
+            !horse.is_food("red_mushroom"),
+            "the tag the dead row the isFood gate refuses"
+        );
+        assert!(!horse.is_food("dirt"));
+        assert!(!horse.is_food(""));
+
+        // THE FOLD (pc 27-61 — the untamed adult the loc3 word the
+        // super fall answers: the wheat hand the ride tail serves,
+        // the fedFood arm the fold never reaches)
+        let verdict = horse.mob_interact("wheat", &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::HorseRide,
+            "the untamed adult the super fall the ride tail answers"
+        );
+        assert_eq!(horse.temper, 0, "the fold the temper walk never arms");
+
+        // THE SNEAK RIDE (the fall-through the sneak NEVER gates —
+        // the taming mount the AbstractHorse tail speaks)
+        let verdict = horse.mob_interact_with_sneak("", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::HorseRide,
+            "the sneak the ride tail never gates — the mount the taming walk serves"
+        );
+
+        // THE FED-FOOD ARMS (the tamed+sneak body the horse's OWN
+        // arms serve — the full-health wheat the ate gate the uneaten
+        // verdict keeps)
+        let mut tame = Zombie::new(2, 0.0, 64.0, 0.0, 3);
+        tame.kind = MobKind::Horse;
+        tame.tamed = true;
+        tame.health = MobKind::Horse.max_health();
+        let verdict = tame.mob_interact_with_sneak("wheat", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: false,
+                loved: false
+            },
+            "the full-health tamed body the wheat the uneaten verdict keeps"
+        );
+        // THE LOVE ARM (the golden_carrot row the setInLove tail
+        // speaks — the 600 arms the gate arms, the temper the ate
+        // gate re-arms)
+        let verdict = tame.mob_interact_with_sneak("golden_carrot", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: true,
+                loved: true
+            }
+        );
+        assert_eq!(tame.in_love, 600, "the setInLove the 600 arms");
+        assert_eq!(tame.temper, 5, "the golden carrot's +5 the ate gate walks");
+        // THE TEMPER CEILING (the 98 + 10 the clamp keeps, the
+        // temper-full gate the arm's own skip answers)
+        tame.temper = 98;
+        tame.in_love = 0;
+        let verdict = tame.mob_interact_with_sneak("golden_apple", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: true,
+                loved: true
+            }
+        );
+        assert_eq!(
+            tame.temper, HORSE_MAX_TEMPER,
+            "the clamp the 100 ceiling keeps"
+        );
+        tame.in_love = 0;
+        let verdict = tame.mob_interact_with_sneak("golden_apple", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: true,
+                loved: true
+            }
+        );
+        assert_eq!(
+            tame.temper, HORSE_MAX_TEMPER,
+            "the temper-full gate the arm's own skip keeps"
+        );
+        // THE HEAL ARM (the hurt body the min-clamp walk heals — the
+        // wheat's 2.0 dose the registered base the ceiling keeps)
+        let mut hurt = Zombie::new(3, 0.0, 64.0, 0.0, 3);
+        hurt.kind = MobKind::Horse;
+        hurt.tamed = true;
+        hurt.health = 40.0;
+        let verdict = hurt.mob_interact_with_sneak("wheat", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: true,
+                loved: false
+            }
+        );
+        assert_eq!(
+            hurt.health, 42.0,
+            "the wheat's 2.0 dose the heal arm speaks"
+        );
+        assert_eq!(hurt.temper, 3, "the ate arm the temper walk re-arms");
+        // THE HAY'S OWN DOSE (the 20.0 heal the min-clamp keeps, the
+        // temper local the row never sets — the walk the 0-gate
+        // skips)
+        hurt.health = 33.0;
+        let verdict = hurt.mob_interact_with_sneak("hay_block", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: true,
+                loved: false
+            }
+        );
+        assert_eq!(
+            hurt.health, 53.0,
+            "the hay's 20.0 dose the registered base the ceiling keeps"
+        );
+        assert_eq!(hurt.temper, 3, "the hay the temper local never sets");
+
+        // THE BABY ARMS (the foal body the horse's OWN arms serve —
+        // the wheat the single-arg ageUp banks, the temper the ate
+        // gate re-arms, the non-food stack the buck arm speaks, the
+        // dandelion the super fall the AgeableMob arm answers)
+        let mut foal = Zombie::new(4, 0.0, 64.0, 0.0, 3);
+        foal.kind = MobKind::Horse;
+        foal.set_age(-24000);
+        let verdict = foal.mob_interact_with_sneak("wheat", false, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::FedFood {
+                ate: true,
+                loved: false
+            }
+        );
+        assert_eq!(
+            foal.age, -23600,
+            "the single-arg ageUp the 20-second walk banks [-24000 + 400]"
+        );
+        assert_eq!(foal.temper, 3, "the ate arm the temper walk re-arms");
+        let verdict = foal.mob_interact_with_sneak("dirt", false, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::MakeMad,
+            "the non-food stack the foal's own buck arm speaks"
+        );
+        foal.age_lock_particle_timer = 0;
+        let verdict = foal.mob_interact_with_sneak("golden_dandelion", false, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::AgeLock { locked: true },
+            "the dandelion the super fall the AgeableMob arm answers"
+        );
+        assert_eq!(foal.age, -24000, "the re-baby the setAge reset walks");
+
+        // THE GUI ARM (the tamed+sneak body the empty hand AND the
+        // non-food miss the super chain answers — the no-sneak adult
+        // the ride tail keeps, the word the GUI gate reads)
+        let mut gui = Zombie::new(5, 0.0, 64.0, 0.0, 3);
+        gui.kind = MobKind::Horse;
+        gui.tamed = true;
+        let verdict = gui.mob_interact_with_sneak("", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::OpenInventory,
+            "the tamed+sneak empty hand the GUI arm answers"
+        );
+        let verdict = gui.mob_interact_with_sneak("dirt", true, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::OpenInventory,
+            "the non-food miss the super chain the GUI arm re-arms"
+        );
+        let verdict = gui.mob_interact("", &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::HorseRide,
+            "the no-sneak tamed adult the ride tail keeps"
+        );
+        // THE VEHICLE ARM (the ridden hull the super's food walk
+        // serves — the empty hand the super's miss the PASS answers)
+        gui.passenger = Some(42);
+        let verdict = gui.mob_interact_with_sneak("", false, &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::Pass,
+            "the vehicle arm the super's miss the PASS answers"
+        );
+
+        // THE VOICES (the eat/angry pairs the isBaby split picks —
+        // the four ids the SoundEvents clinit registers)
+        assert_eq!(gui.eat_voice(), Some("entity.horse.eat"));
+        assert_eq!(gui.angry_voice(), Some("entity.horse.angry"));
+        assert_eq!(foal.eat_voice(), Some("entity.baby_horse.eat"));
+        assert_eq!(foal.angry_voice(), Some("entity.baby_horse.angry"));
+        let mut pig = Zombie::new(7, 0.0, 64.0, 0.0, 3);
+        pig.kind = MobKind::Pig;
+        assert_eq!(pig.eat_voice(), Some("entity.pig.eat"));
+        assert_eq!(pig.angry_voice(), None);
     }
 
     /// THE SPIDER'S OWN REGISTRATION WORDS (javap `EntityTypes` clinit

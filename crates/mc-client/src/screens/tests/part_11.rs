@@ -57448,8 +57448,16 @@ fn the_horse_the_vanilla_rows_wear() {
         "the golden_carrot row the is() call banks"
     );
     assert!(
-        !horse.is_food("carrot"),
-        "the untamed hay the horse's gate refuses"
+        horse.is_food("carrot"),
+        "the carrot row the HORSE_FOOD tag admits [the dev-242 the eight-row walk banks]"
+    );
+    assert!(
+        horse.is_food("wheat"),
+        "the wheat row the HORSE_FOOD tag admits"
+    );
+    assert!(
+        !horse.is_food("red_mushroom"),
+        "the dead row the tag refuses [the handleEating row the isFood gate never admits]"
     );
     // THE HEALTH'S OWN WALK (the horse's own generateMaxHealth the
     // same fn keeps — the [15, 30] band the two draws wear)
@@ -57920,4 +57928,64 @@ fn the_horse_the_wire_variant_the_state_wears() {
         "the gate the zombie's fields never arms"
     );
     assert_eq!(z.horse_markings, 0, "the honest NONE the silence keeps");
+}
+
+/// THE HORSE'S OWN RIDE MOUNT (javap `AbstractHorse.doPlayerRide` the
+/// 26.2 bytecode speaks — the SERVER arm's `player.setYRot(getYRot())`
+/// pc 19-24 the yaw snap the offline truth keeps [the pig's no-snap
+/// law the horse's own walk never wears], the PASSENGER attachment
+/// the EntityAttachments fallback lambda$static$1 keeps verbatim —
+/// `Vec3(0, height, 0)`, the FULL height the HORSE_HEIGHT 1.4
+/// carries — the saddle the walk NEVER reads, the untamed adult the
+/// same mount the taming ride speaks): the HorseRide verdict the
+/// mount answers, the sneak the arm never gates — the Ride
+/// stand-down the pig's own law the horse's walk never wears.
+#[test]
+fn the_horse_the_interact_ride_the_mount_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let mut horse = crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+    horse.kind = crate::mob::MobKind::Horse;
+    horse.yaw = 137.5;
+    horse.on_ground = true;
+    app.mobs.push(horse);
+    let carried_y = top as f64 + crate::mob::HORSE_HEIGHT as f32 as f64;
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        carried_y,
+        c as f64 + 0.5,
+        0.0,
+        90.0,
+    ));
+    assert!(app.mount_offline_horse(7), "the ride armed");
+    // THE SEAT (the FULL height the HORSE_HEIGHT carries — the
+    // fallback's Vec3(0, height, 0) the pig's own law re-speaks)
+    let ride = app.offline_ride.as_ref().unwrap();
+    assert_eq!(ride.vehicle_id, 7, "the mount the id the ride banks");
+    assert_eq!(
+        ride.ride_height,
+        crate::mob::HORSE_HEIGHT as f32,
+        "the FULL height the attachment fallback carries"
+    );
+    // THE YAW SNAP (the server arm's setYRot the body's words
+    // re-aim — the horse's own yaw the mount speaks)
+    assert_eq!(
+        app.body.as_ref().unwrap().yaw,
+        137.5,
+        "the server arm's setYRot the yaw snap speaks"
+    );
+    // THE SADDLE GATE'S OWN ABSENCE (the untamed unsaddled hull the
+    // same mount the taming ride speaks — the pig's isSaddled arm
+    // the horse's walk never wears)
+    assert!(
+        !app.mobs[0].saddled,
+        "the untamed hull the saddle bit never carries"
+    );
+    assert!(
+        app.offline_ride.is_some(),
+        "the mount the saddle never gates"
+    );
 }

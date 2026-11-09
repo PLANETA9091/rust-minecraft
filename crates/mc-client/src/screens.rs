@@ -53884,7 +53884,11 @@ impl App {
                     if self.on_right_press_leash_lane(i) {
                         return true;
                     }
-                    let mut verdict = self.mobs[i].mob_interact(held, &mut self.mob_rng);
+                    let mut verdict = self.mobs[i].mob_interact_with_sneak(
+                        held,
+                        self.shift_down,
+                        &mut self.mob_rng,
+                    );
                     // THE SECONDARY-USE STAND-DOWN (bytecode 28-32:
                     // `player.isSecondaryUseActive()` ifne -> 55 — the
                     // sneak the ride arm refuses, the super's miss the
@@ -54092,6 +54096,93 @@ impl App {
                         // entity_pass word the vanilla arm sets the
                         // later lanes re-arm before any read — the
                         // dead store the offline walk never carries.
+                    }
+                    if let crate::mob::MobInteract::FedFood { ate, loved } = verdict {
+                        // THE HORSE'S OWN FED-FOOD WALK (javap
+                        // `AbstractHorse.fedFood` the handleEating
+                        // boolean the verdict folds — the state walk
+                        // ran inside the mob [the heal/age-up/temper
+                        // arms the law walked], the consume(1) the
+                        // inventory-less lane the Feed verdict's own
+                        // note honest-skips): the LOVED arm the
+                        // golden rows' setInLove tail carries — the
+                        // heart burst the event-18 broadcast spawns
+                        // at the body's own registration box, the eat
+                        // voice the eating() tail plays, the swing
+                        // the SUCCESS_SERVER verdict starts; the
+                        // ate-only arm the eat voice + the swing the
+                        // same verdict speaks; the uneaten miss the
+                        // press consumes the swing never starts (the
+                        // server's PASS the client's SUCCESS_SERVER
+                        // the predicted swing never starts — the same
+                        // honest fold the Feed fallback keeps)
+                        if loved {
+                            let bbox = self.mobs[i].box_for();
+                            let burst = crate::particles::heart_burst(bbox, &mut self.mob_rng);
+                            self.particles.extend(burst);
+                            if let Some(eat_word) = self.mobs[i].eat_voice() {
+                                self.sounds.play_voice(self.frame, eat_word, 1.0, 1.0);
+                            }
+                            self.swing.start();
+                        } else if ate {
+                            if let Some(eat_word) = self.mobs[i].eat_voice() {
+                                self.sounds.play_voice(self.frame, eat_word, 1.0, 1.0);
+                            }
+                            self.swing.start();
+                        }
+                        return true;
+                    }
+                    if let crate::mob::MobInteract::MakeMad = verdict {
+                        // THE HORSE'S OWN BUCK WALK (javap
+                        // `Horse.mobInteract` 94-108 — the makeMad()
+                        // ran inside the mob [the isStanding guard +
+                        // the standIfPossible rear the client's pose
+                        // lanes never bank — the honest skip the
+                        // render's vocabulary keeps], the
+                        // makeSound(getAngrySound()) the angry voice
+                        // speaks — the entity.horse.angry /
+                        // entity.baby_horse.angry pair the isBaby
+                        // split picks, the SUCCESS return the CLIENT
+                        // swing the verdict starts)
+                        if let Some(word) = self.mobs[i].angry_voice() {
+                            self.sounds.play_voice(self.frame, word, 1.0, 1.0);
+                        }
+                        self.swing.start();
+                        return true;
+                    }
+                    if let crate::mob::MobInteract::HorseRide = verdict {
+                        // THE HORSE'S OWN RIDE WALK (javap
+                        // `AbstractHorse.mobInteract` 107-115 — the
+                        // doPlayerRide the server arm the mount rides
+                        // [the yaw snap the body's words re-aim, the
+                        // full-height attachment the seat carries],
+                        // the SUCCESS verdict the mount answers — the
+                        // sneak the arm NEVER gates, the Ride
+                        // stand-down the pig's own law the horse's
+                        // walk never wears). The isVehicle's own
+                        // refuse the mount's rides guard keeps — the
+                        // press the item lane's use walk answers.
+                        let mob_id = self.mobs[i].id;
+                        if self.mount_offline_horse(mob_id) {
+                            self.swing.start();
+                            return true;
+                        }
+                    }
+                    if let crate::mob::MobInteract::OpenInventory = verdict {
+                        // THE HORSE'S OWN GUI VERDICT (javap
+                        // `AbstractHorse.mobInteract` 21-43 — the
+                        // `openCustomInventoryScreen(player)` tail the
+                        // tamed+sneak body answers, the SUCCESS return
+                        // the CLIENT swing starts). The screen the
+                        // honest skip keeps — the horse's saddle/armor
+                        // slots the SERVER state the container word
+                        // owns (the wire's own window the later round
+                        // arms, the trader's openTradingScreen tail
+                        // the Talk verdict's same skip the precedent
+                        // keeps — the screen the server the authority
+                        // holds)
+                        self.swing.start();
+                        return true;
                     }
                     if let crate::mob::MobInteract::Feed { love, grow } = verdict {
                         // THE FOOD ARM'S OWN WALK (the Animal
@@ -74938,6 +75029,53 @@ impl App {
             seat_x: 0.0,
             ride_height: crate::mob::PIG_HEIGHT as f32,
         });
+        // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
+        // handler speaks — the same translatable the wire lane folds)
+        self.set_overlay_message(&format_positional(
+            MOUNT_ONBOARD_FORMAT,
+            &[SHIFT_KEY_DISPLAY],
+        ));
+        true
+    }
+
+    /// THE HORSE'S OWN MOUNT (javap `AbstractHorse.doPlayerRide` the
+    /// 26.2 bytecode speaks — the `setEating(false)` +
+    /// `clearStanding()` pc 0-8 the client's pose words never bank,
+    /// the SERVER arm's `player.setYRot(getYRot())` pc 19-24 the yaw
+    /// snap the offline truth keeps [the pig's no-snap law the
+    /// horse's own walk never wears — the doPlayerRide's own walk
+    /// the body's yaw the horse's words re-aim], the startRiding the
+    /// ride belief arms, the PASSENGER attachment the
+    /// EntityAttachments fallback lambda$static$1 keeps verbatim —
+    /// `Vec3(0, height, 0)`, the FULL height the HORSE_HEIGHT 1.4
+    /// carries, no boat's height/3 the AbstractBoat override rides).
+    /// The saddle the walk NEVER reads (the untamed adult the same
+    /// mount the taming ride speaks — the pig's isSaddled gate the
+    /// horse's own arm never wears). The isVehicle the single rider
+    /// the guard reserves (the vanilla startRiding's own false the
+    /// rides lane the caller's own words keep). Returns the
+    /// startRiding's own word: the SUCCESS verdict the true carries,
+    /// the PASS the false.
+    pub fn mount_offline_horse(&mut self, id: i32) -> bool {
+        if self.net_ride.is_some() || self.offline_ride.is_some() {
+            return false;
+        }
+        let Some(mob) = self
+            .mobs
+            .iter()
+            .find(|m| m.id == id && m.kind == crate::mob::MobKind::Horse)
+        else {
+            return false;
+        };
+        let yaw = mob.yaw;
+        self.offline_ride = Some(crate::world_view::OfflineRide {
+            vehicle_id: id,
+            seat_x: 0.0,
+            ride_height: crate::mob::HORSE_HEIGHT as f32,
+        });
+        if let Some(b) = self.body.as_mut() {
+            b.yaw = yaw;
+        }
         // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
         // handler speaks — the same translatable the wire lane folds)
         self.set_overlay_message(&format_positional(
