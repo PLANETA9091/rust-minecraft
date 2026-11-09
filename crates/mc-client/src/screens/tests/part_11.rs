@@ -56058,3 +56058,292 @@ fn the_beacon_wire_swap_the_kind_split_the_offhand_wears() {
         other => panic!("the split press the packet speaks, not {other:?}"),
     }
 }
+
+
+/// THE QC COLLECT GATES'S OWN BEACON+MERCHANT LANES (the autopush-539
+/// round — the 538 NEXT's own second lane the round banks: the two
+/// paints the kind gates the family law wears [the payment seats +
+/// the result the kindless verdicts the NONE keeps, the rows the
+/// shared bank's mapped words the inv_idx/menu-map seats speak], the
+/// folds the gate re-wears, the place the word banks [the potion's
+/// own max-1 cap the per-seat place wears], the wire fold the
+/// component half + the tail bank the chest's own shape re-wears,
+/// the full drain the carried word the NONE retires).
+#[test]
+fn the_beacon_merchant_qc_the_gates_the_words_wear() {
+    use crate::world_view::ContainerCommand;
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // ===== THE MERCHANT'S OWN PAINT + FOLD (the offline sim the
+    // local write-through answers) =====
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = vec![
+        (10, 10, 0),
+        (30, 10, 1),
+        (50, 10, 2),
+        (10, 40, 3),
+        (30, 40, 4),
+    ];
+    app.merchant_panel = (100, 100);
+    app.merchant_slots = vec![(0, 0); 39];
+    // THE ROW'S OWN WORD (the menu 3 the items 9 wears — the
+    // mismatched pair the gate refuses)
+    app.merchant_slots[3] = (potion, 2);
+    app.items_potion_kinds[9] = kind_b;
+    app.merchant_carried = (potion, 4);
+    app.merchant_carried_potion_kind = kind_a;
+    app.qc_arm_merchant(10, 40, 0);
+    assert!(app.qc_armed, "the press the arm wears");
+    app.qc_paint_merchant(10, 40); // the same-id kind pair the mismatch
+    assert!(
+        app.qc_slots.is_empty(),
+        "the mismatched pair the paint refuses"
+    );
+    app.qc_paint_merchant(30, 40); // the empty row the paint banks
+    assert_eq!(app.qc_slots, vec![4], "the empty row the paint banks");
+    // THE FOLD'S OWN RE-WEAR (the forced set the honest walk
+    // re-checks — the refused seat the fold keeps, the empty row the
+    // place serves [the potion's own max-1 cap the place wears], the
+    // word the bank lays)
+    app.qc_slots = vec![3, 4];
+    app.qc_distribute_merchant_offline();
+    assert_eq!(
+        app.merchant_slots[3],
+        (potion, 2),
+        "the mismatched pair the fold refuses"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], kind_b,
+        "the refused seat the word keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[4],
+        (potion, 1),
+        "the empty row the max-1 place wears"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (potion, 1),
+        "the write-through the place keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], kind_a,
+        "the empty row the placed word banks"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (potion, 3),
+        "the remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, kind_a,
+        "the remainder the word keeps"
+    );
+    // THE SAME-KIND PAIR'S OWN PASS (the kinded carried the same
+    // word the seat wears — the pair the paint banks)
+    app.merchant_slots[3] = (0, 0);
+    app.items_potion_kinds[9] = kind_a;
+    app.merchant_carried = (potion, 4);
+    app.merchant_carried_potion_kind = kind_a;
+    app.qc_slots.clear();
+    app.qc_paint_merchant(10, 40);
+    assert_eq!(
+        app.qc_slots,
+        vec![3],
+        "the same-kind pair the paint banks"
+    );
+    // ===== THE BEACON'S OWN PAINT + FOLD (the offline lane the
+    // mirror + the inventory write-through keeps) =====
+    // THE ARM'S OWN RESET (the merchant drag the section's own walk
+    // retires — the in-flight arm the fresh screen never re-keys)
+    app.qc_armed = false;
+    app.qc_slots.clear();
+    app.screen = ScreenKind::Beacon;
+    app.beacon_slot_rects = vec![(10, 10, 0), (10, 40, 1), (30, 40, 2)];
+    app.beacon_panel = (100, 100);
+    app.beacon_payment = (0, 0);
+    app.beacon_mirror = vec![(0, 0); 36];
+    app.beacon_mirror[0] = (potion, 2);
+    app.items_potion_kinds[9] = kind_a;
+    app.beacon_carried = (potion, 4);
+    app.beacon_carried_potion_kind = kind_b;
+    app.qc_arm_beacon(10, 40, 0);
+    assert!(app.qc_armed, "the press the arm wears");
+    app.qc_paint_beacon(10, 40); // the row 1 the mismatched pair
+    assert!(
+        app.qc_slots.is_empty(),
+        "the mismatched pair the paint refuses"
+    );
+    app.qc_paint_beacon(30, 40); // the row 2 the empty seat
+    assert_eq!(app.qc_slots, vec![2], "the empty row the paint banks");
+    // THE FOLD'S OWN RE-WEAR (the forced set the honest walk
+    // re-checks — the payment seat the tag law's own wall the fold
+    // keeps, the mismatched row the kind gate refuses, the empty row
+    // the place serves, the carried word the bank lays)
+    app.qc_slots = vec![0, 1, 2];
+    app.qc_distribute_beacon_offline();
+    assert_eq!(app.beacon_payment, (0, 0), "the payment the tag wall keeps");
+    assert_eq!(
+        app.beacon_mirror[0],
+        (potion, 2),
+        "the mismatched row the fold refuses"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], kind_a,
+        "the refused row the word keeps"
+    );
+    assert_eq!(
+        app.beacon_mirror[1],
+        (potion, 1),
+        "the empty row the max-1 place wears"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (potion, 1),
+        "the write-through the place keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], kind_b,
+        "the empty row the carried word banks"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (potion, 3),
+        "the remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.beacon_carried_potion_kind, kind_b,
+        "the remainder the word keeps"
+    );
+    // ===== THE WIRE FOLD'S OWN HALF (the live belief the packets
+    // ride — the component half the fold re-wears, the tail the word
+    // banks, the full drain the carried word the NONE retires) =====
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    app.merchant_live_window = Some((5, 3));
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_slots[3] = (potion, 2);
+    app.items_potion_kinds[9] = kind_b;
+    app.merchant_carried = (potion, 4);
+    app.merchant_carried_potion_kind = kind_a;
+    app.qc_type = 0;
+    app.qc_slots = vec![3, 4];
+    app.qc_distribute_merchant_wire();
+    assert_eq!(
+        app.merchant_slots[3],
+        (potion, 2),
+        "the wire fold the mismatched pair refuses"
+    );
+    assert_eq!(
+        app.merchant_slots[4],
+        (potion, 1),
+        "the wire fold the empty row places"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (potion, 1),
+        "the wire write-through the place keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[10], kind_a,
+        "the wire tail the placed word banks"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (potion, 3),
+        "the wire remainder the cursor keeps"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, kind_a,
+        "the wire remainder the word keeps"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, -999, "the START packet the slot wears");
+            assert_eq!(click.button, 0, "the type-0 start the mask wears");
+        }
+        other => panic!("the START packet the stream leads, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 3, "the ADD packet the painted seat wears");
+            assert_eq!(click.button, 1, "the ADD the mask(1, type) wears");
+        }
+        other => panic!("the ADD packet the stream serves, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 4, "the ADD packet the empty seat wears");
+        }
+        other => panic!("the second ADD the stream serves, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, -999, "the END packet the slot wears");
+            assert_eq!(click.button, 2, "the END the mask(2, type) wears");
+            assert_eq!(
+                click.changed,
+                vec![(4i16, (potion, 1))],
+                "the changed map the fold's own mutations names"
+            );
+        }
+        other => panic!("the END packet the stream closes, not {other:?}"),
+    }
+    // THE WIRE DRAIN'S OWN RETIRE (the emptied carried the NONE word
+    // wears — the empty row the carried word the bank lays, the
+    // write-through the row's cell answers)
+    app.merchant_slots[3] = (0, 0);
+    app.items_potion_kinds[9] = kind_b;
+    app.merchant_carried = (potion, 1);
+    app.merchant_carried_potion_kind = kind_a;
+    app.qc_slots = vec![3];
+    app.qc_distribute_merchant_wire();
+    assert_eq!(
+        app.merchant_slots[3],
+        (potion, 1),
+        "the drain the empty row places"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (potion, 1),
+        "the write-through the drain keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], kind_a,
+        "the empty row the carried word banks"
+    );
+    assert_eq!(app.merchant_carried, (0, 0), "the drain the cursor empties");
+    assert_eq!(
+        app.merchant_carried_potion_kind, none,
+        "the emptied cursor the word retires"
+    );
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, -999, "the second START the slot wears");
+        }
+        other => panic!("the second START the stream leads, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 3, "the second ADD the painted seat wears");
+        }
+        other => panic!("the second ADD the stream serves, not {other:?}"),
+    }
+    match rx.try_recv().unwrap() {
+        ContainerCommand::Click(click) => {
+            assert_eq!(
+                click.changed,
+                vec![(3i16, (potion, 1))],
+                "the second END the drain's mutation names"
+            );
+        }
+        other => panic!("the second END the stream closes, not {other:?}"),
+    }
+}

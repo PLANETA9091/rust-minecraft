@@ -49714,6 +49714,30 @@ impl App {
         if !beacon_qc_seat_may_place(menu, carried.0) {
             return; // shouldAdd pc 47-52 — the payment seat's own tag verdict
         }
+        // THE COMPONENT HALF (the 539 round — the family's own gate the
+        // paint re-wears: the same-id kind pair the seat's own word
+        // refuses): the payment seat the kindless verdict the NONE keeps
+        // [the tag law's own seat the kind word never banks — the 538
+        // record the honest wall wears], the rows the shared bank's
+        // mapped word the inv_idx seat speaks [the row pickup's own
+        // reads the paint re-wears — the main rows 1..27 the items
+        // 9..35 the +idx shift answers, the hotbar 28..36 the -27
+        // shift speaks]
+        let seat_kind = if menu != 0 && crate::world::brewing_is_potion_kind(seat_id) {
+            let idx = menu - 1;
+            let inv_idx = if idx < 27 { 9 + idx } else { idx - 27 };
+            self.items_potion_kinds
+                .get(inv_idx)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(seat_kind, self.beacon_carried_potion_kind)
+        {
+            return; // the component half — the same-id kind pair refuses
+        }
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
         }
@@ -49784,6 +49808,26 @@ impl App {
         let (seat_id, _) = self.qc_seat_stack(menu);
         if seat_id != 0 && seat_id != carried.0 {
             return; // canItemQuickReplace — the different item the seat refuses
+        }
+        // THE COMPONENT HALF (the 539 round — the family's own gate the
+        // paint re-wears: the same-id kind pair the seat's own word
+        // refuses): the trade's own seats the kindless verdict the NONE
+        // keeps [the payment pair + the result the kind words never
+        // bank — the 538 record the honest wall wears], the rows the
+        // shared bank's mapped word the menu map speaks [the 3..30 the
+        // +6 shift answers, the 30..38 the -30 shift speaks — the
+        // click walk's own reads the paint re-wears]
+        let seat_kind = if menu >= 3 && crate::world::brewing_is_potion_kind(seat_id) {
+            Self::merchant_menu_to_inventory(menu)
+                .and_then(|row| self.items_potion_kinds.get(row).copied())
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(seat_kind, self.merchant_carried_potion_kind)
+        {
+            return; // the component half — the same-id kind pair refuses
         }
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
@@ -51814,6 +51858,26 @@ impl App {
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
             }
+            // THE COMPONENT HALF (the 539 round — the paint's own gate
+            // the fold re-wears, the chest's own shape the beacon's
+            // offline walk re-wears): the payment seat the kindless
+            // verdict the NONE keeps, the rows the shared bank's
+            // mapped word the inv_idx seat speaks
+            let seat_kind = if menu != 0 && crate::world::brewing_is_potion_kind(seat_id) {
+                let idx = menu - 1;
+                let inv_idx = if idx < 27 { 9 + idx } else { idx - 27 };
+                self.items_potion_kinds
+                    .get(inv_idx)
+                    .copied()
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if seat_id == carried.0
+                && qc_collect_kind_refuses(seat_kind, self.beacon_carried_potion_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
+            }
             if !beacon_qc_seat_may_place(menu, carried.0) {
                 continue; // pc 384-391 — the payment seat's own tag law
             }
@@ -51846,6 +51910,16 @@ impl App {
                 }
                 if let Some(item) = self.inventory.items.get_mut(inv_idx) {
                     *item = new;
+                }
+                // THE PLACE'S OWN WORD BANK (the 539 round — the chest's
+                // own law the beacon's offline fold re-wears: the empty
+                // row the placed stack's own word banks [the click
+                // lane's own place arm the same bank wears], the
+                // occupied row the merge the original's word keeps, the
+                // payment seat the kindless verdict the write never
+                // wears)
+                if seat_count == 0 && inv_idx < self.items_potion_kinds.len() {
+                    self.items_potion_kinds[inv_idx] = self.beacon_carried_potion_kind;
                 }
             }
         }
@@ -51884,6 +51958,23 @@ impl App {
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
             }
+            // THE COMPONENT HALF (the 539 round — the paint's own gate
+            // the fold re-wears, the chest's own shape the merchant's
+            // offline walk re-wears): the trade's own seats the
+            // kindless verdict the NONE keeps, the rows the shared
+            // bank's mapped word the menu map speaks
+            let seat_kind = if menu >= 3 && crate::world::brewing_is_potion_kind(seat_id) {
+                Self::merchant_menu_to_inventory(menu)
+                    .and_then(|row| self.items_potion_kinds.get(row).copied())
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if seat_id == carried.0
+                && qc_collect_kind_refuses(seat_kind, self.merchant_carried_potion_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
+            }
             if self.qc_type != 2 && carried.1 < painted as i32 {
                 continue; // pc 394-416 — the count's own gate
             }
@@ -51908,6 +51999,20 @@ impl App {
                 if let Some(item) = self.inventory.items.get_mut(idx) {
                     *item = new;
                 }
+                // THE PLACE'S OWN WORD BANK (the 539 round — the chest's
+                // own law the merchant's offline fold re-wears: the
+                // empty row the placed stack's own word banks [the
+                // click lane's own place arm the same bank wears], the
+                // occupied row the merge the original's word keeps, the
+                // trade's own seats the kindless verdict the write
+                // never wears)
+                if seat_count == 0 {
+                    if let Some(row) = Self::merchant_menu_to_inventory(menu) {
+                        if row < self.items_potion_kinds.len() {
+                            self.items_potion_kinds[row] = self.merchant_carried_potion_kind;
+                        }
+                    }
+                }
             }
         }
         // pc 520-530 — the remainder the cursor keeps
@@ -51923,10 +52028,19 @@ impl App {
     /// THE MERCHANT'S WIRE DISTRIBUTION (the offline walk's twin over
     /// the LIVE merchant belief — the free fn
     /// [`wire_merchant_quickcraft_distribute`] the disjoint field
-    /// borrows keep, the furnace's own shape the kinds never wear):
-    /// the packet triple the merchant window's own identity rides,
-    /// the place math the same net fold keeps, the write-through the
-    /// caller's own rows speak.
+    /// borrows keep, the brewing/anvil's own shape the kind words the
+    /// 539 round re-wears): the packet triple the merchant window's
+    /// own identity rides, the place math the same net fold keeps,
+    /// the write-through the caller's own rows speak. THE CALLER'S
+    /// OWN KIND READS (the 384 chest's own law the merchant wire
+    /// re-wears): the carried word the field banks, the seat words
+    /// the closure's own menu mapping serves (the trade's own seats
+    /// + the result the kindless wall the NONE keeps, the rows the
+    /// shared bank's mapped word the +6/-30 shifts answer). THE
+    /// PLACE'S OWN WORD BANK (the chest's own tail law the merchant
+    /// wire re-wears): the empty row the placed stack's own word
+    /// banks, the occupied row the merge the original's word keeps,
+    /// the drag's own word the emptied carried the NONE wears.
     fn qc_distribute_merchant_wire(&mut self) {
         let Some(sink) = self.live_clicks.as_ref() else {
             return; // no live session — the command dies on the frame thread
@@ -51936,6 +52050,27 @@ impl App {
         };
         let qc_type = self.qc_type;
         let qc_slots = self.qc_slots.clone();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the chest's own
+        // shape the merchant tail re-wears)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| {
+                let seat = self.merchant_slots.get(m).copied().unwrap_or((0, 0));
+                (m, seat.1)
+            })
+            .collect();
+        let items_kinds = &self.items_potion_kinds;
+        let carried_kind = self.merchant_carried_potion_kind;
+        let seat_kinds = |menu: usize| {
+            if menu >= 3 {
+                Self::merchant_menu_to_inventory(menu)
+                    .and_then(|row| items_kinds.get(row).copied())
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            }
+        };
         wire_merchant_quickcraft_distribute(
             sink,
             &mut self.merchant_slots,
@@ -51944,6 +52079,8 @@ impl App {
             window_id,
             state_id,
             &mut self.merchant_carried,
+            carried_kind,
+            &seat_kinds,
         );
         // THE WRITE-THROUGH (the projection the inventory IS — the
         // painted rows the inventory cells answer, the HUD row the
@@ -51955,6 +52092,28 @@ impl App {
                     self.inventory.items[idx] = new;
                 }
             }
+        }
+        // THE PLACE'S OWN WORD BANK (the chest's own tail law the
+        // merchant wire re-wears — the 387 furnace's own shape the
+        // before-counts the empty seat's bank reads): the empty row
+        // the placed stack's own word banks, the occupied row the
+        // merge the original's word keeps, the trade's own seats the
+        // kindless verdict the write never wears
+        for (menu, old_count) in &before {
+            let new = self.merchant_slots.get(*menu).copied().unwrap_or((0, 0));
+            if *old_count == 0 && new.1 > 0 {
+                if let Some(row) = Self::merchant_menu_to_inventory(*menu) {
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = carried_kind;
+                    }
+                }
+            }
+        }
+        // the drag's own word (the offline walk's own law the wire's
+        // tail re-wears — the emptied carried the NONE wears, the
+        // remainder the same stack the word keeps)
+        if self.merchant_carried.1 <= 0 {
+            self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         }
         self.hotbar_slots = self.inventory.hotbar();
     }
@@ -104083,18 +104242,22 @@ fn wire_enchant_quickcraft_distribute(
 /// THE MERCHANT DRAG'S OWN WIRE DISTRIBUTION (the doClick
 /// QUICK_CRAFT status-2 arm pcs 298-534 over the LIVE merchant
 /// belief, the packet triple `quickCraftToSlots` pcs 0-90 speaks —
-/// the furnace's own shape the kinds never wear): the START packet
-/// the `mask(0, type)` button the slot -999 keeps (the changed map
-/// the state transition's own silence keeps EMPTY), the ADD packets
-/// the `mask(1, type)` button per painted seat ride (the collect's
-/// own no-mutation the EMPTY map names), the END packet the
-/// `mask(2, type)` button the changed map the distribution's own
-/// mutations names. The per-seat place math the same net fold keeps
-/// — the flat 39-slot mirror the fold reads (the inputs 0/1 the
-/// menu's own seats, the result 2 the paint's own refusal the set
-/// never names — the defensive skip the same verdict keeps, the
-/// store rows 3..38 the write-through projection the caller speaks),
-/// the HUD row the caller's own sync answers.
+/// the brewing/anvil's own shape the kind words the 539 round
+/// re-wears): the START packet the `mask(0, type)` button the slot
+/// -999 keeps (the changed map the state transition's own silence
+/// keeps EMPTY), the ADD packets the `mask(1, type)` button per
+/// painted seat ride (the collect's own no-mutation the EMPTY map
+/// names), the END packet the `mask(2, type)` button the changed
+/// map the distribution's own mutations names. The per-seat place
+/// math the same net fold keeps — the flat 39-slot mirror the fold
+/// reads (the inputs 0/1 the menu's own seats, the result 2 the
+/// paint's own refusal the set never names — the defensive skip the
+/// same verdict keeps, the store rows 3..38 the write-through
+/// projection the caller speaks), the same-id kind pair the
+/// component half refuses (the carried word + the seat words the
+/// caller's own closure serves — the trade's own seats the kindless
+/// words the plain law keeps), the HUD row the caller's own sync
+/// answers.
 fn wire_merchant_quickcraft_distribute(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     slots: &mut [(i32, i32)],
@@ -104103,6 +104266,8 @@ fn wire_merchant_quickcraft_distribute(
     window_id: i32,
     state_id: i32,
     carried: &mut (i32, i32),
+    carried_kind: i32,
+    seat_kinds: &dyn Fn(usize) -> i32,
 ) {
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
@@ -104150,6 +104315,18 @@ fn wire_merchant_quickcraft_distribute(
             let (seat_id, seat_count) = slots.get(menu).copied().unwrap_or((0, 0));
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the 539 round — the paint's own gate
+            // the fold re-wears, the brewing/anvil's own shape the
+            // merchant wire re-wears: the caller's own kind reads the
+            // closure wears): the same-id potion pair the mismatched
+            // word refuses (the trade's own seats + the result the
+            // kindless words the plain law keeps)
+            if seat_id == carried.0
+                && crate::world::brewing_is_potion_kind(seat_id)
+                && qc_collect_kind_refuses(seat_kinds(menu), carried_kind)
+            {
+                continue; // the component half — the same-id kind pair refuses
             }
             if qc_type != 2 && carried.1 < painted as i32 {
                 continue; // pc 394-416 — the count's own gate
