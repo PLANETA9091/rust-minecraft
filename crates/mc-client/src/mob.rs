@@ -2415,6 +2415,10 @@ pub fn wandering_trader_offer_views(
                 cost_a: (mc_registry::item_id_by_name(o.cost_a.0)?, o.cost_a.1),
                 cost_b: None,
                 result: (mc_registry::item_id_by_name(o.result.0)?, o.result.1),
+                // THE KINDLESS PRODUCT'S OWN WALL (the offline offer's
+                // plain pair the patch never speaks — the NONE the
+                // honest default keeps)
+                result_kind: crate::brewing_sim::POTION_KIND_NONE,
                 out_of_stock: o.out_of_stock(),
                 uses: o.uses,
                 max_uses: o.max_uses,

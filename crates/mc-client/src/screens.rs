@@ -35549,11 +35549,19 @@ impl App {
         };
         self.merchant_slots[2] = new_seat;
         self.merchant_carried = new_carried;
-        // THE RESULT SEAT'S OWN KINDLESS PAIR (the offer's own product
-        // the words never mint — the carried word the NONE the honest
-        // verdict wears, the 537 silence law the take re-speaks; the
-        // offer words the NEXT's lane may bank)
-        self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        // THE OFFER WORDS'S OWN RESULT BANK (the take's own mint the
+        // active offer serves — the result stack the offer's own
+        // product IS, the kind the potion_contents patch the wire
+        // stack wears [the 343 extraction the projection banks], the
+        // word the carried cursor banks; the KINDLESS WALLS the
+        // honest verdict keeps — the offerless take the onTake's own
+        // ifnull law wears [the 537 record], the kindless product the
+        // patch never spoke the NONE the 536 record re-wears)
+        self.merchant_carried_potion_kind = self
+            .merchant_active_offer
+            .and_then(|idx| self.merchant_offers.get(idx))
+            .map(|o| o.result_kind)
+            .unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
         // THE ONTAKE'S OWN APPLY (javap MerchantResultSlot.onTake —
         // the active offer the container's own bank wears, the take
         // the costs shrink, the uses the notifyTrade increments, the
@@ -35623,6 +35631,17 @@ impl App {
         self.merchant_slots[2] = remainder;
         // THE ROWS' OWN WRITE-THROUGH (the projection the inventory
         // IS — the mirrored cell the same walk names)
+        // THE OFFER WORD'S OWN ROW BANK (the take's own mint the
+        // quick-move re-wears — the gained rows the offer's own
+        // product fills, the kind the row's own word banks [the merge
+        // the vanilla's own component law answers — the kinds the
+        // same word wears], the kindless product the row's own word
+        // never retires, the potion-family gate the plain ids keep)
+        let offer_word = self
+            .merchant_active_offer
+            .and_then(|idx| self.merchant_offers.get(idx))
+            .map(|o| o.result_kind)
+            .unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
         for &(i, pair) in changed.iter().skip(1) {
             if i < 3 {
                 continue; // the payment seats — the walk's own range never wears
@@ -35631,6 +35650,15 @@ impl App {
             self.merchant_slots[i] = pair;
             if inv_idx < 36 {
                 self.inventory.items[inv_idx] = pair;
+            }
+            // THE ROW'S OWN WORD (the gained seat the offer's own
+            // product fills — the word the row bank lays, the merge
+            // the same word re-banks)
+            if offer_word != crate::brewing_sim::POTION_KIND_NONE
+                && pair.1 > 0
+                && crate::world::brewing_is_potion_kind(pair.0)
+            {
+                self.items_potion_kinds[inv_idx] = offer_word;
             }
         }
         self.hotbar_slots = self.inventory.hotbar();

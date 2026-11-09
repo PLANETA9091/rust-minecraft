@@ -34715,6 +34715,7 @@ fn the_merchant_offers_the_wire_words_wear() {
                 cost_a: (emerald, 4),
                 cost_b: None,
                 result: (bread, 1),
+                result_kind: crate::brewing_sim::POTION_KIND_NONE,
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
@@ -34791,6 +34792,7 @@ fn the_merchant_offers_the_wire_words_wear() {
             cost_a: (emerald, 4),
             cost_b: None,
             result: (bread, 1),
+            result_kind: crate::brewing_sim::POTION_KIND_NONE,
             out_of_stock: false,
             uses: 0,
             max_uses: 4,
@@ -35367,6 +35369,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -35433,6 +35436,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
             cost_a: (wheat, 2),
             cost_b: None,
             result: (bread, 1),
+            result_kind: crate::brewing_sim::POTION_KIND_NONE,
             out_of_stock: false,
             uses: 0,
             max_uses: 4,
@@ -35442,6 +35446,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
             cost_a: (emerald, 4),
             cost_b: None,
             result: (bread, 1),
+            result_kind: crate::brewing_sim::POTION_KIND_NONE,
             out_of_stock: false,
             uses: 0,
             max_uses: 4,
@@ -35471,6 +35476,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         cost_a: (emerald, 4),
         cost_b: Some((wheat, 2)),
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -35492,6 +35498,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: true,
         uses: 4,
         max_uses: 4,
@@ -35519,6 +35526,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -35567,6 +35575,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -35649,6 +35658,7 @@ fn the_merchant_try_move_the_trade_walk_wears() {
                 cost_a: (emerald, 4),
                 cost_b: None,
                 result: (bread, 1),
+                result_kind: crate::brewing_sim::POTION_KIND_NONE,
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
@@ -35726,6 +35736,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -35865,6 +35876,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 8),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -35916,6 +35928,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 3,
         max_uses: 4,
@@ -35960,6 +35973,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
         cost_a: (emerald, 4),
         cost_b: Some((wheat, 2)),
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -36023,6 +36037,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
         cost_a: (emerald, 4),
         cost_b: Some((wheat, 2)),
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -36046,6 +36061,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
                 cost_a: (emerald, 4),
                 cost_b: None,
                 result: (bread, 1),
+                result_kind: crate::brewing_sim::POTION_KIND_NONE,
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
@@ -36084,6 +36100,7 @@ fn the_merchant_result_take_the_trade_apply_wears() {
                 cost_a: (emerald, 4),
                 cost_b: None,
                 result: (bread, 1),
+                result_kind: crate::brewing_sim::POTION_KIND_NONE,
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
@@ -36396,6 +36413,7 @@ fn the_merchant_rows_own_sprites_the_button_states_wear() {
             cost_a: (emerald, 1),
             cost_b: None,
             result: (bread, 1),
+            result_kind: crate::brewing_sim::POTION_KIND_NONE,
             out_of_stock: i == 8,
             uses: 0,
             max_uses: 4,
@@ -36425,6 +36443,7 @@ fn the_merchant_rows_own_sprites_the_button_states_wear() {
             cost_a: (emerald, 1),
             cost_b: None,
             result: (bread, 1),
+            result_kind: crate::brewing_sim::POTION_KIND_NONE,
             out_of_stock: i == 8,
             uses: 0,
             max_uses: 4,
@@ -36489,6 +36508,7 @@ fn the_merchant_rows_own_sprites_the_button_states_wear() {
         cost_a: (iron, 2),
         cost_b: None,
         result: (bread, 3),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: true,
         uses: 4,
         max_uses: 4,
@@ -36640,6 +36660,7 @@ fn the_merchant_echo_gate_the_selection_keeps() {
                     cost_a: (emerald, 1),
                     cost_b: None,
                     result: (bread, 2),
+                    result_kind: crate::brewing_sim::POTION_KIND_NONE,
                     out_of_stock: uses >= 4,
                     uses,
                     max_uses: 4,
@@ -36771,6 +36792,7 @@ fn the_merchant_visible_gate_the_press_clamps() {
         cost_a: (ca, n),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -36930,6 +36952,7 @@ fn the_merchant_stale_scroll_the_shrunken_bank_retires() {
         cost_a: (ca, n),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -37137,6 +37160,7 @@ fn the_merchant_stale_selection_the_silence_the_crash_arm_banks() {
         cost_a: (ca, n),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -37292,6 +37316,7 @@ fn the_merchant_mid_drag_shrink_the_max_fold_banks() {
         cost_a: (emerald, n),
         cost_b: None,
         result: (mc_registry::item_id_by_name("bread").unwrap(), 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -37420,6 +37445,7 @@ fn the_negative_scroll_the_press_fold_banks() {
         cost_a: (emerald, n),
         cost_b: None,
         result: (mc_registry::item_id_by_name("bread").unwrap(), 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -37673,6 +37699,7 @@ fn the_container_correction_the_instant_ship_wears() {
                 cost_a: (emerald, 1),
                 cost_b: None,
                 result: (mc_registry::item_id_by_name("bread").unwrap(), 2),
+                result_kind: crate::brewing_sim::POTION_KIND_NONE,
                 out_of_stock: false,
                 uses: 0,
                 max_uses: 4,
@@ -37761,6 +37788,7 @@ fn the_merchant_trade_sound_the_dead_code_silence_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -37849,6 +37877,7 @@ fn the_traded_stat_the_on_take_ride_wears() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -38375,6 +38404,7 @@ fn the_merchant_progress_bar_the_canvas_wears() {
                         cost_a: (emerald, 1),
                         cost_b: None,
                         result: (bread, 2),
+                        result_kind: crate::brewing_sim::POTION_KIND_NONE,
                         out_of_stock: false,
                         uses: 0,
                         max_uses: 4,
@@ -49873,6 +49903,7 @@ fn the_merchant_swap_the_trade_seats_the_rows_ride() {
         cost_a: (emerald, 4),
         cost_b: None,
         result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
         out_of_stock: false,
         uses: 0,
         max_uses: 4,
@@ -56346,4 +56377,219 @@ fn the_beacon_merchant_qc_the_gates_the_words_wear() {
         }
         other => panic!("the second END the stream closes, not {other:?}"),
     }
+}
+
+/// THE OFFER WORDS'S OWN RESULT BANK (autopush-540 — the result seat
+/// the offer's own product the kind word never minted [the 537
+/// silence law the honest wall wore], the offer's own patch the word
+/// the projection banks): the CASE PROJECTION the wire stack's own
+/// extraction answers [the 343 walk the offer's product re-wears —
+/// the kinded result the word banks, the plain result the NONE
+/// keeps], the CASE TAKE the cleric's potion trade the cursor banks
+/// [the active offer's own word the carried wears, the kindless
+/// product the NONE the 536 record re-wears], the CASE QUICK-MOVE
+/// the gained rows the word banks [the hotbar head the reversed
+/// walk fills, the row's own word the offer's own product lays].
+#[test]
+fn the_offer_words_the_result_bank_wears() {
+    use crate::world_view::{MerchantOfferView, open_container_view};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+    let kind = 15i32; // the strong swiftness seat the bootstrap banks
+
+    // THE CASE PROJECTION (the wire offer's patched stack the view's
+    // own word banks — the store's offers the extraction serves)
+    let patch = mc_protocol::play::ComponentPatch {
+        added: vec![(
+            mc_protocol::play::data_component_types::POTION_CONTENTS,
+            mc_protocol::play::ComponentValue::PotionContents(
+                mc_protocol::play::PotionContents {
+                    potion: Some(kind),
+                    custom_color: None,
+                    custom_effects: Vec::new(),
+                    custom_name: None,
+                },
+            ),
+        )],
+        removed: Vec::new(),
+    };
+    let offer = |result: mc_protocol::play::ItemStack, cost: i32| mc_protocol::play::MerchantOffer {
+        cost_a: mc_protocol::play::ItemCost {
+            item_id: cost,
+            count: 4,
+            predicate: Vec::new(),
+        },
+        result,
+        cost_b: None,
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+        special_price_diff: 0,
+        price_multiplier: 1.0,
+        demand: 0,
+    };
+    let mut m = crate::world_model::WorldModel::new();
+    m.apply(mc_protocol::play::PlayEvent::ScreenOpened(
+        mc_protocol::play::OpenScreen {
+            container_id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+            title_nbt: vec![0x0A, 0x00],
+        },
+    ));
+    m.apply(mc_protocol::play::PlayEvent::MerchantOffers(
+        mc_protocol::play::MerchantOffersPacket {
+            container_id: 3,
+            offers: vec![
+                offer(
+                    mc_protocol::play::ItemStack {
+                        count: 1,
+                        item_id: potion,
+                        patch: patch.clone(),
+                    },
+                    emerald,
+                ),
+                offer(
+                    mc_protocol::play::ItemStack {
+                        count: 1,
+                        item_id: bread,
+                        patch: Default::default(),
+                    },
+                    wheat,
+                ),
+            ],
+            villager_level: 2,
+            villager_xp: 17,
+            show_progress: true,
+            can_restock: false,
+        },
+    ));
+    let view = open_container_view(&m).expect("the window the projection banks");
+    let merchant = view.merchant.expect("the merchant bank the projection wears");
+    assert_eq!(
+        merchant.offers[0].result_kind, kind,
+        "the kinded result the patch's own word banks"
+    );
+    assert_eq!(
+        merchant.offers[1].result_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the plain result the NONE the honest default keeps"
+    );
+
+    // THE CASE TAKE (the cleric's potion trade the cursor the word
+    // banks — the offer's own word the carried wears)
+    let mut app = App::new(3);
+    app.enter_world();
+    app.screen = ScreenKind::Merchant;
+    app.body = Some(crate::body::PlayerBody::new(16.5, 30.0, 16.5, 0.0, 0.0));
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_offers = vec![MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (potion, 1),
+        result_kind: kind,
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    }];
+    app.merchant_row_rects = vec![(100, 100, 0)];
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2)];
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the row's seat the press consumes"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (potion, 1),
+        "the result the offer's own match wears"
+    );
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_carried,
+        (potion, 1),
+        "the whole result the cursor rides"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, kind,
+        "the offer's own word the cursor banks"
+    );
+
+    // THE KINDLESS PRODUCT'S OWN WALL (the plain result the NONE the
+    // 536 record re-wears — the word the patch never spoke the take
+    // never mints)
+    app.merchant_carried = (0, 0);
+    app.merchant_offers[0] = MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (bread, 1),
+        result_kind: crate::brewing_sim::POTION_KIND_NONE,
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    };
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the refill the press serves"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (bread, 1),
+        "the plain result the match wears"
+    );
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_carried,
+        (bread, 1),
+        "the plain result the cursor rides"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the kindless product the NONE the honest wall keeps"
+    );
+
+    // THE CASE QUICK-MOVE (the shift-click the gained rows the word
+    // banks — the hotbar head the reversed walk fills, the row's own
+    // word the offer's own product lays)
+    app.merchant_carried = (0, 0);
+    app.merchant_offers[0] = MerchantOfferView {
+        cost_a: (emerald, 4),
+        cost_b: None,
+        result: (potion, 1),
+        result_kind: kind,
+        out_of_stock: false,
+        uses: 0,
+        max_uses: 4,
+        xp: 5,
+    };
+    app.inventory.items[9] = (emerald, 4);
+    app.merchant_slots[3] = (emerald, 4);
+    assert!(
+        app.merchant_widget_press(104, 104),
+        "the second refill the press serves"
+    );
+    assert_eq!(
+        app.merchant_slots[2],
+        (potion, 1),
+        "the potion result the match re-wears"
+    );
+    app.shift_down = true;
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_slots[38],
+        (potion, 1),
+        "the result the reversed walk rides home"
+    );
+    assert_eq!(
+        app.items_potion_kinds[8], kind,
+        "the hotbar row's own word the offer's product lays"
+    );
 }

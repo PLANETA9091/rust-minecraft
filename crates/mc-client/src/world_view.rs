@@ -2452,6 +2452,12 @@ pub struct MerchantOfferView {
     pub cost_b: Option<(i32, i32)>,
     /// The trade's product — the `(item_id, count)` pair.
     pub result: (i32, i32),
+    /// THE OFFER'S OWN KIND WORD (the result stack's potion_contents
+    /// patch the projection banks — the 343 extraction the offer's
+    /// own product re-wears; the kindless stack the NONE the honest
+    /// default keeps — the cleric's potion trade the word the result
+    /// bank serves)
+    pub result_kind: i32,
     /// The out-of-stock word.
     pub out_of_stock: bool,
     /// The trade's uses / max-uses pair (the stock's own words).
@@ -4316,7 +4322,7 @@ fn bundle_rows_of(slots: &[mc_protocol::play::ItemStack]) -> Vec<(i32, Vec<(i32,
 /// The model's open-container store projected for the UI — `None`
 /// while no foreign window is open (the join's own state: no screen
 /// is up until the server opens one).
-fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
+pub(crate) fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
     let oc = model.open_container()?;
     // THE BUNDLE ROWS' EXTRACTION (the set-slot sync's projection):
     // the shared walk over the window's own slots — the menu slot id
@@ -4347,6 +4353,10 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
                         cost_a: (o.cost_a.item_id, o.cost_a.count),
                         cost_b: o.cost_b.as_ref().map(|b| (b.item_id, b.count)),
                         result: (o.result.item_id, o.result.count),
+                        // THE OFFER WORD'S OWN RIDE (the result stack's
+                        // patch the extraction answers — the kindless
+                        // product the NONE the honest default keeps)
+                        result_kind: potion_kind_of(&o.result),
                         out_of_stock: o.out_of_stock,
                         uses: o.uses,
                         max_uses: o.max_uses,
