@@ -96490,7 +96490,12 @@ impl App {
                     0.0,
                 ));
             for (q, tints) in &parts {
-                let base = icon_tint(tints);
+                // THE DROP'S OWN KIND WORD (the autopush-544 ride — the
+                // stack's potion_contents the GROUND walk's tint the
+                // vanilla ItemEntityRenderer serves: the kinded bottle
+                // the liquid color the entity banks wears, the kindless
+                // the json's own default the lane keeps)
+                let base = icon_tint_kind(tints, d.potion_kind);
                 let sh = if q.shade {
                     ground_shade(q.direction)
                 } else {
@@ -96834,7 +96839,14 @@ impl App {
                             .mul(&Mat4::rot_y(std::f32::consts::PI))
                             .mul(&Mat4::scale_3d(0.5, 0.5, 0.5));
                         for (q, tints) in &parts {
-                            let base = icon_tint(tints);
+                            // THE FRAME'S OWN KIND WORD (the autopush-544
+                            // ride — the vanilla ItemFrameRenderer.submit
+                            // the ItemRenderer.render(stack, FIXED) walk
+                            // serves: the contained stack's own
+                            // potion_contents the tint law answers, the
+                            // kinded bottle the liquid color wears, the
+                            // kindless the json's own default keeps)
+                            let base = icon_tint_kind(tints, fr.potion_kind);
                             sampled.push(crate::raster::SampledQuad {
                                 pts: q.vertices.map(|v| {
                                     let p = m_item.transform_point(Vec3::new(v[0], v[1], v[2]));

@@ -57194,3 +57194,142 @@ fn the_item_frame_the_kind_ride_the_words_wear() {
         "the empty frame the wire wall keeps"
     );
 }
+
+/// THE WORLD'S OWN KIND TINT (the autopush-544 round — the NEXT's own
+/// render lane the canvas the kind word never saw): the frame's held
+/// potion + the walk-over drop the tint law the stack's own word
+/// answers — the kinded bottle the liquid color the canvas wears, the
+/// kindless the json's own default keeps, the plain item the word the
+/// tint never reads. The DIFF the two walks the word alone moves, the
+/// RATIO the cross-product law the tint's own multiplier speaks (the
+/// same texel the two tints' channel ratio the product keeps — the
+/// shade the multiplier the cross-product cancels).
+#[test]
+fn the_world_tint_the_kind_word_the_canvas_wears() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let stick = mc_registry::item_id_by_name("stick").unwrap();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let ctx = RenderCtx {
+        view: crate::math::Mat4::look_at(
+            crate::math::Vec3::new(10.5, 64.5, 12.0),
+            crate::math::Vec3::new(10.5, 64.5, 10.0),
+            crate::math::Vec3::new(0.0, 1.0, 0.0),
+        ),
+        proj: crate::math::Mat4::perspective(70.0f32.to_radians(), 1.0, 0.05, 512.0),
+        fog_color: [0.0, 0.0, 0.0],
+        fog_near: 100.0,
+        fog_far: 200.0,
+        fire_anim_tick: 0,
+    };
+    // THE RATIO'S OWN WALK (the differing pixel the cross-product the
+    // round bound keeps — the texel the two tints' product the same
+    // scale wears, the rounding the half-step the bound covers)
+    let ratio_law = |k: &crate::raster::Framebuf, n: &crate::raster::Framebuf, label: &str| {
+        let t_k = crate::tint::unpack(crate::brewing_sim::potion_kind_liquid_color(night));
+        let t_n = crate::tint::unpack(crate::brewing_sim::POTION_DEFAULT_COLOR);
+        let mut diffs = 0usize;
+        for (k, n) in k.color.chunks_exact(3).zip(n.color.chunks_exact(3)) {
+            if k != n {
+                diffs += 1;
+                for c in 0..3 {
+                    let cross_k = f32::from(k[c]) * t_n[c];
+                    let cross_n = f32::from(n[c]) * t_k[c];
+                    let bound = 0.6 * (t_k[c] + t_n[c]) + 1e-3;
+                    assert!(
+                        (cross_k - cross_n).abs() <= bound,
+                        "{label}: the differing pixel the ratio law keeps ({cross_k} vs {cross_n}, bound {bound})"
+                    );
+                }
+            }
+        }
+        assert!(diffs > 0, "{label}: the word the canvas wears");
+    };
+    // THE CASE FRAME'S OWN DIFF (the kinded bottle the liquid the
+    // canvas wears — the same pose the two walks the word alone moves)
+    let frame_at = |kind: i32| -> crate::raster::Framebuf {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.item_frames.push(ItemFrameEnt {
+            id: 501,
+            cell: (10, 64, 10),
+            facing: 3,
+            rotation: 0,
+            item: (potion, 1),
+            potion_kind: kind,
+            glow: false,
+            check_interval: 0,
+        });
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(0);
+        app.render_item_frames(&mut fb, &ctx);
+        fb
+    };
+    let kinded = frame_at(night);
+    let plain = frame_at(none);
+    ratio_law(&kinded, &plain, "the frame");
+    // THE CASE PLAIN-ITEM'S OWN WALL (the stick the word never reads —
+    // the kinded kind the tint the stick's own json never carries, the
+    // two walks the white the same canvas wears)
+    let stick_at = |kind: i32| -> crate::raster::Framebuf {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.item_frames.push(ItemFrameEnt {
+            id: 501,
+            cell: (10, 64, 10),
+            facing: 3,
+            rotation: 0,
+            item: (stick, 1),
+            potion_kind: kind,
+            glow: false,
+            check_interval: 0,
+        });
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(0);
+        app.render_item_frames(&mut fb, &ctx);
+        fb
+    };
+    assert_eq!(
+        stick_at(night).color,
+        stick_at(none).color,
+        "the plain item the word the tint never reads"
+    );
+    // THE CASE DROP'S OWN DIFF (the walk-over entity the GROUND walk's
+    // own tint serves — the kinded bottle the spawn the canvas wears,
+    // the same lane the word alone moves; the drop's own eye the
+    // entity's own cell the view keeps)
+    let ctx_drop = RenderCtx {
+        view: crate::math::Mat4::look_at(
+            crate::math::Vec3::new(10.5, 65.5, 23.5),
+            crate::math::Vec3::new(10.5, 63.9, 20.3),
+            crate::math::Vec3::new(0.0, 1.0, 0.0),
+        ),
+        proj: crate::math::Mat4::perspective(70.0f32.to_radians(), 1.0, 0.05, 512.0),
+        fog_color: [0.0, 0.0, 0.0],
+        fog_near: 100.0,
+        fog_far: 200.0,
+        fire_anim_tick: 0,
+    };
+    let drop_at = |kind: i32| -> crate::raster::Framebuf {
+        let mut app = App::new(3);
+        app.enter_world();
+        let mut d = crate::drops::ItemDrop::spawn_entity_loot(
+            701,
+            potion,
+            1,
+            10.5,
+            64.0,
+            20.5,
+            &mut crate::drops::Lcg::new(9),
+        );
+        d.potion_kind = kind;
+        app.drops.push(d);
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(0);
+        app.render_drops(&mut fb, &ctx_drop);
+        fb
+    };
+    let drop_k = drop_at(night);
+    let drop_n = drop_at(none);
+    ratio_law(&drop_k, &drop_n, "the drop");
+}
