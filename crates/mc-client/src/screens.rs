@@ -33474,7 +33474,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the accessor's word the throw
+        // lends — the pickup re-bank the ride keeps)
+        let thrown_kind = self.anvil_seat_potion_kind(39);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.anvil_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
         if self.anvil_carried.1 <= 0 {
             self.anvil_names[39] = None;
@@ -34957,6 +34960,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
+        // THE CARRIED'S OWN KINDLESS VERDICT (the lane the carried
+        // kind word never banks — the throw the NONE the consistent
+        // verdict wears, the carried-kind banking the NEXT's lane
+        // banks)
         self.drop_item_entity_aimed(id, dropped);
         self.merchant_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
     }
@@ -35734,6 +35741,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
+        // THE CARRIED'S OWN KINDLESS VERDICT (the lane the carried
+        // kind word never banks — the throw the NONE the consistent
+        // verdict wears, the carried-kind banking the NEXT's lane
+        // banks)
         self.drop_item_entity_aimed(id, dropped);
         self.beacon_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
     }
@@ -39035,8 +39046,11 @@ impl App {
         // 0.30000001192092896 lift, the 40-tick delay, the AIMED
         // look-direction impulse (the radian folds + the 0.3 speed +
         // the f12/f13 bob draws + the vy jitter pair — the bytecode's
-        // own draw order the ctor's bob seed keeps FIRST)
-        self.drop_item_entity_aimed(id, dropped);
+        // own draw order the ctor's bob seed keeps FIRST). THE
+        // CARRIED'S OWN WORD the throw lends (the pickup re-bank the
+        // ride keeps)
+        let thrown_kind = self.inv_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // the carried stack's own prediction: the whole stack gone (left)
         // or the one item split off (right — the doClick's split(1) law)
         let new_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
@@ -39075,7 +39089,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps)
+        let thrown_kind = self.furnace_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.furnace_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
         // the throw's own word (the emptied carried the NONE wears —
         // the whole-stack throw the word drops, the half the split the
@@ -39097,7 +39114,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps)
+        let thrown_kind = self.chest_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.chest_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
         // the throw's own word (the emptied carried the NONE wears —
         // the whole-stack throw the word drops, the half the split the
@@ -62756,7 +62776,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps)
+        let thrown_kind = self.brewing_carried_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.brewing_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
         // THE THROWN KIND'S OWN DROP (the 339 round — the item entity
         // the (id, count) pair the kind never carries, the throw the
@@ -63614,7 +63637,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps)
+        let thrown_kind = self.enchant_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.enchant_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
         // THE THROWN STACK'S OWN STORE (the dev-196 round — the
         // emptied carried the store clears; the dropped item entity
@@ -64052,7 +64078,10 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps)
+        let thrown_kind = self.dispenser_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.dispenser_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
         // the throw's own word (the emptied carried the NONE wears —
         // the whole-stack throw the word drops, the half the split the

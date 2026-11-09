@@ -55404,6 +55404,110 @@ fn the_seat_lanes_the_thrown_kinds_the_words_ride() {
     );
 }
 
+/// THE CARRIED THROWS'S OWN KIND RIDE (the autopush-537 round — the
+/// cursor's own words the lanes bank the outside throw the entity's
+/// honest pair re-wears): the CASE INVENTORY the kinded carried the
+/// outside throw wears [the split the word keeps, the whole throw
+/// the word the entity lends + the retire the emptied cursor
+/// speaks], the CASE CHEST the kinded carried the word wears, the
+/// CASE ANVIL the carried seat the accessor's word lends.
+#[test]
+fn the_carried_throws_the_kinds_the_words_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE CASE INVENTORY'S OWN LEND (the kinded carried the outside
+    // throw wears — the cursor's word the drop lends)
+    app.inv_carried = (potion, 3);
+    app.inv_carried_potion_kind = kind_a;
+    app.throw_carried_outside(1); // the right press — ONE off
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_a),
+        "the thrown one the kind wears"
+    );
+    assert_eq!(app.inv_carried, (potion, 2), "the split the cursor keeps");
+    assert_eq!(
+        app.inv_carried_potion_kind, kind_a,
+        "the split the word keeps"
+    );
+    app.throw_carried_outside(0); // the left press — the WHOLE
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_a),
+        "the whole throw the kind wears"
+    );
+    assert_eq!(app.inv_carried, (0, 0), "the cursor the throw empties");
+    assert_eq!(
+        app.inv_carried_potion_kind, none,
+        "the emptied cursor the word retires"
+    );
+    // THE CASE CHEST'S OWN LEND (the kinded carried the outside
+    // throw wears — the word the drop lends)
+    app.chest_carried = (potion, 1);
+    app.chest_carried_potion_kind = kind_b;
+    app.throw_chest_carried_outside(0);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_b),
+        "the chest throw the kind wears"
+    );
+    assert_eq!(
+        app.chest_carried_potion_kind, none,
+        "the emptied cursor the word retires"
+    );
+    // THE CASE ANVIL'S OWN LEND (the carried seat the accessor's
+    // word lends — the 39 seat's own store the read speaks)
+    app.anvil_carried = (potion, 1);
+    app.anvil_seat_potion_kinds[39] = kind_a;
+    app.throw_anvil_carried_outside(0);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_a),
+        "the anvil throw the kind wears"
+    );
+    assert_eq!(
+        app.anvil_seat_potion_kinds[39], none,
+        "the emptied cursor the word retires"
+    );
+}
+
+/// THE KINDLESS CARRIED VERDICTS'S OWN SILENCE (the autopush-537
+/// round — the lanes the carried kind word never bank the throw the
+/// NONE the consistent verdict wears): the CASE MERCHANT the carried
+/// potion the NONE the spawn keeps, the CASE BEACON the same
+/// verdict.
+#[test]
+fn the_kindless_carried_verdicts_the_silence_keeps() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE CASE MERCHANT'S OWN VERDICT (the carried kind word the
+    // lane never banks — the throw the NONE keeps)
+    app.merchant_carried = (potion, 2);
+    app.throw_merchant_carried_outside(0);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(none),
+        "the merchant throw the NONE keeps"
+    );
+    // THE CASE BEACON'S OWN VERDICT (the same law the power seat's
+    // screen wears)
+    app.beacon_carried = (potion, 2);
+    app.throw_beacon_carried_outside(0);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(none),
+        "the beacon throw the NONE keeps"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the
