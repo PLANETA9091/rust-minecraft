@@ -9141,6 +9141,21 @@ pub struct App {
     pub beacon_open_cell: Option<(i32, i32, i32)>,
     pub beacon_payment: (i32, i32),
     pub beacon_carried: (i32, i32),
+    /// THE BEACON CARRIED'S OWN WORD (the autopush-538 round — the
+    /// 537 kindless verdict the honest walk re-wears: the carried
+    /// kind word the screen's own cursor banks — the ROW PICKUP the
+    /// shared bank's seat the four arms answer [the pickup the
+    /// seat's word the cursor carries, the place the word the seat
+    /// lays, the swap the pairs exchange, the merge the emptied
+    /// carried the NONE wears], the PAYMENT SEAT the tag law's own
+    /// kindless verdict keeps — the payment the potion never holds,
+    /// the mayPlace refusal the round's own test wears, the pair's
+    /// own change the word retires, the refused no-op the silence
+    /// keeps; the throw the word lends, the close the ride home the
+    /// receiving seat banks, the wire lane the honest NONE wall
+    /// keeps — the correction the kind never carries). The render's
+    /// own id gate the stale word never paints.
+    pub beacon_carried_potion_kind: i32,
     pub beacon_mirror: Vec<(i32, i32)>,
     pub beacon_primary: Option<i32>,
     pub beacon_secondary: Option<i32>,
@@ -9226,6 +9241,21 @@ pub struct App {
     /// THE MERCHANT'S OWN CARRIED (the cursor stack the refresh
     /// re-feeds — the beacon's verbatim pair the route re-wears)
     pub merchant_carried: (i32, i32),
+    /// THE MERCHANT CARRIED'S OWN WORD (the autopush-538 round — the
+    /// 537 kindless verdict the honest walk re-wears: the carried
+    /// kind word the screen's own cursor banks — the ROW PICKUP the
+    /// shared bank's mapped seat the four arms answer [the pickup
+    /// the seat's word the cursor carries, the place the word the
+    /// seat lays, the swap the pairs exchange, the merge the emptied
+    /// carried the NONE wears], the PAYMENT PAIR + the RESULT SEAT
+    /// the trade's own kindless verdicts keep — the offer's own pair
+    /// the words never mint, the pair's own change the word retires,
+    /// the refused no-op the silence keeps; the throw the word
+    /// lends, the close the ride home the receiving seat banks, the
+    /// wire lane the honest NONE wall keeps — the correction the
+    /// kind never carries). The render's own id gate the stale word
+    /// never paints.
+    pub merchant_carried_potion_kind: i32,
     /// THE ACTIVE OFFER'S OWN BANK (javap 26.2 MerchantContainer —
     /// the `activeOffer` field the `updateSellItem`'s own match keeps
     /// [pc 159-162 the in-stock match the store speaks, pc 0-2 the
@@ -13710,6 +13740,7 @@ impl App {
             beacon_open_cell: None,
             beacon_payment: (0, 0),
             beacon_carried: (0, 0),
+            beacon_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             beacon_mirror: Vec::new(),
             beacon_primary: None,
             beacon_secondary: None,
@@ -13738,6 +13769,7 @@ impl App {
             merchant_doubleclick: false,
             merchant_last_click_slot: None,
             merchant_carried: (0, 0),
+            merchant_carried_potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             merchant_active_offer: None,
             merchant_title: None,
             merchant_slot_rects: Vec::new(),
@@ -34721,6 +34753,8 @@ impl App {
         self.container_stores_load_once();
         self.beacon_payment = (0, 0);
         self.beacon_carried = (0, 0);
+        // the fresh-open pair (the stale word the beacon door retires)
+        self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE FRESH SESSION'S OWN RESET (the chest door's own law the
         // beacon open re-wears — the stale gather pair the open
         // retires, the vanilla screen the fresh open the whole state
@@ -34783,6 +34817,9 @@ impl App {
             self.beacon_is_live = false;
             self.beacon_live_window = None;
             self.beacon_carried = (0, 0);
+            // the wire's own word (the window's death the word retires —
+            // the fresh open the own reset re-lays)
+            self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             self.beacon_payment = (0, 0);
             self.beacon_doubleclick = false;
             self.beacon_last_click_slot = None;
@@ -34797,6 +34834,21 @@ impl App {
         // close_furnace shape)
         if self.beacon_carried.1 > 0 {
             let (id, count) = self.beacon_carried;
+            // THE WORD'S OWN RIDE HOME (the container_carried_returned
+            // law the beacon's own close re-wears — the kinded carried
+            // the receiving free row the word banks, the potion's
+            // max-stack-1 law the merge pass never speaks, the free
+            // seat the only home the scan finds)
+            let carried_kind = if crate::world::brewing_is_potion_kind(id) {
+                self.beacon_carried_potion_kind
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            let landing = if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                self.inventory.items.iter().position(|it| it.1 <= 0)
+            } else {
+                None
+            };
             let mut rest = count;
             for it in self.inventory.items.iter_mut() {
                 if rest == 0 {
@@ -34820,8 +34872,16 @@ impl App {
             if rest > 0 {
                 self.spawn_drop_at_player(id, rest);
             }
+            if let Some(idx) = landing {
+                if self.inventory.items[idx].0 == id && self.inventory.items[idx].1 > 0 {
+                    self.items_potion_kinds[idx] = carried_kind;
+                }
+            }
             self.beacon_carried = (0, 0);
         }
+        // the ride home the word spent (the receiving seat the kind
+        // banks, the cursor's own emptiness the silence wears)
+        self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE PAYMENT'S OWN GROUND DROP (javap BeaconMenu.removed pc
         // 16-44 — the `paymentSlot.remove(getMaxStackSize())` the
         // whole stack strips, the isEmpty gate the no-op keeps, the
@@ -34868,6 +34928,9 @@ impl App {
             self.merchant_live_window = None;
             self.merchant_trader_id = None;
             self.merchant_carried = (0, 0);
+            // the wire's own word (the window's death the word retires —
+            // the fresh open the own reset re-lays)
+            self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             self.merchant_title = None;
             self.merchant_slots = Vec::new();
             self.merchant_offers = Vec::new();
@@ -34887,6 +34950,21 @@ impl App {
         // close_furnace shape)
         if self.merchant_carried.1 > 0 {
             let (id, count) = self.merchant_carried;
+            // THE WORD'S OWN RIDE HOME (the container_carried_returned
+            // law the merchant's own close re-wears — the kinded
+            // carried the receiving free row the word banks, the
+            // potion's max-stack-1 law the merge pass never speaks,
+            // the free seat the only home the scan finds)
+            let carried_kind = if crate::world::brewing_is_potion_kind(id) {
+                self.merchant_carried_potion_kind
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            let landing = if carried_kind != crate::brewing_sim::POTION_KIND_NONE {
+                self.inventory.items.iter().position(|it| it.1 <= 0)
+            } else {
+                None
+            };
             let mut rest = count;
             for it in self.inventory.items.iter_mut() {
                 if rest == 0 {
@@ -34910,8 +34988,16 @@ impl App {
             if rest > 0 {
                 self.spawn_drop_at_player(id, rest);
             }
+            if let Some(idx) = landing {
+                if self.inventory.items[idx].0 == id && self.inventory.items[idx].1 > 0 {
+                    self.items_potion_kinds[idx] = carried_kind;
+                }
+            }
             self.merchant_carried = (0, 0);
         }
+        // the ride home the word spent (the receiving seat the kind
+        // banks, the cursor's own emptiness the silence wears)
+        self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE INPUT SLOTS' OWN GROUND DROP (javap MerchantMenu.removed
         // pc 54-… — the `removeItemNoUpdate(0)`/`removeItemNoUpdate(1)`
         // pair the alive + disconnected gate serves, the
@@ -34960,12 +35046,18 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        // THE CARRIED'S OWN KINDLESS VERDICT (the lane the carried
-        // kind word never banks — the throw the NONE the consistent
-        // verdict wears, the carried-kind banking the NEXT's lane
-        // banks)
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps; the 537 kindless verdict the walk
+        // re-wears)
+        let thrown_kind = self.merchant_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.merchant_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+        // the throw's own word (the emptied carried the NONE wears —
+        // the whole-stack throw the word drops, the half the split the
+        // same stack keeps)
+        if self.merchant_carried.1 <= 0 {
+            self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE MERCHANT'S OWN SLOT WALK (javap 26.2 AbstractContainerMenu.
@@ -35099,6 +35191,7 @@ impl App {
             // take-half / place-one / place-all / swap arms answer,
             // the 64 cap the default speaks)
             let believed = self.merchant_slots[menu];
+            let old_carried = self.merchant_carried;
             let (new_slot, new_carried) = if button == 0 {
                 crate::world_view::predict_pickup(believed, self.merchant_carried)
             } else {
@@ -35106,6 +35199,13 @@ impl App {
             };
             self.merchant_slots[menu] = new_slot;
             self.merchant_carried = new_carried;
+            // THE PAYMENT SEATS' OWN KINDLESS VERDICT (the 536 law the
+            // carried word re-speaks — the trade's own seats the kind
+            // words never bank, the pair's own change the word retires,
+            // the refused no-op the silence keeps)
+            if new_carried != old_carried {
+                self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
             // THE SETITEM'S OWN LAW (javap MerchantContainer.setItem
             // pc 19-27 — the payment write the isPaymentSlot gate the
             // update re-speaks: the seats the compute reads, the
@@ -35118,11 +35218,75 @@ impl App {
         // grid rides, the 30..38 the hotbar row the -30 shift keeps)
         let idx = if menu < 30 { 9 + menu - 3 } else { menu - 30 };
         let believed = self.inventory.items[idx];
+        // THE ROW'S OWN WORD (the shared bank's mapped seat the read
+        // speaks — the kinded potion the word banks, the plain item
+        // the NONE keeps)
+        let old_seat_kind = if crate::world::brewing_is_potion_kind(believed.0) {
+            self.items_potion_kinds[idx]
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.merchant_carried_potion_kind;
         let (new_slot, new_carried) = if button == 0 {
-            crate::world_view::predict_pickup(believed, self.merchant_carried)
+            crate::world_view::predict_pickup_kind(
+                believed,
+                self.merchant_carried,
+                old_seat_kind,
+                old_carried_kind,
+            )
         } else {
             crate::world_view::predict_pickup_right(believed, self.merchant_carried)
         };
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 law the merchant's
+        // own walk re-wears — the SAME four arms the chest rows
+        // speak: the pickup the seat's kind the word banks, the
+        // place the word the seat lays, the model's own swap the
+        // pairs exchange, the merge the emptied carried the NONE
+        // word wears)
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            // THE COMPONENT'S OWN VERDICT (the plain id test the kind
+            // words never spoke — the same-id kind pair the vanilla
+            // isSameItemSameComponents the different items answers)
+            let pair_same = crate::world_view::potion_pair_same_item(
+                believed.0,
+                old_seat_kind,
+                old_carried_kind,
+            );
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = self.merchant_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.merchant_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word (the row
+                // bank the seat's own word lends)
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat (the row bank
+                // the word keeps — the potion's own identity the store
+                // ride survives)
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if button == 0
+                && believed.1 > 0
+                && new_slot.1 > 0
+                && (believed.0 != new_slot.0 || !pair_same)
+            {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the SAME-ID KIND
+                // PAIR the component law's own answer exchanges, the
+                // kind the pairs exchange)
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the seat keeps its own kind, the emptied
+                // carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.items_potion_kinds[idx] = new_seat_kind;
+            self.merchant_carried_potion_kind = new_carried_kind;
+        }
         self.inventory.items[idx] = new_slot;
         self.merchant_slots[menu] = new_slot;
         self.merchant_carried = new_carried;
@@ -35385,6 +35549,11 @@ impl App {
         };
         self.merchant_slots[2] = new_seat;
         self.merchant_carried = new_carried;
+        // THE RESULT SEAT'S OWN KINDLESS PAIR (the offer's own product
+        // the words never mint — the carried word the NONE the honest
+        // verdict wears, the 537 silence law the take re-speaks; the
+        // offer words the NEXT's lane may bank)
+        self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
         // THE ONTAKE'S OWN APPLY (javap MerchantResultSlot.onTake —
         // the active offer the container's own bank wears, the take
         // the costs shrink, the uses the notifyTrade increments, the
@@ -35681,10 +35850,19 @@ impl App {
             // keeps)
             let (sid, scount) = self.beacon_payment;
             let (cid, ccount) = self.beacon_carried;
+            let old_carried = self.beacon_carried;
             if ccount <= 0 {
                 if scount > 0 {
                     self.beacon_carried = (sid, scount);
                     self.beacon_payment = (0, 0);
+                }
+                // THE PAYMENT SEAT'S OWN KINDLESS VERDICT (the tag
+                // law's own walk the carried word re-speaks — the
+                // payment the potion never holds, the pair's own
+                // change the word retires, the empty seat the
+                // silence keeps)
+                if self.beacon_carried != old_carried {
+                    self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 }
                 return;
             }
@@ -35695,6 +35873,10 @@ impl App {
                 // the swap arm (the vanilla PICKUP's own law)
                 self.beacon_payment = (cid, 1);
                 self.beacon_carried = (sid, scount);
+                // THE SWAP'S OWN KINDLESS VERDICT (the payment the
+                // kind word never banks — the pair's own change the
+                // word retires)
+                self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 return;
             }
             // the place arm (left: up to the max-1 cap; right: ONE —
@@ -35706,6 +35888,11 @@ impl App {
                 } else {
                     (0, 0)
                 };
+                // THE PLACE'S OWN KINDLESS VERDICT (the payment seat
+                // the kind word never banks — the placed potion the
+                // mayPlace refusal the potion carried never reaches,
+                // the pair's own change the word retires)
+                self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
             }
             return;
         }
@@ -35716,11 +35903,80 @@ impl App {
         let idx = slot - 1; // 0..35 in the mirror
         let inv_idx = if idx < 27 { 9 + idx } else { idx - 27 };
         let believed = self.beacon_mirror.get(idx).copied().unwrap_or((0, 0));
+        // THE ROW'S OWN WORD (the shared bank's seat the read speaks
+        // — the kinded potion the word banks, the plain item the
+        // NONE keeps)
+        let old_seat_kind = if crate::world::brewing_is_potion_kind(believed.0) {
+            self.items_potion_kinds
+                .get(inv_idx)
+                .copied()
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        let old_carried_kind = self.beacon_carried_potion_kind;
         let (new_slot, new_carried) = if button == 0 {
-            crate::world_view::predict_pickup(believed, self.beacon_carried)
+            crate::world_view::predict_pickup_kind(
+                believed,
+                self.beacon_carried,
+                old_seat_kind,
+                old_carried_kind,
+            )
         } else {
             crate::world_view::predict_pickup_right(believed, self.beacon_carried)
         };
+        // THE KIND'S OWN CURSOR RIDE (the dev-204 law the beacon's
+        // own walk re-wears — the SAME four arms the chest rows
+        // speak: the pickup the seat's kind the word banks, the
+        // place the word the seat lays, the model's own swap the
+        // pairs exchange, the merge the emptied carried the NONE
+        // word wears)
+        let mut new_seat_kind = old_seat_kind;
+        let mut new_carried_kind = old_carried_kind;
+        {
+            // THE COMPONENT'S OWN VERDICT (the plain id test the kind
+            // words never spoke — the same-id kind pair the vanilla
+            // isSameItemSameComponents the different items answers)
+            let pair_same = crate::world_view::potion_pair_same_item(
+                believed.0,
+                old_seat_kind,
+                old_carried_kind,
+            );
+            let seat_gone = believed.1 > 0 && new_slot.1 <= 0;
+            let seat_new = believed.1 <= 0 && new_slot.1 > 0;
+            let carried_gone = self.beacon_carried.1 > 0 && new_carried.1 <= 0;
+            let carried_new = self.beacon_carried.1 <= 0 && new_carried.1 > 0;
+            if seat_gone && carried_new {
+                // the PICKUP — the kind rides to the word (the row
+                // bank the seat's own word lends)
+                new_carried_kind = old_seat_kind;
+                new_seat_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if carried_gone && seat_new {
+                // the PLACE — the kind rides to the seat (the row bank
+                // the word keeps — the potion's own identity the store
+                // ride survives)
+                new_seat_kind = old_carried_kind;
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            } else if button == 0
+                && believed.1 > 0
+                && new_slot.1 > 0
+                && (believed.0 != new_slot.0 || !pair_same)
+            {
+                // the MODEL'S OWN SWAP (the (id, count) pairs the
+                // different-item exchange keeps — the SAME-ID KIND
+                // PAIR the component law's own answer exchanges, the
+                // kind the pairs exchange)
+                std::mem::swap(&mut new_seat_kind, &mut new_carried_kind);
+            } else if carried_gone {
+                // the MERGE — the seat keeps its own kind, the emptied
+                // carried the NONE word wears
+                new_carried_kind = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            if inv_idx < self.items_potion_kinds.len() {
+                self.items_potion_kinds[inv_idx] = new_seat_kind;
+            }
+            self.beacon_carried_potion_kind = new_carried_kind;
+        }
         if let Some(cell) = self.beacon_mirror.get_mut(idx) {
             *cell = new_slot;
         }
@@ -35741,12 +35997,18 @@ impl App {
             return; // the doClick THROW's own isEmpty guard — silence
         }
         let dropped = if button == 0 { count } else { 1 };
-        // THE CARRIED'S OWN KINDLESS VERDICT (the lane the carried
-        // kind word never banks — the throw the NONE the consistent
-        // verdict wears, the carried-kind banking the NEXT's lane
-        // banks)
-        self.drop_item_entity_aimed(id, dropped);
+        // THE CARRIED SEAT'S OWN WORD (the throw lends — the pickup
+        // re-bank the ride keeps; the 537 kindless verdict the walk
+        // re-wears)
+        let thrown_kind = self.beacon_carried_potion_kind;
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         self.beacon_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+        // the throw's own word (the emptied carried the NONE wears —
+        // the whole-stack throw the word drops, the half the split the
+        // same stack keeps)
+        if self.beacon_carried.1 <= 0 {
+            self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
     }
 
     /// THE POWER SEAT'S OWN PRESS (javap 26.2 BeaconScreen$
@@ -51587,7 +51849,13 @@ impl App {
                 }
             }
         }
-        self.beacon_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        // pc 520-530 — the remainder the cursor keeps
+        self.beacon_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // the drag's own word (the emptied carried the NONE wears — the
+        // remainder the same stack the word keeps)
+        if self.beacon_carried.1 <= 0 {
+            self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
     }
 
@@ -51644,6 +51912,11 @@ impl App {
         }
         // pc 520-530 — the remainder the cursor keeps
         self.merchant_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // the drag's own word (the emptied carried the NONE wears — the
+        // remainder the same stack the word keeps)
+        if self.merchant_carried.1 <= 0 {
+            self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
         self.hotbar_slots = self.inventory.hotbar();
     }
 
@@ -53425,6 +53698,10 @@ impl App {
                             self.merchant_live_window = None;
                             self.merchant_slots = vec![(0, 0); 39];
                             self.merchant_carried = (0, 0);
+                            // the fresh birth's own pair (the stale word
+                            // the trader door retires)
+                            self.merchant_carried_potion_kind =
+                                crate::brewing_sim::POTION_KIND_NONE;
                             self.merchant_title = title;
                             self.merchant_offers =
                                 crate::mob::wandering_trader_offer_views(&offers);
@@ -89944,6 +90221,9 @@ impl App {
                     // the AUTHORITATIVE carried lands too (the chest's
                     // wholesale replacement speaks)
                     self.beacon_carried = c.carried;
+                    // the wire's own word (the live lane the honest NONE
+                    // wall keeps — the correction the kind never carries)
+                    self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                     // the window's identity rides in: the clicks echo
                     // against THIS id and revision (the stateId lane)
                     self.beacon_live_window = Some((c.id, c.state_id));
@@ -90012,6 +90292,9 @@ impl App {
                     // the AUTHORITATIVE carried lands too (the chest's
                     // wholesale replacement speaks)
                     self.merchant_carried = c.carried;
+                    // the wire's own word (the live lane the honest NONE
+                    // wall keeps — the correction the kind never carries)
+                    self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                     // THE WINDOW'S OWN TITLE (the chest's decode ride —
                     // the extractLabels walk's own cargo the screen's
                     // plain-title branch draws)
@@ -90447,6 +90730,9 @@ impl App {
                 // fresh open the own re-lay serves; the payment the
                 // same law the server-side removed() returns)
                 self.beacon_carried = (0, 0);
+                // the word the window's death retires (the fresh open
+                // the own reset re-lays)
+                self.beacon_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
                 self.beacon_payment = (0, 0);
                 // the gather pair the window's death retires (the
                 // fresh open the own reset re-arms)

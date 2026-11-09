@@ -55476,35 +55476,264 @@ fn the_carried_throws_the_kinds_the_words_ride() {
     );
 }
 
-/// THE KINDLESS CARRIED VERDICTS'S OWN SILENCE (the autopush-537
-/// round — the lanes the carried kind word never bank the throw the
-/// NONE the consistent verdict wears): the CASE MERCHANT the carried
-/// potion the NONE the spawn keeps, the CASE BEACON the same
-/// verdict.
+/// THE MERCHANT+BEACON CARRIED KINDS'S OWN BANK (the autopush-538
+/// round — the 537 kindless verdicts the honest walk re-wears): the
+/// CASE MERCHANT the row pickup the shared bank's mapped seat the
+/// word banks [the emptied seat the NONE retires], the throw the
+/// word lends [the whole the word drops, the split the same stack
+/// keeps], the CASE BEACON the row pickup the word banks, the
+/// PAYMENT the tag law's own kindless verdict keeps [the emerald
+/// carry the NONE wears], the throw the ride re-speaks.
 #[test]
-fn the_kindless_carried_verdicts_the_silence_keeps() {
+fn the_merchant_beacon_carried_the_words_the_walks_bank() {
     let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
     let none = crate::brewing_sim::POTION_KIND_NONE;
     let mut app = App::new(3);
     app.enter_world();
     app.spawn_offline_body();
-    // THE CASE MERCHANT'S OWN VERDICT (the carried kind word the
-    // lane never banks — the throw the NONE keeps)
-    app.merchant_carried = (potion, 2);
+    // THE CASE MERCHANT'S OWN ROW PICKUP (the shared bank's mapped
+    // seat the word banks — the emptied seat the NONE retires)
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2), (10, 40, 3)];
+    app.merchant_panel = (0, 0);
+    app.merchant_slots = vec![(0, 0); 39];
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind_a;
+    app.click_merchant_slot(10, 40, 0); // the menu 3 the items 9 wears
+    assert_eq!(
+        app.merchant_carried,
+        (potion, 1),
+        "the pickup the carried banks"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, kind_a,
+        "the kinded pickup the word banks"
+    );
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the seat the pickup empties"
+    );
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the emptied seat the NONE word wears"
+    );
+    // THE THROW'S OWN LEND (the whole stack the word wears)
     app.throw_merchant_carried_outside(0);
     assert_eq!(
         app.drops.last().map(|d| d.potion_kind),
-        Some(none),
-        "the merchant throw the NONE keeps"
+        Some(kind_a),
+        "the merchant throw the kind wears"
     );
-    // THE CASE BEACON'S OWN VERDICT (the same law the power seat's
-    // screen wears)
-    app.beacon_carried = (potion, 2);
-    app.throw_beacon_carried_outside(0);
+    assert_eq!(app.merchant_carried, (0, 0), "the cursor the throw empties");
+    assert_eq!(
+        app.merchant_carried_potion_kind, none,
+        "the emptied cursor the word retires"
+    );
+    // THE SPLIT'S OWN KEEP (the right press the ONE off — the same
+    // stack the word keeps)
+    app.merchant_carried = (potion, 3);
+    app.merchant_carried_potion_kind = kind_b;
+    app.throw_merchant_carried_outside(1);
     assert_eq!(
         app.drops.last().map(|d| d.potion_kind),
-        Some(none),
-        "the beacon throw the NONE keeps"
+        Some(kind_b),
+        "the split the kind wears"
+    );
+    assert_eq!(
+        app.merchant_carried,
+        (potion, 2),
+        "the split the cursor keeps"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, kind_b,
+        "the split the word keeps"
+    );
+    // THE CASE BEACON'S OWN ROW PICKUP (the shared bank's seat the
+    // word banks — the mirror + the inventory the write-through keeps)
+    app.screen = ScreenKind::Beacon;
+    app.beacon_slot_rects = vec![(10, 10, 0), (10, 40, 1)];
+    app.beacon_panel = (0, 0);
+    app.beacon_payment = (0, 0);
+    app.beacon_mirror = vec![(0, 0); 36];
+    app.beacon_mirror[0] = (potion, 1);
+    app.inventory.items[9] = (potion, 1);
+    app.items_potion_kinds[9] = kind_b;
+    app.beacon_screen_click(10, 40, 0); // the slot 1 the mirror 0 wears
+    assert_eq!(
+        app.beacon_carried,
+        (potion, 1),
+        "the pickup the carried banks"
+    );
+    assert_eq!(
+        app.beacon_carried_potion_kind, kind_b,
+        "the kinded pickup the word banks"
+    );
+    assert_eq!(app.beacon_mirror[0], (0, 0), "the seat the pickup empties");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the emptied seat the NONE word wears"
+    );
+    // THE PAYMENT'S OWN KINDLESS VERDICT (the emerald the tag law's
+    // own seat banks — the carried word the NONE keeps)
+    app.beacon_carried = (0, 0);
+    app.beacon_carried_potion_kind = none;
+    app.beacon_payment = (emerald, 1);
+    app.beacon_screen_click(10, 10, 0); // the payment seat the slot 0 wears
+    assert_eq!(
+        app.beacon_carried,
+        (emerald, 1),
+        "the payment pickup the carried banks"
+    );
+    assert_eq!(
+        app.beacon_carried_potion_kind, none,
+        "the payment the NONE word keeps"
+    );
+    // THE THROW'S OWN RIDE (the word the drop lends — the split the
+    // same stack keeps)
+    app.beacon_carried = (potion, 2);
+    app.beacon_carried_potion_kind = kind_a;
+    app.throw_beacon_carried_outside(1);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_a),
+        "the beacon throw the kind wears"
+    );
+    assert_eq!(
+        app.beacon_carried,
+        (potion, 1),
+        "the split the cursor keeps"
+    );
+    assert_eq!(
+        app.beacon_carried_potion_kind, kind_a,
+        "the split the word keeps"
+    );
+}
+
+/// THE KINDLESS CARRIED SEATS'S OWN VERDICTS (the autopush-538 round
+/// — the seats the kind words never mint the honest law keeps): the
+/// CASE MERCHANT the PAYMENT SWAP the word retires [the kindless
+/// seat the potion takes — the honest loss the trade's own law
+/// wears], the RESULT take the offer's own pair the NONE keeps, the
+/// CLOSE the ride home the receiving seat banks, the CASE BEACON the
+/// close the same ride wears, the WIRE OPEN the honest NONE wall
+/// keeps.
+#[test]
+fn the_kindless_carried_seats_the_verdicts_keep() {
+    use crate::world_view::LiveContainer;
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let emerald = mc_registry::item_id_by_name("emerald").unwrap();
+    let bread = mc_registry::item_id_by_name("bread").unwrap();
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE PAYMENT SWAP'S OWN RETIRE (the kindless seat the potion
+    // takes — the carried word the NONE wears)
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = vec![(10, 10, 0), (30, 10, 1), (50, 10, 2), (10, 40, 3)];
+    app.merchant_panel = (0, 0);
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_slots[0] = (emerald, 4);
+    app.merchant_carried = (potion, 1);
+    app.merchant_carried_potion_kind = kind_a;
+    app.click_merchant_slot(10, 10, 0); // the payment seat the swap wears
+    assert_eq!(
+        app.merchant_carried,
+        (emerald, 4),
+        "the swap the cursor keeps"
+    );
+    assert_eq!(
+        app.merchant_slots[0],
+        (potion, 1),
+        "the kindless seat the potion takes"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, none,
+        "the swap the word retires"
+    );
+    // THE RESULT'S OWN TAKE (the offer's own pair the words never
+    // mint — the carried word the NONE keeps)
+    app.merchant_slots[2] = (bread, 1);
+    app.merchant_carried = (0, 0);
+    app.click_merchant_slot(50, 10, 0);
+    assert_eq!(
+        app.merchant_carried,
+        (bread, 1),
+        "the take the result rides"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, none,
+        "the offer pair the NONE keeps"
+    );
+    // THE MERCHANT CLOSE'S OWN RIDE (the kinded carried the receiving
+    // free row the word banks, the cursor's own emptiness the silence
+    // wears)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.merchant_carried = (potion, 1);
+    app.merchant_carried_potion_kind = kind_b;
+    app.close_merchant(ScreenKind::World);
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the ride the free row wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], kind_b,
+        "the landing the word banks"
+    );
+    assert_eq!(
+        app.merchant_carried_potion_kind, none,
+        "the ride home the word spent"
+    );
+    // THE BEACON CLOSE'S OWN RIDE (the same law the power seat's
+    // screen wears)
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.beacon_carried = (potion, 1);
+    app.beacon_carried_potion_kind = kind_a;
+    app.close_beacon(ScreenKind::World);
+    assert_eq!(
+        app.inventory.items[0],
+        (potion, 1),
+        "the ride the free row wears"
+    );
+    assert_eq!(
+        app.items_potion_kinds[0], kind_a,
+        "the landing the word banks"
+    );
+    assert_eq!(
+        app.beacon_carried_potion_kind, none,
+        "the ride home the word spent"
+    );
+    // THE WIRE OPEN'S OWN WALL (the correction the kind never carries
+    // — the honest NONE the fresh window wears)
+    app.world_is_network = true;
+    app.merchant_carried = (potion, 1);
+    app.merchant_carried_potion_kind = kind_b;
+    app.live_container_updated(Some(LiveContainer {
+        id: 21,
+        menu_type_id: crate::world_model::MENU_TYPE_MERCHANT,
+        slots: vec![(0, 0); 39],
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 5,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    assert_eq!(app.merchant_carried, (0, 0), "the wire the carried banks");
+    assert_eq!(
+        app.merchant_carried_potion_kind, none,
+        "the wire the NONE wall keeps"
     );
 }
 
