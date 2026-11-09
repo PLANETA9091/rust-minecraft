@@ -658,14 +658,38 @@ fn box_overlaps_solid(world: &World, b: (f64, f64, f64, f64, f64, f64), deflate:
 }
 
 /// `isMergable`'s own law (javap): the stack fits one more of its kind
-/// and the two stacks share the item id (the components' honest
-/// stand-in — the client's stacks carry the id alone). The cap the
-/// item's own max stack wears — the registry's item_max_stack table
-/// (the snowball pair the 16 the sum refuses, the azalea pair the 64
-/// the sum accepts).
-fn mergeable(a: &ItemDrop, b: &ItemDrop) -> bool {
+/// and the two stacks share the item id — the COMPONENT PAIR the
+/// words answer (the 491/512 rides the entity's honest store wears —
+/// the potion word, the wear frac, the ench pairs the same stacks
+/// speak: the identical pair the vanilla's own
+/// isSameItemSameComponents merge keeps, the mismatched pair the
+/// refusal the absorbed entity's words the loss never wears) — and
+/// the STACKABLE CAP the `isStackable` fold's own
+/// `!isDamageableItem || !isDamaged` arm wears (the damaged stack
+/// the 1 the fold speaks, the merge the pair never offers). The cap
+/// the item's own max stack wears — the registry's item_max_stack
+/// table (the snowball pair the 16 the sum refuses, the azalea pair
+/// the 64 the sum accepts).
+/// pub(crate) the round's own test wears (the 540 precedent — the
+/// verdict the census pins directly)
+pub(crate) fn mergeable(a: &ItemDrop, b: &ItemDrop) -> bool {
+    // THE STACKABLE'S OWN DAMAGED ARM (the fold's own leg — the
+    // damageable id the registry's max-damage table names, the
+    // damaged frac the entity wears: either side the merge refuses,
+    // the pristine pair the arm the 64 keeps)
+    let damaged =
+        |d: &ItemDrop| mc_registry::item_max_damage(d.item).is_some() && d.damage_frac > 0.0;
+    if damaged(a) || damaged(b) {
+        return false;
+    }
     let cap = mc_registry::item_max_stack(a.item) as i32;
-    a.item == b.item && a.count > 0 && b.count > 0 && a.count + b.count <= cap
+    a.item == b.item
+        && a.potion_kind == b.potion_kind
+        && a.damage_frac == b.damage_frac
+        && a.enchantments == b.enchantments
+        && a.count > 0
+        && b.count > 0
+        && a.count + b.count <= cap
 }
 
 /// The neighbour merge (javap mergeWithNeighbours): the closest

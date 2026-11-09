@@ -56918,3 +56918,128 @@ fn the_census_the_container_lanes_the_q_answers() {
         "the merchant throw the stack wears"
     );
 }
+
+/// THE WORLD MERGE'S OWN COMPONENT LEG (the autopush-542 round — the
+/// mergelaw_513 census the entity's own gate the pair wears): the
+/// mergeable verdict the words speak — the CASE PLAIN the pristine
+/// pair the merge wears, the CASE ENCH the mismatched pair the
+/// refusal keeps [the absorbed entity's words the loss never wears],
+/// the CASE ENCH-SAME the identical pairs the merge answers, the
+/// CASE WEAR the mismatched fracs the equality leg refuses, the CASE
+/// KIND the mismatched potion words the pair refuses, the CASE
+/// ABSORB the merge_pass shape the survivor's own words keep.
+#[test]
+fn the_world_merge_the_component_leg_the_pairs_wear() {
+    let book = mc_registry::item_id_by_name("book").unwrap();
+    let rod = mc_registry::item_id_by_name("fishing_rod").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let mk = |id: i32, n: i32, seed: u64, x: f64| {
+        crate::drops::ItemDrop::spawn_entity_loot(
+            n,
+            id,
+            1,
+            x,
+            60.0,
+            0.0,
+            &mut crate::drops::Lcg::new(seed),
+        )
+    };
+    // THE CASE PLAIN'S OWN PAIR (the pristine pair the merge wears —
+    // the NONE words the plain law keeps, the 64 cap the sum accepts)
+    let a = mk(book, 1, 9, 0.0);
+    let b = mk(book, 2, 10, 0.2);
+    assert!(
+        crate::drops::mergeable(&a, &b),
+        "the pristine pair the merge wears"
+    );
+    // THE CASE ENCH'S OWN REFUSAL (the mismatched pair the gate
+    // refuses — the plain stack the enchanted one the same id never
+    // absorbs, the ench word the pair the loss never wears)
+    let mut a = mk(book, 11, 11, 0.0);
+    a.enchantments = vec![(0usize, 1i32)];
+    let b = mk(book, 12, 12, 0.2);
+    assert!(
+        !crate::drops::mergeable(&a, &b),
+        "the mismatched ench pair the merge refuses"
+    );
+    // THE CASE ENCH-SAME'S OWN MERGE (the identical pairs the vanilla
+    // isSameItemSameComponents the merge keeps)
+    let mut a = mk(book, 13, 13, 0.0);
+    a.enchantments = vec![(0usize, 1i32)];
+    let mut b = mk(book, 14, 14, 0.2);
+    b.enchantments = vec![(0usize, 1i32)];
+    assert!(
+        crate::drops::mergeable(&a, &b),
+        "the identical ench pair the merge wears"
+    );
+    // THE CASE WEAR'S OWN REFUSAL (the mismatched fracs the
+    // component pair refuses — the wear word the entity carries the
+    // pair the equality leg speaks)
+    let mut a = mk(book, 15, 15, 0.0);
+    a.damage_frac = 0.5;
+    let b = mk(book, 16, 16, 0.2);
+    assert!(
+        !crate::drops::mergeable(&a, &b),
+        "the mismatched wear pair the merge refuses"
+    );
+    // THE CASE DAMAGED'S OWN ARM (the damageable id the damaged frac
+    // wears — the isStackable fold's own
+    // !isDamageableItem || !isDamaged arm the merge refuses)
+    let mut a = mk(rod, 17, 17, 0.0);
+    a.damage_frac = 0.5;
+    let b = mk(rod, 18, 18, 0.2);
+    assert!(
+        !crate::drops::mergeable(&a, &b),
+        "the damaged stack the merge never offers"
+    );
+    // THE CASE KIND'S OWN REFUSAL (the mismatched potion words the
+    // component pair refuses — the kinded entity the kindless one
+    // the same id never absorbs)
+    let mut a = mk(book, 19, 19, 0.0);
+    a.potion_kind = night;
+    let b = mk(book, 20, 20, 0.2);
+    assert!(
+        !crate::drops::mergeable(&a, &b),
+        "the mismatched kind pair the merge refuses"
+    );
+    // THE CASE KIND-SAME'S OWN PAIR (the identical words the merge
+    // answers — the kind word the pair the same speaks)
+    let mut a = mk(book, 21, 21, 0.0);
+    a.potion_kind = night;
+    let mut b = mk(book, 22, 22, 0.2);
+    b.potion_kind = night;
+    assert!(
+        crate::drops::mergeable(&a, &b),
+        "the identical kind pair the merge wears"
+    );
+    // THE CASE POTION'S OWN CAP WALL (the potion family the 1-stack
+    // cap wears — the kinded pair the sum refuses the same verdict
+    // the family law keeps)
+    let a = mk(potion, 23, 23, 0.0);
+    let mut b = mk(potion, 24, 24, 0.2);
+    b.potion_kind = night;
+    assert!(
+        !crate::drops::mergeable(&a, &b),
+        "the potion pair the cap the merge refuses"
+    );
+    // THE CASE ABSORB'S OWN WORDS (the merge_pass shape the verdict
+    // wears — the survivor the absorbed stack's count takes, the
+    // words the identical pair the survivor keeps, the vanishing
+    // entity the discard speaks)
+    let mut a = mk(book, 25, 25, 0.0);
+    a.enchantments = vec![(3usize, 2i32)];
+    let mut b = mk(book, 26, 26, 0.2);
+    b.enchantments = vec![(3usize, 2i32)];
+    let mut drops = vec![a, b];
+    crate::drops::merge_pass(&mut drops);
+    assert_eq!(drops.len(), 1, "the absorb the pair one entity wears");
+    assert_eq!(drops[0].count, 2, "the count the survivor takes");
+    assert_eq!(
+        drops[0].enchantments,
+        vec![(3usize, 2i32)],
+        "the words the survivor keeps"
+    );
+    assert_eq!(drops[0].potion_kind, none, "the NONE the pristine wears");
+}
