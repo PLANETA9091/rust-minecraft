@@ -3072,6 +3072,338 @@ fn build_llama_parts(state: &QuadrupedState) -> Vec<Part> {
 }
 
 // ===========================================================================
+// THE HORSE (the equine mesh the autopush-545 unseen lane wore — the
+// dev-238 round the census banks verbatim off the official jar)
+// ===========================================================================
+
+/// THE HORSE COAT TEXTURES' OWN SHA1S (the 26.2 jar's verbatim bytes,
+/// hashed by scripts over the extracted `entity/horse/horse_*.png`
+/// rows) — the HorseRenderer's TEXTURES map the getTextureLocation
+/// walk reads per Variant, the baby pair the isBaby arm answers:
+/// WHITE(0)/CREAMY(1)/CHESTNUT(2)/BROWN(3)/BLACK(4)/GRAY(5)/
+/// DARK_BROWN(6) the Variant clinit's own enum order the javap walk
+/// banks. The load gate every other model speaks: a drifted extract
+/// keeps the horse unseen, the honest missing-asset law.
+const HORSE_COAT_PNG_SHA1S: [&str; 14] = [
+    "1362a4738a42d95e0598086e5c360cba2c77dfd6", // white adult (the Variant-0 row)
+    "474358ec9d0d6c2c1fecefbe56019980a0532bd4", // white baby
+    "254edc4f6f6f71576a4bf658f36208bdf1941674", // creamy adult
+    "ebd7fb4b5539845387845b9d1d0e259114c855a5", // creamy baby
+    "c820fde69c24e9809ee3320b2efa2f67f0c7222a", // chestnut adult
+    "98fc8ffe1317000018db848d55761f5be6045569", // chestnut baby
+    "25f7aa8fde4b8b443b5702d80523fabc847e5996", // brown adult
+    "c38ffcb81750ffa8ba293ca7918850dfbd7dd085", // brown baby
+    "eb12dc1c8d4dd5e1f49bfdc85fae52e539885bb0", // black adult
+    "26af7eb07f38d6bde02e62e148bbcbfc2b6da00b", // black baby
+    "e71bdfa7a5dd5c5bd06974a9be12288e543add39", // gray adult
+    "96e7cffccc2dffd21e3a1c70c5f013c2f4c72218", // gray baby
+    "263041849b4d73824616246835c0b9df1b9d2068", // darkbrown adult
+    "e26b006ce04efbfd453516eaa06a72806b272465", // darkbrown baby
+];
+
+/// THE HORSE COAT TEXTURES' OWN RUNTIME PATHS (the HorseRenderer's
+/// `textures/entity/horse/horse_*.png` rows the map's put walk keeps,
+/// the baby pairs the same layout's `_baby` rows wear — the bare jar
+/// layout the load root reads).
+const HORSE_COAT_RUNTIME_PATHS: [&str; 14] = [
+    "entity/horse/horse_white.png",
+    "entity/horse/horse_white_baby.png",
+    "entity/horse/horse_creamy.png",
+    "entity/horse/horse_creamy_baby.png",
+    "entity/horse/horse_chestnut.png",
+    "entity/horse/horse_chestnut_baby.png",
+    "entity/horse/horse_brown.png",
+    "entity/horse/horse_brown_baby.png",
+    "entity/horse/horse_black.png",
+    "entity/horse/horse_black_baby.png",
+    "entity/horse/horse_gray.png",
+    "entity/horse/horse_gray_baby.png",
+    "entity/horse/horse_darkbrown.png",
+    "entity/horse/horse_darkbrown_baby.png",
+];
+
+/// The horse's equine model — the 26.2 `AbstractEquineModel
+/// .createBodyMesh`'s own numbers, bytecode-proven off the official
+/// jar (the LayerDefinitions registry's `LayerDefinition.create(
+/// createBodyMesh(CubeDeformation.NONE), 64, 64)` bake the clinit
+/// walk banks): the body 10x10x22 (uv 0,32, inflate 0.05) at
+/// PartPose.offset(0, 11, 5) — NO rotX (the horizontal barrel the
+/// box's own 22-long Z span lays), the head_parts 4x12x7 (uv 0,35)
+/// at offsetAndRotation(0, 4, -12, PI/6, 0, 0) with the head 6x5x7
+/// (uv 0,13) + the mane 2x16x2 (uv 56,36, z 5.01) + the upper mouth
+/// 4x5x5 (uv 0,25, z -7) + the two EAR 2x3x1 cubes (uv 19,16, inflate
+/// -0.001) the head's own cube list folds, the shared 4x11x4 leg
+/// builder (uv 48,21) the four pivots wear (∓4, 14, 7/-10 — the
+/// hind/front z split the -1.0/-1.9 box origins speak), the tail
+/// 3x14x4 (uv 42,36) the BODY's own child at offsetAndRotation(0,
+/// -5, 2, PI/6, 0, 0) the tail xRot fold rides. The port's baby
+/// horse the ADULT mesh wears (the BabyHorseModel's own mesh the
+/// later round banks — the coat's own baby texture the age split
+/// serves).
+pub struct HorseModel {
+    /// the seven coat skins the Variant id indexes + the seven baby
+    /// pairs the is_baby split wears
+    coats: [Vec<u8>; 7],
+    babies: [Vec<u8>; 7],
+}
+
+impl HorseModel {
+    /// Load + sha1-verify all fourteen coat rows (the map the
+    /// renderer wears — one missing row the None keeps, the horse
+    /// never renders). `None` = the horse never renders (the same
+    /// honesty the other paths speak: the renderer must not lie
+    /// about its data).
+    pub fn load(root: &Path) -> Option<HorseModel> {
+        let mut coats: [Vec<u8>; 7] = Default::default();
+        let mut babies: [Vec<u8>; 7] = Default::default();
+        for (i, (path, sha1)) in HORSE_COAT_RUNTIME_PATHS
+            .iter()
+            .zip(HORSE_COAT_PNG_SHA1S.iter())
+            .enumerate()
+        {
+            let bytes = std::fs::read(root.join(path)).ok()?;
+            let digest = sha1::Sha1::digest(&bytes);
+            if hex::encode(digest) != *sha1 {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+                return None;
+            }
+            if i % 2 == 0 {
+                coats[i / 2] = rgba;
+            } else {
+                babies[i / 2] = rgba;
+            }
+        }
+        Some(HorseModel { coats, babies })
+    }
+
+    /// The coat skin's pixel at (u, v) — the RGBA row-major words,
+    /// v down (the 64x64 layout's own stride the load verified; u/v
+    /// clamp to the 64 the square layout keeps). The unknown variant
+    /// id the WHITE default the Variant-0 row wears (the enum's own
+    /// clamp law), the baby the coat's own `_baby` row the is_baby
+    /// split answers.
+    pub fn pixel(&self, variant: u8, baby: bool, u: f32, v: f32) -> [u8; 4] {
+        let idx = (variant as usize).min(6);
+        let tex = if baby {
+            &self.babies[idx]
+        } else {
+            &self.coats[idx]
+        };
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [tex[o], tex[o + 1], tex[o + 2], tex[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the horse
+    /// at `state` — the SAME entity chain fold the avatar speaks
+    /// (one law, every living model), the equine's own parts beneath.
+    pub fn quads(
+        &self,
+        state: &QuadrupedState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_horse_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 8);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(
+                part,
+                &ident,
+                &fold_point,
+                &fold_normal,
+                cam_yaw,
+                cam_pitch,
+                &mut out,
+            );
+        }
+        out
+    }
+}
+
+/// THE HORSE'S OWN POSE (javap `AbstractEquineModel.setupAnim` the
+/// 26.2 bytecode banks — the port's EquineRenderState stand-in the
+/// honest absences wear: the eat/stand/feeding animations the offline
+/// sim never arms (the zeros the folds collapse — the head placement
+/// helper the lerp chain eats idempotent), the animateTail the false
+/// lane keeps, the isInWater the 1.0 fold wears): the head yaw the
+/// ±20° clamp the f2 store keeps, the pitch rad the 0.017453292 fold
+/// speaks, the walk>0.2 bob the cos(walk*0.8)*0.15*speed fold arms,
+/// the leg diagonal the cos(walk*0.6662 + PI) phase the f12 store
+/// keeps (the *0.8*speed amplitude the f13 speaks — the hind pair
+/// the 0.5 halve wears, the front pair the ±f13 the mirror answers),
+/// the tail the xRot PI/6 + speed*0.75 fold keeps (the y/z walk
+/// drift the ageScale pair rides — the baby's 0.5 the age split
+/// speaks), the body the stand=0 collapse keeps level (the
+/// *-0.7853982 stand fold the zeros eat).
+fn build_horse_parts(state: &QuadrupedState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    // THE HEAD'S OWN WALK (the clamp + the pitch rad + the bob)
+    let head_yaw_deg = state.head_yaw_off_deg.clamp(-20.0, 20.0);
+    let mut pitch_rad = state.pitch_deg * 0.017_453_292;
+    if speed > 0.2 {
+        pitch_rad += mth_cos(pos * 0.8) * 0.15 * speed;
+    }
+    let head_x = 0.523_598_8 + pitch_rad;
+    let head_y = head_yaw_deg * 0.017_453_292;
+    // THE LEGS' OWN WALK (the diagonal phase the equine fold keeps)
+    let phase = mth_cos(1.0 * pos * 0.666_199_98 + std::f32::consts::PI);
+    let amp = phase * 0.8 * speed;
+    let hind_l = -phase * 0.5 * speed;
+    let hind_r = phase * 0.5 * speed;
+    // THE TAIL'S OWN WALK (the xRot fold + the drift the ageScale
+    // pair rides — the baby's 0.5 the age split speaks)
+    let age_scale = if state.age_ticks < 0.0 { 0.5 } else { 1.0 };
+    let tail_x = 0.523_598_8 + speed * 0.75;
+    let tail_drift_y = speed * age_scale;
+    let tail_drift_z = speed * 2.0 * age_scale;
+    let leg_cube = Cube {
+        tex: (48.0, 21.0),
+        origin: [-3.0, -1.01, -1.0],
+        size: [4.0, 11.0, 4.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    let leg_cube_front = Cube {
+        tex: (48.0, 21.0),
+        origin: [-3.0, -1.01, -1.9],
+        size: [4.0, 11.0, 4.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // body (the horizontal barrel — NO rotX the offset pose
+        // speaks; the TAIL the body's own child the transform chain
+        // folds)
+        Part {
+            pivot: [0.0, 11.0, 5.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 32.0),
+                origin: [-5.0, -8.0, -17.0],
+                size: [10.0, 10.0, 22.0],
+                inflate: 0.05,
+                mirror: false,
+            }],
+            children: vec![Part {
+                pivot: [0.0, -5.0, 2.0],
+                x_rot: tail_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (42.0, 36.0),
+                    origin: [-1.5, 0.0 + tail_drift_y, 0.0 + tail_drift_z],
+                    size: [3.0, 14.0, 4.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            }],
+        },
+        // head parts (the head + the mane + the upper mouth + the two
+        // ears — the same part's fluent chain the bytecode's addBox
+        // walk speaks: the named boxes the head's own cube list
+        // folds)
+        Part {
+            pivot: [0.0, 4.0, -12.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 13.0),
+                    origin: [-3.0, -11.0, -2.0],
+                    size: [6.0, 5.0, 7.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (56.0, 36.0),
+                    origin: [-1.0, -11.0, 5.01],
+                    size: [2.0, 16.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (0.0, 25.0),
+                    origin: [-2.0, -11.0, -7.0],
+                    size: [4.0, 5.0, 5.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (19.0, 16.0),
+                    origin: [0.55, -13.0, 4.0],
+                    size: [2.0, 3.0, 1.0],
+                    inflate: -0.001,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (19.0, 16.0),
+                    origin: [-2.55, -13.0, 4.0],
+                    size: [2.0, 3.0, 1.0],
+                    inflate: -0.001,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // right hind leg (the plain builder's own unwrap — no mirror)
+        Part {
+            pivot: [-4.0, 14.0, 7.0],
+            x_rot: hind_r,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube],
+            children: vec![],
+        },
+        // left hind leg (the mirror's own wrap)
+        Part {
+            pivot: [4.0, 14.0, 7.0],
+            x_rot: hind_l,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                mirror: true,
+                ..leg_cube
+            }],
+            children: vec![],
+        },
+        // right front leg
+        Part {
+            pivot: [-4.0, 14.0, -10.0],
+            x_rot: -amp,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube_front],
+            children: vec![],
+        },
+        // left front leg (the mirror's own wrap)
+        Part {
+            pivot: [4.0, 14.0, -10.0],
+            x_rot: amp,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                mirror: true,
+                ..leg_cube_front
+            }],
+            children: vec![],
+        },
+    ]
+}
+
+// ===========================================================================
 // THE CHICKEN (the fifth drawn body — the avian's own chain)
 // ===========================================================================
 

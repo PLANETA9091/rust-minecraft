@@ -57364,13 +57364,14 @@ fn the_horse_the_vanilla_rows_wear() {
         "minecraft:horse",
         "the registry id the registration names"
     );
-    // THE UNDRAWN HONESTY (the from_wire_name the drawn names alone
-    // admits — the horse's own mesh the later round wears, the wire's
-    // horse body the zombie fallback speaks until the admission rides)
+    // THE WIRE NAME'S OWN ADMISSION (the dev-238 round the mesh lane
+    // retires — a server-spawned horse the zombie fallback wore, the
+    // equine body the seven-coat set the sha1 the census pins now
+    // draws)
     assert_eq!(
         MobKind::from_wire_name("minecraft:horse"),
-        MobKind::Zombie,
-        "the undrawn kind the honest fallback keeps"
+        MobKind::Horse,
+        "the wire name the kind body draws"
     );
     assert_eq!(
         MobKind::Horse.eye_height(),
@@ -57629,4 +57630,100 @@ fn the_horse_the_q_answers_the_seats_wear() {
         (saddle, 2),
         "the seat the close the memory keeps"
     );
+}
+
+/// THE HORSE'S OWN MESH (javap 26.2 `AbstractEquineModel.createBodyMesh`
+/// + `setupAnim` the dev-238 census banks — the body 10x10x22 (uv 0,32,
+/// inflate 0.05) at PartPose.offset(0, 11, 5), the head_parts 4x12x7
+/// (uv 0,35) at offsetAndRotation(0, 4, -12, PI/6) the head 6x5x7 (uv
+/// 0,13) + the mane 2x16x2 (uv 56,36, z 5.01) + the upper mouth 4x5x5
+/// (uv 0,25, z -7) + the two EAR 2x3x1 cubes (uv 19,16, inflate
+/// -0.001) fold, the shared 4x11x4 leg builder (uv 48,21) the four
+/// pivots (∓4, 14, 7/-10) wear, the tail 3x14x4 (uv 42,36) the body's
+/// own child the xRot PI/6 fold rides, the 64x64 layer the create
+/// call keeps): the quads the posed walk wears, the pixel lane the
+/// Variant id + the is_baby pair pick, the walk folds the equine law
+/// answers.
+#[test]
+fn the_horse_the_mesh_the_quads_wear() {
+    // THE LAYOUT'S OWN VERDICT (the real texture bytes the load
+    // sha1-verifies — the cached extract the port's own law keeps)
+    let root = assets_root();
+    let Some(model) = crate::avatar::HorseModel::load(&root) else {
+        panic!("the cached extract the fourteen coats load");
+    };
+    // THE QUAD COUNT (the body's TWO parts [the body box + the tail
+    // child] + the head part's FIVE cubes + the 4 legs = the 11
+    // cubes' 6-face walk — the head's mane/mouth/ear rows the count
+    // speaks)
+    let state = crate::avatar::QuadrupedState {
+        yaw_deg: 0.0,
+        pitch_deg: 0.0,
+        head_yaw_off_deg: 0.0,
+        walk_pos: 0.0,
+        walk_speed: 0.0,
+        age_ticks: 0.0,
+        death_time: 0.0,
+    };
+    let feet = crate::math::Vec3::new(0.0, 0.0, 0.0);
+    let quads = model.quads(&state, feet, 0.0, 0.0);
+    assert_eq!(
+        quads.len(),
+        11 * 6,
+        "the 11 cubes' 6-face walk the posed draw wears"
+    );
+    // THE VARIANT'S OWN PIXEL LANE (the fourteen skins the pair
+    // picks — the opaque texels the full 64x64 decode wears, the
+    // unused UV margins the vanilla layout's transparency keeps)
+    for variant in 0..7u8 {
+        for baby in [false, true] {
+            let mut opaque = 0;
+            for v in 0..64u32 {
+                for u in 0..64u32 {
+                    if model.pixel(variant, baby, u as f32, v as f32)[3] == 255 {
+                        opaque += 1;
+                    }
+                }
+            }
+            assert!(
+                opaque > 1024,
+                "the opaque texels the variant {variant} baby {baby} skin wears"
+            );
+        }
+    }
+    // the distinct skins the seven rows wear (the variant id the
+    // texture pick serves — the WHITE default the clamp law keeps)
+    let sample = |v: u8| model.pixel(v, false, 2.0, 2.0);
+    let white = sample(0);
+    let clamped = sample(9);
+    assert_eq!(white, clamped, "the unknown id the Variant-0 row wears");
+    // THE BABY'S OWN ROW (the age split the coat's own _baby pair
+    // answers — the distinct skin the baby lane wears)
+    let adult = model.pixel(0, false, 40.0, 40.0);
+    let baby_px = model.pixel(0, true, 40.0, 40.0);
+    assert_ne!(
+        adult, baby_px,
+        "the baby the coat's own row the split wears"
+    );
+    // THE WALK'S OWN FOLD (the equine law the setupAnim keeps: the
+    // hind pair the 0.5 halve wears, the front pair the ±amp mirror
+    // answers — the dead-speed gate the zero fold wears, the walk
+    // phase the nonzero speed the xRot arms)
+    let walking = crate::avatar::QuadrupedState {
+        walk_pos: 1.0,
+        walk_speed: 1.0,
+        ..state
+    };
+    let walked = model.quads(&walking, feet, 0.0, 0.0);
+    assert_eq!(
+        walked.len(),
+        quads.len(),
+        "the walk the same face count wears"
+    );
+    let differ = walked
+        .iter()
+        .zip(quads.iter())
+        .filter(|(w, q)| w.pts != q.pts)
+        .count();
+    assert!(differ > 0, "the walk the legs' own fold speaks");
 }

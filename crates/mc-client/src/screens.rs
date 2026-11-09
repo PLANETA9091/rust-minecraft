@@ -9061,6 +9061,12 @@ pub struct App {
     /// sha1-verifies; `None` = the llama never renders, the honest
     /// missing-asset law the other bodies keep)
     pub llama_model: Option<crate::avatar::LlamaModel>,
+    /// THE HORSE'S OWN BAKE (the equine mesh the autopush-545 unseen
+    /// lane wore — the seven-coat skin set the HorseModel.load
+    /// sha1-verifies, the baby pairs the age split answers; `None` =
+    /// the horse never renders, the honest missing-asset law the
+    /// other bodies keep)
+    pub horse_model: Option<crate::avatar::HorseModel>,
     /// THE FOURTH MOB's own WOOL (the SheepFurModel inflate-mesh over
     /// the sheep_wool.png texture — the SheepWoolLayer's own overlay,
     /// the dye tint the DyeColor table multiplies) — loaded lazily
@@ -13789,6 +13795,7 @@ impl App {
             sheep_model: None,
             wandering_trader_model: None,
             llama_model: None,
+            horse_model: None,
             sheep_wool_model: None,
             sheep_wool_undercoat_model: None,
             baby_sheep_model: None,
@@ -94502,6 +94509,12 @@ impl App {
         if self.llama_model.is_none() {
             self.llama_model = crate::avatar::LlamaModel::load(&jar_root);
         }
+        // THE HORSE'S OWN LAZY LOAD (the seven-coat set the same cache
+        // keeps — the load's sha1 verdict its own lane, the failed
+        // coat set the honest unseen keeps while the others draw)
+        if self.horse_model.is_none() {
+            self.horse_model = crate::avatar::HorseModel::load(&jar_root);
+        }
         // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
         // same cache keeps — each load's sha1 verdict its own lane,
         // the failed variant the honest unseen keeps while the others
@@ -94627,6 +94640,7 @@ impl App {
         let baby_chicken_model = self.baby_chicken_model.as_ref();
         let wandering_trader_model = self.wandering_trader_model.as_ref();
         let llama_model = self.llama_model.as_ref();
+        let horse_model = self.horse_model.as_ref();
         // the variants' honesty is ITS OWN lane: a failed variant skin
         // keeps only that variant's birds unseen, the temperate keeps
         // drawing
@@ -94837,15 +94851,38 @@ impl App {
                     (quads, Box::new(move |u, v| llama.pixel(variant, u, v)))
                 }
                 crate::mob::MobKind::Horse => {
-                    // THE HORSE'S OWN UNDRAWN LANE (the equine mesh the
-                    // later round wears — the HorseModel's own body the
-                    // sha1-pinned texture the HorseRenderer bank pins;
-                    // the census row the kind table's exhaustiveness
-                    // keeps, the same unseen-body honesty the llama
-                    // sha1-fail lane wears. The horse SCREEN the kind's
-                    // own menu the round served — the world body the
-                    // mesh census the NEXT banks.)
-                    continue;
+                    // THE HORSE'S OWN EQUINE WALK (javap
+                    // `AbstractEquineModel.createBodyMesh` the 26.2
+                    // bytecode's mesh the dev-238 census banks — the
+                    // body 10x10x22 (uv 0,32, inflate 0.05) at offset
+                    // (0, 11, 5), the head_parts 4x12x7 (uv 0,35) at
+                    // offsetAndRotation(0, 4, -12, PI/6) the head +
+                    // mane + upper-mouth + ear cubes fold, the 4x11x4
+                    // legs the hind/front z split wears, the tail the
+                    // body's own child the xRot PI/6 fold rides). The
+                    // COAT'S OWN TEXTURE (HorseRenderer's TEXTURES map
+                    // — the Variant id the coat row picks, the baby
+                    // pair the is_baby split answers, the ByIdMap's
+                    // CLAMP law the unknown id wears).
+                    let Some(horse) = horse_model else {
+                        continue; // the horse skins failed their sha1 — this body stays unseen
+                    };
+                    let state = crate::avatar::QuadrupedState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let variant = mob.horse_variant;
+                    let baby = mob.is_baby();
+                    let quads = horse.quads(&state, feet, cam.yaw, cam.pitch);
+                    (
+                        quads,
+                        Box::new(move |u, v| horse.pixel(variant, baby, u, v)),
+                    )
                 }
                 crate::mob::MobKind::Sheep => {
                     // THE COLOR WORD (SheepRenderState.getWoolColor's

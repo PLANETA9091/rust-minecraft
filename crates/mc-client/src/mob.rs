@@ -1269,8 +1269,9 @@ pub enum MobKind {
     /// the kind's own menu serves (the AbstractHorseScreen the
     /// base class the vanilla owes, the saddle/armor seats the
     /// mayPickup laws the own walk speaks); the horse's own MESH the
-    /// later round wears — the render lane the unseen body the
-    /// llama sha1-fail honesty keeps.
+    /// dev-238 round serves — the AbstractEquineModel body the
+    /// seven-coat set the sha1 pins draws, the wire name the
+    /// drawn-name honesty the admission rides.
     Horse,
 }
 
@@ -1407,6 +1408,12 @@ impl MobKind {
             // name the kind's body draws (the entity/creeper/creeper
             // skin the sha1 the generated table pins)
             MobKind::Creeper
+        } else if name == "minecraft:horse" {
+            // THE HORSE'S OWN ADMISSION (the dev-238 round the mesh
+            // lane retires — a server-spawned horse the zombie
+            // fallback wore, the equine body the seven-coat set the
+            // sha1 the census pins now draws)
+            MobKind::Horse
         } else {
             MobKind::Zombie
         }
@@ -5480,6 +5487,15 @@ pub struct Zombie {
     /// map the texture pick serves; the ctor's 0 the DEFAULT row the
     /// vanilla client's own local default wears)
     pub llama_variant: u8,
+    /// THE HORSE COAT'S OWN WORD (javap `net.minecraft.world.entity
+    /// .animal.equine.Variant` the 26.2 bytecode banks — the
+    /// WHITE(0)/CREAMY(1)/CHESTNUT(2)/BROWN(3)/BLACK(4)/GRAY(5)/
+    /// DARK_BROWN(6) order the clinit's enum ctor walks speak, the
+    /// HorseRenderer's TEXTURES map the coat pick serves; the ctor's
+    /// 0 the WHITE row the vanilla client's own local default wears).
+    /// The horse spawner the later round arms — the wire's variant
+    /// byte the merge sets when the lane rides.
+    pub horse_variant: u8,
     /// THE LEASH'S OWN LINK (javap `TraderLlama.setLeashedTo(trader,
     /// true)` the tryToSpawnLlamaFor walk banks — the holder entity's
     /// id the pair's rope reads; the ctor's None the honest un-leashed
@@ -5907,6 +5923,7 @@ impl Zombie {
             // body keeps)
             strength: 0,
             llama_variant: 0,
+            horse_variant: 0,
             leashed_to: None,
             leash_angular_momentum: 0.0,
             eat_animation_tick: 0,
