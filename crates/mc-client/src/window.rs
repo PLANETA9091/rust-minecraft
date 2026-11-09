@@ -2832,6 +2832,12 @@ pub fn run_gui_app(
                 // wears, the live session the packet speaks — the
                 // autopush-531 round the Q family's stand lane speaks)
                 app.on_brewing_drop_key(q_ctrl);
+                // THE DISPENSER'S OWN Q (the SAME arm — the
+                // DispenserMenu the base class keeps, the offline sim
+                // the local walk the lane wears, the live window the
+                // packet speaks — the autopush-532 round the Q
+                // family's 3x3 lane speaks)
+                app.on_dispenser_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's

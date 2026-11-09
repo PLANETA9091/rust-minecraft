@@ -31249,6 +31249,24 @@ impl App {
         }
     }
 
+    /// THE DISPENSER SEAT'S OWN KIND WRITE (the 62434 brewing put's
+    /// own twin the 3x3 lane re-wears — the unified write the family
+    /// law keeps: the grid nine the ROW STORE's own word answers, the
+    /// store rows the shared bank's mapped seat speaks — the single
+    /// call the both lanes' retire arms wear, the bounds the fresh
+    /// vec the resize arms keep)
+    fn dispenser_seat_kind_put(&mut self, seat: usize, kind: i32) {
+        if seat < 9 {
+            if seat < self.dispenser_row_potion_kinds.len() {
+                self.dispenser_row_potion_kinds[seat] = kind;
+            }
+        } else if let Some(row) = Self::dispenser_menu_to_inventory(seat) {
+            if row < self.items_potion_kinds.len() {
+                self.items_potion_kinds[row] = kind;
+            }
+        }
+    }
+
     /// THE DISPENSER'S OWN CLOSE (the vanilla Escape/E on the
     /// dispenser's screen — the chest's own close walk the carried
     /// return, the store flush and the fill ride speak): the carried
@@ -61437,6 +61455,187 @@ impl App {
     /// canvas never wears)
     fn dispenser_swap_tail(&mut self) {
         self.dispenser_mirror_sync_from_inventory();
+    }
+
+    /// THE DISPENSER'S OWN Q WALK (the autopush-532 round — the Q
+    /// family's dispenser lane the census pins: the SAME base-class
+    /// keyPressed keyDrop arm the creative/inventory/table/chest/
+    /// furnace/brewing six the dispatch chain wears, the DispenserMenu
+    /// the inheritance the vanilla owes). THE LANES' OWN SPLIT (the
+    /// 531 brewing walk's own shape the 3x3 seats re-wear): the live
+    /// window the WIRE twin answers (the belief's own rows the take
+    /// mutates, the packet the command lane carries), the offline sim
+    /// the LOCAL store walk answers — the rects/cursor/hover gates
+    /// the SAME geometry walk the click lane speaks, the hasItem gate
+    /// the keyPressed chain keeps BEFORE the lane, the carried cursor
+    /// the doClick arm's own refusal, the taken the tryRemove law
+    /// (the whole stack gone or exactly one off), the drop entity the
+    /// AIMED look spawns, the plain slots the take never refuses (the
+    /// base Slot's iconst_1 pair the swap walk banks), the store rows
+    /// the write-through projection syncs, the drained seats the KIND
+    /// lanes the put helper retires (the dev-236/237/530 law the 3x3
+    /// lane re-wears), the tail the mirror + HUD sync follows. NO
+    /// swing, the container STAYS OPEN.
+    pub fn on_dispenser_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Dispenser || self.dead {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.dispenser_is_live {
+            // THE WIRE GATE: the live window's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the offline stand-in NOT the truth there (the
+            // click lane's own split the walk wears).
+            self.on_dispenser_drop_key_wire(whole_stack);
+            return;
+        }
+        if self.dispenser_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.dispenser_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let menu = slot as usize;
+        let n = self.dispenser_slots.len();
+        let (id, count) = if menu < n {
+            *self.dispenser_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            match Self::dispenser_menu_to_inventory(menu) {
+                Some(row) => self.inventory.items[row],
+                None => *self.dispenser_mirror.get(menu - n).unwrap_or(&(0, 0)),
+            }
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.dispenser_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if menu < n {
+            self.dispenser_slots[menu] = new;
+        } else if let Some(row) = Self::dispenser_menu_to_inventory(menu) {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers)
+            self.inventory.items[row] = new;
+        }
+        // THE DRAINED SEAT'S OWN KIND RETIRE (the dev-236/237/530 law
+        // the 3x3 lane re-wears — the SEAT STORE's own word the put
+        // helper clears, the store row the mapped bank seat answers,
+        // the stale kind the later potion never wears)
+        if new.1 <= 0 {
+            self.dispenser_seat_kind_put(menu, crate::brewing_sim::POTION_KIND_NONE);
+        }
+        // THE TAIL'S OWN SYNC (the mirror row + the HUD row the
+        // projection keeps — the swap lane's own tail the walk shares)
+        self.dispenser_swap_tail();
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the live belief the doClick THROW arm
+    /// answers, the chest walk's own shape the 3x3 seats re-wear):
+    /// the hovered+hasItem gates the SAME rects walk the offline lane
+    /// keeps, the take the live cursor's gate the carried refusal
+    /// opens, THE DRAINED SEATS the kind lanes the take arm retires
+    /// (the grid nine the ROW STORE's own word the FIELD WRITES clear
+    /// — the sink borrow's own law the held command keeps, the stale
+    /// stand-in word the wholesale window never re-banks, the mirror
+    /// row the shared bank's mapped seat answers), the
+    /// hotbar rows the HUD belief syncs, the packet the command lane
+    /// carries (the EMPTY changed map the carried refusal names, the
+    /// drop entity the SERVER's Add Entity lane spawns — no local
+    /// prediction).
+    fn on_dispenser_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.dispenser_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.dispenser_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.dispenser_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        // THE MIRROR'S OWN BOUNDS (the stand-in's fresh vec the resize
+        // arms — the wholesale lane the 36 rows keeps)
+        if self.dispenser_mirror.len() != 36 {
+            self.dispenser_mirror.resize(36, (0, 0));
+        }
+        let menu = slot as usize;
+        let n = self.dispenser_slots.len();
+        let (id, count) = if menu < n {
+            *self.dispenser_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            *self.dispenser_mirror.get(menu - n).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence, NO packet
+        }
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.dispenser_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            if menu < n {
+                self.dispenser_slots[menu] = new;
+            } else {
+                let mi = menu - n;
+                self.dispenser_mirror[mi] = new;
+                if mi >= 27 {
+                    let mut row = [(0, 0); 9];
+                    row.copy_from_slice(&self.dispenser_mirror[27..36]);
+                    self.hotbar_slots = row;
+                }
+            }
+            // THE DRAINED SEAT'S OWN KIND RETIRE (the dev-236/237/530
+            // law the 3x3 lane re-wears — the FIELD WRITES the sink
+            // borrow's own law keeps [the put helper the offline twin
+            // wears — the method call the held command sink never
+            // speaks]: the grid nine the ROW STORE's word, the mirror
+            // rows the mapped bank seat)
+            if new.1 <= 0 {
+                if menu < 9 {
+                    if menu < self.dispenser_row_potion_kinds.len() {
+                        self.dispenser_row_potion_kinds[menu] =
+                            crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                } else if let Some(row) = Self::dispenser_menu_to_inventory(menu) {
+                    if row < self.items_potion_kinds.len() {
+                        self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                    }
+                }
+            }
+            note_batch_change(&mut changed, slot, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.dispenser_carried,
+            },
+        ));
     }
 
     /// THE OFFLINE DISPENSER CLICK'S OWN WALK (the chest's own offline
