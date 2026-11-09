@@ -53987,6 +53987,240 @@ fn the_chest_drop_key_the_kinds_the_seats_retire() {
     );
 }
 
+/// THE BREWING DROP KEY'S OWN KIND RETIRE (the autopush-531 round —
+/// the Q family's stand lane the offline walk answers): the offline
+/// stand's Q the drained seats the banks clear (the SEAT STORE's own
+/// put helper the two lanes answer): the CASE SEAT the kinded potion
+/// the bottle seat drains (the seat's word the NONE retires), the
+/// CASE MAIN the kinded potion the store row drains (the mapped bank
+/// seat the word retires, the mirror the sync re-projects), the CASE
+/// HOTBAR the kinded potion the hotbar row drains (the word retires,
+/// the HUD the every-mutation law syncs), the KINDLESS drain the
+/// bank the silence keeps.
+#[test]
+fn the_brewing_drop_key_the_kinds_the_seats_retire() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::BREWING_STAND);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.open_brewing_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE CASE SEAT'S OWN RETIRE (the kinded potion the bottle seat
+    // drains — the seat's word the bank clears)
+    app.brewing_slots[1] = (potion, 1);
+    app.brewing_kinds[1] = kind_a;
+    let (sx, sy) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.mouse_pos = Some((sx, sy));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.brewing_slots[1], (0, 0), "the seat the Q drains");
+    assert_eq!(
+        app.brewing_kinds[1], none,
+        "the drained seat the word retires"
+    );
+    assert_eq!(app.brewing_carried, (0, 0), "the cursor never touched");
+    // THE CASE MAIN'S OWN RETIRE (the kinded potion the store row
+    // drains — the mapped bank seat the word retires, the mirror the
+    // sync re-projects)
+    app.inventory.items[14] = (potion, 1);
+    app.items_potion_kinds[14] = kind_b;
+    app.brewing_mirror_sync_from_inventory();
+    let (mx, my) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 10)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.mouse_pos = Some((mx, my));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.inventory.items[14], (0, 0), "the row the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.brewing_mirror[5], (0, 0), "the mirror re-projected");
+    // THE CASE HOTBAR'S OWN RETIRE (the kinded potion the hotbar row
+    // drains — the word retires, the HUD the sync keeps)
+    app.inventory.items[2] = (potion, 1);
+    app.items_potion_kinds[2] = kind_c;
+    app.brewing_mirror_sync_from_inventory();
+    let (hx, hy) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 34)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.mouse_pos = Some((hx, hy));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.inventory.items[2], (0, 0), "the hotbar the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[2], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.hotbar_slots[2], (0, 0), "the HUD synced");
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the row
+    // drains — the bank the NONE the drain never mints)
+    app.inventory.items[9] = (dirt, 7);
+    app.brewing_mirror_sync_from_inventory();
+    let (dx, dy) = {
+        app.brewing_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 5)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.mouse_pos = Some((dx, dy));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.inventory.items[9], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the kindless drain the silence keeps"
+    );
+}
+
+/// THE WIRE BREWING DROP KEY'S OWN KIND RETIRE (the autopush-531
+/// round — the take-key census's stand lane the live belief wears):
+/// the live window's Q the drained seats the kind lanes clear (the
+/// swap lane's own kind lanes the take arm re-wears): the CASE SEAT
+/// the kinded potion the bottle seat drains (the SEAT STORE's word
+/// the NONE retires, the packet the drain names), the CASE MAIN the
+/// kinded potion the mirror row drains (the shared bank's mapped
+/// seat the word retires), the CASE HOTBAR the kinded potion the
+/// hotbar row drains (the word retires, the HUD the sync wears), the
+/// KINDLESS drain the bank the silence keeps.
+#[test]
+fn the_wire_brewing_drop_key_the_kinds_the_seats_retire() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let kind_a = crate::brewing_sim::POTION_SWIFTNESS;
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let kind_c = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.live_clicks = Some(tx);
+    let mut slots = vec![(0i32, 0i32); 41];
+    slots[0] = (potion, 1);
+    slots[10] = (potion, 1);
+    slots[32] = (potion, 1);
+    slots[5] = (dirt, 7);
+    app.live_container_updated(Some(LiveContainer {
+        id: 4,
+        menu_type_id: crate::world_model::MENU_TYPE_BREWING_STAND,
+        slots,
+        bundle_rows: Vec::new(),
+        carried: (0, 0),
+        state_id: 9,
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    }));
+    app.screen = ScreenKind::Brewing;
+    for k in app.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    app.brewing_slot_rects = (0..41)
+        .map(|i| (100 + (i as i32) * 20, 100, i as i16))
+        .collect();
+    // THE CASE SEAT'S OWN RETIRE (the kinded potion the bottle seat
+    // drains — the SEAT STORE's word the NONE retires)
+    app.brewing_kinds[0] = kind_a;
+    app.mouse_pos = Some((100 + 8, 108));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.brewing_slots[0], (0, 0), "the seat the Q drains");
+    assert_eq!(
+        app.brewing_kinds[0], none,
+        "the drained seat the word retires"
+    );
+    assert_eq!(app.live_brewing_carried, (0, 0), "the cursor untouched");
+    match rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.window_id, 4, "the window id the echo wears");
+            assert_eq!(click.state_id, 9, "the state id the revision wears");
+            assert_eq!(click.slot, 0, "the bottle seat the packet rides");
+            assert_eq!(click.button, 1, "the Ctrl the byte keys");
+            assert_eq!(click.input, ContainerInput::Throw);
+            assert_eq!(
+                click.changed,
+                vec![(0, (0, 0))],
+                "the drain the packet names"
+            );
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE MAIN'S OWN RETIRE (the kinded potion the mirror row
+    // drains — the shared bank's mapped seat the word retires)
+    app.items_potion_kinds[14] = kind_b;
+    app.mouse_pos = Some((100 + 10 * 20 + 8, 108));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.brewing_mirror[5], (0, 0), "the row the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[14], none,
+        "the mapped seat the word retires"
+    );
+    match rx.try_recv().expect("the packet rode") {
+        ContainerCommand::Click(click) => {
+            assert_eq!(click.slot, 10, "the mirror row's own menu id");
+            assert_eq!(click.changed, vec![(10, (0, 0))], "the drain named");
+        }
+        other => panic!("expected a container click, got {other:?}"),
+    }
+    // THE CASE HOTBAR'S OWN RETIRE (the kinded potion the hotbar row
+    // drains — the word retires, the HUD the sync keeps)
+    app.items_potion_kinds[0] = kind_c;
+    app.mouse_pos = Some((100 + 32 * 20 + 8, 108));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.brewing_mirror[27], (0, 0), "the hotbar the Q drains");
+    assert_eq!(
+        app.items_potion_kinds[0], none,
+        "the mapped seat the word retires"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD synced");
+    // THE KINDLESS DRAIN'S OWN SILENCE (the plain stack the row
+    // drains — the bank the NONE the drain never mints)
+    app.mouse_pos = Some((100 + 5 * 20 + 8, 108));
+    app.on_brewing_drop_key(true);
+    assert_eq!(app.brewing_mirror[0], (0, 0), "the plain stack drains");
+    assert_eq!(
+        app.items_potion_kinds[9], none,
+        "the kindless drain the silence keeps"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the

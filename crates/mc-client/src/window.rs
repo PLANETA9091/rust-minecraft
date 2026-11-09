@@ -2826,6 +2826,12 @@ pub fn run_gui_app(
                 // plain take answers, the input's decrement the
                 // smelting tick the server keeps)
                 app.on_furnace_drop_key(q_ctrl);
+                // THE BREWING STAND'S OWN Q (the SAME arm — the
+                // AbstractContainerScreen base class the stand screen
+                // inherits, the offline sim the local walk the lane
+                // wears, the live session the packet speaks — the
+                // autopush-531 round the Q family's stand lane speaks)
+                app.on_brewing_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's

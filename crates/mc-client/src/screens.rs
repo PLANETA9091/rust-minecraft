@@ -62038,6 +62038,184 @@ impl App {
         true
     }
 
+    /// THE BREWING STAND'S OWN Q (the SAME keyPressed keyDrop arm —
+    /// the AbstractContainerScreen base class the BrewingStandScreen
+    /// inherits, the gate chain and the doClick THROW table the
+    /// container rounds keep verbatim): the hovered seat's stack the
+    /// Q throws, the Ctrl modifier the whole stack. THE LANES' OWN
+    /// SPLIT (the furnace walk's own split the stand re-wears): the
+    /// wire session the belief's own take answers
+    /// ([`Self::on_brewing_drop_key_wire`]), the OFFLINE sim the
+    /// local store the local walk re-wears. The offline walk the
+    /// furnace lane's own shape keeps (the rects the last render
+    /// laid, the hasItem gate the keyPressed chain keeps BEFORE the
+    /// lane, the carried cursor the doClick arm's own refusal, the
+    /// taken the tryRemove law, the drop entity the AIMED look
+    /// spawns, the stand's five the plain slots answer — NO onTake
+    /// chains the stand carries, the store rows the write-through
+    /// projection syncs, the mirror row + the HUD row the tail sync
+    /// follows); THE DRAINED SEATS the banks clear (the
+    /// dev-236/237/530 law the stand's lane re-wears — the SEAT
+    /// STORE's own word the put helper clears, the store row the
+    /// mapped bank seat answers, the same walk the autopush-531
+    /// round the Q family's stand lane speaks).
+    pub fn on_brewing_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Brewing || self.dead {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the offline store NOT the truth there.
+            self.on_brewing_drop_key_wire(whole_stack);
+            return;
+        }
+        if self.brewing_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let menu = slot as usize;
+        let n = self.brewing_slots.len();
+        let (id, count) = if menu < n {
+            *self.brewing_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            match Self::brewing_menu_to_inventory(menu) {
+                Some(row) => self.inventory.items[row],
+                None => *self.brewing_mirror.get(menu - n).unwrap_or(&(0, 0)),
+            }
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.brewing_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if menu < n {
+            self.brewing_slots[menu] = new;
+        } else if let Some(row) = Self::brewing_menu_to_inventory(menu) {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers)
+            self.inventory.items[row] = new;
+        }
+        // THE DRAINED SEAT'S OWN KIND RETIRE (the dev-236/237/530 law
+        // the stand's lane re-wears — the SEAT STORE's own word the
+        // put helper clears, the store row the mapped bank seat
+        // answers, the stale kind the later potion never wears)
+        if new.1 <= 0 {
+            self.brewing_seat_kind_put(menu, crate::brewing_sim::POTION_KIND_NONE);
+        }
+        // THE TAIL'S OWN SYNC (the mirror row + the HUD row the
+        // projection keeps — the swap lane's own tail the walk shares)
+        self.brewing_swap_tail();
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the live belief the doClick THROW arm
+    /// answers, the chest walk's own shape the stand's seats re-wear):
+    /// the hovered+hasItem gates the SAME rects walk the offline lane
+    /// keeps, the take the live cursor's gate the carried refusal
+    /// opens, THE DRAINED SEATS the kind lanes the take arm retires
+    /// (the stand's five the SEAT STORE's own word the swap lane's
+    /// own lanes re-wear, the mirror row the shared bank's mapped
+    /// seat answers), the hotbar rows the HUD belief syncs, the
+    /// packet the command lane carries (the EMPTY changed map the
+    /// carried refusal names, the drop entity the SERVER's Add Entity
+    /// lane spawns — no local prediction).
+    fn on_brewing_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.brewing_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.brewing_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.brewing_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        // THE MIRROR'S OWN BOUNDS (the stand-in's fresh vec the resize
+        // arms — the wholesale lane the 36 rows keeps)
+        if self.brewing_mirror.len() != 36 {
+            self.brewing_mirror.resize(36, (0, 0));
+        }
+        let menu = slot as usize;
+        let n = self.brewing_slots.len();
+        let (id, count) = if menu < n {
+            *self.brewing_slots.get(menu).unwrap_or(&(0, 0))
+        } else {
+            *self.brewing_mirror.get(menu - n).unwrap_or(&(0, 0))
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence, NO packet
+        }
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.live_brewing_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            if menu < n {
+                self.brewing_slots[menu] = new;
+                // THE DRAINED SEAT'S OWN KIND RETIRE (the swap lane's
+                // own kind lane the take arm re-wears — the stale kind
+                // the later potion never wears)
+                if new.1 <= 0 && menu < 5 {
+                    self.brewing_kinds[menu] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            } else {
+                let mi = menu - n;
+                self.brewing_mirror[mi] = new;
+                // THE DRAINED ROW'S OWN KIND RETIRE (the shared bank's
+                // mapped seat the swap lane's own lane re-wears — the
+                // drained row the word retires)
+                if new.1 <= 0 {
+                    if let Some(row) = Self::brewing_menu_to_inventory(menu) {
+                        if row < self.items_potion_kinds.len() {
+                            self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                        }
+                    }
+                }
+                if mi >= 27 {
+                    let mut row = [(0, 0); 9];
+                    row.copy_from_slice(&self.brewing_mirror[27..36]);
+                    self.hotbar_slots = row;
+                }
+            }
+            note_batch_change(&mut changed, slot, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.live_brewing_carried,
+            },
+        ));
+    }
+
     /// THE BREWING'S OWN SWAP TABLE (the offline twin — the autopush-
     /// 509 ride the furnace walk's own shape the stand's seats answer:
     /// the doClick SWAP table pc 1079-1382 the OFFLINE store
