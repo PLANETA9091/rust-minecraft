@@ -57043,3 +57043,154 @@ fn the_world_merge_the_component_leg_the_pairs_wear() {
     );
     assert_eq!(drops[0].potion_kind, none, "the NONE the pristine wears");
 }
+
+/// THE ITEM-FRAME'S OWN KIND RIDE (the autopush-543 round — the NEXT's
+/// own entity lane the census never named): the frame's own kind word
+/// the lanes wear — the CASE STORE the kinded bottle the row word the
+/// frame banks, the CASE SNEAK the swap the pair the words exchange,
+/// the CASE PUNCH the pop the kinded bottle the entity re-banks [the
+/// walk-over pickup the word the inventory seat re-banks], the CASE
+/// WIRE the local walk the networked world never serves.
+#[test]
+fn the_item_frame_the_kind_ride_the_words_wear() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let stick = mc_registry::item_id_by_name("stick").unwrap();
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE FRAME'S OWN BIRTH (the empty wall the factory wears — the
+    // kindless store the fresh entity keeps)
+    app.item_frames.push(ItemFrameEnt {
+        id: 501,
+        cell: (10, 64, 10),
+        facing: 3,
+        rotation: 0,
+        item: (0, 0),
+        potion_kind: none,
+        glow: false,
+        check_interval: 0,
+    });
+    // THE CASE STORE'S OWN BANK (the kinded bottle the row word the
+    // frame banks — the consume the shrink rides, the row the word
+    // the stack keeps)
+    app.inventory.items[app.selected_hotbar] = (potion, 3);
+    app.items_potion_kinds[app.selected_hotbar] = night;
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        app.on_right_press_item_frame_interact(501),
+        "the store lane the SUCCESS verdict carries"
+    );
+    assert_eq!(
+        app.item_frames[0].item,
+        (potion, 1),
+        "the count-1 the copyWithCount fold wears"
+    );
+    assert_eq!(
+        app.item_frames[0].potion_kind, night,
+        "the word the store lane banks"
+    );
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (potion, 2),
+        "the consume the shrink rides"
+    );
+    assert_eq!(
+        app.items_potion_kinds[app.selected_hotbar], night,
+        "the row the word the stack keeps"
+    );
+    // THE CASE SNEAK'S OWN SWAP (the held stick the frame wears, the
+    // potion the hand keeps — the words the pair exchange)
+    app.shift_down = true;
+    app.inventory.items[app.selected_hotbar] = (stick, 4);
+    app.items_potion_kinds[app.selected_hotbar] = none;
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        app.on_right_press_item_frame_interact(501),
+        "the sneak swap the SUCCESS verdict carries"
+    );
+    assert_eq!(
+        app.item_frames[0].item,
+        (stick, 1),
+        "the stick the count-1 the frame wears"
+    );
+    assert_eq!(
+        app.item_frames[0].potion_kind, none,
+        "the plain word the frame keeps"
+    );
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (potion, 1),
+        "the potion the hand keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[app.selected_hotbar], night,
+        "the word the hand's own cell re-banks"
+    );
+    // THE SWAP'S OWN RE-ARM (the potion the frame wears again — the
+    // stick the hand keeps, the punch the pair the walk serves)
+    app.inventory.items[app.selected_hotbar] = (potion, 1);
+    app.items_potion_kinds[app.selected_hotbar] = night;
+    app.hotbar_slots = app.inventory.hotbar();
+    assert!(
+        app.on_right_press_item_frame_interact(501),
+        "the re-armed swap the SUCCESS verdict carries"
+    );
+    assert_eq!(
+        app.item_frames[0].potion_kind, night,
+        "the word the frame re-wears"
+    );
+    assert_eq!(
+        app.inventory.items[app.selected_hotbar],
+        (stick, 1),
+        "the stick the hand keeps"
+    );
+    assert_eq!(
+        app.items_potion_kinds[app.selected_hotbar], none,
+        "the plain word the hand keeps"
+    );
+    // THE CASE PUNCH'S OWN RE-RIDE (the pop the kinded bottle the
+    // entity re-banks — the frame item the pair spawns, the contained
+    // the word the last drop wears, the frame dies)
+    app.shift_down = false;
+    let drops_before = app.drops.len();
+    app.attack_item_frame(501);
+    assert_eq!(
+        app.drops.len(),
+        drops_before + 2,
+        "the pair the survival arm spawns"
+    );
+    let contained = app.drops.last().expect("the contained drop wears");
+    assert_eq!(
+        (contained.item, contained.count),
+        (potion, 1),
+        "the stack the pop wears"
+    );
+    assert_eq!(contained.potion_kind, night, "the word the entity re-banks");
+    assert!(
+        app.item_frames.is_empty(),
+        "the frame the hurt the death wears"
+    );
+    // THE CASE WIRE'S OWN WALL (the networked world the local walk
+    // never serves — the interact the swing the silence keeps)
+    app.world_is_network = true;
+    app.item_frames.push(ItemFrameEnt {
+        id: 502,
+        cell: (11, 64, 10),
+        facing: 3,
+        rotation: 0,
+        item: (0, 0),
+        potion_kind: none,
+        glow: false,
+        check_interval: 0,
+    });
+    assert!(
+        app.on_right_press_item_frame_interact(502),
+        "the wire session the swing verdict carries"
+    );
+    assert_eq!(
+        app.item_frames[0].item,
+        (0, 0),
+        "the empty frame the wire wall keeps"
+    );
+}

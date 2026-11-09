@@ -8020,6 +8020,13 @@ pub struct ItemFrameEnt {
     /// The contained stack (the DATA_ITEM — the count-1 law the
     /// copyWithCount(1) fold wears; (0, 0) = the empty frame).
     pub item: (i32, i32),
+    /// THE FRAME'S OWN KIND WORD (the autopush-543 round — the held
+    /// stack's potion_contents the DATA_ITEM compound's own component
+    /// the store wears: the kinded bottle the placement's row word
+    /// the frame banks, the sneak swap the pair the words exchange,
+    /// the punch the pop the word the entity re-rides, the plain
+    /// stack the [`crate::brewing_sim::POTION_KIND_NONE`] wall keeps).
+    pub potion_kind: i32,
     /// The GlowItemFrame verdict (the held item's name the spawn walk
     /// reads — the glow variant's own model + the max(5, blockLight)
     /// render law the 26.2's own getBlockLightLevel speaks).
@@ -13406,6 +13413,13 @@ pub fn item_frames_bank_to_nbt(frames: &[ItemFrameEnt]) -> mc_protocol::nbt::Nbt
                 "glow".to_string(),
                 mc_protocol::nbt::Nbt::Byte(f.glow as i8),
             ),
+            // THE KIND WORD'S OWN ROW (the held stack's potion_contents
+            // the bank wears — the kinded bottle the word the restart
+            // OUTLIVES, the plain frames the NONE the row keeps)
+            (
+                "potion_kind".to_string(),
+                mc_protocol::nbt::Nbt::Int(f.potion_kind),
+            ),
             ("Item".to_string(), item),
         ]));
     }
@@ -13450,6 +13464,10 @@ pub fn item_frames_from_nbt(value: &mc_protocol::nbt::Nbt) -> Vec<ItemFrameEnt> 
         // euclid answer serves)
         let rotation = read_int("rotation").unwrap_or(0).rem_euclid(8) as u8;
         let glow = read_int("glow").unwrap_or(0) != 0;
+        // THE KIND WORD'S OWN PARSE (the absent row the honest NONE
+        // wall keeps — the old saves the pre-kind bank wore, the
+        // parsed frame the plain store wears)
+        let potion_kind = read_int("potion_kind").unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
         // THE ITEM'S OWN PARSE (the id/count pair the store parse's
         // own walk wears — the unknown name the empty frame keeps)
         let mut item = (0i32, 0i32);
@@ -13476,6 +13494,7 @@ pub fn item_frames_from_nbt(value: &mc_protocol::nbt::Nbt) -> Vec<ItemFrameEnt> 
             facing,
             rotation,
             item,
+            potion_kind,
             glow,
             check_interval: 0,
         });
@@ -81215,6 +81234,7 @@ impl App {
             facing: hit.face as u8,
             rotation: 0,
             item: (0, 0),
+            potion_kind: crate::brewing_sim::POTION_KIND_NONE,
             glow,
             check_interval: 0,
         });
@@ -82137,12 +82157,25 @@ impl App {
         if sneak && frame_filled {
             let old = frame_item;
             let fresh = if held != 0 && held_count > 0 { held } else { 0 };
+            // THE SWAP'S OWN WORD RIDE (the held stack's kind the fresh
+            // word reads [the row's own word the stack still wears —
+            // the swap the rows the writes never moved], the frame's
+            // old kind the pair the exchange prepares)
+            let sel = self.selected_hotbar;
+            let fresh_kind = if fresh != 0 {
+                self.row_potion_kind(sel)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            let old_kind = self.item_frames[idx].potion_kind;
             self.item_frames[idx].item = if fresh != 0 { (fresh, 1) } else { (0, 0) };
+            self.item_frames[idx].potion_kind = fresh_kind;
             // THE HAND'S OWN KEEP (the frame's old item the selected
             // slot the swap wears — the empty slot the fresh stack
-            // banks, the held stack the old REPLACES)
-            let sel = self.selected_hotbar;
+            // banks, the held stack the old REPLACES; the old kind
+            // word the row's own cell re-banks)
             self.inventory.items[sel] = if old.1 > 0 { old } else { (0, 0) };
+            self.items_potion_kinds[sel] = old_kind;
             self.hotbar_slots = self.inventory.hotbar();
             // THE ANALOG'S OWN RIDE (the setItem walk's
             // updateNeighbourForOutputSignal law the map re-bank +
@@ -82160,6 +82193,11 @@ impl App {
         // 131-152)
         if !frame_filled && held != 0 && held_count > 0 {
             self.item_frames[idx].item = (held, 1);
+            // THE STORE'S OWN KIND BANK (the held stack's own word the
+            // frame wears — the kinded bottle the row word banks, the
+            // plain stack the NONE wall keeps [the read the consume's
+            // own shrink precedes — the row the word the stack wears])
+            self.item_frames[idx].potion_kind = self.row_potion_kind(self.selected_hotbar);
             // THE CONSUME (the stack.consume(1, player) pc 146-152 —
             // the survival shrink the stack rides, the empty slot
             // clears; the `--held-item` stand-in the honest no-op
@@ -82235,9 +82273,9 @@ impl App {
         let Some(idx) = self.item_frames.iter().position(|f| f.id == id) else {
             return;
         };
-        let (filled, glow, cell, contained) = {
+        let (filled, glow, cell, contained, kind) = {
             let f = &self.item_frames[idx];
-            (f.item.1 > 0, f.glow, f.cell, f.item)
+            (f.item.1 > 0, f.glow, f.cell, f.item, f.potion_kind)
         };
         let creative = self.game_mode == GameMode::Creative;
         let (fx, fy, fz) = (
@@ -82271,7 +82309,7 @@ impl App {
                 if contained.0 != 0 {
                     let did = self.next_drop_id;
                     self.next_drop_id += 1;
-                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    let mut d = crate::drops::ItemDrop::spawn_entity_loot(
                         did,
                         contained.0,
                         contained.1,
@@ -82279,7 +82317,13 @@ impl App {
                         fy,
                         fz,
                         &mut self.mob_rng,
-                    ));
+                    );
+                    // THE POP'S OWN KIND RIDE (the frame's word the
+                    // entity re-banks — the kinded bottle the plain
+                    // spawn the NONE never wears, the walk-over pickup
+                    // the word the inventory seat re-banks)
+                    d.potion_kind = kind;
+                    self.drops.push(d);
                 }
             }
             self.sounds

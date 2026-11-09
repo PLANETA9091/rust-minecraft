@@ -3985,6 +3985,8 @@ fn the_item_frame_the_punch_lanes_the_drops_and_voices_wear() {
 #[test]
 fn the_item_frames_bank_parse_roundtrip_wears() {
     let stick = mc_registry::item_id_by_name("stick").unwrap();
+    let night = 4; // the night_vision row the POTION_KIND_NAMES banks
+    let none = crate::brewing_sim::POTION_KIND_NONE;
     let frames = vec![
         ItemFrameEnt {
             id: 7,
@@ -3992,6 +3994,7 @@ fn the_item_frames_bank_parse_roundtrip_wears() {
             facing: 2,
             rotation: 7,
             item: (stick, 1),
+            potion_kind: night,
             glow: true,
             check_interval: 55,
         },
@@ -4001,6 +4004,7 @@ fn the_item_frames_bank_parse_roundtrip_wears() {
             facing: 5,
             rotation: 0,
             item: (0, 0),
+            potion_kind: none,
             glow: false,
             check_interval: 0,
         },
@@ -4028,6 +4032,10 @@ fn the_item_frames_bank_parse_roundtrip_wears() {
     assert_eq!(parsed[1].rotation, 7);
     assert!(parsed[1].glow);
     assert_eq!(parsed[1].item, (stick, 1), "the count-1 the bank wears");
+    // THE KIND WORD'S OWN RIDE (the kinded row the bank wears — the
+    // word the restart OUTLIVES, the plain row the NONE keeps)
+    assert_eq!(parsed[1].potion_kind, night, "the kind the bank rides");
+    assert_eq!(parsed[0].potion_kind, none, "the plain row the NONE keeps");
     // THE SESSION'S OWN COUNTERS (the id + the poll clock the boot
     // walk re-mints — the file the cell identity banks)
     assert!(
@@ -4130,6 +4138,11 @@ fn the_item_frames_parse_tolerant_the_corrupt_rows_skip() {
     assert_eq!(parsed[1].rotation, 1, "the 9 the %8 wrap banks");
     assert_eq!(parsed[1].item, (stick, 1), "the absent count the 1 keeps");
     assert!(!parsed[1].glow, "the absent glow the false wears");
+    assert_eq!(
+        parsed[1].potion_kind,
+        crate::brewing_sim::POTION_KIND_NONE,
+        "the absent kind row the NONE wall keeps"
+    );
     assert_eq!(parsed[1].facing, 3);
     assert_eq!(parsed[2].rotation, 7, "the -1 the euclid wrap banks");
     // THE MISSING LIST the honest empties keep + the wrong tag too
