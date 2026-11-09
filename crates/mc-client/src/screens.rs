@@ -38957,6 +38957,24 @@ impl App {
     /// dropAround=true form rides is the death-drop's walk, not the
     /// throw's).
     fn drop_item_entity_aimed(&mut self, item: i32, count: i32) {
+        // THE KINDLESS VERDICT (the plain drops the NONE word the spawn
+        // keeps — the kinded lanes the kinded twin answers)
+        self.drop_item_entity_aimed_kinded(
+            item,
+            count,
+            crate::brewing_sim::POTION_KIND_NONE,
+        );
+    }
+
+    /// THE THROWN KIND'S OWN RIDE (the autopush-536 round — the dev-199
+    /// honest note the throw wears, the thrown stack's own word the
+    /// entity's honest pair carries: the Q walks' drains the seat's
+    /// word the drop lends [the spawn the same AIMED walk answers], the
+    /// pickup walk the word the inventory seat re-banks — the
+    /// dispenser shot's own post-spawn lend the wrapper banks, the
+    /// orbit loot's own word the same shape keeps). The kindless
+    /// verdict the plain stacks never mint [the NONE the spawn wore]).
+    fn drop_item_entity_aimed_kinded(&mut self, item: i32, count: i32, kind: i32) {
         let Some(b) = self.body.as_ref() else {
             return; // no body — no eye to throw from (the headless menus)
         };
@@ -38982,6 +39000,9 @@ impl App {
         let r1 = self.mob_rng.next_f32();
         let r2 = self.mob_rng.next_f32();
         d.pickup_delay = 40;
+        // THE THROWN SEAT'S OWN WORD (the kinded lane's lend — the
+        // kindless verdict the NONE keeps)
+        d.potion_kind = kind;
         d.vx = (-f10 * f9 * 0.3_f32) as f64 + (f12 as f64).cos() * (f13 as f64);
         d.vy = (-f8 * 0.3_f32 + 0.1_f32 + (r1 - r2) * 0.1_f32) as f64;
         d.vz = (f11 * f9 * 0.3_f32) as f64 + (f12 as f64).sin() * (f13 as f64);
@@ -45118,7 +45139,10 @@ impl App {
             return; // removeFromSelected's EMPTY law — drop false, silence
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the hotbar row's kind the drop
+        // lends — the pickup re-bank the ride keeps)
+        let thrown_kind = self.items_potion_kinds[sel];
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // removeFromSelected's store walk: the whole stack gone or
         // exactly one off (the removeItem(selected, 1) law)
         self.inventory.items[sel] = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -45443,7 +45467,16 @@ impl App {
                 return; // THE doClick THROW's getCarried().isEmpty() gate
             }
             let dropped = if whole_stack { count } else { 1 };
-            self.drop_item_entity_aimed(id, dropped);
+            // THE THROWN SEAT'S OWN WORD (the offhand's own kind seat
+            // the drop lends — the OFFHAND_KIND_SEAT parity the pickup
+            // walk banks; the armor the kindless seats the mayPlace
+            // verdict keeps — the potion the armor never holds)
+            let thrown_kind = if hovered_armor.is_some() {
+                crate::brewing_sim::POTION_KIND_NONE
+            } else {
+                self.items_potion_kinds[OFFHAND_KIND_SEAT]
+            };
+            self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
             // the same safeTake walk over the equipment lists — the
             // whole piece gone or exactly one off
             let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -45471,7 +45504,10 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the store row's kind the drop
+        // lends — the pickup re-bank the ride keeps)
+        let thrown_kind = self.items_potion_kinds[store];
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own store walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         self.inventory.items[store] = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -45621,7 +45657,17 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the grid cell's or the store
+        // row's kind the drop lends — the pickup re-bank the ride
+        // keeps)
+        let thrown_kind = if let Some(cell) = cell {
+            self.table_grid_potion_kinds[cell]
+        } else {
+            store
+                .map(|s| self.items_potion_kinds[s])
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        };
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -46487,7 +46533,14 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the store row's kind the drop
+        // lends — the item/lapis pair the FIELD-LESS seats the
+        // kind-blind law keeps, the rows the shared bank's mapped
+        // seat speaks)
+        let thrown_kind = Self::enchant_menu_to_inventory(menu)
+            .map(|row| self.items_potion_kinds[row])
+            .unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -46676,7 +46729,11 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the trio's or the mapped row's
+        // kind the drop lends — the accessor the kind retire reads,
+        // the pickup re-bank the ride keeps)
+        let thrown_kind = self.anvil_seat_potion_kind(menu);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -46883,7 +46940,14 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the mapped row's kind the drop
+        // lends — the payment pair the kindless seats the trade's own
+        // words never bank, the rows the shared bank's mapped seat
+        // speaks)
+        let thrown_kind = Self::merchant_menu_to_inventory(menu)
+            .map(|row| self.items_potion_kinds[row])
+            .unwrap_or(crate::brewing_sim::POTION_KIND_NONE);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -47069,7 +47133,11 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the trio's or the mapped row's
+        // kind the drop lends — the accessor the kind retire reads,
+        // the pickup re-bank the ride keeps)
+        let thrown_kind = self.furnace_seat_potion_kind(slot);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -62089,7 +62157,11 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the grid nine's or the mapped
+        // row's kind the drop lends — the accessor the kind retire
+        // reads)
+        let thrown_kind = self.dispenser_seat_potion_kind(menu);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };
@@ -62870,7 +62942,11 @@ impl App {
                     // the cursor's own stack the Q never throws
         }
         let dropped = if whole_stack { count } else { 1 };
-        self.drop_item_entity_aimed(id, dropped);
+        // THE THROWN SEAT'S OWN WORD (the stand's five seats' or the
+        // mapped row's kind the drop lends — the accessor the kind
+        // retire reads)
+        let thrown_kind = self.brewing_seat_potion_kind(menu);
+        self.drop_item_entity_aimed_kinded(id, dropped, thrown_kind);
         // safeTake(count, MAX)'s own walk: the whole stack gone or
         // exactly one off (the tryRemove law the doClick arm speaks)
         let new = if whole_stack { (0, 0) } else { (id, count - 1) };

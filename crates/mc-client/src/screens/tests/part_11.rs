@@ -55237,6 +55237,173 @@ fn the_wire_merchant_drop_key_the_kinds_the_seats_retire() {
     }
 }
 
+/// THE Q THROWN DROPS'S OWN KIND RIDE (the autopush-536 round — the
+/// dev-199 honest note the throw wears, the thrown stack's own word
+/// the entity's honest pair carries: the Q walks' drains the seat's
+/// word the drop lends, the pickup walk the word the inventory seat
+/// re-banks): the CASE STORE the kinded potion the store row throws
+/// [the drop the banked kind wears], the CASE PLAIN the dirt the
+/// NONE the spawn keeps, the CASE OFFHAND the kinded potion the
+/// offhand seat throws [the OFFHAND_KIND_SEAT parity the ride
+/// banks], the CASE HOTBAR the kinded potion the world lane throws
+/// [the selected row's word the drop lends].
+#[test]
+fn the_q_thrown_drops_the_kinds_the_words_ride() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_a = crate::brewing_sim::POTION_STRONG_SWIFTNESS;
+    let kind_c = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    // THE CASE STORE'S OWN LEND (the kinded potion the store row
+    // throws — the drop the banked kind wears)
+    app.inventory.items[5] = (potion, 1);
+    app.items_potion_kinds[5] = kind_a;
+    app.mouse_pos = Some((336, 246)); // store 5's own rect
+    app.on_inventory_drop_key(false);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_a),
+        "the thrown potion the kind wears"
+    );
+    // THE CASE PLAIN'S OWN NONE (the dirt the plain stack throws —
+    // the NONE word the spawn keeps)
+    app.inventory.items[6] = (dirt, 7);
+    app.mouse_pos = Some((354, 246)); // store 6's own rect
+    app.on_inventory_drop_key(true);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(none),
+        "the plain stack the NONE keeps"
+    );
+    // THE CASE OFFHAND'S OWN LEND (the kinded potion the offhand
+    // seat throws — the OFFHAND_KIND_SEAT parity the ride banks)
+    app.inventory.offhand[0] = (potion, 1);
+    app.items_potion_kinds[OFFHAND_KIND_SEAT] = kind_c;
+    app.mouse_pos = Some((317, 167)); // the offhand's own rect
+    app.on_inventory_drop_key(true);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_c),
+        "the thrown offhand the kind wears"
+    );
+    // THE CASE HOTBAR'S OWN LEND (the kinded potion the world lane
+    // throws — the selected row's word the drop lends)
+    app.screen = ScreenKind::World;
+    app.inventory.items[0] = (potion, 1);
+    app.items_potion_kinds[0] = kind_a;
+    app.on_drop_key(true);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_a),
+        "the world throw the kind wears"
+    );
+    assert_eq!(app.inventory.items[0], (0, 0), "the row the Q drains");
+}
+
+/// THE SEAT LANES'S OWN THROWN KINDS (the autopush-536 round — the
+/// container walks' drains the seat's word the drop lends): the CASE
+/// ANVIL the kinded potion the input seat throws [the accessor's
+/// word the drop wears], the CASE FURNACE the kinded potion the fuel
+/// seat throws [the trio's word the drop wears], the CASE MERCHANT
+/// the kinded potion the store row throws [the mapped bank seat the
+/// ride speaks].
+#[test]
+fn the_seat_lanes_the_thrown_kinds_the_words_ride() {
+    let potion = mc_registry::item_id_by_name("potion").unwrap();
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let surface = app.spawn_y - 1;
+    let cell = (c, surface + 1, c);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(cell.0, cell.1, cell.2, crate::world::ANVIL);
+    app.open_anvil_for(cell);
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let assets_root = assets_root();
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    // THE CASE ANVIL'S OWN LEND (the kinded potion the input seat
+    // throws — the accessor's word the drop wears)
+    app.anvil_slots[0] = (potion, 1);
+    app.anvil_seat_potion_kinds[0] = kind_b;
+    let (sx, sy) = {
+        app.anvil_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 0)
+            .map(|&(x, y, _)| (x + 8, y + 8))
+            .unwrap()
+    };
+    app.mouse_pos = Some((sx, sy));
+    app.on_anvil_drop_key(true);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_b),
+        "the thrown input the kind wears"
+    );
+    // THE CASE FURNACE'S OWN LEND (the kinded potion the fuel seat
+    // throws — the trio's word the drop wears)
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(0, 0, 0, crate::world::FURNACE);
+    app.open_furnace((0, 0, 0));
+    {
+        let mut a = GuiAssets::open(&assets_root);
+        app.mouse_pos = None;
+        app.render(&mut fb, &mut a);
+    }
+    app.furnace_slots = vec![(0, 0); 39];
+    app.furnace_seat_potion_kinds = [none; 3];
+    app.furnace_slots[1] = (potion, 1);
+    app.furnace_seat_potion_kinds[1] = kind_b;
+    let (fx, fy) = {
+        app.furnace_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 1)
+            .map(|&(x, y, _)| (x, y))
+            .unwrap()
+    };
+    app.mouse_pos = Some((fx + 8, fy + 8));
+    app.on_furnace_drop_key(true);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_b),
+        "the thrown fuel the kind wears"
+    );
+    // THE CASE MERCHANT'S OWN LEND (the kinded potion the store row
+    // throws — the mapped bank seat the ride speaks)
+    app.merchant_is_live = false;
+    app.merchant_slots = vec![(0, 0); 39];
+    app.merchant_carried = (0, 0);
+    app.screen = ScreenKind::Merchant;
+    app.merchant_slot_rects = (0..39)
+        .map(|i| (100 + (i as i32) * 20, 100, i as i16))
+        .collect();
+    app.inventory.items[14] = (potion, 1);
+    app.items_potion_kinds[14] = kind_b;
+    app.mouse_pos = Some((100 + 8 * 20 + 8, 108));
+    app.on_merchant_drop_key(true);
+    assert_eq!(
+        app.drops.last().map(|d| d.potion_kind),
+        Some(kind_b),
+        "the thrown row the kind wears"
+    );
+}
+
 /// THE BEACON WIRE SWAP'S OWN KIND VERDICTS (the autopush-527 round —
 /// the census's own last kindless twin the word walk wears: the CASE B
 /// the mirror row's potion the digit row banks [the drained seat the
