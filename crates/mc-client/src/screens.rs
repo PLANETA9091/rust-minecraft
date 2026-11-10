@@ -49727,6 +49727,13 @@ impl App {
         if self.screen == ScreenKind::Chest {
             return self.chest_carried;
         }
+        if self.screen == ScreenKind::Horse {
+            // THE MOUNT'S OWN LANE CURSOR (the 553 NEXT's own drag the
+            // round banks — the arm/paint/release trio the click walk's
+            // own cursor stack the both lanes wear: the wire belief the
+            // projection carries, the offline sim the same field holds)
+            return self.horse_carried;
+        }
         if self.screen == ScreenKind::Crafting {
             // THE TABLE'S OWN LANE CURSOR (the click walk's own split
             // the `world_is_network` gate keys — the wire lane the
@@ -50685,6 +50692,68 @@ impl App {
         self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
     }
 
+    /// THE MOUNT DRAG'S OWN COLLECT (mouseDragged pcs 23-58 — the 553
+    /// NEXT's own first lane the round answers, the same
+    /// `shouldAddSlotToQuickCraft` gates the family paints wear — the
+    /// horse's own hover the rects speak): the arm, the carried
+    /// non-empty, the count's own `> painted || type 2` law, the
+    /// SEATS' own mayPlace verdicts the pair keys (the SADDLE seat the
+    /// saddle alone paints, the BODY seat the armor family, the rows
+    /// 2..37 the base Slot's plain TRUE keeps), the canDragTo the base
+    /// menu's iconst_1 keeps (the HorseInventoryMenu no override the
+    /// 554 census banks). The horse carried the kindless word the
+    /// field-less wall wears (the anvil family's own law): the rows
+    /// the shared bank's mapped word the menu map speaks, the seats
+    /// the kindless store the NONE wall keeps.
+    fn qc_paint_horse(&mut self, mx: i32, my: i32) {
+        let Some(&(_, _, slot)) = self
+            .horse_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.horse_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        // THE SEAT'S OWN MAYPLACE (the SADDLE seat the saddle alone
+        // paints, the BODY seat the armor family, the rows the plain
+        // TRUE keeps)
+        if menu < 2 && !Self::horse_seat_may_place(menu, carried.0) {
+            return; // the foreign stack the seat never paints
+        }
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        // THE COMPONENT HALF (the field-less wall the anvil family
+        // keeps — the horse carried the kindless word wears): the rows
+        // the shared bank's mapped word the menu map speaks, the seats
+        // the kindless store the NONE wall keeps
+        let seat_kind = if menu >= 2 {
+            Self::horse_menu_to_inventory(menu)
+                .and_then(|row| self.items_potion_kinds.get(row).copied())
+                .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+        } else {
+            crate::brewing_sim::POTION_KIND_NONE
+        };
+        if seat_id == carried.0
+            && qc_collect_kind_refuses(seat_kind, crate::brewing_sim::POTION_KIND_NONE)
+        {
+            return; // the component half — the same-id kind pair refuses
+        }
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
     /// THE CHEST DRAG'S OWN WIRE DISTRIBUTION (the offline walk's twin
     /// over the LIVE chest belief — the free fn
     /// [`wire_chest_quickcraft_distribute`] the disjoint field borrows
@@ -51529,6 +51598,19 @@ impl App {
                 self.chest_mirror[menu - n]
             };
         }
+        if self.screen == ScreenKind::Horse {
+            // THE MOUNT'S OWN NUMBERING (the 553 NEXT's own drag the
+            // round banks — the two horse seats the store's own pair
+            // keeps, the standard rows 2..37 the write-through
+            // projection speaks; the paint seat read the SAME split
+            // wears)
+            if menu < 2 {
+                return self.horse_seats[menu];
+            }
+            return Self::horse_menu_to_inventory(menu)
+                .map(|row| self.inventory.items[row])
+                .unwrap_or((0, 0));
+        }
         if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN NUMBERING (the flat 39-slot belief the
             // both lanes speak — the input 0, the fuel 1, the result
@@ -51708,6 +51790,22 @@ impl App {
                     self.qc_distribute_merchant_wire();
                 } else {
                     self.qc_distribute_merchant_offline();
+                }
+            } else if self.screen == ScreenKind::Horse {
+                // THE MOUNT'S OWN LANES (the 553 NEXT's own first lane
+                // the round answers — the wire the window belief rides,
+                // the offline sim the local write-through answer: the
+                // packets the painted set mints, the fold the same net
+                // keeps, the single-seat drag the doClick's own PICKUP
+                // conversion the plain fold answers). THE MOUNT'S OWN
+                // GATE (the 552 record's own law the click walk + the
+                // Q-walk wear — the `horse_is_live` flag the screen's
+                // own word the split keys, the `world_is_network` the
+                // harness world the mount window never re-keys)
+                if self.horse_is_live {
+                    self.qc_distribute_horse_wire();
+                } else {
+                    self.qc_distribute_horse_offline();
                 }
             } else if self.world_is_network {
                 self.qc_distribute_wire();
@@ -53033,6 +53131,164 @@ impl App {
         // remainder the same stack the word keeps)
         if self.merchant_carried.1 <= 0 {
             self.merchant_carried_potion_kind = crate::brewing_sim::POTION_KIND_NONE;
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE MOUNT'S OWN OFFLINE DISTRIBUTION (the doClick QUICK_CRAFT
+    /// status-2 arm pcs 298-534 over the 38-row mount menu — the 553
+    /// NEXT's own first lane the round answers, the anvil's own
+    /// math the field-less wall re-wears: the seats 0/1 the store's
+    /// own pair the write lanes answer, the rows 2..37 the
+    /// write-through projection keeps [the menu 2..28 the items 9..35
+    /// the +7 shift rides, the 29..37 the hotbar row the -29 shift
+    /// speaks]). The per-seat gates the doClick arm re-checks: the
+    /// SEATS' own mayPlace (the SADDLE seat the saddle alone places,
+    /// the BODY seat the armor family, the rows the base Slot's plain
+    /// TRUE keeps), the canItemQuickReplace (the same id or the empty
+    /// seat), the count's own `>= painted || type 2` law — the single
+    /// seat the doClick's own PICKUP conversion the plain fold answers
+    /// (the place_count the type arms the same place-one/split arms
+    /// the PICKUP table speaks). The horse carried the kindless word
+    /// the field-less wall wears (the anvil family's own law): the
+    /// rows the shared bank's mapped word the menu map speaks, the
+    /// seats the kindless store the NONE wall keeps.
+    fn qc_distribute_horse_offline(&mut self) {
+        let carried = self.horse_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            // THE SEAT'S OWN MAYPLACE (doClick's own per-seat gate the
+            // status-2 arm re-checks — pc 384-391)
+            if menu < 2 && !Self::horse_seat_may_place(menu, carried.0) {
+                continue; // the SADDLE seat the saddle alone places
+            }
+            let (seat_pair, _) = self.horse_menu_stack(menu);
+            let (seat_id, seat_count) = seat_pair;
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the field-less wall the anvil family
+            // keeps — the horse carried the kindless word wears): the
+            // rows the shared bank's mapped word the menu map speaks,
+            // the seats the kindless store the NONE wall keeps
+            let seat_kind = if menu >= 2 {
+                Self::horse_menu_to_inventory(menu)
+                    .and_then(|row| self.items_potion_kinds.get(row).copied())
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if seat_id == carried.0
+                && qc_collect_kind_refuses(seat_kind, crate::brewing_sim::POTION_KIND_NONE)
+            {
+                continue; // the component half — the same-id kind pair refuses
+            }
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 402-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor split, the
+            // type-1's own ONE per seat the right drag keeps (the
+            // single seat the doClick's own PICKUP conversion the same
+            // arms the place speaks)
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            self.horse_menu_stack_put(menu, menu < 2, new);
+        }
+        // pc 520-530 — the remainder the cursor keeps
+        self.horse_carried = if k > 0 { (carried.0, k) } else { (0, 0) };
+        // the drag's own word (the horse carried the field-less wall
+        // the NONE wears — no lane cursor word the mount window banks)
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE MOUNT'S WIRE DISTRIBUTION (the offline walk's twin over the
+    /// LIVE mount belief — the free fn
+    /// [`wire_horse_quickcraft_distribute`] the disjoint field borrows
+    /// keep, the merchant's own flat-fold shape the kind words the
+    /// field-less wall keeps): the packet triple the mount window's
+    /// own identity rides, the place math the same net fold keeps,
+    /// the write-back the flat projection the stores land. THE
+    /// CALLER'S OWN KIND READS (the field-less wall the anvil family
+    /// keeps): the horse carried the NONE word the drag wears, the
+    /// seat words the closure's own menu mapping serves (the rows the
+    /// shared bank's mapped word, the seats the kindless store the
+    /// NONE keeps). THE PLACE'S OWN WORD BANK (the honest wall the
+    /// mount window banks): the carried word the NONE wears — the
+    /// empty row the NONE bank the field-less law keeps, no lane
+    /// cursor word the mount window tracks.
+    fn qc_distribute_horse_wire(&mut self) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.horse_live_window else {
+            return; // the stand-in: no window, no echo
+        };
+        let qc_type = self.qc_type;
+        let qc_slots = self.qc_slots.clone();
+        // THE FLAT'S OWN PROJECTION (the 38-row wire order the
+        // quick-move predictor wears — the seats 0/1 the store's own
+        // pair, the rows 2..37 the shared bank's mapped seats)
+        let mut flat = self.horse_menu_flat();
+        // THE PLACE'S OWN BEFORE-COUNTS (the painted seats' own pairs
+        // the after-walk the empty seat's bank reads — the helper the
+        // same cells the place math mutates)
+        let before: Vec<(usize, i32)> = qc_slots
+            .iter()
+            .map(|&m| (m, flat.get(m).copied().unwrap_or((0, 0)).1))
+            .collect();
+        let items_kinds = &self.items_potion_kinds;
+        let seat_kinds = |menu: usize| {
+            if menu >= 2 {
+                Self::horse_menu_to_inventory(menu)
+                    .and_then(|row| items_kinds.get(row).copied())
+                    .unwrap_or(crate::brewing_sim::POTION_KIND_NONE)
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            }
+        };
+        wire_horse_quickcraft_distribute(
+            sink,
+            &mut flat,
+            qc_type,
+            &qc_slots,
+            window_id,
+            state_id,
+            &mut self.horse_carried,
+            &seat_kinds,
+        );
+        // THE WRITE-BACK (the flat the stores land — the seats the
+        // store's own pair answers, the rows the write-through
+        // projection keeps, the hotbar HUD row the put's own tail
+        // syncs)
+        self.horse_seats[0] = flat[0];
+        self.horse_seats[1] = flat[1];
+        for m in 2..38usize {
+            if let Some(row) = Self::horse_menu_to_inventory(m) {
+                self.inventory.items[row] = flat[m];
+            }
+        }
+        // THE PLACE'S OWN WORD BANK (the honest wall the mount window
+        // banks — the field-less carried the NONE word wears: the
+        // empty row the NONE bank the law keeps, no lane cursor word
+        // the mount window tracks)
+        for (menu, old_count) in &before {
+            if *old_count == 0 {
+                if let Some(row) = Self::horse_menu_to_inventory(*menu) {
+                    self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+                }
+            }
         }
         self.hotbar_slots = self.inventory.hotbar();
     }
@@ -56446,6 +56702,12 @@ impl App {
                 // re-keys, the plain Slots + the standard rows the
                 // base Slot's own TRUE keeps)
                 self.qc_paint_merchant(mx, my);
+            } else if self.screen == ScreenKind::Horse {
+                // THE MOUNT'S OWN HOVER (the 553 NEXT's own first lane
+                // the round answers — the same shouldAdd gates the
+                // seats' mayPlace verdicts re-key, the rows the base
+                // Slot's plain TRUE keeps)
+                self.qc_paint_horse(mx, my);
             }
         }
     }
@@ -105681,6 +105943,132 @@ fn wire_merchant_quickcraft_distribute(
             let new = (carried.0, place); // pc 505-514
             if menu < slots.len() {
                 slots[menu] = new;
+            }
+            changed.push((menu as i16, new));
+        }
+        *carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+    }
+    // THE END (pc 71-87 — slotClicked(null, -999, mask(2, type),
+    // QUICK_CRAFT)): the distribution's own mutations the changed map
+    // names, the empty-cursor drag the EMPTY map keeps
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: end_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed,
+            carried: *carried,
+        },
+    ));
+}
+
+/// THE MOUNT DRAG'S OWN WIRE DISTRIBUTION (the same doClick QUICK_CRAFT
+/// status-2 arm pcs 298-534 over the 38-row mount menu, the packet
+/// triple `quickCraftToSlots` pcs 0-90 speaks — the mount window's own
+/// identity the packets ride, the merchant's own lane the flat-fold
+/// shape re-wears): the START packet the `mask(0, type)` button the
+/// slot -999 keeps (the changed map the state transition's own silence
+/// keeps EMPTY), the ADD packets the `mask(1, type)` button per
+/// painted seat ride (the collect's own no-mutation the EMPTY map
+/// names), the END packet the `mask(2, type)` button the changed map
+/// the distribution's own mutations names. The per-seat gates the
+/// doClick arm re-checks — the SEATS' own mayPlace (the SADDLE seat
+/// the saddle alone places, the BODY seat the armor family, the rows
+/// the base Slot's plain TRUE keeps, the canDragTo the base menu's
+/// iconst_1 the census banks), the canItemQuickReplace (the same id
+/// or the empty seat), the count's own `>= painted || type 2` law —
+/// the single seat the doClick's own PICKUP conversion the server's
+/// own walk decides (the packets the plain set mints). The seat words
+/// the caller's own closure serves (the field-less wall the anvil
+/// family keeps — the carried the NONE word the pair law wears, the
+/// rows the shared bank's mapped word the gate reads).
+fn wire_horse_quickcraft_distribute(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    flat: &mut [(i32, i32)],
+    qc_type: i32,
+    qc_slots: &[usize],
+    window_id: i32,
+    state_id: i32,
+    carried: &mut (i32, i32),
+    seat_kinds: &dyn Fn(usize) -> i32,
+) {
+    let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
+    let add_button = start_button | 1; // getQuickcraftMask(1, type)
+    let end_button = start_button | 2; // getQuickcraftMask(2, type)
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: start_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed: Vec::new(),
+            carried: *carried,
+        },
+    ));
+    // THE ADDS (pc 19-68 — slotClicked(slot, slot.index, mask(1, type),
+    // QUICK_CRAFT) per painted seat): the collect's own no-mutation
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if carried.1 > 0 {
+        for &menu in qc_slots {
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button: add_button,
+                    input: crate::world_view::ContainerInput::QuickCraft,
+                    changed: Vec::new(),
+                    carried: *carried,
+                },
+            ));
+        }
+        // THE DISTRIBUTION (doClick pcs 298-534): the per-seat gates +
+        // place math the same net fold keeps — the mount menu's own 38
+        // the flat projection feeds
+        let painted = qc_slots.len();
+        let mut k = carried.1;
+        for &menu in qc_slots {
+            // THE SEAT'S OWN MAYPLACE (doClick's own per-seat gate the
+            // status-2 arm re-checks — pc 384-391): the SADDLE seat
+            // the saddle alone places, the BODY seat the armor family,
+            // the rows the base Slot's plain TRUE keeps
+            if menu < 2 && !crate::world_view::horse_seat_may_place(menu, carried.0) {
+                continue;
+            }
+            let (seat_id, seat_count) = flat.get(menu).copied().unwrap_or((0, 0));
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            // THE COMPONENT HALF (the field-less wall the anvil family
+            // keeps — the carried the NONE word the pair law wears):
+            // the same-id potion pair the mismatched word refuses
+            if seat_id == carried.0
+                && qc_collect_kind_refuses(seat_kinds(menu), crate::brewing_sim::POTION_KIND_NONE)
+            {
+                continue; // the component half — the same-id kind pair refuses
+            }
+            if qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 402-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor(count/painted),
+            // the type-1's own ONE per seat (the right drag's answer)
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < flat.len() {
+                flat[menu] = new;
             }
             changed.push((menu as i16, new));
         }

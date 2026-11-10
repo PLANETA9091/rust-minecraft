@@ -58874,3 +58874,338 @@ fn the_horse_the_quick_move_the_lanes_wear() {
         "the drained src the kind retires"
     );
 }
+
+/// THE HORSE'S OWN QUICKCRAFT DRAG (the 554 round — the 553 NEXT's
+/// own first lane the round answers): the paint the motion collects
+/// (the press seat the first motion paints, the seats' mayPlace the
+/// foreign stack refuses), the release the painted set distributes —
+/// the wire the START/ADD/END triple mints (the even split the type-0
+/// law folds, the one-each the type-1 keeps, the remainder the cursor
+/// wears), the offline sim the same net fold the local write-through
+/// answers (the single seat the doClick's own PICKUP conversion the
+/// plain fold speaks), the BODY seat the mayPlace refusal both lanes
+/// the silence keeps.
+#[test]
+fn the_horse_the_quickcraft_the_drag_wears() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+    let saddle = id("saddle");
+    let dirt = id("dirt");
+    // THE WIRE HALF'S OWN WALK (the live window the drag the packets
+    // mint — the 552 click-pair harness the mount window's own
+    // identity re-wears)
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    let table = LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MOUNT,
+        slots: vec![(0i32, 0i32); 38],
+        carried: (dirt, 12),
+        state_id: 0,
+        bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    };
+    app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+    assert_eq!(app.screen, ScreenKind::Horse, "the window the sync opens");
+    assert_eq!(
+        app.horse_carried,
+        (dirt, 12),
+        "the wire's own cursor the birth banks"
+    );
+    // the hit boxes the render's own law pre-keys (the seats the pair,
+    // the rows 2..4 the grid speaks)
+    app.horse_slot_rects = vec![
+        (100, 100, 0),
+        (120, 100, 1),
+        (200, 100, 2),
+        (220, 100, 3),
+        (240, 100, 4),
+    ];
+    app.horse_panel = (90, 90);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // THE LEFT DRAG'S OWN PAINT (the carried press the arm speaks — NO
+    // slot click, NO packet — the motion the rows collect, the press
+    // seat the first motion paints)
+    app.on_press(208, 108);
+    assert!(app.qc_armed, "the carried press the drag arms");
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the armed press NO packet speaks"
+    );
+    app.on_mouse_move(208, 108);
+    assert_eq!(
+        app.qc_slots,
+        vec![2usize],
+        "the press seat the first motion paints"
+    );
+    app.on_mouse_move(228, 108);
+    app.on_mouse_move(248, 108);
+    assert_eq!(
+        app.qc_slots,
+        vec![2usize, 3, 4],
+        "the painted rows the motion collects"
+    );
+    assert_eq!(
+        app.horse_carried,
+        (dirt, 12),
+        "the paint the cursor never touches"
+    );
+    // THE RELEASE'S OWN DISTRIBUTION (the wire the painted set mints —
+    // the START/ADD/END triple the quickCraftToSlots walk speaks, the
+    // even split the type-0 law folds: 12/3 the four per seat, the
+    // remainder the cursor drains)
+    app.mouse_pos = Some((248, 108));
+    app.qc_release(0);
+    assert!(!app.qc_armed, "the release the arm clears");
+    assert!(app.qc_slots.is_empty(), "the release the paint retires");
+    assert_eq!(app.horse_carried, (0, 0), "the even split the cursor drains");
+    assert_eq!(
+        app.inventory.items[9], (dirt, 4),
+        "menu 2 the fold fills"
+    );
+    assert_eq!(
+        app.inventory.items[10], (dirt, 4),
+        "menu 3 the fold fills"
+    );
+    assert_eq!(
+        app.inventory.items[11], (dirt, 4),
+        "menu 4 the fold fills"
+    );
+    match click_rx.try_recv().expect("the START rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5, "the window's own id the echo names");
+            assert_eq!(c.slot, -999, "the START the null slot speaks");
+            assert_eq!(c.button, 0, "the mask(0, type) the left drag wears");
+            assert_eq!(
+                c.input,
+                ContainerInput::QuickCraft,
+                "the QUICK_CRAFT the input speaks"
+            );
+            assert!(
+                c.changed.is_empty(),
+                "the transition the EMPTY map keeps"
+            );
+            assert_eq!(
+                c.carried,
+                (dirt, 12),
+                "the pre-drag cursor the packet rides"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    for slot in [2i16, 3, 4] {
+        match click_rx.try_recv().expect("the ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, slot, "the painted row the ADD names");
+                assert_eq!(c.button, 1, "the mask(1, type) the add wears");
+                assert!(
+                    c.changed.is_empty(),
+                    "the collect the EMPTY map keeps"
+                );
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+    match click_rx.try_recv().expect("the END rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.slot, -999, "the END the null slot speaks");
+            assert_eq!(c.button, 2, "the mask(2, type) the end wears");
+            assert_eq!(
+                c.changed,
+                vec![(2i16, (dirt, 4)), (3i16, (dirt, 4)), (4i16, (dirt, 4))],
+                "the distribution the changed map rides"
+            );
+            assert_eq!(c.carried, (0, 0), "the drained cursor the packet banks");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE RIGHT DRAG'S OWN ONE-EACH (the type-1 law the place-ONE
+    // keeps — the same-id rows the merge arms the +1 wears, the
+    // remainder the cursor keeps)
+    app.horse_carried = (dirt, 12);
+    app.on_right_press(208, 108);
+    assert!(app.qc_armed, "the right press the type-1 drag arms");
+    app.on_mouse_move(208, 108);
+    app.on_mouse_move(228, 108);
+    assert_eq!(
+        app.qc_slots,
+        vec![2usize, 3],
+        "the right drag the rows collect"
+    );
+    app.mouse_pos = Some((228, 108));
+    app.qc_release(1);
+    assert_eq!(
+        app.inventory.items[9],
+        (dirt, 5),
+        "the one-each the +1 wears"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (dirt, 5),
+        "the one-each the second row takes"
+    );
+    assert_eq!(
+        app.horse_carried,
+        (dirt, 10),
+        "the remainder the cursor keeps"
+    );
+    match click_rx.try_recv().expect("the type-1 START rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.slot, -999, "the START the null slot speaks");
+            assert_eq!(
+                c.button, 4,
+                "the mask(0, type-1) the right drag wears"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    for slot in [2i16, 3] {
+        match click_rx.try_recv().expect("the type-1 ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, slot, "the painted row the ADD names");
+                assert_eq!(c.button, 5, "the mask(1, type-1) the add wears");
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+    match click_rx.try_recv().expect("the type-1 END rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.button, 6, "the mask(2, type-1) the end wears");
+            assert_eq!(
+                c.changed,
+                vec![(2i16, (dirt, 5)), (3i16, (dirt, 5))],
+                "the one-each the changed map rides"
+            );
+            assert_eq!(
+                c.carried,
+                (dirt, 10),
+                "the remainder the packet banks"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE BODY SEAT'S OWN MAYPLACE REFUSAL (the carried saddle the
+    // paint never names — the mayPlace verdict the set keeps empty,
+    // the release the deferred place the click walk's own refusal
+    // serves, the packet the silence keeps)
+    app.horse_carried = (saddle, 1);
+    app.on_right_press(128, 108);
+    assert!(app.qc_armed, "the right press the drag arms");
+    app.on_mouse_move(128, 108);
+    assert!(
+        app.qc_slots.is_empty(),
+        "the foreign stack the seat never paints"
+    );
+    app.mouse_pos = Some((128, 108));
+    app.qc_release(1);
+    assert_eq!(
+        app.horse_seats[1],
+        (0, 0),
+        "the BODY seat the refusal keeps"
+    );
+    assert_eq!(
+        app.horse_carried,
+        (saddle, 1),
+        "the cursor the refusal keeps"
+    );
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the refused drag NO packet speaks"
+    );
+    // THE OFFLINE HALF'S OWN WALK (the local sim the write-through
+    // answers — the 553 quick-move harness the offline sim re-wears)
+    let mut sim = App::new(3);
+    sim.enter_world();
+    sim.open_horse();
+    sim.horse_slot_rects = vec![
+        (100, 100, 0),
+        (120, 100, 1),
+        (200, 100, 2),
+        (220, 100, 3),
+    ];
+    sim.horse_panel = (90, 90);
+    for it in sim.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    sim.inventory.items[9] = (dirt, 10);
+    sim.horse_carried = (dirt, 12);
+    // THE EVEN SPLIT'S OWN FOLD (the merge row the cap the +6 wears,
+    // the empty row the six takes, the cursor the fold drains)
+    sim.on_press(208, 108);
+    assert!(sim.qc_armed, "the carried press the drag arms");
+    sim.on_mouse_move(208, 108);
+    sim.on_mouse_move(228, 108);
+    assert_eq!(
+        sim.qc_slots,
+        vec![2usize, 3],
+        "the offline paint the rows collect"
+    );
+    sim.mouse_pos = Some((228, 108));
+    sim.qc_release(0);
+    assert_eq!(
+        sim.inventory.items[9],
+        (dirt, 16),
+        "the merge row the +6 wears"
+    );
+    assert_eq!(
+        sim.inventory.items[10],
+        (dirt, 6),
+        "the empty row the split takes"
+    );
+    assert_eq!(sim.horse_carried, (0, 0), "the fold the cursor drains");
+    // THE SINGLE SEAT'S OWN PICKUP CONVERSION (the painted-one drag
+    // the doClick's own PICKUP the plain fold answers — the right
+    // drag the place-ONE arm the +1 speaks)
+    sim.horse_carried = (dirt, 5);
+    sim.on_right_press(208, 108);
+    assert!(sim.qc_armed, "the right press the type-1 drag arms");
+    sim.on_mouse_move(208, 108);
+    assert_eq!(
+        sim.qc_slots,
+        vec![2usize],
+        "the single seat the paint names"
+    );
+    sim.mouse_pos = Some((208, 108));
+    sim.qc_release(1);
+    assert_eq!(
+        sim.inventory.items[9],
+        (dirt, 17),
+        "the place-ONE the conversion wears"
+    );
+    assert_eq!(
+        sim.horse_carried,
+        (dirt, 4),
+        "the remainder the cursor keeps"
+    );
+    // THE OFFLINE BODY SEAT'S OWN REFUSAL (the saddle the paint never
+    // names, the release the deferred place the click walk's own
+    // mayPlace refusal serves — the local lanes the silence keeps)
+    sim.horse_carried = (saddle, 1);
+    sim.on_press(128, 108);
+    assert!(sim.qc_armed, "the carried press the drag arms");
+    sim.on_mouse_move(128, 108);
+    assert!(
+        sim.qc_slots.is_empty(),
+        "the foreign stack the seat never paints"
+    );
+    sim.mouse_pos = Some((128, 108));
+    sim.qc_release(0);
+    assert_eq!(
+        sim.horse_seats[1],
+        (0, 0),
+        "the BODY seat the refusal keeps"
+    );
+    assert_eq!(
+        sim.horse_carried,
+        (saddle, 1),
+        "the cursor the refusal keeps"
+    );
+}
