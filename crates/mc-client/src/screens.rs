@@ -9712,6 +9712,18 @@ pub struct App {
     /// reads — the foreign horse the drain the gate refuses, the own
     /// horse the seats the walk serves.
     pub horse_owned: bool,
+    /// THE HORSE WINDOW'S OWN LIVE FLAG (the merchant route's own law
+    /// the dedicated packet re-wears — the 26.2 `minecraft:
+    /// mount_screen_open` word the server's own walk speaks, the wire
+    /// open the flag wears, the close + the death walk the flag
+    /// retires; the offline stand-in the false keeps)
+    pub horse_is_live: bool,
+    /// THE HORSE WINDOW'S OWN IDENTITY (the live window's containerId
+    /// + the stateId revision the echoes answer — the merchant's
+    /// `Some((c.id, c.state_id))` shape the dedicated packet's birth
+    /// re-wears; the fresh window's state 0 the content packets
+    /// re-key)
+    pub horse_live_window: Option<(i32, i32)>,
     /// THE CHEST PANEL'S OWN ORIGIN (the render-time layout the press
     /// walk hit-tests — the furnace panel's own convention): the
     /// generic_9x3 chrome's top-left in GUI space, `(0, 0)` until the
@@ -13931,6 +13943,8 @@ impl App {
             chest_open_cell: None,
             horse_seats: [(0, 0); 2],
             horse_seat_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 2],
+            horse_is_live: false,
+            horse_live_window: None,
             horse_panel: (0, 0),
             horse_slot_rects: Vec::new(),
             horse_carried: (0, 0),
@@ -26609,6 +26623,21 @@ impl App {
     /// close never clears the horse inventory — the reopen
     /// continues), the screen the back seat wears.
     pub fn close_horse(&mut self, back: ScreenKind) {
+        // THE WIRE'S OWN CLOSE (the merchant close's own shape — the
+        // live session's close echoes the serverbound ContainerClose
+        // packet through the live session's send lane, the server's
+        // own close the input drops + the carried return answer; the
+        // flag + the identity the close retires, the fresh open the
+        // own birth re-lays — the offline stand-in the false keeps)
+        if self.horse_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.horse_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.horse_is_live = false;
+            self.horse_live_window = None;
+        }
         if self.horse_carried.1 > 0 {
             let (id, count) = self.horse_carried;
             let mut rest = count;
@@ -45692,6 +45721,14 @@ impl App {
             // the belief resets with the window, the carried stack the
             // server's own close returns.
             self.close_furnace(ScreenKind::World);
+        } else if self.screen == ScreenKind::Horse {
+            // THE HORSE'S OWN ESCAPE LANE (the vanilla Escape/E on the
+            // mount's screen — the container family's own close walk
+            // the screen stack serves): the carried ride-home rides,
+            // the live session's close echo the dedicated packet's
+            // window answers (the merchant close's own shape), the
+            // flag + the identity the close retires.
+            self.close_horse(ScreenKind::World);
         } else if self.screen == ScreenKind::Inventory {
             // the survival inventory's own close (the vanilla Escape on
             // the E-key screen): the carried's add-back walk rides, the
@@ -54173,14 +54210,24 @@ impl App {
                         // `AbstractHorse.mobInteract` 21-43 — the
                         // `openCustomInventoryScreen(player)` tail the
                         // tamed+sneak body answers, the SUCCESS return
-                        // the CLIENT swing starts). The screen the
-                        // honest skip keeps — the horse's saddle/armor
-                        // slots the SERVER state the container word
-                        // owns (the wire's own window the later round
-                        // arms, the trader's openTradingScreen tail
-                        // the Talk verdict's same skip the precedent
-                        // keeps — the screen the server the authority
-                        // holds)
+                        // the CLIENT swing starts). THE SCREEN LANE the
+                        // round arms (the 550 NEXT's own first lane the
+                        // window answers — the honest skip the
+                        // dev-242's verdict the screen lane replaces):
+                        // the OFFLINE stand-in the container family's
+                        // own birth wears (the open_horse walk — the
+                        // seats the horse's OWN memory keeps, the
+                        // cursor fresh-empty, the owned verdict the
+                        // tamed+sneak gate the mob walk banks), the
+                        // WIRE session the dedicated packet answers
+                        // (the 26.2 `minecraft:mount_screen_open` word
+                        // the server's own walk sends — the 41-id lane
+                        // the route dispatches, the screen the
+                        // server's own authority opens, the swing the
+                        // SUCCESS verdict starts)
+                        if !self.world_is_network {
+                            self.open_horse();
+                        }
                         self.swing.start();
                         return true;
                     }
@@ -91117,6 +91164,46 @@ impl App {
                     if self.screen == ScreenKind::World {
                         self.open(ScreenKind::Merchant);
                     }
+                    return;
+                }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_MOUNT {
+                    // THE MOUNT'S OWN WIRE LANE (the merchant's 456
+                    // route the dedicated packet re-wears — the 26.2
+                    // `minecraft:mount_screen_open` word the server's
+                    // own walk speaks, the generic OpenScreen route the
+                    // mount lane never rides, the client's own
+                    // MENU_TYPE_MOUNT word the model's birth banks): the
+                    // menu's own numbering — the saddle 0 + the armor 1
+                    // the pair speaks, the player rows 2..37 the
+                    // standard bank wears [the plain horse the
+                    // columns-0 shape the grid never wears — the
+                    // chested columns the later round lays], the wire's
+                    // own (0, 0) emptiness riding verbatim. THE WALK
+                    // the server owns (the seats the content packets'
+                    // foreign lane feeds, the echoes the
+                    // prediction-free lane keeps — the offline
+                    // stand-in's own memory the live words replace).
+                    self.horse_is_live = true;
+                    // the window's identity rides in: the echoes answer
+                    // against THIS id and revision — the state_id the
+                    // fresh window's birth the content packets re-key
+                    self.horse_live_window = Some((c.id, c.state_id));
+                    // the wire's own seats (the store's slot 0/1 the
+                    // pair answers) + the honest NONE wall the kind
+                    // word never crosses
+                    self.horse_seats = [
+                        *c.slots.first().unwrap_or(&(0, 0)),
+                        *c.slots.get(1).unwrap_or(&(0, 0)),
+                    ];
+                    self.horse_seat_potion_kinds = [crate::brewing_sim::POTION_KIND_NONE; 2];
+                    if self.screen == ScreenKind::World {
+                        self.open_horse();
+                    }
+                    // the AUTHORITATIVE carried lands after the birth
+                    // (the open's own fresh cursor the wire's own
+                    // cursor replaces — the wholesale replacement the
+                    // chest's lane speaks)
+                    self.horse_carried = c.carried;
                     return;
                 }
                 if c.menu_type_id == crate::world_model::MENU_TYPE_ENCHANTMENT {

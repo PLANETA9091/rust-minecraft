@@ -110,6 +110,7 @@ pub mod clientbound {
         CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
         CB_CONTAINER_SET_DATA as CONTAINER_SET_DATA,
         CB_MERCHANT_OFFERS as MERCHANT_OFFERS,
+        CB_MOUNT_SCREEN_OPEN as MOUNT_SCREEN_OPEN,
         CB_SET_TIME as SET_TIME,
         CB_GAME_EVENT as GAME_EVENT,
         CB_PLAYER_ABILITIES as PLAYER_ABILITIES,
@@ -11188,6 +11189,66 @@ pub fn parse_open_screen(payload: &[u8]) -> Result<OpenScreen> {
     })
 }
 
+/// Mount Screen Open: a MOUNT's inventory window OPENS — the equine
+/// GUI's own packet (the generated-id 41 pin, `minecraft:mount_screen_open`).
+/// The 26.2 class census banks the RENAME: the old
+/// `ClientboundHorseScreenOpenPacket` the jar no longer carries — the
+/// dedicated word the mount family speaks (the horse/donkey/mule/llama
+/// herd the one lane serves; the 26.2 `MenuType` clinit the HORSE menu
+/// type no longer registers — the menu the packet's own walk
+/// constructs, javap `ClientPacketListener.handleMountScreenOpen`:
+/// `level.getEntity(entityId)` the mount lookup, the
+/// `SimpleContainer(AbstractMountInventoryMenu.getInventorySize(columns))`
+/// stand-in (`columns * 3` the static law speaks), the
+/// `HorseInventoryMenu(containerId, playerInventory, container, horse,
+/// columns)` birth, `player.containerMenu` the store lands, the
+/// `HorseInventoryScreen(menu, inventory, horse, columns)` setScreen —
+/// the screen the packet's own authority opens, the generic OpenScreen
+/// route the mount lane never rides). THREE lanes (javap of the record's
+/// private decode lambda: `readContainerId()` — the BARE VARINT the
+/// Open Screen's id lane wears; `readVarInt()` — the columns word the
+/// horse's own grid speaks [the plain Horse the base class's
+/// `iconst_0` answers — the 26.2 horse's own slots the equipment pair
+/// replaces, the chested herd the `hasChest() ? 5 : 0` law wears];
+/// `readInt()` — the mount's entity id, the FIXED 4-BYTE INT lane the
+/// VarInt pair never shares — the write body's `writeInt` the same
+/// shape speaks back).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MountScreenOpen {
+    /// The window id the server assigned — the new menu's containerId
+    /// (vanilla never opens window 0; the value rides verbatim).
+    pub container_id: i32,
+    /// The mount inventory's columns word — the grid the menu's own
+    /// loop lays (3 rows × columns the `getInventorySize` law speaks;
+    /// the plain horse's 0 the equipment-pair-only screen banks).
+    pub inventory_columns: i32,
+    /// The mount's entity id — the level lookup the client's own walk
+    /// keys, the horse the screen binds (the FIXED INT lane the
+    /// columns' VarInt never wears).
+    pub entity_id: i32,
+}
+
+/// Mount Screen Open's wire walk (see [`MountScreenOpen`] — the
+/// three-lane record, the generated-id guard).
+pub fn parse_mount_screen_open(payload: &[u8]) -> Result<MountScreenOpen> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::MOUNT_SCREEN_OPEN,
+        "not a mount screen open packet (0x{id:02X})"
+    );
+    let container_id = read_varint(&mut c)?;
+    let inventory_columns = read_varint(&mut c)?;
+    // THE FIXED INT LANE (the decode lambda's `readInt()` the third
+    // call speaks — the VarInt pair the first two lanes wear)
+    let entity_id = read_i32(&mut c)?;
+    Ok(MountScreenOpen {
+        container_id,
+        inventory_columns,
+        entity_id,
+    })
+}
+
 /// Container Close: the open container window CLOSES — the container
 /// GUI's own packet (the generated-id 17 pin). ONE lane (javap of the
 /// 26.2 decode body): `FriendlyByteBuf.readContainerId` — the same
@@ -11593,6 +11654,15 @@ pub enum PlayEvent {
     /// (the container GUI's birth; the model consumes it in the
     /// open-container arm).
     ScreenOpened(OpenScreen),
+    /// Mount Screen Open: a MOUNT's inventory window OPENS — the
+    /// dedicated packet the 26.2 rename speaks (`minecraft:
+    /// mount_screen_open`, the generated-id 41 pin): the window id +
+    /// the columns word + the mount's entity id (the FIXED INT lane).
+    /// The model consumes it in the open-container arm — the menu the
+    /// packet's own walk constructs (the client-owned MENU_TYPE_MOUNT
+    /// routing word the store banks; the generic OpenScreen route the
+    /// mount lane never rides). See [`MountScreenOpen`].
+    MountScreenOpen(MountScreenOpen),
     /// Container Close: the open container window CLOSES — the
     /// bare-VarInt window id (the model consumes it in the
     /// open-container arm).
@@ -11840,6 +11910,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::OPEN_SCREEN => {
                 Ok(PlayEvent::ScreenOpened(parse_open_screen(&pkt)?))
+            }
+            clientbound::MOUNT_SCREEN_OPEN => {
+                Ok(PlayEvent::MountScreenOpen(parse_mount_screen_open(&pkt)?))
             }
             clientbound::MERCHANT_OFFERS => {
                 Ok(PlayEvent::MerchantOffers(parse_merchant_offers(&pkt)?))
@@ -19210,6 +19283,63 @@ mod tests {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::OPEN_SCREEN);
         assert!(parse_container_close(&p).is_err());
+    }
+
+    /// Mount Screen Open's wire walk (see [`MountScreenOpen`] — the
+    /// dedicated packet the 26.2 rename speaks, the THREE-lane record
+    /// the decode lambda's own call order wears).
+    #[test]
+    fn the_mount_screen_open_lanes_pin_the_window() {
+        assert_eq!(
+            clientbound::MOUNT_SCREEN_OPEN,
+            41,
+            "minecraft:mount_screen_open — the generated pin"
+        );
+        // the plain horse's walk: window 5, the columns word 0 (the
+        // equipment pair the base class's iconst_0 answers), the mount
+        // entity id 12345 riding the FIXED INT lane (the VarInt pair
+        // the first two lanes wear — the decode lambda's readInt the
+        // third call speaks)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOUNT_SCREEN_OPEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 0);
+        p.extend_from_slice(&12345i32.to_be_bytes());
+        let m = parse_mount_screen_open(&p).unwrap();
+        assert_eq!(m.container_id, 5, "the bare VarInt shape");
+        assert_eq!(m.inventory_columns, 0, "the plain horse's own word");
+        assert_eq!(m.entity_id, 12345, "the FIXED INT lane the lookup keys");
+        // the chested donkey's walk: the columns word 5 (the
+        // hasChest() law the grid answers), the entity id the negative
+        // lane the fixed int wears (the VarInt the sign the walk never
+        // folds)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOUNT_SCREEN_OPEN);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 5);
+        p.extend_from_slice(&(-2i32).to_be_bytes());
+        let m = parse_mount_screen_open(&p).unwrap();
+        assert_eq!(m.inventory_columns, 5, "the chested columns word");
+        assert_eq!(m.entity_id, -2, "the fixed int the negative rides");
+        // the truncation map: the id alone, the id+window, the lanes
+        // short of the fixed int
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOUNT_SCREEN_OPEN);
+        assert!(parse_mount_screen_open(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOUNT_SCREEN_OPEN);
+        write_varint(&mut p, 5);
+        assert!(parse_mount_screen_open(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOUNT_SCREEN_OPEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 0);
+        p.extend_from_slice(&[0x00, 0x00, 0x00]); // 3 of the int's 4 bytes
+        assert!(parse_mount_screen_open(&p).is_err());
+        // a wrong packet id refuses (the generated-id guard)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        assert!(parse_mount_screen_open(&p).is_err());
     }
 
     /// Set Container Data's wire walk (javap 26.2 of the record's

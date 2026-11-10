@@ -57989,3 +57989,157 @@ fn the_horse_the_interact_ride_the_mount_wears() {
         "the mount the saddle never gates"
     );
 }
+
+/// THE HORSE'S OWN GUI WINDOW (the 550 NEXT's own first lane the
+/// round answers — javap 26.2 the dedicated packet banks: the
+/// `ClientboundMountScreenOpenPacket` the class census speaks — the
+/// old `ClientboundHorseScreenOpenPacket` the jar no longer carries —
+/// the `(containerId, inventoryColumns, entityId)` trio the decode
+/// lambda's own call order wears, the `handleMountScreenOpen` walk the
+/// menu births + the screen setScreen answers, the `MenuType` clinit
+/// the HORSE row no longer registers): the client-owned
+/// MENU_TYPE_MOUNT word the model's birth banks, the wire route the
+/// merchant's 456 shape re-wears — the saddle 0 + the armor 1 the
+/// pair lands, the identity rides (the fresh window's state 0 the
+/// content packets re-key), the owned verdict the tamed gate the
+/// server's own walk speaks, the close the flag + the identity
+/// retires (the ContainerClose echo the merchant close's own shape
+/// keeps).
+#[test]
+fn the_horse_the_gui_window_the_wire_wears() {
+    use crate::world_view::{ContainerCommand, LiveContainer};
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+    let saddle = id("saddle");
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    // the mount window's birth: window 5, the client-owned routing
+    // word, the saddle 0 + the empty armor 1 the pair rides (the
+    // content sync the store's own lanes lay), the fresh state 0
+    let table = LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MOUNT,
+        slots: {
+            let mut s = vec![(0i32, 0i32); 38];
+            s[0] = (saddle, 1);
+            s
+        },
+        carried: (0, 0),
+        state_id: 0,
+        bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    };
+    app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+    assert_eq!(
+        app.screen,
+        ScreenKind::Horse,
+        "the wire's own word the screen opens"
+    );
+    assert!(
+        app.horse_is_live,
+        "the live flag the dedicated packet wears"
+    );
+    assert_eq!(
+        app.horse_live_window,
+        Some((5, 0)),
+        "the identity the fresh window's birth banks"
+    );
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 1),
+        "the saddle seat the content sync lands"
+    );
+    assert_eq!(
+        app.horse_seats[1],
+        (0, 0),
+        "the empty armor seat the wire's own (0, 0) wears"
+    );
+    assert!(app.horse_owned, "the owned verdict the tamed gate banks");
+    assert_eq!(app.horse_carried, (0, 0), "the fresh cursor the wire keeps");
+    // THE CLOSE (the Escape walk — the flag + the identity retire, the
+    // serverbound ContainerClose echo the merchant close's own shape
+    // speaks)
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the close the world keeps");
+    assert!(!app.horse_is_live, "the flag the close retires");
+    assert_eq!(
+        app.horse_live_window, None,
+        "the identity the close retires"
+    );
+    match click_rx.try_recv().expect("the close echo rode the lane") {
+        ContainerCommand::Close { window_id } => {
+            assert_eq!(window_id, 5, "the window's own id the echo names");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+/// THE HORSE'S OWN GUI VERDICT (the mobInteract OpenInventory arm the
+/// screen lane answers — javap `AbstractHorse.mobInteract` 21-43 the
+/// `openCustomInventoryScreen` tail the tamed+sneak body speaks, the
+/// server-only law the OFFLINE stand-in the container family's own
+/// birth wears, the wire session the dedicated packet answers): the
+/// tamed+sneak right-press the screen OPENS (the owned verdict the
+/// mob walk banks, the seats the horse's OWN memory keeps, the swing
+/// the SUCCESS verdict starts), the untamed body the sneak press the
+/// MOUNT the ride tail never gates — the GUI the verdict never opens.
+#[test]
+fn the_horse_the_gui_verdict_the_screen_opens() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    let mut horse = crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+    horse.kind = crate::mob::MobKind::Horse;
+    horse.tamed = true;
+    horse.on_ground = true;
+    app.mobs.push(horse);
+    let carried_y = top as f64 + crate::mob::HORSE_HEIGHT as f32 as f64;
+    app.body = Some(crate::body::PlayerBody::new(
+        c as f64 + 0.5,
+        carried_y,
+        c as f64 + 0.5,
+        0.0,
+        90.0,
+    ));
+    // THE TAMED + SNEAK PRESS (the GUI arm the mob walk answers — the
+    // OpenInventory verdict the screen lane opens, the press consumed)
+    app.shift_down = true;
+    assert!(
+        app.on_right_press(0, 0),
+        "the tamed+sneak press the verdict consumes"
+    );
+    assert_eq!(app.screen, ScreenKind::Horse, "the GUI the verdict opens");
+    assert!(app.horse_owned, "the owned verdict the mob walk banks");
+    assert!(!app.horse_is_live, "the offline stand-in the false keeps");
+    assert_eq!(
+        app.horse_live_window, None,
+        "no wire identity the sim wears"
+    );
+    assert!(app.swing.swinging, "the SUCCESS the swing starts");
+    // THE UNTAMED BODY (the sneak press the ride tail answers — the
+    // GUI arm the tamed gate refuses, the mount the tail never gates,
+    // the screen the verdict never opens)
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the close the world keeps");
+    app.mobs[0].tamed = false;
+    assert!(
+        app.on_right_press(0, 0),
+        "the untamed+sneak press the ride tail consumes"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the GUI the untamed body never opens"
+    );
+    assert!(
+        app.offline_ride.is_some(),
+        "the mount the sneak never gates"
+    );
+}

@@ -2401,6 +2401,25 @@ pub const MENU_TYPE_SMOKER: i32 = 22;
 /// [`crate::screens`]' own hopper split wears).
 pub const MENU_TYPE_HOPPER: i32 = 16;
 
+/// THE MOUNT WINDOW'S OWN ROUTING WORD (the client's OWN alias the
+/// store banks — NOT a vanilla MenuType id): the 26.2 mount screen the
+/// DEDICATED packet opens (`minecraft:mount_screen_open`, the
+/// generated-id 41 pin) — the `MenuType` clinit the HORSE menu type
+/// no longer registers (the registration census the 26.2 bytecode
+/// wears: generic_9x1..generic_9x6, generic_3x3, crafter_3x3, anvil,
+/// beacon, blast_furnace, brewing_stand, crafting, enchantment,
+/// furnace, grindstone, hopper, lectern, loom, merchant, shulker_box,
+/// smithing, smoker, cartography_table, stonecutter — the horse row
+/// the list never carries), the vanilla walk the menu builds DIRECTLY
+/// (javap `ClientPacketListener.handleMountScreenOpen`: the
+/// `HorseInventoryMenu(containerId, playerInventory, container, horse,
+/// columns)` birth the packet's own lanes construct, the generic
+/// OpenScreen route the mount lane never rides). The 100 the alias
+/// word the vanilla ids (0..24) never collide with — the model's open
+/// container store the mount menu's birth banks, the screen route's
+/// own dispatch the word answers, the honest provenance the doc wears.
+pub const MENU_TYPE_MOUNT: i32 = 100;
+
 /// An OPEN container window — the `containerMenu` lane the audited
 /// consumer routes foreign-window container packets through (javap of
 /// the 26.2 `ClientPacketListener`): the Open Screen packet BIRTHS the
@@ -4414,6 +4433,44 @@ impl WorldModel {
                     id: o.container_id,
                     menu_type_id: o.menu_type_id,
                     title_nbt: o.title_nbt,
+                    slots: Vec::new(),
+                    state_id: 0,
+                    carried: ItemStack {
+                        count: 0,
+                        item_id: 0,
+                        patch: ComponentPatch::default(),
+                    },
+                    data_slots: Vec::new(),
+                    merchant: MerchantBank::default(),
+                });
+                true
+            }
+            PlayEvent::MountScreenOpen(m) => {
+                // The audited consumer (javap of
+                // ClientPacketListener.handleMountScreenOpen — the
+                // dedicated packet's own walk): the
+                // `level.getEntity(entityId)` mount lookup, the
+                // `SimpleContainer(getInventorySize(columns))` stand-in
+                // (columns * 3 the static law speaks), the
+                // `HorseInventoryMenu(containerId, playerInventory,
+                // container, horse, columns)` birth, and
+                // `player.containerMenu = menu` — the menu the store's
+                // own lane lands, the generic OpenScreen walk the mount
+                // packet never rides (the vanilla client walk the
+                // screen setScreen answers — the route the store's own
+                // MENU_TYPE_MOUNT word banks). The store OPENS fresh
+                // (the same wholesale birth the OpenScreen arm wears —
+                // the menu's own slots the content packets' foreign
+                // lane feeds); the columns word + the entity id ride
+                // the event verbatim (the client's 0-shape the plain
+                // horse's own grid banks — the chested columns + the
+                // mount binding the later rounds re-wear; the title the
+                // packet never carries, the screen's own
+                // HORSE_INVENTORY_LOCATION the vanilla ctor speaks).
+                self.open_container = Some(OpenContainerState {
+                    id: m.container_id,
+                    menu_type_id: MENU_TYPE_MOUNT,
+                    title_nbt: Vec::new(),
                     slots: Vec::new(),
                     state_id: 0,
                     carried: ItemStack {
@@ -14556,6 +14613,75 @@ mod tests {
         write_varint(&mut p, 0);
         let c = parse_container_close(&p).unwrap();
         assert!(!m.apply(PlayEvent::ContainerClosed(c)));
+    }
+
+    /// The mount window's own store walk (the dedicated packet's
+    /// consumer, the client-owned [`MENU_TYPE_MOUNT`] routing word):
+    /// the Mount Screen Open packet BIRTHS the store (the vanilla
+    /// walk's `containerMenu` lane — the menu the packet's own lanes
+    /// construct, the generic OpenScreen route the mount lane never
+    /// rides), the window's content traffic feeds it (the saddle 0 +
+    /// the armor 1 the menu's own pair speaks), and the Container
+    /// Close drops it wholesale.
+    #[test]
+    fn the_mount_screen_open_births_the_window_store() {
+        use mc_protocol::play::{
+            clientbound, parse_container_close, parse_mount_screen_open,
+            parse_set_container_content,
+        };
+        let mut m = WorldModel::new();
+        assert!(m.open_container().is_none(), "no screen, no store");
+
+        // Mount Screen Open: window 5, the plain horse's columns word
+        // 0, the mount entity id 12345 riding the fixed int lane
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOUNT_SCREEN_OPEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 0);
+        p.extend_from_slice(&12345i32.to_be_bytes());
+        let m0 = parse_mount_screen_open(&p).unwrap();
+        assert!(m.apply(PlayEvent::MountScreenOpen(m0)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.id, 5, "the packet's own window id");
+        assert_eq!(
+            oc.menu_type_id, MENU_TYPE_MOUNT,
+            "the client-owned routing word the birth banks"
+        );
+        assert!(
+            oc.title_nbt.is_empty(),
+            "the title the packet never carries"
+        );
+        assert!(oc.slots.is_empty(), "the contents ride the container lane");
+
+        // the window's content traffic feeds the store (the saddle 0 +
+        // the armor 1 the menu's own pair answers — the same foreign
+        // lane the chest's traffic rides)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 5); // the mount's window
+        write_varint(&mut p, 7); // state id
+        write_varint(&mut p, 2); // the collection count
+        write_varint(&mut p, 3);
+        write_varint(&mut p, 771); // the saddle stack
+        write_varint(&mut p, 0); // patch: none added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, 0); // slot 1: the EMPTY armor seat
+        write_varint(&mut p, 0); // the carried item: empty
+        let c = parse_set_container_content(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerFilled(c)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.state_id, 7);
+        assert_eq!(oc.slots.len(), 2, "the pair the content sync lays");
+        assert_eq!(oc.slots[0].item_id, 771, "the saddle seat lands");
+
+        // the close drops the mount window wholesale (the same ONE
+        // assignment the audited close walks)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        write_varint(&mut p, 5);
+        let c = parse_container_close(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerClosed(c)));
+        assert!(m.open_container().is_none(), "the close drops the window");
     }
 
     /// The Set Data lane's own store walk (the furnace progress
