@@ -639,6 +639,20 @@ pub(crate) fn format_player_chat_line(m: &mc_protocol::play::PlayerChatMessage) 
 }
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
+/// THE HORSE ARMOR'S OWN FAMILY (the BODY seat's own mayPlace row —
+/// javap 26.2 the `ArmorSlot.mayPlace` law the
+/// `LivingEntity.isEquippableInSlot` walk speaks: the stack's own
+/// EQUIPPABLE component the slot word reads, the BODY slot the six
+/// armors' own components name — the registry's own ids the plain id
+/// model banks, the max-1 stack the seat's own ceiling keeps).
+const HORSE_ARMOR_NAMES: [&str; 6] = [
+    "leather_horse_armor",
+    "copper_horse_armor",
+    "iron_horse_armor",
+    "golden_horse_armor",
+    "diamond_horse_armor",
+    "netherite_horse_armor",
+];
 /// THE SPRINT WINDOW'S OWN SPAN (26.2 Options <init>'s audited
 /// OptionInstance('options.sprintWindow', IntRange(0, 10), 7) — the
 /// double-tap-W window the LocalPlayer.aiStep's sprintTriggerTime
@@ -9724,6 +9738,17 @@ pub struct App {
     /// re-wears; the fresh window's state 0 the content packets
     /// re-key)
     pub horse_live_window: Option<(i32, i32)>,
+    /// THE HORSE SCREEN'S OWN DOUBLE-CLICK FLAG (the same
+    /// `AbstractContainerScreen.doubleclick` field the family's own
+    /// copies bank — the press walk arms it, the gather the later
+    /// round serves through it, the arm's own false clears)
+    pub horse_doubleclick: bool,
+    /// THE HORSE SCREEN'S OWN LAST-CLICK SEAT (the same
+    /// `lastClickSlot` field the family's own copies bank — the menu
+    /// id the horse numbering keys [the seats 0/1, the rows 2..37],
+    /// the next press's flag compute compares it against the new
+    /// hover)
+    pub horse_last_click_slot: Option<usize>,
     /// THE CHEST PANEL'S OWN ORIGIN (the render-time layout the press
     /// walk hit-tests — the furnace panel's own convention): the
     /// generic_9x3 chrome's top-left in GUI space, `(0, 0)` until the
@@ -13945,6 +13970,8 @@ impl App {
             horse_seat_potion_kinds: [crate::brewing_sim::POTION_KIND_NONE; 2],
             horse_is_live: false,
             horse_live_window: None,
+            horse_doubleclick: false,
+            horse_last_click_slot: None,
             horse_panel: (0, 0),
             horse_slot_rects: Vec::new(),
             horse_carried: (0, 0),
@@ -25561,10 +25588,13 @@ impl App {
             || self.screen == ScreenKind::Furnace
             || self.screen == ScreenKind::Beacon
             || self.screen == ScreenKind::Merchant
+            || self.screen == ScreenKind::Horse
         {
             // the BEACON screen the same base walk wears (the
             // autopush-323 round — the beacon's own lanes the
-            // distribution and the deferred place answer)
+            // distribution and the deferred place answer); the HORSE
+            // screen the same walk wears (the mount's own deferred
+            // place the round banks — the arm the release serves)
             if spread_fired {
                 // pc 243's goto 452 — the consumed release the arm's
                 // own tail still clears (the drag dies with the spread)
@@ -26611,6 +26641,11 @@ impl App {
         self.enter_world();
         self.horse_owned = true;
         self.horse_carried = (0, 0);
+        // THE FRESH SESSION'S OWN RESET (the stale gather pair the
+        // open retires — the chest's own shape the fresh open the
+        // whole state re-arms)
+        self.horse_doubleclick = false;
+        self.horse_last_click_slot = None;
         self.open(ScreenKind::Horse);
     }
 
@@ -26856,9 +26891,13 @@ impl App {
             // the foreign horse's seats the THROW never takes)
             return;
         }
-        if self.world_is_network {
-            return; // the wire lane the later round banks — the live
-                    // menu the server's own authority owns
+        if self.horse_is_live {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the server's own bank the truth there (the
+            // merchant walk's own split the screen's own flag keeps).
+            self.on_horse_drop_key_wire(whole_stack);
+            return;
         }
         if self.horse_slot_rects.is_empty() || self.horse_panel == (0, 0) {
             return; // no render spoke yet — no geometry to hit
@@ -26922,6 +26961,248 @@ impl App {
         }
         // NO swing, the container STAYS OPEN (the container walk's own
         // laws the base class keeps).
+    }
+
+    /// THE MOUNT WINDOW'S OWN CLICK PAIR (the 551 NEXT's own first
+    /// lane the round answers — the saddle/armor seats the click echo
+    /// the live window answers, the ServerboundContainerClick the
+    /// seat pair the wire's own walk speaks): the plain LEFT/RIGHT
+    /// press the doClick PICKUP table answers over the horse menu's
+    /// own 38 rows — the seats 0/1 the pair's own laws key, the
+    /// standard rows 2..37 the write-through projection IS. THE
+    /// SEAT'S OWN MAYPLACE (javap 26.2 — `ArmorSlot.mayPlace` the
+    /// `LivingEntity.isEquippableInSlot(stack, slot)` walk speaks: the
+    /// stack's own EQUIPPABLE component read, the null the
+    /// MAINHAND-only arm refuses, the `slot() == slot && canUseSlot(
+    /// slot) && canBeEquippedBy(holder)` verdict the tail answers;
+    /// the `HorseInventoryMenu$1` the SADDLE slot the
+    /// `canUseSlot(SADDLE) && is(CAN_EQUIP_SADDLE)` verdict keys, the
+    /// `$2` the BODY slot the `is(CAN_WEAR_HORSE_ARMOR) || isLlama`
+    /// fold wears): the SADDLE the saddle item alone equips, the
+    /// ARMOR the horse-armor family alone equips — the foreign stack
+    /// the carried cursor the seat never takes, the plain id law the
+    /// component walk's own verdict keeps. THE SEAT'S OWN MAX
+    /// (`ArmorSlot.getMaxStackSize` the iconst_1 speaks): the one
+    /// stack the seat wears — the registry's own max-1 the seven
+    /// equip items bank (saddle + the six armors), the plain pickup
+    /// walk's own `item_max_stack` law the same ceiling answers. THE
+    /// MAYPICKUP the plain model keeps (the PREVENT_ARMOR_CHANGE
+    /// component gate the enchant walk's own law wears — the plain
+    /// model the component the equip items never bank, the pickup the
+    /// unconditional walk answers). THE QUICK-MOVE the later round
+    /// banks (the shift press the quickMoveStack routing the wheel
+    /// first decodes — the plain lane the shift press the silence
+    /// keeps, no packet the refusal rides). THE OFFLINE SIM THE LOCAL
+    /// WALK WEARS (the believed pair the pickup prediction mutates,
+    /// the carried the local cursor keeps, NO echo); THE LIVE SESSION
+    /// THE WIRE SPEAKS (the packet the command lane carries, the
+    /// prediction the changed map rides, the next sync's wholesale
+    /// correction the truth lands — the echoes the
+    /// horse_live_window identity answers).
+    fn click_horse_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if !self.horse_is_live {
+            let Some((_, _, slot)) = self.horse_hover_seat(mx, my) else {
+                // THE DROP-OUTSIDE LANE (the 26.2 mouseClicked's own
+                // walk — the furnace's own shape, the laid-out panel
+                // the strict rect compare speaks)
+                if self.horse_panel != (0, 0)
+                    && (mx < self.horse_panel.0
+                        || my < self.horse_panel.1
+                        || mx >= self.horse_panel.0 + 176
+                        || my >= self.horse_panel.1 + 166)
+                {
+                    self.throw_horse_carried_outside(button);
+                }
+                return;
+            };
+            let slot = slot as usize;
+            // THE QUICK-MOVE'S OWN LANE the later round banks (the
+            // shift press the routing the wheel first decodes — the
+            // plain walk the shift press the silence keeps)
+            if self.shift_down {
+                return;
+            }
+            let (believed, seat) = self.horse_menu_stack(slot);
+            if seat
+                && self.horse_carried.1 > 0
+                && !Self::horse_seat_may_place(slot, self.horse_carried.0)
+            {
+                return; // the foreign stack the seat never takes
+            }
+            let (new_slot, new_carried) = if button == 0 {
+                crate::world_view::predict_pickup(believed, self.horse_carried)
+            } else {
+                crate::world_view::predict_pickup_right(believed, self.horse_carried)
+            };
+            self.horse_menu_stack_put(slot, seat, new_slot);
+            self.horse_carried = new_carried;
+            return;
+        }
+        let Some((window_id, state_id)) = self.horse_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        // THE SINK'S OWN CLONE (the owned sender the ride's own
+        // mutable walk wears — the furnace walk's own shape)
+        let Some(sink) = self.live_clicks.clone() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((_, _, slot_i)) = self.horse_hover_seat(mx, my) else {
+            return; // the press landed between the slots — no click
+        };
+        let slot = slot_i as usize;
+        if self.shift_down {
+            return; // the quick-move's own lane the later round banks
+        }
+        let (believed, seat) = self.horse_menu_stack(slot);
+        if seat
+            && self.horse_carried.1 > 0
+            && !Self::horse_seat_may_place(slot, self.horse_carried.0)
+        {
+            return; // the foreign stack the seat never takes
+        }
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.horse_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.horse_carried)
+        };
+        self.horse_menu_stack_put(slot, seat, new_slot);
+        self.horse_carried = new_carried;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: slot_i,
+                button,
+                input: crate::world_view::ContainerInput::Pickup,
+                changed: vec![(slot_i, new_slot)],
+                carried: new_carried,
+            },
+        ));
+    }
+
+    /// THE HORSE MENU'S OWN STACK READ (the pair the click lanes
+    /// share — the seats 0/1 the store's own pair answers, the
+    /// standard rows the write-through projection reads; the seat
+    /// word the caller's own mayPlace verdict keys).
+    fn horse_menu_stack(&self, slot: usize) -> ((i32, i32), bool) {
+        if slot < 2 {
+            (self.horse_seats[slot], true)
+        } else {
+            match Self::horse_menu_to_inventory(slot) {
+                Some(row) => (self.inventory.items[row], false),
+                None => ((0, 0), false),
+            }
+        }
+    }
+
+    /// THE HORSE MENU'S OWN STACK WRITE (the same pair the write
+    /// lanes share — the seat's own store the drained kind the NONE
+    /// wall retires, the standard rows the write-through projection
+    /// answers, the hotbar HUD row the tail syncs).
+    fn horse_menu_stack_put(&mut self, slot: usize, seat: bool, pair: (i32, i32)) {
+        if seat && slot < 2 {
+            self.horse_seats[slot] = pair;
+            if pair.1 <= 0 {
+                self.horse_seat_potion_kinds[slot] = crate::brewing_sim::POTION_KIND_NONE;
+            }
+        } else if let Some(row) = Self::horse_menu_to_inventory(slot) {
+            self.inventory.items[row] = pair;
+            if pair.1 <= 0 {
+                self.items_potion_kinds[row] = crate::brewing_sim::POTION_KIND_NONE;
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+    }
+
+    /// THE HORSE SEAT'S OWN MAYPLACE (javap 26.2 — the
+    /// `ArmorSlot.mayPlace` law the
+    /// `LivingEntity.isEquippableInSlot` walk speaks, the plain id
+    /// model the component verdict keeps): the SADDLE seat the
+    /// saddle item alone equips (the Equippable's SADDLE slot the
+    /// saddle's own component names), the ARMOR seat the
+    /// horse-armor family alone equips (the BODY slot the six
+    /// armors' own components name — the leather/copper/iron/golden
+    /// /diamond/netherite row the registry banks).
+    fn horse_seat_may_place(seat: usize, item: i32) -> bool {
+        match seat {
+            0 => mc_registry::item_id_by_name("saddle") == Some(item),
+            1 => HORSE_ARMOR_NAMES
+                .iter()
+                .any(|n| mc_registry::item_id_by_name(n) == Some(item)),
+            _ => true,
+        }
+    }
+
+    /// THE HORSE CARRIED'S OWN THROW (the 26.2 mouseClicked's own
+    /// walk the doClick-OUTSIDE lane serves — the
+    /// [`Self::throw_chest_carried_outside`] shape the mount's cursor
+    /// wears: the whole stack the LEFT press drops, the one item the
+    /// RIGHT split keeps, the aimed impulse the drop walk speaks).
+    fn throw_horse_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.horse_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed_kinded(id, dropped, crate::brewing_sim::POTION_KIND_NONE);
+        self.horse_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
+    /// THE HORSE'S OWN Q WALK (javap 26.2 — the SAME keyPressed
+    /// keyDrop arm the container rounds bank, the doClick THROW table
+    /// the merchant's wire lane keeps verbatim; the live belief the
+    /// same gates answer): the hovered+hasItem gates the SAME rects
+    /// walk the offline lane keeps, the take the live carried's gate
+    /// the carried refusal opens, THE DRAINED SEATS the kind lanes
+    /// the FIELD WRITES retire, the hotbar rows the HUD belief syncs,
+    /// the packet the command lane carries (the EMPTY changed map the
+    /// carried refusal names, the drop entity the SERVER's Add Entity
+    /// lane spawns — no local prediction; the mount window's own
+    /// identity the echo answers).
+    fn on_horse_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.horse_slot_rects.is_empty() || self.horse_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some((_, _, slot)) = self.horse_hover_seat(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.horse_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        let Some(sink) = self.live_clicks.clone() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let slot = slot as usize;
+        let (id, count) = self.horse_menu_stack(slot).0;
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence, NO packet
+        }
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.horse_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            self.horse_menu_stack_put(slot, slot < 2, new);
+            note_batch_change(&mut changed, slot as i16, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot: slot as i16,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.horse_carried,
+            },
+        ));
     }
 
     /// Open the survival inventory over the standing world (the vanilla
@@ -50243,6 +50524,41 @@ impl App {
         self.qc_remainder = 0;
     }
 
+    /// THE MOUNT DRAG'S OWN ARM (the merchant's own shape — the
+    /// mouseClicked pcs 316-378 base walk the carried-NON-EMPTY press
+    /// answers: the in-flight drag the press never re-arms, the
+    /// on-seat OR outside press the arm wears, the chrome the
+    /// between-space the walk skips; the live window's absence the
+    /// stand-in gate refuses — the furnace arm's own law the wire
+    /// world keeps). THE PAINT the later round banks (the painted
+    /// distribution the quickMoveStack-free mount walk the wheel
+    /// first decodes — the arm the release's own deferred place the
+    /// plain walk serves today).
+    fn qc_arm_horse(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if self.horse_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        if self.world_is_network && self.horse_live_window.is_none() {
+            return; // the stand-in: no window, no drag
+        }
+        let panel = self.horse_panel;
+        let on_seat = self.horse_hover_seat(mx, my).is_some();
+        // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
+        // the 176x166 chrome the panel origin frames)
+        let outside = mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166;
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32; // the button's own type (pc 338-347 the left, pc 353-363 the right)
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
     /// THE MERCHANT DRAG'S OWN COLLECT (the same mouseDragged pcs
     /// 0-58 the family paints answer — the merchant's own hover the
     /// rects speak): shouldAdd pc 0-71 the gates wear — the arm, the
@@ -51776,6 +52092,76 @@ impl App {
                 && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 276 || my >= panel.1 + 166);
             if on_seat || outside {
                 self.click_merchant_slot(mx, my, self.qc_button as i8);
+            }
+            return;
+        }
+        if self.screen == ScreenKind::Horse {
+            // THE MOUNT'S OWN DEFERRED PLACE (the same pc 325-449 walk
+            // the furnace geometry answers — the carried press the
+            // arm keeps, the placement the release serves): the seat
+            // the click walk's own PICKUP serves (the wire lane the
+            // window belief rides, the offline sim the local lanes),
+            // the outside the -999 drop serves (the whole carried the
+            // PRIMARY button drops, the ONE item the right wears), the
+            // between the -1 no-op keeps. THE PAINTED DISTRIBUTION the
+            // later round banks (the paint the mount walk never
+            // answers yet — the release the deferred-place tail the
+            // empty paint always reaches).
+            let on_seat = self.horse_hover_seat(mx, my).is_some();
+            let panel = self.horse_panel;
+            let outside = panel != (0, 0)
+                && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+            if on_seat {
+                // pc 427-449 — the PICKUP the click walk's own lanes
+                // serve: the placement rides the RELEASE, the armed
+                // button the right drag's place-ONE speaks
+                self.click_horse_slot(mx, my, self.qc_button as i8);
+                return;
+            }
+            if outside {
+                // doClick pc 599-660 — the -999 PICKUP the carried's
+                // drop speaks (the whole carried the PRIMARY button
+                // drops, the ONE item the right drag's byte wears): the
+                // wire session the packet the belief's clear rides, the
+                // offline sim the local throw IS
+                if self.world_is_network {
+                    let Some((window_id, state_id)) = self.horse_live_window else {
+                        return;
+                    };
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        wire_throw_outside(
+                            sink,
+                            &mut self.horse_carried,
+                            self.qc_button as i8,
+                            window_id,
+                            state_id,
+                            None,
+                        );
+                    }
+                } else {
+                    self.throw_horse_carried_outside(self.qc_button as i8);
+                }
+                return;
+            }
+            if self.world_is_network {
+                // pc 599's own jump — the -1 PICKUP the wire keeps (the
+                // isValidSlotIndex refusal — the no-op)
+                let Some((window_id, state_id)) = self.horse_live_window else {
+                    return;
+                };
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                        crate::world_view::ContainerClick {
+                            window_id,
+                            state_id,
+                            slot: -1,
+                            button: self.qc_button as i8,
+                            input: crate::world_view::ContainerInput::Pickup,
+                            changed: Vec::new(),
+                            carried: self.horse_carried,
+                        },
+                    ));
+                }
             }
             return;
         }
@@ -53330,6 +53716,30 @@ impl App {
             self.merchant_last_click_slot = hovered_menu;
             return;
         }
+        if self.screen == ScreenKind::Horse {
+            // THE MOUNT'S OWN PRESS (the family's own shape the chest
+            // + furnace rounds bank — the mouseClicked walk the
+            // horse's rects answer): the DOUBLE-CLICK FLAG the
+            // previous press's seat the compare reads, the
+            // QUICKCRAFT DRAG the carried-NON-EMPTY press arms (NO
+            // slot click, NO packet — the placement the release's own
+            // deferred place serves), the carried-empty press the
+            // PICKUP dispatch keeps, the last-click seat the press
+            // remembers. THE GATHER the later round banks (the
+            // doubled press the spread the wheel first decodes).
+            let hovered_menu = self.horse_hover_seat(mx, my).map(|(_, _, s)| s as usize);
+            self.horse_doubleclick = self.horse_last_click_slot.is_some()
+                && self.horse_last_click_slot == hovered_menu
+                && self.press_doubled;
+            let held = self.horse_carried.1 > 0;
+            if held {
+                self.qc_arm_horse(mx, my, 0);
+            } else if !self.horse_doubleclick {
+                self.click_horse_slot(mx, my, 0);
+            }
+            self.horse_last_click_slot = hovered_menu;
+            return;
+        }
         if self.screen == ScreenKind::Inventory {
             // THE DOUBLE-CLICK FLAG (mouseClicked pcs 61-80 — the
             // `lastClickSlot == hovered && the event's doubled tag`
@@ -53684,6 +54094,26 @@ impl App {
                 self.qc_arm_merchant(mx, my, 1);
             } else {
                 self.click_merchant_slot(mx, my, 1);
+            }
+            return false;
+        }
+        if self.screen == ScreenKind::Horse {
+            // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
+            // the `isQuickCrafting` verdict the press walk never
+            // re-enters: the armed drag's frames the other button's
+            // press keep silent); the carried-NON-EMPTY press the
+            // TYPE-1 DRAG ARMS (pc 353-363 — the one-each
+            // distribution the release serves), the carried-empty
+            // press the secondary dispatch keeps (the split-pickup
+            // the press lane answers)
+            if self.qc_armed {
+                return false;
+            }
+            let held = self.horse_carried.1 > 0;
+            if held {
+                self.qc_arm_horse(mx, my, 1);
+            } else {
+                self.click_horse_slot(mx, my, 1);
             }
             return false;
         }
@@ -55554,10 +55984,13 @@ impl App {
                 || self.screen == ScreenKind::Dispenser
                 || self.screen == ScreenKind::Crafting
                 || self.screen == ScreenKind::Furnace
-                || self.screen == ScreenKind::Beacon)
+                || self.screen == ScreenKind::Beacon
+                || self.screen == ScreenKind::Horse)
         {
             // the BEACON screen the same base walk wears (the
-            // autopush-323 round — the mismatch the drag aborts)
+            // autopush-323 round — the mismatch the drag aborts); the
+            // HORSE screen the same walk wears (the mount's own drag
+            // the mismatch the abort keeps)
             self.qc_armed = false;
             self.qc_slots.clear();
             return;
@@ -55573,11 +56006,13 @@ impl App {
                 || self.screen == ScreenKind::Dispenser
                 || self.screen == ScreenKind::Crafting
                 || self.screen == ScreenKind::Furnace
-                || self.screen == ScreenKind::Beacon)
+                || self.screen == ScreenKind::Beacon
+                || self.screen == ScreenKind::Horse)
         {
             // the BEACON screen the same base walk wears (the
             // autopush-323 round — the type-1 drag the beacon's own
-            // distribution rides)
+            // distribution rides); the HORSE screen the same walk
+            // wears (the mount's own type-1 drag the release serves)
             self.qc_release(1);
             return;
         }

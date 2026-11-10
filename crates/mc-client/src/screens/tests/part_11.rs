@@ -58143,3 +58143,523 @@ fn the_horse_the_gui_verdict_the_screen_opens() {
         "the mount the sneak never gates"
     );
 }
+
+/// THE MOUNT WINDOW'S OWN CLICK PAIR (the 551 NEXT's own first lane
+/// the round answers — the saddle/armor seats the click echo the live
+/// window answers, the ServerboundContainerClick the seat pair the
+/// wire's own walk speaks): the carried saddle the QC ARM the press
+/// speaks (NO slot click, NO packet — the placement the release's
+/// own deferred place serves), the release the PICKUP the seat
+/// places (the packet the command lane rides, the belief the same
+/// pair mutates), the ARMOR SEAT'S OWN MAYPLACE the saddle the
+/// refusal keeps (javap `ArmorSlot.mayPlace` the
+/// `isEquippableInSlot` walk — the BODY slot the horse-armor family
+/// alone equips, the foreign stack the silence rides, NO packet),
+/// the iron armor the BODY seat the place speaks, the carried-empty
+/// press the PICKUP the seat takes (the whole stack the cursor
+/// banks), the right press the ONE item the max-1 seat the split
+/// wears.
+#[test]
+fn the_horse_the_click_pair_the_wire_the_seats_speak() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+    let saddle = id("saddle");
+    let iron = id("iron_horse_armor");
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    let table = LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MOUNT,
+        slots: vec![(0i32, 0i32); 38],
+        carried: (saddle, 1),
+        state_id: 0,
+        bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    };
+    app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+    assert_eq!(app.screen, ScreenKind::Horse, "the window the sync opens");
+    assert_eq!(
+        app.horse_carried,
+        (saddle, 1),
+        "the wire's own cursor the birth banks"
+    );
+    // the hit boxes the render's own law pre-keys (the seats 0/1 the
+    // pair speaks)
+    app.horse_slot_rects = vec![(100, 100, 0), (120, 100, 1)];
+    app.horse_panel = (90, 90);
+    // THE SADDLE PLACE'S OWN WALK (the carried press the QC ARM
+    // speaks — the arm the geometry wears, NO slot click, NO packet)
+    app.on_press(108, 108);
+    assert!(app.qc_armed, "the carried press the drag arms");
+    assert_eq!(
+        app.horse_seats[0],
+        (0, 0),
+        "the armed press the seat never takes"
+    );
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the armed press NO packet speaks"
+    );
+    // THE RELEASE'S OWN DEFERRED PLACE (the PICKUP the release
+    // serves — the saddle the SADDLE seat takes, the packet the
+    // command lane rides)
+    app.mouse_pos = Some((108, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 1),
+        "the release the saddle places"
+    );
+    assert_eq!(app.horse_carried, (0, 0), "the cursor the place empties");
+    match click_rx.try_recv().expect("the place packet rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5, "the window's own id the echo names");
+            assert_eq!(c.state_id, 0, "the fresh revision the echo keeps");
+            assert_eq!(c.slot, 0, "the seat's own id the packet names");
+            assert_eq!(c.button, 0, "the left press the byte wears");
+            assert_eq!(
+                c.input,
+                ContainerInput::Pickup,
+                "the PICKUP the place input speaks"
+            );
+            assert_eq!(
+                c.changed,
+                vec![(0i16, (saddle, 1))],
+                "the prediction the changed map rides"
+            );
+            assert_eq!(c.carried, (0, 0), "the emptied cursor the pair banks");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    assert!(!app.qc_armed, "the release the arm clears");
+    // THE ARMOR SEAT'S OWN MAYPLACE REFUSAL (the carried saddle the
+    // BODY seat never takes — the mayPlace verdict the silence wears,
+    // the packet the refusal never mints)
+    app.horse_carried = (saddle, 1);
+    app.on_press(128, 108);
+    assert!(app.qc_armed, "the carried press the drag arms");
+    app.mouse_pos = Some((128, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.horse_seats[1],
+        (0, 0),
+        "the foreign stack the seat never takes"
+    );
+    assert_eq!(
+        app.horse_carried,
+        (saddle, 1),
+        "the cursor the refusal keeps"
+    );
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the refused place NO packet speaks"
+    );
+    // THE ARMOR SEAT'S OWN ITEM (the iron armor the BODY seat the
+    // place speaks — the whole stack the max-1 seat takes)
+    app.horse_carried = (iron, 1);
+    app.on_press(128, 108);
+    app.mouse_pos = Some((128, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.horse_seats[1],
+        (iron, 1),
+        "the armor the BODY seat takes"
+    );
+    assert_eq!(app.horse_carried, (0, 0), "the cursor the place empties");
+    assert!(
+        click_rx.try_recv().is_ok(),
+        "the armor place the packet rides"
+    );
+    // THE CARRIED-EMPTY PRESS'S OWN PICKUP (the armor seat the whole
+    // stack the cursor takes — the dispatch the press lane serves, NO
+    // drag)
+    app.on_press(128, 108);
+    assert!(!app.qc_armed, "the empty cursor the plain press keeps");
+    assert_eq!(app.horse_seats[1], (0, 0), "the pickup the seat drains");
+    assert_eq!(app.horse_carried, (iron, 1), "the stack the cursor takes");
+    match click_rx.try_recv().expect("the pickup rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(
+                c.changed,
+                vec![(1i16, (0, 0))],
+                "the drained seat the changed map banks"
+            );
+            assert_eq!(c.carried, (iron, 1), "the taken stack the pair banks");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE RIGHT PRESS'S OWN PLACE-ONE (the leather armor the split
+    // speaks — the one item the EMPTY armor seat takes, the pair the
+    // cursor keeps)
+    let leather = id("leather_horse_armor");
+    app.horse_carried = (leather, 3);
+    app.on_right_press(128, 108);
+    assert!(app.qc_armed, "the right carried press the drag arms");
+    assert_eq!(app.qc_button, 1, "the type-1 drag the right press keys");
+    app.mouse_pos = Some((128, 108));
+    app.qc_release(1);
+    assert_eq!(
+        app.horse_seats[1],
+        (leather, 1),
+        "the right drag the one item places"
+    );
+    assert_eq!(app.horse_carried, (leather, 2), "the pair the cursor keeps");
+    match click_rx.try_recv().expect("the split place rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.button, 1, "the right press the byte wears");
+            assert_eq!(
+                c.changed,
+                vec![(1i16, (leather, 1))],
+                "the one item the changed map banks"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE SADDLE SEAT'S OWN MAYPLACE (the wire mirror — the iron the
+    // SADDLE seat never takes: the carried press the drag arms, the
+    // release the mayPlace verdict the silence wears [the SWAP arm
+    // the same mayPlace gate consults — the filled seat the foreign
+    // stack never exchanges], NO packet)
+    app.horse_carried = (iron, 1);
+    app.on_press(108, 108);
+    assert!(app.qc_armed, "the carried press the drag arms");
+    app.mouse_pos = Some((108, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 1),
+        "the filled seat the foreign stack never swaps"
+    );
+    assert_eq!(app.horse_carried, (iron, 1), "the cursor the refusal keeps");
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the refused swap NO packet speaks"
+    );
+}
+
+/// THE MOUNT WINDOW'S OWN OFFLINE CLICK PAIR (the offline stand-in's
+/// own walk the click lanes answer): the standard row the PICKUP
+/// drains (the write-through projection IS), the right press the ONE
+/// item the empty row places, the same-item row the merge speaks,
+/// the different-item row the SWAP wears, the carried cursor the
+/// OUTSIDE press the drop speaks (the aimed impulse the drop walk
+/// spawns), the SADDLE seat's own mayPlace the offline sim keeps,
+/// the fresh open the stale pair the reset retires.
+#[test]
+fn the_horse_the_click_pair_the_offline_the_rows_wear() {
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+    let saddle = id("saddle");
+    let dirt = id("dirt");
+    let stone = id("stone");
+    let leather = id("leather_horse_armor");
+    let mut app = App::new(3);
+    app.enter_world();
+    app.open_horse();
+    assert_eq!(app.screen, ScreenKind::Horse, "the sim the open wears");
+    assert!(!app.horse_is_live, "the offline stand-in the false keeps");
+    // the drop walk's own eye (the aimed impulse the body throws —
+    // the headless menus the no-body the silence keeps)
+    let top = app.spawn_y;
+    app.body = Some(crate::body::PlayerBody::new(
+        8.5,
+        top as f64 + crate::world_view::PLAYER_EYE_HEIGHT as f64,
+        8.5,
+        0.0,
+        90.0,
+    ));
+    // the hit boxes the render's own law pre-keys (the seats + the
+    // rows the store's own mapping rides: menu 2 → row 9, menu 3 →
+    // row 10, menu 4 → row 11)
+    app.horse_slot_rects = vec![
+        (100, 100, 0),
+        (120, 100, 1),
+        (200, 100, 2),
+        (220, 100, 3),
+        (240, 100, 4),
+    ];
+    app.horse_panel = (90, 90);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.inventory.items[9] = (dirt, 7);
+    app.inventory.items[11] = (stone, 2);
+    // THE ROW'S OWN PICKUP (the carried-empty press the whole stack
+    // the cursor takes — the write-through the store IS)
+    app.on_press(208, 108);
+    assert_eq!(app.inventory.items[9], (0, 0), "the row the pickup drains");
+    assert_eq!(app.horse_carried, (dirt, 7), "the stack the cursor takes");
+    // THE RIGHT PRESS'S OWN PLACE-ONE (the empty row the one item
+    // takes — the carried press the drag arms, the release the place
+    // speaks: the split the max-64 row wears)
+    app.on_right_press(228, 108);
+    assert!(app.qc_armed, "the right carried press the drag arms");
+    app.mouse_pos = Some((228, 108));
+    app.qc_release(1);
+    assert_eq!(
+        app.inventory.items[10],
+        (dirt, 1),
+        "the right press the one item places"
+    );
+    assert_eq!(app.horse_carried, (dirt, 6), "the pair the cursor keeps");
+    // THE MERGE'S OWN ARM (the same-item row the one item takes —
+    // the row the +1 wears, the cursor the -1 speaks)
+    app.inventory.items[10] = (dirt, 3);
+    app.on_right_press(228, 108);
+    app.mouse_pos = Some((228, 108));
+    app.qc_release(1);
+    assert_eq!(
+        app.inventory.items[10],
+        (dirt, 4),
+        "the merge the row wears"
+    );
+    assert_eq!(app.horse_carried, (dirt, 5), "the cursor the merge drains");
+    // THE SWAP'S OWN ARM (the different-item row the exchange keeps —
+    // the pairs the plain id test swaps; the LEFT press the drag
+    // arms, the release the swap serves)
+    app.on_press(248, 108);
+    assert!(app.qc_armed, "the carried press the drag arms");
+    app.mouse_pos = Some((248, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.inventory.items[11],
+        (dirt, 5),
+        "the row the carried takes"
+    );
+    assert_eq!(
+        app.horse_carried,
+        (stone, 2),
+        "the seat's stack the cursor takes"
+    );
+    // THE RIGHT PRESS'S OWN NEVER-SWAP (the filled row the foreign
+    // right press the no-op keeps — the same law the bytes wear, the
+    // OFFLINE sim the packet never mints)
+    app.on_right_press(228, 108);
+    app.mouse_pos = Some((228, 108));
+    app.qc_release(1);
+    assert_eq!(
+        app.inventory.items[10],
+        (dirt, 4),
+        "the right press the filled row never swaps"
+    );
+    assert_eq!(app.horse_carried, (stone, 2), "the cursor the no-op keeps");
+    // THE DROP-OUTSIDE LANE (the carried cursor the outside press
+    // ARMS the drag — the release the -999 THROW serves: the whole
+    // stack the LEFT button drops, the entity the drop walk spawns)
+    let drops_before = app.next_drop_id;
+    app.on_press(10, 10);
+    assert!(app.qc_armed, "the carried outside press the drag arms");
+    app.mouse_pos = Some((10, 10));
+    app.qc_release(0);
+    assert_eq!(
+        app.next_drop_id,
+        drops_before + 1,
+        "the outside release the entity spawns"
+    );
+    assert_eq!(app.horse_carried, (0, 0), "the whole stack the drop takes");
+    // THE SADDLE SEAT'S OWN MAYPLACE (the stone the SADDLE seat never
+    // takes — the carried press the drag arms, the release the
+    // mayPlace verdict the silence wears)
+    app.horse_carried = (stone, 2);
+    app.on_press(108, 108);
+    assert!(app.qc_armed, "the carried press the drag arms");
+    app.mouse_pos = Some((108, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.horse_seats[0],
+        (0, 0),
+        "the foreign stack the saddle seat refuses"
+    );
+    assert_eq!(
+        app.horse_carried,
+        (stone, 2),
+        "the cursor the refusal keeps"
+    );
+    // THE SADDLE THE SEAT TAKES (the release the place speaks — the
+    // mayPlace verdict the walk answers)
+    app.horse_carried = (saddle, 1);
+    app.on_press(108, 108);
+    app.mouse_pos = Some((108, 108));
+    app.qc_release(0);
+    assert_eq!(app.horse_seats[0], (saddle, 1), "the saddle the seat takes");
+    assert_eq!(app.horse_carried, (0, 0), "the cursor the place empties");
+    // THE ARMOR SEAT'S OWN FAMILY (the leather armor the BODY seat
+    // takes — the six armors the mayPlace row wears)
+    app.horse_carried = (leather, 1);
+    app.on_press(128, 108);
+    app.mouse_pos = Some((128, 108));
+    app.qc_release(0);
+    assert_eq!(
+        app.horse_seats[1],
+        (leather, 1),
+        "the armor the BODY seat takes"
+    );
+    // THE FRESH OPEN'S OWN RESET (the stale pair the open retires —
+    // the chest's own shape the mount wears)
+    app.horse_last_click_slot = Some(4);
+    app.horse_doubleclick = true;
+    app.on_escape();
+    app.open_horse();
+    assert!(
+        !app.horse_doubleclick,
+        "the stale flag the fresh open retires"
+    );
+    assert_eq!(
+        app.horse_last_click_slot, None,
+        "the stale seat the fresh open retires"
+    );
+}
+
+/// THE MOUNT WINDOW'S OWN Q WALK (the 551 NEXT's own third lane the
+/// round answers — the Q-walk wire lane the offline gate the live
+/// words re-arms): the live session's Q the packet the command lane
+/// speaks (the THROW input the doClick table wears, the whole stack
+/// the byte-1 rides, the one item the byte-0 keeps), the drained
+/// seats the kind lanes the FIELD WRITES retire, the hotbar row the
+/// HUD belief syncs, the carried cursor's refusal the EMPTY changed
+/// map names (the seats the cursor's own stack the Q never touches),
+/// the empty seat the hasItem gate the silence keeps (NO packet).
+#[test]
+fn the_horse_the_q_walk_the_wire_the_throw_speaks() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+    let saddle = id("saddle");
+    let dirt = id("dirt");
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    let table = LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MOUNT,
+        slots: {
+            let mut s = vec![(0i32, 0i32); 38];
+            s[0] = (saddle, 1);
+            s
+        },
+        carried: (0, 0),
+        state_id: 3,
+        bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    };
+    app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+    app.horse_slot_rects = vec![(100, 100, 0), (120, 100, 1), (200, 100, 2), (300, 100, 29)];
+    app.horse_panel = (90, 90);
+    // THE ROWS' OWN BANK (the mount menu's standard rows the player's
+    // OWN inventory IS — the wire's wholesale slots the client's own
+    // store banks, the row the shared bank's seat reads)
+    app.inventory.items[9] = (dirt, 7);
+    // THE SADDLE SEAT'S OWN WHOLE THROW (the Q the byte-1 packet
+    // rides — the drained seat the kind lane retires, the belief the
+    // same pair mutates)
+    app.mouse_pos = Some((108, 108));
+    app.on_horse_drop_key(true);
+    assert_eq!(
+        app.horse_seats[0],
+        (0, 0),
+        "the whole throw the seat drains"
+    );
+    assert_eq!(app.horse_carried, (0, 0), "the cursor the Q never touches");
+    match click_rx.try_recv().expect("the throw rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5, "the window's own id the echo names");
+            assert_eq!(c.state_id, 3, "the revision the echo answers");
+            assert_eq!(c.slot, 0, "the seat's own id the packet names");
+            assert_eq!(c.button, 1, "the whole stack the byte wears");
+            assert_eq!(
+                c.input,
+                ContainerInput::Throw,
+                "the THROW the Q input speaks"
+            );
+            assert_eq!(
+                c.changed,
+                vec![(0i16, (0, 0))],
+                "the drained seat the changed map banks"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE ROW'S OWN ONE THROW (the Q the byte-0 packet rides — the
+    // six the row keeps, the write-through the store IS)
+    app.mouse_pos = Some((208, 108));
+    app.on_horse_drop_key(false);
+    assert_eq!(
+        app.inventory.items[9],
+        (dirt, 6),
+        "the one item the row keeps"
+    );
+    match click_rx.try_recv().expect("the one-throw rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.button, 0, "the one item the byte wears");
+            assert_eq!(
+                c.changed,
+                vec![(2i16, (dirt, 6))],
+                "the kept stack the changed map banks"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE HOTBAR ROW'S OWN HUD SYNC (the menu 29 the store row 0 the
+    // mapping speaks — the HUD the write-through's tail re-keys)
+    app.inventory.items[0] = (dirt, 4);
+    app.mouse_pos = Some((308, 108));
+    app.on_horse_drop_key(true);
+    assert_eq!(
+        app.inventory.items[0],
+        (0, 0),
+        "the hotbar row the whole throw drains"
+    );
+    assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD the sync re-keys");
+    match click_rx.try_recv().expect("the hotbar throw rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.slot, 29, "the hotbar row's own id the packet names");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE CARRIED CURSOR'S OWN REFUSAL (the carried stack the Q never
+    // throws — the packet the EMPTY changed map names, the seats the
+    // cursor's own stack the walk never touches)
+    app.horse_carried = (saddle, 1);
+    app.inventory.items[9] = (dirt, 6);
+    app.mouse_pos = Some((208, 108));
+    app.on_horse_drop_key(true);
+    assert_eq!(
+        app.inventory.items[9],
+        (dirt, 6),
+        "the carried refusal the row keeps"
+    );
+    match click_rx
+        .try_recv()
+        .expect("the refusal packet rode the lane")
+    {
+        ContainerCommand::Click(c) => {
+            assert!(
+                c.changed.is_empty(),
+                "the carried refusal the EMPTY map names"
+            );
+            assert_eq!(
+                c.carried,
+                (saddle, 1),
+                "the cursor pair the THROW arm never touches"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE EMPTY SEAT'S OWN SILENCE (the hasItem gate the packet never
+    // rides)
+    app.mouse_pos = Some((128, 108));
+    app.on_horse_drop_key(true);
+    assert!(
+        click_rx.try_recv().is_err(),
+        "the empty seat NO packet speaks"
+    );
+}
