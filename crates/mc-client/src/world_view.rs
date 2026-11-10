@@ -4306,6 +4306,111 @@ fn furnace_move_item_stack_to(
     moved
 }
 
+/// THE HORSE ARMOR'S OWN FAMILY (the BODY seat's own mayPlace row —
+/// javap 26.2 the `ArmorSlot.mayPlace` law the
+/// `LivingEntity.isEquippableInSlot` walk speaks: the stack's own
+/// EQUIPPABLE component the slot word reads, the BODY slot the six
+/// armors' own components name — the registry's own ids the plain id
+/// model banks, the max-1 stack the seat's own ceiling keeps).
+pub const HORSE_ARMOR_NAMES: [&str; 6] = [
+    "leather_horse_armor",
+    "copper_horse_armor",
+    "iron_horse_armor",
+    "golden_horse_armor",
+    "diamond_horse_armor",
+    "netherite_horse_armor",
+];
+
+/// THE HORSE SEAT'S OWN MAYPLACE (javap 26.2 — the `ArmorSlot.mayPlace`
+/// law the `LivingEntity.isEquippableInSlot` walk speaks, the plain id
+/// model the component verdict keeps): the SADDLE seat the saddle
+/// item alone equips (the Equippable's SADDLE slot the saddle's own
+/// component names), the ARMOR seat the horse-armor family alone
+/// equips (the BODY slot the six armors' own components name — the
+/// leather/copper/iron/golden/diamond/netherite row the registry
+/// banks). The click lanes AND the quick-move seat fills the same
+/// verdict wear.
+pub fn horse_seat_may_place(seat: usize, item: i32) -> bool {
+    match seat {
+        0 => mc_registry::item_id_by_name("saddle") == Some(item),
+        1 => HORSE_ARMOR_NAMES
+            .iter()
+            .any(|n| mc_registry::item_id_by_name(n) == Some(item)),
+        _ => true,
+    }
+}
+
+/// THE MOUNT WINDOW'S OWN QUICK-MOVE (javap 26.2 — the
+/// `AbstractMountInventoryMenu.quickMoveStack` walk the
+/// HorseInventoryMenu never overrides, the plain horse the columns-0
+/// shape the walk wears). THE ROUTING the decoded ranges speak:
+///
+/// 1. THE SEAT ARM (src 0/1, pc 56-84): `index < 2 + mountSize` the
+///    plain horse's zero mount grid keeps — `moveItemStackTo(item, 2,
+///    slots.size())` the WHOLE player bank the forward order wears.
+/// 2. THE SEAT FILLS (src >= 2, pc 85-164): the ARMOR seat 1 the
+///    FIRST attempt answers (`getSlot(1).mayPlace(item) &&
+///    !getSlot(1).hasItem()` the empty-only gate pre-keys, then
+///    `moveItemStackTo(item, 1, 2)`), the SADDLE seat 0 the second
+///    (`getSlot(0).mayPlace(item) && !getSlot(0).hasItem()`, then
+///    `moveItemStackTo(item, 0, 1)`) — the max-1 seats the walker's
+///    own ceiling takes.
+/// 3. THE MAIN GRID'S OWN LANE (src 2..29, pc 238-267):
+///    `moveItemStackTo(item, 29, 38)` the hotbar row.
+/// 4. THE HOTBAR'S OWN LANE (src 29..38, pc 208-237):
+///    `moveItemStackTo(item, 2, 29)` the main grid.
+///
+/// THE MOVE WALKER the furnace lane wears (the merge pass over the
+/// WHOLE range, the single-empty pass after the break — the
+/// moveItemStackTo law the furnace predictor re-banks). The EMPTY
+/// return the failed walk wears (Vec::new() — the doClick loop the
+/// silence keeps). The cursor is NOT the quick-move's lane (the
+/// vanilla quickMoveStack never reads the carried stack).
+pub fn predict_horse_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32, i32))> {
+    let src_item = slots.get(src).copied().unwrap_or((0, 0));
+    if src_item.1 <= 0 {
+        return Vec::new(); // the hasItem gate — nothing to move
+    }
+    let mut rows = slots.to_vec();
+    let mut remaining = src_item.1;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    let moved = if src < 2 {
+        // THE SEAT'S OWN RANGE (pc 56-84 — the whole player bank the
+        // move wears, the forward order the bytecode keeps)
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 2, 38, false)
+    } else if rows.get(1).map_or(false, |s| s.1 <= 0) && horse_seat_may_place(1, src_item.0) {
+        // THE ARMOR SEAT'S OWN FILL (pc 85-124 — the FIRST attempt
+        // the empty-only mayPlace gate pre-keys)
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 1, 2, false)
+    } else if rows.get(0).map_or(false, |s| s.1 <= 0) && horse_seat_may_place(0, src_item.0) {
+        // THE SADDLE SEAT'S OWN FILL (pc 125-164 — the second attempt
+        // the same gate wears)
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 0, 1, false)
+    } else if (2..29).contains(&src) {
+        // THE MAIN GRID'S OWN LANE (pc 238-267 — the hotbar row the
+        // move wears)
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 29, 38, false)
+    } else if (29..38).contains(&src) {
+        // THE HOTBAR'S OWN LANE (pc 208-237 — the main grid the move
+        // wears)
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 2, 29, false)
+    } else {
+        false
+    };
+    if !moved {
+        return Vec::new(); // the EMPTY return the failed walk wears
+    }
+    let src_new = if remaining > 0 {
+        (src_item.0, remaining)
+    } else {
+        (0, 0)
+    };
+    if src_new != src_item {
+        changed.insert(0, (src, src_new));
+    }
+    changed
+}
+
 /// The component patch's OWN bundle rows (the set-slot sync's
 /// projection, shared by both container lanes): the slots whose
 /// component patch carries the `bundle_contents` value — the slot's

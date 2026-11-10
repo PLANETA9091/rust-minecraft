@@ -58663,3 +58663,214 @@ fn the_horse_the_q_walk_the_wire_the_throw_speaks() {
         "the empty seat NO packet speaks"
     );
 }
+
+/// THE MOUNT WINDOW'S OWN QUICK-MOVE (the 552 NEXT's own first lane
+/// the round answers — the shift press the quickMoveStack routing the
+/// byte walk decodes): the MAIN GRID's shift press the HOTBAR the
+/// merge + the empty pass wears (the packet the QuickMove input the
+/// changed map rides — the multi-slot deltas the wire speaks), the
+/// SADDLE ROW the empty saddle seat the fill speaks (the armor seat
+/// the FIRST attempt the mayPlace refusal wears, the saddle seat the
+/// second answers), the FILLED saddle seat the row the main grid the
+/// hotbar lane keeps (the fill arms refuse — the vanilla routing the
+/// swap lane answers), the OFFLINE sim the potion row the kind ride
+/// banks (the empty dst the placed stack's word wears, the drained
+/// src the NONE retires), the SEAT's shift press the player rows the
+/// whole bank the move wears.
+#[test]
+fn the_horse_the_quick_move_the_lanes_wear() {
+    use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+    let saddle = id("saddle");
+    let dirt = id("dirt");
+    let mut app = App::new(3);
+    app.open(ScreenKind::Connect);
+    app.net_world = Some(air_net_world(2, 0));
+    app.enter_network_world(None, Skybox::Overworld, None, None);
+    let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+    app.attach_live_clicks(click_tx);
+    let table = LiveContainer {
+        id: 5,
+        menu_type_id: crate::world_model::MENU_TYPE_MOUNT,
+        slots: vec![(0i32, 0i32); 38],
+        carried: (0, 0),
+        state_id: 0,
+        bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
+        title_nbt: Vec::new(),
+        merchant: None,
+    };
+    app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+    app.horse_slot_rects = vec![
+        (100, 100, 0),
+        (120, 100, 1),
+        (200, 100, 2),
+        (220, 100, 3),
+        (240, 100, 4),
+        (300, 100, 29),
+        (320, 100, 30),
+        (340, 100, 31),
+    ];
+    app.horse_panel = (90, 90);
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    // the rows' own bank (menu 2 → row 9, menu 3 → row 10, menu 4 →
+    // row 11, menu 29 → row 0, menu 30 → row 1, menu 31 → row 2)
+    app.inventory.items[9] = (dirt, 64);
+    app.inventory.items[0] = (dirt, 10);
+    app.shift_down = true;
+    // THE MAIN GRID'S OWN LANE (the hotbar the merge pass fills to
+    // the cap, the first empty row the split takes — the packet the
+    // QuickMove input the changed map rides)
+    app.click_horse_slot(208, 108, 0);
+    assert_eq!(
+        app.inventory.items[9],
+        (0, 0),
+        "the src row the quick-move drains"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 64),
+        "the merge pass the hotbar row fills"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (dirt, 10),
+        "the split pass the empty row takes"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (dirt, 64),
+        "the HUD the tail re-keys"
+    );
+    assert_eq!(app.horse_carried, (0, 0), "the cursor the lane never touches");
+    match click_rx.try_recv().expect("the quick-move rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(c.window_id, 5, "the window's own id the echo names");
+            assert_eq!(c.slot, 2, "the src row's own id the packet names");
+            assert_eq!(
+                c.input,
+                ContainerInput::QuickMove,
+                "the QuickMove the shift press speaks"
+            );
+            assert_eq!(
+                c.changed,
+                vec![
+                    (2i16, (0, 0)),
+                    (29i16, (dirt, 64)),
+                    (30i16, (dirt, 10))
+                ],
+                "the multi-slot deltas the changed map rides"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE SADDLE ROW'S OWN SEAT FILL (the armor seat the FIRST
+    // attempt the mayPlace refusal wears — the saddle the BODY seat
+    // never takes — the saddle seat the SECOND attempt the fill
+    // speaks)
+    app.inventory.items[10] = (saddle, 1);
+    app.click_horse_slot(228, 108, 0);
+    assert_eq!(
+        app.horse_seats[0],
+        (saddle, 1),
+        "the saddle the seat fill banks"
+    );
+    assert_eq!(
+        app.inventory.items[10],
+        (0, 0),
+        "the src row the fill drains"
+    );
+    match click_rx.try_recv().expect("the seat fill rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(
+                c.changed,
+                vec![(3i16, (0, 0)), (0i16, (saddle, 1))],
+                "the fill pair the changed map rides"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE FILLED SEAT'S OWN ROUTING (the fill arms refuse — the
+    // second saddle row the main grid the hotbar lane answers, the
+    // first empty hotbar row the move takes)
+    app.inventory.items[11] = (saddle, 1);
+    app.click_horse_slot(248, 108, 0);
+    assert_eq!(
+        app.inventory.items[11],
+        (0, 0),
+        "the src row the hotbar lane drains"
+    );
+    assert_eq!(
+        app.inventory.items[2],
+        (saddle, 1),
+        "the hotbar row the move takes"
+    );
+    match click_rx.try_recv().expect("the hotbar move rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(
+                c.changed,
+                vec![(4i16, (0, 0)), (31i16, (saddle, 1))],
+                "the move pair the changed map rides"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE SEAT'S OWN SHIFT PRESS (the player rows the whole bank the
+    // move wears — the saddle the seat carries the first empty row
+    // the move takes)
+    app.click_horse_slot(108, 108, 0);
+    assert_eq!(app.horse_seats[0], (0, 0), "the seat the shift drains");
+    assert_eq!(
+        app.inventory.items[9],
+        (saddle, 1),
+        "the player row the move takes"
+    );
+    match click_rx.try_recv().expect("the seat move rode the lane") {
+        ContainerCommand::Click(c) => {
+            assert_eq!(
+                c.changed,
+                vec![(0i16, (0, 0)), (2i16, (saddle, 1))],
+                "the seat move the changed map rides"
+            );
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+    // THE OFFLINE SIM'S OWN KIND RIDE (the potion row the hotbar lane
+    // wears — the empty dst the placed stack's word banks, the
+    // drained src the NONE retires)
+    let mut sim = App::new(3);
+    sim.enter_world();
+    sim.open_horse();
+    let potion = id("potion");
+    let kind_b = crate::brewing_sim::POTION_HEALING;
+    let none = crate::brewing_sim::POTION_KIND_NONE;
+    sim.horse_slot_rects = vec![(100, 100, 0), (200, 100, 2), (300, 100, 29)];
+    sim.horse_panel = (90, 90);
+    for it in sim.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    for k in sim.items_potion_kinds.iter_mut() {
+        *k = none;
+    }
+    sim.inventory.items[9] = (potion, 1);
+    sim.items_potion_kinds[9] = kind_b;
+    sim.shift_down = true;
+    sim.click_horse_slot(208, 108, 0);
+    assert_eq!(
+        sim.inventory.items[0],
+        (potion, 1),
+        "the hotbar row the move takes"
+    );
+    assert_eq!(
+        sim.items_potion_kinds[0],
+        kind_b,
+        "the empty dst the kind banks"
+    );
+    assert_eq!(
+        sim.items_potion_kinds[9],
+        none,
+        "the drained src the kind retires"
+    );
+}

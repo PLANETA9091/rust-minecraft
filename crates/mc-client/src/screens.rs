@@ -639,20 +639,6 @@ pub(crate) fn format_player_chat_line(m: &mc_protocol::play::PlayerChatMessage) 
 }
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
-/// THE HORSE ARMOR'S OWN FAMILY (the BODY seat's own mayPlace row —
-/// javap 26.2 the `ArmorSlot.mayPlace` law the
-/// `LivingEntity.isEquippableInSlot` walk speaks: the stack's own
-/// EQUIPPABLE component the slot word reads, the BODY slot the six
-/// armors' own components name — the registry's own ids the plain id
-/// model banks, the max-1 stack the seat's own ceiling keeps).
-const HORSE_ARMOR_NAMES: [&str; 6] = [
-    "leather_horse_armor",
-    "copper_horse_armor",
-    "iron_horse_armor",
-    "golden_horse_armor",
-    "diamond_horse_armor",
-    "netherite_horse_armor",
-];
 /// THE SPRINT WINDOW'S OWN SPAN (26.2 Options <init>'s audited
 /// OptionInstance('options.sprintWindow', IntRange(0, 10), 7) — the
 /// double-tap-W window the LocalPlayer.aiStep's sprintTriggerTime
@@ -27016,10 +27002,17 @@ impl App {
                 return;
             };
             let slot = slot as usize;
-            // THE QUICK-MOVE'S OWN LANE the later round banks (the
-            // shift press the routing the wheel first decodes — the
-            // plain walk the shift press the silence keeps)
+            // THE QUICK-MOVE LANE (the shift-click — the vanilla
+            // doClick's own precedence: the hasShiftDown test the
+            // pickup/split branches PRECEDES, the button byte keeps
+            // its press's own value, the cursor is NOT the lane). THE
+            // MOUNT'S OWN ROUTING the predictor wears (the decoded
+            // ranges the quickMoveStack walk speaks — the seats' fill
+            // arms the empty-only mayPlace gate pre-keys)
             if self.shift_down {
+                let changed =
+                    crate::world_view::predict_horse_quick_move(&self.horse_menu_flat(), slot);
+                self.horse_quick_move_apply(slot, &changed);
                 return;
             }
             let (believed, seat) = self.horse_menu_stack(slot);
@@ -27051,7 +27044,26 @@ impl App {
         };
         let slot = slot_i as usize;
         if self.shift_down {
-            return; // the quick-move's own lane the later round banks
+            // THE QUICK-MOVE LANE (the wire half the offline lane's
+            // own twin wears — the prediction the same stores mutates,
+            // the packet the command lane carries, the changed map
+            // the multi-slot deltas ride, the cursor pair the lane
+            // never touches)
+            let changed =
+                crate::world_view::predict_horse_quick_move(&self.horse_menu_flat(), slot);
+            self.horse_quick_move_apply(slot, &changed);
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: slot_i,
+                    button,
+                    input: crate::world_view::ContainerInput::QuickMove,
+                    changed: changed.iter().map(|(i, p)| (*i as i16, *p)).collect(),
+                    carried: self.horse_carried,
+                },
+            ));
+            return;
         }
         let (believed, seat) = self.horse_menu_stack(slot);
         if seat
@@ -27114,23 +27126,76 @@ impl App {
         }
     }
 
-    /// THE HORSE SEAT'S OWN MAYPLACE (javap 26.2 — the
-    /// `ArmorSlot.mayPlace` law the
-    /// `LivingEntity.isEquippableInSlot` walk speaks, the plain id
-    /// model the component verdict keeps): the SADDLE seat the
-    /// saddle item alone equips (the Equippable's SADDLE slot the
-    /// saddle's own component names), the ARMOR seat the
-    /// horse-armor family alone equips (the BODY slot the six
-    /// armors' own components name — the leather/copper/iron/golden
-    /// /diamond/netherite row the registry banks).
-    fn horse_seat_may_place(seat: usize, item: i32) -> bool {
-        match seat {
-            0 => mc_registry::item_id_by_name("saddle") == Some(item),
-            1 => HORSE_ARMOR_NAMES
-                .iter()
-                .any(|n| mc_registry::item_id_by_name(n) == Some(item)),
-            _ => true,
+    /// THE HORSE MENU'S OWN FLAT PROJECTION (the 38-row wire order the
+    /// quick-move predictor wears — the seats 0/1 the store's own pair
+    /// answers, the standard rows 2..37 the shared bank's mapped seats
+    /// speak: the menu id the store row the same mapping the click
+    /// lanes wear).
+    fn horse_menu_flat(&self) -> Vec<(i32, i32)> {
+        let mut flat = vec![(0, 0); 38];
+        flat[0] = self.horse_seats[0];
+        flat[1] = self.horse_seats[1];
+        for m in 2..38usize {
+            if let Some(row) = Self::horse_menu_to_inventory(m) {
+                flat[m] = self.inventory.items[row];
+            }
         }
+        flat
+    }
+
+    /// THE QUICK-MOVE'S OWN APPLY (the changed map the prediction
+    /// speaks — the store rows the write-through lanes land, the KIND'S
+    /// OWN RIDE the 384 law the family re-wears: the src's own word
+    /// the ride banks [the seat src the kindless NONE the wall keeps],
+    /// the empty dst the placed stack's word banks, the drained src
+    /// the NONE retires, the kinded remainder the word keeps; the
+    /// hotbar HUD row the put's own tail syncs).
+    fn horse_quick_move_apply(&mut self, src: usize, changed: &[(usize, (i32, i32))]) {
+        if changed.is_empty() {
+            return; // the EMPTY return the failed walk wears
+        }
+        // THE KIND'S OWN PRE-READS (the src's own word the ride banks
+        // — the seat src the kindless NONE the wall keeps)
+        let src_row = Self::horse_menu_to_inventory(src);
+        let src_kind = src_row.map_or(crate::brewing_sim::POTION_KIND_NONE, |r| {
+            self.items_potion_kinds[r]
+        });
+        let old_dests: Vec<(usize, (i32, i32))> = changed
+            .iter()
+            .filter(|(i, _)| *i != src)
+            .map(|(i, _)| (*i, self.horse_menu_stack(*i).0))
+            .collect();
+        for (i, pair) in changed {
+            self.horse_menu_stack_put(*i, *i < 2, *pair);
+        }
+        for (idx, old) in &old_dests {
+            if old.1 <= 0 {
+                // THE EMPTY DST'S OWN KIND BANK (the placed stack's own
+                // word the row banks — the seats the kindless store the
+                // NONE wall keeps)
+                if let Some(row) = Self::horse_menu_to_inventory(*idx) {
+                    self.items_potion_kinds[row] = src_kind;
+                }
+            }
+        }
+        if let Some(&(_, src_new)) = changed.iter().find(|(i, _)| *i == src) {
+            let tail = if src_new.1 > 0 && crate::world::brewing_is_potion_kind(src_new.0) {
+                src_kind
+            } else {
+                crate::brewing_sim::POTION_KIND_NONE
+            };
+            if let Some(row) = src_row {
+                self.items_potion_kinds[row] = tail;
+            }
+        }
+    }
+
+    /// THE HORSE SEAT'S OWN MAYPLACE (the wire domain's own law —
+    /// [`crate::world_view::horse_seat_may_place`] the component
+    /// verdict the plain id model keeps; the click lanes AND the
+    /// quick-move seat fills the same verdict wear).
+    fn horse_seat_may_place(seat: usize, item: i32) -> bool {
+        crate::world_view::horse_seat_may_place(seat, item)
     }
 
     /// THE HORSE CARRIED'S OWN THROW (the 26.2 mouseClicked's own
